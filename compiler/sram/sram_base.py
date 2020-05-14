@@ -37,6 +37,9 @@ class sram_base(design, verilog, lef):
         else:
             self.num_wmasks = 0
 
+        if not self.num_spare_cols:
+            self.num_spare_cols = 0
+
         # For logical effort delay calculations.
         self.all_mods_except_control_done = False
 
@@ -44,7 +47,7 @@ class sram_base(design, verilog, lef):
         """ Add pins for entire SRAM. """
 
         for port in self.write_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}[{1}]".format(port, bit), "INPUT")
                 
         for port in self.all_ports:
@@ -75,8 +78,10 @@ class sram_base(design, verilog, lef):
         for port in self.write_ports:
             for bit in range(self.num_wmasks):
                 self.add_pin("wmask{0}[{1}]".format(port, bit), "INPUT")
+            for bit in range(self.num_spare_cols):
+                self.add_pin("spare_wen{0}[{1}]".format(port, bit), "INPUT")
         for port in self.read_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
         
         self.add_pin("vdd", "POWER")
@@ -274,7 +279,7 @@ class sram_base(design, verilog, lef):
         else:
             self.col_addr_dff = None
 
-        self.data_dff = factory.create("dff_array", module_name="data_dff", rows=1, columns=self.word_size)
+        self.data_dff = factory.create("dff_array", module_name="data_dff", rows=1, columns=self.word_size + self.num_spare_cols)
         self.add_mod(self.data_dff)
 
         if self.write_size:
@@ -303,6 +308,7 @@ class sram_base(design, verilog, lef):
             self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
                                                            words_per_row=self.words_per_row,
                                                            word_size=self.word_size,
+                                                           spare_columns=self.num_spare_cols,
                                                            sram=self,
                                                            port_type="rw")
             self.add_mod(self.control_logic_rw)
@@ -310,6 +316,7 @@ class sram_base(design, verilog, lef):
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
+                                                          spare_columns=self.num_spare_cols,
                                                           sram=self,
                                                           port_type="w")
             self.add_mod(self.control_logic_w)
@@ -317,6 +324,7 @@ class sram_base(design, verilog, lef):
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
+                                                          spare_columns=self.num_spare_cols,
                                                           sram=self,
                                                           port_type="r")
             self.add_mod(self.control_logic_r)
@@ -328,12 +336,12 @@ class sram_base(design, verilog, lef):
 
         temp = []
         for port in self.read_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("dout{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("bank_din{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             for bit in range(self.bank_addr_size):
@@ -349,6 +357,8 @@ class sram_base(design, verilog, lef):
             temp.append("w_en{0}".format(port))
             for bit in range(self.num_wmasks):
                 temp.append("bank_wmask{}[{}]".format(port, bit))
+            for bit in range(self.num_spare_cols):
+                temp.append("spare_wen{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
@@ -436,7 +446,7 @@ class sram_base(design, verilog, lef):
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 inputs.append("din{}[{}]".format(port, bit))
                 outputs.append("bank_din{}[{}]".format(port, bit))
 

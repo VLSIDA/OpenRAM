@@ -71,7 +71,7 @@ class sram_1bank(sram_base):
             self.wmask_bus_size = self.m2_nonpref_pitch * (max(self.num_wmasks + 1, self.col_addr_size + 1)) + self.wmask_bus_gap
         else:
             self.data_bus_gap = self.m3_nonpref_pitch * 2
-            self.data_bus_size = self.m3_nonpref_pitch * (max(self.word_size + 1, self.col_addr_size + 1)) + self.data_bus_gap
+            self.data_bus_size = self.m3_nonpref_pitch * (max(self.word_size + self.num_spare_cols + 1, self.col_addr_size + 1)) + self.data_bus_gap
 
         self.col_addr_bus_gap = self.m2_nonpref_pitch * 2
         self.col_addr_bus_size = self.m2_nonpref_pitch * (self.col_addr_size) + self.col_addr_bus_gap
@@ -191,7 +191,7 @@ class sram_1bank(sram_base):
                                      signal + "{}".format(port))
 
             if port in self.read_ports:
-                for bit in range(self.word_size):
+                for bit in range(self.word_size + self.num_spare_cols):
                     self.copy_layout_pin(self.bank_inst,
                                          "dout{0}_{1}".format(port, bit),
                                          "dout{0}[{1}]".format(port, bit))
@@ -208,7 +208,7 @@ class sram_1bank(sram_base):
                                      "addr{0}[{1}]".format(port, bit + self.col_addr_size))
 
             if port in self.write_ports:
-                for bit in range(self.word_size):
+                for bit in range(self.word_size + self.num_spare_cols):
                     self.copy_layout_pin(self.data_dff_insts[port],
                                          "din_{}".format(bit),
                                          "din{0}[{1}]".format(port, bit))
@@ -218,6 +218,10 @@ class sram_1bank(sram_base):
                         self.copy_layout_pin(self.wmask_dff_insts[port],
                                              "din_{}".format(bit),
                                              "wmask{0}[{1}]".format(port, bit))
+                for bit in range(self.num_spare_cols):
+                    self.copy_layout_pin(self.bank_inst,
+                                         "spare_wen{0}_{1}".format(port, bit),
+                                         "spare_wen{0}[{1}]".format(port, bit))
 
     def route_layout(self):
         """ Route a single bank SRAM """
@@ -380,7 +384,7 @@ class sram_1bank(sram_base):
                 else:
                     offset = self.data_dff_insts[port].ul() + vector(0, self.data_bus_gap)
 
-            dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
+            dff_names = ["dout_{}".format(x) for x in range(self.word_size + self.num_spare_cols)]
             dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
             if self.write_size:
                 for x in dff_names:
@@ -393,7 +397,7 @@ class sram_1bank(sram_base):
                                               to_layer="m4",
                                               offset=pin_offset)
             
-            bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size)]
+            bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             if self.write_size:
                 for x in bank_names:

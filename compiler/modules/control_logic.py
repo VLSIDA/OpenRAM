@@ -36,9 +36,9 @@ class control_logic(design.design):
         self.port_type = port_type
 
         if not spare_columns:
-            self.num_spare_cols = spare_columns
-        else:
             self.num_spare_cols = 0
+        else:
+            self.num_spare_cols = spare_columns
 
         self.num_cols = word_size * words_per_row + self.num_spare_cols
         self.num_words = num_rows * words_per_row

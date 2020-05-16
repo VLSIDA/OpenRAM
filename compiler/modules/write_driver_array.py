@@ -85,9 +85,9 @@ class write_driver_array(design.design):
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "OUTPUT")
         if self.write_size:
-            for i in range(self.num_wmasks):
+            for i in range(self.num_wmasks + self.num_spare_cols):
                 self.add_pin(self.en_name + "_{0}".format(i), "INPUT")
-        elif self.num_spare_cols:
+        elif self.num_spare_cols and not self.write_size:
             for i in range(self.num_spare_cols + 1):
                 self.add_pin(self.en_name + "_{0}".format(i), "INPUT")
         else:
@@ -124,7 +124,7 @@ class write_driver_array(design.design):
                     w = 0
                     windex+=1
             
-            elif self.num_spare_cols:
+            elif self.num_spare_cols and not self.write_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
                                    self.get_br_name() + "_{0}".format(index),
@@ -138,6 +138,10 @@ class write_driver_array(design.design):
 
         for i in range(self.num_spare_cols):
             index = self.word_size + i
+            if self.write_size:
+                offset = self.num_wmasks
+            else:
+                offset = 1
             name = "write_driver{}".format(index)
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
@@ -145,7 +149,7 @@ class write_driver_array(design.design):
             self.connect_inst([self.data_name + "_{0}".format(index),
                                self.get_bl_name() + "_{0}".format(index),
                                self.get_br_name() + "_{0}".format(index),
-                               self.en_name + "_{0}".format(i + 1), "vdd", "gnd"])
+                               self.en_name + "_{0}".format(i + offset), "vdd", "gnd"])
 
 
     def place_write_array(self):
@@ -227,8 +231,16 @@ class write_driver_array(design.design):
                                     offset=en_pin.ll(),
                                     width=wmask_en_len - en_gap,
                                     height=en_pin.height())
+            
+            for i in range(self.num_spare_cols):
+                inst = self.driver_insts[self.word_size + i]
+                self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
+                                    layer="m1",
+                                    offset=inst.get_pin(inst.mod.en_name).ll(),
+                                    width=self.single_col_width - inst.get_pin(inst.mod.en_name).width())
+
          
-        elif self.num_spare_cols:
+        elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
             inst = self.driver_insts[0]
             self.add_layout_pin(text=self.en_name + "_{0}".format(0),

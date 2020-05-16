@@ -386,8 +386,10 @@ class port_data(design.design):
         if self.write_size is not None:
             for i in range(self.num_wmasks):
                 temp.append("wdriver_sel_{}".format(i))
+            for i in range(self.num_spare_cols):
+                temp.append("spare_wen{}".format(i))
 
-        elif self.num_spare_cols:
+        elif self.num_spare_cols and not self.write_size:
             temp.append("w_en")
             for i in range(self.num_spare_cols):
                 temp.append("spare_wen{}".format(i))
@@ -690,7 +692,7 @@ class port_data(design.design):
             else:
                 debug.error("Didn't find precharge array.")
         
-        # Copy layout pins of spare columns
+        # Copy bitlines of spare columns
         for bit in range(self.num_spare_cols):
             if self.precharge_array_inst:
                 self.copy_layout_pin(self.precharge_array_inst,
@@ -718,7 +720,10 @@ class port_data(design.design):
                 for bit in range(self.num_wmasks):
                     # Add write driver's en_{} pins
                     self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
-            elif self.num_spare_cols:
+                for bit in range(self.num_spare_cols):
+                    # Add spare columns' en_{} pins
+                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + self.num_wmasks), "spare_wen{}".format(bit))
+            elif self.num_spare_cols and not self.write_mask_and_array_inst:
                 self.copy_layout_pin(self.write_driver_array_inst, "en_0", "w_en")            
                 for bit in range(self.num_spare_cols):
                     self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + 1), "spare_wen{}".format(bit))

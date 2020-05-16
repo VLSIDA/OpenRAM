@@ -66,7 +66,7 @@ class sram_1bank(sram_base):
         # So, m3 non-pref pitch means that this is routed on the m2 layer.
         if self.write_size:
             self.data_bus_gap = self.m4_nonpref_pitch * 2
-            self.data_bus_size = self.m4_nonpref_pitch * (self.word_size) + self.data_bus_gap
+            self.data_bus_size = self.m4_nonpref_pitch * (self.word_size + self.num_spare_cols) + self.data_bus_gap
             self.wmask_bus_gap = self.m2_nonpref_pitch * 2
             self.wmask_bus_size = self.m2_nonpref_pitch * (max(self.num_wmasks + 1, self.col_addr_size + 1)) + self.wmask_bus_gap
         else:

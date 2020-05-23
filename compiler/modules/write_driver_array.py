@@ -165,7 +165,7 @@ class write_driver_array(design.design):
                 for pin in pin_list:
                     self.add_power_pin(name=n,
                                        loc=pin.center(),
-                                       vertical=True,
+                                       directions=("V", "V"),
                                        start_layer=pin.layer)
         if self.write_size:
             for bit in range(self.num_wmasks):

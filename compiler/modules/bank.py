@@ -83,10 +83,10 @@ class bank(design.design):
             self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]), "OUTPUT")
         for port in self.write_ports:
             for bit in range(self.word_size):
-                self.add_pin("din{0}_{1}".format(port,bit), "INPUT")
+                self.add_pin("din{0}_{1}".format(port, bit), "INPUT")
         for port in self.all_ports:
             for bit in range(self.addr_size):
-                self.add_pin("addr{0}_{1}".format(port,bit), "INPUT")
+                self.add_pin("addr{0}_{1}".format(port, bit), "INPUT")
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
@@ -128,16 +128,14 @@ class bank(design.design):
         bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
         # This will ensure the pin is only on the top or bottom edge
         if port % 2:
-            via_offset = bl_pin.uc() + vector(0, self.m2_pitch)
+            via_offset = bl_pin.uc() + vector(0, 1.5 * self.m2_pitch)
             left_right_offset = vector(self.max_x_offset, via_offset.y)
         else:
-            via_offset = bl_pin.bc() - vector(0, self.m2_pitch)
+            via_offset = bl_pin.bc() - vector(0, 1.5 * self.m2_pitch)
             left_right_offset = vector(self.min_x_offset, via_offset.y)
-        if bl_pin == "m1":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=via_offset)
-        self.add_via_center(layers=self.m2_stack,
-                            offset=via_offset)
+        self.add_via_stack_center(from_layer=bl_pin.layer,
+                                  to_layer="m3",
+                                  offset=via_offset)
         self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
@@ -635,11 +633,10 @@ class bank(design.design):
         # Port 0
         # The bank is at (0,0), so this is to the left of the y-axis.
         # 2 pitches on the right for vias/jogs to access the inputs
-        control_bus_offset = vector(-self.m2_pitch * self.num_control_lines[0] - self.m2_pitch, self.min_y_offset)
+        control_bus_offset = vector(-self.m3_pitch * self.num_control_lines[0] - self.m3_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
         control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2 * self.m1_pitch
         self.bus_xoffset[0] = self.create_bus(layer="m2",
-                                              pitch=self.m2_pitch,
                                               offset=control_bus_offset,
                                               names=self.control_signals[0],
                                               length=control_bus_length,
@@ -650,11 +647,10 @@ class bank(design.design):
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
             control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2 * self.m1_pitch
-            control_bus_offset = vector(self.bitcell_array_right + self.m2_pitch,
+            control_bus_offset = vector(self.bitcell_array_right + self.m3_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
             self.bus_xoffset[1] = self.create_bus(layer="m2",
-                                                  pitch=self.m2_pitch,
                                                   offset=control_bus_offset,
                                                   names=list(reversed(self.control_signals[1])),
                                                   length=control_bus_length,
@@ -844,9 +840,9 @@ class bank(design.design):
                 self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
         if port % 2:
-            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * self.m2_pitch, 0)
+            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * self.m2_nonpref_pitch, 0)
         else:
-            offset = self.column_decoder_inst[port].lr() + vector(self.m2_pitch, 0)
+            offset = self.column_decoder_inst[port].lr() + vector(self.m2_nonpref_pitch, 0)
 
         decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
         
@@ -854,7 +850,9 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
-        self.create_vertical_channel_route(route_map, offset, self.m1_stack)
+        self.create_vertical_channel_route(route_map,
+                                           offset,
+                                           self.m1_stack)
 
     def add_lvs_correspondence_points(self):
         """
@@ -910,30 +908,39 @@ class bank(design.design):
         # pre-decoder and this connection is in metal3
         connection = []
         connection.append((self.prefix + "p_en_bar{}".format(port),
-                           self.port_data_inst[port].get_pin("p_en_bar").lc()))
+                           self.port_data_inst[port].get_pin("p_en_bar").lc(),
+                           self.port_data_inst[port].get_pin("p_en_bar").layer))
 
         rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
         connection.append((self.prefix + "wl_en{}".format(port),
-                           self.bitcell_array_inst.get_pin(rbl_wl_name).lc()))
+                           self.bitcell_array_inst.get_pin(rbl_wl_name).lc(),
+                           self.bitcell_array_inst.get_pin(rbl_wl_name).layer))
             
         if port in self.write_ports:
             if port % 2:
                 connection.append((self.prefix + "w_en{}".format(port),
-                                   self.port_data_inst[port].get_pin("w_en").rc()))
+                                   self.port_data_inst[port].get_pin("w_en").rc(),
+                                   self.port_data_inst[port].get_pin("w_en").layer))
             else:
                 connection.append((self.prefix + "w_en{}".format(port),
-                                   self.port_data_inst[port].get_pin("w_en").lc()))
+                                   self.port_data_inst[port].get_pin("w_en").lc(),
+                                  self.port_data_inst[port].get_pin("w_en").layer))
                 
         if port in self.read_ports:
             connection.append((self.prefix + "s_en{}".format(port),
-                               self.port_data_inst[port].get_pin("s_en").lc()))
+                               self.port_data_inst[port].get_pin("s_en").lc(),
+                              self.port_data_inst[port].get_pin("s_en").layer))
 
-        for (control_signal, pin_pos) in connection:
-            control_mid_pos = self.bus_xoffset[port][control_signal]
-            control_pos = vector(self.bus_xoffset[port][control_signal].x, pin_pos.y)
-            self.add_wire(self.m1_stack, [control_mid_pos, control_pos, pin_pos])
-            self.add_via_center(layers=self.m1_stack,
-                                offset=control_pos)
+        for (control_signal, pin_pos, pin_layer) in connection:
+            if port==0:
+                y_offset = self.min_y_offset
+            else:
+                y_offset = self.max_y_offset
+            control_pos = vector(self.bus_xoffset[port][control_signal].x, y_offset)
+            if pin_layer == "m1":
+                self.add_wire(self.m1_stack, [control_pos, pin_pos])
+            elif pin_layer == "m3":
+                self.add_wire(self.m2_stack[::-1], [control_pos, pin_pos])
 
         # clk to wordline_driver
         control_signal = self.prefix + "wl_en{}".format(port)

@@ -8,33 +8,26 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-class ptx_3finger_nmos_test(openram_test):
+
+class control_logic_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import tech
 
-        debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",
-                             width=tech.drc["minwidth_tx"],
-                             mults=3,
-                             tx_type="nmos",
-                             connect_source_active=True,
-                             connect_drain_active=True,
-                             connect_poly=True)
-        self.local_drc_check(fet)
-
+        debug.info(1, "Testing sample for control_logic_rw")
+        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
+        self.local_check(a)
+        
         globals.end_openram()
-
-
+        
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

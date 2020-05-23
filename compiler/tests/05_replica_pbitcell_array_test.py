@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
 import unittest
@@ -13,7 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_bitcell_array_test(openram_test):
+class replica_pbitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -41,7 +41,7 @@ class replica_bitcell_array_test(openram_test):
         debug.info(2, "Testing 4x4 array for pbitcell")
         a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=0, bitcell_ports=[0])
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

@@ -15,26 +15,29 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class control_logic_test(openram_test):
+class write_driver_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import control_logic
-        import tech
 
-        debug.info(1, "Testing sample for control_logic_rw")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
+        # check write driver array for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+
+        factory.reset()
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case)")
+        a = factory.create(module_type="write_driver_array", columns=8, word_size=8)
         self.local_check(a)
 
-        debug.info(1, "Testing sample for control_logic_r")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="r")
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case)")
+        a = factory.create(module_type="write_driver_array", columns=16, word_size=8)
         self.local_check(a)
 
-        debug.info(1, "Testing sample for control_logic_w")
-        a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32, port_type="w")
-        self.local_check(a)
-        
+        globals.end_openram()
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

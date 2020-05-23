@@ -7,6 +7,7 @@
 #
 import datetime
 import debug
+from math import log
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
@@ -137,7 +138,6 @@ class sram_base(design, verilog, lef):
             self.copy_power_pins(inst, "vdd")
             self.copy_power_pins(inst, "gnd")
             
-        import tech
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
@@ -148,6 +148,7 @@ class sram_base(design, verilog, lef):
             grid_stack = power_grid
         except ImportError:
             # if no power_grid is specified by tech we use sensible defaults
+            import tech
             if "m4" in tech.layer:
                 # Route a M3/M4 grid
                 grid_stack = self.m3_stack
@@ -496,70 +497,6 @@ class sram_base(design, verilog, lef):
             self.connect_inst(temp)
         
         return insts
-
-    def connect_vbus_m2m3(self, src_pin, dest_pin):
-        """
-        Helper routine to connect an instance to a vertical bus.
-        Routes horizontal then vertical L shape.
-        Dest pin is assumed to be on M2.
-        Src pin can be on M1/M2/M3.
-        """
-        
-        if src_pin.cx()<dest_pin.cx():
-            in_pos = src_pin.rc()
-        else:
-            in_pos = src_pin.lc()
-        if src_pin.cy() < dest_pin.cy():
-            out_pos = dest_pin.bc()
-        else:
-            out_pos = dest_pin.uc()
-
-        # move horizontal first
-        self.add_wire(("m3", "via2", "m2"),
-                      [in_pos,
-                       vector(out_pos.x, in_pos.y),
-                       out_pos])
-        if src_pin.layer=="m1":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=in_pos)
-        if src_pin.layer in ["m1", "m2"]:
-            self.add_via_center(layers=self.m2_stack,
-                                offset=in_pos)
-
-    def connect_hbus_m2m3(self, src_pin, dest_pin):
-        """
-        Helper routine to connect an instance to a horizontal bus.
-        Routes horizontal then vertical L shape.
-        Dest pin is on M1/M2/M3.
-        Src pin can be on M1/M2/M3.
-        """
-        
-        if src_pin.cx()<dest_pin.cx():
-            in_pos = src_pin.rc()
-        else:
-            in_pos = src_pin.lc()
-        if src_pin.cy() < dest_pin.cy():
-            out_pos = dest_pin.lc()
-        else:
-            out_pos = dest_pin.rc()
-
-        # move horizontal first
-        self.add_wire(("m3", "via2", "m2"),
-                      [in_pos,
-                       vector(out_pos.x, in_pos.y),
-                       out_pos])
-        if src_pin.layer=="m1":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=in_pos)
-        if src_pin.layer in ["m1", "m2"]:
-            self.add_via_center(layers=self.m2_stack,
-                                offset=in_pos)
-        if dest_pin.layer=="m1":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=out_pos)
-        if dest_pin.layer=="m3":
-            self.add_via_center(layers=self.m2_stack,
-                                offset=out_pos)
             
     def sp_write(self, sp_name, lvs_netlist=False):
         # Write the entire spice of the object to the file

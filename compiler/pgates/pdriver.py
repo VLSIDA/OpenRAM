@@ -76,6 +76,8 @@ class pdriver(pgate.pgate):
 
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
+        self.route_supply_rails()
+        self.add_boundary()
         
     def add_pins(self):
         self.add_pin("A", "INPUT")
@@ -140,26 +142,11 @@ class pdriver(pgate.pgate):
             z_inst_list.append(self.inv_inst_list[x].get_pin("Z"))
             a_inst_list.append(self.inv_inst_list[x + 1].get_pin("A"))
             mid_point = vector(z_inst_list[x].cx(), a_inst_list[x].cy())
-            self.add_path("m1",
+            self.add_path(self.route_layer,
                           [z_inst_list[x].center(), mid_point,
                            a_inst_list[x].center()])
 
     def add_layout_pins(self):
-        # Continous vdd rail along with label.
-        vdd_pin = self.inv_inst_list[0].get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="m1",
-                            offset=vdd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-        
-        # Continous gnd rail along with label.
-        gnd_pin = self.inv_inst_list[0].get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="m1",
-                            offset=gnd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
 
         z_pin = self.inv_inst_list[len(self.inv_inst_list) - 1].get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",

@@ -35,7 +35,7 @@ class dff_buf(design.design):
         # This causes a DRC in the pinv which assumes min width rails. This ensures the output
         # contact does not violate spacing to the rail in the NMOS.
         debug.check(inv1_size>=2, "Inverter must be greater than two for rail spacing DRC rules.")
-        debug.check(inv2_size>=2, "Inverter must be greater than two for rail spacing DRC rules.")        
+        debug.check(inv2_size>=2, "Inverter must be greater than two for rail spacing DRC rules.")
 
         self.inv1_size=inv1_size
         self.inv2_size=inv2_size
@@ -52,14 +52,13 @@ class dff_buf(design.design):
     def create_layout(self):
         self.place_instances()
         self.width = self.inv2_inst.rx()
+
         self.height = self.dff.height
-        
-        
         self.route_wires()
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
-
+        
     def add_modules(self):
         self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
@@ -73,8 +72,6 @@ class dff_buf(design.design):
                                    size=self.inv2_size,
                                    height=self.dff.height)
         self.add_mod(self.inv2)
-
-        
         
     def add_pins(self):
         self.add_pin("D", "INPUT")
@@ -96,17 +93,19 @@ class dff_buf(design.design):
 
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",
                                      mod=self.inv1)
-        self.connect_inst(["qint", "Qb",  "vdd", "gnd"])
+        self.connect_inst(["qint", "Qb", "vdd", "gnd"])
         
         self.inv2_inst=self.add_inst(name="dff_buf_inv2",
                                      mod=self.inv2)
-        self.connect_inst(["Qb", "Q",  "vdd", "gnd"])
+        self.connect_inst(["Qb", "Q", "vdd", "gnd"])
 
     def place_instances(self):
         # Add the DFF
-        self.dff_inst.place(vector(0,0))
+        self.dff_inst.place(vector(0, 0))
 
         # Add INV1 to the right
+        # The INV needs well spacing because the DFF is likely from a library
+        # with different well construction rules
         well_spacing = 0
         try:
             well_spacing = max(well_spacing, self.nwell_space)
@@ -129,7 +128,7 @@ class dff_buf(design.design):
         # Route dff q to inv1 a
         q_pin = self.dff_inst.get_pin("Q")
         a1_pin = self.inv1_inst.get_pin("A")
-        mid_x_offset = 0.5*(a1_pin.cx() + q_pin.cx())
+        mid_x_offset = 0.5 * (a1_pin.cx() + q_pin.cx())
         mid1 = vector(mid_x_offset, q_pin.cy())
         mid2 = vector(mid_x_offset, a1_pin.cy())
         self.add_path("m3", [q_pin.center(), mid1, mid2, a1_pin.center()])
@@ -143,7 +142,7 @@ class dff_buf(design.design):
         # Route inv1 z to inv2 a
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
-        mid_x_offset = 0.5*(z1_pin.cx() + a2_pin.cx())
+        mid_x_offset = 0.5 * (z1_pin.cx() + a2_pin.cx())
         self.mid_qb_pos = vector(mid_x_offset, z1_pin.cy())
         mid2 = vector(mid_x_offset, a2_pin.cy())
         self.add_path("m1", [z1_pin.center(), self.mid_qb_pos, mid2, a2_pin.center()])
@@ -181,8 +180,8 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
-        mid_pos = dout_pin.center() + vector(self.m1_pitch,0)
-        q_pos = mid_pos - vector(0,self.m2_pitch)
+        mid_pos = dout_pin.center() + vector(self.m1_nonpref_pitch, 0)
+        q_pos = mid_pos - vector(0, self.m2_pitch)
         self.add_layout_pin_rect_center(text="Q",
                                         layer="m2",
                                         offset=q_pos)
@@ -190,7 +189,7 @@ class dff_buf(design.design):
         self.add_via_center(layers=self.m1_stack,
                             offset=q_pos)
 
-        qb_pos = self.mid_qb_pos + vector(0,self.m2_pitch)
+        qb_pos = self.mid_qb_pos + vector(0, self.m2_pitch)
         self.add_layout_pin_rect_center(text="Qb",
                                         layer="m2",
                                         offset=qb_pos)
@@ -200,7 +199,7 @@ class dff_buf(design.design):
          
     def get_clk_cin(self):
         """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
-        #This is a handmade cell so the value must be entered in the tech.py file or estimated.
-        #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
-        #FIXME: Dff changed in a past commit. The parameter need to be updated.
+        # This is a handmade cell so the value must be entered in the tech.py file or estimated.
+        # Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
+        # FIXME: Dff changed in a past commit. The parameter need to be updated.
         return parameter["dff_clk_cin"]

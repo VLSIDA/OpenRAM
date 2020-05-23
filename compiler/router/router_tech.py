@@ -18,17 +18,13 @@ class router_tech:
     """
     def __init__(self, layers, rail_track_width):
         """
-        Allows us to change the layers that we are routing on. First layer
-        is always horizontal, middle is via, and last is always
-        vertical.
+        Allows us to change the layers that we are routing on.
+        This uses the preferreed directions.
         """
         self.layers = layers
         self.rail_track_width = rail_track_width
 
         if len(self.layers) == 1:
-            if preferred_directions[self.layers[0]] != "H":
-                debug.warning("Using '{}' for horizontal routing, but it " \
-                              "prefers vertical routing".format(self.layers[0]))
             self.horiz_layer_name = self.vert_layer_name = self.layers[0]
             self.horiz_lpp = self.vert_lpp = layer[self.layers[0]]
             
@@ -42,13 +38,21 @@ class router_tech:
 
             # figure out wich of the two layers prefers horizontal/vertical
             # routing
-            if preferred_directions[try_horiz_layer] == "H" and preferred_directions[try_vert_layer] == "V":
+            self.horiz_layer_name = None
+            self.vert_layer_name = None
+            
+            if preferred_directions[try_horiz_layer] == "H":
                 self.horiz_layer_name = try_horiz_layer
+            else:
+                self.horiz_layer_name = try_vert_layer
+            if preferred_directions[try_vert_layer] == "V":
                 self.vert_layer_name = try_vert_layer
             else:
-                raise ValueError("Layer '{}' and '{}' are using the wrong " \
-                            "preferred_directions '{}' and '{}'. Only "\
-                            "('H', 'V') are supported")
+                self.vert_layer_name = try_horiz_layer
+
+            if not self.horiz_layer_name or not self.vert_layer_name:
+                raise ValueError("Layer '{}' and '{}' are using the wrong "
+                                 "preferred_directions '{}' and '{}'.")
 
             via_connect = contact(self.layers, (1, 1))
             max_via_size = max(via_connect.width,via_connect.height)

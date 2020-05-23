@@ -70,7 +70,8 @@ class precharge(design.design):
         self.route_vdd_rail()
         self.route_bitlines()
         self.connect_to_bitlines()
-
+        self.add_boundary()
+        
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en_bar", "vdd"],
                           ["OUTPUT", "OUTPUT", "INPUT", "POWER"])
@@ -80,7 +81,7 @@ class precharge(design.design):
         Initializes the upper and lower pmos
         """
         if(OPTS.tech_name == "s8"):
-            (self.ptx_width, self.ptx_mults) = pgate.bin_width(self, "pmos", self.ptx_width)
+            (self.ptx_width, self.ptx_mults) = pgate.bin_width("pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,
                                    mults=self.ptx_mults,
@@ -113,7 +114,7 @@ class precharge(design.design):
 
         self.add_power_pin("vdd",
                            self.well_contact_pos,
-                           vertical=True)
+                           directions=("V", "V"))
         
         # Hack for li layers
         if hasattr(self, "li_stack"):
@@ -158,7 +159,7 @@ class precharge(design.design):
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
         # adds the upper pmos(s) to layout with 2 M2 tracks
-        ydiff = self.pmos.height + self.m2_pitch
+        ydiff = self.pmos.height + 2 * self.m2_pitch
         self.upper_pmos1_pos = self.lower_pmos_position + vector(0, ydiff)
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 

@@ -25,28 +25,28 @@ class single_bank_test(openram_test):
         c = sram_config(word_size=4,
                         num_words=16)
 
-        c.words_per_row=1
-        factory.reset()
-        c.recompute_sizes()
-        debug.info(1, "No column mux")
-        a = factory.create("bank", sram_config=c)
-        self.local_check(a)
+        # c.words_per_row=1
+        # factory.reset()
+        # c.recompute_sizes()
+        # debug.info(1, "No column mux")
+        # a = factory.create("bank", sram_config=c)
+        # self.local_check(a)
 
-        c.num_words=32
-        c.words_per_row=2
-        factory.reset()
-        c.recompute_sizes()
-        debug.info(1, "Two way column mux")
-        a = factory.create("bank", sram_config=c)
-        self.local_check(a)
+        # c.num_words=32
+        # c.words_per_row=2
+        # factory.reset()
+        # c.recompute_sizes()
+        # debug.info(1, "Two way column mux")
+        # a = factory.create("bank", sram_config=c)
+        # self.local_check(a)
 
-        c.num_words=64
-        c.words_per_row=4
-        factory.reset()
-        c.recompute_sizes()
-        debug.info(1, "Four way column mux")
-        a = factory.create("bank", sram_config=c)
-        self.local_check(a)
+        # c.num_words=64
+        # c.words_per_row=4
+        # factory.reset()
+        # c.recompute_sizes()
+        # debug.info(1, "Four way column mux")
+        # a = factory.create("bank", sram_config=c)
+        # self.local_check(a)
 
         c.word_size=2
         c.num_words=128

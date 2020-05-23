@@ -56,6 +56,7 @@ class ptristate_inv(pgate.pgate):
         self.connect_rails()
         self.route_inputs()
         self.route_outputs()
+        self.add_boundary()
         
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -77,9 +78,6 @@ class ptristate_inv(pgate.pgate):
         # Add an extra space because we route the output on the right of the S/D
         self.width = self.well_width + 0.5 * self.m1_space
         # Height is an input parameter, so it is not recomputed.
-        
-        # Make sure we can put a well above and below
-        self.top_bottom_space = max(contact.active_contact.width, contact.active_contact.height)
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """

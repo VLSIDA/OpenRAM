@@ -15,25 +15,28 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class ptx_3finger_nmos_test(openram_test):
+class sense_amp_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import tech
 
-        debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",
-                             width=tech.drc["minwidth_tx"],
-                             mults=3,
-                             tx_type="nmos",
-                             connect_source_active=True,
-                             connect_drain_active=True,
-                             connect_poly=True)
-        self.local_drc_check(fet)
+        #check sense amp array for multi-port
+        OPTS.bitcell = "pbitcell"
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 0
+
+        factory.reset()
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 (multi-port case)")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2)
+        self.local_check(a)
+
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 (multi-port case)")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
+        self.local_check(a)
 
         globals.end_openram()
-
 
 # run the test from the command line
 if __name__ == "__main__":

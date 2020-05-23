@@ -15,22 +15,15 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class ptx_3finger_nmos_test(openram_test):
+class pinv_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import tech
 
-        debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",
-                             width=tech.drc["minwidth_tx"],
-                             mults=3,
-                             tx_type="nmos",
-                             connect_source_active=True,
-                             connect_drain_active=True,
-                             connect_poly=True)
-        self.local_drc_check(fet)
+        debug.info(2, "Checking 100x inverter")
+        tx = factory.create(module_type="pinv", size=100)
+        self.local_check(tx)
 
         globals.end_openram()
 

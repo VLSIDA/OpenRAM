@@ -15,25 +15,30 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class ptx_3finger_nmos_test(openram_test):
+class bank_select_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import tech
 
-        debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",
-                             width=tech.drc["minwidth_tx"],
-                             mults=3,
-                             tx_type="nmos",
-                             connect_source_active=True,
-                             connect_drain_active=True,
-                             connect_poly=True)
-        self.local_drc_check(fet)
+        OPTS.bitcell = "pbitcell"
+        debug.info(1, "No column mux, rw control logic")
+        a = factory.create(module_type="bank_select", port="rw")
+        self.local_check(a)
+
+        OPTS.num_rw_ports = 0
+        OPTS.num_w_ports = 1
+        OPTS.num_r_ports = 1
+
+        debug.info(1, "No column mux, w control logic")
+        a = factory.create(module_type="bank_select", port="w")
+        self.local_check(a)
+
+        debug.info(1, "No column mux, r control logic")
+        a = factory.create(module_type="bank_select", port="r")
+        self.local_check(a)
 
         globals.end_openram()
-
 
 # run the test from the command line
 if __name__ == "__main__":

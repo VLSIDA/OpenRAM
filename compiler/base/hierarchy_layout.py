@@ -42,14 +42,14 @@ class layout():
         self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells
         self.gds_read()
-        
+
         try:
             from tech import power_grid
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
 
-            
+
 
     ############################################################
     # GDS layout
@@ -465,7 +465,7 @@ class layout():
             mid2 = vector(mid1, end.y)
         else:
             debug.error("Invalid direction for jog -- must be H or V.")
-            
+
         if layer in layer_stacks:
             self.add_wire(layer, [start, mid1, mid2, end])
         elif layer in techlayer:
@@ -480,7 +480,7 @@ class layout():
         mid1 = vector(0.5 * start.x + 0.5 * end.x, start.y)
         mid2 = vector(mid1, end.y)
         self.add_path(layer, [start, mid1, mid2, end])
-        
+
     def add_wire(self, layers, coordinates, widen_short_wires=True):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
@@ -620,7 +620,7 @@ class layout():
                                             last_via=via,
                                             size=size)
         return via
-    
+
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
@@ -973,7 +973,7 @@ class layout():
         self.add_via_stack_center(from_layer=vlayer,
                                   to_layer=dest_pin.layer,
                                   offset=out_pos)
-        
+
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         try:
@@ -985,7 +985,7 @@ class layout():
         except AttributeError:
             debug.error("Cannot find layer pitch.", -1)
         return (nonpref_pitch, pitch, pitch - space, space)
-    
+
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
@@ -998,8 +998,13 @@ class layout():
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
 
+        # max_x_lc & min_x_rc are for routing to/from the edge of the pins
+        # to increase spacing between contacts of different nets
+        max_x_lc = max([pin.lc().x for pin in pins])
+        min_x_rc = min([pin.rc().x for pin in pins])
+
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x - min_x <= pitch:
+        if max_x_lc - min_x_rc <= pitch:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
 
             # Add the horizontal trunk on the vertical layer!
@@ -1020,7 +1025,15 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                mid = vector(pin.center().x, trunk_offset.y)
+                # If there is sufficient space, Route from the edge of the pins
+                # Otherwise, route from the center of the pins
+                if max_x_lc - min_x_rc > pitch:
+                    if pin.center().x == max_x:
+                        mid = vector(pin.lc().x, trunk_offset.y)
+                    else:
+                        mid = vector(pin.rc().x, trunk_offset.y)
+                else:
+                    mid = vector(pin.center().x, trunk_offset.y)
                 self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
@@ -1037,8 +1050,13 @@ class layout():
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
+        # max_y_bc & min_y_uc are for routing to/from the edge of the pins
+        # to reduce spacing between contacts of different nets
+        max_y_bc = max([pin.bc().y for pin in pins])
+        min_y_uc = min([pin.uc().y for pin in pins])
+
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y - min_y <= pitch:
+        if max_y_bc - min_y_uc <= pitch:
 
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
 
@@ -1060,7 +1078,15 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                mid = vector(trunk_offset.x, pin.center().y)
+                # If there is sufficient space, Route from the edge of the pins
+                # Otherwise, route from the center of the pins
+                if max_y_bc - min_y_uc > pitch:
+                    if pin.center().y == max_y:
+                        mid = vector(trunk_offset.x, pin.bc().y)
+                    else:
+                        mid = vector(trunk_offset.x, pin.uc().y)
+                else:
+                    mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
@@ -1103,7 +1129,7 @@ class layout():
                 pitch = self.horizontal_nonpref_pitch
             else:
                 pitch = self.vertical_nonpref_pitch
-            
+
             for pin1 in net1:
                 for pin2 in net2:
                     if vcg_pin_overlap(pin1, pin2, vertical, pitch):
@@ -1113,7 +1139,7 @@ class layout():
 
         def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
-            
+
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin,
             # for example, so the extra comparison *shouldn't* matter.
@@ -1147,7 +1173,7 @@ class layout():
 
         layer_stuff = self.get_layer_pitch(self.vertical_layer)
         (self.vertical_nonpref_pitch, self.vertical_pitch, self.vertical_width, self.vertical_space) = layer_stuff
-        
+
         layer_stuff = self.get_layer_pitch(self.horizontal_layer)
         (self.horizontal_nonpref_pitch, self.horizontal_pitch, self.horizontal_width, self.horizontal_space) = layer_stuff
 
@@ -1172,7 +1198,7 @@ class layout():
         # print("Nets:")
         # for net_name in nets:
          #    print(net_name, [x.name for x in nets[net_name]])
-            
+
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
         for net_name1 in nets:

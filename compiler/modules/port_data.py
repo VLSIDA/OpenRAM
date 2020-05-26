@@ -19,7 +19,7 @@ class port_data(design.design):
     """
 
     def __init__(self, sram_config, port, name=""):
-        
+
         sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
@@ -444,7 +444,7 @@ class port_data(design.design):
 
     def route_sense_amp_out(self, port):
         """ Add pins for the sense amp output """
-        
+
         for bit in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data_{}".format(bit))
             self.add_layout_pin_rect_center(text="dout_{0}".format(bit),
@@ -521,10 +521,10 @@ class port_data(design.design):
 
         insn2_start_bit = 1 if self.port == 0 else 0
 
-        self.connect_bitlines(inst1=inst1,
-                              inst2=inst2,
-                              num_bits=self.num_cols,
-                              inst2_start_bit=insn2_start_bit)
+        self.channel_route_bitlines(inst1=inst1,
+                                    inst2=inst2,
+                                    num_bits=self.num_cols,
+                                    inst2_start_bit=insn2_start_bit)
 
     def route_sense_amp_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
@@ -703,7 +703,7 @@ class port_data(design.design):
                 bitline_dirs = ("H", "V")
             elif bottom_names[0].layer == "m1":
                 bitline_dirs = ("V", "H")
-            
+
             route_map = list(zip(bottom_names, top_names))
             self.create_horizontal_channel_route(route_map, offset, self.m1_stack, bitline_dirs)
 
@@ -717,7 +717,7 @@ class port_data(design.design):
         This assumes that they have sufficient space to create a jog
         in the middle between the two modules (if needed).
         """
-        
+
         bot_inst_group, top_inst_group = self._group_bitline_instances(
             inst1, inst2, num_bits,
             inst1_bls_template, inst1_start_bit,
@@ -738,9 +738,8 @@ class port_data(design.design):
                                  vector(bot_br.x, yoffset),
                                  vector(top_br.x, yoffset),
                                  top_br])
-        
+
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
-

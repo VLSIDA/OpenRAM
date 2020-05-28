@@ -108,16 +108,23 @@ class bitcell_base_array(design.design):
         except AttributeError:
             bitcell_power_pin_directions = None
 
+        # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
+        try:
+            bitcell_no_vdd_pin = cell_properties.bitcell.no_vdd_via
+        except AttributeError:
+            bitcell_no_vdd_pin = False
+
         # Add vdd/gnd via stacks
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row,col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(name=pin_name,
-                                           loc=pin.center(),
-                                           directions=bitcell_power_pin_directions,
-                                           start_layer=pin.layer)
+                        if not (pin_name == "vdd" and bitcell_no_vdd_pin):
+                            self.add_power_pin(name=pin_name,
+                                               loc=pin.center(),
+                                               directions=bitcell_power_pin_directions,
+                                               start_layer=pin.layer)
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset

@@ -534,11 +534,14 @@ class port_data(design.design):
             else:
                 start_bit=0
 
-        self.channel_route_bitlines(inst1=inst1,
-                                    inst1_bls_template=inst1_bls_templ,
-                                    inst2=inst2,
-                                    num_bits=self.word_size,
-                                    inst1_start_bit=start_bit)
+        # This could be a channel route, but in some techs the bitlines
+        # are too close together.
+        print("SA to precharge")
+        self.connect_bitlines(inst1=inst1,
+                              inst1_bls_template=inst1_bls_templ,
+                              inst2=inst2,
+                              num_bits=self.word_size,
+                              inst1_start_bit=start_bit)
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
@@ -558,10 +561,13 @@ class port_data(design.design):
             else:
                 start_bit=0
 
-        self.channel_route_bitlines(inst1=inst1, inst2=inst2,
-                                    num_bits=self.word_size,
-                                    inst1_bls_template=inst1_bls_templ,
-                                    inst1_start_bit=start_bit)
+        # This could be a channel route, but in some techs the bitlines
+        # are too close together.
+        print("WD to precharge")
+        self.connect_bitlines(inst1=inst1, inst2=inst2,
+                              num_bits=self.word_size,
+                              inst1_bls_template=inst1_bls_templ,
+                              inst1_start_bit=start_bit)
 
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
@@ -569,11 +575,12 @@ class port_data(design.design):
         inst1 = self.write_driver_array_inst
         inst2 = self.sense_amp_array_inst
 
-        # These should be pitch matched in the cell library,
-        # but just in case, do a channel route.
-        self.channel_route_bitlines(inst1=inst1,
-                                    inst2=inst2,
-                                    num_bits=self.word_size)
+        # This could be a channel route, but in some techs the bitlines
+        # are too close together.
+        print("WD to SA")
+        self.connect_bitlines(inst1=inst1,
+                              inst2=inst2,
+                              num_bits=self.word_size)
 
     def route_bitline_pins(self):
         """ Add the bitline pins for the given port """
@@ -676,10 +683,9 @@ class port_data(design.design):
         Route the bl and br of two modules using the channel router.
         """
 
-        bot_inst_group, top_inst_group = self._group_bitline_instances(
-                                           inst1, inst2, num_bits,
-                                           inst1_bls_template, inst1_start_bit,
-                                           inst2_bls_template, inst2_start_bit)
+        bot_inst_group, top_inst_group = self._group_bitline_instances(inst1, inst2, num_bits,
+                                                                       inst1_bls_template, inst1_start_bit,
+                                                                       inst2_bls_template, inst2_start_bit)
 
         # Channel route each mux separately since we don't minimize the number
         # of tracks in teh channel router yet. If we did, we could route all the bits at once!
@@ -688,13 +694,8 @@ class port_data(design.design):
             bottom_names = self._get_bitline_pins(bot_inst_group, bit)
             top_names = self._get_bitline_pins(top_inst_group, bit)
 
-            if bottom_names[0].layer == "m2":
-                bitline_dirs = ("H", "V")
-            elif bottom_names[0].layer == "m1":
-                bitline_dirs = ("V", "H")
-            
             route_map = list(zip(bottom_names, top_names))
-            self.create_horizontal_channel_route(route_map, offset, self.m1_stack, bitline_dirs)
+            self.create_horizontal_channel_route(route_map, offset, self.m1_stack)
 
     def connect_bitlines(self, inst1, inst2, num_bits,
                          inst1_bls_template="{inst}_{bit}",
@@ -707,26 +708,23 @@ class port_data(design.design):
         in the middle between the two modules (if needed).
         """
         
-        bot_inst_group, top_inst_group = self._group_bitline_instances(
-            inst1, inst2, num_bits,
-            inst1_bls_template, inst1_start_bit,
-            inst2_bls_template, inst2_start_bit)
+        bot_inst_group, top_inst_group = self._group_bitline_instances(inst1, inst2, num_bits,
+                                                                       inst1_bls_template, inst1_start_bit,
+                                                                       inst2_bls_template, inst2_start_bit)
 
         for col in range(num_bits):
+            print(col)
             bot_bl_pin, bot_br_pin = self._get_bitline_pins(bot_inst_group, col)
             top_bl_pin, top_br_pin = self._get_bitline_pins(top_inst_group, col)
             bot_bl, bot_br = bot_bl_pin.uc(), bot_br_pin.uc()
             top_bl, top_br = top_bl_pin.bc(), top_br_pin.bc()
-
-            yoffset = 0.5 * (top_bl.y + bot_bl.y)
-            self.add_path("m2", [bot_bl,
-                                 vector(bot_bl.x, yoffset),
-                                 vector(top_bl.x, yoffset),
-                                 top_bl])
-            self.add_path("m2", [bot_br,
-                                 vector(bot_br.x, yoffset),
-                                 vector(top_br.x, yoffset),
-                                 top_br])
+            
+            print("BL", bot_bl, top_bl)
+            print(bot_bl_pin, top_bl_pin)
+            print("BR", bot_br, top_br)
+            print(bot_br_pin, top_br_pin)
+            self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V")
+            self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V")
         
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""

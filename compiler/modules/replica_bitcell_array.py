@@ -91,14 +91,16 @@ class replica_bitcell_array(design.design):
         # Replica bitlines
         self.replica_columns = {}
         for bit in range(self.left_rbl+self.right_rbl):
+            # Creating left_rbl
             if bit<self.left_rbl:
                 replica_bit = bit+1
                 # dummy column
-                column_offset = 1
+                column_offset = self.left_rbl - bit
+            # Creating right_rbl
             else:
                 replica_bit = bit+self.row_size+1
                 # dummy column + replica column + bitcell colums
-                column_offset = 3 + self.row_size
+                column_offset = self.left_rbl - bit + self.row_size
             self.replica_columns[bit] = factory.create(module_type="replica_column",
                                                        rows=self.row_size,
                                                        left_rbl=self.left_rbl,

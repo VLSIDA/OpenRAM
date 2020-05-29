@@ -536,7 +536,6 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        print("SA to precharge")
         self.connect_bitlines(inst1=inst1,
                               inst1_bls_template=inst1_bls_templ,
                               inst2=inst2,
@@ -563,7 +562,6 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        print("WD to precharge")
         self.connect_bitlines(inst1=inst1, inst2=inst2,
                               num_bits=self.word_size,
                               inst1_bls_template=inst1_bls_templ,
@@ -577,7 +575,6 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        print("WD to SA")
         self.connect_bitlines(inst1=inst1,
                               inst2=inst2,
                               num_bits=self.word_size)
@@ -713,16 +710,11 @@ class port_data(design.design):
                                                                        inst2_bls_template, inst2_start_bit)
 
         for col in range(num_bits):
-            print(col)
             bot_bl_pin, bot_br_pin = self._get_bitline_pins(bot_inst_group, col)
             top_bl_pin, top_br_pin = self._get_bitline_pins(top_inst_group, col)
             bot_bl, bot_br = bot_bl_pin.uc(), bot_br_pin.uc()
             top_bl, top_br = top_bl_pin.bc(), top_br_pin.bc()
             
-            print("BL", bot_bl, top_bl)
-            print(bot_bl_pin, top_bl_pin)
-            print("BR", bot_br, top_br)
-            print(bot_br_pin, top_br_pin)
             self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V")
             self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V")
         

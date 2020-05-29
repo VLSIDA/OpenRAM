@@ -114,7 +114,6 @@ class replica_column(design.design):
                                                   mod=self.dummy_cell)
                 self.connect_inst(self.get_bitcell_pins(0, row))
 
-
     def place_instances(self):
         from tech import cell_properties
         # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
@@ -149,20 +148,30 @@ class replica_column(design.design):
             self.cell_inst[row].place(offset=offset,
                                       mirror=dir_key)
 
-
-
     def add_layout_pins(self):
         """ Add the layout pins """
 
         for bl_name in self.cell.get_all_bitline_names():
-            bl_pin = self.cell_inst[1].get_pin(bl_name)
+            bl_pin = self.cell_inst[0].get_pin(bl_name)
             self.add_layout_pin(text=bl_name,
                                 layer=bl_pin.layer,
                                 offset=bl_pin.ll(),
                                 width=bl_pin.width(),
                                 height=self.height)
 
-        for row in range(1, self.total_size - 1):
+        try:
+            end_caps_enabled = cell_properties.bitcell.end_caps
+        except AttributeError:
+            end_caps_enabled = False
+
+        if end_caps_enabled:
+            row_range_max = self.total_size - 1
+            row_range_min = 1
+        else:
+            row_range_max = self.total_size
+            row_range_min = 0
+
+        for row in range(row_range_min, row_range_max):
             for wl_name in self.cell.get_all_wl_names():
                 wl_pin = self.cell_inst[row].get_pin(wl_name)
                 self.add_layout_pin(text="{0}_{1}".format(wl_name,row),
@@ -172,7 +181,7 @@ class replica_column(design.design):
                                     height=wl_pin.height())
 
         # For every second row and column, add a via for gnd and vdd
-        for row in range(1, self.total_size - 1):
+        for row in range(row_range_min, row_range_max):
             inst = self.cell_inst[row]
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)

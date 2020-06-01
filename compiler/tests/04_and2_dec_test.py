@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class pand3_dec_test(openram_test):
+class and2_dec_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -23,10 +23,10 @@ class pand3_dec_test(openram_test):
         global verify
         import verify
 
-        import pand3_dec
+        import and2_dec
 
-        debug.info(2, "Testing pand3 gate 4x")
-        a = pand3_dec.pand3_dec(name="pand3x4", size=4)
+        debug.info(2, "Testing and2 gate 4x")
+        a = and2_dec.and2_dec(name="and2x4", size=4)
         self.local_check(a)
 
         globals.end_openram()

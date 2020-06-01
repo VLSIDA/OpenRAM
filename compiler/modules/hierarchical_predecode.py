@@ -42,13 +42,13 @@ class hierarchical_predecode(design.design):
 
         # FIXME: Default parms are required for hard cells for now.
         if self.number_of_inputs == 2:
-            self.and_mod = factory.create(module_type="pand2_dec",
+            self.and_mod = factory.create(module_type="and2_dec",
                                           height=self.cell_height)
         elif self.number_of_inputs == 3:
-            self.and_mod = factory.create(module_type="pand3_dec",
+            self.and_mod = factory.create(module_type="and3_dec",
                                           height=self.cell_height)
         elif self.number_of_inputs == 4:
-            self.and_mod = factory.create(module_type="pand4_dec",
+            self.and_mod = factory.create(module_type="and4_dec",
                                           height=self.cell_height)
         else:
             debug.error("Invalid number of predecode inputs: {}".format(self.number_of_inputs), -1)

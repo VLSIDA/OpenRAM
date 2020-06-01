@@ -7,22 +7,28 @@
 #
 import debug
 from vector import vector
-import pgate
+import design
 from sram_factory import factory
 from globals import OPTS
+from tech import layer
 
 
-class pand4_dec(pgate.pgate):
+class and4_dec(design.design):
     """
     This is an AND with configurable drive strength.
     """
     def __init__(self, name, size=1, height=None, add_wells=True):
-        debug.info(1, "Creating pand4_dec {}".format(name))
-        self.add_comment("size: {}".format(size))
-
-        self.size = size
         
-        pgate.pgate.__init__(self, name, height, add_wells)
+        design.design.__init__(self, name)
+        
+        debug.info(1, "Creating and4_dec {}".format(name))
+        self.add_comment("size: {}".format(size))
+        self.size = size
+        self.height = height
+        
+        self.create_netlist()
+        if not OPTS.netlist_only:
+            self.create_layout()
 
     def create_netlist(self):
         self.add_pins()
@@ -30,20 +36,24 @@ class pand4_dec(pgate.pgate):
         self.create_insts()
 
     def create_modules(self):
-        if OPTS.tech_name == "s8":
-            self.nand = factory.create(module_type="nand4_dec")
-        else:
-            self.nand = factory.create(module_type="nand4_dec",
-                                       height=self.height)
+        self.nand = factory.create(module_type="nand4_dec",
+                                   height=self.height)
 
         self.inv = factory.create(module_type="inv_dec",
+                                  height=self.height,
                                   size=self.size)
 
         self.add_mod(self.nand)
         self.add_mod(self.inv)
 
     def create_layout(self):
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
+
         self.width = self.nand.width + self.inv.width
+        self.height = self.nand.height
 
         self.place_insts()
         self.add_wires()

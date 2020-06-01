@@ -40,12 +40,8 @@ class wordline_driver(design.design):
         self.create_insts()
 
     def create_modules(self):
-        if OPTS.tech_name == "s8":
-            self.nand = factory.create(module_type="nand2_dec")
-            self.height = self.nand.height
-        else:
-            self.nand = factory.create(module_type="nand2_dec",
-                                       height=self.height)
+        self.nand = factory.create(module_type="nand2_dec",
+                                   height=self.height)
             
         self.driver = factory.create(module_type="inv_dec",
                                      size=self.size,

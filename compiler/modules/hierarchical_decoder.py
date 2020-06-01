@@ -57,21 +57,15 @@ class hierarchical_decoder(design.design):
         self.DRC_LVS()
                 
     def add_modules(self):
-        if OPTS.tech_name == "s8":
-            self.and2 = factory.create(module_type="pand2_dec")
-        else:
-            self.and2 = factory.create(module_type="pand2_dec",
-                                       height=self.cell_height)
+        self.and2 = factory.create(module_type="and2_dec",
+                                   height=self.cell_height)
         self.add_mod(self.and2)
-        if OPTS.tech_name == "s8":
-            self.and3 = factory.create(module_type="pand3_dec")
-        else:
-            self.and3 = factory.create(module_type="pand3_dec",
-                                       height=self.cell_height)
-            
+        
+        self.and3 = factory.create(module_type="and3_dec",
+                                   height=self.cell_height)
         self.add_mod(self.and3)
         # TBD
-        # self.and4 = factory.create(module_type="pand4_dec")
+        # self.and4 = factory.create(module_type="and4_dec")
         # self.add_mod(self.and4)
         
         self.add_decoders()
@@ -180,6 +174,7 @@ class hierarchical_decoder(design.design):
         # Two extra pitches between modules on left and right
         self.internal_routing_width = self.total_number_of_predecoder_outputs * self.bus_pitch + self.bus_pitch
         self.row_decoder_height = self.and2.height * self.num_outputs
+
         # Extra bus space for supply contacts
         self.input_routing_width = self.num_inputs * self.bus_pitch + self.bus_space
 

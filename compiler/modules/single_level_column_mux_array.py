@@ -7,7 +7,7 @@
 #
 import design
 import debug
-from tech import layer
+from tech import layer, preferred_directions
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -33,10 +33,15 @@ class single_level_column_mux_array(design.design):
 
         if "li" in layer:
             self.col_mux_stack = self.li_stack
-            self.col_mux_stack_pitch = self.li_pitch
+            self.col_mux_stack_pitch = self.m1_pitch
         else:
             self.col_mux_stack = self.m1_stack
             self.col_mux_stack_pitch = self.m1_pitch
+            
+        if preferred_directions[self.col_mux_stack[0]] == "V":
+            self.via_directions = ("H", "H")
+        else:
+            self.via_directions = "pref"
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -173,7 +178,8 @@ class single_level_column_mux_array(design.design):
                             self.get_pin("sel_{}".format(sel_index)).cy())
             # Add the poly contact with a shift to account for the rotation
             self.add_via_center(layers=self.poly_stack,
-                                offset=offset)
+                                offset=offset,
+                                directions=self.via_directions)
             self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):
@@ -224,11 +230,13 @@ class single_level_column_mux_array(design.design):
 
                 # This via is on the right of the wire
                 self.add_via_center(layers=self.col_mux_stack,
-                                    offset=bl_out_offset)
+                                    offset=bl_out_offset,
+                                    directions=self.via_directions)
 
                 # This via is on the left of the wire
                 self.add_via_center(layers=self.col_mux_stack,
-                                    offset=br_out_offset)
+                                    offset=br_out_offset,
+                                    directions=self.via_directions)
 
             else:
                 self.add_path(self.col_mux_stack[2], [bl_out_offset, bl_offset])
@@ -236,10 +244,12 @@ class single_level_column_mux_array(design.design):
 
                 # This via is on the right of the wire
                 self.add_via_center(layers=self.col_mux_stack,
-                                    offset=bl_out_offset)
+                                    offset=bl_out_offset,
+                                    directions=self.via_directions)
                 # This via is on the left of the wire
                 self.add_via_center(layers=self.col_mux_stack,
-                                    offset=br_out_offset)
+                                    offset=br_out_offset,
+                                    directions=self.via_directions)
 
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the NMOS pass TX"""

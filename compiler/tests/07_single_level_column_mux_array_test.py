@@ -23,15 +23,15 @@ class single_level_column_mux_test(openram_test):
 
         # check single level column mux array in single port
         debug.info(1, "Testing sample for 2-way column_mux_array")
-        a = factory.create(module_type="single_level_column_mux_array", columns=16, word_size=8)
+        a = factory.create(module_type="single_level_column_mux_array", columns=16, port=0, word_size=8)
         self.local_check(a)
 
         debug.info(1, "Testing sample for 4-way column_mux_array")
-        a = factory.create(module_type="single_level_column_mux_array", columns=16, word_size=4)
+        a = factory.create(module_type="single_level_column_mux_array", columns=16, port=0, word_size=4)
         self.local_check(a)
 
         debug.info(1, "Testing sample for 8-way column_mux_array")
-        a = factory.create(module_type="single_level_column_mux_array", columns=32, word_size=4)
+        a = factory.create(module_type="single_level_column_mux_array", columns=32, port=0, word_size=4)
         self.local_check(a)
 
         globals.end_openram()

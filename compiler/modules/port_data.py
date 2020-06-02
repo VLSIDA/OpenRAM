@@ -536,11 +536,11 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        self.connect_bitlines(inst1=inst1,
-                              inst1_bls_template=inst1_bls_templ,
-                              inst2=inst2,
-                              num_bits=self.word_size,
-                              inst1_start_bit=start_bit)
+        self.channel_route_bitlines(inst1=inst1,
+                                    inst1_bls_template=inst1_bls_templ,
+                                    inst2=inst2,
+                                    num_bits=self.word_size,
+                                    inst1_start_bit=start_bit)
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
@@ -562,10 +562,10 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        self.connect_bitlines(inst1=inst1, inst2=inst2,
-                              num_bits=self.word_size,
-                              inst1_bls_template=inst1_bls_templ,
-                              inst1_start_bit=start_bit)
+        self.channel_route_bitlines(inst1=inst1, inst2=inst2,
+                                    num_bits=self.word_size,
+                                    inst1_bls_template=inst1_bls_templ,
+                                    inst1_start_bit=start_bit)
 
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
@@ -714,9 +714,10 @@ class port_data(design.design):
             top_bl_pin, top_br_pin = self._get_bitline_pins(top_inst_group, col)
             bot_bl, bot_br = bot_bl_pin.uc(), bot_br_pin.uc()
             top_bl, top_br = top_bl_pin.bc(), top_br_pin.bc()
-            
-            self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V")
-            self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V")
+
+            layer_pitch = getattr(self, "{}_pitch".format(top_bl_pin.layer))
+            self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V", top_bl_pin.by() - layer_pitch)
+            self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V", top_bl_pin.by() - 2 * layer_pitch)
         
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""

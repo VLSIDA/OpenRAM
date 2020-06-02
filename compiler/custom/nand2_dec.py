@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice, parameter
+from tech import GDS, layer, spice, parameter, drc
 import logical_effort
 import utils
 
@@ -31,6 +31,14 @@ class nand2_dec(design.design):
         self.height = nand2_dec.height
         self.pin_map = nand2_dec.pin_map
         self.add_pin_types(self.type_list)
+
+        # FIXME: For now...
+        size = 1
+        self.size = size
+        self.nmos_size = 2 * size
+        self.pmos_size = parameter["beta"] * size
+        self.nmos_width = self.nmos_size * drc("minwidth_tx")
+        self.pmos_width = self.pmos_size * drc("minwidth_tx")
         
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

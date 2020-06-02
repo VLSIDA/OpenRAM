@@ -111,11 +111,12 @@ class sram_factory:
                 return obj_item
 
         # If no prefered module name is provided, we generate one.
-        if module_name is None:
-            # Use the default  name if there are default arguments
+        if not module_name:
+            # Use the default name for the first cell.
             # This is especially for library cells so that the
             # spice and gds files can be found.
-            if len(kwargs) > 0:
+            # Subsequent objects will get unique names to help with GDS limitation.
+            if len(self.objects[real_module_type]) > 0:
                 # Create a unique name and increment the index
                 module_name = "{0}_{1}".format(real_module_type,
                                                self.module_indices[real_module_type])

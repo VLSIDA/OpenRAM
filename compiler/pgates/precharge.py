@@ -105,21 +105,16 @@ class precharge(design.design):
         
         # center of vdd rail
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
-        self.add_path("m1", [pmos_pin.uc(), pmos_vdd_pos])
+        self.add_path(self.en_layer, [pmos_pin.center(), pmos_vdd_pos])
         
-        # if enable is not on M1, the supply can be
-        if self.en_layer != "m1":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=pmos_vdd_pos)
-
         self.add_power_pin("vdd",
                            self.well_contact_pos,
                            directions=("V", "V"))
-        
-        # Hack for li layers
-        if hasattr(self, "li_stack"):
-            self.add_via_center(layers=self.li_stack,
-                                offset=self.well_contact_pos)
+
+        self.add_via_stack_center(from_layer=pmos_pin.layer,
+                                  to_layer=self.en_layer,
+                                  offset=pmos_pin.center(),
+                                  directions=("V", "V"))
         
     def create_ptx(self):
         """
@@ -199,14 +194,9 @@ class precharge(design.design):
         # midway in the 4 M2 tracks
         offset = self.lower_pmos_inst.get_pin("G").ul() \
                  + vector(0, 0.5 * self.m2_pitch)
-        self.add_via_center(layers=self.poly_stack,
-                            offset=offset)
-        if self.en_layer == "m2":
-            self.add_via_center(layers=self.m1_stack,
-                                offset=offset)
-            if hasattr(self, "li_stack"):
-                self.add_via_center(layers=self.li_stack,
-                                    offset=offset)
+        self.add_via_stack_center(from_layer="poly",
+                                  to_layer=self.en_layer,
+                                  offset=offset)
         
         # adds the en rail on metal1
         self.add_layout_pin_segment_center(text="en_bar",
@@ -225,13 +215,13 @@ class precharge(design.design):
                         self.nwell_extend_active
         self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) + \
                                 vector(0, offset_height)
-        self.add_via_center(layers=self.active_stack,
-                            offset=self.well_contact_pos,
-                            implant_type="n",
-                            well_type="n")
-        if hasattr(self, "li_stack"):
-            self.add_via_center(layers=self.li_stack,
-                                offset=self.well_contact_pos)
+        self.well_contact = self.add_via_center(layers=self.active_stack,
+                                                offset=self.well_contact_pos,
+                                                implant_type="n",
+                                                well_type="n")
+        self.add_via_stack_center(from_layer=self.active_stack[2],
+                                  to_layer=self.bitline_layer,
+                                  offset=self.well_contact_pos)
 
         self.height = self.well_contact_pos.y + contact.active_contact.height + self.m1_space
 
@@ -288,31 +278,19 @@ class precharge(design.design):
         Adds contacts/via from metal1 to metal2 for bit-lines
         """
 
-        # No contacts needed if M1
-        if self.bitline_layer == "m1":
-            return
-        
         # BL
-        lower_pin = self.lower_pmos_inst.get_pin("S")
-        self.lower_via = self.add_via_center(layers=self.m1_stack,
-                                             offset=lower_pin.center(),
-                                             directions=("V", "V"))
+        for lower_pin in [self.lower_pmos_inst.get_pin("S"), self.lower_pmos_inst.get_pin("D")]:
+            self.add_via_stack_center(from_layer=lower_pin.layer,
+                                      to_layer=self.bitline_layer,
+                                      offset=lower_pin.center(),
+                                      directions=("V", "V"))
 
-        lower_pin = self.lower_pmos_inst.get_pin("D")
-        self.lower_via = self.add_via_center(layers=self.m1_stack,
-                                             offset=lower_pin.center(),
-                                             directions=("V", "V"))
-        
         # BR
-        upper_pin = self.upper_pmos1_inst.get_pin("S")
-        self.upper_via2 = self.add_via_center(layers=self.m1_stack,
-                                              offset=upper_pin.center(),
-                                              directions=("V", "V"))
-
-        upper_pin = self.upper_pmos2_inst.get_pin("D")
-        self.upper_via2 = self.add_via_center(layers=self.m1_stack,
-                                              offset=upper_pin.center(),
-                                              directions=("V", "V"))
+        for upper_pin in [self.upper_pmos1_inst.get_pin("S"), self.upper_pmos2_inst.get_pin("D")]:
+            self.add_via_stack_center(from_layer=upper_pin.layer,
+                                      to_layer=self.bitline_layer,
+                                      offset=upper_pin.center(),
+                                      directions=("V", "V"))
 
     def connect_pmos(self, pmos_pin, bit_xoffset):
         """

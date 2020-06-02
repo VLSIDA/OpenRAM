@@ -40,7 +40,6 @@ class hierarchical_predecode(design.design):
     def add_modules(self):
         """ Add the INV and AND gate modules """
 
-        # FIXME: Default parms are required for hard cells for now.
         if self.number_of_inputs == 2:
             self.and_mod = factory.create(module_type="and2_dec",
                                           height=self.cell_height)
@@ -59,7 +58,6 @@ class hierarchical_predecode(design.design):
                                   height=self.cell_height,
                                   size=1)
         self.add_mod(self.inv)
-
 
     def create_layout(self):
         """ The general organization is from left to right:

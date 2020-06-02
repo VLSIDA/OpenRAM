@@ -7,7 +7,6 @@
 #
 import design
 import debug
-from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -26,7 +25,7 @@ class precharge_array(design.design):
         
         self.columns = columns
         self.size = size
-        self.port = port 
+        self.port = port
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
 

@@ -196,6 +196,7 @@ class port_data(design.design):
         if self.col_addr_size > 0:
             self.column_mux_array = factory.create(module_type="column_mux_array",
                                                    columns=self.num_cols,
+                                                   port=self.port,
                                                    word_size=self.word_size,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])

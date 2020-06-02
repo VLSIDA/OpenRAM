@@ -60,6 +60,7 @@ class openram_test(unittest.TestCase):
                 #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
                 #shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 debug.warning("DRC failed but LVS passed: {}".format(a.name))
+                #self.fail("DRC failed but LVS passed: {}".format(a.name))
             elif drc_result != 0:
                 #zip_file = "/tmp/{0}_{1}".format(a.name,os.getpid())
                 #debug.info(0,"Archiving failed files to {}.zip".format(zip_file))

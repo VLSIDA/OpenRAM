@@ -15,25 +15,23 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class hierarchical_predecode3x8_test(openram_test):
+class pand3_dec_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
+        global verify
+        import verify
 
-        # Use the 2 port cell since it is usually bigger/easier
-        OPTS.bitcell = "bitcell_1rw_1r"
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 0
+        import pand3_dec
 
-        debug.info(1, "Testing sample for hierarchy_predecode3x8")
-        a = factory.create(module_type="hierarchical_predecode3x8")
+        debug.info(2, "Testing pand3 gate 4x")
+        a = pand3_dec.pand3_dec(name="pand3x4", size=4)
         self.local_check(a)
 
         globals.end_openram()
 
-# run the test from the command line
+# instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

@@ -5,12 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc
-import debug
-import design
-from vector import vector
 from hierarchical_predecode import hierarchical_predecode
 from globals import OPTS
+
 
 class hierarchical_predecode3x8(hierarchical_predecode):
     """
@@ -37,22 +34,6 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                      ["in_0",    "in_1",    "in_2",    "out_7", "vdd", "gnd"]]
         self.create_and_array(connections)
 
-    def create_layout(self):
-        """
-        The general organization is from left to right:
-        1) a set of M2 rails for input signals
-        2) a set of inverters to invert input signals
-        3) a set of M2 rails for the vdd, gnd, inverted inputs, inputs
-        4) a set of NAND gates for inversion
-        """
-        self.setup_layout_constraints()
-        self.route_rails()
-        self.place_input_inverters()
-        self.place_and_array()
-        self.route()
-        self.add_boundary()
-        self.DRC_LVS()
-        
     def get_and_input_line_combination(self):
         """ These are the decoder connections of the NAND gates to the A,B,C pins """
         combination = [["Abar_0", "Abar_1", "Abar_2"],

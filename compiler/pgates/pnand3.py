@@ -212,7 +212,10 @@ class pnand3(pgate.pgate):
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
+        # This is a more compact offset, but the bottom one works better in the decoders to "center" the pins
+        # in the height of the gates
         self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
+        # self.inputA_yoffset = self.output_yoffset - self.m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

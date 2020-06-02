@@ -386,10 +386,12 @@ class ptx(design.design):
         well_ll = center_pos - vector(0.5 * self.well_width,
                                       0.5 * self.well_height)
         if well_name in layer:
-            self.add_rect(layer=well_name,
-                          offset=well_ll,
-                          width=self.well_width,
-                          height=self.well_height)
+            well = self.add_rect(layer=well_name,
+                                 offset=well_ll,
+                                 width=self.well_width,
+                                 height=self.well_height)
+            setattr(self, well_name, well)
+            
         if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=well_ll,

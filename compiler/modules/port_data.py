@@ -469,45 +469,37 @@ class port_data(design.design):
             bank_wmask_name = "bank_wmask_{}".format(bit)
             self.copy_layout_pin(self.write_mask_and_array_inst, wmask_in_name, bank_wmask_name)
 
-    def route_write_mask_and_array_to_write_driver(self,port):
-        """ Routing of wdriver_sel_{} between write mask AND array and write driver array. Adds layout pin for write
-            mask AND array output and via for write driver enable """
+    def route_write_mask_and_array_to_write_driver(self, port):
+        """
+        Routing of wdriver_sel_{} between write mask AND array and
+        write driver array. Adds layout pin for write
+        mask AND array output and via for write driver enable
+        """
 
-        inst1 = self.write_mask_and_array_inst
-        inst2 = self.write_driver_array_inst
+        wmask_inst = self.write_mask_and_array_inst
+        wdriver_inst = self.write_driver_array_inst
 
-        loc = 0
         for bit in range(self.num_wmasks):
             # Bring write mask AND array output pin to port data level
-            self.copy_layout_pin(inst1, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
+            self.copy_layout_pin(wmask_inst, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
 
-            wmask_out_pin = inst1.get_pin("wmask_out_{0}".format(bit))
-            wdriver_en_pin = inst2.get_pin("en_{0}".format(bit))
+            wmask_out_pin = wmask_inst.get_pin("wmask_out_{0}".format(bit))
+            wdriver_en_pin = wdriver_inst.get_pin("en_{0}".format(bit))
 
-            # The metal2 wdriver_sel_{} wire must hit the en_{} pin after the closest bitline pin that's right of the
-            # the wdriver_sel_{} pin in the write driver AND array.
-            if bit == 0:
-                # When the write mask output pin is right of the bitline, the target is found
-                while (wmask_out_pin.lx() + self.m2_pitch > inst2.get_pin("data_{0}".format(loc)).rx()):
-                    loc += 1
-                length = inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
-                debug.check(loc<=self.num_wmasks,
-                            "Couldn't route the write mask select.")
-            else:
-                # Stride by the write size rather than finding the next pin to the right
-                loc += self.write_size
-                length = inst2.get_pin("data_{0}".format(loc)).rx() + self.m2_pitch
+            wmask_pos = wmask_out_pin.center()
+            wdriver_pos = wdriver_en_pin.rc() - vector(self.m2_pitch, 0)
+            mid_pos = vector(wdriver_pos.x, wmask_pos.y)
 
-            beg_pos = wmask_out_pin.center()
-            middle_pos = vector(length, wmask_out_pin.cy())
-            end_pos = vector(length, wdriver_en_pin.cy())
 
+            # Add driver on mask output
+            self.add_via_center(layers=self.m1_stack,
+                                offset=wmask_pos)
             # Add via for the write driver array's enable input
             self.add_via_center(layers=self.m1_stack,
-                                offset=end_pos)
+                                offset=wdriver_pos)
 
             # Route between write mask AND array and write driver array
-            self.add_wire(self.m1_stack, [beg_pos, middle_pos, end_pos])
+            self.add_wire(self.m1_stack, [wmask_pos, mid_pos, wdriver_pos])
 
     def route_column_mux_to_precharge_array(self, port):
         """ Routing of BL and BR between col mux and precharge array """
@@ -516,15 +508,12 @@ class port_data(design.design):
         if self.col_addr_size==0:
             return
 
-        inst1 = self.column_mux_array_inst
-        inst2 = self.precharge_array_inst
+        start_bit = 1 if self.port == 0 else 0
 
-        insn2_start_bit = 1 if self.port == 0 else 0
-
-        self.channel_route_bitlines(inst1=inst1,
-                                    inst2=inst2,
-                                    num_bits=self.num_cols,
-                                    inst2_start_bit=insn2_start_bit)
+        self.connect_bitlines(inst1=self.column_mux_array_inst,
+                              inst2=self.precharge_array_inst,
+                              num_bits=self.num_cols,
+                              inst2_start_bit=start_bit)
 
     def route_sense_amp_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """

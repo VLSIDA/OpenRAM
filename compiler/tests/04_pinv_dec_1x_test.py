@@ -15,21 +15,15 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class hierarchical_predecode3x8_test(openram_test):
+class pinv_dec_1x_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # Use the 2 port cell since it is usually bigger/easier
-        OPTS.bitcell = "bitcell_1rw_1r"
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 0
-
-        debug.info(1, "Testing sample for hierarchy_predecode3x8")
-        a = factory.create(module_type="hierarchical_predecode3x8")
-        self.local_check(a)
+        debug.info(2, "Checking 1x size decoder inverter")
+        tx = factory.create(module_type="pinv_dec", size=1)
+        self.local_check(tx)
 
         globals.end_openram()
 

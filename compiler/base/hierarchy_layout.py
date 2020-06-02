@@ -244,25 +244,27 @@ class layout():
                                             height))
         return self.objs[-1]
 
-    def add_segment_center(self, layer, start, end):
+    def add_segment_center(self, layer, start, end, width=None):
         """
         Add a min-width rectanglular segment using center
         line on the start to end point
         """
-        minwidth_layer = drc["minwidth_{}".format(layer)]
+        if not width:
+            width = drc["minwidth_{}".format(layer)]
+
         if start.x != end.x and start.y != end.y:
             debug.error("Nonrectilinear center rect!", -1)
         elif start.x != end.x:
-            offset = vector(0, 0.5 * minwidth_layer)
+            offset = vector(0, 0.5 * width)
             return self.add_rect(layer,
                                  start - offset,
                                  end.x - start.x,
-                                 minwidth_layer)
+                                 width)
         else:
-            offset = vector(0.5 * minwidth_layer, 0)
+            offset = vector(0.5 * width, 0)
             return self.add_rect(layer,
                                  start - offset,
-                                 minwidth_layer,
+                                 width,
                                  end.y - start.y)
 
     def get_pin(self, text):
@@ -322,7 +324,7 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
-    def add_layout_pin_segment_center(self, text, layer, start, end):
+    def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """
         Creates a path like pin with center-line convention
         """
@@ -331,27 +333,27 @@ class layout():
             self.gds_write(file_name)
             debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
 
-        minwidth_layer = drc["minwidth_{}".format(layer)]
+        if not width:
+            layer_width = drc["minwidth_{}".format(layer)]
+        else:
+            layer_width = width
 
         # one of these will be zero
-        width = max(start.x, end.x) - min(start.x, end.x)
-        height = max(start.y, end.y) - min(start.y, end.y)
+        bbox_width = max(start.x, end.x) - min(start.x, end.x)
+        bbox_height = max(start.y, end.y) - min(start.y, end.y)
         ll_offset = vector(min(start.x, end.x), min(start.y, end.y))
 
         # Shift it down 1/2 a width in the 0 dimension
-        if height == 0:
-            ll_offset -= vector(0, 0.5 * minwidth_layer)
-        if width == 0:
-            ll_offset -= vector(0.5 * minwidth_layer, 0)
-        # This makes sure it is long enough, but also it is not 0 width!
-        height = max(minwidth_layer, height)
-        width = max(minwidth_layer, width)
+        if bbox_height == 0:
+            ll_offset -= vector(0, 0.5 * layer_width)
+        if bbox_width == 0:
+            ll_offset -= vector(0.5 * layer_width, 0)
 
-        return self.add_layout_pin(text,
-                                   layer,
-                                   ll_offset,
-                                   width,
-                                   height)
+        return self.add_layout_pin(text=text,
+                                   layer=layer,
+                                   offset=ll_offset,
+                                   width=bbox_width,
+                                   height=bbox_height)
 
     def add_layout_pin_rect_center(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """
@@ -692,6 +694,8 @@ class layout():
                 boundary_layer = "stdc"
                 boundary = [self.find_lowest_coords(),
                             self.find_highest_coords()]
+                debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
+                    
                 height = boundary[1][1] - boundary[0][1]
                 width = boundary[1][0] - boundary[0][0]
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
@@ -1335,16 +1339,16 @@ class layout():
         which vias are needed.
         """
 
-        via = self.add_via_stack_center(from_layer=start_layer,
-                                        to_layer=self.pwr_grid_layer,
-                                        size=size,
-                                        offset=loc,
-                                        directions=directions)
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc)
         else:
+            via = self.add_via_stack_center(from_layer=start_layer,
+                                            to_layer=self.pwr_grid_layer,
+                                            size=size,
+                                            offset=loc,
+                                            directions=directions)
             # Hack for min area
             if OPTS.tech_name == "s8":
                 width = round_to_grid(sqrt(drc["minarea_m3"]))

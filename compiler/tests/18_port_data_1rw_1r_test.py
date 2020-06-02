@@ -20,10 +20,10 @@ class port_data_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
-        OPTS.bitcell = "bitcell_1w_1r"
-        OPTS.num_rw_ports = 0
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 1
+        OPTS.num_w_ports = 0
 
         c = sram_config(word_size=4,
                         num_words=16)

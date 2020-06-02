@@ -1078,15 +1078,18 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                # If there is sufficient space, Route from the edge of the pins
-                # Otherwise, route from the center of the pins
-                if max_y_bc - min_y_uc > pitch:
-                    if pin.center().y == max_y:
-                        mid = vector(trunk_offset.x, pin.bc().y)
-                    else:
-                        mid = vector(trunk_offset.x, pin.uc().y)
-                else:
-                    mid = vector(trunk_offset.x, pin.center().y)
+                # This code block currently causes drc violations for the topmost
+                #   port when using multiport, TODO: fix or remove this block
+                # # If there is sufficient space, Route from the edge of the pins
+                # # Otherwise, route from the center of the pins
+                # if max_y_bc - min_y_uc > pitch:
+                #     if pin.center().y == max_y:
+                #         mid = vector(trunk_offset.x, pin.bc().y)
+                #     else:
+                #         mid = vector(trunk_offset.x, pin.uc().y)
+                # else:
+                #     mid = vector(trunk_offset.x, pin.center().y)
+                mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)

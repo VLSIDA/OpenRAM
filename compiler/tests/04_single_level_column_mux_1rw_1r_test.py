@@ -32,7 +32,7 @@ class single_level_column_mux_1rw_1r_test(openram_test):
         self.local_check(tx)
 
         debug.info(2, "Checking column mux port 1")
-        tx = factory.create(module_type="single_level_column_mux", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        tx = factory.create(module_type="single_level_column_mux", tx_size=8, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
         
         globals.end_openram()

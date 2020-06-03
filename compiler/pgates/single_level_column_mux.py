@@ -13,6 +13,7 @@ from sram_factory import factory
 import logical_effort
 from utils import round_to_grid
 
+
 class single_level_column_mux(pgate.pgate):
     """
     This module implements the columnmux bitline cell used in the design.
@@ -44,9 +45,18 @@ class single_level_column_mux(pgate.pgate):
 
     def create_layout(self):
 
-        self.pin_height = 2 * self.m2_width
+        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
+        if "li" in layer:
+            self.col_mux_stack = self.li_stack
+        else:
+            self.col_mux_stack = self.m1_stack
+        self.pin_layer = self.bitcell.get_pin(self.bitcell_bl).layer
+        self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
+        self.pin_width = getattr(self, "{}_width".format(self.pin_layer))
+        self.pin_height = 2 * self.pin_width
         self.width = self.bitcell.width
         self.height = self.nmos_upper.uy() + self.pin_height
+        
         self.connect_poly()
         self.add_bitline_pins()
         self.connect_bitlines()
@@ -58,9 +68,7 @@ class single_level_column_mux(pgate.pgate):
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size * drc("minwidth_tx")
         self.nmos = factory.create(module_type="ptx",
-                                    width=self.ptx_width,
-                                    add_source_contact=False,
-                                    add_drain_contact=False)
+                                    width=self.ptx_width)
         self.add_mod(self.nmos)
 
     def add_pins(self):
@@ -69,40 +77,26 @@ class single_level_column_mux(pgate.pgate):
     def add_bitline_pins(self):
         """ Add the top and bottom pins to this cell """
 
-        bl_pin=self.bitcell.get_pin(self.bitcell_bl)
-        br_pin=self.bitcell.get_pin(self.bitcell_br)
-
-        bl_pos = vector(bl_pin.lx(), 0)
-        br_pos = vector(br_pin.lx(), 0)
-
-        # The bitline input/output pins must be a least as wide as the metal pitch
-        #   so that there is enough space to route to/from the pins.
-        # FIXME: bitline_metal_pitch should be greater than the horizontal metal pitch used in port_data
-        bitline_metal_pitch = self.width / 2
-        bitline_width = br_pos.x - bl_pos.x
-        if bitline_width < bitline_metal_pitch:
-            bitline_width_increase_bl = round_to_grid((bitline_metal_pitch - bitline_width) / 2)
-            bitline_width_increase_br = round_to_grid((bitline_metal_pitch - bitline_width) - bitline_width_increase_bl)
-            bl_pos = bl_pos + vector(-bitline_width_increase_bl, 0)
-            br_pos = br_pos + vector( bitline_width_increase_br, 0)
+        bl_pos = vector(self.pin_pitch, 0)
+        br_pos = vector(self.width - self.pin_pitch, 0)
 
         # bl and br
         self.add_layout_pin(text="bl",
-                            layer=bl_pin.layer,
+                            layer=self.pin_layer,
                             offset=bl_pos + vector(0, self.height - self.pin_height),
                             height=self.pin_height)
         self.add_layout_pin(text="br",
-                            layer=br_pin.layer,
+                            layer=self.pin_layer,
                             offset=br_pos + vector(0, self.height - self.pin_height),
                             height=self.pin_height)
 
         # bl_out and br_out
         self.add_layout_pin(text="bl_out",
-                            layer=bl_pin.layer,
+                            layer=self.pin_layer,
                             offset=bl_pos,
                             height=self.pin_height)
         self.add_layout_pin(text="br_out",
-                            layer=br_pin.layer,
+                            layer=self.pin_layer,
                             offset=br_pos,
                             height=self.pin_height)
 
@@ -110,7 +104,7 @@ class single_level_column_mux(pgate.pgate):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""
 
         # Space it in the center
-        nmos_lower_position = self.nmos.active_offset.scale(0,1) \
+        nmos_lower_position = self.nmos.active_offset.scale(0, 1) \
                               + vector(0.5 * self.bitcell.width- 0.5 * self.nmos.active_width, 0)
         self.nmos_lower = self.add_inst(name="mux_tx1",
                                         mod=self.nmos,
@@ -145,62 +139,29 @@ class single_level_column_mux(pgate.pgate):
     def connect_bitlines(self):
         """ Connect the bitlines to the mux transistors """
 
-        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
-        if "li" in layer:
-            self.col_mux_stack = self.li_stack
-        else:
-            self.col_mux_stack = self.m1_stack
-
-        # These are on metal2
         bl_pin = self.get_pin("bl")
         br_pin = self.get_pin("br")
         bl_out_pin = self.get_pin("bl_out")
         br_out_pin = self.get_pin("br_out")
 
-        # These are on metal1
         nmos_lower_s_pin = self.nmos_lower.get_pin("S")
         nmos_lower_d_pin = self.nmos_lower.get_pin("D")
         nmos_upper_s_pin = self.nmos_upper.get_pin("S")
         nmos_upper_d_pin = self.nmos_upper.get_pin("D")
 
         # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
-        self.add_via_center(layers=self.col_mux_stack,
-                            offset=bl_pin.bc(),
-                            directions=("V", "V"))
-        self.add_via_center(layers=self.col_mux_stack,
-                            offset=br_out_pin.uc(),
-                            directions=("V", "V"))
-        self.add_via_center(layers=self.col_mux_stack,
-                            offset=nmos_upper_s_pin.center(),
-                            directions=("V", "V"))
-        self.add_via_center(layers=self.col_mux_stack,
-                            offset=nmos_lower_d_pin.center(),
-                            directions=("V", "V"))
-
-        # Add diffusion contacts
-        # These were previously omitted with the options: add_source_contact=False, add_drain_contact=False
-        # They are added now and not previously so that they do not include m1 (which is usually included by default)
-        # This is only a concern when the local interconnect (li) layer is being used
-        self.add_via_center(layers=self.active_stack,
-                            offset=nmos_upper_d_pin.center(),
-                            directions=("V", "V"),
-                            implant_type="n",
-                            well_type="nwell")
-        self.add_via_center(layers=self.active_stack,
-                            offset=nmos_lower_s_pin.center(),
-                            directions=("V", "V"),
-                            implant_type="n",
-                            well_type="nwell")
-        self.add_via_center(layers=self.active_stack,
-                            offset=nmos_upper_s_pin.center(),
-                            directions=("V", "V"),
-                            implant_type="n",
-                            well_type="nwell")
-        self.add_via_center(layers=self.active_stack,
-                            offset=nmos_lower_d_pin.center(),
-                            directions=("V", "V"),
-                            implant_type="n",
-                            well_type="nwell")
+        self.add_via_stack_center(from_layer=bl_pin.layer,
+                                  to_layer=self.col_mux_stack[0],
+                                  offset=bl_pin.bc())
+        self.add_via_stack_center(from_layer=br_out_pin.layer,
+                                  to_layer=self.col_mux_stack[0],
+                                  offset=br_out_pin.uc())
+        self.add_via_stack_center(from_layer=nmos_upper_s_pin.layer,
+                                  to_layer=self.col_mux_stack[2],
+                                  offset=nmos_upper_s_pin.center())
+        self.add_via_stack_center(from_layer=nmos_lower_d_pin.layer,
+                                  to_layer=self.col_mux_stack[2],
+                                  offset=nmos_lower_d_pin.center())
 
         # bl -> nmos_upper/D on metal1
         # bl_out -> nmos_upper/S on metal2

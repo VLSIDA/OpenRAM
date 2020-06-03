@@ -235,11 +235,11 @@ class precharge(design.design):
         """
         Adds both bit-line and bit-line-bar to the module
         """
-        layer_width = drc("minwidth_" + self.bitline_layer)
-        layer_space = drc("{0}_to_{0}".format(self.bitline_layer))
+        layer_pitch = getattr(self, "{}_pitch".format(self.bitline_layer))
+        layer_width = getattr(self, "{}_width".format(self.bitline_layer))
 
-        # adds the BL
-        self.bl_xoffset = layer_space + 0.5 * layer_width
+        # adds the BL so it aligns with the col mux
+        self.bl_xoffset = layer_pitch + 0.5 * layer_width
         top_pos = vector(self.bl_xoffset, self.height)
         pin_pos = vector(self.bl_xoffset, 0)
         self.add_path(self.bitline_layer, [top_pos, pin_pos])
@@ -248,8 +248,8 @@ class precharge(design.design):
                                                          start=pin_pos,
                                                          end=top_pos)
         
-        # adds the BR
-        self.br_xoffset = self.width - layer_space - 0.5 * layer_width
+        # adds the BR so it aligns with the col mux
+        self.br_xoffset = self.width - layer_pitch - 0.5 * layer_width
         top_pos = vector(self.br_xoffset, self.height)
         pin_pos = vector(self.br_xoffset, 0)
         self.add_path(self.bitline_layer, [top_pos, pin_pos])

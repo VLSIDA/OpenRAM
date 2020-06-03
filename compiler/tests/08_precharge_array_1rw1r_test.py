@@ -29,7 +29,7 @@ class precharge_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        pc = factory.create(module_type="precharge_array", columns=3, port=0, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(pc)
         
         # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")

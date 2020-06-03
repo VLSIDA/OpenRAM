@@ -180,6 +180,7 @@ class port_data(design.design):
         # Precharge will be shifted left if needed
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + 1,
+                                              port=self.port,
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port])
         self.add_mod(self.precharge_array)
@@ -195,6 +196,7 @@ class port_data(design.design):
         if self.col_addr_size > 0:
             self.column_mux_array = factory.create(module_type="column_mux_array",
                                                    columns=self.num_cols,
+                                                   port=self.port,
                                                    word_size=self.word_size,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
@@ -250,6 +252,7 @@ class port_data(design.design):
         # module, which happens before we create the real precharge_array
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + 1,
+                                              port=self.port,
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port])
 
@@ -536,11 +539,18 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        self.channel_route_bitlines(inst1=inst1,
-                                    inst1_bls_template=inst1_bls_templ,
-                                    inst2=inst2,
-                                    num_bits=self.word_size,
-                                    inst1_start_bit=start_bit)
+        if OPTS.tech_name == "s8":
+            self.connect_bitlines(inst1=inst1,
+                                  inst1_bls_template=inst1_bls_templ,
+                                  inst2=inst2,
+                                  num_bits=self.word_size,
+                                  inst1_start_bit=start_bit)
+        else:
+            self.channel_route_bitlines(inst1=inst1,
+                                        inst1_bls_template=inst1_bls_templ,
+                                        inst2=inst2,
+                                        num_bits=self.word_size,
+                                        inst1_start_bit=start_bit)
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
@@ -562,11 +572,17 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        self.channel_route_bitlines(inst1=inst1, inst2=inst2,
-                                    num_bits=self.word_size,
-                                    inst1_bls_template=inst1_bls_templ,
-                                    inst1_start_bit=start_bit)
-
+        if OPTS.tech_name == "s8":
+            self.connect_bitlines(inst1=inst1, inst2=inst2,
+                                  num_bits=self.word_size,
+                                  inst1_bls_template=inst1_bls_templ,
+                                  inst1_start_bit=start_bit)
+        else:
+            self.channel_route_bitlines(inst1=inst1, inst2=inst2,
+                                        num_bits=self.word_size,
+                                        inst1_bls_template=inst1_bls_templ,
+                                        inst1_start_bit=start_bit)
+            
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """
 

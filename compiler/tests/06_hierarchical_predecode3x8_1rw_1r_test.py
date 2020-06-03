@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import unittest
@@ -14,18 +16,24 @@ from sram_factory import factory
 import debug
 
 
-class port_address_test(openram_test):
+class hierarchical_predecode3x8_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(1, "Port address 16 rows")
-        a = factory.create("port_address", cols=16, rows=16)
+        # Use the 2 port cell since it is usually bigger/easier
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+
+        debug.info(1, "Testing sample for hierarchy_predecode3x8")
+        a = factory.create(module_type="hierarchical_predecode3x8")
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

@@ -701,7 +701,7 @@ class layout():
                 boundary = [self.find_lowest_coords(),
                             self.find_highest_coords()]
                 debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
-                    
+
                 height = boundary[1][1] - boundary[0][1]
                 width = boundary[1][0] - boundary[0][0]
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
@@ -1008,13 +1008,8 @@ class layout():
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
 
-        # max_x_lc & min_x_rc are for routing to/from the edge of the pins
-        # to increase spacing between contacts of different nets
-        max_x_lc = max([pin.lc().x for pin in pins])
-        min_x_rc = min([pin.rc().x for pin in pins])
-
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x_lc - min_x_rc <= pitch:
+        if max_x - min_x <= pitch:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
 
             # Add the horizontal trunk on the vertical layer!
@@ -1035,15 +1030,7 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                # If there is sufficient space, Route from the edge of the pins
-                # Otherwise, route from the center of the pins
-                if max_x_lc - min_x_rc > pitch:
-                    if pin.center().x == max_x:
-                        mid = vector(pin.lc().x, trunk_offset.y)
-                    else:
-                        mid = vector(pin.rc().x, trunk_offset.y)
-                else:
-                    mid = vector(pin.center().x, trunk_offset.y)
+                mid = vector(pin.center().x, trunk_offset.y)
                 self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
                                     offset=mid)
@@ -1060,13 +1047,8 @@ class layout():
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
 
-        # max_y_bc & min_y_uc are for routing to/from the edge of the pins
-        # to reduce spacing between contacts of different nets
-        max_y_bc = max([pin.bc().y for pin in pins])
-        min_y_uc = min([pin.uc().y for pin in pins])
-
         # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y_bc - min_y_uc <= pitch:
+        if max_y - min_y <= pitch:
 
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
 
@@ -1088,17 +1070,6 @@ class layout():
 
             # Route each pin to the trunk
             for pin in pins:
-                # This code block currently causes drc violations for the topmost
-                #   port when using multiport, TODO: fix or remove this block
-                # # If there is sufficient space, Route from the edge of the pins
-                # # Otherwise, route from the center of the pins
-                # if max_y_bc - min_y_uc > pitch:
-                #     if pin.center().y == max_y:
-                #         mid = vector(trunk_offset.x, pin.bc().y)
-                #     else:
-                #         mid = vector(trunk_offset.x, pin.uc().y)
-                # else:
-                #     mid = vector(trunk_offset.x, pin.center().y)
                 mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,

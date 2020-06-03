@@ -191,7 +191,7 @@ class hierarchical_decoder(design.design):
                      + self.predecoder_width \
                      + self.internal_routing_width \
                      + self.nand_width \
-                     + 2 * self.m1_pitch
+                     + self.m1_space
             
     def route_inputs(self):
         """ Create input bus for the predecoders """

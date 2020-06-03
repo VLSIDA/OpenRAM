@@ -18,14 +18,13 @@ import debug
 
 
 # @unittest.skip("SKIPPING 20_sram_1bank_nomux_wmask_test")
-class sram_1bank_nomux_wmask_test(openram_test):
+class sram_1bank_nomux_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
         c = sram_config(word_size=8,
-                        write_size=4,
                         num_spare_cols=3,
                         num_words=16,
                         num_banks=1)
@@ -33,13 +32,13 @@ class sram_1bank_nomux_wmask_test(openram_test):
         c.words_per_row = 1
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w sram "
-                      "with {} bit words, {} words, {} bit writes, {} words per "
+                      "with {} bit words, {} words, {} spare cols, {} words per "
                       "row, {} banks".format(OPTS.num_rw_ports,
                                              OPTS.num_r_ports,
                                              OPTS.num_w_ports,
                                              c.word_size,
                                              c.num_words,
-                                             c.write_size,
+                                             c.num_spare_cols,
                                              c.words_per_row,
                                              c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)

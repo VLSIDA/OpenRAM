@@ -138,7 +138,7 @@ class port_data(design.design):
             for bit in range(self.num_wmasks):
                 self.add_pin("bank_wmask_{}".format(bit), "INPUT")
             for bit in range(self.num_spare_cols):
-                self.add_pin("spare_wen{}".format(bit), "INPUT")
+                self.add_pin("bank_spare_wen{}".format(bit), "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -387,12 +387,12 @@ class port_data(design.design):
             for i in range(self.num_wmasks):
                 temp.append("wdriver_sel_{}".format(i))
             for i in range(self.num_spare_cols):
-                temp.append("spare_wen{}".format(i))
+                temp.append("bank_spare_wen{}".format(i))
 
         elif self.num_spare_cols and not self.write_size:
             temp.append("w_en")
             for i in range(self.num_spare_cols):
-                temp.append("spare_wen{}".format(i))
+                temp.append("bank_spare_wen{}".format(i))
         else:
             temp.append("w_en")
         temp.extend(["vdd", "gnd"])
@@ -627,9 +627,9 @@ class port_data(design.design):
                 start_bit=0
 
         if self.port==0:
-            off=1
+            off = 1
         else:
-            off=0
+            off = 0
 
         
         if self.num_spare_cols != 0 and self.col_addr_size>0:
@@ -722,11 +722,11 @@ class port_data(design.design):
                     self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit), "wdriver_sel_{}".format(bit))
                 for bit in range(self.num_spare_cols):
                     # Add spare columns' en_{} pins
-                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + self.num_wmasks), "spare_wen{}".format(bit))
+                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + self.num_wmasks), "bank_spare_wen{}".format(bit))
             elif self.num_spare_cols and not self.write_mask_and_array_inst:
                 self.copy_layout_pin(self.write_driver_array_inst, "en_0", "w_en")            
                 for bit in range(self.num_spare_cols):
-                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + 1), "spare_wen{}".format(bit))
+                    self.copy_layout_pin(self.write_driver_array_inst, "en_{}".format(bit + 1), "bank_spare_wen{}".format(bit))
             else:
                 self.copy_layout_pin(self.write_driver_array_inst, "en", "w_en")
         if self.write_mask_and_array_inst:

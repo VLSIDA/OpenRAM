@@ -107,7 +107,7 @@ class control_logic(design.design):
         # clk_buf drives a flop for every address
         addr_flops = math.log(self.num_words, 2) + math.log(self.words_per_row, 2)
         # plus data flops and control flops
-        num_flops = addr_flops + self.word_size + self.num_control_signals
+        num_flops = addr_flops + self.word_size + self.num_spare_cols + self.num_control_signals
         # each flop internally has a FO 5 approximately
         # plus about 5 fanouts for the control logic
         clock_fanout = 5 * num_flops + 5
@@ -135,7 +135,7 @@ class control_logic(design.design):
 
         # s_en drives every sense amp
         self.sen_and3 = factory.create(module_type="pand3",
-                                       size=self.word_size,
+                                       size=self.word_size + self.num_spare_cols,
                                        height=dff_height)
         self.add_mod(self.sen_and3)
 

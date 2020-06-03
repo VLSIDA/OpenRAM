@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class sram_1bank_nomux_1rw_1r_test(openram_test):
+class sram_1bank_nomux_1rw_1r_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

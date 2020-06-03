@@ -105,7 +105,7 @@ class bank(design.design):
             for bit in range(self.num_wmasks):
                 self.add_pin("bank_wmask{0}_{1}".format(port, bit), "INPUT")
             for bit in range(self.num_spare_cols):
-                self.add_pin("spare_wen{0}_{1}".format(port, bit), "INPUT")
+                self.add_pin("bank_spare_wen{0}_{1}".format(port, bit), "INPUT")
         for port in self.all_ports:
             self.add_pin("wl_en{0}".format(port), "INPUT")
         self.add_pin("vdd", "POWER")
@@ -442,7 +442,7 @@ class bank(design.design):
                 for bit in range(self.num_wmasks):
                     temp.append("bank_wmask{0}_{1}".format(port, bit))
                 for bit in range(self.num_spare_cols):
-                    temp.append("spare_wen{0}_{1}".format(port, bit))
+                    temp.append("bank_spare_wen{0}_{1}".format(port, bit))
             temp.extend(["vdd", "gnd"])
             
             self.connect_inst(temp)
@@ -725,15 +725,15 @@ class bank(design.design):
             din_name = "din{0}_{1}".format(port, row)
             self.copy_layout_pin(self.port_data_inst[port], data_name, din_name)
 
-        if self.word_size:
+        if self.write_size:
             for row in range(self.num_wmasks):
                 wmask_name = "bank_wmask_{}".format(row)
                 bank_wmask_name = "bank_wmask{0}_{1}".format(port, row)
                 self.copy_layout_pin(self.port_data_inst[port], wmask_name, bank_wmask_name)
         
         for col in range(self.num_spare_cols):
-            sparecol_name = "spare_wen{}".format(col)
-            bank_sparecol_name = "spare_wen{0}_{1}".format(port, col)
+            sparecol_name = "bank_spare_wen{}".format(col)
+            bank_sparecol_name = "bank_spare_wen{0}_{1}".format(port, col)
             self.copy_layout_pin(self.port_data_inst[port], sparecol_name, bank_sparecol_name)
             
     def channel_route_bitlines(self, inst1, inst2, num_bits,

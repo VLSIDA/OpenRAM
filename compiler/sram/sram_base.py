@@ -285,6 +285,10 @@ class sram_base(design, verilog, lef):
         if self.write_size:
             self.wmask_dff = factory.create("dff_array", module_name="wmask_dff", rows=1, columns=self.num_wmasks)
             self.add_mod(self.wmask_dff)
+
+        if self.num_spare_cols:
+            self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
+            self.add_mod(self.spare_wen_dff)
         
         # Create the bank module (up to four are instantiated)
         self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
@@ -358,7 +362,7 @@ class sram_base(design, verilog, lef):
             for bit in range(self.num_wmasks):
                 temp.append("bank_wmask{}[{}]".format(port, bit))
             for bit in range(self.num_spare_cols):
-                temp.append("spare_wen{0}[{1}]".format(port, bit))
+                temp.append("bank_spare_wen{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
         temp.extend(["vdd", "gnd"])
@@ -475,7 +479,29 @@ class sram_base(design, verilog, lef):
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
 
         return insts
+    
+    def create_spare_wen_dff(self):
+        """ Add all spare write enable flops """
+        insts = []
+        for port in self.all_ports:
+            if port in self.write_ports:
+                insts.append(self.add_inst(name="spare_wen_dff{}".format(port),
+                                           mod=self.spare_wen_dff))
+            else:
+                insts.append(None)
+                continue
 
+            # inputs, outputs/output/bar
+            inputs = []
+            outputs = []
+            for bit in range(self.num_spare_cols):
+                inputs.append("spare_wen{}[{}]".format(port, bit))
+                outputs.append("bank_spare_wen{}[{}]".format(port, bit))
+
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+
+        return insts
+    
     def create_control_logic(self):
         """ Add control logic instances """
 

@@ -142,7 +142,7 @@ class write_driver_array(design.design):
                 offset = self.num_wmasks
             else:
                 offset = 1
-            name = "write_driver{}".format(index)
+            name = "write_driver{}".format(self.columns + i)
             self.driver_insts[index]=self.add_inst(name=name,
                                                    mod=self.driver)
 
@@ -234,27 +234,30 @@ class write_driver_array(design.design):
             
             for i in range(self.num_spare_cols):
                 inst = self.driver_insts[self.word_size + i]
+                en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
                                     layer="m1",
-                                    offset=inst.get_pin(inst.mod.en_name).ll(),
-                                    width=self.single_col_width - inst.get_pin(inst.mod.en_name).width())
+                                    offset=en_pin.ll(),
+                                    width=self.driver.width - en_pin.width())
 
          
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
             inst = self.driver_insts[0]
+            en_pin = inst.get_pin(inst.mod.en_name)
             self.add_layout_pin(text=self.en_name + "_{0}".format(0),
                                 layer="m1",
-                                offset=inst.get_pin(inst.mod.en_name).ll(),
-                                width=self.width_regular_cols - (self.words_per_row * inst.get_pin(inst.mod.en_name).width()))
+                                offset=en_pin.ll(),
+                                width=self.width_regular_cols - self.words_per_row * en_pin.width())
 
             # individual enables for every spare write driver
             for i in range(self.num_spare_cols):
                 inst = self.driver_insts[self.word_size + i]
+                en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + 1),
                                     layer="m1",
-                                    offset=inst.get_pin(inst.mod.en_name).ll(),
-                                    width=self.single_col_width - inst.get_pin(inst.mod.en_name).width())
+                                    offset=en_pin.ll(),
+                                    width=self.driver.width - en_pin.width())
         
         else:
             inst = self.driver_insts[0]

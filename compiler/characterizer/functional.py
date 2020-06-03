@@ -18,7 +18,7 @@ from .charutils import *
 import utils
 from globals import OPTS
 from .simulation import simulation
-from .delay import delay
+# from .delay import delay
 import graph_util
 from sram_factory import factory
 
@@ -39,6 +39,9 @@ class functional(simulation):
             self.num_wmasks = int(self.word_size / self.write_size)
         else:
             self.num_wmasks = 0
+
+        if not self.num_spare_cols:
+            self.num_spare_cols = 0
 
         self.set_corner(corner)
         self.set_spice_constants()
@@ -86,6 +89,7 @@ class functional(simulation):
             if port in self.write_ports:
                 checks.append((self.data_value[port],"data"))
                 checks.append((self.wmask_value[port],"wmask"))
+                checks.append((self.spare_wen_value[port],"spare_wen"))
 
             for (val, name) in checks:
                 debug.check(len(self.cycle_times)==len(val),
@@ -226,7 +230,7 @@ class functional(simulation):
         # Extract dout values from spice timing.lis
         for (word, dout_port, eo_period, check) in self.read_check:
             sp_read_value = ""
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(),bit,check))
                 if value > self.v_high:
                     sp_read_value = "1" + sp_read_value
@@ -281,13 +285,18 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        random_value = random.randint(0,(2**self.word_size)-1)
+        if not self.num_spare_cols:
+            random_value = random.randint(0,(2**(self.word_size))-1)
+        else:
+            random_value1 = random.randint(0,(2**(self.word_size))-1)
+            random_value2 = random.randint(0,(2**(self.num_spare_cols))-1)
+            random_value = random_value1 + random_value2
         data_bits = self.convert_to_bin(random_value,False)
         return data_bits
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
-        if (self.num_spare_rows == 0):
+        if self.num_spare_rows==0:
             random_value = random.randint(0,(2**self.addr_size)-1)
         else:
             random_value = random.randint(0,((2**(self.addr_size-1)-1))+(self.num_spare_rows * self.words_per_row))
@@ -307,8 +316,7 @@ class functional(simulation):
         if(is_addr):
             expected_value = self.addr_size
         else:
-
-            expected_value = self.word_size
+            expected_value = self.word_size + self.num_spare_cols
         for i in range (expected_value - len(new_value)):
             new_value =  "0" + new_value
             
@@ -337,7 +345,7 @@ class functional(simulation):
         # Add load capacitance to each of the read ports
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 sig_name="{0}{1}_{2} ".format(self.dout_name, port, bit)
                 self.sf.write("CD{0}{1} {2} 0 {3}f\n".format(port, bit, sig_name, self.load))
 
@@ -357,7 +365,7 @@ class functional(simulation):
         # Generate data input bits 
         self.sf.write("\n* Generation of data and address signals\n")
         for port in self.write_ports:
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 sig_name="{0}{1}_{2} ".format(self.din_name, port, bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period, self.slew, 0.05)
         
@@ -386,6 +394,15 @@ class functional(simulation):
                     self.stim.gen_pwl(sig_name, self.cycle_times, self.wmask_values[port][bit], self.period,
                                       self.slew, 0.05)
 
+        # Generate spare enable bits (for spare cols)
+        for port in self.write_ports:
+            if self.num_spare_cols:
+                self.sf.write("\n* Generation of spare enable signals\n")
+                for bit in range(self.num_spare_cols):
+                    sig_name = "SPARE_WEN{0}_{1} ".format(port, bit)
+                    self.stim.gen_pwl(sig_name, self.cycle_times, self.spare_wen_values[port][bit], self.period,
+                                      self.slew, 0.05)
+
         # Generate CLK signals
         for port in self.all_ports:
             self.stim.gen_pulse(sig_name="{0}{1}".format("clk", port),
@@ -401,7 +418,7 @@ class functional(simulation):
         for (word, dout_port, eo_period, check) in self.read_check:
             t_intital = eo_period - 0.01*self.period
             t_final = eo_period + 0.01*self.period
-            for bit in range(self.word_size):
+            for bit in range(self.word_size + self.num_spare_cols):
                 self.stim.gen_meas_value(meas_name="V{0}_{1}ck{2}".format(dout_port,bit,check),
                                          dout="{0}_{1}".format(dout_port,bit),
                                          t_intital=t_intital,

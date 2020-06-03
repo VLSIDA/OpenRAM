@@ -19,7 +19,7 @@ class port_data(design.design):
     """
 
     def __init__(self, sram_config, port, name=""):
-        
+
         sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
@@ -447,7 +447,7 @@ class port_data(design.design):
 
     def route_sense_amp_out(self, port):
         """ Add pins for the sense amp output """
-        
+
         for bit in range(self.word_size):
             data_pin = self.sense_amp_array_inst.get_pin("data_{}".format(bit))
             self.add_layout_pin_rect_center(text="dout_{0}".format(bit),
@@ -488,7 +488,7 @@ class port_data(design.design):
 
             wmask_out_pin = wmask_inst.get_pin("wmask_out_{0}".format(bit))
             wdriver_en_pin = wdriver_inst.get_pin("en_{0}".format(bit))
-            
+
             wmask_pos = wmask_out_pin.center()
             wdriver_pos = wdriver_en_pin.rc() - vector(self.m2_pitch, 0)
             mid_pos = vector(wdriver_pos.x, wmask_pos.y)
@@ -720,7 +720,7 @@ class port_data(design.design):
         This assumes that they have sufficient space to create a jog
         in the middle between the two modules (if needed).
         """
-        
+
         bot_inst_group, top_inst_group = self._group_bitline_instances(inst1, inst2, num_bits,
                                                                        inst1_bls_template, inst1_start_bit,
                                                                        inst2_bls_template, inst2_start_bit)
@@ -734,9 +734,8 @@ class port_data(design.design):
             layer_pitch = getattr(self, "{}_pitch".format(top_bl_pin.layer))
             self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V", top_bl_pin.by() - layer_pitch)
             self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V", top_bl_pin.by() - 2 * layer_pitch)
-        
+
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
-

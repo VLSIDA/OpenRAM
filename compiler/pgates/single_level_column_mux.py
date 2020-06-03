@@ -11,7 +11,7 @@ from tech import drc, layer
 from vector import vector
 from sram_factory import factory
 import logical_effort
-
+from utils import round_to_grid
 
 class single_level_column_mux(pgate.pgate):
     """
@@ -75,6 +75,17 @@ class single_level_column_mux(pgate.pgate):
         bl_pos = vector(bl_pin.lx(), 0)
         br_pos = vector(br_pin.lx(), 0)
 
+        # The bitline input/output pins must be a least as wide as the metal pitch
+        #   so that there is enough space to route to/from the pins.
+        # FIXME: bitline_metal_pitch should be greater than the horizontal metal pitch used in port_data
+        bitline_metal_pitch = self.width / 2
+        bitline_width = br_pos.x - bl_pos.x
+        if bitline_width < bitline_metal_pitch:
+            bitline_width_increase_bl = round_to_grid((bitline_metal_pitch - bitline_width) / 2)
+            bitline_width_increase_br = round_to_grid((bitline_metal_pitch - bitline_width) - bitline_width_increase_bl)
+            bl_pos = bl_pos + vector(-bitline_width_increase_bl, 0)
+            br_pos = br_pos + vector( bitline_width_increase_br, 0)
+
         # bl and br
         self.add_layout_pin(text="bl",
                             layer=bl_pin.layer,
@@ -133,7 +144,7 @@ class single_level_column_mux(pgate.pgate):
 
     def connect_bitlines(self):
         """ Connect the bitlines to the mux transistors """
-        
+
         # If li exists, use li and m1 for the mux, otherwise use m1 and m2
         if "li" in layer:
             self.col_mux_stack = self.li_stack

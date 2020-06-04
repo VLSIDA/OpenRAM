@@ -123,23 +123,22 @@ class bank(design.design):
 
     def route_rbl(self, port):
         """ Route the rbl_bl and rbl_wl """
-        
-        bl_pin_name = self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-        bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
-        # This will ensure the pin is only on the top or bottom edge
+
+        # Connect the rbl to the port data pin
+        bl_pin = self.port_data_inst[port].get_pin("rbl_bl")
         if port % 2:
-            via_offset = bl_pin.uc() + vector(0, self.m2_pitch)
-            left_right_offset = vector(self.max_x_offset, via_offset.y)
+            pin_offset = bl_pin.uc()
+            left_right_offset = vector(self.max_x_offset, pin_offset.y)
         else:
-            via_offset = bl_pin.bc() - vector(0, self.m2_pitch)
-            left_right_offset = vector(self.min_x_offset, via_offset.y)
+            pin_offset = bl_pin.bc()
+            left_right_offset = vector(self.min_x_offset, pin_offset.y)
         self.add_via_stack_center(from_layer=bl_pin.layer,
                                   to_layer="m3",
-                                  offset=via_offset)
+                                  offset=pin_offset)
         self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
-                                           end=via_offset)
+                                           end=pin_offset)
             
     def route_bitlines(self, port):
         """ Route the bitlines depending on the port type rw, w, or r. """

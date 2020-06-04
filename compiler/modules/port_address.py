@@ -93,7 +93,7 @@ class port_address(design.design):
             decoder_out_pos = decoder_out_pin.rc()
             driver_in_pin = self.wordline_driver_inst.get_pin("in_{}".format(row))
             driver_in_pos = driver_in_pin.lc()
-            self.add_zjog(self.route_layer, decoder_out_pos, driver_in_pos)
+            self.add_zjog(self.route_layer, decoder_out_pos, driver_in_pos, var_offset=0.3)
 
             self.add_via_stack_center(from_layer=decoder_out_pin.layer,
                                       to_layer=self.route_layer,

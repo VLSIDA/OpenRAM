@@ -29,6 +29,10 @@ class port_address_1rw_1r_test(openram_test):
         debug.info(1, "Port address 16 rows")
         a = factory.create("port_address", cols=16, rows=16)
         self.local_check(a)
+
+        debug.info(1, "Port address 512 rows")
+        a = factory.create("port_address", cols=256, rows=512)
+        self.local_check(a)
         
         globals.end_openram()
         

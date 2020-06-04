@@ -191,14 +191,15 @@ class precharge(design.design):
         """
 
         # adds the en contact to connect the gates to the en rail
-        # midway in the 4 M2 tracks
-        offset = self.lower_pmos_inst.get_pin("G").ul() \
-                 + vector(0, 0.5 * self.m2_pitch)
+        pin_offset = self.lower_pmos_inst.get_pin("G").lr()
+        # This is an extra space down for some techs with contact to active spacing
+        offset = pin_offset - vector(0, self.poly_space)
         self.add_via_stack_center(from_layer="poly",
                                   to_layer=self.en_layer,
                                   offset=offset)
-        
-        # adds the en rail on metal1
+        self.add_path("poly",
+                      [self.lower_pmos_inst.get_pin("G").bc(), offset])
+        # adds the en rail
         self.add_layout_pin_segment_center(text="en_bar",
                                            layer=self.en_layer,
                                            start=offset.scale(0, 1),

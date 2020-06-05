@@ -178,14 +178,17 @@ class port_data(design.design):
 
         # Extra column +1 is for RBL
         # Precharge will be shifted left if needed
+        # Column offset is set to port so extra column can be on left or right
+        # and mirroring happens correctly
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + 1,
-                                              port=self.port,
                                               bitcell_bl=self.bl_names[self.port],
-                                              bitcell_br=self.br_names[self.port])
+                                              bitcell_br=self.br_names[self.port],
+                                              column_offset=self.port - 1)
         self.add_mod(self.precharge_array)
 
         if self.port in self.read_ports:
+            # RBLs don't get a sense amp
             self.sense_amp_array = factory.create(module_type="sense_amp_array",
                                                   word_size=self.word_size,
                                                   words_per_row=self.words_per_row)
@@ -194,9 +197,9 @@ class port_data(design.design):
             self.sense_amp_array = None
 
         if self.col_addr_size > 0:
+            # RBLs dont get a col mux
             self.column_mux_array = factory.create(module_type="column_mux_array",
                                                    columns=self.num_cols,
-                                                   port=self.port,
                                                    word_size=self.word_size,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
@@ -205,17 +208,18 @@ class port_data(design.design):
             self.column_mux_array = None
 
         if self.port in self.write_ports:
+            # RBLs dont get a write driver
             self.write_driver_array = factory.create(module_type="write_driver_array",
                                                      columns=self.num_cols,
                                                      word_size=self.word_size,
                                                      write_size=self.write_size)
             self.add_mod(self.write_driver_array)
             if self.write_size is not None:
+                # RBLs don't get a write mask
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
                                                            word_size=self.word_size,
-                                                           write_size=self.write_size,
-                                                           port = self.port)
+                                                           write_size=self.write_size)
                 self.add_mod(self.write_mask_and_array)
             else:
                 self.write_mask_and_array = None
@@ -248,13 +252,6 @@ class port_data(design.design):
         self.precharge = factory.create(module_type="precharge",
                                         bitcell_bl=self.bl_names[0],
                                         bitcell_br=self.br_names[0])
-        # We create a dummy here to get bl/br names to add those pins to this
-        # module, which happens before we create the real precharge_array
-        self.precharge_array = factory.create(module_type="precharge_array",
-                                              columns=self.num_cols + 1,
-                                              port=self.port,
-                                              bitcell_bl=self.bl_names[self.port],
-                                              bitcell_br=self.br_names[self.port])
 
     def create_precharge_array(self):
         """ Creating Precharge """

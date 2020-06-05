@@ -20,7 +20,7 @@ class sense_amp_array(design.design):
     Dynamically generated sense amp array for all bitlines.
     """
 
-    def __init__(self, name, word_size, words_per_row):
+    def __init__(self, name, word_size, words_per_row, column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("word_size {0}".format(word_size))
@@ -28,6 +28,7 @@ class sense_amp_array(design.design):
 
         self.word_size = word_size
         self.words_per_row = words_per_row
+        self.column_offset = column_offset
         self.row_size = self.word_size * self.words_per_row
 
         self.create_netlist()
@@ -102,25 +103,22 @@ class sense_amp_array(design.design):
     def place_sense_amp_array(self):
         from tech import cell_properties
         if self.bitcell.width > self.amp.width:
-            amp_spacing = self.bitcell.width * self.words_per_row
+            amp_spacing = self.bitcell.width
         else:
-            amp_spacing = self.amp.width * self.words_per_row
+            amp_spacing = self.amp.width
 
-        for i in range(0, self.word_size):
-            xoffset = amp_spacing * i
+        for i in range(0, self.row_size, self.words_per_row):
+            index = int(i / self.words_per_row)
+            xoffset = i * amp_spacing
 
-            # align the xoffset to the grid of bitcells. This way we
-            # know when to do the mirroring.
-            grid_x = int(xoffset / self.amp.width)
-
-            if cell_properties.bitcell.mirror.y and grid_x % 2:
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.amp.width
             else:
                 mirror = ""
 
             amp_position = vector(xoffset, 0)
-            self.local_insts[i].place(offset=amp_position, mirror=mirror)
+            self.local_insts[index].place(offset=amp_position, mirror=mirror)
 
     def add_layout_pins(self):
         for i in range(len(self.local_insts)):

@@ -29,19 +29,19 @@ class single_level_column_mux_pbitcell_test(openram_test):
 
         factory.reset()
         debug.info(1, "Testing sample for 2-way column_mux_array in multi-port")
-        a = factory.create(module_type="single_level_column_mux_array", columns=16, port=0, word_size=8, bitcell_bl="bl0", bitcell_br="br0")
+        a = factory.create(module_type="single_level_column_mux_array", columns=16, word_size=8, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(a)
 
         debug.info(1, "Testing sample for 4-way column_mux_array  in multi-port")
-        a = factory.create(module_type="single_level_column_mux_array", columns=16, port=0, word_size=4, bitcell_bl="bl0", bitcell_br="br0")
+        a = factory.create(module_type="single_level_column_mux_array", columns=16, word_size=4, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(a)
 
         debug.info(1, "Testing sample for 8-way column_mux_array  in multi-port (innermost connections)")
-        a = factory.create(module_type="single_level_column_mux_array", columns=32, port=0, word_size=4, bitcell_bl="bl0", bitcell_br="br0")
+        a = factory.create(module_type="single_level_column_mux_array", columns=32, word_size=4, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(a)
 
         debug.info(1, "Testing sample for 8-way column_mux_array  in multi-port (outermost connections)")
-        a = factory.create(module_type="single_level_column_mux_array", columns=32, port=3, word_size=4, bitcell_bl="bl2", bitcell_br="br2")
+        a = factory.create(module_type="single_level_column_mux_array", columns=32, word_size=4, bitcell_bl="bl2", bitcell_br="br2", column_offset=3)
         self.local_check(a)
 
         globals.end_openram()

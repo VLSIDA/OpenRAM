@@ -13,6 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class port_data_1rw_1r_test(openram_test):
 
     def runTest(self):

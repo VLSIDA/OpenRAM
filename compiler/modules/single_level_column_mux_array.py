@@ -20,17 +20,17 @@ class single_level_column_mux_array(design.design):
     Array of column mux to read the bitlines through the 6T.
     """
 
-    def __init__(self, name, columns, port, word_size, bitcell_bl="bl", bitcell_br="br"):
+    def __init__(self, name, columns, word_size, bitcell_bl="bl", bitcell_br="br", column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} word_size: {1} bl: {2} br: {3}".format(columns, word_size, bitcell_bl, bitcell_br))
 
         self.columns = columns
-        self.port = port
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
+        self.column_offset = column_offset
 
         if "li" in layer:
             self.col_mux_stack = self.li_stack
@@ -118,7 +118,7 @@ class single_level_column_mux_array(design.design):
         # For every column, add a pass gate
         for col_num in range(self.columns):
             xoffset = col_num * self.mux.width
-            if cell_properties.bitcell.mirror.y and (col_num + self.port) % 2:
+            if cell_properties.bitcell.mirror.y and (col_num + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.mux.width
             else:

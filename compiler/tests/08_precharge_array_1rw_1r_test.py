@@ -28,18 +28,14 @@ class precharge_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
 
         factory.reset()
-        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = factory.create(module_type="precharge_array", columns=3, port=0, bitcell_bl="bl0", bitcell_br="br0")
+        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell (port 0)")
+        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(pc)
+
+        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell (port 1)")
+        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0", column_offset=1)
         self.local_check(pc)
         
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
-        # pc = precharge_array.precharge_array(name="pre3", columns=3, bitcell_bl="bl0", bitcell_br="br0")
-        # self.local_check(pc)
-        
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (outermost connections)")
-        # pc = precharge_array.precharge_array(name="pre4", columns=3, bitcell_bl="bl2", bitcell_br="br2")
-        # self.local_check(pc)
-
         globals.end_openram()
 
 # run the test from the command line

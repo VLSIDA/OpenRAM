@@ -27,7 +27,8 @@ class ptx_3finger_nmos_test(openram_test):
                              width=tech.drc["minwidth_tx"],
                              mults=3,
                              tx_type="nmos",
-                             connect_active=True,
+                             connect_source_active=True,
+                             connect_drain_active=True,
                              connect_poly=True)
         self.local_drc_check(fet)
 

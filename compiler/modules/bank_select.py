@@ -205,7 +205,7 @@ class bank_select(design.design):
         bank_sel_line_end = vector(xoffset_bank_sel, self.yoffset_maxpoint)
         self.add_path("m2", [bank_sel_line_pos, bank_sel_line_end])
         self.add_via_center(layers=self.m1_stack,
-                            offset=bank_sel_inv_pin.lc())
+                            offset=bank_sel_inv_pin.center())
 
         # Route the pin to the left edge as well
         bank_sel_pin_pos=vector(0, 0)
@@ -242,30 +242,31 @@ class bank_select(design.design):
                 
             # Connect the logic output to inverter input
             out_pin = logic_inst.get_pin("Z")
-            out_pos = out_pin.rc()
+            out_pos = out_pin.center()
             in_pin = inv_inst.get_pin("A")
-            in_pos = in_pin.lc()
+            in_pos = in_pin.center()
             mid1_pos = vector(0.5 * (out_pos.x + in_pos.x), out_pos.y)
             mid2_pos = vector(0.5 * (out_pos.x + in_pos.x), in_pos.y)
             self.add_path("m1", [out_pos, mid1_pos, mid2_pos, in_pos])
             
             # Connect the logic B input to bank_sel / bank_sel_bar
-            logic_pos = logic_inst.get_pin("B").lc() - vector(0.5 * contact.m1_via.height, 0)
+            logic_pin = logic_inst.get_pin("B")
+            logic_pos = logic_pin.center()
             input_pos = vector(xoffset_bank_signal, logic_pos.y)
-            self.add_path("m2", [logic_pos, input_pos])
-            self.add_via_center(layers=self.m1_stack,
-                                offset=logic_pos,
-                                directions=("H", "H"))
+            self.add_path("m3", [logic_pos, input_pos])
+            self.add_via_center(self.m2_stack,
+                                input_pos)
+            self.add_via_stack_center(from_layer=logic_pin.layer,
+                                      to_layer="m3",
+                                      offset=logic_pos)
 
             # Connect the logic A input to the input pin
-            logic_pos = logic_inst.get_pin("A").lc()
+            logic_pin = logic_inst.get_pin("A")
+            logic_pos = logic_pin.center()
             input_pos = vector(0, logic_pos.y)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=logic_pos,
-                                directions=("H", "H"))
-            self.add_via_center(layers=self.m2_stack,
-                                offset=logic_pos,
-                                directions=("H", "H"))
+            self.add_via_stack_center(from_layer=logic_pin.layer,
+                                      to_layer="m3",
+                                      offset=logic_pos)
             self.add_layout_pin_segment_center(text=input_name,
                                                layer="m3",
                                                start=input_pos,

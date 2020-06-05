@@ -60,6 +60,13 @@ m1_stack = ("m1", "via1", "m2")
 m2_stack = ("m2", "via2", "m3")
 m3_stack = ("m3", "via3", "m4")
 
+layer_indices = {"poly": 0,
+                 "active": 0,
+                 "m1": 1,
+                 "m2": 2,
+                 "m3": 3,
+                 "m4": 4}
+
 # The FEOL stacks get us up to m1
 feol_stacks = [poly_stack,
                active_stack]

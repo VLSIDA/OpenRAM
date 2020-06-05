@@ -17,13 +17,13 @@ class pdriver(pgate.pgate):
     sized for driving a load.
     """
     
-    def __init__(self, name, neg_polarity=False, fanout=0, size_list=None, height=None):
+    def __init__(self, name, inverting=False, fanout=0, size_list=None, height=None, add_wells=True):
 
         debug.info(1, "creating pdriver {}".format(name))
 
         self.stage_effort = 3
         self.height = height
-        self.neg_polarity = neg_polarity
+        self.inverting = inverting
         self.size_list = size_list
         self.fanout = fanout
 
@@ -31,11 +31,11 @@ class pdriver(pgate.pgate):
             debug.error("Either fanout or size list must be specified.", -1)
         if self.size_list and self.fanout != 0:
             debug.error("Cannot specify both size_list and fanout.", -1)
-        if self.size_list and self.neg_polarity:
-            debug.error("Cannot specify both size_list and neg_polarity.", -1)
+        if self.size_list and self.inverting:
+            debug.error("Cannot specify both size_list and inverting.", -1)
  
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
         
     def compute_sizes(self):
         # size_list specified
@@ -47,9 +47,9 @@ class pdriver(pgate.pgate):
                                   int(round(self.fanout ** (1 / self.stage_effort))))
 
             # Increase the number of stages if we need to fix polarity
-            if self.neg_polarity and (self.num_stages % 2 == 0):
+            if self.inverting and (self.num_stages % 2 == 0):
                 self.num_stages += 1
-            elif not self.neg_polarity and (self.num_stages % 2):
+            elif not self.inverting and (self.num_stages % 2):
                 self.num_stages += 1
 
             self.size_list = []
@@ -73,9 +73,10 @@ class pdriver(pgate.pgate):
         self.place_modules()
         self.route_wires()
         self.add_layout_pins()
-
         self.width = self.inv_inst_list[-1].rx()
         self.height = self.inv_inst_list[0].height
+        self.extend_wells()
+        self.route_supply_rails()
         self.add_boundary()
         
     def add_pins(self):
@@ -86,10 +87,13 @@ class pdriver(pgate.pgate):
 
     def add_modules(self):
         self.inv_list = []
+        add_well = self.add_wells
         for size in self.size_list:
             temp_inv = factory.create(module_type="pinv",
                                       size=size,
-                                      height=self.height)
+                                      height=self.height,
+                                      add_wells=add_well)
+            add_well=False
             self.inv_list.append(temp_inv)
             self.add_mod(temp_inv)
     
@@ -141,26 +145,11 @@ class pdriver(pgate.pgate):
             z_inst_list.append(self.inv_inst_list[x].get_pin("Z"))
             a_inst_list.append(self.inv_inst_list[x + 1].get_pin("A"))
             mid_point = vector(z_inst_list[x].cx(), a_inst_list[x].cy())
-            self.add_path("m1",
+            self.add_path(self.route_layer,
                           [z_inst_list[x].center(), mid_point,
                            a_inst_list[x].center()])
 
     def add_layout_pins(self):
-        # Continous vdd rail along with label.
-        vdd_pin = self.inv_inst_list[0].get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="m1",
-                            offset=vdd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-        
-        # Continous gnd rail along with label.
-        gnd_pin = self.inv_inst_list[0].get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="m1",
-                            offset=gnd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
 
         z_pin = self.inv_inst_list[len(self.inv_inst_list) - 1].get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",

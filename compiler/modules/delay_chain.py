@@ -62,7 +62,7 @@ class delay_chain(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.inv = factory.create(module_type="pinv", route_output=False)
+        self.inv = factory.create(module_type="pinv")
         self.add_mod(self.inv)
 
     def create_inverters(self):

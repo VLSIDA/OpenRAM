@@ -29,6 +29,10 @@ class pand3_test(openram_test):
         a = pand3.pand3(name="pand3x4", size=4)
         self.local_check(a)
 
+        debug.info(2, "Testing vertical pand3 gate 4x")
+        a = pand3.pand3(name="pand3x4", size=4, vertical=True)
+        self.local_check(a)
+        
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

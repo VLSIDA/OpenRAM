@@ -15,30 +15,22 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class precharge_test(openram_test):
+
+class hierarchical_predecode3x8_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
-        # check precharge array in multi-port
+
+        # Use the 2 port cell since it is usually bigger/easier
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
 
-        factory.reset()
-        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
-        self.local_check(pc)
-        
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
-        # pc = precharge_array.precharge_array(name="pre3", columns=3, bitcell_bl="bl0", bitcell_br="br0")
-        # self.local_check(pc)
-        
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (outermost connections)")
-        # pc = precharge_array.precharge_array(name="pre4", columns=3, bitcell_bl="bl2", bitcell_br="br2")
-        # self.local_check(pc)
+        debug.info(1, "Testing sample for hierarchy_predecode3x8")
+        a = factory.create(module_type="hierarchical_predecode3x8")
+        self.local_check(a)
 
         globals.end_openram()
 

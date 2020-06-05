@@ -59,14 +59,23 @@ class sram_1bank(sram_base):
         wmask_pos = [None] * len(self.all_ports)
         data_pos = [None] * len(self.all_ports)
 
+        # These positions utilize the channel route sizes.
+        # FIXME: Auto-compute these rather than manual computation.
+        # If a horizontal channel, they rely on the vertical channel non-preferred (contacted) pitch.
+        # If a vertical channel, they rely on the horizontal channel non-preferred (contacted) pitch.
+        # So, m3 non-pref pitch means that this is routed on the m2 layer.
         if self.write_size:
-            max_gap_size = self.m3_pitch * self.word_size + 2 * self.m1_pitch
-            max_gap_size_wmask = self.m2_pitch * max(self.num_wmasks + 1, self.col_addr_size + 1) + 2 * self.m1_pitch
+            self.data_bus_gap = self.m4_nonpref_pitch * 2
+            self.data_bus_size = self.m4_nonpref_pitch * (self.word_size) + self.data_bus_gap
+            self.wmask_bus_gap = self.m2_nonpref_pitch * 2
+            self.wmask_bus_size = self.m2_nonpref_pitch * (max(self.num_wmasks + 1, self.col_addr_size + 1)) + self.wmask_bus_gap
         else:
-            # This is M2 pitch even though it is on M1 to help stem via spacings on the trunk
-            # The M1 pitch is for supply rail spacings
-            max_gap_size = self.m2_pitch * max(self.word_size + 1,self.col_addr_size + 1) + 2 * self.m1_pitch
+            self.data_bus_gap = self.m3_nonpref_pitch * 2
+            self.data_bus_size = self.m3_nonpref_pitch * (max(self.word_size + 1, self.col_addr_size + 1)) + self.data_bus_gap
 
+        self.col_addr_bus_gap = self.m2_nonpref_pitch * 2
+        self.col_addr_bus_size = self.m2_nonpref_pitch * (self.col_addr_size) + self.col_addr_bus_gap
+        
         # Port 0
         port = 0
 
@@ -74,12 +83,12 @@ class sram_1bank(sram_base):
             if self.write_size:
                 # Add the write mask flops below the write mask AND array.
                 wmask_pos[port] = vector(self.bank.bank_array_ll.x,
-                                         -max_gap_size_wmask - self.dff.height)
+                                         - self.wmask_bus_size - self.dff.height)
                 self.wmask_dff_insts[port].place(wmask_pos[port])
 
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                        -max_gap_size - max_gap_size_wmask - 2 * self.dff.height)
+                                        - self.data_bus_size - self.wmask_bus_size - 2 * self.dff.height)
                 self.data_dff_insts[port].place(data_pos[port])
             else:
                 # Add the data flops below the bank to the right of the lower-left of bank array
@@ -89,7 +98,7 @@ class sram_1bank(sram_base):
                 # sense amps.
                 if port in self.write_ports:
                     data_pos[port] = vector(self.bank.bank_array_ll.x,
-                                            -max_gap_size - self.dff.height)
+                                            -self.data_bus_size - self.dff.height)
                     self.data_dff_insts[port].place(data_pos[port])
         else:
             wmask_pos[port] = vector(self.bank.bank_array_ll.x, 0)
@@ -99,10 +108,10 @@ class sram_1bank(sram_base):
         if self.col_addr_dff:
             if self.write_size:
                 col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
-                                            -max_gap_size_wmask - self.col_addr_dff_insts[port].height)
+                                            -self.wmask_bus_size - self.col_addr_dff_insts[port].height)
             else:
                 col_addr_pos[port] = vector(self.bank.bank_array_ll.x - self.col_addr_dff_insts[port].width - self.bank.m2_gap,
-                                            -max_gap_size - self.col_addr_dff_insts[port].height)
+                                            -self.data_bus_size - self.col_addr_dff_insts[port].height)
             self.col_addr_dff_insts[port].place(col_addr_pos[port])
         else:
             col_addr_pos[port] = vector(self.bank.bank_array_ll.x, 0)
@@ -127,12 +136,12 @@ class sram_1bank(sram_base):
                 if self.write_size:
                     # Add the write mask flops below the write mask AND array.
                     wmask_pos[port] = vector(self.bank.bank_array_ur.x - self.wmask_dff_insts[port].width,
-                                             self.bank.height + max_gap_size_wmask + self.dff.height)
+                                             self.bank.height + self.wmask_bus_size + self.dff.height)
                     self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
 
                     # Add the data flops below the write mask flops
                     data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                            self.bank.height + max_gap_size_wmask + max_gap_size + 2 * self.dff.height)
+                                            self.bank.height + self.wmask_bus_size + self.data_bus_size + 2 * self.dff.height)
                     self.data_dff_insts[port].place(data_pos[port], mirror="MX")
                 else:
                     # Add the data flops above the bank to the left of the upper-right of bank array
@@ -141,17 +150,17 @@ class sram_1bank(sram_base):
                     # These flops go below the sensing and leave a gap to channel route to the
                     # sense amps.
                     data_pos[port] = vector(self.bank.bank_array_ur.x - self.data_dff_insts[port].width,
-                                            self.bank.height + max_gap_size + self.dff.height)
+                                            self.bank.height + self.data_bus_size + self.dff.height)
                     self.data_dff_insts[port].place(data_pos[port], mirror="MX")
 
             # Add the col address flops above the bank to the right of the upper-right of bank array
             if self.col_addr_dff:
                 if self.write_size:
                     col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                                self.bank.height + max_gap_size_wmask + self.dff.height)
+                                                self.bank.height + self.wmask_bus_size + self.dff.height)
                 else:
                     col_addr_pos[port] = vector(self.bank.bank_array_ur.x + self.bank.m2_gap,
-                                                    self.bank.height + max_gap_size + self.dff.height)
+                                                    self.bank.height + self.data_bus_size + self.dff.height)
                 self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
             else:
                 col_addr_pos[port] = self.bank_inst.ur()
@@ -245,7 +254,7 @@ class sram_1bank(sram_base):
             # This uses a metal2 track to the right (for port0) of the control/row addr DFF
             # to route vertically. For port1, it is to the left.
             row_addr_clk_pin = self.row_addr_dff_insts[port].get_pin("clk")
-            if port%2:
+            if port % 2:
                 control_clk_buf_pos = control_clk_buf_pin.lc()
                 row_addr_clk_pos = row_addr_clk_pin.lc()
                 mid1_pos = vector(self.row_addr_dff_insts[port].lx() - self.m2_pitch,
@@ -258,19 +267,20 @@ class sram_1bank(sram_base):
 
             # This is the steiner point where the net branches out
             clk_steiner_pos = vector(mid1_pos.x, control_clk_buf_pos.y)
-            self.add_path("m1", [control_clk_buf_pos, clk_steiner_pos])
-            self.add_via_center(layers=self.m1_stack,
-                                offset=clk_steiner_pos)
+            self.add_path(control_clk_buf_pin.layer, [control_clk_buf_pos, clk_steiner_pos])
+            self.add_via_stack_center(from_layer=control_clk_buf_pin.layer,
+                                      to_layer="m2",
+                                      offset=clk_steiner_pos)
             
             # Note, the via to the control logic is taken care of above
-            self.add_wire(("m3", "via2", "m2"),
+            self.add_wire(self.m2_stack[::-1],
                           [row_addr_clk_pos, mid1_pos, clk_steiner_pos])
         
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
                 dff_clk_pos = dff_clk_pin.center()
                 mid_pos = vector(clk_steiner_pos.x, dff_clk_pos.y)
-                self.add_wire(("m3", "via2", "m2"),
+                self.add_wire(self.m2_stack[::-1],
                               [dff_clk_pos, mid_pos, clk_steiner_pos])
 
             if port in self.write_ports:
@@ -282,7 +292,7 @@ class sram_1bank(sram_base):
                 self.add_path("m2",
                               [mid_pos, clk_steiner_pos],
                               width=max(m2_via.width, m2_via.height))
-                self.add_wire(("m3", "via2", "m2"),
+                self.add_wire(self.m2_stack[::-1],
                               [data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
                 if self.write_size:
@@ -292,7 +302,7 @@ class sram_1bank(sram_base):
                     # In some designs, the steiner via will be too close to the mid_pos via
                     # so make the wire as wide as the contacts
                     self.add_path("m2", [mid_pos, clk_steiner_pos], width=max(m2_via.width, m2_via.height))
-                    self.add_wire(("m3", "via2", "m2"), [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
+                    self.add_wire(self.m2_stack[::-1], [wmask_dff_clk_pos, mid_pos, clk_steiner_pos])
             
     def route_control_logic(self):
         """ Route the control logic pins that are not inputs """
@@ -304,14 +314,15 @@ class sram_1bank(sram_base):
                     continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal + "{}".format(port))
-                self.connect_vbus_m2m3(src_pin, dest_pin)
+                self.connect_vbus(src_pin, dest_pin)
 
         for port in self.all_ports:
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
             dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))
-            
-            self.connect_hbus_m2m3(src_pin, dest_pin)
+            self.add_wire(self.m2_stack[::-1],
+                          [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
+            # self.connect_hbus(src_pin, dest_pin)
             
     def route_row_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """
@@ -324,33 +335,37 @@ class sram_1bank(sram_base):
                 flop_pos = flop_pin.center()
                 bank_pos = bank_pin.center()
                 mid_pos = vector(bank_pos.x, flop_pos.y)
-                self.add_wire(("m3", "via2", "m2"),
+                self.add_wire(self.m2_stack[::-1],
                               [flop_pos, mid_pos, bank_pos])
-                self.add_via_center(layers=self.m2_stack,
-                                    offset=flop_pos)
+                self.add_via_stack_center(from_layer=flop_pin.layer,
+                                          to_layer="m3",
+                                          offset=flop_pos)
 
     def route_col_addr_dff(self):
         """ Connect the output of the col flops to the bank pins """
         for port in self.all_ports:
-            if port%2:
-                offset = self.col_addr_dff_insts[port].ll() - vector(0, (self.col_addr_size + 2) * self.m1_pitch)
+            if port % 2:
+                offset = self.col_addr_dff_insts[port].ll() - vector(0, self.col_addr_bus_size)
             else:
-                offset = self.col_addr_dff_insts[port].ul() + vector(0, 2 * self.m1_pitch)
+                offset = self.col_addr_dff_insts[port].ul() + vector(0, self.col_addr_bus_gap)
 
             bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]
             col_addr_bus_offsets = self.create_horizontal_bus(layer="m1",
-                                                              pitch=self.m1_pitch,
                                                               offset=offset,
                                                               names=bus_names,
                                                               length=self.col_addr_dff_insts[port].width)
 
             dff_names = ["dout_{}".format(x) for x in range(self.col_addr_size)]
             data_dff_map = zip(dff_names, bus_names)
-            self.connect_horizontal_bus(data_dff_map, self.col_addr_dff_insts[port], col_addr_bus_offsets)
+            self.connect_horizontal_bus(data_dff_map,
+                                        self.col_addr_dff_insts[port],
+                                        col_addr_bus_offsets)
             
             bank_names = ["addr{0}_{1}".format(port, x) for x in range(self.col_addr_size)]
             data_bank_map = zip(bank_names, bus_names)
-            self.connect_horizontal_bus(data_bank_map, self.bank_inst, col_addr_bus_offsets)
+            self.connect_horizontal_bus(data_bank_map,
+                                        self.bank_inst,
+                                        col_addr_bus_offsets)
 
     def route_data_dff(self):
         """ Connect the output of the data flops to the write driver """
@@ -358,48 +373,47 @@ class sram_1bank(sram_base):
         for port in self.write_ports:
             if self.write_size:
                 if port % 2:
-                    offset = self.data_dff_insts[port].ll() - vector(0, (self.word_size + 2) * self.m3_pitch)
+                    offset = self.data_dff_insts[port].ll() - vector(0, self.data_bus_size)
                 else:
-                    offset = self.data_dff_insts[port].ul() + vector(0, 2 * self.m3_pitch)
+                    offset = self.data_dff_insts[port].ul() + vector(0, self.data_bus_gap)
             else:
                 if port % 2:
-                    offset = self.data_dff_insts[port].ll() - vector(0, (self.word_size + 2) * self.m1_pitch)
+                    offset = self.data_dff_insts[port].ll() - vector(0, self.data_bus_size)
                 else:
-                    offset = self.data_dff_insts[port].ul() + vector(0, 2 * self.m1_pitch)
+                    offset = self.data_dff_insts[port].ul() + vector(0, self.data_bus_gap)
 
             dff_names = ["dout_{}".format(x) for x in range(self.word_size)]
             dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
             if self.write_size:
                 for x in dff_names:
-                    pin_offset = self.data_dff_insts[port].get_pin(x).center()
+                    pin = self.data_dff_insts[port].get_pin(x)
+                    pin_offset = pin.center()
                     self.add_via_center(layers=self.m1_stack,
                                         offset=pin_offset,
                                         directions=("V", "V"))
-                    self.add_via_center(layers=self.m2_stack,
-                                        offset=pin_offset)
-                    self.add_via_center(layers=self.m3_stack,
-                                        offset=pin_offset)
+                    self.add_via_stack_center(from_layer="m2",
+                                              to_layer="m4",
+                                              offset=pin_offset)
             
             bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             if self.write_size:
                 for x in bank_names:
+                    pin = self.bank_inst.get_pin(x)
                     if port % 2:
-                        pin_offset = self.bank_inst.get_pin(x).uc()
+                        pin_offset = pin.uc()
                     else:
-                        pin_offset = self.bank_inst.get_pin(x).bc()
-                    self.add_via_center(layers=self.m1_stack,
-                                        offset=pin_offset)
-                    self.add_via_center(layers=self.m2_stack,
-                                        offset=pin_offset)
-                    self.add_via_center(layers=self.m3_stack,
-                                        offset=pin_offset)
+                        pin_offset = pin.bc()
+                    self.add_via_stack_center(from_layer=pin.layer,
+                                              to_layer="m4",
+                                              offset=pin_offset)
 
             route_map = list(zip(bank_pins, dff_pins))
             if self.write_size:
                 layer_stack = self.m3_stack
             else:
                 layer_stack = self.m1_stack
+                
             self.create_horizontal_channel_route(netlist=route_map,
                                                  offset=offset,
                                                  layer_stack=layer_stack)
@@ -409,9 +423,9 @@ class sram_1bank(sram_base):
         # This is where the channel will start (y-dimension at least)
         for port in self.write_ports:
             if port % 2:
-                offset = self.wmask_dff_insts[port].ll() - vector(0, (self.num_wmasks + 2) * self.m1_pitch)
+                offset = self.wmask_dff_insts[port].ll() - vector(0, self.wmask_bus_size)
             else:
-                offset = self.wmask_dff_insts[port].ul() + vector(0, 2 * self.m1_pitch)
+                offset = self.wmask_dff_insts[port].ul() + vector(0, self.wmask_bus_gap)
 
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
             dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]

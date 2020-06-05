@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
 import unittest
@@ -22,10 +22,12 @@ class replica_bitcell_array_test(openram_test):
         OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
         OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
+        OPTS.col_cap_bitcell="col_cap_bitcell_1rw_1r"
+        OPTS.row_cap_bitcell="row_cap_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-        
+
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
         a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=2, right_rbl=0, bitcell_ports=[0,1])
         self.local_check(a)

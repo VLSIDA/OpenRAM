@@ -22,11 +22,11 @@ class single_level_column_mux_1rw_1r_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-
+        globals.setup_bitcell()
+        
         debug.info(2, "Checking column mux port 0")
         tx = factory.create(module_type="single_level_column_mux", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)

@@ -22,10 +22,10 @@ class precharge_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         
         # check precharge array in multi-port
-        OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        globals.setup_bitcell()
 
         factory.reset()
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell (port 0)")

@@ -77,8 +77,8 @@ class sram_factory:
         """
         tech_module_type, tm_overridden = self.get_techmodule_type(module_type)
         user_module_type, um_overridden = self.get_usermodule_type(module_type)
-        #print(module_type, tech_module_type, tm_overridden)
-        #print(module_type, user_module_type, um_overridden)
+        # print(module_type, tech_module_type, tm_overridden)
+        # print(module_type, user_module_type, um_overridden)
         
         # overridden user modules have priority
         if um_overridden:

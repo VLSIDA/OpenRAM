@@ -124,26 +124,23 @@ class options(optparse.Values):
     purge_temp = True
 
     # These are the default modules that can be over-riden
+    bitcell_suffix = ""
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
-    col_cap_bitcell = "col_cap_bitcell"
     column_mux_array = "single_level_column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
-    dummy_bitcell = "dummy_bitcell"
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
     nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
-    replica_bitcell = "replica_bitcell"
     replica_bitline = "replica_bitline"
-    row_cap_bitcell = "row_cap_bitcell"
     sense_amp_array = "sense_amp_array"
     sense_amp = "sense_amp"
     tri_gate_array = "tri_gate_array"

@@ -798,22 +798,34 @@ class bank(design.design):
 
         for row in range(self.num_rows):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).rc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row)).lc()
+            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pos = driver_wl_pin.rc()
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pos = bitcell_wl_pin.lc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
-            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                      to_layer=bitcell_wl_pin.layer,
+                                      offset=bitcell_wl_pos,
+                                      directions=("H", "H"))
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
         for row in range(self.num_rows):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).lc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row)).rc()
+            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pos = driver_wl_pin.lc()
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pos = bitcell_wl_pin.rc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].lx() + 0.5 * self.bitcell_array_inst.rx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
-            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                      to_layer=bitcell_wl_pin.layer,
+                                      offset=bitcell_wl_pos,
+                                      directions=("H", "H"))
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """

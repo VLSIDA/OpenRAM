@@ -8,6 +8,7 @@ from sram_factory import factory
 from globals import OPTS
 from tech import cell_properties
 
+
 class col_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
@@ -35,8 +36,7 @@ class col_cap_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        # self.dummy_cell = factory.create(module_type="col_cap_bitcell_1rw_1r") # TODO: make module_type generic
-        self.dummy_cell = factory.create(module_type="col_cap_bitcell")
+        self.dummy_cell = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
 
         self.cell = factory.create(module_type="bitcell")

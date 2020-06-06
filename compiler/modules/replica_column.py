@@ -5,11 +5,11 @@
 #
 import debug
 import design
-from tech import drc, cell_properties
-import contact
+from tech import cell_properties
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+
 
 class replica_column(design.design):
     """
@@ -29,11 +29,12 @@ class replica_column(design.design):
         self.right_rbl = right_rbl
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
-        self.total_size = self.left_rbl+rows+self.right_rbl+2
+        self.total_size = self.left_rbl + rows + self.right_rbl + 2
         self.column_offset = column_offset
 
-        debug.check(replica_bit!=0 and replica_bit!=rows,"Replica bit cannot be the dummy row.")
-        debug.check(replica_bit<=left_rbl or replica_bit>=self.total_size-right_rbl-1,
+        debug.check(replica_bit != 0 and replica_bit != rows,
+                    "Replica bit cannot be the dummy row.")
+        debug.check(replica_bit <= left_rbl or replica_bit >= self.total_size - right_rbl - 1,
                     "Replica bit cannot be in the regular array.")
 
         self.create_netlist()
@@ -46,7 +47,7 @@ class replica_column(design.design):
         self.create_instances()
 
     def create_layout(self):
-        self.height = self.total_size*self.cell.height
+        self.height = self.total_size * self.cell.height
         self.width = self.cell.width
 
         self.place_instances()
@@ -58,25 +59,25 @@ class replica_column(design.design):
 
         for bl_name in self.cell.get_all_bitline_names():
             # In the replica column, these are only outputs!
-            self.add_pin("{0}_{1}".format(bl_name,0), "OUTPUT")
+            self.add_pin("{0}_{1}".format(bl_name, 0), "OUTPUT")
 
         for row in range(self.total_size):
             for wl_name in self.cell.get_all_wl_names():
-                self.add_pin("{0}_{1}".format(wl_name,row), "INPUT")
+                self.add_pin("{0}_{1}".format(wl_name, row), "INPUT")
 
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.replica_cell = factory.create(module_type="replica_bitcell")
+        self.replica_cell = factory.create(module_type="replica_{}".format(OPTS.bitcell))
         self.add_mod(self.replica_cell)
-        self.dummy_cell = factory.create(module_type="dummy_bitcell")
+        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
         try:
-            edge_module_type = ("col_cap_bitcell" if cell_properties.bitcell.end_caps else "dummy_bitcell")
+            edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")
         except AttributeError:
-            edge_module_type = "dummy_bitcell"
-        self.edge_cell = factory.create(module_type=edge_module_type)
+            edge_module_type = "dummy"
+        self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
         self.add_mod(self.edge_cell)
         # Used for pin names only
         self.cell = factory.create(module_type="bitcell")
@@ -94,7 +95,7 @@ class replica_column(design.design):
             # Top/bottom cell are always dummy cells.
             # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
             # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
-            if (row>self.left_rbl and row<self.total_size-self.right_rbl-1):
+            if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.replica_cell)
                 self.connect_inst(self.get_bitcell_pins(0, row))
@@ -118,7 +119,7 @@ class replica_column(design.design):
         from tech import cell_properties
         # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
         # so that we will start with mirroring rather than not mirroring
-        rbl_offset = (self.left_rbl+1)%2
+        rbl_offset = (self.left_rbl + 1) %2
 
         # if our bitcells are mirrored on the y axis, check if we are in global
         # column that needs to be flipped.
@@ -129,12 +130,10 @@ class replica_column(design.design):
             xoffset = self.replica_cell.width
 
         for row in range(self.total_size):
-            dir_x = False
-            name = "bit_r{0}_{1}".format(row,"rbl")
-            if cell_properties.bitcell.mirror.x and (row+rbl_offset)%2:
-                dir_x = True
+            # name = "bit_r{0}_{1}".format(row, "rbl")
+            dir_x = cell_properties.bitcell.mirror.x and (row + rbl_offset) % 2
 
-            offset = vector(xoffset,self.cell.height*(row+(row+rbl_offset)%2))
+            offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
 
             if dir_x and dir_y:
                 dir_key = "XY"
@@ -174,9 +173,9 @@ class replica_column(design.design):
         for row in range(row_range_min, row_range_max):
             for wl_name in self.cell.get_all_wl_names():
                 wl_pin = self.cell_inst[row].get_pin(wl_name)
-                self.add_layout_pin(text="{0}_{1}".format(wl_name,row),
+                self.add_layout_pin(text="{0}_{1}".format(wl_name, row),
                                     layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0,1),
+                                    offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=wl_pin.height())
 
@@ -194,10 +193,10 @@ class replica_column(design.design):
 
         pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
-            bitcell_pins.append(pin+"_{0}".format(col))
+            bitcell_pins.append(pin + "_{0}".format(col))
         pin_names = self.cell.get_all_wl_names()
         for pin in pin_names:
-            bitcell_pins.append(pin+"_{0}".format(row))
+            bitcell_pins.append(pin + "_{0}".format(row))
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
 
@@ -211,11 +210,10 @@ class replica_column(design.design):
 
         pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
-            bitcell_pins.append(pin+"_{0}".format(col))
+            bitcell_pins.append(pin + "_{0}".format(col))
         bitcell_pins.append("vdd")
 
         return bitcell_pins
-
 
     def exclude_all_but_replica(self):
         """Excludes all bits except the replica cell (self.replica_bit)."""

@@ -23,10 +23,10 @@ class wordline_driver_array_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
 
         # Use the 2 port cell since it is usually bigger/easier
-        OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        globals.setup_bitcell()
 
         # check wordline driver for single port
         debug.info(2, "Checking driver")

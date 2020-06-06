@@ -48,11 +48,18 @@ class hierarchical_decoder(design.design):
         self.setup_layout_constants()
         self.place_pre_decoder()
         self.place_row_decoder()
+        
+        self.height = max(self.predecoder_height, self.row_decoder_height) + self.bus_space
+        
         self.route_inputs()
         self.route_outputs()
         self.route_decoder_bus()
         self.route_vdd_gnd()
+        
         self.offset_all_coordinates()
+        
+        self.width = self.and_inst[0].rx() + self.m1_space
+        
         self.add_boundary()
         self.DRC_LVS()
                 
@@ -178,21 +185,6 @@ class hierarchical_decoder(design.design):
         # Extra bus space for supply contacts
         self.input_routing_width = self.num_inputs * self.bus_pitch + self.bus_space
 
-        # Calculates height and width of row-decoder
-        # Calculates height and width of hierarchical decoder
-        # Add extra pitch for good measure
-        self.height = max(self.predecoder_height, self.row_decoder_height) + self.bus_space
-        if (self.num_inputs == 4 or self.num_inputs == 5):
-            self.nand_width = self.and2.width
-        else:
-            self.nand_width = self.and3.width
-
-        self.width = self.input_routing_width \
-                     + self.predecoder_width \
-                     + self.internal_routing_width \
-                     + self.nand_width \
-                     + self.m1_space
-            
     def route_inputs(self):
         """ Create input bus for the predecoders """
         # Find the left-most predecoder

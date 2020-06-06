@@ -23,12 +23,10 @@ class bitcell_1rw_1r_array_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         
-        OPTS.bitcell = "bitcell_1rw_1r"
-        OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
-        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        globals.setup_bitcell()
         
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)

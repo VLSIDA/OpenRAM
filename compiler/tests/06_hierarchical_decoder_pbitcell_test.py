@@ -21,11 +21,11 @@ class hierarchical_decoder_pbitcell_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         # check hierarchical decoder for multi-port
-        OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
-
+        globals.setup_bitcell()
+        
         factory.reset()
         debug.info(1, "Testing 16 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=16)

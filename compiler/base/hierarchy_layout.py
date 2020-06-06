@@ -450,26 +450,27 @@ class layout():
                     path=coordinates,
                     layer_widths=layer_widths)
 
-    def add_zjog(self, layer, start, end, first_direction="H", fixed_offset=None):
+    def add_zjog(self, layer, start, end, first_direction="H", var_offset=0.5, fixed_offset=None):
         """
         Add a simple jog at the halfway point.
         If layer is a single value, it is a path.
         If layer is a tuple, it is a wire with preferred directions.
         """
 
+        neg_offset = 1.0 - var_offset
         # vertical first
         if first_direction == "V":
             if fixed_offset:
                 mid1 = vector(start.x, fixed_offset)
             else:
-                mid1 = vector(start.x, 0.5 * start.y + 0.5 * end.y)
+                mid1 = vector(start.x, neg_offset * start.y + var_offset * end.y)
             mid2 = vector(end.x, mid1.y)
         # horizontal first
         elif first_direction == "H":
             if fixed_offset:
                 mid1 = vector(fixed_offset, start.y)
             else:
-                mid1 = vector(0.5 * start.x + 0.5 * end.x, start.y)
+                mid1 = vector(neg_offset * start.x + var_offset * end.x, start.y)
             mid2 = vector(mid1, end.y)
         else:
             debug.error("Invalid direction for jog -- must be H or V.")

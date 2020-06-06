@@ -214,25 +214,18 @@ def setup_bitcell():
             if OPTS.num_r_ports > 0:
                 ports += "{}r".format(OPTS.num_r_ports)
 
-            OPTS.bitcell = "bitcell_"+ports
-            OPTS.replica_bitcell = "replica_bitcell_"+ports
-            OPTS.dummy_bitcell = "dummy_bitcell_"+ports
-    else:
-        OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-        OPTS.replica_bitcell = "dummy_" + OPTS.bitcell
+            if ports != "":
+                OPTS.bitcell_suffix = "_" + ports
+            OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
                 
     # See if bitcell exists
     try:
         __import__(OPTS.bitcell)
-        __import__(OPTS.replica_bitcell)
-        __import__(OPTS.dummy_bitcell)
     except ImportError:
         # Use the pbitcell if we couldn't find a custom bitcell
         # or its custom replica  bitcell
         # Use the pbitcell (and give a warning if not in unit test mode)
         OPTS.bitcell = "pbitcell"
-        OPTS.replica_bitcell = "replica_pbitcell"
-        OPTS.replica_bitcell = "dummy_pbitcell"
         if not OPTS.is_unit_test:
             debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))

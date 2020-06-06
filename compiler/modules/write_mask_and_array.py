@@ -18,7 +18,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size, port=0):
+    def __init__(self, name, columns, word_size, write_size, column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -28,7 +28,7 @@ class write_mask_and_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
-        self.port = port
+        self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         self.num_wmasks = int(word_size / write_size)
 

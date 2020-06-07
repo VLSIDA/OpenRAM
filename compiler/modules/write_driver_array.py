@@ -18,7 +18,8 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, name, columns, word_size, num_spare_cols=None, write_size=None):
+    def __init__(self, name, columns, word_size, num_spare_cols=None, write_size=None, column_offset=0):
+
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -27,6 +28,7 @@ class write_driver_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
+        self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         if not num_spare_cols:
             self.num_spare_cols = 0
@@ -162,7 +164,7 @@ class write_driver_array(design.design):
             index = int(i / self.words_per_row)
             xoffset = i * self.driver_spacing
 
-            if cell_properties.bitcell.mirror.y and i % 2:
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
@@ -176,7 +178,7 @@ class write_driver_array(design.design):
             index = self.word_size + i
             xoffset = (self.columns + i) * self.driver_spacing
                 
-            if cell_properties.bitcell.mirror.y and i % 2:
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:

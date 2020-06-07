@@ -56,7 +56,8 @@ class pbuf(pgate.pgate):
         
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.size,
-                                   height=self.height)
+                                   height=self.height,
+                                   add_wells=False)
         self.add_mod(self.inv2)
 
     def create_insts(self):

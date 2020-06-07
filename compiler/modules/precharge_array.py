@@ -7,7 +7,6 @@
 #
 import design
 import debug
-from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -19,7 +18,7 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
+    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br", column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
@@ -28,6 +27,7 @@ class precharge_array(design.design):
         self.size = size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
+        self.column_offset = column_offset
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -106,7 +106,7 @@ class precharge_array(design.design):
         xoffset = 0
         for i in range(self.columns):
             tempx = xoffset
-            if cell_properties.bitcell.mirror.y and (i + 1) % 2:
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 tempx = tempx + self.pc_cell.width
             else:

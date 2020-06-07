@@ -128,23 +128,22 @@ class bank(design.design):
 
     def route_rbl(self, port):
         """ Route the rbl_bl and rbl_wl """
-        
-        bl_pin_name = self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-        bl_pin = self.bitcell_array_inst.get_pin(bl_pin_name)
-        # This will ensure the pin is only on the top or bottom edge
+
+        # Connect the rbl to the port data pin
+        bl_pin = self.port_data_inst[port].get_pin("rbl_bl")
         if port % 2:
-            via_offset = bl_pin.uc() + vector(0, 1.5 * self.m2_pitch)
-            left_right_offset = vector(self.max_x_offset, via_offset.y)
+            pin_offset = bl_pin.uc()
+            left_right_offset = vector(self.max_x_offset, pin_offset.y)
         else:
-            via_offset = bl_pin.bc() - vector(0, 1.5 * self.m2_pitch)
-            left_right_offset = vector(self.min_x_offset, via_offset.y)
+            pin_offset = bl_pin.bc()
+            left_right_offset = vector(self.min_x_offset, pin_offset.y)
         self.add_via_stack_center(from_layer=bl_pin.layer,
                                   to_layer="m3",
-                                  offset=via_offset)
+                                  offset=pin_offset)
         self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
-                                           end=via_offset)
+                                           end=pin_offset)
             
     def route_bitlines(self, port):
         """ Route the bitlines depending on the port type rw, w, or r. """
@@ -817,22 +816,34 @@ class bank(design.design):
 
         for row in range(self.num_rows):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).rc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row)).lc()
+            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pos = driver_wl_pin.rc()
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pos = bitcell_wl_pin.lc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
-            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                      to_layer=bitcell_wl_pin.layer,
+                                      offset=bitcell_wl_pos,
+                                      directions=("H", "H"))
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
         for row in range(self.num_rows):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pos = self.port_address_inst[port].get_pin("wl_{}".format(row)).lc()
-            bitcell_wl_pos = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row)).rc()
+            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pos = driver_wl_pin.lc()
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pos = bitcell_wl_pin.rc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].lx() + 0.5 * self.bitcell_array_inst.rx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
-            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                      to_layer=bitcell_wl_pin.layer,
+                                      offset=bitcell_wl_pos,
+                                      directions=("H", "H"))
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """

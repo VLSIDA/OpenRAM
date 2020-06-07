@@ -19,7 +19,7 @@ class pnand3(pgate.pgate):
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-    def __init__(self, name, size=1, height=None):
+    def __init__(self, name, size=1, height=None, add_wells=True):
         """ Creates a cell for a simple 3 input nand """
 
         debug.info(2,
@@ -45,7 +45,7 @@ class pnand3(pgate.pgate):
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
         
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -63,13 +63,14 @@ class pnand3(pgate.pgate):
 
         self.setup_layout_constants()
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
+        self.route_inputs()
+        self.route_output()
         self.determine_width()
         self.route_supply_rails()
         self.connect_rails()
         self.extend_wells()
-        self.route_inputs()
-        self.route_output()
         self.add_boundary()
         
     def add_ptx(self):
@@ -211,7 +212,10 @@ class pnand3(pgate.pgate):
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
+        # This is a more compact offset, but the bottom one works better in the decoders to "center" the pins
+        # in the height of the gates
         self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
+        # self.inputA_yoffset = self.output_yoffset - self.m1_pitch
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

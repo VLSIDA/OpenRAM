@@ -35,7 +35,7 @@ class library_lvs_test(openram_test):
                 debug.error("Missing GDS file {}".format(gds_name))
             if not os.path.isfile(sp_name):
                 lvs_errors += 1
-                debug.error("Missing SPICE file {}".format(gds_name))
+                debug.error("Missing SPICE file {}".format(sp_name))
             drc_errors += verify.run_drc(name, gds_name)
             lvs_errors += verify.run_lvs(f, gds_name, sp_name)
 

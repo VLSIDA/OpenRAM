@@ -189,7 +189,7 @@ class sram_1bank(sram_base):
                     if self.num_spare_cols:
                         spare_wen_pos[port] = vector(self.bank.bank_array_ur.x - self.wmask_dff_insts[port].width 
                                                      - self.spare_wen_dff_insts[port].width - self.bank.m2_gap,
-                                                     self.bank.height + bus_size + self.dff.height))
+                                                     self.bank.height + bus_size + self.dff.height)
                         self.spare_wen_dff_insts[port].place(spare_wen_pos[port], mirror="MX")
                 
                 # Place dffs when spare cols is enabled
@@ -400,7 +400,9 @@ class sram_1bank(sram_base):
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
             dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))
-            self.connect_hbus(src_pin, dest_pin)
+            self.add_wire(self.m2_stack[::-1],
+                          [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
+            # self.connect_hbus(src_pin, dest_pin)
             
     def route_row_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """

@@ -24,7 +24,7 @@ class pgate(design.design):
     functions for parameterized gates.
     """
 
-    def __init__(self, name, height=None):
+    def __init__(self, name, height=None, add_wells=True):
         """ Creates a generic cell """
         design.design.__init__(self, name)
 
@@ -33,7 +33,8 @@ class pgate(design.design):
         elif not height:
             # By default, something simple
             self.height = 14 * self.m1_pitch
-            
+        self.add_wells = add_wells
+        
         if "li" in layer:
             self.route_layer = "li"
         else:
@@ -43,7 +44,6 @@ class pgate(design.design):
         self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
 
         # This is the space from a S/D contact to the supply rail
-        # Assume the contact starts at the active edge
         contact_to_vdd_rail_space = 0.5 * self.m1_width + self.m1_space
         # This is a poly-to-poly of a flipped cell
         poly_to_poly_gate_space = self.poly_extend_active + self.poly_space
@@ -150,7 +150,7 @@ class pgate(design.design):
 
         # This should match the cells in the cell library
         self.nwell_y_offset = 0.48 * self.height
-        full_height = self.height + 0.5* self.m1_width
+        full_height = self.height + 0.5 * self.m1_width
         
         # FIXME: float rounding problem
         if "nwell" in layer:
@@ -161,12 +161,12 @@ class pgate(design.design):
             nwell_height = nwell_max_offset - self.nwell_y_offset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=nwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=nwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=nwell_height)
 
         # Start this half a rail width below the cell
@@ -177,12 +177,12 @@ class pgate(design.design):
             pwell_height = self.nwell_y_offset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=pwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=pwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
 
     def add_nwell_contact(self, pmos, pmos_pos):
@@ -302,10 +302,18 @@ class pgate(design.design):
 
     def determine_width(self):
         """ Determine the width based on the well contacts (assumed to be on the right side) """
+
+        # It was already set or is left as default (minimum)
         # Width is determined by well contact and spacing and allowing a supply via between each cell
-        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
+        if self.add_wells:
+            width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+            # Height is an input parameter, so it is not recomputed.
+        else:
+            max_active_xoffset = self.find_highest_layer_coords("active").x
+            max_route_xoffset = self.find_highest_layer_coords(self.route_layer).x + 0.5 * self.m1_space
+            width = max(max_active_xoffset, max_route_xoffset)
+            
+        self.width = width
 
     @staticmethod
     def bin_width(tx_type, target_width):
@@ -327,16 +335,20 @@ class pgate(design.design):
             base_bins = []
             scaled_bins = []
             scaling_factors = []
-            scaled_bins.append(bins[-1])
-            base_bins.append(bins[-1])
-            scaling_factors.append(1)
-            for width in bins[0:-1]:
+
+            for width in bins:
                 m = math.ceil(target_width / width)
                 base_bins.append(width)
                 scaling_factors.append(m)
                 scaled_bins.append(m * width)
-
-            select = bisect_left(scaled_bins, target_width)
+                
+            select = -1
+            for i in reversed(range(0, len(scaled_bins))):
+                if abs(target_width - scaled_bins[i])/target_width <= 1-accuracy_requirement:
+                    select = i
+                    break
+            if select == -1:
+                debug.error("failed to bin tx size {}, try reducing accuracy requirement".format(target_width), 1)
             scaling_factor = scaling_factors[select]
             scaled_bin = scaled_bins[select]
             selected_bin = base_bins[select]

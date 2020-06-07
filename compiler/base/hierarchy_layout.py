@@ -42,14 +42,14 @@ class layout():
         self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells
         self.gds_read()
-        
+
         try:
             from tech import power_grid
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
 
-            
+
 
     ############################################################
     # GDS layout
@@ -244,25 +244,27 @@ class layout():
                                             height))
         return self.objs[-1]
 
-    def add_segment_center(self, layer, start, end):
+    def add_segment_center(self, layer, start, end, width=None):
         """
         Add a min-width rectanglular segment using center
         line on the start to end point
         """
-        minwidth_layer = drc["minwidth_{}".format(layer)]
+        if not width:
+            width = drc["minwidth_{}".format(layer)]
+
         if start.x != end.x and start.y != end.y:
             debug.error("Nonrectilinear center rect!", -1)
         elif start.x != end.x:
-            offset = vector(0, 0.5 * minwidth_layer)
+            offset = vector(0, 0.5 * width)
             return self.add_rect(layer,
                                  start - offset,
                                  end.x - start.x,
-                                 minwidth_layer)
+                                 width)
         else:
-            offset = vector(0.5 * minwidth_layer, 0)
+            offset = vector(0.5 * width, 0)
             return self.add_rect(layer,
                                  start - offset,
-                                 minwidth_layer,
+                                 width,
                                  end.y - start.y)
 
     def get_pin(self, text):
@@ -322,7 +324,7 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
-    def add_layout_pin_segment_center(self, text, layer, start, end):
+    def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """
         Creates a path like pin with center-line convention
         """
@@ -331,27 +333,27 @@ class layout():
             self.gds_write(file_name)
             debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
 
-        minwidth_layer = drc["minwidth_{}".format(layer)]
+        if not width:
+            layer_width = drc["minwidth_{}".format(layer)]
+        else:
+            layer_width = width
 
         # one of these will be zero
-        width = max(start.x, end.x) - min(start.x, end.x)
-        height = max(start.y, end.y) - min(start.y, end.y)
+        bbox_width = max(start.x, end.x) - min(start.x, end.x)
+        bbox_height = max(start.y, end.y) - min(start.y, end.y)
         ll_offset = vector(min(start.x, end.x), min(start.y, end.y))
 
         # Shift it down 1/2 a width in the 0 dimension
-        if height == 0:
-            ll_offset -= vector(0, 0.5 * minwidth_layer)
-        if width == 0:
-            ll_offset -= vector(0.5 * minwidth_layer, 0)
-        # This makes sure it is long enough, but also it is not 0 width!
-        height = max(minwidth_layer, height)
-        width = max(minwidth_layer, width)
+        if bbox_height == 0:
+            ll_offset -= vector(0, 0.5 * layer_width)
+        if bbox_width == 0:
+            ll_offset -= vector(0.5 * layer_width, 0)
 
-        return self.add_layout_pin(text,
-                                   layer,
-                                   ll_offset,
-                                   width,
-                                   height)
+        return self.add_layout_pin(text=text,
+                                   layer=layer,
+                                   offset=ll_offset,
+                                   width=bbox_width,
+                                   height=bbox_height)
 
     def add_layout_pin_rect_center(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """
@@ -448,24 +450,31 @@ class layout():
                     path=coordinates,
                     layer_widths=layer_widths)
 
-    def add_zjog(self, layer, start, end, first_direction="H"):
+    def add_zjog(self, layer, start, end, first_direction="H", var_offset=0.5, fixed_offset=None):
         """
         Add a simple jog at the halfway point.
         If layer is a single value, it is a path.
         If layer is a tuple, it is a wire with preferred directions.
         """
 
+        neg_offset = 1.0 - var_offset
         # vertical first
         if first_direction == "V":
-            mid1 = vector(start.x, 0.5 * start.y + 0.5 * end.y)
+            if fixed_offset:
+                mid1 = vector(start.x, fixed_offset)
+            else:
+                mid1 = vector(start.x, neg_offset * start.y + var_offset * end.y)
             mid2 = vector(end.x, mid1.y)
         # horizontal first
         elif first_direction == "H":
-            mid1 = vector(0.5 * start.x + 0.5 * end.x, start.y)
+            if fixed_offset:
+                mid1 = vector(fixed_offset, start.y)
+            else:
+                mid1 = vector(neg_offset * start.x + var_offset * end.x, start.y)
             mid2 = vector(mid1, end.y)
         else:
             debug.error("Invalid direction for jog -- must be H or V.")
-            
+
         if layer in layer_stacks:
             self.add_wire(layer, [start, mid1, mid2, end])
         elif layer in techlayer:
@@ -480,7 +489,7 @@ class layout():
         mid1 = vector(0.5 * start.x + 0.5 * end.x, start.y)
         mid2 = vector(mid1, end.y)
         self.add_path(layer, [start, mid1, mid2, end])
-        
+
     def add_wire(self, layers, coordinates, widen_short_wires=True):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
@@ -620,7 +629,7 @@ class layout():
                                             last_via=via,
                                             size=size)
         return via
-    
+
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
         import ptx
@@ -692,6 +701,8 @@ class layout():
                 boundary_layer = "stdc"
                 boundary = [self.find_lowest_coords(),
                             self.find_highest_coords()]
+                debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
+
                 height = boundary[1][1] - boundary[0][1]
                 width = boundary[1][0] - boundary[0][0]
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
@@ -973,7 +984,7 @@ class layout():
         self.add_via_stack_center(from_layer=vlayer,
                                   to_layer=dest_pin.layer,
                                   offset=out_pos)
-        
+
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         try:
@@ -985,7 +996,7 @@ class layout():
         except AttributeError:
             debug.error("Cannot find layer pitch.", -1)
         return (nonpref_pitch, pitch, pitch - space, space)
-    
+
     def add_horizontal_trunk_route(self,
                                    pins,
                                    trunk_offset,
@@ -1103,7 +1114,7 @@ class layout():
                 pitch = self.horizontal_nonpref_pitch
             else:
                 pitch = self.vertical_nonpref_pitch
-            
+
             for pin1 in net1:
                 for pin2 in net2:
                     if vcg_pin_overlap(pin1, pin2, vertical, pitch):
@@ -1113,7 +1124,7 @@ class layout():
 
         def vcg_pin_overlap(pin1, pin2, vertical, pitch):
             """ Check for vertical or horizontal overlap of the two pins """
-            
+
             # FIXME: If the pins are not in a row, this may break.
             # However, a top pin shouldn't overlap another top pin,
             # for example, so the extra comparison *shouldn't* matter.
@@ -1147,7 +1158,7 @@ class layout():
 
         layer_stuff = self.get_layer_pitch(self.vertical_layer)
         (self.vertical_nonpref_pitch, self.vertical_pitch, self.vertical_width, self.vertical_space) = layer_stuff
-        
+
         layer_stuff = self.get_layer_pitch(self.horizontal_layer)
         (self.horizontal_nonpref_pitch, self.horizontal_pitch, self.horizontal_width, self.horizontal_space) = layer_stuff
 
@@ -1172,7 +1183,7 @@ class layout():
         # print("Nets:")
         # for net_name in nets:
          #    print(net_name, [x.name for x in nets[net_name]])
-            
+
         # Find the vertical pin conflicts
         # FIXME: O(n^2) but who cares for now
         for net_name1 in nets:
@@ -1306,16 +1317,16 @@ class layout():
         which vias are needed.
         """
 
-        via = self.add_via_stack_center(from_layer=start_layer,
-                                        to_layer=self.pwr_grid_layer,
-                                        size=size,
-                                        offset=loc,
-                                        directions=directions)
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc)
         else:
+            via = self.add_via_stack_center(from_layer=start_layer,
+                                            to_layer=self.pwr_grid_layer,
+                                            size=size,
+                                            offset=loc,
+                                            directions=directions)
             # Hack for min area
             if OPTS.tech_name == "s8":
                 width = round_to_grid(sqrt(drc["minarea_m3"]))

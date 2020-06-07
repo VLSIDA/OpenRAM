@@ -21,10 +21,10 @@ class options(optparse.Values):
     ###################
     # This is the technology directory.
     openram_tech = ""
-    
+
     # This is the name of the technology.
     tech_name = ""
-    
+
     # Port configuration (1-2 ports allowed)
     num_rw_ports = 1
     num_r_ports = 0
@@ -32,7 +32,7 @@ class options(optparse.Values):
 
     # Write mask size, default will be overwritten with word_size if not user specified
     write_size = None
-    
+
     # These will get initialized by the user or the tech file
     nominal_corner_only = False
     supply_voltages = ""
@@ -52,17 +52,17 @@ class options(optparse.Values):
     ###################
     # Approximate percentage of delay compared to bitlines
     rbl_delay_percentage = 0.5
-    
+
     # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
-    
-    
+
+
 
     ###################
     # Debug options.
-    ###################    
+    ###################
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
@@ -93,7 +93,7 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
 
-    
+
     ###################
     # Tool options
     ###################
@@ -110,7 +110,7 @@ class options(optparse.Values):
     drc_exe = None
     lvs_exe = None
     pex_exe = None
-    
+
     # Should we print out the banner at startup
     print_banner = True
 
@@ -126,6 +126,7 @@ class options(optparse.Values):
     purge_temp = True
 
     # These are the default modules that can be over-riden
+    bitcell_suffix = ""
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
@@ -135,10 +136,12 @@ class options(optparse.Values):
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
-    dummy_bitcell = "dummy_bitcell"
+    inv_dec = "pinv"
+    nand2_dec = "pnand2"
+    nand3_dec = "pnand3"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
-    replica_bitcell = "replica_bitcell"
     replica_bitline = "replica_bitline"
     sense_amp_array = "sense_amp_array"
     sense_amp = "sense_amp"
@@ -148,4 +151,3 @@ class options(optparse.Values):
     write_driver_array = "write_driver_array"
     write_driver = "write_driver"
     write_mask_and_array = "write_mask_and_array"
-

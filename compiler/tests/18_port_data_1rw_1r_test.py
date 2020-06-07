@@ -13,6 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class port_data_1rw_1r_test(openram_test):
 
     def runTest(self):
@@ -20,11 +21,11 @@ class port_data_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
-        OPTS.bitcell = "bitcell_1w_1r"
-        OPTS.num_rw_ports = 0
+        OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 1
-
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+        
         c = sram_config(word_size=4,
                         num_words=16)
 
@@ -36,7 +37,7 @@ class port_data_1rw_1r_test(openram_test):
         self.local_check(a)
         a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
-        
+
         c.num_words=32
         c.words_per_row=2
         factory.reset()

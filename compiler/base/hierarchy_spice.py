@@ -208,6 +208,7 @@ class spice():
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
         else:
+            debug.info(4, "no spfile {0}".format(self.sp_file))
             self.spice = []
 
         # We don't define self.lvs and will use self.spice if dynamically created

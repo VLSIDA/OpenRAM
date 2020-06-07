@@ -18,7 +18,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size, port=0):
+    def __init__(self, name, columns, word_size, write_size, column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -28,7 +28,7 @@ class write_mask_and_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
-        self.port = port
+        self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         self.num_wmasks = int(word_size / write_size)
 
@@ -60,7 +60,7 @@ class write_mask_and_array(design.design):
         # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
         # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
-                                   size=self.write_size / 4.0)
+                                   size=max(self.write_size / 4.0, 1))
         self.add_mod(self.and2)
 
     def create_and2_array(self):

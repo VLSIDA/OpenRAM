@@ -32,7 +32,7 @@ class pinv(pgate.pgate):
     from center of rail to rail.
     """
 
-    def __init__(self, name, size=1, beta=parameter["beta"], height=None):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None, add_wells=True):
 
         debug.info(2,
                    "creating pinv structure {0} with size of {1}".format(name,
@@ -40,11 +40,12 @@ class pinv(pgate.pgate):
         self.add_comment("size: {}".format(size))
 
         self.size = size
+        debug.check(self.size >= 1, "Must have a size greater than or equal to 1.")
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta
         
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """
@@ -56,17 +57,18 @@ class pinv(pgate.pgate):
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
         self.determine_width()
         self.extend_wells()
-        self.route_supply_rails()
-        self.connect_rails()
         self.route_input_gate(self.pmos_inst,
                               self.nmos_inst,
                               self.output_pos.y,
                               "A",
                               position="farleft")
         self.route_outputs()
+        self.route_supply_rails()
+        self.connect_rails()
         self.add_boundary()
         
     def add_pins(self):

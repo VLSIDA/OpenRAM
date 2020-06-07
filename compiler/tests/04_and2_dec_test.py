@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import unittest
@@ -13,24 +15,23 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_bitcell_array_test(openram_test):
+class and2_dec_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
+        global verify
+        import verify
 
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 0
-        OPTS.num_w_ports = 0
+        import and2_dec
 
-        factory.reset()
-        debug.info(2, "Testing 4x4 array for bitcell")
-        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, left_rbl=1, right_rbl=0, bitcell_ports=[0])
+        debug.info(2, "Testing and2 gate 4x")
+        a = and2_dec.and2_dec(name="and2x4", size=4)
         self.local_check(a)
-        
+
         globals.end_openram()
 
-# run the test from the command line
+# instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

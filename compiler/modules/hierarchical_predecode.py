@@ -202,15 +202,15 @@ class hierarchical_predecode(design.design):
             y_offset = pin.cy()
             in_pin = "in_{}".format(num)
             a_pin = "A_{}".format(num)
-            in_pos = vector(self.input_rails[in_pin].x, y_offset)
-            a_pos = vector(self.decode_rails[a_pin].x, y_offset)
+            in_pos = vector(self.input_rails[in_pin].cx(), y_offset)
+            a_pos = vector(self.decode_rails[a_pin].cx(), y_offset)
             self.add_path(self.input_layer, [in_pos, a_pos])
             self.add_via_stack_center(from_layer=self.input_layer,
                                       to_layer=self.bus_layer,
-                                      offset=[self.input_rails[in_pin].x, y_offset])
+                                      offset=[self.input_rails[in_pin].cx(), y_offset])
             self.add_via_stack_center(from_layer=self.input_layer,
                                       to_layer=self.bus_layer,
-                                      offset=[self.decode_rails[a_pin].x, y_offset])
+                                      offset=[self.decode_rails[a_pin].cx(), y_offset])
 
     def route_output_and(self):
         """
@@ -240,12 +240,12 @@ class hierarchical_predecode(design.design):
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
             if OPTS.tech_name == "s8":
-                rail_pos = vector(self.decode_rails[out_pin].x, inv_out_pos.y)                
+                rail_pos = vector(self.decode_rails[out_pin].cx(), inv_out_pos.y)
                 self.add_path(self.output_layer, [inv_out_pos, rail_pos])
             else:
                 y_offset = (inv_num + 1) * self.inv.height - self.output_layer_pitch
                 right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
-                rail_pos = vector(self.decode_rails[out_pin].x, y_offset)
+                rail_pos = vector(self.decode_rails[out_pin].cx(), y_offset)
                 self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
                 
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
@@ -259,7 +259,7 @@ class hierarchical_predecode(design.design):
             # route input
             pin = self.inv_inst[inv_num].get_pin("A")
             inv_in_pos = pin.center()
-            in_pos = vector(self.input_rails[in_pin].x, inv_in_pos.y)
+            in_pos = vector(self.input_rails[in_pin].cx(), inv_in_pos.y)
             self.add_path(self.input_layer, [in_pos, inv_in_pos])
             self.add_via_stack_center(from_layer=pin.layer,
                                       to_layer=self.input_layer,
@@ -290,7 +290,7 @@ class hierarchical_predecode(design.design):
             for rail_pin, gate_pin in zip(index_lst, gate_lst):
                 pin = self.and_inst[k].get_pin(gate_pin)
                 pin_pos = pin.center()
-                rail_pos = vector(self.decode_rails[rail_pin].x, pin_pos.y)
+                rail_pos = vector(self.decode_rails[rail_pin].cx(), pin_pos.y)
                 self.add_path(self.input_layer, [rail_pos, pin_pos])
                 self.add_via_stack_center(from_layer=self.input_layer,
                                           to_layer=self.bus_layer,

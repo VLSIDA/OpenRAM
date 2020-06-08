@@ -219,8 +219,6 @@ class layout():
         if not height:
             height = drc["minwidth_{}".format(layer)]
         lpp = techlayer[layer]
-        if abs(offset[0]-5.16250)<0.01 and abs(offset[1]-8.70750)<0.01:
-            import pdb; pdb.set_trace()
         self.objs.append(geometry.rectangle(lpp,
                                             offset,
                                             width,
@@ -838,51 +836,57 @@ class layout():
         if not pitch:
             pitch = getattr(self, "{}_pitch".format(layer))
 
-        line_positions = {}
+        pins = {}
         if vertical:
             for i in range(len(names)):
                 line_offset = offset + vector(i * pitch,
                                               0)
                 if make_pins:
-                    self.add_layout_pin(text=names[i],
-                                        layer=layer,
-                                        offset=line_offset,
-                                        height=length)
+                    new_pin = self.add_layout_pin(text=names[i],
+                                                  layer=layer,
+                                                  offset=line_offset,
+                                                  height=length)
                 else:
-                    self.add_rect(layer=layer,
-                                  offset=line_offset,
-                                  height=length)
-                line_positions[names[i]] = line_offset + vector(half_minwidth, 0)
+                    rect = self.add_rect(layer=layer,
+                                         offset=line_offset,
+                                         height=length)
+                    new_pin = pin_layout(names[i],
+                                         [rect.ll(), rect.ur()],
+                                         layer)
+                    
+                pins[names[i]] = new_pin
         else:
             for i in range(len(names)):
                 line_offset = offset + vector(0,
                                               i * pitch + half_minwidth)
                 if make_pins:
-                    self.add_layout_pin(text=names[i],
-                                        layer=layer,
-                                        offset=line_offset,
-                                        width=length)
+                    new_pin = self.add_layout_pin(text=names[i],
+                                                  layer=layer,
+                                                  offset=line_offset,
+                                                  width=length)
                 else:
-                    self.add_rect(layer=layer,
-                                  offset=line_offset,
-                                  width=length)
-                # Make this the center of the rail
-                line_positions[names[i]] = line_offset + vector(0.5 * length,
-                                                                half_minwidth)
+                    rect = self.add_rect(layer=layer,
+                                         offset=line_offset,
+                                         width=length)
+                    new_pin = pin_layout(names[i],
+                                         [rect.ll(), rect.ur()],
+                                         layer)
+                    
+                pins[names[i]] = new_pin
 
-        return line_positions
+        return pins
 
-    def connect_horizontal_bus(self, mapping, inst, bus_offsets,
+    def connect_horizontal_bus(self, mapping, inst, bus_pins,
                                layer_stack=("m1", "via1", "m2")):
         """ Horizontal version of connect_bus. """
-        self.connect_bus(mapping, inst, bus_offsets, layer_stack, True)
+        self.connect_bus(mapping, inst, bus_pins, layer_stack, True)
 
-    def connect_vertical_bus(self, mapping, inst, bus_offsets,
+    def connect_vertical_bus(self, mapping, inst, bus_pins,
                              layer_stack=("m1", "via1", "m2")):
         """ Vertical version of connect_bus. """
-        self.connect_bus(mapping, inst, bus_offsets, layer_stack, False)
+        self.connect_bus(mapping, inst, bus_pins, layer_stack, False)
 
-    def connect_bus(self, mapping, inst, bus_offsets, layer_stack, horizontal):
+    def connect_bus(self, mapping, inst, bus_pins, layer_stack, horizontal):
         """
         Connect a mapping of pin -> name for a bus. This could be
         replaced with a channel router in the future.
@@ -898,7 +902,7 @@ class layout():
         for (pin_name, bus_name) in mapping:
             pin = inst.get_pin(pin_name)
             pin_pos = pin.center()
-            bus_pos = bus_offsets[bus_name]
+            bus_pos = bus_pins[bus_name].center()
 
             if horizontal:
                 # up/down then left/right

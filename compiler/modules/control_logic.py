@@ -389,10 +389,10 @@ class control_logic(design.design):
         height = self.control_logic_center.y - self.m2_pitch
         offset = vector(self.ctrl_dff_array.width, 0)
         
-        self.rail_offsets = self.create_vertical_bus("m2",
-                                                     offset,
-                                                     self.internal_bus_list,
-                                                     height)
+        self.input_bus = self.create_vertical_bus("m2",
+                                                  offset,
+                                                  self.internal_bus_list,
+                                                  height)
 
     def create_instances(self):
         """ Create all the instances """
@@ -498,7 +498,7 @@ class control_logic(design.design):
         # Connect to the rail level with the vdd rail
         # Use pen since it is in every type of control logic
         vdd_ypos = self.p_en_bar_nand_inst.get_pin("vdd").by()
-        in_pos = vector(self.rail_offsets["rbl_bl_delay"].x, vdd_ypos)
+        in_pos = vector(self.input_bus["rbl_bl_delay"].cx(), vdd_ypos)
         mid1 = vector(out_pos.x, in_pos.y)
         self.add_wire(self.m1_stack, [out_pos, mid1, in_pos])
         self.add_via_center(layers=self.m1_stack,
@@ -553,7 +553,7 @@ class control_logic(design.design):
 
     def route_gated_clk_bar(self):
         clkbuf_map = zip(["A"], ["clk_buf"])
-        self.connect_vertical_bus(clkbuf_map, self.clk_bar_inst, self.rail_offsets)
+        self.connect_vertical_bus(clkbuf_map, self.clk_bar_inst, self.input_bus)
 
         out_pos = self.clk_bar_inst.get_pin("Z").center()
         in_pos = self.gated_clk_bar_inst.get_pin("A").center()
@@ -563,7 +563,7 @@ class control_logic(design.design):
         clkbuf_map = zip(["B"], ["cs"])
         self.connect_vertical_bus(clkbuf_map,
                                   self.gated_clk_bar_inst,
-                                  self.rail_offsets,
+                                  self.input_bus,
                                   self.m2_stack[::-1])
         # The pin is on M1, so we need another via as well
         b_pin = self.gated_clk_bar_inst.get_pin("B")
@@ -591,12 +591,12 @@ class control_logic(design.design):
         clkbuf_map = zip(["A", "B"], ["clk_buf", "cs"])
         self.connect_vertical_bus(clkbuf_map,
                                   self.gated_clk_buf_inst,
-                                  self.rail_offsets)
+                                  self.input_bus)
 
         clkbuf_map = zip(["Z"], ["gated_clk_buf"])
         self.connect_vertical_bus(clkbuf_map,
                                   self.gated_clk_buf_inst,
-                                  self.rail_offsets,
+                                  self.input_bus,
                                   self.m2_stack[::-1])
         # The pin is on M1, so we need another via as well
         z_pin = self.gated_clk_buf_inst.get_pin("Z")
@@ -619,7 +619,7 @@ class control_logic(design.design):
 
     def route_wlen(self):
         wlen_map = zip(["A"], ["gated_clk_bar"])
-        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.rail_offsets)
+        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.input_bus)
         
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
@@ -644,7 +644,7 @@ class control_logic(design.design):
 
     def route_pen(self):
         in_map = zip(["A", "B"], ["gated_clk_buf", "rbl_bl_delay"])
-        self.connect_vertical_bus(in_map, self.p_en_bar_nand_inst, self.rail_offsets)
+        self.connect_vertical_bus(in_map, self.p_en_bar_nand_inst, self.input_bus)
 
         out_pin = self.p_en_bar_nand_inst.get_pin("Z")
         out_pos = out_pin.center()
@@ -687,7 +687,7 @@ class control_logic(design.design):
             input_name = "cs"
             
         sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
-        self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.rail_offsets)
+        self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.input_bus)
         
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
 
@@ -711,7 +711,7 @@ class control_logic(design.design):
         self.route_output_to_bus_jogged(self.rbl_bl_delay_inv_inst, "rbl_bl_delay_bar")
         
         rbl_map = zip(["A"], ["rbl_bl_delay"])
-        self.connect_vertical_bus(rbl_map, self.rbl_bl_delay_inv_inst, self.rail_offsets)
+        self.connect_vertical_bus(rbl_map, self.rbl_bl_delay_inv_inst, self.input_bus)
 
     def create_wen_row(self):
 
@@ -743,7 +743,7 @@ class control_logic(design.design):
             input_name = "cs"
             
         wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay_bar", "gated_clk_bar"])
-        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.rail_offsets)
+        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus)
 
         self.connect_output(self.w_en_gate_inst, "Z", "w_en")
         
@@ -766,13 +766,13 @@ class control_logic(design.design):
             dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])
         else:
             dff_out_map = zip(["dout_bar_0"], ["cs"])
-        self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.rail_offsets, self.m2_stack[::-1])
+        self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.input_bus, self.m2_stack[::-1])
         
         # Connect the clock rail to the other clock rail
         # by routing in the supply rail track to avoid channel conflicts
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
         mid_pos = in_pos + vector(0, self.and2.height)
-        rail_pos = vector(self.rail_offsets["clk_buf"].x, mid_pos.y)
+        rail_pos = vector(self.input_bus["clk_buf"].cx(), mid_pos.y)
         self.add_wire(self.m1_stack, [in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=self.m1_stack,
                             offset=rail_pos)
@@ -1006,8 +1006,8 @@ class control_logic(design.design):
         # Connect this at the bottom of the buffer
         out_pos = inst.get_pin("Z").center()
         mid1 = vector(out_pos.x, out_pos.y - 0.25 * inst.mod.height)
-        mid2 = vector(self.rail_offsets[name].x, mid1.y)
-        bus_pos = self.rail_offsets[name]
+        mid2 = vector(self.input_bus[name].cx(), mid1.y)
+        bus_pos = self.input_bus[name].center()
         self.add_wire(self.m2_stack[::-1], [out_pos, mid1, mid2, bus_pos])
         # The pin is on M1, so we need another via as well
         self.add_via_center(layers=self.m1_stack,

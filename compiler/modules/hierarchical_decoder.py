@@ -209,7 +209,7 @@ class hierarchical_decoder(design.design):
             for i in range(2):
                 index = pre_num * 2 + i
 
-                input_pos = self.input_bus["addr_{}".format(index)]
+                input_pos = self.input_bus["addr_{}".format(index)].center()
 
                 in_name = "in_{}".format(i)
                 decoder_pin = self.pre2x4_inst[pre_num].get_pin(in_name)
@@ -223,7 +223,7 @@ class hierarchical_decoder(design.design):
             for i in range(3):
                 index = pre_num * 3 + i + self.no_of_pre2x4 * 2
                 
-                input_pos = self.input_bus["addr_{}".format(index)]
+                input_pos = self.input_bus["addr_{}".format(index)].center()
 
                 in_name = "in_{}".format(i)
                 decoder_pin = self.pre3x8_inst[pre_num].get_pin(in_name)
@@ -572,7 +572,7 @@ class hierarchical_decoder(design.design):
         """
 
         pin_pos = pin.center()
-        rail_pos = vector(self.predecode_bus[rail_name].x, pin_pos.y)
+        rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
         self.add_path(self.input_layer, [rail_pos, pin_pos])
         
         self.add_via_stack_center(from_layer=self.bus_layer,
@@ -595,11 +595,11 @@ class hierarchical_decoder(design.design):
         pin_pos = pin.rc()
         mid_point1 = vector(x_offset, pin_pos.y)
         mid_point2 = vector(x_offset, y_offset)
-        rail_pos = vector(self.predecode_bus[rail_name].x, mid_point2.y)
+        rail_pos = vector(self.predecode_bus[rail_name].cx(), mid_point2.y)
         self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
 
         # pin_pos = pin.center()
-        # rail_pos = vector(self.predecode_bus[rail_name].x, pin_pos.y)
+        # rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
         # self.add_path(self.output_layer, [pin_pos, rail_pos])
         self.add_via_stack_center(from_layer=pin.layer,
                                   to_layer=self.output_layer,

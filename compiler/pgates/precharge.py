@@ -13,7 +13,7 @@ from tech import parameter
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
-from tech import drc
+from tech import drc, layer
 
 
 class precharge(design.design):
@@ -38,10 +38,16 @@ class precharge(design.design):
 
         if self.bitcell_bl_pin.layer == "m1":
             self.bitline_layer = "m1"
-            self.en_layer = "m2"
+            if "li" in layer:
+                self.en_layer = "li"
+            else:
+                self.en_layer = "m2"
         else:
             self.bitline_layer = "m2"
-            self.en_layer = "m1"
+            if "li" in layer:
+                self.en_layer = "li"
+            else:
+                self.en_layer = "m1"
             
         # Creates the netlist and layout
         # Since it has variable height, it is not a pgate.

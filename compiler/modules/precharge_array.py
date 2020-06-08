@@ -10,6 +10,7 @@ import debug
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer
 
 
 class precharge_array(design.design):

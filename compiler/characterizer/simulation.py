@@ -131,7 +131,6 @@ class simulation():
                 debug.error("Non-binary data string",1)
             bit -= 1
 
-
     def add_address(self, address, port):
         """ Add the array of address values """
         debug.check(len(address)==self.addr_size, "Invalid address size.")
@@ -193,7 +192,7 @@ class simulation():
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
         self.add_address(address,port)
-        self.add_wmask(wmask,port)
+        self.add_wmask(wmask,port)       
         self.add_spare_wen("1" * self.num_spare_cols, port)
         
         #Add noops to all other ports.
@@ -213,9 +212,8 @@ class simulation():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.add_control_one_port(port, "read")
-        self.add_address(address, port)
-        self.add_spare_wen("0" * self.num_spare_cols, port)
-        
+        self.add_address(address, port)        
+     
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
@@ -227,6 +225,7 @@ class simulation():
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
                 self.add_wmask("0"*self.num_wmasks, port)
+            self.add_spare_wen("0" * self.num_spare_cols, port)
         
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
@@ -269,7 +268,7 @@ class simulation():
         
         self.add_control_one_port(port, "read")
         self.add_address(address, port)
-        self.add_spare_wen("0" * self.num_spare_cols, port)
+
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
@@ -280,14 +279,13 @@ class simulation():
             try:
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
-                self.add_wmask("0"*self.num_wmasks, port)
-        
+                self.add_wmask("0"*self.num_wmasks, port)            
+            self.add_spare_wen("0" * self.num_spare_cols, port)       
                 
     def add_noop_one_port(self, port):
         """ Add the control values for a noop to a single port. Does not increment the period. """   
         self.add_control_one_port(port, "noop")
-        self.add_spare_wen("0" * self.num_spare_cols, port)
-        
+       
         try:
             self.add_address(self.addr_value[port][-1], port)
         except:
@@ -304,7 +302,8 @@ class simulation():
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
                 self.add_wmask("0"*self.num_wmasks, port)
-
+            self.add_spare_wen("0" * self.num_spare_cols, port)
+ 
     def add_noop_clock_one_port(self, port):
         """ Add the control values for a noop to a single port. Increments the period. """
         debug.info(2, 'Clock only on port {}'.format(port))

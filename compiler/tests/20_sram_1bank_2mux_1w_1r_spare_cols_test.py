@@ -15,20 +15,18 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 20_psram_1bank_2mux_1w_1r_test, odd supply routing error")
-class psram_1bank_2mux_1w_1r_test(openram_test):
+#@unittest.skip("SKIPPING 20_sram_1bank_2mux_1w_1r_spare_cols_test, odd supply routing error")
+class sram_1bank_2mux_1w_1r_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
         
-        OPTS.bitcell = "bitcell_1w_1r"
-        OPTS.replica_bitcell="replica_bitcell_1w_1r"
-        OPTS.dummy_bitcell="dummy_bitcell_1w_1r"
         OPTS.num_rw_ports = 0
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 1
+        globals.setup_bitcell()
         
         c = sram_config(word_size=4,
                         num_words=32,
@@ -39,13 +37,14 @@ class psram_1bank_2mux_1w_1r_test(openram_test):
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w sram "
                    "with {} bit words, {} words, {} words per "
-                   "row, {} banks".format(OPTS.num_rw_ports,
-                                          OPTS.num_r_ports,
-                                          OPTS.num_w_ports,
-                                          c.word_size,
-                                          c.num_words,
-                                          c.words_per_row,
-                                          c.num_banks))
+                   "row, {} spare columns, {} banks".format(OPTS.num_rw_ports,
+                                                            OPTS.num_r_ports,
+                                                            OPTS.num_w_ports,
+                                                            c.word_size,
+                                                            c.num_words,
+                                                            c.words_per_row,
+                                                            c.num_spare_cols,
+                                                            c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
         

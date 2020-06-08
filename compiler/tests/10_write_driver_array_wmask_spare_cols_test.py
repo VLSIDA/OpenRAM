@@ -17,7 +17,7 @@ from sram_factory import factory
 import debug
 
 
-class write_driver_test(openram_test):
+class write_driver_array_wmask_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -33,7 +33,7 @@ class write_driver_test(openram_test):
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8, write_size=4")
-        a = factory.create(module_type="write_driver_array", columns=16, word_size=8, write_size=4)
+        a = factory.create(module_type="write_driver_array", columns=16, word_size=8, write_size=4, num_spare_cols=3)
         self.local_check(a)
 
         globals.end_openram()

@@ -17,7 +17,7 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 20_sram_1bank_nomux_wmask_test")
+# @unittest.skip("SKIPPING 20_sram_1bank_nomux_spare_cols_test")
 class sram_1bank_nomux_spare_cols_test(openram_test):
 
     def runTest(self):

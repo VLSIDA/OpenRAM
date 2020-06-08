@@ -15,18 +15,18 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class write_driver_test(openram_test):
+class write_driver_array_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
         # check write driver array for single port
-        debug.info(2, "Testing write_driver_array for columns=8, word_size=8")
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8 and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=8, word_size=8, num_spare_cols=3)
         self.local_check(a)
 
-        debug.info(2, "Testing write_driver_array for columns=16, word_size=8")
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=8 and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=16, word_size=8, num_spare_cols=3)
         self.local_check(a)
         
@@ -37,11 +37,11 @@ class write_driver_test(openram_test):
         OPTS.num_r_ports = 0
 
         factory.reset()
-        debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case)")
+        debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=8, word_size=8, num_spare_cols=3)
         self.local_check(a)
 
-        debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case)")
+        debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=16, word_size=8, num_spare_cols=3)
         self.local_check(a)
         

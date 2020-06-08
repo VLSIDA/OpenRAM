@@ -15,18 +15,18 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class sense_amp_test(openram_test):
+class sense_amp_array_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
         # check sense amp array for single port
-        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 and num_spare_cols=3")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=1, num_spare_cols=3)
         self.local_check(a)
 
-        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 and num_spare_cols=2")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4, num_spare_cols=2)
         self.local_check(a)
         
@@ -37,11 +37,11 @@ class sense_amp_test(openram_test):
         OPTS.num_r_ports = 0
 
         factory.reset()
-        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 (multi-port case)")
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2, num_spare_cols=2 (multi-port case)")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2, num_spare_cols=2)
         self.local_check(a)
 
-        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 (multi-port case)")
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4, num_spare_cols=3 (multi-port case)")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4, num_spare_cols=3)
         self.local_check(a)
         

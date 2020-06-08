@@ -22,8 +22,7 @@ class port_data_spare_cols_test(openram_test):
 
         c = sram_config(word_size=8,
                         num_words=16,
-                        num_spare_rows=1,
-                        num_spare_cols=1)
+                        num_spare_cols=3)
 
         c.words_per_row=1
         factory.reset()

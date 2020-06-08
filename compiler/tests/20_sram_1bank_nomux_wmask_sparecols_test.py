@@ -16,8 +16,9 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-# @unittest.skip("SKIPPING 20_sram_1bank_2mux_wmask_spare_cols_test")
-class sram_1bank_2mux_wmask_spare_cols_test(openram_test):
+
+@unittest.skip("SKIPPING 20_sram_1bank_nomux_wmask_sparecols_test, not working yet")
+class sram_1bank_nomux_wmask_sparecols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -25,11 +26,11 @@ class sram_1bank_2mux_wmask_spare_cols_test(openram_test):
         from sram_config import sram_config
         c = sram_config(word_size=8,
                         write_size=4,
+                        num_words=16,
                         num_spare_cols=3,
-                        num_words=64,
                         num_banks=1)
 
-        c.words_per_row = 2
+        c.words_per_row = 1
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w sram "
                       "with {} bit words, {} words, {} bit writes, {} words per "

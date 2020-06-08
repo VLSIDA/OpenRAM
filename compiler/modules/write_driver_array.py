@@ -7,6 +7,7 @@
 #
 import design
 import debug
+from tech import drc
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
@@ -239,9 +240,7 @@ class write_driver_array(design.design):
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
                                     layer="m1",
-                                    offset=en_pin.ll(),
-                                    width=self.driver.width - en_pin.width())
-
+                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
          
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
@@ -258,9 +257,8 @@ class write_driver_array(design.design):
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + 1),
                                     layer="m1",
-                                    offset=en_pin.ll(),
-                                    width=self.driver.width - en_pin.width())
-        
+                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
+
         else:
             inst = self.driver_insts[0]
             self.add_layout_pin(text=self.en_name,

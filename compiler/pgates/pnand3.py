@@ -212,10 +212,9 @@ class pnand3(pgate.pgate):
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
-        # This is a more compact offset, but the bottom one works better in the decoders to "center" the pins
-        # in the height of the gates
-        self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
-        # self.inputA_yoffset = self.output_yoffset - self.m1_pitch
+        bottom_pin = self.nmos1_inst.get_pin("D")
+        self.inputA_yoffset = max(bottom_pin.uy() + self.m1_pitch,
+                                  self.nmos1_inst.uy() + self.poly_to_active)
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
@@ -223,14 +222,14 @@ class pnand3(pgate.pgate):
                               position="left")
 
         # Put B right on the well line
-        self.inputB_yoffset = self.inputA_yoffset - self.m1_pitch
+        self.inputB_yoffset = self.inputA_yoffset + self.m1_pitch
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               self.inputB_yoffset,
                               "B",
                               position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
+        self.inputC_yoffset = self.inputB_yoffset + self.m1_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,

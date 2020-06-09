@@ -177,9 +177,9 @@ class pnand2(pgate.pgate):
 
 
         # Top of NMOS drain
-        nmos_pin = self.nmos2_inst.get_pin("D")
-        bottom_pin_offset = nmos_pin.uy()
-        self.inputA_yoffset = bottom_pin_offset + self.m1_pitch
+        bottom_pin = self.nmos2_inst.get_pin("D")
+        self.inputA_yoffset = max(bottom_pin.uy() + self.m1_pitch,
+                                  self.nmos2_inst.uy() + self.poly_to_active)
 
         self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
 

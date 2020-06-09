@@ -205,29 +205,15 @@ class ptx(design.design):
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
         
-        # The active offset is due to the well extension
-        if "pwell" in layer:
-            pwell_enclose_active = drc("pwell_enclose_active")
-        else:
-            pwell_enclose_active = 0
-        if "nwell" in layer:
-            nwell_enclose_active = drc("nwell_enclose_active")
-        else:
-            nwell_enclose_active = 0
-        # Use the max of either so that the poly gates will align properly
-        well_enclose_active = max(pwell_enclose_active,
-                                  nwell_enclose_active,
-                                  self.active_space)
-        self.active_offset = vector([well_enclose_active] * 2)
+        self.active_offset = vector([self.well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
         well_name = "{}well".format(self.well_type)
         if well_name in layer:
             well_width_rule = drc("minwidth_" + well_name)
-            well_enclose_active = drc(well_name + "_enclose_active")
-            self.well_width = max(self.active_width + 2 * well_enclose_active,
+            self.well_width = max(self.active_width + 2 * self.well_enclose_active,
                                   well_width_rule)
-            self.well_height = max(self.active_height + 2 * well_enclose_active,
+            self.well_height = max(self.active_height + 2 * self.well_enclose_active,
                                    well_width_rule)
             # We are going to shift the 0,0, so include that in the width and height
             self.height = self.well_height - self.active_offset.y

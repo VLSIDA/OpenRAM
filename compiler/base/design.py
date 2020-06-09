@@ -172,6 +172,20 @@ class design(hierarchy_design):
             self.well_extend_active = max(self.well_extend_active, self.nwell_extend_active)
         if "pwell" in layer:
             self.well_extend_active = max(self.well_extend_active, self.pwell_extend_active)
+
+        # The active offset is due to the well extension
+        if "pwell" in layer:
+            self.pwell_enclose_active = drc("pwell_enclose_active")
+        else:
+            self.pwell_enclose_active = 0
+        if "nwell" in layer:
+            self.nwell_enclose_active = drc("nwell_enclose_active")
+        else:
+            self.nwell_enclose_active = 0
+        # Use the max of either so that the poly gates will align properly
+        self.well_enclose_active = max(self.pwell_enclose_active,
+                                       self.nwell_enclose_active,
+                                       self.active_space)
             
         # These are for debugging previous manual rules
         if False:

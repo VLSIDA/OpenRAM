@@ -25,14 +25,14 @@ scn4m_subm:
       - .coverage.*
     expire_in: 1 week
 
-# s8:
-#   stage: test
-#   script: 
-#     - coverage run -p $OPENRAM_HOME/tests/regress.py -t s8
-#   artifacts:
-#     paths:
-#       - .coverage.*
-#     expire_in: 1 week
+s8:
+  stage: test
+  script: 
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -t s8
+  artifacts:
+    paths:
+      - .coverage.*
+    expire_in: 1 week
 
 coverage:
   stage: coverage

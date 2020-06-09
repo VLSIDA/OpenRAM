@@ -12,7 +12,6 @@ import unittest
 import sys,os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
-import debug
 
 (OPTS, args) = globals.parse_args()
 del sys.argv[1:]
@@ -26,7 +25,8 @@ files = os.listdir(sys.path[0])
 # load a file with all tests to skip in a given technology
 # since tech_name is dynamically loaded, we can't use @skip directives
 try:
-    skip_file = open("skip_tests_{}.txt".format(OPTS.tech_name), "r")
+    skip_file_name = "skip_tests_{}.txt".format(OPTS.tech_name)
+    skip_file = open(skip_file_name, "r")
     skip_tests = skip_file.read().splitlines()
     for st in skip_tests:
         debug.warning("Skipping: " + st)

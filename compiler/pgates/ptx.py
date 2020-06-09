@@ -216,7 +216,8 @@ class ptx(design.design):
             nwell_enclose_active = 0
         # Use the max of either so that the poly gates will align properly
         well_enclose_active = max(pwell_enclose_active,
-                                  nwell_enclose_active)
+                                  nwell_enclose_active,
+                                  self.active_space)
         self.active_offset = vector([well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well

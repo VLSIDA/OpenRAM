@@ -17,7 +17,7 @@ import debug
 
 #@unittest.skip("SKIPPING 05_bitcell_1rw_1r_array_test")
 
-class bitcell_1rw_1r_array_test(openram_test):
+class bitcell_array_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

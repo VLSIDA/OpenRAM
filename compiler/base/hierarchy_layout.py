@@ -1304,13 +1304,10 @@ class layout():
                                     pin.ll(),
                                     pin.width(),
                                     pin.height())
-            elif pin.layer == "m1":
-                self.add_power_pin(name, pin.center())
-            else:
-                debug.warning("{0} pins of {1} should be on {2} or metal1 for "\
-                              "supply router."
-                              .format(name, inst.name, self.pwr_grid_layer))
 
+            else:
+                self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+ 
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at

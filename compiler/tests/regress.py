@@ -25,7 +25,7 @@ files = os.listdir(sys.path[0])
 # load a file with all tests to skip in a given technology
 # since tech_name is dynamically loaded, we can't use @skip directives
 try:
-    skip_file_name = "skip_tests_{}.txt".format(OPTS.tech_name)
+    skip_file_name = "{0}/tests/skip_tests_{1}.txt".format(os.getenv("OPENRAM_HOME"), OPTS.tech_name)
     skip_file = open(skip_file_name, "r")
     skip_tests = skip_file.read().splitlines()
     for st in skip_tests:

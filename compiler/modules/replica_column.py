@@ -154,7 +154,7 @@ class replica_column(design.design):
             bl_pin = self.cell_inst[0].get_pin(bl_name)
             self.add_layout_pin(text=bl_name,
                                 layer=bl_pin.layer,
-                                offset=bl_pin.ll(),
+                                offset=bl_pin.ll().scale(1, 0),
                                 width=bl_pin.width(),
                                 height=self.height)
 

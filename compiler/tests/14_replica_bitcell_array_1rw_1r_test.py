@@ -13,7 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class replica_bitcell_array_test(openram_test):
+class replica_bitcell_array_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

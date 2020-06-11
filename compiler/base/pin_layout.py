@@ -367,8 +367,17 @@ class pin_layout:
                    + str(self.width()) + "x"
                    + str(self.height()) + " @ " + str(self.ll()))
         (layer_num, purpose) = layer[self.layer]
+        try:
+            from tech import pin_purpose
+        except ImportError:
+            pin_purpose = purpose
+        try:
+            from tech import label_purpose
+        except ImportError:
+            label_purpose = purpose
+        
         newLayout.addBox(layerNumber=layer_num,
-                         purposeNumber=purpose,
+                         purposeNumber=pin_purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
                          height=self.height(),
@@ -378,7 +387,7 @@ class pin_layout:
         # imported into Magic.
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
-                          purposeNumber=purpose,
+                          purposeNumber=label_purpose,
                           offsetInMicrons=self.center(),
                           magnification=GDS["zoom"],
                           rotate=None)

@@ -695,14 +695,19 @@ class layout():
         # we should add a boundary just for DRC in some technologies
         if not self.is_library_cell and not self.bounding_box:
             # If there is a boundary layer, and we didn't create one, add one.
+            boundary_layers = []
             if "boundary" in techlayer.keys():
-                boundary_layer = "boundary"
-                boundary = [self.find_lowest_coords(),
-                            self.find_highest_coords()]
-                debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
+                boundary_layers.append("boundary")
+            if "stdc" in techlayer.keys():
+                boundary_layers.append("stdc")
+            boundary = [self.find_lowest_coords(),
+                        self.find_highest_coords()]
+            debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
 
-                height = boundary[1][1] - boundary[0][1]
-                width = boundary[1][0] - boundary[0][0]
+            height = boundary[1][1] - boundary[0][1]
+            width = boundary[1][0] - boundary[0][0]
+            
+            for boundary_layer in boundary_layers:
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
                 gds_layout.addBox(layerNumber=layer_number,
                                   purposeNumber=layer_purpose,
@@ -1259,17 +1264,23 @@ class layout():
         if OPTS.netlist_only:
             return
 
-        boundary_layer = "boundary"
-        if not ur:
-            self.bounding_box = self.add_rect(layer=boundary_layer,
-                                              offset=ll,
-                                              height=self.height,
-                                              width=self.width)
-        else:
-            self.bounding_box = self.add_rect(layer=boundary_layer,
-                                              offset=ll,
-                                              height=ur.y - ll.y,
-                                              width=ur.x - ll.x)
+        boundary_layers = []
+        if "stdc" in techlayer.keys():
+            boundary_layers.append("stdc")
+        if "boundary" in techlayer.keys():
+            boundary_layers.append("boundary")
+        # Save the last one as self.bounding_box
+        for boundary_layer in boundary_layers:
+            if not ur:
+                self.bounding_box = self.add_rect(layer=boundary_layer,
+                                                  offset=ll,
+                                                  height=self.height,
+                                                  width=self.width)
+            else:
+                self.bounding_box = self.add_rect(layer=boundary_layer,
+                                                  offset=ll,
+                                                  height=ur.y - ll.y,
+                                                  width=ur.x - ll.x)
 
     def add_enclosure(self, insts, layer="nwell"):
         """ Add a layer that surrounds the given instances. Useful

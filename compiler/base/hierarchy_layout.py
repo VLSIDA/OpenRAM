@@ -1043,7 +1043,8 @@ class layout():
                 mid = vector(pin.center().x, trunk_offset.y)
                 self.add_path(self.vertical_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
-                                    offset=mid)
+                                    offset=mid,
+                                    directions=self.directions)
 
     def add_vertical_trunk_route(self,
                                  pins,
@@ -1083,7 +1084,8 @@ class layout():
                 mid = vector(trunk_offset.x, pin.center().y)
                 self.add_path(self.horizontal_layer, [pin.center(), mid])
                 self.add_via_center(layers=layer_stack,
-                                    offset=mid)
+                                    offset=mid,
+                                    directions=self.directions)
 
     def create_channel_route(self, netlist,
                              offset,
@@ -1146,7 +1148,8 @@ class layout():
             overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
             return overlaps
 
-        if not directions:
+        self.directions = directions
+        if not directions or directions == "pref":
             # Use the preferred layer directions
             if self.get_preferred_direction(layer_stack[0]) == "V":
                 self.vertical_layer = layer_stack[0]
@@ -1154,6 +1157,14 @@ class layout():
             else:
                 self.vertical_layer = layer_stack[2]
                 self.horizontal_layer = layer_stack[0]
+        elif directions == "nonpref":
+            # Use the preferred layer directions
+            if self.get_preferred_direction(layer_stack[0]) == "V":
+                self.vertical_layer = layer_stack[2]
+                self.horizontal_layer = layer_stack[0]
+            else:
+                self.vertical_layer = layer_stack[0]
+                self.horizontal_layer = layer_stack[2]
         else:
             # Use the layer directions specified to the router rather than
             # the preferred directions

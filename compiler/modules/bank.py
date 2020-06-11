@@ -9,7 +9,7 @@ import debug
 import design
 from sram_factory import factory
 from math import log, ceil
-from tech import drc
+from tech import drc, layer
 from vector import vector
 from globals import OPTS
 
@@ -879,9 +879,16 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
+        if "li" in layer:
+            stack = self.li_stack
+            directions = "nonpref"
+        else:
+            stack = self.m1_stack
+            directions = "pref"
         self.create_vertical_channel_route(route_map,
                                            offset,
-                                           self.m1_stack)
+                                           stack,
+                                           directions=directions)
 
     def add_lvs_correspondence_points(self):
         """

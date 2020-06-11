@@ -195,7 +195,10 @@ class precharge(design.design):
         # adds the en contact to connect the gates to the en rail
         pin_offset = self.lower_pmos_inst.get_pin("G").lr()
         # This is an extra space down for some techs with contact to active spacing
-        offset = pin_offset - vector(0, self.poly_space)
+        contact_space = max(self.poly_space,
+                            self.contact_to_gate) + 0.5 * contact.poly_contact.first_layer_height
+        print(self.contact_to_gate)
+        offset = pin_offset - vector(0, contact_space)
         self.add_via_stack_center(from_layer="poly",
                                   to_layer=self.en_layer,
                                   offset=offset)

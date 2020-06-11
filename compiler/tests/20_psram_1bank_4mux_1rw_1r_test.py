@@ -15,7 +15,6 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING 20_psram_1bank_4mux_1rw_1r_test - Matt sucks, don't do this")
 class psram_1bank_4mux_1rw_1r_test(openram_test):
 
     def runTest(self):

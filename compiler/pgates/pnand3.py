@@ -12,7 +12,7 @@ from vector import vector
 import logical_effort
 from sram_factory import factory
 from globals import OPTS
-
+import contact
 
 class pnand3(pgate.pgate):
     """
@@ -209,13 +209,21 @@ class pnand3(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B and C inputs """
 
+        # We can use this pitch because the contacts and overlap won't be adjacent
+        non_contact_pitch = 0.5 * self.m1_width + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
-        # This is a more compact offset, but the bottom one works better in the decoders to "center" the pins
-        # in the height of the gates
-        self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
-        # self.inputA_yoffset = self.output_yoffset - self.m1_pitch
+        bottom_pin = self.nmos1_inst.get_pin("D")
+        # active contact metal to poly contact metal spacing
+        active_contact_to_poly_contact = bottom_pin.uy() + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
+        # active diffusion to poly contact spacing
+        # doesn't use nmos uy because that is calculated using offset + poly height
+        active_to_poly_contact = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height \
+                                 + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
+
+        self.inputA_yoffset = max(active_contact_to_poly_contact,
+                                  active_to_poly_contact)
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,
@@ -223,14 +231,14 @@ class pnand3(pgate.pgate):
                               position="left")
 
         # Put B right on the well line
-        self.inputB_yoffset = self.inputA_yoffset - self.m1_pitch
+        self.inputB_yoffset = self.inputA_yoffset + non_contact_pitch
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               self.inputB_yoffset,
                               "B",
                               position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
+        self.inputC_yoffset = self.inputB_yoffset + non_contact_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,

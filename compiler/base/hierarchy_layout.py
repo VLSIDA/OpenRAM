@@ -695,8 +695,8 @@ class layout():
         # we should add a boundary just for DRC in some technologies
         if not self.is_library_cell and not self.bounding_box:
             # If there is a boundary layer, and we didn't create one, add one.
-            if "stdc" in techlayer.keys():
-                boundary_layer = "stdc"
+            if "boundary" in techlayer.keys():
+                boundary_layer = "boundary"
                 boundary = [self.find_lowest_coords(),
                             self.find_highest_coords()]
                 debug.check(boundary[0] and boundary[1], "No shapes to make a boundary.")
@@ -1259,10 +1259,7 @@ class layout():
         if OPTS.netlist_only:
             return
 
-        if "stdc" in techlayer.keys():
-            boundary_layer = "stdc"
-        else:
-            boundary_layer = "boundary"
+        boundary_layer = "boundary"
         if not ur:
             self.bounding_box = self.add_rect(layer=boundary_layer,
                                               offset=ll,
@@ -1307,13 +1304,10 @@ class layout():
                                     pin.ll(),
                                     pin.width(),
                                     pin.height())
-            elif pin.layer == "m1":
-                self.add_power_pin(name, pin.center())
-            else:
-                debug.warning("{0} pins of {1} should be on {2} or metal1 for "\
-                              "supply router."
-                              .format(name, inst.name, self.pwr_grid_layer))
 
+            else:
+                self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+ 
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at

@@ -149,13 +149,9 @@ class precharge(design.design):
         # Compute the other pmos2 location,
         # but determining offset to overlap the source and drain pins
         overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
-        # This is how much the contact is placed inside the ptx active
-        contact_xdiff = self.pmos.get_pin("S").lx()
         
         # adds the lower pmos to layout
-        bl_xoffset = self.bitcell_bl_pin.lx()
-        self.lower_pmos_position = vector(max(bl_xoffset - contact_xdiff,
-                                              self.nwell_enclose_active),
+        self.lower_pmos_position = vector(self.well_enclose_active + 0.5 * self.m1_width,
                                           self.initial_yoffset)
         self.lower_pmos_inst.place(self.lower_pmos_position)
 
@@ -218,7 +214,7 @@ class precharge(design.design):
         
         # adds the contact from active to metal1
         offset_height = self.upper_pmos1_inst.uy() + \
-                        0.5 * contact.active_contact.height + \
+                        contact.active_contact.height + \
                         self.nwell_extend_active
         self.well_contact_pos = self.upper_pmos1_inst.get_pin("D").center().scale(1, 0) + \
                                 vector(0, offset_height)

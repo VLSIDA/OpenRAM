@@ -15,23 +15,32 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class pand3_test(openram_test):
+class sense_amp_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        global verify
-        import verify
 
-        import pand3
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
 
-        debug.info(2, "Testing pand3 gate 4x")
-        a = pand3.pand3(name="pand3x4", size=4)
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=1")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=1)
+        self.local_check(a)
+
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=2)
+        self.local_check(a)
+
+        debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4")
+        a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4)
         self.local_check(a)
 
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

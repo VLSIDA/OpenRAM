@@ -16,6 +16,7 @@ import os
 from globals import OPTS
 from pgate import pgate
 
+
 class ptx(design.design):
     """
     This module generates gds and spice of a parametrically NMOS or
@@ -24,6 +25,10 @@ class ptx(design.design):
     given width. Total width is therefore mults*width.  Options allow
     you to connect the fingered gates and active for parallel devices.
     The add_*_contact option tells which layer to bring source/drain up to.
+
+    ll, ur, width and height refer to the active area.
+    Wells and poly may extend beyond this.
+ 
     """
     def __init__(self,
                  name="",
@@ -221,15 +226,13 @@ class ptx(design.design):
                                   well_width_rule)
             self.well_height = max(self.active_height + 2 * self.well_enclose_active,
                                    well_width_rule)
-            # We are going to shift the 0,0, so include that in the width and height
-            self.height = self.well_height - self.active_offset.y
-            self.width = self.well_width - self.active_offset.x
         else:
-            # The well is not included in the height and width
-            self.height = self.poly_height
-            self.width = self.active_width
             self.well_height = self.height
             self.well_width = self.width
+            
+        # We are going to shift the 0,0, so include that in the width and height
+        self.height = self.active_height
+        self.width = self.active_width
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
@@ -353,18 +356,18 @@ class ptx(design.design):
         """
         Adding the diffusion (active region = diffusion region)
         """
-        self.add_rect(layer="active",
-                      offset=self.active_offset,
-                      width=self.active_width,
-                      height=self.active_height)
+        self.active = self.add_rect(layer="active",
+                                    offset=self.active_offset,
+                                    width=self.active_width,
+                                    height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
         enclose_width = self.implant_enclose_active
         enclose_offset = [enclose_width] * 2
-        self.add_rect(layer="{}implant".format(self.implant_type),
-                      offset=self.active_offset - enclose_offset,
-                      width=self.active_width + 2 * enclose_width,
-                      height=self.active_height + 2 * enclose_width)
+        self.implant = self.add_rect(layer="{}implant".format(self.implant_type),
+                                     offset=self.active_offset - enclose_offset,
+                                     width=self.active_width + 2 * enclose_width,
+                                     height=self.active_height + 2 * enclose_width)
 
     def add_well_implant(self):
         """

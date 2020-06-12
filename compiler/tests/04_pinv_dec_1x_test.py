@@ -21,6 +21,11 @@ class pinv_dec_1x_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+        
         debug.info(2, "Checking 1x size decoder inverter")
         tx = factory.create(module_type="pinv_dec", size=1)
         self.local_check(tx)

@@ -133,7 +133,7 @@ class dff_buf(design.design):
         q_pin = self.dff_inst.get_pin("Q")
         a1_pin = self.inv1_inst.get_pin("A")
         mid1 = vector(a1_pin.cx(), q_pin.cy())
-        self.add_path(q_pin.layer, [q_pin.center(), mid1, a1_pin.center()])
+        self.add_path(q_pin.layer, [q_pin.center(), mid1, a1_pin.center()], width=q_pin.height())
         self.add_via_stack_center(from_layer=a1_pin.layer,
                                   to_layer=q_pin.layer,
                                   offset=a1_pin.center())
@@ -177,8 +177,8 @@ class dff_buf(design.design):
                             height=din_pin.height())
 
         dout_pin = self.inv2_inst.get_pin("Z")
-        mid_pos = dout_pin.center() + vector(self.m1_nonpref_pitch, 0)
-        q_pos = mid_pos - vector(0, self.m2_pitch)
+        mid_pos = dout_pin.center() + vector(self.m2_nonpref_pitch, 0)
+        q_pos = mid_pos - vector(0, 2 * self.m2_nonpref_pitch)
         self.add_layout_pin_rect_center(text="Q",
                                         layer="m2",
                                         offset=q_pos)
@@ -187,7 +187,7 @@ class dff_buf(design.design):
                                   to_layer="m2",
                                   offset=q_pos)
 
-        qb_pos = self.mid_qb_pos + vector(0, self.m2_pitch)
+        qb_pos = self.mid_qb_pos + vector(0, 2 * self.m2_nonpref_pitch)
         self.add_layout_pin_rect_center(text="Qb",
                                         layer="m2",
                                         offset=qb_pos)

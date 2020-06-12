@@ -27,7 +27,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         lvs_dir = OPTS.openram_tech + "lvs_lib/"
-        if os.path.exists(lvs_dir):
+        # Calibre will do the scaling in s8
+        if os.path.exists(lvs_dir): # and OPTS.lvs_exe[0]!="calibre":
             self.lvs_file = lvs_dir + name + ".sp"
         else:
             self.lvs_file = self.sp_file

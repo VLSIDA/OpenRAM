@@ -109,15 +109,15 @@ class pinv_dec(pinv.pinv):
             self.add_rect(layer="pwell",
                           offset=ll,
                           width=ur.x - ll.x,
-                          height=self.height - ll.y)
+                          height=self.height - ll.y + 0.5 * self.pwell_contact.height + self.well_enclose_active)
 
         if "nwell" in layer:
             ll = self.pmos_inst.ll() - self.pmos_inst.mod.active_offset
             ur = self.pmos_inst.ur() + self.pmos_inst.mod.active_offset
             self.add_rect(layer="nwell",
-                          offset=ll - vector(self.nwell_enclose_active, 0),
-                          width=ur.x - ll.x + self.nwell_enclose_active,
-                          height=self.height - ll.y + 2 * self.nwell_enclose_active)
+                          offset=ll,
+                          width=ur.x - ll.x,
+                          height=self.height - ll.y + 0.5 * self.nwell_contact.height + self.well_enclose_active)
             
     def place_ptx(self):
         """
@@ -125,15 +125,14 @@ class pinv_dec(pinv.pinv):
 
         # offset so that the input contact is over from the left edge by poly spacing
         x_offset = self.nmos.active_offset.y + contact.poly_contact.width + self.poly_space
-        # center the transistor in the y-dimension
+        # bottom of the transistor in the y-dimension
         y_offset = self.nmos.width + self.active_space
         self.nmos_pos = vector(x_offset, y_offset)
-        self.nmos_inst.place(self.nmos_pos)
         self.nmos_inst.place(self.nmos_pos,
                              rotate=270)
         # place PMOS so it is half a poly spacing down from the top
-        xoffset = self.nmos_inst.height + 2 * self.poly_extend_active + 2 * self.well_extend_active + drc("pwell_to_nwell")
-        self.pmos_pos = self.nmos_pos + vector(xoffset, 0)
+        xoffset = self.nmos_inst.rx() + 2 * self.poly_extend_active + 2 * self.well_extend_active + drc("pwell_to_nwell")
+        self.pmos_pos = vector(xoffset, y_offset)
         self.pmos_inst.place(self.pmos_pos,
                              rotate=270)
 
@@ -142,6 +141,31 @@ class pinv_dec(pinv.pinv):
         nmos_drain_pos = self.nmos_inst.get_pin("D").center()
         self.output_pos = vector(0.5 * (pmos_drain_pos.x + nmos_drain_pos.x), nmos_drain_pos.y)
 
+        if OPTS.tech_name == "s8":
+            self.add_implants()
+            
+    def add_implants(self):
+        """
+        Add top-to-bottom implants for adjacency issues in s8.
+        """
+        # Route to the bottom
+        ll = (self.nmos_inst.ll() - vector(2 * [self.implant_enclose_active])).scale(1, 0)
+        # Don't route to the top
+        ur = self.nmos_inst.ur() + vector(self.implant_enclose_active, 0)
+        self.add_rect("nimplant",
+                      ll,
+                      ur.x - ll.x,
+                      ur.y - ll.y)
+
+        # Route to the bottom
+        ll = (self.pmos_inst.ll() - vector(2 * [self.implant_enclose_active])).scale(1, 0)
+        # Don't route to the top
+        ur = self.pmos_inst.ur() + vector(self.implant_enclose_active, 0)
+        self.add_rect("pimplant",
+                      ll,
+                      ur.x - ll.x,
+                      ur.y - ll.y)
+        
     def route_outputs(self):
         """
         Route the output (drains) together.

@@ -40,7 +40,7 @@ class pnand3(pgate.pgate):
                     "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 

@@ -99,6 +99,9 @@ def parse_args():
     # Alias SCMOS to 180nm
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn4m_subm"
+    # Alias s8 to sky130
+    if OPTS.tech_name == "s8":
+        OPTS.tech_name = "sky130"
 
     return (options, args)
 

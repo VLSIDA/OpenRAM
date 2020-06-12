@@ -78,7 +78,7 @@ class hierarchical_predecode(design.design):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             self.bus_layer = "m1"
             self.bus_directions = None
             self.bus_pitch = self.m1_pitch
@@ -239,7 +239,7 @@ class hierarchical_predecode(design.design):
             # add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
-            if OPTS.tech_name == "s8":
+            if OPTS.tech_name == "sky130":
                 rail_pos = vector(self.decode_rails[out_pin].cx(), inv_out_pos.y)
                 self.add_path(self.output_layer, [inv_out_pos, rail_pos])
             else:
@@ -309,8 +309,8 @@ class hierarchical_predecode(design.design):
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
-        # In s8, we use hand-made decoder cells with vertical power
-        if OPTS.tech_name == "s8":
+        # In sky130, we use hand-made decoder cells with vertical power
+        if OPTS.tech_name == "sky130":
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
                 for i in [self.inv_inst, self.and_inst]:

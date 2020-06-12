@@ -68,7 +68,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     if final_verification:
         f.write(pre + "extract unique all\n".format(cell_name))
     # Hack to work around unit scales in SkyWater
-    if OPTS.tech_name=="s8":
+    if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
     f.write(pre + "extract\n".format(cell_name))
     # f.write(pre + "ext2spice hierarchy on\n")

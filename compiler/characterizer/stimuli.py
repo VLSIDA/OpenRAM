@@ -254,7 +254,7 @@ class stimuli():
 
         includes = self.device_models + [circuit]
         self.sf.write("* {} process corner\n".format(self.process))
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             libraries = self.device_libraries
             for item in list(libraries):
                 if os.path.isfile(item[0]):

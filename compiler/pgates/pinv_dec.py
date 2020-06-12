@@ -13,7 +13,7 @@ from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
-if(OPTS.tech_name == "s8"):
+if(OPTS.tech_name == "sky130"):
     from tech import nmos_bins, pmos_bins, accuracy_requirement
 
     
@@ -36,7 +36,7 @@ class pinv_dec(pinv.pinv):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             self.supply_layer = "m1"
         else:
             self.supply_layer = "m2"
@@ -53,7 +53,7 @@ class pinv_dec(pinv.pinv):
         self.tx_mults = 1
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
             return

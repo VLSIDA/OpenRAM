@@ -19,7 +19,7 @@ import logical_effort
 from sram_factory import factory
 from errors import drc_error
 
-if(OPTS.tech_name == "s8"):
+if(OPTS.tech_name == "sky130"):
     from tech import nmos_bins, pmos_bins, accuracy_requirement
 
     
@@ -88,7 +88,7 @@ class pinv(pgate.pgate):
             self.tx_mults = 1
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
-            if OPTS.tech_name == "s8":
+            if OPTS.tech_name == "sky130":
                 (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
                 (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
             return
@@ -133,7 +133,7 @@ class pinv(pgate.pgate):
 
         # Determine the number of mults for each to fit width
         # into available space
-        if OPTS.tech_name != "s8":
+        if OPTS.tech_name != "sky130":
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
             nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)

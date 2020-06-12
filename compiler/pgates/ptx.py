@@ -126,8 +126,8 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        if OPTS.tech_name == "s8":
-            # s8 technology is in microns, also needs mult parameter
+        if OPTS.tech_name == "sky130":
+            # sky130 technology is in microns, also needs mult parameter
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3}".format(spice[self.tx_type],
                                                                    self.mults,
@@ -149,8 +149,8 @@ class ptx(design.design):
 
         # LVS lib is always in SI units
         if os.path.exists(OPTS.openram_tech + "lvs_lib"):
-            if OPTS.tech_name == "s8":
-                # s8 requires mult parameter too
+            if OPTS.tech_name == "sky130":
+                # sky130 requires mult parameter too
                 self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
                                                                                        self.mults,
                                                                                        self.tx_width,

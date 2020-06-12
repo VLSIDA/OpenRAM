@@ -588,7 +588,7 @@ class port_data(design.design):
         
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        elif OPTS.tech_name == "s8":
+        elif OPTS.tech_name == "sky130":
             self.connect_bitlines(inst1=inst1,
                                   inst1_bls_template=inst1_bls_templ,
                                   inst2=inst2,
@@ -646,7 +646,7 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        elif OPTS.tech_name == "s8":
+        elif OPTS.tech_name == "sky130":
             self.connect_bitlines(inst1=inst1, inst2=inst2,
                                   num_bits=self.word_size,
                                   inst1_bls_template=inst1_bls_templ,

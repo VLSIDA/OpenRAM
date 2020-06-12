@@ -159,7 +159,7 @@ class hierarchical_decoder(design.design):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             self.bus_layer = "m1"
             self.bus_directions = "nonpref"
             self.bus_pitch = self.m1_pitch
@@ -525,7 +525,7 @@ class hierarchical_decoder(design.design):
         must-connects next level up.
         """
                 
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             for n in ["vdd", "gnd"]:
                 pins = self.and_inst[0].get_pins(n)
                 for pin in pins:

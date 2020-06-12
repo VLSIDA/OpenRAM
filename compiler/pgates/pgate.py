@@ -14,7 +14,7 @@ from tech import layer, drc
 from vector import vector
 from globals import OPTS
 
-if(OPTS.tech_name == "s8"):
+if(OPTS.tech_name == "sky130"):
     from tech import nmos_bins, pmos_bins, accuracy_requirement
 
     

@@ -102,7 +102,7 @@ class bitcell_base_array(design.design):
                                     height=wl_pin.height())
 
         # For non-square via stacks, vertical/horizontal direction refers to the stack orientation in 2d space
-        # Default uses prefered directions for each layer; this cell property is only currently used by s8 tech (03/20)
+        # Default uses prefered directions for each layer; this cell property is only currently used by sky130 tech (03/20)
         try:
             bitcell_power_pin_directions = cell_properties.bitcell_power_pin_directions
         except AttributeError:

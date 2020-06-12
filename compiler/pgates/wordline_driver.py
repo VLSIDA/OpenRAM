@@ -89,7 +89,7 @@ class wordline_driver(design.design):
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top, (middle), and bottom. """
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             for name in ["vdd", "gnd"]:
                 for inst in [self.nand_inst, self.driver_inst]:
                     self.copy_layout_pin(inst, name)
@@ -110,7 +110,7 @@ class wordline_driver(design.design):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
         a2_pin = self.driver_inst.get_pin("A")
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             mid1_point = vector(a2_pin.cx(), z1_pin.cy())
         else:
             mid1_point = vector(z1_pin.cx(), a2_pin.cy())

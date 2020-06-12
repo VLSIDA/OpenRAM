@@ -68,7 +68,7 @@ class wordline_driver_array(design.design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             for name in ["vdd", "gnd"]:
                 supply_pins = self.wld_inst[0].get_pins(name)
                 for pin in supply_pins:

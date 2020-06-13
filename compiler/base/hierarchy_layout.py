@@ -55,14 +55,17 @@ class layout():
     # GDS layout
     ############################################################
     def offset_all_coordinates(self):
-        """ This function is called after everything is placed to
-        shift the origin in the lowest left corner """
+        """
+        This function is called after everything is placed to
+        shift the origin in the lowest left corner
+        """
         offset = self.find_lowest_coords()
         self.translate_all(offset)
         return offset
 
     def get_gate_offset(self, x_offset, height, inv_num):
-        """Gets the base offset and y orientation of stacked rows of gates
+        """
+        Gets the base offset and y orientation of stacked rows of gates
         assuming a minwidth metal1 vdd/gnd rail. Input is which gate
         in the stack from 0..n
         """
@@ -120,6 +123,7 @@ class layout():
             highesty2 = max(inst.uy() for inst in self.insts)
         else:
             highestx2 = highesty2 = None
+
         if highestx1 == None and highestx2 == None:
             return None
         elif highestx1 == None:
@@ -188,7 +192,7 @@ class layout():
             inst.offset = vector(inst.offset - offset)
             # The instances have a precomputed boundary that we need to update.
             if inst.__class__.__name__ == "instance":
-                inst.compute_boundary(inst.offset)
+                inst.compute_boundary(inst.offset, inst.mirror, inst.rotate)
         for pin_name in self.pin_map.keys():
             # All the pins are absolute coordinates that need to be updated.
             pin_list = self.pin_map[pin_name]

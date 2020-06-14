@@ -123,6 +123,10 @@ class options(optparse.Values):
     analytical_delay = True
     # Purge the temp directory after a successful
     # run (doesn't purge on errors, anyhow)
+
+    # Route the input/output pins to the perimeter
+    perimeter_pins = False
+    
     purge_temp = True
 
     # These are the default modules that can be over-riden

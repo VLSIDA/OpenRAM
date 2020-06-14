@@ -9,7 +9,7 @@ import debug
 from vector import vector
 from sram_base import sram_base
 from contact import m2_via
-
+from globals import OPTS
 
 class sram_1bank(sram_base):
     """
@@ -246,7 +246,6 @@ class sram_1bank(sram_base):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
-
         highest_coord = self.find_highest_coords()
         lowest_coord = self.find_lowest_coords()
         bbox = [lowest_coord, highest_coord]
@@ -263,83 +262,102 @@ class sram_1bank(sram_base):
             for signal in self.control_logic_inputs[port]:
                 if signal == "clk":
                     continue
-                self.add_perimeter_pin(name=signal + "{}".format(port),
-                                       pin=self.control_logic_insts[port].get_pin(signal),
-                                       side=left_or_right,
-                                       bbox=bbox)
-                # self.copy_layout_pin(self.control_logic_insts[port],
-                #                      signal,
-                #                      signal + "{}".format(port))
+                if OPTS.perimeter_pins:
+                    self.add_perimeter_pin(name=signal + "{}".format(port),
+                                           pin=self.control_logic_insts[port].get_pin(signal),
+                                           side=left_or_right,
+                                           bbox=bbox)
+                else:
+                    self.copy_layout_pin(self.control_logic_insts[port],
+                                         signal,
+                                         signal + "{}".format(port))
 
-            self.add_perimeter_pin(name="clk{}".format(port),
-                                   pin=self.control_logic_insts[port].get_pin("clk"),
-                                   side=bottom_or_top,
-                                   bbox=bbox)
+            if OPTS.perimeter_pins:
+                self.add_perimeter_pin(name="clk{}".format(port),
+                                       pin=self.control_logic_insts[port].get_pin("clk"),
+                                       side=bottom_or_top,
+                                       bbox=bbox)
+            else:
+                self.copy_layout_pin(self.control_logic_insts[port],
+                                     "clk",
+                                     "clk{}".format(port))
 
             # Data output pins go to BOTTOM/TOP
             if port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    self.add_perimeter_pin(name="dout{0}[{1}]".format(port, bit),
-                                           pin=self.bank_inst.get_pin("dout{0}_{1}".format(port, bit)),
-                                           side=bottom_or_top,
-                                           bbox=bbox)
-                    # self.copy_layout_pin(self.bank_inst,
-                    #                      "dout{0}_{1}".format(port, bit),
-                    #                      "dout{0}[{1}]".format(port, bit))
+                    if OPTS.perimeter_pins:
+                        self.add_perimeter_pin(name="dout{0}[{1}]".format(port, bit),
+                                               pin=self.bank_inst.get_pin("dout{0}_{1}".format(port, bit)),
+                                               side=bottom_or_top,
+                                               bbox=bbox)
+                    else:
+                        self.copy_layout_pin(self.bank_inst,
+                                             "dout{0}_{1}".format(port, bit),
+                                             "dout{0}[{1}]".format(port, bit))
 
             # Lower address bits go to BOTTOM/TOP
             for bit in range(self.col_addr_size):
-                self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit),
-                                       pin=self.col_addr_dff_insts[port].get_pin("din_{}".format(bit)),
-                                       side=bottom_or_top,
-                                       bbox=bbox)
-                # self.copy_layout_pin(self.col_addr_dff_insts[port],
-                #                      "din_{}".format(bit),
-                #                      "addr{0}[{1}]".format(port, bit))
+                if OPTS.perimeter_pins:
+                    self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit),
+                                           pin=self.col_addr_dff_insts[port].get_pin("din_{}".format(bit)),
+                                           side=bottom_or_top,
+                                           bbox=bbox)
+                else:
+                    self.copy_layout_pin(self.col_addr_dff_insts[port],
+                                         "din_{}".format(bit),
+                                         "addr{0}[{1}]".format(port, bit))
                 
             # Upper address bits go to LEFT/RIGHT
             for bit in range(self.row_addr_size):
-                self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit + self.col_addr_size),
-                                       pin=self.row_addr_dff_insts[port].get_pin("din_{}".format(bit)),
-                                       side=left_or_right,
-                                       bbox=bbox)
-                # self.copy_layout_pin(self.row_addr_dff_insts[port],
-                #                      "din_{}".format(bit),
-                #                      "addr{0}[{1}]".format(port, bit + self.col_addr_size))
-
+                if OPTS.perimeter_pins:
+                    self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit + self.col_addr_size),
+                                           pin=self.row_addr_dff_insts[port].get_pin("din_{}".format(bit)),
+                                           side=left_or_right,
+                                           bbox=bbox)
+                else:
+                    self.copy_layout_pin(self.row_addr_dff_insts[port],
+                                         "din_{}".format(bit),
+                                         "addr{0}[{1}]".format(port, bit + self.col_addr_size))
+                    
             # Data input pins go to BOTTOM/TOP
             if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    self.add_perimeter_pin(name="din{0}[{1}]".format(port, bit),
-                                           pin=self.data_dff_insts[port].get_pin("din_{}".format(bit)),
-                                           side=bottom_or_top,
-                                           bbox=bbox)
-                    # self.copy_layout_pin(self.data_dff_insts[port],
-                    #                      "din_{}".format(bit),
-                    #                      "din{0}[{1}]".format(port, bit))
+                    if OPTS.perimeter_pins:
+                        self.add_perimeter_pin(name="din{0}[{1}]".format(port, bit),
+                                               pin=self.data_dff_insts[port].get_pin("din_{}".format(bit)),
+                                               side=bottom_or_top,
+                                               bbox=bbox)
+                    else:
+                        self.copy_layout_pin(self.data_dff_insts[port],
+                                             "din_{}".format(bit),
+                                             "din{0}[{1}]".format(port, bit))
                     
             # Write mask pins go to BOTTOM/TOP
             if port in self.write_ports:
                 if self.write_size:
                     for bit in range(self.num_wmasks):
-                        self.add_perimeter_pin(name="wmask{0}[{1}]".format(port, bit),
-                                               pin=self.wmask_dff_insts[port].get_pin("din_{}".format(bit)),
-                                               side=bottom_or_top,
-                                               bbox=bbox)
-                        # self.copy_layout_pin(self.wmask_dff_insts[port],
-                        #                      "din_{}".format(bit),
-                        #                      "wmask{0}[{1}]".format(port, bit))
+                        if OPTS.perimeter_pins:
+                            self.add_perimeter_pin(name="wmask{0}[{1}]".format(port, bit),
+                                                   pin=self.wmask_dff_insts[port].get_pin("din_{}".format(bit)),
+                                                   side=bottom_or_top,
+                                                   bbox=bbox)
+                        else:
+                            self.copy_layout_pin(self.wmask_dff_insts[port],
+                                                 "din_{}".format(bit),
+                                                 "wmask{0}[{1}]".format(port, bit))
 
             # Spare wen pins go to BOTTOM/TOP
             if port in self.write_ports:
                 for bit in range(self.num_spare_cols):
-                    self.add_perimeter_pin(name="spare_wen{0}[{1}]".format(port, bit),
-                                           pin=self.spare_wen_dff_insts[port].get_pin("din_{}".format(bit)),
-                                           side=left_or_right,
-                                           bbox=bbox)
-                    # self.copy_layout_pin(self.spare_wen_dff_insts[port],
-                    #                      "din_{}".format(bit),
-                    #                      "spare_wen{0}[{1}]".format(port, bit))
+                    if OPTS.perimeter_pins:
+                        self.add_perimeter_pin(name="spare_wen{0}[{1}]".format(port, bit),
+                                               pin=self.spare_wen_dff_insts[port].get_pin("din_{}".format(bit)),
+                                               side=left_or_right,
+                                               bbox=bbox)
+                    else:
+                        self.copy_layout_pin(self.spare_wen_dff_insts[port],
+                                             "din_{}".format(bit),
+                                             "spare_wen{0}[{1}]".format(port, bit))
 
     def route_layout(self):
         """ Route a single bank SRAM """

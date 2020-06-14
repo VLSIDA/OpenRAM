@@ -8,7 +8,7 @@
 import contact
 import pinv
 import debug
-from tech import drc, parameter
+from tech import drc, parameter, layer
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -102,31 +102,30 @@ class pinv_dec(pinv.pinv):
     def extend_wells(self):
         """ Extend bottom to top for each well. """
 
-        from tech import layer
         if "pwell" in layer:
-            ll = self.nmos_inst.ll() - self.nmos_inst.mod.active_offset
-            ur = self.nmos_inst.ur() + self.nmos_inst.mod.active_offset
+            ll = (self.nmos_inst.ll() - vector(2 * [self.well_enclose_active])).scale(1, 0)
+            ur = self.nmos_inst.ur() + vector(2 * [self.well_enclose_active])
             self.add_rect(layer="pwell",
                           offset=ll,
                           width=ur.x - ll.x,
                           height=self.height - ll.y + 0.5 * self.pwell_contact.height + self.well_enclose_active)
 
         if "nwell" in layer:
-            ll = self.pmos_inst.ll() - self.pmos_inst.mod.active_offset
-            ur = self.pmos_inst.ur() + self.pmos_inst.mod.active_offset
+            ll = (self.pmos_inst.ll() - vector(2 * [self.well_enclose_active])).scale(1, 0)
+            ur = self.pmos_inst.ur() + vector(2 * [self.well_enclose_active])
             self.add_rect(layer="nwell",
                           offset=ll,
                           width=ur.x - ll.x,
                           height=self.height - ll.y + 0.5 * self.nwell_contact.height + self.well_enclose_active)
-            
+
     def place_ptx(self):
         """
         """
+        # center the transistors in the y-dimension (it is rotated, so use the width)
+        y_offset = 0.5 * (self.height - self.nmos.width) + self.nmos.width
 
         # offset so that the input contact is over from the left edge by poly spacing
         x_offset = self.nmos.active_offset.y + contact.poly_contact.width + self.poly_space
-        # bottom of the transistor in the y-dimension
-        y_offset = self.nmos.width + self.active_space
         self.nmos_pos = vector(x_offset, y_offset)
         self.nmos_inst.place(self.nmos_pos,
                              rotate=270)
@@ -206,7 +205,7 @@ class pinv_dec(pinv.pinv):
         self.add_via_stack_center(offset=contact_pos,
                                   from_layer=self.active_stack[2],
                                   to_layer=self.supply_layer)
-        
+
     def route_supply_rails(self):
         pin = self.nmos_inst.get_pin("S")
         source_pos = pin.center()

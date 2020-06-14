@@ -1354,7 +1354,7 @@ class layout():
             # Hack for min area
             if OPTS.tech_name == "sky130":
                 width = round_to_grid(sqrt(drc["minarea_m3"]))
-                height = round_to_grid(drc["minarea_m3"]/width)
+                height = round_to_grid(drc["minarea_m3"] / width)
             else:
                 width = via.width
                 height = via.height
@@ -1364,6 +1364,46 @@ class layout():
                                             width=width,
                                             height=height)
 
+    def add_perimeter_pin(self, name, pin, side, bbox):
+        """
+        Add a pin along the perimeter side specified by the bbox with
+        the given name and layer from the pin starting location.
+        """
+        (ll, ur) = bbox
+        left = ll.x
+        bottom = ll.y
+        right = ur.x
+        top = ur.y
+        
+        pin_loc = pin.center()
+        if side == "left":
+            peri_pin_loc = vector(left, pin_loc.y)
+            layer = "m3"
+        elif side == "right":
+            layer = "m3"
+            peri_pin_loc = vector(right, pin_loc.x)
+        elif side == "top":
+            layer = "m4"
+            peri_pin_loc = vector(pin_loc.x, top)
+        elif side == "bottom":
+            layer = "m4"
+            peri_pin_loc = vector(pin_loc.x, bottom)
+
+        self.add_via_stack_center(from_layer=pin.layer,
+                                  to_layer=layer,
+                                  offset=pin_loc)
+        
+        self.add_path(layer,
+                      [pin_loc, peri_pin_loc])
+
+        self.add_via_stack_center(from_layer=layer,
+                                  to_layer="m4",
+                                  offset=peri_pin_loc)
+        
+        self.add_layout_pin_rect_center(text=name,
+                                        layer="m4",
+                                        offset=peri_pin_loc)
+        
     def add_power_ring(self, bbox):
         """
         Create vdd and gnd power rings around an area of the bounding box

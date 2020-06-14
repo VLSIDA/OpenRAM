@@ -1005,7 +1005,7 @@ class control_logic(design.design):
     def route_output_to_bus_jogged(self, inst, name):
         # Connect this at the bottom of the buffer
         out_pos = inst.get_pin("Z").center()
-        mid1 = vector(out_pos.x, out_pos.y - 0.25 * inst.mod.height)
+        mid1 = vector(out_pos.x, out_pos.y - 0.4 * inst.mod.height)
         mid2 = vector(self.input_bus[name].cx(), mid1.y)
         bus_pos = self.input_bus[name].center()
         self.add_wire(self.m2_stack[::-1], [out_pos, mid1, mid2, bus_pos])

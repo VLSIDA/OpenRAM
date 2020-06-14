@@ -14,6 +14,7 @@ from sram_factory import factory
 from globals import OPTS
 import contact
 
+
 class pnand3(pgate.pgate):
     """
     This module generates gds of a parametrically sized 2-input nand.
@@ -219,11 +220,13 @@ class pnand3(pgate.pgate):
         active_contact_to_poly_contact = bottom_pin.uy() + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
         # active diffusion to poly contact spacing
         # doesn't use nmos uy because that is calculated using offset + poly height
-        active_to_poly_contact = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height \
-                                 + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
-
+        active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
+        active_to_poly_contact = active_top + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
+        active_to_poly_contact2 = active_top + drc("contact_to_gate") + 0.5 * self.route_layer_width
         self.inputA_yoffset = max(active_contact_to_poly_contact,
-                                  active_to_poly_contact)
+                                  active_to_poly_contact,
+                                  active_to_poly_contact2)
+        
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.inputA_yoffset,

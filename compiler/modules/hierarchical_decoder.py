@@ -11,7 +11,6 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
-from errors import drc_error
 
 
 class hierarchical_decoder(design.design):

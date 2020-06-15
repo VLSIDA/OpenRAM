@@ -234,19 +234,18 @@ class hierarchical_predecode(design.design):
             in_pin = "in_{}".format(inv_num)
 
             inv_out_pin = self.inv_inst[inv_num].get_pin("Z")
-            inv_out_pos = inv_out_pin.lr()
             
             # add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
-            if False and OPTS.tech_name == "sky130":
-                rail_pos = vector(self.decode_rails[out_pin].cx(), inv_out_pos.y)
-                self.add_path(self.output_layer, [inv_out_pos, rail_pos])
+            if OPTS.tech_name == "sky130":
+                inv_out_pos = inv_out_pin.lr()
             else:
-                y_offset = (inv_num + 1) * self.inv.height - self.output_layer_pitch
-                right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
-                rail_pos = vector(self.decode_rails[out_pin].cx(), y_offset)
-                self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
+                inv_out_pos = inv_out_pin.rc()
+            y_offset = (inv_num + 1) * self.inv.height - self.output_layer_pitch
+            right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
+            rail_pos = vector(self.decode_rails[out_pin].cx(), y_offset)
+            self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
                 
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
                                       to_layer=self.output_layer,

@@ -33,6 +33,31 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
+def filter_gds(cell_name, input_gds, output_gds):
+    """ Run the gds through magic for any layer processing """
+    global OPTS
+
+    run_file = OPTS.openram_temp + "run_filter.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
+    f.write("gds polygon subcell true\n")
+    f.write("gds warning default\n")
+    f.write("gds read {}\n".format(input_gds))
+    f.write("load {}\n".format(cell_name))
+    f.write("cellname delete \\(UNNAMED\\)\n")
+    #f.write("writeall force\n")
+    f.write("select top cell\n")
+    f.write("gds write {}\n".format(output_gds))
+    f.write("quit -noprompt\n")
+    f.write("EOF\n")
+
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+
+    (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
+
+    
 def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 

@@ -110,6 +110,8 @@ class options(optparse.Values):
     drc_exe = None
     lvs_exe = None
     pex_exe = None
+    # For sky130, we need magic for filtering.
+    magic_exe = None
 
     # Should we print out the banner at startup
     print_banner = True

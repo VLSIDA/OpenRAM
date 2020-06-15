@@ -20,15 +20,15 @@ Calibre means pointing the code to the proper DRC and LVS rule files.
 import os
 import shutil
 import re
-import time
 import debug
 from globals import OPTS
-from run_script import *
+from run_script import run_script
 
 # Keep track of statistics
 num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
+
 
 def write_calibre_drc_script(cell_name, extract, final_verification):
     """ Write a Calibre runset file and script to run DRC """
@@ -67,6 +67,7 @@ def write_calibre_drc_script(cell_name, extract, final_verification):
     os.system("chmod u+x {}".format(run_file))
     return drc_runset
 
+
 def write_calibre_lvs_script(cell_name, final_verification):
     """ Write a Calibre runset file and script to run LVS """
 
@@ -80,7 +81,7 @@ def write_calibre_lvs_script(cell_name, final_verification):
         'lvsSourcePath': cell_name + ".sp",
         'lvsSourcePrimary': cell_name,
         'lvsSourceSystem': 'SPICE',
-        'lvsSpiceFile': "extracted.sp",
+        'lvsSpiceFile': "{}.spice".format(cell_name),
         'lvsPowerNames': 'vdd',
         'lvsGroundNames': 'gnd',
         'lvsIncludeSVRFCmds': 1,
@@ -130,8 +131,9 @@ def write_calibre_lvs_script(cell_name, final_verification):
 
     return lvs_runset
 
-def write_calibre_pex_script(cell_name, extract, output, final_verification):
 
+def write_calibre_pex_script(cell_name, extract, output, final_verification):
+    """ Write a pex script that can either just extract the netlist or the netlist+parasitics """
     if output == None:
         output = name + ".pex.netlist"
 
@@ -150,10 +152,9 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
         'pexRunDir': OPTS.openram_temp,
         'pexLayoutPaths': cell_name + ".gds",
         'pexLayoutPrimary': cell_name,
-        #'pexSourcePath' : OPTS.openram_temp+"extracted.sp",
         'pexSourcePath': cell_name + ".sp",
         'pexSourcePrimary': cell_name,
-        'pexReportFile': cell_name + ".lvs.report",
+        'pexReportFile': cell_name + ".pex.report",
         'pexPexNetlistFile': cell_name + ".pex.netlist",
         'pexPexReportFile': cell_name + ".pex.report",
         'pexMaskDBFile': cell_name + ".maskdb",
@@ -179,6 +180,7 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
 
     return pex_runset
 
+
 def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
@@ -186,9 +188,15 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     global num_drc_runs
     num_drc_runs += 1
 
-    # Copy file to local dir if it isn't already
-    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
-        shutil.copy(gds_name, OPTS.openram_temp)
+    # Filter the layouts through magic as a GDS filter for nsdm/psdm/nwell merging
+    if OPTS.tech_name == "sky130":
+        shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
+        from magic import filter_gds
+        filter_gds(cell_name, OPTS.openram_temp + "temp.gds", gds_name)
+    else:
+        # Copy file to local dir if it isn't already
+        if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+            shutil.copy(gds_name, OPTS.openram_temp)
 
     drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
 

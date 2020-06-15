@@ -83,9 +83,9 @@ class hierarchical_predecode(design.design):
             self.bus_directions = None
             self.bus_pitch = self.m1_pitch
             self.bus_space = 1.5 * self.m1_space
-            self.input_layer = "li"
-            self.output_layer = "m2"
-            self.output_layer_pitch = self.m2_pitch
+            self.input_layer = "m2"
+            self.output_layer = "li"
+            self.output_layer_pitch = self.li_pitch
         else:
             self.bus_layer = "m2"
             self.bus_directions = None
@@ -234,12 +234,12 @@ class hierarchical_predecode(design.design):
             in_pin = "in_{}".format(inv_num)
 
             inv_out_pin = self.inv_inst[inv_num].get_pin("Z")
-            inv_out_pos = inv_out_pin.rc()
+            inv_out_pos = inv_out_pin.lr()
             
             # add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
-            if OPTS.tech_name == "sky130":
+            if False and OPTS.tech_name == "sky130":
                 rail_pos = vector(self.decode_rails[out_pin].cx(), inv_out_pos.y)
                 self.add_path(self.output_layer, [inv_out_pos, rail_pos])
             else:

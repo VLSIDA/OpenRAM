@@ -140,7 +140,7 @@ class pinv_dec(pinv.pinv):
         nmos_drain_pos = self.nmos_inst.get_pin("D").center()
         self.output_pos = vector(0.5 * (pmos_drain_pos.x + nmos_drain_pos.x), nmos_drain_pos.y)
 
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             self.add_implants()
             
     def add_implants(self):

@@ -176,11 +176,10 @@ class pnand2(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B inputs """
 
-
         # Top of NMOS drain
         bottom_pin = self.nmos1_inst.get_pin("D")
         # active contact metal to poly contact metal spacing
-        active_contact_to_poly_contact = bottom_pin.uy() + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
+        active_contact_to_poly_contact = bottom_pin.uy() + self.route_layer_space + 0.5 * contact.poly_contact.second_layer_height
         # active diffusion to poly contact spacing
         # doesn't use nmos uy because that is calculated using offset + poly height
         active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
@@ -196,8 +195,15 @@ class pnand2(pgate.pgate):
                               "A",
                               position="center")
         
-        # self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
-        self.inputB_yoffset = self.output_yoffset - self.route_layer_pitch
+        self.inputB_yoffset = self.inputA_yoffset + 2 * self.m3_pitch
+        # # active contact metal to poly contact metal spacing
+        # active_contact_to_poly_contact = self.output_yoffset - self.route_layer_space - 0.5 * contact.poly_contact.second_layer_height
+        # active_bottom = self.pmos1_inst.by()
+        # active_to_poly_contact = active_bottom - self.poly_to_active - 0.5 * contact.poly_contact.first_layer_height
+        # active_to_poly_contact2 = active_bottom - drc("contact_to_gate") - 0.5 * self.route_layer_width
+        # self.inputB_yoffset = min(active_contact_to_poly_contact,
+        #                           active_to_poly_contact,
+        #                           active_to_poly_contact2)
 
         # This will help with the wells and the input/output placement
         self.route_input_gate(self.pmos2_inst,
@@ -210,7 +216,7 @@ class pnand2(pgate.pgate):
         """ Route the Z output """
         
         # One routing track layer below the PMOS contacts
-        route_layer_offset = 0.5 * self.route_layer_width + self.route_layer_space
+        route_layer_offset = 0.5 * contact.poly_contact.second_layer_height + self.route_layer_space
         self.output_yoffset = self.pmos1_inst.get_pin("D").by() - route_layer_offset
 
 

@@ -11,7 +11,7 @@ from tech import drc, layer
 from vector import vector
 from sram_factory import factory
 import logical_effort
-from utils import round_to_grid
+from globals import OPTS
 
 
 class single_level_column_mux(pgate.pgate):
@@ -113,18 +113,21 @@ class single_level_column_mux(pgate.pgate):
 
         # This aligns it directly above the other tx with gates abutting
         nmos_upper_position = nmos_lower_position \
-                                + vector(0, self.nmos.active_height + max(self.active_space,self.poly_space))
+                                + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
         self.nmos_upper = self.add_inst(name="mux_tx2",
                                         mod=self.nmos,
                                         offset=nmos_upper_position)
         self.connect_inst(["br", "sel", "br_out", "gnd"])
 
+        if OPTS.tech_name == "sky130":
+            self.add_implants()
+        
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
 
         # offset is the top of the lower nmos' diffusion
         # height is the distance between the nmos' diffusions, which depends on max(self.active_space,self.poly_space)
-        offset = self.nmos_lower.get_pin("G").ul() - vector(0,self.poly_extend_active)
+        offset = self.nmos_lower.get_pin("G").ul() - vector(0, self.poly_extend_active)
         height = self.nmos_upper.get_pin("G").by() + self.poly_extend_active - offset.y
         self.add_rect(layer="poly",
                             offset=offset,
@@ -183,13 +186,26 @@ class single_level_column_mux(pgate.pgate):
                        vector(nmos_lower_s_pin.cx(), br_out_pin.uy()),
                        nmos_lower_s_pin.center()])
         # halfway up, move over
-        mid1 = br_pin.bc().scale(1,0.5) \
-               + nmos_lower_d_pin.uc().scale(0,0.5)
-        mid2 = br_pin.bc().scale(0,0.5) \
-               + nmos_lower_d_pin.uc().scale(1,0.5)
+        mid1 = br_pin.bc().scale(1, 0.5) \
+               + nmos_lower_d_pin.uc().scale(0, 0.5)
+        mid2 = br_pin.bc().scale(0, 0.5) \
+               + nmos_lower_d_pin.uc().scale(1, 0.5)
         self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
-
+ 
+    def add_implants(self):
+        """
+        Add top-to-bottom implants for adjacency issues in s8.
+        """
+        # Route to the bottom
+        ll = (self.nmos_lower.ll() - vector(2 * [self.implant_enclose_active])).scale(1, 0)
+        # Don't route to the top
+        ur = self.nmos_upper.ur() + vector(self.implant_enclose_active, 0)
+        self.add_rect("nimplant",
+                      ll,
+                      ur.x - ll.x,
+                      ur.y - ll.y)
+       
     def add_pn_wells(self):
         """
         Add a well and implant over the whole cell. Also, add the
@@ -209,8 +225,8 @@ class single_level_column_mux(pgate.pgate):
                             offset=active_pos)
 
         # Add the M1->..->power_grid_layer stack
-        self.add_power_pin(name = "gnd",
-                           loc = active_pos,
+        self.add_power_pin(name="gnd",
+                           loc=active_pos,
                            start_layer="m1")
 
         # Add well enclosure over all the tx and contact

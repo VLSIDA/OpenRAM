@@ -7,7 +7,7 @@
 # All rights reserved.
 #
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS

@@ -5,22 +5,17 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys,re,shutil
-import copy
 import collections
-from design import design
 import debug
-import math
-import tech
 import random
 from .stimuli import *
 from .charutils import *
-import utils
 from globals import OPTS
 from .simulation import simulation
 # from .delay import delay
 import graph_util
 from sram_factory import factory
+
 
 class functional(simulation):
     """
@@ -60,7 +55,6 @@ class functional(simulation):
         self.read_check = []
         self.read_results = []
 
-
     def run(self, feasible_period=None):
         if feasible_period: #period defaults to tech.py feasible period otherwise.
             self.period = feasible_period
@@ -85,11 +79,11 @@ class functional(simulation):
         for port in self.all_ports:
             checks = []
             if port in self.read_ports:
-                checks.append((self.addr_value[port],"addr"))
+                checks.append((self.addr_value[port], "addr"))
             if port in self.write_ports:
-                checks.append((self.data_value[port],"data"))
-                checks.append((self.wmask_value[port],"wmask"))
-                checks.append((self.spare_wen_value[port],"spare_wen"))
+                checks.append((self.data_value[port], "data"))
+                checks.append((self.wmask_value[port], "wmask"))
+                checks.append((self.spare_wen_value[port], "spare_wen"))
 
             for (val, name) in checks:
                 debug.check(len(self.cycle_times)==len(val),
@@ -108,15 +102,15 @@ class functional(simulation):
         r_ops = ["noop", "read"]
 
         # First cycle idle is always an idle cycle
-        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, "0"*self.num_wmasks, 0, self.t_current)
+        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
         # 1. Write all the write ports first to seed a bunch of locations.
         for port in self.write_ports:
             addr = self.gen_addr()
             word = self.gen_data()
-            comment = self.gen_cycle_comment("write", word, addr, "1"*self.num_wmasks, port, self.t_current)
-            self.add_write_one_port(comment, addr, word, "1"*self.num_wmasks, port)
+            comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
+            self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
 
         # All other read-only ports are noops.
@@ -135,7 +129,7 @@ class functional(simulation):
             if port in self.write_ports:
                 self.add_noop_one_port(port)
             else:
-                comment = self.gen_cycle_comment("read", word, addr, "0"*self.num_wmasks, port, self.t_current)
+                comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
                 self.add_read_one_port(comment, addr, port)
                 self.add_read_check(word, port)
         self.cycle_times.append(self.t_current)
@@ -164,13 +158,13 @@ class functional(simulation):
                         self.add_noop_one_port(port)
                     else:
                         word = self.gen_data()
-                        comment = self.gen_cycle_comment("write", word, addr, "1"*self.num_wmasks, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word, "1"*self.num_wmasks, port)
+                        comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
                         w_addrs.append(addr)
                 elif op == "partial_write":
                     # write only to a word that's been written to
-                    (addr,old_word) = self.get_data()
+                    (addr, old_word) = self.get_data()
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
@@ -183,7 +177,7 @@ class functional(simulation):
                         self.stored_words[addr] = new_word
                         w_addrs.append(addr)
                 else:
-                    (addr,word) = random.choice(list(self.stored_words.items()))
+                    (addr, word) = random.choice(list(self.stored_words.items()))
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -191,7 +185,7 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, "0"*self.num_wmasks, port, self.t_current)
+                        comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
                         self.add_read_one_port(comment, addr, port)
                         self.add_read_check(word, port)
                 
@@ -199,7 +193,7 @@ class functional(simulation):
             self.t_current += self.period
         
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        comment = self.gen_cycle_comment("noop", "0"*self.word_size, "0"*self.addr_size, "0"*self.num_wmasks, 0, self.t_current)
+        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
     def gen_masked_data(self, old_word, word, wmask):
@@ -213,7 +207,7 @@ class functional(simulation):
             if wmask[bit] == "0":
                 lower = bit * self.write_size
                 upper = lower + self.write_size - 1
-                new_word = new_word[:lower] + old_word[lower:upper+1] + new_word[upper + 1:]
+                new_word = new_word[:lower] + old_word[lower:upper + 1] + new_word[upper + 1:]
                 
         return new_word
         
@@ -223,7 +217,7 @@ class functional(simulation):
             self.check
         except:
             self.check = 0
-        self.read_check.append([word, "{0}{1}".format(self.dout_name,port), self.t_current+self.period, self.check])
+        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check])
         self.check += 1
         
     def read_stim_results(self):
@@ -231,7 +225,7 @@ class functional(simulation):
         for (word, dout_port, eo_period, check) in self.read_check:
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
-                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(),bit,check))
+                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check))
                 if value > self.v_high:
                     sp_read_value = "1" + sp_read_value
                 elif value < self.v_low:
@@ -282,25 +276,24 @@ class functional(simulation):
         # wmask must be reversed since a python list goes right to left and sram bits go left to right.
         return wmask[::-1]
 
-
     def gen_data(self):
         """ Generates a random word to write. """
         if not self.num_spare_cols:
-            random_value = random.randint(0,(2**(self.word_size))-1)
+            random_value = random.randint(0, (2 ** self.word_size) - 1)
         else:
-            random_value1 = random.randint(0,(2**(self.word_size))-1)
-            random_value2 = random.randint(0,(2**(self.num_spare_cols))-1)
+            random_value1 = random.randint(0, (2 ** self.word_size) - 1)
+            random_value2 = random.randint(0, (2 ** self.num_spare_cols) - 1)
             random_value = random_value1 + random_value2
-        data_bits = self.convert_to_bin(random_value,False)
+        data_bits = self.convert_to_bin(random_value, False)
         return data_bits
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
         if self.num_spare_rows==0:
-            random_value = random.randint(0,(2**self.addr_size)-1)
+            random_value = random.randint(0, (2 ** self.addr_size) - 1)
         else:
-            random_value = random.randint(0,((2**(self.addr_size-1)-1))+(self.num_spare_rows * self.words_per_row))
-        addr_bits = self.convert_to_bin(random_value,True)
+            random_value = random.randint(0, ((2 ** (self.addr_size - 1) - 1)) + (self.num_spare_rows * self.words_per_row))
+        addr_bits = self.convert_to_bin(random_value, True)
         return addr_bits
         
     def get_data(self):
@@ -308,36 +301,36 @@ class functional(simulation):
         # Used for write masks since they should be writing to previously written addresses
         addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
-        return (addr,word)
+        return (addr, word)
         
-    def convert_to_bin(self,value,is_addr):
+    def convert_to_bin(self, value, is_addr):
         """ Converts addr & word to usable binary values. """
-        new_value = str.replace(bin(value),"0b","")
+        new_value = str.replace(bin(value), "0b", "")
         if(is_addr):
             expected_value = self.addr_size
         else:
             expected_value = self.word_size + self.num_spare_cols
-        for i in range (expected_value - len(new_value)):
+        for i in range(expected_value - len(new_value)):
             new_value =  "0" + new_value
             
-        #print("Binary Conversion: {} to {}".format(value, new_value))
-        return new_value  
+        # print("Binary Conversion: {} to {}".format(value, new_value))
+        return new_value
             
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
-        self.sf = open(temp_stim,"w")
+        self.sf = open(temp_stim, "w")
         self.sf.write("* Functional test stimulus file for {}ns period\n\n".format(self.period))
-        self.stim = stimuli(self.sf,self.corner)
+        self.stim = stimuli(self.sf, self.corner)
 
-        #Write include statements
+        # Write include statements
         self.stim.write_include(self.sp_file)
 
-        #Write Vdd/Gnd statements
+        # Write Vdd/Gnd statements
         self.sf.write("\n* Global Power Supplies\n")
         self.stim.write_supply()
         
-        #Instantiate the SRAM
+        # Instantiate the SRAM
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_model(pins=self.pins,
                              model_name=self.sram.name)
@@ -362,7 +355,7 @@ class functional(simulation):
         for comment in self.fn_cycle_comments:
             self.sf.write("*{}\n".format(comment))
                 
-        # Generate data input bits 
+        # Generate data input bits
         self.sf.write("\n* Generation of data and address signals\n")
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
@@ -378,10 +371,10 @@ class functional(simulation):
         # Generate control signals
         self.sf.write("\n * Generation of control signals\n")
         for port in self.all_ports:
-            self.stim.gen_pwl("CSB{}".format(port), self.cycle_times , self.csb_values[port], self.period, self.slew, 0.05)
+            self.stim.gen_pwl("CSB{}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
             
         for port in self.readwrite_ports:
-            self.stim.gen_pwl("WEB{}".format(port), self.cycle_times , self.web_values[port], self.period, self.slew, 0.05)
+            self.stim.gen_pwl("WEB{}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
 
         # Generate wmask bits
         for port in self.write_ports:
@@ -416,11 +409,11 @@ class functional(simulation):
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
         for (word, dout_port, eo_period, check) in self.read_check:
-            t_intital = eo_period - 0.01*self.period
-            t_final = eo_period + 0.01*self.period
+            t_intital = eo_period - 0.01 * self.period
+            t_final = eo_period + 0.01 * self.period
             for bit in range(self.word_size + self.num_spare_cols):
-                self.stim.gen_meas_value(meas_name="V{0}_{1}ck{2}".format(dout_port,bit,check),
-                                         dout="{0}_{1}".format(dout_port,bit),
+                self.stim.gen_meas_value(meas_name="V{0}_{1}ck{2}".format(dout_port, bit, check),
+                                         dout="{0}_{1}".format(dout_port, bit),
                                          t_intital=t_intital,
                                          t_final=t_final)
         
@@ -450,7 +443,7 @@ class functional(simulation):
         # Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
         self.sram_spc_name = "X{}".format(self.sram.name)
-        self.sram.build_graph(self.graph,self.sram_spc_name,self.pins)
+        self.sram.build_graph(self.graph, self.sram_spc_name, self.pins)
 
     # FIXME: refactor to share with delay.py
     def set_internal_spice_names(self):
@@ -458,17 +451,17 @@ class functional(simulation):
         
         # For now, only testing these using first read port.
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format("clk", port), 
+        self.graph.get_all_paths('{}{}'.format("clk", port),
                                  '{}{}_{}'.format(self.dout_name, port, 0).lower())
 
-        self.sen_name = self.get_sen_name(self.graph.all_paths)    
-        debug.info(2,"s_en name = {}".format(self.sen_name))
+        self.sen_name = self.get_sen_name(self.graph.all_paths)
+        debug.info(2, "s_en name = {}".format(self.sen_name))
         
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
-        debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+        self.bl_name, self.br_name = self.get_bl_name(self.graph.all_paths, port)
+        debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
 
-        self.q_name,self.qbar_name = self.get_bit_name()
-        debug.info(2,"q name={}\nqbar name={}".format(self.q_name,self.qbar_name))
+        self.q_name, self.qbar_name = self.get_bit_name()
+        debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
         
     def get_bit_name(self):
         """ Get a bit cell name """
@@ -476,10 +469,10 @@ class functional(simulation):
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
-        q_name = cell_name+'.'+str(storage_names[0])
-        qbar_name = cell_name+'.'+str(storage_names[1])
+        q_name = cell_name + '.' + str(storage_names[0])
+        qbar_name = cell_name + '.' + str(storage_names[1])
 
-        return (q_name,qbar_name)
+        return (q_name, qbar_name)
         
     # FIXME: refactor to share with delay.py
     def get_sen_name(self, paths):
@@ -489,29 +482,28 @@ class functional(simulation):
         """
         
         sa_mods = factory.get_mods(OPTS.sense_amp)
-        # Any sense amp instantiated should be identical, any change to that 
+        # Any sense amp instantiated should be identical, any change to that
         # will require some identification to determine the mod desired.
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
-        return sen_name        
+        return sen_name
      
     # FIXME: refactor to share with delay.py
     def get_bl_name(self, paths, port):
         """Gets the signal name associated with the bitlines in the bank."""
         
-        cell_mod = factory.create(module_type=OPTS.bitcell)  
+        cell_mod = factory.create(module_type=OPTS.bitcell)
         cell_bl = cell_mod.get_bl_name(port)
         cell_br = cell_mod.get_br_name(port)
         
-        bl_found = False
         # Only a single path should contain a single s_en name. Anything else is an error.
         bl_names = []
         exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
                 
-        return bl_names[0], bl_names[1]          
+        return bl_names[0], bl_names[1]
 
     def get_bl_name_search_exclusions(self):
         """Gets the mods as a set which should be excluded while searching for name."""
@@ -520,9 +512,9 @@ class functional(simulation):
         # so it makes the search awkward
         return set(factory.get_mods(OPTS.replica_bitline))
         
-    def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
+    def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None):
         """
-        Finds a single alias for the int_net in given paths. 
+        Finds a single alias for the int_net in given paths.
         More or less hits cause an error
         """
         
@@ -530,14 +522,14 @@ class functional(simulation):
         for path in paths:
             aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, int_net, mod, exclusion_set)
             if net_found and len(aliases) >= 1:
-                debug.error('Found multiple paths with {} net.'.format(int_net),1)
+                debug.error('Found multiple paths with {} net.'.format(int_net), 1)
             elif len(aliases) > 1:
-                debug.error('Found multiple {} nets in single path.'.format(int_net),1)
+                debug.error('Found multiple {} nets in single path.'.format(int_net), 1)
             elif not net_found and len(aliases) == 1:
                 path_net_name = aliases[0]
                 net_found = True
         if not net_found:
-            debug.error("Could not find {} net in timing paths.".format(int_net),1)
+            debug.error("Could not find {} net in timing paths.".format(int_net), 1)
                 
-        return path_net_name 
+        return path_net_name
     

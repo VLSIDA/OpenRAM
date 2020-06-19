@@ -192,7 +192,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     if OPTS.tech_name == "sky130":
         shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
         from magic import filter_gds
-        filter_gds(cell_name, OPTS.openram_temp + "temp.gds", gds_name)
+        filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")
     else:
         # Copy file to local dir if it isn't already
         if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):

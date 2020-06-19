@@ -37,6 +37,14 @@ def filter_gds(cell_name, input_gds, output_gds):
     """ Run the gds through magic for any layer processing """
     global OPTS
 
+    # Copy .magicrc file into temp dir
+    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+    
+
     run_file = OPTS.openram_temp + "run_filter.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")

@@ -134,7 +134,7 @@ class ptx(design.design):
         if OPTS.tech_name == "sky130":
             # sky130 technology is in microns, also needs mult parameter
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
-            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3}".format(spice[self.tx_type],
+            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                    self.mults,
                                                                    self.tx_width,
                                                                    drc("minwidth_poly"))

@@ -23,10 +23,13 @@ class and2_dec_test(openram_test):
         global verify
         import verify
 
-        import and2_dec
-
-        debug.info(2, "Testing and2 gate 4x")
-        a = and2_dec.and2_dec(name="and2x4", size=4)
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+        
+        debug.info(2, "Testing and2_dec gate")
+        a = factory.create(module_type="and2_dec")
         self.local_check(a)
 
         globals.end_openram()

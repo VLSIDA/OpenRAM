@@ -10,9 +10,9 @@ import re
 import os
 import math
 import tech
-from delay_data import *
-from wire_spice_model import *
-from power_data import *
+from delay_data import delay_data
+from wire_spice_model import wire_spice_model
+from power_data import power_data
 import logical_effort
 
 
@@ -263,7 +263,10 @@ class spice():
         Recursive spice subcircuit write;
         Writes the spice subcircuit from the library or the dynamically generated one
         """
+
         if not self.spice:
+            # If spice isn't defined, we dynamically generate one.
+            
             # recursively write the modules
             for i in self.mods:
                 if self.contains(i, usedMODS):
@@ -316,7 +319,7 @@ class spice():
             sp.write(".ENDS {0}\n".format(self.name))
 
         else:
-            # write the subcircuit itself
+            # If spice is a hard module, output the spice file contents.
             # Including the file path makes the unit test fail for other users.
             # if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
@@ -356,7 +359,7 @@ class spice():
         stage_effort = self.get_stage_effort(relative_cap)
         
         # If it fails, then keep running with a valid object.
-        if stage_effort == None:
+        if not stage_effort:
             return delay_data(0.0, 0.0)
             
         abs_delay = stage_effort.get_absolute_delay()

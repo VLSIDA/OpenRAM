@@ -36,6 +36,10 @@ class replica_column(design.design):
                     "Replica bit cannot be the dummy row.")
         debug.check(replica_bit <= left_rbl or replica_bit >= self.total_size - right_rbl - 1,
                     "Replica bit cannot be in the regular array.")
+        if OPTS.tech_name == "sky130":
+            debug.check(rows % 2 == 0 and (left_rbl + 1) % 2 == 0,
+                        "sky130 currently requires rows to be even and to start with X mirroring"
+                        + " (left_rbl must be odd) for LVS.")
 
         self.create_netlist()
         if not OPTS.netlist_only:

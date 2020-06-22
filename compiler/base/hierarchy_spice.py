@@ -40,6 +40,8 @@ class spice():
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         self.conns = []
+        # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
+        self.no_instances = False
         # Keep track of any comments to add the the spice
         try:
             self.commments
@@ -264,7 +266,9 @@ class spice():
         Writes the spice subcircuit from the library or the dynamically generated one
         """
 
-        if not self.spice:
+        if self.no_instances:
+            return
+        elif not self.spice:
             # If spice isn't defined, we dynamically generate one.
             
             # recursively write the modules
@@ -302,6 +306,9 @@ class spice():
                 # we don't need to output connections of empty instances.
                 # these are wires and paths
                 if self.conns[i] == []:
+                    continue
+                # Instance with no devices in it needs no subckt/instance
+                if self.insts[i].mod.no_instances:
                     continue
                 if lvs_netlist and hasattr(self.insts[i].mod, "lvs_device"):
                     sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,

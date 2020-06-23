@@ -15,6 +15,8 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
+@unittest.skip("SKIPPING 04_and4_dec_test")
 class and4_dec_test(openram_test):
 
     def runTest(self):

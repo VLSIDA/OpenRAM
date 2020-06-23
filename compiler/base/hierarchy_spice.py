@@ -215,7 +215,7 @@ class spice():
 
         # We don't define self.lvs and will use self.spice if dynamically created
         # or they are the same file
-        if self.lvs_file!=self.sp_file and os.path.isfile(self.lvs_file):
+        if self.lvs_file != self.sp_file and os.path.isfile(self.lvs_file):
             debug.info(3, "opening {0}".format(self.lvs_file))
             f = open(self.lvs_file)
             self.lvs = f.readlines()

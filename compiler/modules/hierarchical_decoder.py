@@ -152,7 +152,7 @@ class hierarchical_decoder(design.design):
             self.predecoder_width = self.pre2_4.width
 
         # How much space between each predecoder
-        self.predecoder_spacing = self.and2.height
+        self.predecoder_spacing = 2 * self.and2.height
         self.predecoder_height = self.pre2_4.height * self.no_of_pre2x4 + self.pre3_8.height * self.no_of_pre3x8 \
                                  + (self.no_of_pre2x4 + self.no_of_pre3x8 - 1) * self.predecoder_spacing
 

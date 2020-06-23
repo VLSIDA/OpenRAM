@@ -131,8 +131,8 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        if OPTS.tech_name == "sky130":
-            # sky130 technology is in microns, also needs mult parameter
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 simulation cannot use the mult parameter in simulation
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                    self.mults,
@@ -152,19 +152,17 @@ class ptx(design.design):
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
 
-        # LVS lib is always in SI units
-        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
-            if OPTS.tech_name == "sky130":
-                # sky130 requires mult parameter too
-                self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
-                                                                                       self.mults,
-                                                                                       self.tx_width,
-                                                                                       drc("minwidth_poly"))
-            else:
-                self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                                         self.mults,
-                                                                                         self.tx_width,
-                                                                                         drc("minwidth_poly"))
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 requires mult parameter too
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
+                                                                                   self.mults,
+                                                                                   self.tx_width,
+                                                                                   drc("minwidth_poly"))
+        else:
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
 
     def setup_layout_constants(self):
         """

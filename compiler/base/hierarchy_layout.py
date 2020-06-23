@@ -599,6 +599,10 @@ class layout():
         """
 
         if from_layer == to_layer:
+            # In the case where we have no vias added, make sure that there is at least
+            # a metal enclosure. This helps with center-line path routing.
+            self.add_rect_center(layer=from_layer,
+                                 offset=offset)
             return last_via
 
         from_id = layer_indices[from_layer]

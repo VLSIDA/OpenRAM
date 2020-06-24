@@ -191,8 +191,9 @@ class pgate(design.design):
                               offset=pwell_position,
                               width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
-                
-        self.extend_implants()
+
+        if OPTS.tech_name == "sky130":
+            self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """

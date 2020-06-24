@@ -189,11 +189,11 @@ class pnand2(pgate.pgate):
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
         
-        self.route_input_gate(self.pmos1_inst,
-                              self.nmos1_inst,
-                              self.inputA_yoffset,
-                              "A",
-                              position="center")
+        apin = self.route_input_gate(self.pmos1_inst,
+                                     self.nmos1_inst,
+                                     self.inputA_yoffset,
+                                     "A",
+                                     position="center")
         
         self.inputB_yoffset = self.inputA_yoffset + 2 * self.m3_pitch
         # # active contact metal to poly contact metal spacing
@@ -206,14 +206,14 @@ class pnand2(pgate.pgate):
         #                           active_to_poly_contact2)
 
         # This will help with the wells and the input/output placement
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
+        bpin = self.route_input_gate(self.pmos2_inst,
+                                     self.nmos2_inst,
+                                     self.inputB_yoffset,
+                                     "B",
+                                     position="center")
 
         if OPTS.tech_name == "sky130":
-            self.enclose_npc()
+            self.add_enclosure([apin, bpin], "npc", drc("npc_enclose_poly"))
         
 
     def route_output(self):

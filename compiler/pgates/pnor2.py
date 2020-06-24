@@ -195,24 +195,24 @@ class pnor2(pgate.pgate):
         self.inputB_yoffset = bottom_pin_offset + self.m1_nonpref_pitch
         self.inputA_yoffset = self.inputB_yoffset + self.m1_nonpref_pitch
         
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="right",
-                              directions=("V", "V"))
+        bpin = self.route_input_gate(self.pmos2_inst,
+                                     self.nmos2_inst,
+                                     self.inputB_yoffset,
+                                     "B",
+                                     position="right",
+                                     directions=("V", "V"))
         
         # This will help with the wells and the input/output placement
-        self.route_input_gate(self.pmos1_inst,
-                              self.nmos1_inst,
-                              self.inputA_yoffset,
-                              "A",
-                              directions=("V", "V"))
+        apin = self.route_input_gate(self.pmos1_inst,
+                                     self.nmos1_inst,
+                                     self.inputA_yoffset,
+                                     "A",
+                                     directions=("V", "V"))
 
         self.output_yoffset = self.inputA_yoffset + self.m1_nonpref_pitch
 
         if OPTS.tech_name == "sky130":
-            self.enclose_npc()
+            self.add_enclosure([apin, bpin], "npc", drc("npc_enclose_poly"))
 
     def route_output(self):
         """ Route the Z output """

@@ -227,28 +227,28 @@ class pnand3(pgate.pgate):
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
         
-        self.route_input_gate(self.pmos1_inst,
-                              self.nmos1_inst,
-                              self.inputA_yoffset,
-                              "A",
-                              position="left")
+        apin = self.route_input_gate(self.pmos1_inst,
+                                     self.nmos1_inst,
+                                     self.inputA_yoffset,
+                                     "A",
+                                     position="left")
 
         self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
+        bpin = self.route_input_gate(self.pmos2_inst,
+                                     self.nmos2_inst,
+                                     self.inputB_yoffset,
+                                     "B",
+                                     position="center")
 
         self.inputC_yoffset = self.inputB_yoffset + self.m3_pitch
-        self.route_input_gate(self.pmos3_inst,
-                              self.nmos3_inst,
-                              self.inputC_yoffset,
-                              "C",
-                              position="right")
+        cpin = self.route_input_gate(self.pmos3_inst,
+                                     self.nmos3_inst,
+                                     self.inputC_yoffset,
+                                     "C",
+                                     position="right")
 
         if OPTS.tech_name == "sky130":
-            self.enclose_npc()
+            self.add_enclosure([apin, bpin, cpin], "npc", drc("npc_enclose_poly"))
         
     def route_output(self):
         """ Route the Z output """

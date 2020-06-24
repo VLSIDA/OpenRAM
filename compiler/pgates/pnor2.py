@@ -211,6 +211,9 @@ class pnor2(pgate.pgate):
 
         self.output_yoffset = self.inputA_yoffset + self.m1_nonpref_pitch
 
+        if OPTS.tech_name == "sky130":
+            self.enclose_npc()
+
     def route_output(self):
         """ Route the Z output """
         # PMOS2 (right) drain

@@ -212,6 +212,10 @@ class pnand2(pgate.pgate):
                               "B",
                               position="center")
 
+        if OPTS.tech_name == "sky130":
+            self.enclose_npc()
+        
+
     def route_output(self):
         """ Route the Z output """
         

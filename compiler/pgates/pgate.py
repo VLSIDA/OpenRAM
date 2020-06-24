@@ -43,6 +43,9 @@ class pgate(design.design):
         self.route_layer_space = getattr(self, "{}_space".format(self.route_layer))
         self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
 
+        # hack for enclosing input pin with npc
+        self.input_pin_vias = []
+
         # This is the space from a S/D contact to the supply rail
         contact_to_vdd_rail_space = 0.5 * self.route_layer_width + self.route_layer_space
         # This is a poly-to-poly of a flipped cell
@@ -132,6 +135,8 @@ class pgate(design.design):
                                         offset=contact_offset,
                                         directions=directions)
 
+        self.input_pin_vias.append(via)
+
         self.add_layout_pin_rect_center(text=name,
                                         layer=self.route_layer,
                                         offset=contact_offset,
@@ -145,6 +150,28 @@ class pgate(design.design):
                              offset=mid_point,
                              height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
+
+    def enclose_npc(self):
+        """ Enclose the poly contacts with npc layer """
+        ll = None
+        ur = None
+        for via in self.input_pin_vias:
+            # Find ll/ur
+            if not ll:
+                ll = via.ll()
+            else:
+                ll = ll.min(via.ll())
+            if not ur:
+                ur = via.ur()
+            else:
+                ur = ur.max(via.ur())
+
+        npc_enclose_poly = drc("npc_enclose_poly")
+        npc_enclose_offset = vector(npc_enclose_poly, npc_enclose_poly)
+        self.add_rect(layer="npc",
+                      offset=ll - npc_enclose_offset,
+                      width=(ur.x - ll.x) + 2 * npc_enclose_poly,
+                      height=(ur.y - ll.y)  + 2 * npc_enclose_poly)
 
     def extend_wells(self):
         """ Extend the n/p wells to cover whole cell """

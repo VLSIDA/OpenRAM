@@ -252,31 +252,47 @@ class pgate(design.design):
         """
         Add top-to-bottom implants for adjacency issues in s8.
         """
+        if self.add_wells:
+            rightx = None
+        else:
+            rightx = self.width
+            
         nmos_insts = self.get_tx_insts("nmos")
+        if len(nmos_insts) > 0:
+            self.add_enclosure(nmos_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               boty=0)
+        
         pmos_insts = self.get_tx_insts("pmos")
-        ntap_insts = [self.nwell_contact]
-        ptap_insts = [self.pwell_contact]
-
-        self.add_enclosure(nmos_insts,
-                           layer="nimplant",
-                           extend=self.implant_enclose_active,
-                           leftx=0,
-                           boty=0)
-        self.add_enclosure(pmos_insts,
-                           layer="pimplant",
-                           extend=self.implant_enclose_active,
-                           leftx=0,
-                           topy=self.height)
-        self.add_enclosure(ntap_insts,
-                           layer="nimplant",
-                           extend=self.implant_enclose_active,
-                           rightx=self.width,
-                           topy=self.height)
-        self.add_enclosure(ptap_insts,
-                           layer="pimplant",
-                           extend=self.implant_enclose_active,
-                           rightx=self.width,
-                           boty=0)
+        if len(pmos_insts) > 0:
+            self.add_enclosure(pmos_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               topy=self.height)
+        
+        try:
+            ntap_insts = [self.nwell_contact]
+            self.add_enclosure(ntap_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               topy=self.height)
+        except AttributeError:
+            pass
+        try:
+            ptap_insts = [self.pwell_contact]
+            self.add_enclosure(ptap_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               boty=0)
+        except AttributeError:
+            pass
         
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """

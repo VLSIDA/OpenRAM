@@ -233,14 +233,14 @@ class pnand3(pgate.pgate):
                               "A",
                               position="left")
 
-        self.inputB_yoffset = self.inputA_yoffset + 1.2 * self.m3_pitch
+        self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               self.inputB_yoffset,
                               "B",
                               position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset + 1.2 * self.m3_pitch
+        self.inputC_yoffset = self.inputB_yoffset + self.m3_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,

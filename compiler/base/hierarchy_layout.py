@@ -269,6 +269,23 @@ class layout():
                                  width,
                                  end.y - start.y)
 
+    def get_tx_insts(self, tx_type=None):
+        """
+        Return a list of the instances of given tx type.
+        """
+        tx_list = []
+        for i in self.insts:
+            try:
+                if tx_type and i.mod.tx_type == tx_type:
+                    tx_list.append(i)
+                elif not tx_type:
+                    if i.mod.tx_type == "nmos" or i.mod.tx_type == "pmos":
+                        tx_list.append(i)
+            except AttributeError:
+                pass
+                        
+        return tx_list
+                        
     def get_pin(self, text):
         """
         Return the pin or list of pins
@@ -1301,26 +1318,48 @@ class layout():
                                                   height=ur.y - ll.y,
                                                   width=ur.x - ll.x)
 
-    def add_enclosure(self, insts, layer="nwell"):
-        """ Add a layer that surrounds the given instances. Useful
+    def add_enclosure(self, insts, layer="nwell", extend=0, leftx=None, rightx=None, topy=None, boty=None):
+        """
+        Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or
-        spacings."""
+        spacings. Extra arg can force a dimension to one side left/right top/bot.
+        """
 
-        xmin = insts[0].lx()
-        ymin = insts[0].by()
-        xmax = insts[0].rx()
-        ymax = insts[0].uy()
-        for inst in insts:
-            xmin = min(xmin, inst.lx())
-            ymin = min(ymin, inst.by())
-            xmax = max(xmax, inst.rx())
-            ymax = max(ymax, inst.uy())
+        if leftx != None:
+            xmin = leftx
+        else:
+            xmin = insts[0].lx()
+            for inst in insts:
+                xmin = min(xmin, inst.lx())
+            xmin = xmin - extend
+        if boty != None:
+            ymin = boty
+        else:
+            ymin = insts[0].by()
+            for inst in insts:
+                ymin = min(ymin, inst.by())
+            ymin = ymin - extend
+        if rightx != None:
+            xmax = rightx
+        else:
+            xmax = insts[0].rx()
+            for inst in insts:
+                xmax = max(xmax, inst.rx())
+            xmax = xmax + extend
+        if topy != None:
+            ymax = topy
+        else:
+            ymax = insts[0].uy()
+            for inst in insts:
+                ymax = max(ymax, inst.uy())
+            ymax = ymax + extend
 
-        self.add_rect(layer=layer,
-                      offset=vector(xmin, ymin),
-                      width=xmax - xmin,
-                      height=ymax - ymin)
-
+        rect = self.add_rect(layer=layer,
+                             offset=vector(xmin, ymin),
+                             width=xmax - xmin,
+                             height=ymax - ymin)
+        return rect
+    
     def copy_power_pins(self, inst, name):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
@@ -1337,7 +1376,7 @@ class layout():
 
             else:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
- 
+
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at

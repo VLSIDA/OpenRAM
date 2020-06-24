@@ -135,8 +135,6 @@ class pgate(design.design):
                                         offset=contact_offset,
                                         directions=directions)
 
-        self.input_pin_vias.append(via)
-
         self.add_layout_pin_rect_center(text=name,
                                         layer=self.route_layer,
                                         offset=contact_offset,
@@ -151,27 +149,7 @@ class pgate(design.design):
                              height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
-    def enclose_npc(self):
-        """ Enclose the poly contacts with npc layer """
-        ll = None
-        ur = None
-        for via in self.input_pin_vias:
-            # Find ll/ur
-            if not ll:
-                ll = via.ll()
-            else:
-                ll = ll.min(via.ll())
-            if not ur:
-                ur = via.ur()
-            else:
-                ur = ur.max(via.ur())
-
-        npc_enclose_poly = drc("npc_enclose_poly")
-        npc_enclose_offset = vector(npc_enclose_poly, npc_enclose_poly)
-        self.add_rect(layer="npc",
-                      offset=ll - npc_enclose_offset,
-                      width=(ur.x - ll.x) + 2 * npc_enclose_poly,
-                      height=(ur.y - ll.y)  + 2 * npc_enclose_poly)
+        return via
 
     def extend_wells(self):
         """ Extend the n/p wells to cover whole cell """
@@ -179,6 +157,7 @@ class pgate(design.design):
         # This should match the cells in the cell library
         self.nwell_yoffset = 0.48 * self.height
         full_height = self.height + 0.5 * self.m1_width
+
         
         # FIXME: float rounding problem
         if "nwell" in layer:
@@ -212,6 +191,8 @@ class pgate(design.design):
                               offset=pwell_position,
                               width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
+                
+        self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """
@@ -267,6 +248,36 @@ class pgate(design.design):
 
         # Return the top of the well
 
+    def extend_implants(self):
+        """
+        Add top-to-bottom implants for adjacency issues in s8.
+        """
+        nmos_insts = self.get_tx_insts("nmos")
+        pmos_insts = self.get_tx_insts("pmos")
+        ntap_insts = [self.nwell_contact]
+        ptap_insts = [self.pwell_contact]
+
+        self.add_enclosure(nmos_insts,
+                           layer="nimplant",
+                           extend=self.implant_enclose_active,
+                           leftx=0,
+                           boty=0)
+        self.add_enclosure(pmos_insts,
+                           layer="pimplant",
+                           extend=self.implant_enclose_active,
+                           leftx=0,
+                           topy=self.height)
+        self.add_enclosure(ntap_insts,
+                           layer="nimplant",
+                           extend=self.implant_enclose_active,
+                           rightx=self.width,
+                           topy=self.height)
+        self.add_enclosure(ptap_insts,
+                           layer="pimplant",
+                           extend=self.implant_enclose_active,
+                           rightx=self.width,
+                           boty=0)
+        
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
 
@@ -295,7 +306,7 @@ class pgate(design.design):
                              offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
-        
+
         # Now add the full active and implant for the NMOS
         # active_offset = nmos_pos + vector(nmos.active_width,0)
         # This might be needed if the spacing between the actives

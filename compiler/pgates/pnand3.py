@@ -222,7 +222,7 @@ class pnand3(pgate.pgate):
         # doesn't use nmos uy because that is calculated using offset + poly height
         active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
         active_to_poly_contact = active_top + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
-        active_to_poly_contact2 = active_top + drc("contact_to_gate") + 0.5 * self.route_layer_width
+        active_to_poly_contact2 = active_top + self.poly_contact_to_gate + 0.5 * self.route_layer_width
         self.inputA_yoffset = max(active_contact_to_poly_contact,
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
@@ -233,15 +233,14 @@ class pnand3(pgate.pgate):
                               "A",
                               position="left")
 
-        # Put B right on the well line
-        self.inputB_yoffset = self.inputA_yoffset + non_contact_pitch
+        self.inputB_yoffset = self.inputA_yoffset + 1.2 * self.m3_pitch
         self.route_input_gate(self.pmos2_inst,
                               self.nmos2_inst,
                               self.inputB_yoffset,
                               "B",
                               position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset + non_contact_pitch
+        self.inputC_yoffset = self.inputB_yoffset + 1.2 * self.m3_pitch
         self.route_input_gate(self.pmos3_inst,
                               self.nmos3_inst,
                               self.inputC_yoffset,

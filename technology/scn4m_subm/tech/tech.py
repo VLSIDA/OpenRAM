@@ -217,9 +217,9 @@ drc.add_enclosure("active",
                   layer = "contact",
                   enclosure = _lambda_)
 # Reserved for other technologies
-drc["contact_to_gate"] = 2*_lambda_
+drc["active_contact_to_gate"] = 2*_lambda_
 # 5.4 Minimum spacing to gate of transistor
-drc["contact_to_poly"] = 2*_lambda_
+drc["poly_contact_to_gate"] = 2*_lambda_
 
 # 6.1 Exact contact size
 # 5.3 Minimum contact spacing

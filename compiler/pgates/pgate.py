@@ -379,4 +379,4 @@ class pgate(design.design):
         return(scaled_bins)
         
     def bin_accuracy(self, ideal_width, width):
-        return abs(1-(ideal_width - width)/ideal_width)
+        return 1-abs((ideal_width - width)/ideal_width)

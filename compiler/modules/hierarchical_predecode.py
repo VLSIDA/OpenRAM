@@ -24,12 +24,11 @@ class hierarchical_predecode(design.design):
         if not height:
             self.cell_height = b.height
             self.column_decoder = False
-        elif height != b.height:
-            self.cell_height = height
-            self.column_decoder = True
         else:
-            self.cell_height = b.height
-            self.column_decoder = False
+            self.cell_height = height
+        # If we are pitch matched to the bitcell, it's a predecoder
+        # otherwise it's a column decoder (out of pgates)
+        self.column_decoder = (height != b.height)
             
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         design.design.__init__(self, name)
@@ -311,7 +310,7 @@ class hierarchical_predecode(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # In sky130, we use hand-made decoder cells with vertical power
-        if not self.column_decoder:
+        if OPTS.tech_name == "sky130" and not self.column_decoder:
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
                 for i in [self.inv_inst, self.and_inst]:

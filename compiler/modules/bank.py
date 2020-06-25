@@ -497,18 +497,20 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
 
-        # Height is a multiple of DFF so that it can be staggered
-        # and rows do not align with the control logic module
-        self.dff = factory.create(module_type="dff")
+        self.dff =factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            self.column_decoder = factory.create(module_type="pinvbuf", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="pinvbuf",
+                                                 height=self.dff.height)
         elif self.col_addr_size == 2:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4",
+                                                 height=self.dff.height)
+
         elif self.col_addr_size == 3:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
+                                                 height=self.dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?", -1)

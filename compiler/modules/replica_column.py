@@ -183,11 +183,16 @@ class replica_column(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # For every second row and column, add a via for gnd and vdd
-        for row in range(row_range_min, row_range_max):
-            inst = self.cell_inst[row]
+        # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
+        if end_caps_enabled:
+            supply_insts = [self.cell_inst[0], self.cell_inst[self.total_size - 1]]
+        else:
+            supply_insts = self.cell_inst.values()
+
+        for inst in supply_insts:
             for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
+                if pin_name in inst.mod.pins:
+                    self.copy_layout_pin(inst, pin_name)
 
     def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell,

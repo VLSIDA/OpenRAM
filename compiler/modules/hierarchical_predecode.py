@@ -20,12 +20,17 @@ class hierarchical_predecode(design.design):
     def __init__(self, name, input_number, height=None):
         self.number_of_inputs = input_number
 
+        b = factory.create(module_type="bitcell")
         if not height:
-            b = factory.create(module_type="bitcell")
             self.cell_height = b.height
-        else:
+            self.column_decoder = False
+        elif height != b.height:
             self.cell_height = height
-
+            self.column_decoder = True
+        else:
+            self.cell_height = b.height
+            self.column_decoder = False
+            
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         design.design.__init__(self, name)
     
@@ -40,21 +45,21 @@ class hierarchical_predecode(design.design):
     def add_modules(self):
         """ Add the INV and AND gate modules """
 
-        if self.number_of_inputs == 2:
-            self.and_mod = factory.create(module_type="and2_dec",
-                                          height=self.cell_height)
-        elif self.number_of_inputs == 3:
-            self.and_mod = factory.create(module_type="and3_dec",
-                                          height=self.cell_height)
-        elif self.number_of_inputs == 4:
-            self.and_mod = factory.create(module_type="and4_dec",
-                                          height=self.cell_height)
+        debug.check(self.number_of_inputs < 4,
+                    "Invalid number of predecode inputs: {}".format(self.number_of_inputs))
+            
+        if self.column_decoder:
+            and_type = "pand{}".format(self.number_of_inputs)
+            inv_type = "pinv"
         else:
-            debug.error("Invalid number of predecode inputs: {}".format(self.number_of_inputs), -1)
+            and_type = "and{}_dec".format(self.number_of_inputs)
+            inv_type = "inv_dec"
+        self.and_mod = factory.create(module_type=and_type,
+                                      height=self.cell_height)
         self.add_mod(self.and_mod)
 
         # This uses the pinv_dec parameterized cell
-        self.inv = factory.create(module_type="inv_dec",
+        self.inv = factory.create(module_type=inv_type,
                                   height=self.cell_height,
                                   size=1)
         self.add_mod(self.inv)
@@ -80,7 +85,7 @@ class hierarchical_predecode(design.design):
         # Outputs from cells are on output layer
         if OPTS.tech_name == "sky130":
             self.bus_layer = "m1"
-            self.bus_directions = None
+            self.bus_directions = "nonpref"
             self.bus_pitch = self.m1_pitch
             self.bus_space = 1.5 * self.m1_space
             self.input_layer = "m2"
@@ -88,7 +93,7 @@ class hierarchical_predecode(design.design):
             self.output_layer_pitch = self.li_pitch
         else:
             self.bus_layer = "m2"
-            self.bus_directions = None
+            self.bus_directions = "pref"
             self.bus_pitch = self.m2_pitch
             self.bus_space = self.m2_space
             # This requires a special jog to ensure to conflicts with the output layers
@@ -238,10 +243,7 @@ class hierarchical_predecode(design.design):
             # add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
-            if OPTS.tech_name == "sky130":
-                inv_out_pos = inv_out_pin.lr()
-            else:
-                inv_out_pos = inv_out_pin.rc()
+            inv_out_pos = inv_out_pin.rc()
             y_offset = (inv_num + 1) * self.inv.height - self.output_layer_pitch
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
             rail_pos = vector(self.decode_rails[out_pin].cx(), y_offset)
@@ -309,7 +311,7 @@ class hierarchical_predecode(design.design):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # In sky130, we use hand-made decoder cells with vertical power
-        if OPTS.tech_name == "sky130":
+        if not self.column_decoder:
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
                 for i in [self.inv_inst, self.and_inst]:

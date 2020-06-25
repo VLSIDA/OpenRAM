@@ -110,17 +110,17 @@ class bitcell_base_array(design.design):
 
         # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
         try:
-            bitcell_no_vdd_pin = cell_properties.bitcell.no_vdd_via
+            end_caps_enabled = cell_properties.bitcell.end_caps
         except AttributeError:
-            bitcell_no_vdd_pin = False
+            end_caps_enabled = False
 
         # Add vdd/gnd via stacks
-        for row in range(self.row_size):
-            for col in range(self.column_size):
-                inst = self.cell_inst[row,col]
-                for pin_name in ["vdd", "gnd"]:
-                    for pin in inst.get_pins(pin_name):
-                        if not (pin_name == "vdd" and bitcell_no_vdd_pin):
+        if not end_caps_enabled:
+            for row in range(self.row_size):
+                for col in range(self.column_size):
+                    inst = self.cell_inst[row, col]
+                    for pin_name in ["vdd", "gnd"]:
+                        for pin in inst.get_pins(pin_name):
                             self.add_power_pin(name=pin_name,
                                                loc=pin.center(),
                                                directions=bitcell_power_pin_directions,

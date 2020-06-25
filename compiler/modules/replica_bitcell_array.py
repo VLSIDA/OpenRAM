@@ -380,19 +380,22 @@ class replica_bitcell_array(design.design):
 
         # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
         try:
-            bitcell_no_vdd_pin = cell_properties.bitcell.no_vdd_via
+            if cell_properties.bitcell.end_caps_enabled:
+                supply_insts = [self.dummy_col_left_inst, self.dummy_col_right_inst,
+                                self.dummy_row_top_inst, self.dummy_row_bot_inst] + list(self.replica_col_inst.values())
+            else:
+                supply_insts = self.insts
         except AttributeError:
-            bitcell_no_vdd_pin = False
+            supply_insts = self.insts
 
         for pin_name in ["vdd", "gnd"]:
-            for inst in self.insts:
+            for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
                 for pin in pin_list:
-                    if not (pin_name == "vdd" and bitcell_no_vdd_pin):
-                        self.add_power_pin(name=pin_name,
-                                           loc=pin.center(),
-                                           directions=("V", "V"),
-                                           start_layer=pin.layer)
+                    self.add_power_pin(name=pin_name,
+                                       loc=pin.center(),
+                                       directions=("V", "V"),
+                                       start_layer=pin.layer)
 
     def get_rbl_wl_name(self, port):
         """ Return the WL for the given RBL port """

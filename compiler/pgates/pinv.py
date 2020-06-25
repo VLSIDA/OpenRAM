@@ -20,7 +20,7 @@ from sram_factory import factory
 from errors import drc_error
 
 if(OPTS.tech_name == "sky130"):
-    from tech import nmos_bins, pmos_bins, accuracy_requirement
+    from tech import nmos_bins, pmos_bins
 
     
 class pinv(pgate.pgate):
@@ -169,13 +169,13 @@ class pinv(pgate.pgate):
 
             valid_pmos = []
             for bin in pmos_bins:
-                if abs(self.bin_accuracy(self.pmos_width, bin[0])) > accuracy_requirement and abs(self.bin_accuracy(self.pmos_width, bin[0])) <= 1:
+                if abs(self.bin_accuracy(self.pmos_width, bin[0])) > OPTS.accuracy_requirement and abs(self.bin_accuracy(self.pmos_width, bin[0])) <= 1:
                     valid_pmos.append(bin)
             valid_pmos.sort(key = operator.itemgetter(1))
 
             valid_nmos = []
             for bin in nmos_bins:
-                if abs(self.bin_accuracy(self.nmos_width, bin[0])) > accuracy_requirement and abs(self.bin_accuracy(self.nmos_width, bin[0])) <= 1:
+                if abs(self.bin_accuracy(self.nmos_width, bin[0])) > OPTS.accuracy_requirement and abs(self.bin_accuracy(self.nmos_width, bin[0])) <= 1:
                     valid_nmos.append(bin)
             valid_nmos.sort(key = operator.itemgetter(1))
 

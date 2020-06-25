@@ -165,7 +165,7 @@ class sram_1bank(sram_base):
         # The row address bits are placed above the control logic aligned on the right.
         x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
         # It is above the control logic but below the top of the bitcell array
-        y_offset = max(self.control_logic_insts[port].uy(), self.bank_inst.uy() - self.row_addr_dff_insts[port].height)
+        y_offset = max(self.control_logic_insts[port].uy(), self.control_logic_insts[port].uy() + self.dff.height)
         row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
 
@@ -238,7 +238,7 @@ class sram_1bank(sram_base):
             # The row address bits are placed above the control logic aligned on the left.
             x_offset = control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
             # It is below the control logic but below the bottom of the bitcell array
-            y_offset = min(self.control_logic_insts[port].by(), self.bank_inst.by() + self.row_addr_dff_insts[port].height)
+            y_offset = min(self.control_logic_insts[port].by(), self.control_logic_insts[port].by() - self.dff.height)
             row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="XY")
 
@@ -485,11 +485,14 @@ class sram_1bank(sram_base):
                 flop_pos = flop_pin.center()
                 bank_pos = bank_pin.center()
                 mid_pos = vector(bank_pos.x, flop_pos.y)
-                self.add_wire(self.m2_stack[::-1],
-                              [flop_pos, mid_pos, bank_pos])
                 self.add_via_stack_center(from_layer=flop_pin.layer,
                                           to_layer="m3",
                                           offset=flop_pos)
+                self.add_path("m3", [flop_pos, mid_pos])
+                self.add_via_stack_center(from_layer=bank_pin.layer,
+                                          to_layer="m3",
+                                          offset=mid_pos)
+                self.add_path(bank_pin.layer, [mid_pos, bank_pos])
 
     def route_col_addr_dff(self):
         """ Connect the output of the col flops to the bank pins """

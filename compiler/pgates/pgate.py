@@ -15,7 +15,7 @@ from vector import vector
 from globals import OPTS
 
 if(OPTS.tech_name == "sky130"):
-    from tech import nmos_bins, pmos_bins, accuracy_requirement
+    from tech import nmos_bins, pmos_bins
 
     
 class pgate(design.design):
@@ -400,7 +400,7 @@ class pgate(design.design):
                 
             select = -1
             for i in reversed(range(0, len(scaled_bins))):
-                if abs(target_width - scaled_bins[i])/target_width <= 1-accuracy_requirement:
+                if abs(target_width - scaled_bins[i])/target_width <= 1-OPTS.accuracy_requirement:
                     select = i
                     break
             if select == -1:
@@ -434,4 +434,4 @@ class pgate(design.design):
         return(scaled_bins)
         
     def bin_accuracy(self, ideal_width, width):
-        return abs(1-(ideal_width - width)/ideal_width)
+        return 1-abs((ideal_width - width)/ideal_width)

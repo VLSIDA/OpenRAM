@@ -10,7 +10,7 @@ import debug
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
-
+from tech import layer
 
 class write_mask_and_array(design.design):
     """
@@ -93,7 +93,7 @@ class write_mask_and_array(design.design):
 
         self.width = self.bitcell.width * self.columns
         self.height = self.and2.height
-        
+
         for i in range(self.num_wmasks):
             base = vector(i * self.wmask_en_len, 0)
             self.and2_insts[i].place(base)
@@ -121,16 +121,17 @@ class write_mask_and_array(design.design):
 
             for supply in ["gnd", "vdd"]:
                 supply_pin=self.and2_insts[i].get_pin(supply)
-                self.add_power_pin(supply, supply_pin.center())
+                if "li" in layer:
+                    self.add_power_pin(supply, supply_pin.center(), start_layer="li", directions = ("H", "H"))
+                else:
+                    self.add_power_pin(supply, supply_pin.center())
 
         for supply in ["gnd", "vdd"]:
             supply_pin_left = self.and2_insts[0].get_pin(supply)
             supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
             self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
-            
+
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""
         # The enable is connected to an and2 for every row.
         return self.and2.get_cin() * len(self.and2_insts)
-
-

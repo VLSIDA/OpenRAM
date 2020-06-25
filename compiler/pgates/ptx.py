@@ -131,8 +131,8 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        if OPTS.tech_name == "sky130":
-            # sky130 technology is in microns, also needs mult parameter
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 simulation cannot use the mult parameter in simulation
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                    self.mults,
@@ -152,19 +152,17 @@ class ptx(design.design):
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
 
-        # LVS lib is always in SI units
-        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
-            if OPTS.tech_name == "sky130":
-                # sky130 requires mult parameter too
-                self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
-                                                                                       self.mults,
-                                                                                       self.tx_width,
-                                                                                       drc("minwidth_poly"))
-            else:
-                self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                                         self.mults,
-                                                                                         self.tx_width,
-                                                                                         drc("minwidth_poly"))
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 requires mult parameter too
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
+                                                                                   self.mults,
+                                                                                   self.tx_width,
+                                                                                   drc("minwidth_poly"))
+        else:
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
 
     def setup_layout_constants(self):
         """
@@ -198,7 +196,7 @@ class ptx(design.design):
         # This is the spacing between the poly gates
         self.min_poly_pitch = self.poly_space + self.poly_width
         self.contacted_poly_pitch = self.poly_space + contact.poly_contact.width
-        self.contact_pitch = 2 * self.contact_to_gate + self.poly_width + self.contact_width
+        self.contact_pitch = 2 * self.active_contact_to_gate + self.poly_width + self.contact_width
         self.poly_pitch = max(self.min_poly_pitch,
                               self.contacted_poly_pitch,
                               self.contact_pitch)
@@ -208,7 +206,7 @@ class ptx(design.design):
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
         self.active_width = 2 * self.end_to_contact + self.active_contact.width \
-                            + 2 * self.contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
+                            + 2 * self.active_contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -323,7 +321,7 @@ class ptx(design.design):
         """
         # poly is one contacted spacing from the end and down an extension
         poly_offset = self.contact_offset \
-                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.contact_to_gate, 0)
+                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.active_contact_to_gate, 0)
         
         # poly_positions are the bottom center of the poly gates
         self.poly_positions = []

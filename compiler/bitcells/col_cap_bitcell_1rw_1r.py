@@ -41,3 +41,4 @@ class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
         self.height = col_cap_bitcell_1rw_1r.height
         self.pin_map = col_cap_bitcell_1rw_1r.pin_map
         self.add_pin_types(self.type_list)
+        self.no_instances = True

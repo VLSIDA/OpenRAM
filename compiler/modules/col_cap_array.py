@@ -17,6 +17,7 @@ class col_cap_array(bitcell_base_array):
         super().__init__(cols, rows, name, column_offset)
         self.mirror = mirror
 
+        self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -47,8 +48,8 @@ class col_cap_array(bitcell_base_array):
         for col in range(self.column_size):
             for row in range(self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row,col]=self.add_inst(name=name,
-                                                      mod=self.dummy_cell)
+                self.cell_inst[row, col]=self.add_inst(name=name,
+                                                       mod=self.dummy_cell)
                 self.connect_inst(self.get_bitcell_pins(col, row))
 
     def get_bitcell_pins(self, col, row):
@@ -73,31 +74,20 @@ class col_cap_array(bitcell_base_array):
 
         for col in range(self.column_size):
             for cell_column in column_list:
-                bl_pin = self.cell_inst[0,col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column+"_{0}".format(col),
+                bl_pin = self.cell_inst[0, col].get_pin(cell_column)
+                self.add_layout_pin(text=cell_column + "_{0}".format(col),
                                     layer=bl_pin.layer,
-                                    offset=bl_pin.ll().scale(1,0),
+                                    offset=bl_pin.ll().scale(1, 0),
                                     width=bl_pin.width(),
                                     height=self.height)
 
         # Add vdd/gnd via stacks
         for row in range(self.row_size):
             for col in range(self.column_size):
-                inst = self.cell_inst[row,col]
+                inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
                         self.add_power_pin(name=pin.name,
                                            loc=pin.center(),
                                            start_layer=pin.layer)
 
-
-    # def input_load(self):
-    #     wl_wire = self.gen_wl_wire()
-    #     return wl_wire.return_input_cap()
-    #
-    # def get_wordline_cin(self):
-    #     """Get the relative input capacitance from the wordline connections in all the bitcell"""
-    #     #A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns
-    #     bitcell_wl_cin = self.cell.get_wl_cin()
-    #     total_cin = bitcell_wl_cin * self.column_size
-    #     return total_cin

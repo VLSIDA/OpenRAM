@@ -184,7 +184,7 @@ class pnand2(pgate.pgate):
         # doesn't use nmos uy because that is calculated using offset + poly height
         active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
         active_to_poly_contact = active_top + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
-        active_to_poly_contact2 = active_top + drc("contact_to_gate") + 0.5 * self.route_layer_width
+        active_to_poly_contact2 = active_top + self.poly_contact_to_gate + 0.5 * self.route_layer_width
         self.inputA_yoffset = max(active_contact_to_poly_contact,
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
@@ -200,7 +200,7 @@ class pnand2(pgate.pgate):
         # active_contact_to_poly_contact = self.output_yoffset - self.route_layer_space - 0.5 * contact.poly_contact.second_layer_height
         # active_bottom = self.pmos1_inst.by()
         # active_to_poly_contact = active_bottom - self.poly_to_active - 0.5 * contact.poly_contact.first_layer_height
-        # active_to_poly_contact2 = active_bottom - drc("contact_to_gate") - 0.5 * self.route_layer_width
+        # active_to_poly_contact2 = active_bottom - self.poly_contact_to_gate - 0.5 * self.route_layer_width
         # self.inputB_yoffset = min(active_contact_to_poly_contact,
         #                           active_to_poly_contact,
         #                           active_to_poly_contact2)
@@ -211,6 +211,10 @@ class pnand2(pgate.pgate):
                               self.inputB_yoffset,
                               "B",
                               position="center")
+
+        if OPTS.tech_name == "sky130":
+            self.enclose_npc()
+        
 
     def route_output(self):
         """ Route the Z output """

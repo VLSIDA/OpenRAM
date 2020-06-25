@@ -11,7 +11,7 @@ import verify
 import debug
 import os
 from globals import OPTS
-
+import tech
 
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
@@ -26,9 +26,12 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
-        lvs_dir = OPTS.openram_tech + "lvs_lib/"
-        # Calibre will do the scaling in s8
-        if os.path.exists(lvs_dir): # and OPTS.lvs_exe[0]!="calibre":
+        try:
+            lvs_subdir = tech.lvs_lib
+        except AttributeError:
+            lvs_subdir = "lvs_lib"
+        lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+        if os.path.exists(lvs_dir):
             self.lvs_file = lvs_dir + name + ".sp"
         else:
             self.lvs_file = self.sp_file
@@ -45,7 +48,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if i.name == inst.name:
                 break
         else:
-            debug.error("Couldn't find instance {0}".format(inst_name), -1)
+            debug.error("Couldn't find instance {0}".format(inst.name), -1)
         inst_map = inst.mod.pin_map
         return inst_map
         
@@ -181,7 +184,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Given a list of nets, will compare the internal alias of a mod to determine
            if the nets have a connection to this mod's net (but not inst).
         """
-        if exclusion_set == None:
+        if not exclusion_set:
             exclusion_set = set()
         try:
             self.name_dict

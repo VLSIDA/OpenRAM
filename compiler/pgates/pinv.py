@@ -195,9 +195,9 @@ class pinv(pgate.pgate):
             debug.info(2, "prebinning {0} tx, target: {4}, found {1} x {2} = {3}".format("pmos", self.pmos_width, pmos_mults, self.pmos_width * pmos_mults, self.pmos_size * drc("minwidth_tx")))
             debug.info(2, "prebinning {0} tx, target: {4}, found {1} x {2} = {3}".format("nmos", self.nmos_width, nmos_mults, self.nmos_width * nmos_mults, self.nmos_size * drc("minwidth_tx")))
             pinv.bin_count += 1
-            pinv.bin_error += abs((self.pmos_width * pmos_mults) - (self.pmos_size * drc("minwidth_tx"))/(self.pmos_size * drc("minwidth_tx")))
+            pinv.bin_error += abs(((self.pmos_width * pmos_mults) - (self.pmos_size * drc("minwidth_tx")))/(self.pmos_size * drc("minwidth_tx")))
             pinv.bin_count += 1
-            pinv.bin_error += abs((self.nmos_width * nmos_mults) - (self.nmos_size * drc("minwidth_tx"))/(self.nmos_size * drc("minwidth_tx")))
+            pinv.bin_error += abs(((self.nmos_width * nmos_mults) - (self.nmos_size * drc("minwidth_tx")))/(self.nmos_size * drc("minwidth_tx")))
             debug.info(2, "pinv bin count: {0} pinv bin error: {1} percent error {2}".format(pinv.bin_count, pinv.bin_error, pinv.bin_error/pinv.bin_count))
 
     def add_ptx(self):

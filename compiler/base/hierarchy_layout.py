@@ -739,7 +739,7 @@ class layout():
                                   width=width,
                                   height=height,
                                   center=False)
-                debug.info(2, "Adding {0} boundary {1}".format(self.name, boundary))
+                debug.info(4, "Adding {0} boundary {1}".format(self.name, boundary))
 
         self.visited.append(self.name)
 

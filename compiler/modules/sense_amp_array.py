@@ -28,7 +28,7 @@ class sense_amp_array(design.design):
         self.add_comment("words_per_row: {0}".format(words_per_row))
 
         self.word_size = word_size
-        self.words_per_row = words_per_row        
+        self.words_per_row = words_per_row
         if not num_spare_cols:
             self.num_spare_cols = 0
         else:
@@ -77,7 +77,7 @@ class sense_amp_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        for i in range(0,self.word_size + self.num_spare_cols):
+        for i in range(0, self.word_size + self.num_spare_cols):
             self.add_pin(self.data_name + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "INPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "INPUT")
@@ -96,7 +96,7 @@ class sense_amp_array(design.design):
 
     def create_sense_amp_array(self):
         self.local_insts = []
-        for i in range(0,self.word_size + self.num_spare_cols):
+        for i in range(0, self.word_size + self.num_spare_cols):
             name = "sa_d{0}".format(i)
             self.local_insts.append(self.add_inst(name=name,
                                                   mod=self.amp))
@@ -107,14 +107,10 @@ class sense_amp_array(design.design):
 
     def place_sense_amp_array(self):
         from tech import cell_properties
-        if self.bitcell.width > self.amp.width:
-            amp_spacing = self.bitcell.width 
-        else:
-            amp_spacing = self.amp.width
 
         for i in range(0, self.row_size, self.words_per_row):
             index = int(i / self.words_per_row)
-            xoffset = i * amp_spacing       
+            xoffset = i * self.bitcell.width
             
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
@@ -126,9 +122,9 @@ class sense_amp_array(design.design):
             self.local_insts[index].place(offset=amp_position, mirror=mirror)
             
         # place spare sense amps (will share the same enable as regular sense amps)
-        for i in range(0,self.num_spare_cols):
+        for i in range(0, self.num_spare_cols):
             index = self.word_size + i
-            xoffset = ((self.word_size * self.words_per_row) + i) * amp_spacing
+            xoffset = ((self.word_size * self.words_per_row) + i) * self.bitcell.width
 
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
@@ -143,17 +139,17 @@ class sense_amp_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
 
-            gnd_pin = inst.get_pin("gnd")
-            self.add_power_pin(name="gnd",
-                               loc=gnd_pin.center(),
-                               start_layer=gnd_pin.layer,
-                               directions=("V", "V"))
-            
-            vdd_pin = inst.get_pin("vdd")
-            self.add_power_pin(name="vdd",
-                               loc=vdd_pin.center(),
-                               start_layer=vdd_pin.layer,
-                               directions=("V", "V"))
+            for gnd_pin in inst.get_pins("gnd"):
+                self.add_power_pin(name="gnd",
+                                   loc=gnd_pin.center(),
+                                   start_layer=gnd_pin.layer,
+                                   directions=("V", "V"))
+
+            for vdd_pin in inst.get_pins("vdd"):
+                self.add_power_pin(name="vdd",
+                                   loc=vdd_pin.center(),
+                                   start_layer=vdd_pin.layer,
+                                   directions=("V", "V"))
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())

@@ -21,8 +21,7 @@ class channel_route(design.design):
                  offset,
                  layer_stack,
                  directions=None,
-                 vertical=False,
-                 add_routes=True):
+                 vertical=False):
         """
         The net list is a list of the nets with each net being a list of pins
         to be connected. The offset is the lower-left of where the
@@ -41,7 +40,6 @@ class channel_route(design.design):
         self.layer_stack = layer_stack
         self.directions = directions
         self.vertical = vertical
-        self.add_routes = add_routes
         
         if not directions or directions == "pref":
             # Use the preferred layer directions
@@ -174,17 +172,15 @@ class channel_route(design.design):
             # Add the trunk routes from the bottom up for
             # horizontal or the left to right for vertical
             if self.vertical:
-                if self.add_routes:
-                    self.add_vertical_trunk_route(pin_list,
-                                                  current_offset,
-                                                  self.vertical_nonpref_pitch)
+                self.add_vertical_trunk_route(pin_list,
+                                              current_offset,
+                                              self.vertical_nonpref_pitch)
                 # This accounts for the via-to-via spacings
                 current_offset += vector(self.horizontal_nonpref_pitch, 0)
             else:
-                if self.add_routes:
-                    self.add_horizontal_trunk_route(pin_list,
-                                                    current_offset,
-                                                    self.horizontal_nonpref_pitch)
+                self.add_horizontal_trunk_route(pin_list,
+                                                current_offset,
+                                                self.horizontal_nonpref_pitch)
                 # This accounts for the via-to-via spacings
                 current_offset += vector(0, self.vertical_nonpref_pitch)
 

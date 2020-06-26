@@ -31,6 +31,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         except AttributeError:
             lvs_subdir = "lvs_lib"
         lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+
         if os.path.exists(lvs_dir):
             self.lvs_file = lvs_dir + name + ".sp"
         else:

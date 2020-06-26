@@ -15,8 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 22_sram_1rw_1r_1bank_nomux_func_test")
-class psram_1bank_nomux_func_test(openram_test):
+class riscv_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))

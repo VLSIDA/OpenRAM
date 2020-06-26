@@ -33,8 +33,8 @@ class single_level_column_mux_array(design.design):
         self.column_offset = column_offset
 
         if "li" in layer:
-            self.col_mux_stack = self.li_stack
-            self.col_mux_stack_pitch = self.m1_pitch
+            self.col_mux_stack = self.m1_stack[::-1]
+            self.col_mux_stack_pitch = self.m2_pitch
         else:
             self.col_mux_stack = self.m1_stack
             self.col_mux_stack_pitch = self.m1_pitch
@@ -155,7 +155,7 @@ class single_level_column_mux_array(design.design):
         self.route_bitlines()
 
     def add_horizontal_input_rail(self):
-        """ Create address input rails on M1 below the mux transistors  """
+        """ Create address input rails below the mux transistors  """
         for j in range(self.words_per_row):
             offset = vector(0, self.route_height + (j - self.words_per_row) * self.col_mux_stack_pitch)
             self.add_layout_pin(text="sel_{}".format(j),
@@ -177,10 +177,10 @@ class single_level_column_mux_array(design.design):
             # use the y offset from the sel pin and the x offset from the gate
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
-            # Add the poly contact with a shift to account for the rotation
-            self.add_via_center(layers=self.poly_stack,
-                                offset=offset,
-                                directions=self.via_directions)
+            self.add_via_stack_center(from_layer="poly",
+                                      to_layer=self.col_mux_stack[0],
+                                      offset=offset,
+                                      directions=self.via_directions)
             self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):

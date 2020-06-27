@@ -108,8 +108,21 @@ class write_mask_and_array(design.design):
                                            end=vector(self.width, en_pin.cy()))
 
         for i in range(self.num_wmasks):
+            # Route the A pin over to the left so that it doesn't conflict with the sense
+            # amp output which is usually in the center
+            a_pin = self.and2_insts[i].get_pin("A")
+            a_pos = a_pin.center()
+            in_pos = vector(self.and2_insts[i].lx(),
+                            a_pos.y)
+            self.add_via_stack_center(from_layer=a_pin.layer,
+                                      to_layer="m2",
+                                      offset=in_pos)
+            self.add_layout_pin_rect_center(text="wmask_in_{0}".format(i),
+                                            layer="m2",
+                                            offset=in_pos)
+            self.add_path(a_pin.layer, [in_pos, a_pos])
+            
             # Copy remaining layout pins
-            self.copy_layout_pin(self.and2_insts[i], "A", "wmask_in_{0}".format(i))
             self.copy_layout_pin(self.and2_insts[i], "Z", "wmask_out_{0}".format(i))
 
             # Add via connections to metal3 for AND array's B pin
@@ -122,7 +135,7 @@ class write_mask_and_array(design.design):
             for supply in ["gnd", "vdd"]:
                 supply_pin=self.and2_insts[i].get_pin(supply)
                 if "li" in layer:
-                    self.add_power_pin(supply, supply_pin.center(), start_layer="li", directions = ("H", "H"))
+                    self.add_power_pin(supply, supply_pin.center(), start_layer="li", directions=("H", "H"))
                 else:
                     self.add_power_pin(supply, supply_pin.center())
 

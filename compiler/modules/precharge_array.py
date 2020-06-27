@@ -75,11 +75,18 @@ class precharge_array(design.design):
     def add_layout_pins(self):
 
         en_bar_pin = self.pc_cell.get_pin("en_bar")
-        self.add_layout_pin(text="en_bar",
-                            layer=en_bar_pin.layer,
-                            offset=en_bar_pin.ll(),
-                            width=self.width,
-                            height=en_bar_pin.height())
+        if en_bar_pin.layer =="li":
+            en_bar_layer = "m3"
+        else:
+            en_bar_layer = en_bar_pin.layer
+        r = self.add_layout_pin(text="en_bar",
+                                layer=en_bar_layer,
+                                offset=en_bar_pin.ll(),
+                                width=self.width,
+                                height=en_bar_pin.height())
+        self.add_via_stack_center(from_layer=en_bar_pin.layer,
+                                  to_layer=en_bar_layer,
+                                  offset = r.center())
 
         for inst in self.local_insts:
             self.copy_layout_pin(inst, "vdd")

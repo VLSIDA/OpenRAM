@@ -154,7 +154,6 @@ class write_driver_array(design.design):
                                self.get_br_name() + "_{0}".format(index),
                                self.en_name + "_{0}".format(i + offset), "vdd", "gnd"])
 
-
     def place_write_array(self):
         from tech import cell_properties
         if self.bitcell.width > self.driver.width:

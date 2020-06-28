@@ -1165,7 +1165,7 @@ class layout():
             layer = "m3"
         elif side == "right":
             layer = "m3"
-            peri_pin_loc = vector(right, pin_loc.x)
+            peri_pin_loc = vector(right, pin_loc.y)
         elif side == "top":
             layer = "m4"
             peri_pin_loc = vector(pin_loc.x, top)

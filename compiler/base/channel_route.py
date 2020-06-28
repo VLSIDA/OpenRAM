@@ -240,10 +240,18 @@ class channel_route(design.design):
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(self.vertical_layer, [pin.center(), mid])
+                # Find the correct side of the pin
+                if pin.cy() < trunk_offset.y:
+                    pin_pos = pin.uc()
+                else:
+                    pin_pos = pin.bc()
+                self.add_path(self.vertical_layer, [pin_pos, mid])
                 self.add_via_center(layers=self.layer_stack,
                                     offset=mid,
                                     directions=self.directions)
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=self.vertical_layer,
+                                          offset=pin_pos)
 
     def add_vertical_trunk_route(self,
                                  pins,
@@ -280,10 +288,18 @@ class channel_route(design.design):
             # Route each pin to the trunk
             for pin in pins:
                 mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(self.horizontal_layer, [pin.center(), mid])
+                # Find the correct side of the pin
+                if pin.cx() < trunk_offset.x:
+                    pin_pos = pin.rc()
+                else:
+                    pin_pos = pin.lc()
+                self.add_path(self.horizontal_layer, [pin_pos, mid])
                 self.add_via_center(layers=self.layer_stack,
                                     offset=mid,
                                     directions=self.directions)
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=self.horizontal_layer,
+                                          offset=pin_pos)
 
     def vcg_pin_overlap(self, pin1, pin2, pitch):
         """ Check for vertical or horizontal overlap of the two pins """

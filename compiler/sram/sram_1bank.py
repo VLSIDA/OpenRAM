@@ -86,7 +86,7 @@ class sram_1bank(sram_base):
         # The row address bits are placed above the control logic aligned on the right.
         x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
         # It is above the control logic but below the top of the bitcell array
-        y_offset = max(self.control_logic_insts[port].uy(), self.control_logic_insts[port].uy() + self.dff.height)
+        y_offset = max(self.control_logic_insts[port].uy(), self.bank_inst.uy() - self.row_addr_dff_insts[port].height)
         row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(row_addr_pos[port])
 
@@ -145,7 +145,7 @@ class sram_1bank(sram_base):
             # The row address bits are placed above the control logic aligned on the left.
             x_offset = control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
             # It is below the control logic but below the bottom of the bitcell array
-            y_offset = min(self.control_logic_insts[port].by(), self.control_logic_insts[port].by() - self.dff.height)
+            y_offset = min(self.control_logic_insts[port].by(), self.bank_inst.by() + self.row_addr_dff_insts[port].height)
             row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(row_addr_pos[port], mirror="XY")
 
@@ -180,8 +180,6 @@ class sram_1bank(sram_base):
                 data_pos[port] = vector(x_offset - self.data_dff_insts[port].width,
                                         y_offset)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
-
-
         else:
             wmask_pos[port] = vector(x_offset, y_offset)
             data_pos[port] = vector(x_offset, y_offset)
@@ -339,14 +337,6 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
         
-        # spare wen dff
-        if self.num_spare_cols > 0 and port in self.write_ports:
-            dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
-            dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
-            bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            route_map.extend(list(zip(bank_pins, dff_pins)))
-        
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
@@ -379,6 +369,18 @@ class sram_1bank(sram_base):
             self.create_horizontal_channel_route(netlist=route_map,
                                                  offset=offset,
                                                  layer_stack=layer_stack)
+
+        # Route these separately because sometimes the pin pitch on the write driver is too narrow for M3 (FreePDK45)
+        # spare wen dff
+        if self.num_spare_cols > 0 and port in self.write_ports:
+            dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
+            dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
+            bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
+            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+            route_map = zip(bank_pins, dff_pins)
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=self.m1_stack)
         
     def route_clk(self):
         """ Route the clock network """

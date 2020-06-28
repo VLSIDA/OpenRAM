@@ -888,7 +888,7 @@ class bank(design.design):
         route_map = list(zip(decode_pins, column_mux_pins))
         if "li" in layer:
             stack = self.li_stack
-            directions = "nonpref"
+            directions = "pref"
         else:
             stack = self.m1_stack
             directions = "pref"

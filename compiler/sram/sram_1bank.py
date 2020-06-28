@@ -384,6 +384,14 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, sram_pins)))
 
+        # spare wen dff
+        if self.num_spare_cols > 0 and port in self.write_ports:
+            dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
+            dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
+            bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
+            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+            route_map.extend(list(zip(bank_pins, dff_pins)))
+            
         if self.num_wmasks > 0 and port in self.write_ports:
             layer_stack = self.m3_stack
         else:
@@ -401,17 +409,17 @@ class sram_1bank(sram_base):
                                                  offset=offset,
                                                  layer_stack=layer_stack)
 
-        # Route these separately because sometimes the pin pitch on the write driver is too narrow for M3 (FreePDK45)
-        # spare wen dff
-        if self.num_spare_cols > 0 and port in self.write_ports:
-            dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
-            dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
-            bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            route_map = zip(bank_pins, dff_pins)
-            self.create_horizontal_channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=self.m1_stack)
+        # # Route these separately because sometimes the pin pitch on the write driver is too narrow for M3 (FreePDK45)
+        # # spare wen dff
+        # if self.num_spare_cols > 0 and port in self.write_ports:
+        #     dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
+        #     dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
+        #     bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
+        #     bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+        #     route_map = zip(bank_pins, dff_pins)
+        #     self.create_horizontal_channel_route(netlist=route_map,
+        #                                          offset=offset,
+        #                                          layer_stack=self.m1_stack)
         
     def route_clk(self):
         """ Route the clock network """

@@ -102,11 +102,12 @@ class bitcell_base_array(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # Copy a vdd/gnd layout pin from every column in the first row
-        for col in range(self.column_size):
-            inst = self.cell_inst[0, col]
-            for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
+        # Copy a vdd/gnd layout pin from every cell
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                inst = self.cell_inst[row, col]
+                for pin_name in ["vdd", "gnd"]:
+                    self.copy_layout_pin(inst, pin_name)
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset

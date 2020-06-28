@@ -109,17 +109,19 @@ class sram_1bank(sram_base):
                 self.wmask_dff_insts[port].place(wmask_pos[port])
                 x_offset = self.wmask_dff_insts[port].rx()
 
-            # Add spare write enable flops to the right of write mask flops
+            # Add the data flops below the write mask flops.
+            data_pos[port] = vector(x_offset,
+                                    y_offset)
+            self.data_dff_insts[port].place(data_pos[port])
+            x_offset = self.data_dff_insts[port].rx()
+
+            # Add spare write enable flops to the right of data flops since the spare columns
+            # will be on the right
             if self.num_spare_cols:
                 spare_wen_pos[port] = vector(x_offset,
                                              y_offset)
                 self.spare_wen_dff_insts[port].place(spare_wen_pos[port])
                 x_offset = self.spare_wen_dff_insts[port].rx()
-
-            # Add the data flops below the write mask flops.
-            data_pos[port] = vector(x_offset,
-                                    y_offset)
-            self.data_dff_insts[port].place(data_pos[port])
 
         else:
             wmask_pos[port] = vector(x_offset, y_offset)
@@ -159,6 +161,14 @@ class sram_1bank(sram_base):
                 col_addr_pos[port] = vector(x_offset, y_offset)
             
             if port in self.write_ports:
+                # Add spare write enable flops to the right of the data flops since the spare
+                # columns will be on the left
+                if self.num_spare_cols:
+                    spare_wen_pos[port] = vector(x_offset - self.spare_wen_dff_insts[port].width,
+                                                 y_offset)
+                    self.spare_wen_dff_insts[port].place(spare_wen_pos[port], mirror="MX")
+                    x_offset = self.spare_wen_dff_insts[port].lx()
+
                 if self.write_size:
                     # Add the write mask flops below the write mask AND array.
                     wmask_pos[port] = vector(x_offset - self.wmask_dff_insts[port].width,
@@ -166,17 +176,11 @@ class sram_1bank(sram_base):
                     self.wmask_dff_insts[port].place(wmask_pos[port], mirror="MX")
                     x_offset = self.wmask_dff_insts[port].lx()
 
-                # Add spare write enable flops to the right of write mask flops
-                if self.num_spare_cols:
-                    spare_wen_pos[port] = vector(x_offset - self.spare_wen_dff_insts[port].width,
-                                                 y_offset)
-                    self.spare_wen_dff_insts[port].place(spare_wen_pos[port], mirror="MX")
-                    x_offset = self.spare_wen_dff_insts[port].lx()
-
                 # Add the data flops below the write mask flops.
                 data_pos[port] = vector(x_offset - self.data_dff_insts[port].width,
                                         y_offset)
                 self.data_dff_insts[port].place(data_pos[port], mirror="MX")
+
 
         else:
             wmask_pos[port] = vector(x_offset, y_offset)
@@ -360,20 +364,9 @@ class sram_1bank(sram_base):
             route_map.extend(list(zip(bank_pins, dff_pins)))
 
         if self.num_wmasks > 0 and port in self.write_ports:
-            vertical_layer = "m4"
             layer_stack = self.m3_stack
         else:
-            vertical_layer = "m2"
             layer_stack = self.m1_stack
-        for (pin1, pin2) in route_map:
-            if pin1.layer != vertical_layer:
-                self.add_via_stack_center(from_layer=pin1.layer,
-                                          to_layer=vertical_layer,
-                                          offset=pin1.center())
-            if pin2.layer != vertical_layer:
-                self.add_via_stack_center(from_layer=pin2.layer,
-                                          to_layer=vertical_layer,
-                                          offset=pin2.center())
                 
         if port == 0:
             offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
@@ -580,6 +573,7 @@ class sram_1bank(sram_base):
             self.create_horizontal_channel_route(netlist=route_map,
                                                  offset=offset,
                                                  layer_stack=self.m1_stack)
+            
     def route_spare_wen_dff(self):
         """ Connect the output of the spare write enable flops to the spare write drivers """
         # This is where the channel will start (y-dimension at least)

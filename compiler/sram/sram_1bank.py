@@ -77,8 +77,10 @@ class sram_1bank(sram_base):
         port = 0
 
         # This includes 2 M2 pitches for the row addr clock line.
+        # The delay line is aligned with the bitcell array while the control logic is aligned with the port_data
+        # using the control_logic_center value.
         control_pos[port] = vector(-self.control_logic_insts[port].width - 2 * self.m2_pitch,
-                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y - 2 * self.bank.m2_gap)
+                                   self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
         self.control_logic_insts[port].place(control_pos[port])
         
         # The row address bits are placed above the control logic aligned on the right.
@@ -129,10 +131,13 @@ class sram_1bank(sram_base):
             port = 1
         
             # This includes 2 M2 pitches for the row addr clock line
+            # The delay line is aligned with the bitcell array while the control logic is aligned with the port_data
+            # using the control_logic_center value.
             control_pos[port] = vector(self.bank_inst.rx() + self.control_logic_insts[port].width + 2 * self.m2_pitch,
-                                       self.bank.bank_array_ur.y + self.control_logic_insts[port].height - \
-                                       (self.control_logic_insts[port].height - self.control_logic_insts[port].mod.control_logic_center.y)
-                                       + 2 * self.bank.m2_gap)
+                                       self.bank.bank_array_ur.y
+                                       + self.control_logic_insts[port].height
+                                       - self.control_logic_insts[port].height
+                                       + self.control_logic_insts[port].mod.control_logic_center.y)
             self.control_logic_insts[port].place(control_pos[port], mirror="XY")
         
             # The row address bits are placed above the control logic aligned on the left.

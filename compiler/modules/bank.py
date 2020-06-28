@@ -217,11 +217,12 @@ class bank(design.design):
         # Place the col decoder left aligned with wordline driver
         # This is also placed so that it's supply rails do not align with the SRAM-level
         # control logic to allow control signals to easily pass over in M3
-        # by placing 1/2 a cell pitch down
+        # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
+        # may be routed in M3 or M4
         x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = 0.5 * self.dff.height + self.column_decoder.height
+            y_offset = 1.25 * self.dff.height + self.column_decoder.height
         else:
             y_offset = 0
         self.column_decoder_offsets[port] = vector(-x_offset, -y_offset)
@@ -258,10 +259,14 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver
         # Above the bitcell array with a well spacing
+        # This is also placed so that it's supply rails do not align with the SRAM-level
+        # control logic to allow control signals to easily pass over in M3
+        # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
+        # may be routed in M3 or M4
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = self.bitcell_array_top + 0.5 * self.dff.height + self.column_decoder.height
+            y_offset = self.bitcell_array_top + 1.25 * self.dff.height + self.column_decoder.height
         else:
             y_offset = self.bitcell_array_top
         self.column_decoder_offsets[port] = vector(x_offset, y_offset)

@@ -184,9 +184,11 @@ class replica_column(design.design):
                                     height=wl_pin.height())
 
         # Supplies are only connected in the ends
-        for inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+        for (index, inst) in self.cell_inst.items():
             for pin_name in ["vdd", "gnd"]:
-                if pin_name in inst.mod.pins:
+                if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+                    self.copy_power_pins(inst, pin_name)
+                else:
                     self.copy_layout_pin(inst, pin_name)
 
     def get_bitcell_pins(self, col, row):

@@ -381,7 +381,7 @@ class replica_bitcell_array(design.design):
         # vdd/gnd are only connected in the perimeter cells
         # replica column should only have a vdd/gnd in the dummy cell on top/bottom
         supply_insts = [self.dummy_col_left_inst, self.dummy_col_right_inst,
-                        self.dummy_row_top_inst, self.dummy_row_bot_inst] + list(self.replica_col_inst.values())
+                        self.dummy_row_top_inst, self.dummy_row_bot_inst]
         for pin_name in ["vdd", "gnd"]:
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
@@ -390,6 +390,10 @@ class replica_bitcell_array(design.design):
                                        loc=pin.center(),
                                        directions=("V", "V"),
                                        start_layer=pin.layer)
+                    
+            for inst in list(self.replica_col_inst.values()):
+                self.copy_layout_pin(inst, pin_name)
+                self.copy_layout_pin(inst, pin_name)
 
     def get_rbl_wl_name(self, port):
         """ Return the WL for the given RBL port """

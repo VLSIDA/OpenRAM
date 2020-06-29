@@ -378,16 +378,10 @@ class replica_bitcell_array(design.design):
                                     width=pin.width(),
                                     height=self.height)
 
-        # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
-        try:
-            if cell_properties.bitcell.end_caps_enabled:
-                supply_insts = [self.dummy_col_left_inst, self.dummy_col_right_inst,
-                                self.dummy_row_top_inst, self.dummy_row_bot_inst] + list(self.replica_col_inst.values())
-            else:
-                supply_insts = self.insts
-        except AttributeError:
-            supply_insts = self.insts
-
+        # vdd/gnd are only connected in the perimeter cells
+        # replica column should only have a vdd/gnd in the dummy cell on top/bottom
+        supply_insts = [self.dummy_col_left_inst, self.dummy_col_right_inst,
+                        self.dummy_row_top_inst, self.dummy_row_bot_inst] + list(self.replica_col_inst.values())
         for pin_name in ["vdd", "gnd"]:
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)

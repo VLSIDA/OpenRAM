@@ -183,13 +183,8 @@ class replica_column(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # For specific technologies, there is no vdd via within the bitcell. Instead vdd is connect via end caps.
-        if end_caps_enabled:
-            supply_insts = [self.cell_inst[0], self.cell_inst[self.total_size - 1]]
-        else:
-            supply_insts = self.cell_inst.values()
-
-        for inst in supply_insts:
+        # Supplies are only connected in the ends
+        for inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
             for pin_name in ["vdd", "gnd"]:
                 if pin_name in inst.mod.pins:
                     self.copy_layout_pin(inst, pin_name)

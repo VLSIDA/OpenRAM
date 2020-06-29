@@ -900,7 +900,7 @@ class bank(design.design):
                 self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
         if port % 2:
-            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * pitch, 0)
+            offset = self.column_decoder_inst[port].ll() - vector((self.num_col_addr_lines + 1) * pitch, 0)
         else:
             offset = self.column_decoder_inst[port].lr() + vector(pitch, 0)
 

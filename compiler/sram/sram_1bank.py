@@ -71,7 +71,19 @@ class sram_1bank(sram_base):
         # If a vertical channel, they rely on the horizontal channel non-preferred (contacted) pitch.
         # So, m3 non-pref pitch means that this is routed on the m2 layer.
         self.data_bus_gap = self.m4_nonpref_pitch * 2
-        self.data_bus_size = self.m4_nonpref_pitch * (self.word_size + self.num_spare_cols + self.num_wmasks + self.col_addr_size + self.num_spare_cols) + self.data_bus_gap
+
+        # Spare wen are on a separate layer so not included
+        self.data_bus_size = [None] * len(self.all_ports)
+        for port in self.all_ports:
+            # All ports need the col addr flops
+            self.data_bus_size[port] = self.col_addr_size
+            # Write ports need the data input flops and write mask flops
+            if port in self.write_ports:
+                self.data_bus_size[port] += self.num_wmasks + self.word_size
+            # Convert to length
+            self.data_bus_size[port] *= self.m4_nonpref_pitch
+            # Add the gap in unit length
+            self.data_bus_size[port] += self.data_bus_gap
         
         # Port 0
         port = 0
@@ -92,7 +104,7 @@ class sram_1bank(sram_base):
 
         # Add the col address flops below the bank to the right of the control logic
         x_offset = self.control_logic_insts[port].rx() + self.dff.width
-        y_offset = - self.data_bus_size - self.dff.height
+        y_offset = - self.data_bus_size[port] - self.dff.height
         if self.col_addr_dff:
             col_addr_pos[port] = vector(x_offset,
                                         y_offset)
@@ -151,7 +163,7 @@ class sram_1bank(sram_base):
 
             # Add the col address flops below the bank to the right of the control logic
             x_offset = self.control_logic_insts[port].lx() - 2 * self.dff.width
-            y_offset = self.bank.height + self.data_bus_size + self.dff.height
+            y_offset = self.bank.height + self.data_bus_size[port] + self.dff.height
             if self.col_addr_dff:
                 col_addr_pos[port] = vector(x_offset - self.col_addr_dff_insts[port].width,
                                             y_offset)
@@ -360,7 +372,7 @@ class sram_1bank(sram_base):
                 
         if port == 0:
             offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                            - self.data_bus_size + 2 * self.m1_pitch)
+                            - self.data_bus_size[port] + 2 * self.m1_pitch)
         else:
             offset = vector(0,
                             self.bank.height + 2 * self.m1_space)
@@ -507,7 +519,7 @@ class sram_1bank(sram_base):
         # This is where the channel will start (y-dimension at least)
         for port in self.write_ports:
             if port % 2:
-                offset = self.data_dff_insts[port].ll() - vector(0, self.data_bus_size)
+                offset = self.data_dff_insts[port].ll() - vector(0, self.data_bus_size[port])
             else:
                 offset = self.data_dff_insts[port].ul() + vector(0, self.data_bus_gap)
 

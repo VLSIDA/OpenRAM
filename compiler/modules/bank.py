@@ -592,6 +592,18 @@ class bank(design.design):
             self.copy_power_pins(inst, "vdd", add_vias=False)
             self.copy_power_pins(inst, "gnd", add_vias=False)
 
+        # If we use the pinvbuf as the decoder, we need to add power pins.
+        # Other decoders already have them.
+        if self.col_addr_size == 1:
+            for port in self.all_ports:
+                inst = self.column_decoder_inst[port]
+                for pin_name in ["vdd", "gnd"]:
+                    pin_list = inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.add_power_pin(pin_name,
+                                           pin.center(),
+                                           start_layer=pin.layer)
+
     def route_bank_select(self, port):
         """ Route the bank select logic. """
         
@@ -862,6 +874,13 @@ class bank(design.design):
         if not self.col_addr_size>0:
             return
 
+        if OPTS.tech_name == "sky130":
+            stack = self.m2_stack
+            pitch = self.m3_pitch
+        else:
+            stack = self.m1_stack
+            pitch = self.m2_pitch
+        
         if self.col_addr_size == 1:
             
             # Connect to sel[0] and sel[1]
@@ -881,9 +900,9 @@ class bank(design.design):
                 self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
         if port % 2:
-            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * self.m2_nonpref_pitch, 0)
+            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * pitch, 0)
         else:
-            offset = self.column_decoder_inst[port].lr() + vector(self.m2_nonpref_pitch, 0)
+            offset = self.column_decoder_inst[port].lr() + vector(pitch, 0)
 
         decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
         
@@ -891,16 +910,9 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
-        if "li" in layer:
-            stack = self.li_stack
-            directions = "pref"
-        else:
-            stack = self.m1_stack
-            directions = "pref"
         self.create_vertical_channel_route(route_map,
                                            offset,
-                                           stack,
-                                           directions=directions)
+                                           stack)
 
     def add_lvs_correspondence_points(self):
         """

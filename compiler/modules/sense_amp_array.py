@@ -37,6 +37,11 @@ class sense_amp_array(design.design):
         self.column_offset = column_offset
         self.row_size = self.word_size * self.words_per_row
 
+        if OPTS.tech_name == "sky130":
+            self.en_layer = "m3"
+        else:
+            self.en_layer = "m1"
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -173,14 +178,18 @@ class sense_amp_array(design.design):
                                 height=dout_pin.height())
 
     def route_rails(self):
-        # add sclk rail across entire array
-        sclk = self.amp.get_pin(self.amp.en_name)
-        sclk_offset = self.amp.get_pin(self.amp.en_name).ll().scale(0, 1)
-        self.add_layout_pin(text=self.en_name,
-                            layer=sclk.layer,
-                            offset=sclk_offset,
-                            width=self.width,
-                            height=drc("minwidth_" + sclk.layer))
+        # Add enable across the array
+        en_pin = self.amp.get_pin(self.amp.en_name)
+        start_offset = en_pin.lc().scale(0, 1)
+        end_offset = start_offset + vector(self.width, 0)
+        self.add_layout_pin_segment_center(text=self.en_name,
+                                           layer=self.en_layer,
+                                           start=start_offset,
+                                           end=end_offset)
+        for inst in self.local_insts:
+            self.add_via_stack_center(from_layer=en_pin.layer,
+                                      to_layer=self.en_layer,
+                                      offset=inst.get_pin(self.amp.en_name).center())
 
     def input_load(self):
         return self.amp.input_load()

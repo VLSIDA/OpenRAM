@@ -30,6 +30,11 @@ class precharge_array(design.design):
         self.bitcell_br = bitcell_br
         self.column_offset = column_offset
 
+        if OPTS.tech_name == "sky130":
+            self.en_bar_layer = "m3"
+        else:
+            self.en_bar_layer = "m1"
+            
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -74,21 +79,18 @@ class precharge_array(design.design):
 
     def add_layout_pins(self):
 
-        en_bar_pin = self.pc_cell.get_pin("en_bar")
-        if en_bar_pin.layer =="li":
-            en_bar_layer = "m3"
-        else:
-            en_bar_layer = en_bar_pin.layer
-        r = self.add_layout_pin(text="en_bar",
-                                layer=en_bar_layer,
-                                offset=en_bar_pin.ll(),
-                                width=self.width,
-                                height=en_bar_pin.height())
-        self.add_via_stack_center(from_layer=en_bar_pin.layer,
-                                  to_layer=en_bar_layer,
-                                  offset = r.center())
+        en_pin = self.pc_cell.get_pin("en_bar")
+        start_offset = en_pin.lc().scale(0, 1)
+        end_offset = start_offset + vector(self.width, 0)
+        self.add_layout_pin_segment_center(text="en_bar",
+                                           layer=self.en_bar_layer,
+                                           start=start_offset,
+                                           end=end_offset)
 
         for inst in self.local_insts:
+            self.add_via_stack_center(from_layer=en_pin.layer,
+                                      to_layer=self.en_bar_layer,
+                                      offset=inst.get_pin("en_bar").center())
             self.copy_layout_pin(inst, "vdd")
             
         for i in range(len(self.local_insts)):

@@ -132,14 +132,17 @@ class bank(design.design):
         # Connect the rbl to the port data pin
         bl_pin = self.port_data_inst[port].get_pin("rbl_bl")
         if port % 2:
-            pin_offset = bl_pin.uc()
+            pin_pos = bl_pin.uc()
+            pin_offset = pin_pos + vector(0, self.m3_pitch)
             left_right_offset = vector(self.max_x_offset, pin_offset.y)
         else:
-            pin_offset = bl_pin.bc()
+            pin_pos = bl_pin.bc()
+            pin_offset = pin_pos - vector(0, self.m3_pitch)
             left_right_offset = vector(self.min_x_offset, pin_offset.y)
         self.add_via_stack_center(from_layer=bl_pin.layer,
                                   to_layer="m3",
                                   offset=pin_offset)
+        self.add_path(bl_pin.layer, [pin_offset, pin_pos])
         self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
@@ -583,9 +586,11 @@ class bank(design.design):
         
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+        # Copy only the power pins already on the power layer
+        # (this won't add vias to internal bitcell pins, for example)
         for inst in self.insts:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+            self.copy_power_pins(inst, "vdd", add_vias=False)
+            self.copy_power_pins(inst, "gnd", add_vias=False)
 
     def route_bank_select(self, port):
         """ Route the bank select logic. """

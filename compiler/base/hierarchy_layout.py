@@ -1101,7 +1101,7 @@ class layout():
                              height=ymax - ymin)
         return rect
     
-    def copy_power_pins(self, inst, name):
+    def copy_power_pins(self, inst, name, add_vias=True):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
@@ -1115,7 +1115,7 @@ class layout():
                                     pin.width(),
                                     pin.height())
 
-            else:
+            elif add_vias:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
 
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):

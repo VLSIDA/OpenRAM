@@ -69,6 +69,8 @@ class delay(simulation):
         
         self.read_meas_lists = self.create_read_port_measurement_objects()
         self.write_meas_lists = self.create_write_port_measurement_objects()
+        debug.info(1,self.write_meas_lists)
+        debug.info(1,self.read_meas_lists)
         self.check_meas_names(self.read_meas_lists+self.write_meas_lists)
         
     def check_meas_names(self, measures_lists):
@@ -124,6 +126,7 @@ class delay(simulation):
         # Other measurements associated with the read port not included in the liberty file
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
+        debug.info(1,"debug "+str(read_measures[-1]))
         read_measures.append(self.create_read_bit_measures())
 
         return read_measures
@@ -138,17 +141,17 @@ class delay(simulation):
         self.bitline_volt_meas = []
 
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
-                                                         self.bl_name))
+                                                         self.bl_name+"{}"))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ZERO", 
-                                                         self.br_name))
+                                                         self.br_name+"{}"))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
-                                                         self.bl_name)) 
+                                                         self.bl_name+"{}")) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
-                                                         self.br_name)) 
+                                                         self.br_name+"{}")) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         
@@ -182,11 +185,12 @@ class delay(simulation):
                                                            meas.targ_name_no_port)) 
             self.dout_volt_meas[-1].meta_str = meas.meta_str
          
-        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
+        self.dout_volt_meas.append(self.sen_meas)
         
-        return self.dout_volt_meas+[self.sen_meas]
+        return self.dout_volt_meas
      
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """
@@ -265,6 +269,7 @@ class delay(simulation):
         self.graph = graph_util.timing_graph()
         self.sram_spc_name = "X{}".format(self.sram.name)
         self.sram.build_graph(self.graph,self.sram_spc_name,self.pins)
+        debug.info(1,self.graph.all_paths)
 
     def set_internal_spice_names(self):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
@@ -273,13 +278,27 @@ class delay(simulation):
         self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
-        self.sen_name = self.get_sen_name(self.graph.all_paths)    
+        sen_with_port = self.get_sen_name(self.graph.all_paths)
+        if sen_with_port.endswith(str(port)):
+            self.sen_name = sen_with_port[:-len(str(port))]
+        else:
+            self.sen_name = sen_with_port
+            
         debug.info(2,"s_en name = {}".format(self.sen_name))
         
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
+        bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
+        if bl_name_port.endswith(str(port)):
+            self.bl_name = bl_name_port[:-len(str(port))]
+        else:
+            self.bl_name = bl_name_port
+            
+        if br_name_port.endswith(str(port)):
+            self.br_name = br_name_port[:-len(str(port))]
+        else:
+            self.br_name = br_name_port    
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
         
-    def get_sen_name(self, paths):
+    def get_sen_name(self, paths, assumed_port=None):
         """
         Gets the signal name associated with the sense amp enable from input paths.
         Only expects a single path to contain the sen signal name.
@@ -291,6 +310,7 @@ class delay(simulation):
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
+            
         return sen_name        
      
     def get_bl_name(self, paths, port):

@@ -8,11 +8,16 @@
 import contact
 import design
 import debug
-from tech import layer
+import math
+from bisect import bisect_left
+from tech import layer, drc
 from vector import vector
 from globals import OPTS
 
+if(OPTS.tech_name == "s8"):
+    from tech import nmos_bins, pmos_bins, accuracy_requirement
 
+    
 class pgate(design.design):
     """
     This is a module that implements some shared
@@ -26,9 +31,25 @@ class pgate(design.design):
         if height:
             self.height = height
         elif not height:
-            # By default, we make it 8 M1 pitch tall
-            self.height = 8*self.m1_pitch
+            # By default, something simple
+            self.height = 14 * self.m1_pitch
             
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
+        self.route_layer_width = getattr(self, "{}_width".format(self.route_layer))
+        self.route_layer_space = getattr(self, "{}_space".format(self.route_layer))
+        self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
+
+        # This is the space from a S/D contact to the supply rail
+        # Assume the contact starts at the active edge
+        contact_to_vdd_rail_space = 0.5 * self.m1_width + self.m1_space
+        # This is a poly-to-poly of a flipped cell
+        poly_to_poly_gate_space = self.poly_extend_active + self.poly_space
+        self.top_bottom_space = max(contact_to_vdd_rail_space,
+                                    poly_to_poly_gate_space)
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -43,28 +64,28 @@ class pgate(design.design):
         """ Pure virtual function """
         debug.error("Must over-ride create_layout.", -1)
 
-    def connect_pin_to_rail(self, inst, pin, supply):
+    def connect_pin_to_rail(self, inst, pin_name, supply_name):
         """ Connects a ptx pin to a supply rail. """
-        source_pin = inst.get_pin(pin)
-        supply_pin = self.get_pin(supply)
-        if supply_pin.overlaps(source_pin):
-            return
-            
-        if supply == "gnd":
-            height = supply_pin.by() - source_pin.by()
-        elif supply == "vdd":
-            height = supply_pin.uy() - source_pin.by()
-        else:
-            debug.error("Invalid supply name.", -1)
+        supply_pin = self.get_pin(supply_name)
         
-        if abs(height) > 0:
-            self.add_rect(layer="m1",
+        source_pins = inst.get_pins(pin_name)
+        for source_pin in source_pins:
+            
+            if supply_name == "gnd":
+                height = supply_pin.by() - source_pin.by()
+            elif supply_name == "vdd":
+                height = supply_pin.uy() - source_pin.by()
+            else:
+                debug.error("Invalid supply name.", -1)
+
+            debug.check(supply_pin.layer == source_pin.layer, "Supply pin is not on correct layer.")
+            self.add_rect(layer=source_pin.layer,
                           offset=source_pin.ll(),
                           height=height,
                           width=source_pin.width())
     
-    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left"):
-        """ 
+    def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", directions=None):
+        """
         Route the input gate to the left side of the cell for access.
         Position specifies to place the contact the left, center, or
         right of gate.
@@ -89,8 +110,6 @@ class pgate(design.design):
 
         # Center is completely symmetric.
         contact_width = contact.poly_contact.width
-        contact_m1_width = contact.poly_contact.second_layer_width
-        contact_m1_height = contact.poly_contact.second_layer_height
             
         if position == "center":
             contact_offset = left_gate_offset \
@@ -103,18 +122,20 @@ class pgate(design.design):
                              - vector(0.5 * contact_width - 0.5 * self.poly_width, 0)
         elif position == "right":
             contact_offset = left_gate_offset \
-                             + vector(0.5 * contact.width + 0.5 * self.poly_width, 0)
+                             + vector(0.5 * contact_width + 0.5 * self.poly_width, 0)
         else:
             debug.error("Invalid contact placement option.", -1)
 
-        v=self.add_via_center(layers=self.poly_stack,
-                              offset=contact_offset)
+        via = self.add_via_stack_center(from_layer="poly",
+                                        to_layer=self.route_layer,
+                                        offset=contact_offset,
+                                        directions=directions)
 
         self.add_layout_pin_rect_center(text=name,
-                                        layer="m1",
+                                        layer=self.route_layer,
                                         offset=contact_offset,
-                                        width=contact_m1_width,
-                                        height=contact_m1_height)
+                                        width=via.mod.second_layer_width,
+                                        height=via.mod.second_layer_height)
         # This is to ensure that the contact is
         # connected to the gate
         mid_point = contact_offset.scale(0.5, 1) \
@@ -128,16 +149,16 @@ class pgate(design.design):
         """ Extend the n/p wells to cover whole cell """
 
         # This should match the cells in the cell library
-        nwell_y_offset = 0.48 * self.height
-        full_height = self.height + 0.5*self.m1_width
+        self.nwell_y_offset = 0.48 * self.height
+        full_height = self.height + 0.5* self.m1_width
         
         # FIXME: float rounding problem
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                    full_height)
-            nwell_position = vector(0, nwell_y_offset) - vector(self.well_extend_active, 0)
-            nwell_height = nwell_max_offset - nwell_y_offset
+            nwell_position = vector(0, self.nwell_y_offset) - vector(self.well_extend_active, 0)
+            nwell_height = nwell_max_offset - self.nwell_y_offset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
                           width=self.well_width,
@@ -153,7 +174,7 @@ class pgate(design.design):
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
             pwell_position = vector(-self.well_extend_active, pwell_min_offset)
-            pwell_height = nwell_y_offset - pwell_position.y
+            pwell_height = self.nwell_y_offset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.well_width,
@@ -182,13 +203,15 @@ class pgate(design.design):
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
-                               0.5 * pmos.active_contact.first_layer_height)
+                                 0.5 * pmos.active_contact.first_layer_height)
         self.nwell_contact = self.add_via_center(layers=layer_stack,
                                                  offset=contact_offset,
                                                  implant_type="n",
-                                                 well_type="n")
-        self.add_rect_center(layer="m1",
-                             offset=contact_offset + vector(0, 0.5 * (self.height-contact_offset.y)),
+                                                 well_type="n",
+                                                 directions=("V", "V"))
+        
+        self.add_rect_center(layer=self.route_layer,
+                             offset=contact_offset + vector(0, 0.5 * (self.height - contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
                              height=self.height - contact_offset.y)
         
@@ -221,8 +244,6 @@ class pgate(design.design):
 
         layer_stack = self.active_stack
 
-        pwell_position = vector(0, -0.5 * self.m1_width)
-        
         # To the right a spacing away from the nmos right active edge
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
@@ -239,9 +260,11 @@ class pgate(design.design):
         self.pwell_contact= self.add_via_center(layers=layer_stack,
                                                 offset=contact_offset,
                                                 implant_type="p",
-                                                well_type="p")
-        self.add_rect_center(layer="m1",
-                             offset=contact_offset.scale(1,0.5),
+                                                well_type="p",
+                                                directions=("V", "V"))
+            
+        self.add_rect_center(layer=self.route_layer,
+                             offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
         
@@ -264,3 +287,83 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
+        
+    def route_supply_rails(self):
+        """ Add vdd/gnd rails to the top and bottom. """
+        self.add_layout_pin_rect_center(text="gnd",
+                                        layer=self.route_layer,
+                                        offset=vector(0.5 * self.width, 0),
+                                        width=self.width)
+        
+        self.add_layout_pin_rect_center(text="vdd",
+                                        layer=self.route_layer,
+                                        offset=vector(0.5 * self.width, self.height),
+                                        width=self.width)
+
+    def determine_width(self):
+        """ Determine the width based on the well contacts (assumed to be on the right side) """
+        # Width is determined by well contact and spacing and allowing a supply via between each cell
+        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+        self.well_width = self.width + 2 * self.nwell_enclose_active
+        # Height is an input parameter, so it is not recomputed.
+
+    @staticmethod
+    def bin_width(tx_type, target_width):
+        
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")
+        
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+        if len(bins) == 1:
+            selected_bin = bins[0]
+            scaling_factor = math.ceil(target_width / selected_bin)
+            scaled_bin = bins[0] * scaling_factor
+            
+        else:
+            base_bins = []
+            scaled_bins = []
+            scaling_factors = []
+            scaled_bins.append(bins[-1])
+            base_bins.append(bins[-1])
+            scaling_factors.append(1)
+            for width in bins[0:-1]:
+                m = math.ceil(target_width / width)
+                base_bins.append(width)
+                scaling_factors.append(m)
+                scaled_bins.append(m * width)
+
+            select = bisect_left(scaled_bins, target_width)
+            scaling_factor = scaling_factors[select]
+            scaled_bin = scaled_bins[select]
+            selected_bin = base_bins[select]
+
+        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, selected_bin * scaling_factor, target_width))
+
+        return(selected_bin, scaling_factor)
+
+    def permute_widths(self, tx_type, target_width):
+
+        if tx_type == "nmos":
+            bins = nmos_bins[drc("minwidth_poly")]
+        elif tx_type == "pmos":
+            bins = pmos_bins[drc("minwidth_poly")]
+        else:
+            debug.error("invalid tx type")       
+        bins = bins[0:bisect_left(bins, target_width) + 1]
+        if len(bins) == 1:
+            scaled_bins = [(bins[0], math.ceil(target_width / bins[0]))]
+        else:
+            scaled_bins = []
+            scaled_bins.append((bins[-1], 1))
+            for width in bins[:-1]:
+                m = math.ceil(target_width / width)
+                scaled_bins.append((m * width, m))
+
+        return(scaled_bins)
+        
+    def bin_accuracy(self, ideal_width, width):
+        return abs(1-(ideal_width - width)/ideal_width)

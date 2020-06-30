@@ -50,7 +50,7 @@ class bitcell(bitcell_base.bitcell_base):
         self.pin_map = bitcell.pin_map
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
-
+              
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         if props.bitcell.split_wl:

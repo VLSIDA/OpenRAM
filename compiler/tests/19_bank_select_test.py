@@ -24,26 +24,9 @@ class bank_select_test(openram_test):
         debug.info(1, "No column mux, rw control logic")
         a = factory.create(module_type="bank_select", port="rw")
         self.local_check(a)
-        
-        OPTS.bitcell = "pbitcell"
-        debug.info(1, "No column mux, rw control logic")
-        a = factory.create(module_type="bank_select", port="rw")
-        self.local_check(a)
-        
-        OPTS.num_rw_ports = 0
-        OPTS.num_w_ports = 1
-        OPTS.num_r_ports = 1
 
-        debug.info(1, "No column mux, w control logic")
-        a = factory.create(module_type="bank_select", port="w")
-        self.local_check(a)
-        
-        debug.info(1, "No column mux, r control logic")
-        a = factory.create(module_type="bank_select", port="r")
-        self.local_check(a)
-        
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

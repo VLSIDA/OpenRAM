@@ -8,26 +8,31 @@
 import contact
 import pgate
 import debug
+import operator
 from tech import drc, parameter, spice
 from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
+from bisect import bisect_left
 import logical_effort
 from sram_factory import factory
+from errors import drc_error
 
+if(OPTS.tech_name == "s8"):
+    from tech import nmos_bins, pmos_bins, accuracy_requirement
 
+    
 class pinv(pgate.pgate):
     """
     Pinv generates gds of a parametrically sized inverter. The
     size is specified as the drive size (relative to minimum NMOS) and
     a beta value for choosing the pmos size.  The inverter's cell
     height is usually the same as the 6t library cell and is measured
-    from center of rail to rail..  The route_output will route the
-    output to the right side of the cell for easier access.
+    from center of rail to rail.
     """
 
-    def __init__(self, name, size=1, beta=parameter["beta"], height=None, route_output=True):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None):
 
         debug.info(2,
                    "creating pinv structure {0} with size of {1}".format(name,
@@ -38,7 +43,6 @@ class pinv(pgate.pgate):
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta
-        self.route_output = False
         
         pgate.pgate.__init__(self, name, height)
 
@@ -51,9 +55,9 @@ class pinv(pgate.pgate):
         
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-        self.setup_layout_constants()
         self.place_ptx()
         self.add_well_contacts()
+        self.determine_width()
         self.extend_wells()
         self.route_supply_rails()
         self.connect_rails()
@@ -63,6 +67,7 @@ class pinv(pgate.pgate):
                               "A",
                               position="farleft")
         self.route_outputs()
+        self.add_boundary()
         
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -81,6 +86,9 @@ class pinv(pgate.pgate):
             self.tx_mults = 1
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
+            if OPTS.tech_name == "s8":
+                (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
+                (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
             return
         
         # Do a quick sanity check and bail if unlikely feasible height
@@ -99,17 +107,13 @@ class pinv(pgate.pgate):
         min_channel = max(contact.poly_contact.width + self.m1_space,
                           contact.poly_contact.width + 2 * self.poly_to_active)
         
-        # This is the extra space needed to ensure DRC rules
-        # to the active contacts
-        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
-        # This is a poly-to-poly of a flipped cell
-        self.top_bottom_space = max(0.5*self.m1_width + self.m1_space + extra_contact_space, 
-                                    self.poly_extend_active + self.poly_space)
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
-
-        debug.check(self.height > total_height,
-                    "Cell height {0} too small for simple min height {1}.".format(self.height,
-                                                                                  total_height))
+        # debug.check(self.height > total_height,
+        #             "Cell height {0} too small for simple min height {1}.".format(self.height,
+        # total_height))
+        if total_height > self.height:
+            msg = "Cell height {0} too small for simple min height {1}.".format(self.height, total_height)
+            raise drc_error(msg)
 
         # Determine the height left to the transistors to determine
         # the number of fingers
@@ -127,41 +131,62 @@ class pinv(pgate.pgate):
 
         # Determine the number of mults for each to fit width
         # into available space
-        self.nmos_width = self.nmos_size * drc("minwidth_tx")
-        self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)
-        pmos_required_mults = max(int(ceil(self.pmos_width / pmos_height_available)), 1)
-        # The mults must be the same for easy connection of poly
-        self.tx_mults = max(nmos_required_mults, pmos_required_mults)
+        if OPTS.tech_name != "s8":
+            self.nmos_width = self.nmos_size * drc("minwidth_tx")
+            self.pmos_width = self.pmos_size * drc("minwidth_tx")
+            nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)
+            pmos_required_mults = max(int(ceil(self.pmos_width / pmos_height_available)), 1)
+            # The mults must be the same for easy connection of poly
+            self.tx_mults = max(nmos_required_mults, pmos_required_mults)
 
-        # Recompute each mult width and check it isn't too small
-        # This could happen if the height is narrow and the size is small
-        # User should pick a bigger size to fix it...
-        # We also need to round the width to the grid or we will end up
-        # with LVS property mismatch errors when fingers are not a grid
-        # length and get rounded in the offset geometry.
-        self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
-        debug.check(self.nmos_width >= drc("minwidth_tx"),
-                    "Cannot finger NMOS transistors to fit cell height.")
-        self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
-        debug.check(self.pmos_width >= drc("minwidth_tx"),
-                    "Cannot finger PMOS transistors to fit cell height.")
+            # Recompute each mult width and check it isn't too small
+            # This could happen if the height is narrow and the size is small
+            # User should pick a bigger size to fix it...
+            # We also need to round the width to the grid or we will end up
+            # with LVS property mismatch errors when fingers are not a grid
+            # length and get rounded in the offset geometry.
+            self.nmos_width = round_to_grid(self.nmos_width / self.tx_mults)
+            # debug.check(self.nmos_width >= drc("minwidth_tx"),
+            #            "Cannot finger NMOS transistors to fit cell height.")
+            if self.nmos_width < drc("minwidth_tx"):
+                raise drc_error("Cannot finger NMOS transistors to fit cell height.")
 
-    def setup_layout_constants(self):
-        """
-        Compute the width and height
-        """
+            self.pmos_width = round_to_grid(self.pmos_width / self.tx_mults)
+            #debug.check(self.pmos_width >= drc("minwidth_tx"),
+            #            "Cannot finger PMOS transistors to fit cell height.")
+            if self.pmos_width < drc("minwidth_tx"):
+                raise drc_error("Cannot finger NMOS transistors to fit cell height.")
+        else:
+            self.nmos_width = self.nmos_size * drc("minwidth_tx")
+            self.pmos_width = self.pmos_size * drc("minwidth_tx")
+            nmos_bins = self.permute_widths("nmos", self.nmos_width)
+            pmos_bins = self.permute_widths("pmos", self.pmos_width)
 
-        # the width is determined the multi-finger PMOS device width plus
-        # the well contact width, spacing between them
-        # space is for power supply contact to nwell m1 spacing
-        self.width = self.pmos.active_offset.x + self.pmos.active_width \
-                     + self.active_space + contact.nwell_contact.width \
-                     + 0.5 * self.nwell_enclose_active \
-                     + self.m1_space
-        # This includes full enclosures on each end
-        self.well_width = self.width + 2*self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
+            valid_pmos = []
+            for bin in pmos_bins:
+                if self.bin_accuracy(self.pmos_width, bin[0]) > accuracy_requirement:
+                    valid_pmos.append(bin)
+            valid_pmos.sort(key = operator.itemgetter(1))
+
+            valid_nmos = []
+            for bin in nmos_bins:
+                if self.bin_accuracy(self.nmos_width, bin[0]) > accuracy_requirement:
+                    valid_nmos.append(bin)
+            valid_nmos.sort(key = operator.itemgetter(1))
+
+            for bin in valid_pmos:
+                if bin[0]/bin[1] < pmos_height_available:
+                    self.pmos_width = bin[0]/bin[1]
+                    pmos_mults = valid_pmos[0][1]
+                    break
+
+            for bin in valid_nmos:
+                if bin[0]/bin[1] < nmos_height_available:
+                    self.nmos_width = bin[0]/bin[1]
+                    nmos_mults = valid_pmos[0][1]
+                    break
+
+            self.tx_mults = max(pmos_mults, nmos_mults)
         
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
@@ -169,30 +194,22 @@ class pinv(pgate.pgate):
                                    width=self.nmos_width,
                                    mults=self.tx_mults,
                                    tx_type="nmos",
+                                   add_source_contact=self.route_layer,
+                                   add_drain_contact=self.route_layer,
                                    connect_poly=True,
-                                   connect_active=True)
+                                   connect_drain_active=True)
         self.add_mod(self.nmos)
         
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=self.tx_mults,
                                    tx_type="pmos",
+                                   add_source_contact=self.route_layer,
+                                   add_drain_contact=self.route_layer,
                                    connect_poly=True,
-                                   connect_active=True)
+                                   connect_drain_active=True)
         self.add_mod(self.pmos)
         
-    def route_supply_rails(self):
-        """ Add vdd/gnd rails to the top and bottom. """
-        self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, 0),
-                                        width=self.width)
-
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer="m1",
-                                        offset=vector(0.5 * self.width, self.height),
-                                        width=self.width)
-
     def create_ptx(self):
         """
         Create the PMOS and NMOS netlist.
@@ -233,7 +250,7 @@ class pinv(pgate.pgate):
         Route the output (drains) together.
         Optionally, routes output to edge.
         """
-
+            
         # Get the drain pins
         nmos_drain_pin = self.nmos_inst.get_pin("D")
         pmos_drain_pin = self.pmos_inst.get_pin("D")
@@ -241,24 +258,16 @@ class pinv(pgate.pgate):
         # Pick point at right most of NMOS and connect down to PMOS
         nmos_drain_pos = nmos_drain_pin.bc()
         pmos_drain_pos = vector(nmos_drain_pos.x, pmos_drain_pin.uc().y)
-        self.add_path("m1", [nmos_drain_pos, pmos_drain_pos])
+        self.add_path(self.route_layer, [nmos_drain_pos, pmos_drain_pos])
 
         # Remember the mid for the output
         mid_drain_offset = vector(nmos_drain_pos.x, self.output_pos.y)
 
-        if self.route_output:
-            # This extends the output to the edge of the cell
-            output_offset = mid_drain_offset.scale(0, 1) + vector(self.width, 0)
-            self.add_layout_pin_segment_center(text="Z",
-                                               layer="m1",
-                                               start=mid_drain_offset,
-                                               end=output_offset)
-        else:
-            # This leaves the output as an internal pin (min sized)
-            self.add_layout_pin_rect_center(text="Z",
-                                            layer="m1",
-                                            offset=mid_drain_offset \
-                                            + vector(0.5 * self.m1_width, 0))
+        # This leaves the output as an internal pin (min sized)
+        output_offset = mid_drain_offset + vector(0.5 * self.route_layer_width, 0)
+        self.add_layout_pin_rect_center(text="Z",
+                                        layer=self.route_layer,
+                                        offset=output_offset)
 
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

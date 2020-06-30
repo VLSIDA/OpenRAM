@@ -23,11 +23,12 @@ class ptx_4finger_nmos_test(openram_test):
         import tech
 
         debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",        
+        fet = factory.create(module_type="ptx",
                              width= tech.drc["minwidth_tx"],
                              mults=4,
                              tx_type="nmos",
-                             connect_active=True,
+                             connect_source_active=True,
+                             connect_drain_active=True,
                              connect_poly=True)
         self.local_drc_check(fet)
 

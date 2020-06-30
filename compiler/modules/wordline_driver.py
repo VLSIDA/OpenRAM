@@ -7,10 +7,12 @@
 #
 import debug
 import design
-import contact
+import math
+from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import cell_properties
 
 
 class wordline_driver(design.design):
@@ -24,8 +26,20 @@ class wordline_driver(design.design):
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         
-        self.rows = rows
-        self.cols = cols
+        self.bitcell_rows = rows
+        self.bitcell_cols = cols
+
+        b = factory.create(module_type="bitcell")
+        try:
+            self.cell_multiple = cell_properties.bitcell.decoder_bitcell_multiple
+        except AttributeError:
+            self.cell_multiple = 1
+        self.cell_height = self.cell_multiple * b.height
+        
+        # We may have more than one bitcell per decoder row
+        self.num_rows = math.ceil(self.bitcell_rows / self.cell_multiple)
+        # We will place this many final decoders per row
+        self.decoders_per_row = math.ceil(self.bitcell_rows / self.num_rows)
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -37,6 +51,7 @@ class wordline_driver(design.design):
         self.create_drivers()
         
     def create_layout(self):
+        self.setup_layout_constants()
         self.place_drivers()
         self.route_layout()
         self.route_vdd_gnd()
@@ -46,27 +61,20 @@ class wordline_driver(design.design):
         
     def add_pins(self):
         # inputs to wordline_driver.
-        for i in range(self.rows):
+        for i in range(self.bitcell_rows):
             self.add_pin("in_{0}".format(i), "INPUT")
         # Outputs from wordline_driver.
-        for i in range(self.rows):
+        for i in range(self.bitcell_rows):
             self.add_pin("wl_{0}".format(i), "OUTPUT")
         self.add_pin("en", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        b = factory.create(module_type="bitcell")
-        
-        self.inv = factory.create(module_type="pdriver",
-                                  fanout=self.cols,
-                                  neg_polarity=True,
-                                  height=b.height)
-        self.add_mod(self.inv)
-
-        self.nand2 = factory.create(module_type="pnand2",
-                                    height=b.height)
-        self.add_mod(self.nand2)
+        self.and2 = factory.create(module_type="pand2",
+                                   height=self.cell_height,
+                                   size=self.bitcell_cols)
+        self.add_mod(self.and2)
         
     def route_vdd_gnd(self):
         """
@@ -75,160 +83,122 @@ class wordline_driver(design.design):
         """
 
         # Find the x offsets for where the vias/pins should be placed
-        a_xoffset = self.nand_inst[0].rx()
-        b_xoffset = self.inv2_inst[0].lx()
-        for num in range(self.rows):
+        xoffset_list = [self.and_inst[0].lx()]
+        for num in range(self.bitcell_rows):
             # this will result in duplicate polygons for rails, but who cares
             
-            # use the inverter offset even though it will be the nand's too
+            # use the inverter offset even though it will be the and's too
             (gate_offset, y_dir) = self.get_gate_offset(0,
-                                                        self.inv.height,
+                                                        self.and2.height,
                                                         num)
-
             # Route both supplies
             for name in ["vdd", "gnd"]:
-                supply_pin = self.inv2_inst[num].get_pin(name)
+                supply_pin = self.and_inst[num].get_pin(name)
 
                 # Add pins in two locations
-                for xoffset in [a_xoffset, b_xoffset]:
+                for xoffset in xoffset_list:
                     pin_pos = vector(xoffset, supply_pin.cy())
                     self.add_power_pin(name, pin_pos)
             
     def create_drivers(self):
-        self.nand_inst = []
-        self.inv2_inst = []
-        for row in range(self.rows):
-            name_nand = "wl_driver_nand{}".format(row)
-            name_inv2 = "wl_driver_inv{}".format(row)
+        self.and_inst = []
+        for row in range(self.bitcell_rows):
+            name_and = "wl_driver_and{}".format(row)
 
-            # add nand 2
-            self.nand_inst.append(self.add_inst(name=name_nand,
-                                                mod=self.nand2))
-            self.connect_inst(["en",
-                               "in_{0}".format(row),
-                               "wl_bar_{0}".format(row),
-                               "vdd", "gnd"])
-            # add inv2
-            self.inv2_inst.append(self.add_inst(name=name_inv2,
-                                                mod=self.inv))
-            self.connect_inst(["wl_bar_{0}".format(row),
+            # add and2
+            self.and_inst.append(self.add_inst(name=name_and,
+                                                mod=self.and2))
+            self.connect_inst(["in_{0}".format(row),
+                               "en",
                                "wl_{0}".format(row),
                                "vdd", "gnd"])
+
+    def setup_layout_constants(self):
+        # We may have more than one bitcell per decoder row
+        self.driver_rows = math.ceil(self.bitcell_rows / self.cell_multiple)
+        # We will place this many final decoders per row
+        self.decoders_per_row = math.ceil(self.bitcell_rows / self.driver_rows)
             
     def place_drivers(self):
-        nand2_xoffset = 2*self.m1_width + 5*self.m1_space 
-        inv2_xoffset = nand2_xoffset + self.nand2.width
+
+        # Leave a well gap to separate the bitcell array well from this well
+        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
         
-        self.width = inv2_xoffset + self.inv.width
-        self.height = self.inv.height * self.rows
+        self.width = self.decoders_per_row * self.and2.width + well_gap
+        self.height = self.and2.height * self.driver_rows
         
-        for row in range(self.rows):
+        for inst_index in range(self.bitcell_rows):
+            row = math.floor(inst_index / self.decoders_per_row)
+            dec = inst_index % self.decoders_per_row
+            
             if (row % 2):
-                y_offset = self.inv.height*(row + 1)
+                y_offset = self.and2.height * (row + 1)
                 inst_mirror = "MX"
             else:
-                y_offset = self.inv.height*row
+                y_offset = self.and2.height * row
                 inst_mirror = "R0"
 
-            nand2_offset = [nand2_xoffset, y_offset]
-            inv2_offset = [inv2_xoffset, y_offset]
+            x_offset = dec * self.and2.width
+            and2_offset = [x_offset, y_offset]
             
-            # add nand 2
-            self.nand_inst[row].place(offset=nand2_offset,
-                                      mirror=inst_mirror)
-            # add inv2
-            self.inv2_inst[row].place(offset=inv2_offset,
-                                      mirror=inst_mirror)
+            # add and2
+            self.and_inst[inst_index].place(offset=and2_offset,
+                                            mirror=inst_mirror)
 
     def route_layout(self):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_offset = [self.m1_width + 2 * self.m1_space, 0]
+        en_pin = self.and_inst[0].get_pin("B")
+        en_bottom_pos = vector(en_pin.lx(), 0)
         en_pin = self.add_layout_pin(text="en",
                                      layer="m2",
-                                     offset=en_offset,
-                                     width=self.m2_width,
+                                     offset=en_bottom_pos,
                                      height=self.height)
         
-        for row in range(self.rows):
-            nand_inst = self.nand_inst[row]
-            inv2_inst = self.inv2_inst[row]
+        for inst_index in range(self.bitcell_rows):
+            and_inst = self.and_inst[inst_index]
+            row = math.floor(inst_index / self.decoders_per_row)
+
+            # Drop a via
+            b_pin = and_inst.get_pin("B")
+            self.add_via_stack_center(from_layer=b_pin.layer,
+                                      to_layer="m2",
+                                      offset=b_pin.center())
             
-            # en connection
-            a_pin = nand_inst.get_pin("A")
-            a_pos = a_pin.lc()
-            clk_offset = vector(en_pin.bc().x, a_pos.y)
-            self.add_segment_center(layer="m1",
-                                    start=clk_offset,
-                                    end=a_pos)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=clk_offset)
-
-            # Nand2 out to 2nd inv
-            zr_pos = nand_inst.get_pin("Z").rc()
-            al_pos = inv2_inst.get_pin("A").lc()
-            # ensure the bend is in the middle
-            mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
-            mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
-
-            # connect the decoder input pin to nand2 B
-            b_pin = nand_inst.get_pin("B")
-            b_pos = b_pin.lc()
-            # needs to move down since B nand input is
-            # nearly aligned with A inv input
-            up_or_down = self.m2_space if row % 2 else -self.m2_space
-            input_offset = vector(0, b_pos.y + up_or_down)
-            base_offset = vector(clk_offset.x, input_offset.y)
-            contact_offset = vector(0.5 * self.m2_width + self.m2_space + 0.5 * contact.m1_via.width, 0) 
-            mid_via_offset = base_offset + contact_offset
-
+            # connect the decoder input pin to and2 A
+            a_pin = and_inst.get_pin("A")
+            a_pos = a_pin.center()
             # must under the clk line in M1
             self.add_layout_pin_segment_center(text="in_{0}".format(row),
                                                layer="m1",
-                                               start=input_offset,
-                                               end=mid_via_offset)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=mid_via_offset,
-                                directions=("V", "V"))
-
-            # now connect to the nand2 B
-            self.add_path("m2", [mid_via_offset, b_pos])
-            contact_offset = b_pos - vector(0.5 * contact.m1_via.height, 0)
-            self.add_via_center(layers=self.m1_stack,
-                                offset=contact_offset,
-                                directions=("H", "H"))
+                                               start=vector(0, a_pos.y),
+                                               end=a_pos)
 
             # output each WL on the right
-            wl_offset = inv2_inst.get_pin("Z").rc()
+            wl_offset = and_inst.get_pin("Z").rc()
             self.add_layout_pin_segment_center(text="wl_{0}".format(row),
                                                layer="m1",
                                                start=wl_offset,
                                                end=wl_offset - vector(self.m1_width, 0))
 
     def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
-        """ 
+        """
         Follows the clk_buf to a wordline signal adding
         each stages stage effort to a list.
         """
         stage_effort_list = []
         
-        stage1_cout = self.inv.get_cin()
-        stage1 = self.nand2.get_stage_effort(stage1_cout, inp_is_rise)
+        stage1 = self.and2.get_stage_effort(external_cout, inp_is_rise)
         stage_effort_list.append(stage1)
-        last_stage_is_rise = stage1.is_rise
-        
-        stage2 = self.inv.get_stage_efforts(external_cout, last_stage_is_rise)
-        stage_effort_list.extend(stage2)
         
         return stage_effort_list
         
     def get_wl_en_cin(self):
-        """ 
+        """
         Get the relative capacitance of all
         the enable connections in the bank
         """
-        # The enable is connected to a nand2 for every row.
-        total_cin = self.nand2.get_cin() * self.rows
+        # The enable is connected to a and2 for every row.
+        total_cin = self.and2.get_cin() * self.rows
         return total_cin

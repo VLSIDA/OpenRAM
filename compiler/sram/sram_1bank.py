@@ -73,10 +73,11 @@ class sram_1bank(sram_base):
         self.data_bus_gap = self.m4_nonpref_pitch * 2
 
         # Spare wen are on a separate layer so not included
-        self.data_bus_size = [None] * len(self.all_ports)
+        # Start with 1 track minimum
+        self.data_bus_size = [1] * len(self.all_ports)
         for port in self.all_ports:
             # All ports need the col addr flops
-            self.data_bus_size[port] = self.col_addr_size
+            self.data_bus_size[port] += self.col_addr_size
             # Write ports need the data input flops and write mask flops
             if port in self.write_ports:
                 self.data_bus_size[port] += self.num_wmasks + self.word_size
@@ -324,16 +325,6 @@ class sram_1bank(sram_base):
         
         self.route_row_addr_dff()
 
-        # if self.col_addr_dff:
-        #     self.route_col_addr_dff()
-        
-        # self.route_data_dff()
-        
-        # if self.write_size:
-        #     self.route_wmask_dff()
-
-        # if self.num_spare_cols:
-        #     self.route_spare_wen_dff()
         for port in self.all_ports:
             self.route_dff(port)
 
@@ -487,137 +478,6 @@ class sram_1bank(sram_base):
                                           to_layer="m3",
                                           offset=mid_pos)
                 self.add_path(bank_pin.layer, [mid_pos, bank_pos])
-
-    def route_col_addr_dff(self):
-        """ Connect the output of the col flops to the bank pins """
-        for port in self.all_ports:
-            if port % 2:
-                offset = self.col_addr_dff_insts[port].ll() - vector(0, self.col_addr_bus_size)
-            else:
-                offset = self.col_addr_dff_insts[port].ul() + vector(0, self.col_addr_bus_gap)
-
-            bus_names = ["addr_{}".format(x) for x in range(self.col_addr_size)]
-            col_addr_bus_offsets = self.create_horizontal_bus(layer="m1",
-                                                              offset=offset,
-                                                              names=bus_names,
-                                                              length=self.col_addr_dff_insts[port].width)
-
-            dff_names = ["dout_{}".format(x) for x in range(self.col_addr_size)]
-            data_dff_map = zip(dff_names, bus_names)
-            self.connect_horizontal_bus(data_dff_map,
-                                        self.col_addr_dff_insts[port],
-                                        col_addr_bus_offsets)
-            
-            bank_names = ["addr{0}_{1}".format(port, x) for x in range(self.col_addr_size)]
-            data_bank_map = zip(bank_names, bus_names)
-            self.connect_horizontal_bus(data_bank_map,
-                                        self.bank_inst,
-                                        col_addr_bus_offsets)
-
-    def route_data_dff(self):
-        """ Connect the output of the data flops to the write driver """
-        # This is where the channel will start (y-dimension at least)
-        for port in self.write_ports:
-            if port % 2:
-                offset = self.data_dff_insts[port].ll() - vector(0, self.data_bus_size[port])
-            else:
-                offset = self.data_dff_insts[port].ul() + vector(0, self.data_bus_gap)
-
-            dff_names = ["dout_{}".format(x) for x in range(self.word_size + self.num_spare_cols)]
-            dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
-            if self.write_size or self.num_spare_cols:
-                for x in dff_names:
-                    pin = self.data_dff_insts[port].get_pin(x)
-                    pin_offset = pin.center()
-                    self.add_via_center(layers=self.m1_stack,
-                                        offset=pin_offset,
-                                        directions=("V", "V"))
-                    self.add_via_stack_center(from_layer="m2",
-                                              to_layer="m4",
-                                              offset=pin_offset)
-            
-            bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            if self.write_size or self.num_spare_cols:
-                for x in bank_names:
-                    pin = self.bank_inst.get_pin(x)
-                    if port % 2:
-                        pin_offset = pin.uc()
-                    else:
-                        pin_offset = pin.bc()
-                    self.add_via_stack_center(from_layer=pin.layer,
-                                              to_layer="m4",
-                                              offset=pin_offset)
-
-            route_map = list(zip(bank_pins, dff_pins))
-            if self.write_size or self.num_spare_cols:
-                layer_stack = self.m3_stack
-            else:
-                layer_stack = self.m1_stack
-                
-            self.create_horizontal_channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=layer_stack)
-
-    def route_wmask_dff(self):
-        """ Connect the output of the wmask flops to the write mask AND array """
-        # This is where the channel will start (y-dimension at least)
-        for port in self.write_ports:
-            if port % 2:
-                offset = self.wmask_dff_insts[port].ll() - vector(0, self.wmask_bus_size)
-            else:
-                offset = self.wmask_dff_insts[port].ul() + vector(0, self.wmask_bus_gap)
-
-            dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
-            dff_pins = [self.wmask_dff_insts[port].get_pin(x) for x in dff_names]
-            for x in dff_names:
-                offset_pin = self.wmask_dff_insts[port].get_pin(x).center()
-                self.add_via_center(layers=self.m1_stack,
-                                    offset=offset_pin,
-                                    directions=("V", "V"))
-
-            bank_names = ["bank_wmask{0}_{1}".format(port, x) for x in range(self.num_wmasks)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            for x in bank_names:
-                offset_pin = self.bank_inst.get_pin(x).center()
-                self.add_via_center(layers=self.m1_stack,
-                                    offset=offset_pin)
-
-            route_map = list(zip(bank_pins, dff_pins))
-            self.create_horizontal_channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=self.m1_stack)
-            
-    def route_spare_wen_dff(self):
-        """ Connect the output of the spare write enable flops to the spare write drivers """
-        # This is where the channel will start (y-dimension at least)
-        for port in self.write_ports:
-            if port % 2:
-                # for port 0
-                offset = self.spare_wen_dff_insts[port].ll() - vector(0, self.spare_wen_bus_size)
-            else:
-                offset = self.spare_wen_dff_insts[port].ul() + vector(0, self.spare_wen_bus_gap)
-
-            dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
-            dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names] 
-            for x in dff_names:
-                offset_pin = self.spare_wen_dff_insts[port].get_pin(x).center()
-                self.add_via_center(layers=self.m1_stack,
-                                    offset=offset_pin,
-                                    directions=("V", "V"))
-
-            bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            for x in bank_names:
-                offset_pin = self.bank_inst.get_pin(x).center()
-                self.add_via_center(layers=self.m1_stack,
-                                    offset=offset_pin)
-
-            route_map = list(zip(bank_pins, dff_pins))
-            self.create_horizontal_channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=self.m1_stack)
-
 
     def add_lvs_correspondence_points(self):
         """

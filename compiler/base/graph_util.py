@@ -65,8 +65,6 @@ class timing_graph():
         # Call the recursive helper function to print all paths 
         self.get_all_paths_util(src_node, dest_node, visited, path)     
         debug.info(2, "Paths found={}".format(len(self.all_paths)))
-        for path in self.all_paths:
-            debug.info(2, "Paths ={}".format(path))
 
         if reduce_paths:
             self.reduce_paths()

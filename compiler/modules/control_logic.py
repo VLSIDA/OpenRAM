@@ -523,12 +523,12 @@ class control_logic(design.design):
     def route_clk_buf(self):
         clk_pin = self.clk_buf_inst.get_pin("A")
         clk_pos = clk_pin.center()
-        self.add_layout_pin_segment_center(text="clk",
-                                           layer="m2",
-                                           start=clk_pos,
-                                           end=clk_pos.scale(1, 0))
-        self.add_via_center(layers=self.m1_stack,
-                            offset=clk_pos)
+        self.add_layout_pin_rect_center(text="clk",
+                                        layer="m2",
+                                        offset=clk_pos)
+        self.add_via_stack_center(from_layer=clk_pin.layer,
+                                  to_layer="m2",
+                                  offset=clk_pos)
 
         self.route_output_to_bus_jogged(self.clk_buf_inst,
                                         "clk_buf")

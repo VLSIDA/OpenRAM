@@ -13,6 +13,7 @@ from tech import drc, GDS
 from tech import layer as techlayer
 from tech import layer_indices
 from tech import layer_stacks
+from tech import preferred_directions
 import os
 from globals import OPTS
 from vector import vector
@@ -521,7 +522,6 @@ class layout():
 
     def get_preferred_direction(self, layer):
         """ Return the preferred routing directions """
-        from tech import preferred_directions
         return preferred_directions[layer]
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
@@ -567,24 +567,6 @@ class layout():
         self.connect_inst([])
         return inst
 
-    def add_via_stack(self, offset, from_layer, to_layer,
-                      directions=None,
-                      size=[1, 1],
-                      implant_type=None,
-                      well_type=None):
-        """
-        Punch a stack of vias from a start layer to a target layer.
-        """
-        return self.__add_via_stack_internal(offset=offset,
-                                             directions=directions,
-                                             from_layer=from_layer,
-                                             to_layer=to_layer,
-                                             via_func=self.add_via,
-                                             last_via=None,
-                                             size=size,
-                                             implant_type=implant_type,
-                                             well_type=well_type)
-
     def add_via_stack_center(self,
                              offset,
                              from_layer,
@@ -594,24 +576,7 @@ class layout():
                              implant_type=None,
                              well_type=None):
         """
-        Punch a stack of vias from a start layer to a target layer by the center
-        coordinate accounting for mirroring and rotation.
-        """
-        return self.__add_via_stack_internal(offset=offset,
-                                             directions=directions,
-                                             from_layer=from_layer,
-                                             to_layer=to_layer,
-                                             via_func=self.add_via_center,
-                                             last_via=None,
-                                             size=size,
-                                             implant_type=implant_type,
-                                             well_type=well_type)
-
-    def __add_via_stack_internal(self, offset, directions, from_layer, to_layer,
-                                 via_func, last_via, size, implant_type=None, well_type=None):
-        """
-        Punch a stack of vias from a start layer to a target layer. Here we
-        figure out whether to punch it up or down the stack.
+        Punch a stack of vias from a start layer to a target layer by the center.
         """
 
         if from_layer == to_layer:
@@ -619,38 +584,65 @@ class layout():
             # a metal enclosure. This helps with center-line path routing.
             self.add_rect_center(layer=from_layer,
                                  offset=offset)
-            return last_via
+            return None
 
-        from_id = layer_indices[from_layer]
-        to_id   = layer_indices[to_layer]
+        via = None
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = layer_indices[cur_layer]
+            to_id   = layer_indices[to_layer]
 
-        if from_id < to_id: # grow the stack up
-            search_id = 0
-            next_id = 2
-        else: # grow the stack down
-            search_id = 2
-            next_id = 0
+            if from_id < to_id: # grow the stack up
+                search_id = 0
+                next_id = 2
+            else: # grow the stack down
+                search_id = 2
+                next_id = 0
 
-        curr_stack = next(filter(lambda stack: stack[search_id] == from_layer, layer_stacks), None)
-        if curr_stack is None:
-            raise ValueError("Cannot create via from '{0}' to '{1}'."
-                             "Layer '{0}' not defined".format(from_layer, to_layer))
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+            
+            via = self.add_via_center(layers=curr_stack,
+                                      size=size,
+                                      offset=offset,
+                                      directions=directions,
+                                      implant_type=implant_type,
+                                      well_type=well_type)
+            
+            if cur_layer != from_layer:
+                self.add_min_area_rect_center(cur_layer,
+                                              offset,
+                                              via.mod.first_layer_width,
+                                              via.mod.first_layer_height)
+                
+            cur_layer = curr_stack[next_id]
 
-        via = via_func(layers=curr_stack,
-                       size=size,
-                       offset=offset,
-                       directions=directions,
-                       implant_type=implant_type,
-                       well_type=well_type)
-
-        via = self.__add_via_stack_internal(offset=offset,
-                                            directions=directions,
-                                            from_layer=curr_stack[next_id],
-                                            to_layer=to_layer,
-                                            via_func=via_func,
-                                            last_via=via,
-                                            size=size)
         return via
+        
+    def add_min_area_rect_center(self,
+                                 layer,
+                                 offset,
+                                 width=None,
+                                 height=None):
+        """
+        Add a minimum area retcangle at the given point.
+        Either width or height should be fixed.
+        """
+
+        min_area = drc("minarea_{}".format(layer))
+        if min_area == 0:
+            return
+        
+        min_width = drc("minwidth_{}".format(layer))
+        
+        if preferred_directions[layer] == "V":
+            height = max(min_area / width, min_width)
+        else:
+            width = max(min_area / height, min_width)
+            
+        self.add_rect_center(layer=layer,
+                             offset=offset,
+                             width=width,
+                             height=height)
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
@@ -1181,12 +1173,8 @@ class layout():
         self.add_path(layer,
                       [pin_loc, peri_pin_loc])
 
-        self.add_via_stack_center(from_layer=layer,
-                                  to_layer="m4",
-                                  offset=peri_pin_loc)
-        
         self.add_layout_pin_rect_center(text=name,
-                                        layer="m4",
+                                        layer=layer,
                                         offset=peri_pin_loc)
         
     def add_power_ring(self, bbox):

@@ -227,6 +227,8 @@ class stimuli():
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
             self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
+        elif OPTS.spice_name == "alps":
+            self.sf.write(".OPTIONS POST=0 RUNLVL={0} RELTOL={1} PROBE ABSTOL=1e-6 LEAST_DISK_SPACE=2000\n".format(runlvl, reltol))
         else:
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
 
@@ -285,6 +287,12 @@ class stimuli():
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
             cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
+                                                         temp_stim,
+                                                         OPTS.openram_temp)
+            valid_retcode=0
+        elif OPTS.spice_name == "alps":
+            # TODO: Should make multithreading parameter a configuration option
+            cmd = "{0} -mode pro -mt 2 -lqtimeout 0 -i {1} -o {2}timing".format(OPTS.spice_exe,
                                                          temp_stim,
                                                          OPTS.openram_temp)
             valid_retcode=0

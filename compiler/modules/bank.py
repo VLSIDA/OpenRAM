@@ -316,7 +316,7 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
+            self.input_control_signals.append(["s_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
             self.input_control_signals.append(["w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
@@ -329,7 +329,7 @@ class bank(design.design):
         self.num_control_lines = [len(x) for x in self.input_control_signals]
 
         # The width of this bus is needed to place other modules (e.g. decoder) for each port
-        self.central_bus_width = [self.m2_pitch * x + self.m2_width for x in self.num_control_lines]
+        self.central_bus_width = [self.m3_pitch * x + self.m3_width for x in self.num_control_lines]
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -338,6 +338,7 @@ class bank(design.design):
                 self.control_signals.append(["gated_" + str for str in self.input_control_signals[port]])
             else:
                 self.control_signals.append(self.input_control_signals[port])
+                    
 
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
@@ -672,7 +673,8 @@ class bank(design.design):
                                            names=self.control_signals[0],
                                            length=control_bus_length,
                                            vertical=True,
-                                           make_pins=(self.num_banks==1))
+                                           make_pins=(self.num_banks==1),
+                                           pitch=self.m3_pitch)
         
         # Port 1
         if len(self.all_ports)==2:
@@ -686,7 +688,8 @@ class bank(design.design):
                                                names=list(reversed(self.control_signals[1])),
                                                length=control_bus_length,
                                                vertical=True,
-                                               make_pins=(self.num_banks==1))
+                                               make_pins=(self.num_banks==1),
+                                               pitch=self.m3_pitch)
 
     def route_port_data_to_bitcell_array(self, port):
         """ Routing of BL and BR between port data and bitcell array """

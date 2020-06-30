@@ -1135,6 +1135,7 @@ class layout():
                                             size=size,
                                             offset=loc,
                                             directions=directions)
+
             # Hack for min area
             if OPTS.tech_name == "sky130":
                 width = round_to_grid(sqrt(drc["minarea_m3"]))

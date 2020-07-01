@@ -457,7 +457,12 @@ class sram_1bank(sram_base):
             dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))
             self.add_wire(self.m2_stack[::-1],
                           [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
-            # self.connect_hbus(src_pin, dest_pin)
+            self.add_via_stack_center(from_layer=src_pin.layer,
+                                      to_layer="m2",
+                                      offset=src_pin.center())
+            self.add_via_stack_center(from_layer=dest_pin.layer,
+                                      to_layer="m2",
+                                      offset=dest_pin.center())
             
     def route_row_addr_dff(self):
         """ Connect the output of the row flops to the bank pins """

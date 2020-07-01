@@ -917,8 +917,10 @@ class layout():
         (horizontal_layer, via_layer, vertical_layer) = layer_stack
         if horizontal:
             route_layer = vertical_layer
+            bys_layer = horizontal_layer
         else:
             route_layer = horizontal_layer
+            bus_layer = vertical_layer
 
         for (pin_name, bus_name) in mapping:
             pin = inst.get_pin(pin_name)
@@ -940,17 +942,18 @@ class layout():
             # Connect to the pin on the instances with a via if it is
             # not on the right layer
             if pin.layer != route_layer:
-                self.add_via_center(layers=layer_stack,
-                                    offset=pin_pos)
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=route_layer,
+                                          offset=pin_pos)
             # FIXME: output pins tend to not be rotate,
             # but supply pins are. Make consistent?
 
             # We only need a via if they happened to align perfectly
             # so the add_wire didn't add a via
             if (horizontal and bus_pos.y == pin_pos.y) or (not horizontal and bus_pos.x == pin_pos.x):
-                self.add_via_center(layers=layer_stack,
-                                    offset=bus_pos,
-                                    rotate=90)
+                self.add_via_stack_center(from_layer=route_layer,
+                                          to_layer=bus_layer,
+                                          offset=bus_pos)
 
     def connect_vbus(self, src_pin, dest_pin, hlayer="m3", vlayer="m2"):
         """

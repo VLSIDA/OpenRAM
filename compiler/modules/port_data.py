@@ -377,11 +377,11 @@ class port_data(design.design):
                 temp.append("{0}_{1}".format(br_name, bit))
             else:
                 temp.append("{0}_out_{1}".format(bl_name, bit))
-                temp.append("{0}_out_{1}".format(br_name, bit))        
+                temp.append("{0}_out_{1}".format(br_name, bit))
 
-        for bit in range(self.num_spare_cols):   
+        for bit in range(self.num_spare_cols):
             temp.append("spare{0}_{1}".format(bl_name, bit))
-            temp.append("spare{0}_{1}".format(br_name, bit)) 
+            temp.append("spare{0}_{1}".format(br_name, bit))
 
         if self.write_size is not None:
             for i in range(self.num_wmasks):
@@ -522,13 +522,14 @@ class port_data(design.design):
             wdriver_pos = wdriver_en_pin.rc() - vector(self.m2_pitch, 0)
             mid_pos = vector(wdriver_pos.x, wmask_pos.y)
 
-
             # Add driver on mask output
-            self.add_via_center(layers=self.m1_stack,
-                                offset=wmask_pos)
+            self.add_via_stack_center(from_layer=wmask_out_pin.layer,
+                                      to_layer="m1",
+                                      offset=wmask_pos)
             # Add via for the write driver array's enable input
-            self.add_via_center(layers=self.m1_stack,
-                                offset=wdriver_pos)
+            self.add_via_stack_center(from_layer=wdriver_en_pin.layer,
+                                      to_layer="m2",
+                                      offset=wdriver_pos)
 
             # Route between write mask AND array and write driver array
             self.add_wire(self.m1_stack, [wmask_pos, mid_pos, wdriver_pos])

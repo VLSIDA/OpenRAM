@@ -81,6 +81,10 @@ class sram_1bank(sram_base):
             # Write ports need the data input flops and write mask flops
             if port in self.write_ports:
                 self.data_bus_size[port] += self.num_wmasks + self.word_size
+            # This is for the din pins that get routed in the same channel
+            # when we have dout and din together
+            if port in self.readwrite_ports:
+                self.data_bus_size[port] += self.word_size
             # Convert to length
             self.data_bus_size[port] *= self.m4_nonpref_pitch
             # Add the gap in unit length
@@ -237,18 +241,45 @@ class sram_1bank(sram_base):
                                      "clk",
                                      "clk{}".format(port))
 
-            # Data output pins go to BOTTOM/TOP
-            if port in self.read_ports:
+            # Data input pins go to BOTTOM/TOP
+            din_ports = []
+            if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
                     if OPTS.perimeter_pins:
+                        p = self.add_perimeter_pin(name="din{0}[{1}]".format(port, bit),
+                                                   pin=self.data_dff_insts[port].get_pin("din_{0}".format(bit)),
+                                                   side=bottom_or_top,
+                                                   bbox=bbox)
+                        din_ports.append(p)
+                    else:
+                        self.copy_layout_pin(self.bank_inst,
+                                             "din{0}_{1}".format(port, bit),
+                                             "din{0}[{1}]".format(port, bit))
+                        
+            # Data output pins go to BOTTOM/TOP
+            if port in self.readwrite_ports and OPTS.perimeter_pins:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    # This should be routed next to the din pin
+                    p = din_ports[bit]
+                    self.add_layout_pin_rect_center(text="dout{0}[{1}]".format(port, bit),
+                                                    layer=p.layer,
+                                                    offset=p.center() + vector(self.m3_pitch, 0),
+                                                    width=p.width(),
+                                                    height=p.height())
+            elif port in self.read_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    if OPTS.perimeter_pins:
+                        # This should have a clear route to the perimeter if there are no din routes
                         self.add_perimeter_pin(name="dout{0}[{1}]".format(port, bit),
                                                pin=self.bank_inst.get_pin("dout{0}_{1}".format(port, bit)),
                                                side=bottom_or_top,
                                                bbox=bbox)
                     else:
-                        self.copy_layout_pin(self.bank_inst,
-                                             "dout{0}_{1}".format(port, bit),
+                        self.copy_layout_pin(self.data_dff_insts[port],
+                                             "dout_{}".format(bit),
                                              "dout{0}[{1}]".format(port, bit))
+                    
+                        
 
             # Lower address bits go to BOTTOM/TOP
             for bit in range(self.col_addr_size):
@@ -273,19 +304,6 @@ class sram_1bank(sram_base):
                     self.copy_layout_pin(self.row_addr_dff_insts[port],
                                          "din_{}".format(bit),
                                          "addr{0}[{1}]".format(port, bit + self.col_addr_size))
-                    
-            # Data input pins go to BOTTOM/TOP
-            if port in self.write_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
-                    if OPTS.perimeter_pins:
-                        self.add_perimeter_pin(name="din{0}[{1}]".format(port, bit),
-                                               pin=self.data_dff_insts[port].get_pin("din_{}".format(bit)),
-                                               side=bottom_or_top,
-                                               bbox=bbox)
-                    else:
-                        self.copy_layout_pin(self.data_dff_insts[port],
-                                             "din_{}".format(bit),
-                                             "din{0}[{1}]".format(port, bit))
                     
             # Write mask pins go to BOTTOM/TOP
             if port in self.write_ports:
@@ -349,12 +367,22 @@ class sram_1bank(sram_base):
             route_map.extend(list(zip(bank_pins, dff_pins)))
 
         if port in self.write_ports:
-            # data dff
+            # synchronized inputs from data dff
             dff_names = ["dout_{}".format(x) for x in range(self.word_size + self.num_spare_cols)]
             dff_pins = [self.data_dff_insts[port].get_pin(x) for x in dff_names]
             bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
+            
+        if port in self.readwrite_ports and OPTS.perimeter_pins:
+            # outputs from sense amp
+            # These are the output pins which had their pin placed on the perimeter, so route from the
+            # sense amp which should not align with write driver input
+            sram_names = ["dout{0}[{1}]".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
+            sram_pins = [self.get_pin(x) for x in sram_names]
+            bank_names = ["dout{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
+            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
+            route_map.extend(list(zip(bank_pins, sram_pins)))
 
         if self.num_wmasks > 0 and port in self.write_ports:
             layer_stack = self.m3_stack

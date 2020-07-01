@@ -161,7 +161,7 @@ class channel_route(design.design):
             else:
                 # FIXME: We don't support cyclic VCGs right now.
                 debug.error("Cyclic VCG in channel router.", -1)
-
+                
             # These are the pins we'll have to connect
             pin_list = nets[net_name]
             # print("Routing:", net_name, [x.name for x in pin_list])

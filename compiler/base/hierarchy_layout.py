@@ -1176,9 +1176,9 @@ class layout():
         self.add_path(layer,
                       [pin_loc, peri_pin_loc])
 
-        self.add_layout_pin_rect_center(text=name,
-                                        layer=layer,
-                                        offset=peri_pin_loc)
+        return self.add_layout_pin_rect_center(text=name,
+                                               layer=layer,
+                                               offset=peri_pin_loc)
         
     def add_power_ring(self, bbox):
         """

@@ -252,8 +252,8 @@ class sram_1bank(sram_base):
                                                    bbox=bbox)
                         din_ports.append(p)
                     else:
-                        self.copy_layout_pin(self.bank_inst,
-                                             "din{0}_{1}".format(port, bit),
+                        self.copy_layout_pin(self.data_dff_insts[port],
+                                             "din_{}".format(bit),
                                              "din{0}[{1}]".format(port, bit))
                         
             # Data output pins go to BOTTOM/TOP
@@ -275,8 +275,8 @@ class sram_1bank(sram_base):
                                                side=bottom_or_top,
                                                bbox=bbox)
                     else:
-                        self.copy_layout_pin(self.data_dff_insts[port],
-                                             "dout_{}".format(bit),
+                        self.copy_layout_pin(self.bank_inst,
+                                             "dout{0}_{1}".format(port, bit),
                                              "dout{0}[{1}]".format(port, bit))
                     
                         

@@ -802,15 +802,16 @@ class control_logic(design.design):
         """ Create an output pin on the right side from the pin of a given instance. """
         
         out_pin = inst.get_pin(pin_name)
-        right_pos = out_pin.center() + vector(self.width - out_pin.cx(), 0)
+        out_pos = out_pin.center()
+        right_pos = out_pos + vector(self.width - out_pin.cx(), 0)
         
-        self.add_path(out_pin.layer, [out_pin.center(), right_pos])
         self.add_via_stack_center(from_layer=out_pin.layer,
-                                  to_layer="m1",
-                                  offset=right_pos)
-        self.add_layout_pin_rect_center(text=out_name,
-                                        layer="m1",
-                                        offset=right_pos)
+                                  to_layer="m2",
+                                  offset=out_pos)
+        self.add_layout_pin_segment_center(text=out_name,
+                                           layer="m2",
+                                           start=out_pos,
+                                           end=right_pos)
 
     def route_supply(self):
         """ Add vdd and gnd to the instance cells """

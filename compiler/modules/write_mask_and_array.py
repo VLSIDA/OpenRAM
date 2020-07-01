@@ -134,10 +134,7 @@ class write_mask_and_array(design.design):
 
             for supply in ["gnd", "vdd"]:
                 supply_pin=self.and2_insts[i].get_pin(supply)
-                if "li" in layer:
-                    self.add_power_pin(supply, supply_pin.center(), start_layer="li", directions=("H", "H"))
-                else:
-                    self.add_power_pin(supply, supply_pin.center())
+                self.add_power_pin(supply, supply_pin.center(), start_layer=supply_pin.layer)
 
         for supply in ["gnd", "vdd"]:
             supply_pin_left = self.and2_insts[0].get_pin(supply)

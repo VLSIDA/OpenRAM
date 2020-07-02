@@ -235,8 +235,9 @@ class delay(simulation):
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally. {} added to names to differentiate between ports allow the
         # measurements are independent of the ports
-        q_meas = voltage_at_measure("v_q_{}{}".format(meas_tag, "{}"), q_name)
-        qbar_meas = voltage_at_measure("v_qbar_{}{}".format(meas_tag, "{}"), qbar_name) 
+        q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name)
+        qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name) 
+        debug.info(1,"meas name:{}".format(q_meas.name))
         
         return {bit_polarity.NONINVERTING:q_meas, bit_polarity.INVERTING:qbar_meas}
          
@@ -286,15 +287,19 @@ class delay(simulation):
         
         bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
         port_pos = -1-len(str(self.probe_data))-len(str(port))
+        
         if bl_name_port.endswith(str(port)+"_"+str(self.probe_data)):
             self.bl_name = bl_name_port[:port_pos] +"{}"+ bl_name_port[port_pos+len(str(port)):]
+        elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            self.bl_name = bl_name_port
         else:
             self.bl_name = bl_name_port
             debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
             
         if br_name_port.endswith(str(port)+"_"+str(self.probe_data)):
-            port_pos = -1-len(str(self.probe_data))-len(str(port))
             self.br_name = br_name_port[:port_pos] +"{}"+ br_name_port[port_pos+len(str(port)):]
+        elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            self.br_name = br_name_port
         else:
             self.br_name = br_name_port    
             debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")

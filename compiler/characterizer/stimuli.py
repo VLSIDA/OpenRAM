@@ -254,7 +254,7 @@ class stimuli():
 
         includes = self.device_models + [circuit]
         self.sf.write("* {} process corner\n".format(self.process))
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             libraries = self.device_libraries
             for item in list(libraries):
                 if os.path.isfile(item[0]):
@@ -302,7 +302,9 @@ class stimuli():
                                                          OPTS.openram_temp)
             valid_retcode=0
         else:
-            # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit 
+            # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit
+            # Measurements can't be made with a raw file set in ngspice
+            # -r {2}timing.raw
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                        temp_stim,
                                                        OPTS.openram_temp)

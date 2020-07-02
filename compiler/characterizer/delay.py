@@ -1077,7 +1077,8 @@ class delay(simulation):
             self.trimsp.set_configuration(self.num_banks,
                                           self.num_rows,
                                           self.num_cols,
-                                          self.word_size)
+                                          self.word_size,
+                                          self.num_spare_rows)
             self.trimsp.trim(self.probe_address,self.probe_data)
         else:
             # The non-reduced netlist file when it is disabled

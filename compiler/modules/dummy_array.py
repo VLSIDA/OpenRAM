@@ -38,11 +38,10 @@ class dummy_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.dummy_cell = factory.create(module_type="dummy_bitcell")
+        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
 
         self.cell = factory.create(module_type="bitcell")
-        
         
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -50,8 +49,8 @@ class dummy_array(bitcell_base_array):
         for col in range(self.column_size):
             for row in range(self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row,col]=self.add_inst(name=name,
-                                                      mod=self.dummy_cell)
+                self.cell_inst[row, col]=self.add_inst(name=name,
+                                                       mod=self.dummy_cell)
                 self.connect_inst(self.get_bitcell_pins(col, row))
 
     def input_load(self):
@@ -60,7 +59,7 @@ class dummy_array(bitcell_base_array):
 
     def get_wordline_cin(self):
         """Get the relative input capacitance from the wordline connections in all the bitcell"""
-        #A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns
+        # A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns
         bitcell_wl_cin = self.cell.get_wl_cin()
         total_cin = bitcell_wl_cin * self.column_size
         return total_cin

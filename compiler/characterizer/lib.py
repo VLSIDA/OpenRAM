@@ -592,7 +592,10 @@ class lib:
             char_results = self.d.analytical_delay(self.slews,self.loads)
             self.char_sram_results, self.char_port_results = char_results  
         else:
-            probe_address = "1" * self.sram.addr_size
+            if (self.sram.num_spare_rows == 0):
+                probe_address = "1" * self.sram.addr_size
+            else:
+                probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
             self.char_sram_results, self.char_port_results = char_results  
@@ -654,8 +657,12 @@ class lib:
                         ))
 
         # information of checks
-        (drc_errors, lvs_errors) = self.sram.DRC_LVS(final_verification=True)
-        datasheet.write("{0},{1},".format(drc_errors, lvs_errors))
+        # run it only the first time
+        try:
+            datasheet.write("{0},{1},".format(self.drc_errors, self.lvs_errors))
+        except AttributeError:
+            (self.drc_errors, self.lvs_errors) = self.sram.DRC_LVS(final_verification=True)
+            datasheet.write("{0},{1},".format(self.drc_errors, self.lvs_errors))            
         
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')

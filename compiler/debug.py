@@ -40,7 +40,7 @@ def error(str, return_value=0):
     log("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
-    if globals.OPTS.debug_level > 0:
+    if globals.OPTS.debug_level > 0 and return_value != 0:
         import pdb
         pdb.set_trace()
     assert return_value == 0

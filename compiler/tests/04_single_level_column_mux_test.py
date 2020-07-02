@@ -15,7 +15,6 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 04_driver_test")
 
 class single_level_column_mux_test(openram_test):
 

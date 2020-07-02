@@ -21,7 +21,6 @@ class precharge_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # check precharge array in single port
         debug.info(2, "Checking 3 column precharge")
         pc = factory.create(module_type="precharge_array", columns=3)
         self.local_check(pc)

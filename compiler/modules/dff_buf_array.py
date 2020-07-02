@@ -167,11 +167,11 @@ class dff_buf_array(design.design):
             for col in range(self.columns):
                 # Continous vdd rail along with label.
                 vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                self.add_power_pin("vdd", vdd_pin.lc())
+                self.add_power_pin("vdd", vdd_pin.lc(), start_layer=vdd_pin.layer)
 
                 # Continous gnd rail along with label.
                 gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                self.add_power_pin("gnd", gnd_pin.lc())
+                self.add_power_pin("gnd", gnd_pin.lc(), start_layer=gnd_pin.layer)
         
     def add_layout_pins(self):
             

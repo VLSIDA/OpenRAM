@@ -16,6 +16,7 @@ import os
 from globals import OPTS
 from pgate import pgate
 
+
 class ptx(design.design):
     """
     This module generates gds and spice of a parametrically NMOS or
@@ -24,6 +25,10 @@ class ptx(design.design):
     given width. Total width is therefore mults*width.  Options allow
     you to connect the fingered gates and active for parallel devices.
     The add_*_contact option tells which layer to bring source/drain up to.
+
+    ll, ur, width and height refer to the active area.
+    Wells and poly may extend beyond this.
+ 
     """
     def __init__(self,
                  name="",
@@ -126,13 +131,13 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        if OPTS.tech_name == "s8":
-            # s8 technology is in microns
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 simulation cannot use the mult parameter in simulation
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
-                                                                      self.mults,
-                                                                      self.tx_width,
-                                                                      drc("minwidth_poly"))
+                                                                   self.mults,
+                                                                   self.tx_width,
+                                                                   drc("minwidth_poly"))
             # Perimeters are in microns
             # Area is in u since it is microns square
             area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
@@ -147,13 +152,17 @@ class ptx(design.design):
         self.spice_device = main_str + area_str
         self.spice.append("\n* ptx " + self.spice_device)
 
-        # LVS lib is always in SI units
-        if os.path.exists(OPTS.openram_tech + "lvs_lib"):
+        if OPTS.tech_name == "sky130" and OPTS.lvs_exe[0] == "calibre":
+            # sky130 requires mult parameter too
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
+                                                                                   self.mults,
+                                                                                   self.tx_width,
+                                                                                   drc("minwidth_poly"))
+        else:
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
                                                                              self.mults,
                                                                              self.tx_width,
                                                                              drc("minwidth_poly"))
-        
 
     def setup_layout_constants(self):
         """
@@ -187,7 +196,7 @@ class ptx(design.design):
         # This is the spacing between the poly gates
         self.min_poly_pitch = self.poly_space + self.poly_width
         self.contacted_poly_pitch = self.poly_space + contact.poly_contact.width
-        self.contact_pitch = 2 * self.contact_to_gate + self.poly_width + self.contact_width
+        self.contact_pitch = 2 * self.active_contact_to_gate + self.poly_width + self.contact_width
         self.poly_pitch = max(self.min_poly_pitch,
                               self.contacted_poly_pitch,
                               self.contact_pitch)
@@ -197,7 +206,7 @@ class ptx(design.design):
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
         self.active_width = 2 * self.end_to_contact + self.active_contact.width \
-                            + 2 * self.contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
+                            + 2 * self.active_contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -205,38 +214,23 @@ class ptx(design.design):
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
         
-        # The active offset is due to the well extension
-        if "pwell" in layer:
-            pwell_enclose_active = drc("pwell_enclose_active")
-        else:
-            pwell_enclose_active = 0
-        if "nwell" in layer:
-            nwell_enclose_active = drc("nwell_enclose_active")
-        else:
-            nwell_enclose_active = 0
-        # Use the max of either so that the poly gates will align properly
-        well_enclose_active = max(pwell_enclose_active,
-                                  nwell_enclose_active)
-        self.active_offset = vector([well_enclose_active] * 2)
+        self.active_offset = vector([self.well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
         well_name = "{}well".format(self.well_type)
         if well_name in layer:
             well_width_rule = drc("minwidth_" + well_name)
-            well_enclose_active = drc(well_name + "_enclose_active")
-            self.well_width = max(self.active_width + 2 * well_enclose_active,
+            self.well_width = max(self.active_width + 2 * self.well_enclose_active,
                                   well_width_rule)
-            self.well_height = max(self.active_height + 2 * well_enclose_active,
+            self.well_height = max(self.active_height + 2 * self.well_enclose_active,
                                    well_width_rule)
-            # We are going to shift the 0,0, so include that in the width and height
-            self.height = self.well_height - self.active_offset.y
-            self.width = self.well_width - self.active_offset.x
         else:
-            # The well is not included in the height and width
-            self.height = self.poly_height
-            self.width = self.active_width
             self.well_height = self.height
             self.well_width = self.width
+            
+        # We are going to shift the 0,0, so include that in the width and height
+        self.height = self.active_height
+        self.width = self.active_width
 
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
@@ -327,7 +321,7 @@ class ptx(design.design):
         """
         # poly is one contacted spacing from the end and down an extension
         poly_offset = self.contact_offset \
-                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.contact_to_gate, 0)
+                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.active_contact_to_gate, 0)
         
         # poly_positions are the bottom center of the poly gates
         self.poly_positions = []
@@ -360,18 +354,18 @@ class ptx(design.design):
         """
         Adding the diffusion (active region = diffusion region)
         """
-        self.add_rect(layer="active",
-                      offset=self.active_offset,
-                      width=self.active_width,
-                      height=self.active_height)
+        self.active = self.add_rect(layer="active",
+                                    offset=self.active_offset,
+                                    width=self.active_width,
+                                    height=self.active_height)
         # If the implant must enclose the active, shift offset
         # and increase width/height
         enclose_width = self.implant_enclose_active
         enclose_offset = [enclose_width] * 2
-        self.add_rect(layer="{}implant".format(self.implant_type),
-                      offset=self.active_offset - enclose_offset,
-                      width=self.active_width + 2 * enclose_width,
-                      height=self.active_height + 2 * enclose_width)
+        self.implant = self.add_rect(layer="{}implant".format(self.implant_type),
+                                     offset=self.active_offset - enclose_offset,
+                                     width=self.active_width + 2 * enclose_width,
+                                     height=self.active_height + 2 * enclose_width)
 
     def add_well_implant(self):
         """
@@ -386,10 +380,12 @@ class ptx(design.design):
         well_ll = center_pos - vector(0.5 * self.well_width,
                                       0.5 * self.well_height)
         if well_name in layer:
-            self.add_rect(layer=well_name,
-                          offset=well_ll,
-                          width=self.well_width,
-                          height=self.well_height)
+            well = self.add_rect(layer=well_name,
+                                 offset=well_ll,
+                                 width=self.well_width,
+                                 height=self.well_height)
+            setattr(self, well_name, well)
+            
         if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=well_ll,

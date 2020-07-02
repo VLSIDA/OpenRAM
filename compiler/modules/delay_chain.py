@@ -140,21 +140,20 @@ class delay_chain(design.design):
             for load in self.load_inst_map[inv]:
                 # Drop a via on each A pin
                 a_pin = load.get_pin("A")
-                self.add_via_center(layers=self.m1_stack,
-                                    offset=a_pin.center())
-                self.add_via_center(layers=self.m2_stack,
-                                    offset=a_pin.center())
+                self.add_via_stack_center(from_layer=a_pin.layer,
+                                          to_layer="m3",
+                                          offset=a_pin.center())
 
             # Route an M3 horizontal wire to the furthest
             z_pin = inv.get_pin("Z")
             a_pin = inv.get_pin("A")
             a_max = self.load_inst_map[inv][-1].get_pin("A")
-            self.add_via_center(layers=self.m1_stack,
-                                offset=a_pin.center())
-            self.add_via_center(layers=self.m1_stack,
-                                offset=z_pin.center())
-            self.add_via_center(layers=self.m2_stack,
-                                offset=z_pin.center())
+            self.add_via_stack_center(from_layer=a_pin.layer,
+                                      to_layer="m2",
+                                      offset=a_pin.center())
+            self.add_via_stack_center(from_layer=z_pin.layer,
+                                      to_layer="m3",
+                                      offset=z_pin.center())
             self.add_path("m3", [z_pin.center(), a_max.center()])
 
             # Route Z to the A of the next stage
@@ -178,17 +177,22 @@ class delay_chain(design.design):
             load_list = self.load_inst_map[inst]
             for pin_name in ["vdd", "gnd"]:
                 pin = load_list[0].get_pin(pin_name)
-                self.add_power_pin(pin_name, pin.rc() - vector(self.m1_pitch, 0))
+                self.add_power_pin(pin_name,
+                                   pin.rc() - vector(self.m1_pitch, 0),
+                                   start_layer=pin.layer)
                 
-                pin = load_list[-1].get_pin(pin_name)
-                self.add_power_pin(pin_name, pin.rc() - vector(0.5 * self.m1_pitch, 0))
+                pin = load_list[-2].get_pin(pin_name)
+                self.add_power_pin(pin_name,
+                                   pin.rc() - vector(self.m1_pitch, 0),
+                                   start_layer=pin.layer)
                 
     def add_layout_pins(self):
 
         # input is A pin of first inverter
         a_pin = self.driver_inst_list[0].get_pin("A")
-        self.add_via_center(layers=self.m1_stack,
-                            offset=a_pin.center())
+        self.add_via_stack_center(from_layer=a_pin.layer,
+                                  to_layer="m2",
+                                  offset=a_pin.center())
         self.add_layout_pin(text="in",
                             layer="m2",
                             offset=a_pin.ll().scale(1, 0),
@@ -197,8 +201,9 @@ class delay_chain(design.design):
         # output is A pin of last load inverter
         last_driver_inst = self.driver_inst_list[-1]
         a_pin = self.load_inst_map[last_driver_inst][-1].get_pin("A")
-        self.add_via_center(layers=self.m1_stack,
-                            offset=a_pin.center())
+        self.add_via_stack_center(from_layer=a_pin.layer,
+                                  to_layer="m2",
+                                  offset=a_pin.center())
         mid_point = vector(a_pin.cx() + 3 * self.m2_width, a_pin.cy())
         self.add_path("m2", [a_pin.center(), mid_point, mid_point.scale(1, 0)])
         self.add_layout_pin_segment_center(text="out",

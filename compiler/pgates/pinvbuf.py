@@ -9,7 +9,7 @@ import debug
 import pgate
 from vector import vector
 from sram_factory import factory
-
+from tech import layer
 
 class pinvbuf(pgate.pgate):
     """
@@ -111,33 +111,45 @@ class pinvbuf(pgate.pgate):
                              mirror="MX")
         
     def route_wires(self):
+        if "li" in layer:
+            route_stack = self.li_stack
+        else:
+            route_stack = self.m1_stack
+            
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
         mid_point = vector(z1_pin.cx(), a2_pin.cy())
-        self.add_path("m1", [z1_pin.center(), mid_point, a2_pin.center()])
+        self.add_path(z1_pin.layer, [z1_pin.center(), mid_point, a2_pin.center()])
+        self.add_via_stack_center(from_layer=z1_pin.layer,
+                                  to_layer=a2_pin.layer,
+                                  offset=a2_pin.center())
         
         # inv2 Z to inv3 A
         z2_pin = self.inv2_inst.get_pin("Z")
         a3_pin = self.inv3_inst.get_pin("A")
         mid_point = vector(z2_pin.cx(), a3_pin.cy())
-        self.add_path("m1", [z2_pin.center(), mid_point, a3_pin.center()])
+        self.add_path(z2_pin.layer, [z2_pin.center(), mid_point, a3_pin.center()])
+        self.add_via_stack_center(from_layer=z2_pin.layer,
+                                  to_layer=a3_pin.layer,
+                                  offset=a3_pin.center())
 
         # inv1 Z to inv4 A (up and over)
         z1_pin = self.inv1_inst.get_pin("Z")
         a4_pin = self.inv4_inst.get_pin("A")
         mid_point = vector(z1_pin.cx(), a4_pin.cy())
-        self.add_wire(self.m1_stack,
+        self.add_wire(route_stack,
                       [z1_pin.center(), mid_point, a4_pin.center()])
-        self.add_via_center(layers=self.m1_stack,
-                            offset=z1_pin.center())
+        self.add_via_stack_center(from_layer=z1_pin.layer,
+                                  to_layer=route_stack[2],
+                                  offset=z1_pin.center())
         
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
         vdd_pin = self.inv1_inst.get_pin("vdd")
         self.add_layout_pin(text="vdd",
-                            layer="m1",
+                            layer=vdd_pin.layer,
                             offset=vdd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=vdd_pin.height())
@@ -145,7 +157,7 @@ class pinvbuf(pgate.pgate):
         # Continous vdd rail along with label.
         gnd_pin = self.inv4_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
-                            layer="m1",
+                            layer=gnd_pin.layer,
                             offset=gnd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=gnd_pin.height())
@@ -153,31 +165,25 @@ class pinvbuf(pgate.pgate):
         # Continous gnd rail along with label.
         gnd_pin = self.inv1_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
-                            layer="m1",
+                            layer=gnd_pin.layer,
                             offset=gnd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=vdd_pin.height())
             
         z_pin = self.inv4_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
-                                        layer="m2",
+                                        layer=z_pin.layer,
                                         offset=z_pin.center())
-        self.add_via_center(layers=self.m1_stack,
-                            offset=z_pin.center())
 
         zb_pin = self.inv3_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Zb",
-                                        layer="m2",
+                                        layer=zb_pin.layer,
                                         offset=zb_pin.center())
-        self.add_via_center(layers=self.m1_stack,
-                            offset=zb_pin.center())
         
         a_pin = self.inv1_inst.get_pin("A")
         self.add_layout_pin_rect_center(text="A",
-                                        layer="m2",
+                                        layer=a_pin.layer,
                                         offset=a_pin.center())
-        self.add_via_center(layers=self.m1_stack,
-                            offset=a_pin.center())
              
     def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the clk -> clk_buf path"""

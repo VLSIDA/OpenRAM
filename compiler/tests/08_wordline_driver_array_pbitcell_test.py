@@ -15,9 +15,8 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 04_driver_test")
 
-class wordline_driver_pbitcell_test(openram_test):
+class wordline_driver_array_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -31,7 +30,7 @@ class wordline_driver_pbitcell_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking driver (multi-port case)")
-        tx = factory.create(module_type="wordline_driver", rows=8, cols=64)
+        tx = factory.create(module_type="wordline_driver_array", rows=8, cols=64)
         self.local_check(tx)
 
         globals.end_openram()

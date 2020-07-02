@@ -9,6 +9,7 @@ import debug
 import design
 from tech import cell_properties
 
+
 class bitcell_base_array(design.design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy
@@ -68,10 +69,10 @@ class bitcell_base_array(design.design):
 
         pin_names = self.cell.get_all_bitline_names()
         for pin in pin_names:
-            bitcell_pins.append(pin+"_{0}".format(col))
+            bitcell_pins.append(pin + "_{0}".format(col))
         pin_names = self.cell.get_all_wl_names()
         for pin in pin_names:
-            bitcell_pins.append(pin+"_{0}".format(row))
+            bitcell_pins.append(pin + "_{0}".format(row))
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
 
@@ -85,39 +86,28 @@ class bitcell_base_array(design.design):
 
         for col in range(self.column_size):
             for cell_column in column_list:
-                bl_pin = self.cell_inst[0,col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column+"_{0}".format(col),
+                bl_pin = self.cell_inst[0, col].get_pin(cell_column)
+                self.add_layout_pin(text=cell_column + "_{0}".format(col),
                                     layer=bl_pin.layer,
-                                    offset=bl_pin.ll().scale(1,0),
+                                    offset=bl_pin.ll().scale(1, 0),
                                     width=bl_pin.width(),
                                     height=self.height)
 
         for row in range(self.row_size):
             for cell_row in row_list:
-                wl_pin = self.cell_inst[row,0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row+"_{0}".format(row),
+                wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
+                self.add_layout_pin(text=cell_row + "_{0}".format(row),
                                     layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0,1),
+                                    offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # For non-square via stacks, vertical/horizontal direction refers to the stack orientation in 2d space
-        # Default uses prefered directions for each layer; this cell property is only currently used by s8 tech (03/20)
-        try:
-            bitcell_power_pin_directions = cell_properties.bitcell_power_pin_directions
-        except AttributeError:
-            bitcell_power_pin_directions = None
-
-        # Add vdd/gnd via stacks
+        # Copy a vdd/gnd layout pin from every cell
         for row in range(self.row_size):
             for col in range(self.column_size):
-                inst = self.cell_inst[row,col]
+                inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
-                    for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(name=pin_name,
-                                           loc=pin.center(),
-                                           directions=bitcell_power_pin_directions,
-                                           start_layer=pin.layer)
+                    self.copy_layout_pin(inst, pin_name)
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
@@ -137,11 +127,10 @@ class bitcell_base_array(design.design):
             dir_x = True
         return (tempy, dir_x)
 
-
     def place_array(self, name_template, row_offset=0):
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size*self.cell.height
-        self.width = self.column_size*self.cell.width
+        self.height = self.row_size * self.cell.height
+        self.width = self.column_size * self.cell.width
 
         xoffset = 0.0
         for col in range(self.column_size):
@@ -149,7 +138,6 @@ class bitcell_base_array(design.design):
             tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
 
             for row in range(self.row_size):
-                name = name_template.format(row, col)
                 tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
 
                 if dir_x and dir_y:
@@ -161,7 +149,7 @@ class bitcell_base_array(design.design):
                 else:
                     dir_key = ""
 
-                self.cell_inst[row,col].place(offset=[tempx, tempy],
-                                              mirror=dir_key)
+                self.cell_inst[row, col].place(offset=[tempx, tempy],
+                                               mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width

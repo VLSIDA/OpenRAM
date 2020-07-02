@@ -10,9 +10,9 @@ import re
 import os
 import math
 import tech
-from delay_data import *
-from wire_spice_model import *
-from power_data import *
+from delay_data import delay_data
+from wire_spice_model import wire_spice_model
+from power_data import power_data
 import logical_effort
 
 
@@ -40,6 +40,8 @@ class spice():
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         self.conns = []
+        # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
+        self.no_instances = False
         # Keep track of any comments to add the the spice
         try:
             self.commments
@@ -208,11 +210,12 @@ class spice():
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
         else:
+            debug.info(4, "no spfile {0}".format(self.sp_file))
             self.spice = []
 
         # We don't define self.lvs and will use self.spice if dynamically created
         # or they are the same file
-        if self.lvs_file!=self.sp_file and os.path.isfile(self.lvs_file):
+        if self.lvs_file != self.sp_file and os.path.isfile(self.lvs_file):
             debug.info(3, "opening {0}".format(self.lvs_file))
             f = open(self.lvs_file)
             self.lvs = f.readlines()
@@ -262,7 +265,12 @@ class spice():
         Recursive spice subcircuit write;
         Writes the spice subcircuit from the library or the dynamically generated one
         """
-        if not self.spice:
+
+        if self.no_instances:
+            return
+        elif not self.spice:
+            # If spice isn't defined, we dynamically generate one.
+            
             # recursively write the modules
             for i in self.mods:
                 if self.contains(i, usedMODS):
@@ -299,6 +307,9 @@ class spice():
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
+                # Instance with no devices in it needs no subckt/instance
+                if self.insts[i].mod.no_instances:
+                    continue
                 if lvs_netlist and hasattr(self.insts[i].mod, "lvs_device"):
                     sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
                                                                    " ".join(self.conns[i])))
@@ -315,7 +326,7 @@ class spice():
             sp.write(".ENDS {0}\n".format(self.name))
 
         else:
-            # write the subcircuit itself
+            # If spice is a hard module, output the spice file contents.
             # Including the file path makes the unit test fail for other users.
             # if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
@@ -355,7 +366,7 @@ class spice():
         stage_effort = self.get_stage_effort(relative_cap)
         
         # If it fails, then keep running with a valid object.
-        if stage_effort == None:
+        if not stage_effort:
             return delay_data(0.0, 0.0)
             
         abs_delay = stage_effort.get_absolute_delay()

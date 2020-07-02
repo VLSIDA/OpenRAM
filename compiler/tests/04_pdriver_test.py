@@ -32,13 +32,13 @@ class pdriver_test(openram_test):
         c = factory.create(module_type="pdriver", fanout = 50)
         self.local_check(c)
         
-        d = factory.create(module_type="pdriver", fanout = 50, neg_polarity = True)
+        d = factory.create(module_type="pdriver", fanout = 50, inverting = True)
         self.local_check(d)
         
         e = factory.create(module_type="pdriver", fanout = 64)
         self.local_check(e)
         
-        f = factory.create(module_type="pdriver", fanout = 64, neg_polarity = True)
+        f = factory.create(module_type="pdriver", fanout = 64, inverting = True)
         self.local_check(f)
 
         globals.end_openram()

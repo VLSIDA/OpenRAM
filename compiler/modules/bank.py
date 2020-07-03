@@ -132,14 +132,17 @@ class bank(design.design):
         # Connect the rbl to the port data pin
         bl_pin = self.port_data_inst[port].get_pin("rbl_bl")
         if port % 2:
-            pin_offset = bl_pin.uc()
+            pin_pos = bl_pin.uc()
+            pin_offset = pin_pos + vector(0, self.m3_pitch)
             left_right_offset = vector(self.max_x_offset, pin_offset.y)
         else:
-            pin_offset = bl_pin.bc()
+            pin_pos = bl_pin.bc()
+            pin_offset = pin_pos - vector(0, self.m3_pitch)
             left_right_offset = vector(self.min_x_offset, pin_offset.y)
         self.add_via_stack_center(from_layer=bl_pin.layer,
                                   to_layer="m3",
                                   offset=pin_offset)
+        self.add_path(bl_pin.layer, [pin_offset, pin_pos])
         self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
@@ -217,11 +220,12 @@ class bank(design.design):
         # Place the col decoder left aligned with wordline driver
         # This is also placed so that it's supply rails do not align with the SRAM-level
         # control logic to allow control signals to easily pass over in M3
-        # by placing 1/2 a cell pitch down
+        # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
+        # may be routed in M3 or M4
         x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = 0.5 * self.dff.height + self.column_decoder.height
+            y_offset = 1.25 * self.dff.height + self.column_decoder.height
         else:
             y_offset = 0
         self.column_decoder_offsets[port] = vector(-x_offset, -y_offset)
@@ -258,10 +262,14 @@ class bank(design.design):
         # UPPER RIGHT QUADRANT
         # Place the col decoder right aligned with wordline driver
         # Above the bitcell array with a well spacing
+        # This is also placed so that it's supply rails do not align with the SRAM-level
+        # control logic to allow control signals to easily pass over in M3
+        # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
+        # may be routed in M3 or M4
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = self.bitcell_array_top + 0.5 * self.dff.height + self.column_decoder.height
+            y_offset = self.bitcell_array_top + 1.25 * self.dff.height + self.column_decoder.height
         else:
             y_offset = self.bitcell_array_top
         self.column_decoder_offsets[port] = vector(x_offset, y_offset)
@@ -308,7 +316,7 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["w_en{}".format(port_num), "s_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
+            self.input_control_signals.append(["s_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
             self.input_control_signals.append(["w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
@@ -321,7 +329,7 @@ class bank(design.design):
         self.num_control_lines = [len(x) for x in self.input_control_signals]
 
         # The width of this bus is needed to place other modules (e.g. decoder) for each port
-        self.central_bus_width = [self.m2_pitch * x + self.m2_width for x in self.num_control_lines]
+        self.central_bus_width = [self.m3_pitch * x + self.m3_width for x in self.num_control_lines]
 
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
@@ -330,6 +338,7 @@ class bank(design.design):
                 self.control_signals.append(["gated_" + str for str in self.input_control_signals[port]])
             else:
                 self.control_signals.append(self.input_control_signals[port])
+                    
 
         # The central bus is the column address (one hot) and row address (binary)
         if self.col_addr_size>0:
@@ -497,18 +506,20 @@ class bank(design.design):
         Create a 2:4 or 3:8 column address decoder.
         """
 
-        # Height is a multiple of DFF so that it can be staggered
-        # and rows do not align with the control logic module
-        self.dff = factory.create(module_type="dff")
+        self.dff =factory.create(module_type="dff")
         
         if self.col_addr_size == 0:
             return
         elif self.col_addr_size == 1:
-            self.column_decoder = factory.create(module_type="pinvbuf", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="pinvbuf",
+                                                 height=self.dff.height)
         elif self.col_addr_size == 2:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4",
+                                                 height=self.dff.height)
+
         elif self.col_addr_size == 3:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8", height=self.dff.height)
+            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
+                                                 height=self.dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?", -1)
@@ -576,9 +587,23 @@ class bank(design.design):
         
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+        # Copy only the power pins already on the power layer
+        # (this won't add vias to internal bitcell pins, for example)
         for inst in self.insts:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+            self.copy_power_pins(inst, "vdd", add_vias=False)
+            self.copy_power_pins(inst, "gnd", add_vias=False)
+
+        # If we use the pinvbuf as the decoder, we need to add power pins.
+        # Other decoders already have them.
+        if self.col_addr_size == 1:
+            for port in self.all_ports:
+                inst = self.column_decoder_inst[port]
+                for pin_name in ["vdd", "gnd"]:
+                    pin_list = inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.add_power_pin(pin_name,
+                                           pin.center(),
+                                           start_layer=pin.layer)
 
     def route_bank_select(self, port):
         """ Route the bank select logic. """
@@ -648,7 +673,8 @@ class bank(design.design):
                                            names=self.control_signals[0],
                                            length=control_bus_length,
                                            vertical=True,
-                                           make_pins=(self.num_banks==1))
+                                           make_pins=(self.num_banks==1),
+                                           pitch=self.m3_pitch)
         
         # Port 1
         if len(self.all_ports)==2:
@@ -662,7 +688,8 @@ class bank(design.design):
                                                names=list(reversed(self.control_signals[1])),
                                                length=control_bus_length,
                                                vertical=True,
-                                               make_pins=(self.num_banks==1))
+                                               make_pins=(self.num_banks==1),
+                                               pitch=self.m3_pitch)
 
     def route_port_data_to_bitcell_array(self, port):
         """ Routing of BL and BR between port data and bitcell array """
@@ -850,6 +877,13 @@ class bank(design.design):
         if not self.col_addr_size>0:
             return
 
+        if OPTS.tech_name == "sky130":
+            stack = self.m2_stack
+            pitch = self.m3_pitch
+        else:
+            stack = self.m1_stack
+            pitch = self.m2_pitch
+        
         if self.col_addr_size == 1:
             
             # Connect to sel[0] and sel[1]
@@ -869,9 +903,9 @@ class bank(design.design):
                 self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
         if port % 2:
-            offset = self.column_decoder_inst[port].ll() - vector(self.num_col_addr_lines * self.m2_nonpref_pitch, 0)
+            offset = self.column_decoder_inst[port].ll() - vector((self.num_col_addr_lines + 1) * pitch, 0)
         else:
-            offset = self.column_decoder_inst[port].lr() + vector(self.m2_nonpref_pitch, 0)
+            offset = self.column_decoder_inst[port].lr() + vector(pitch, 0)
 
         decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
         
@@ -879,16 +913,9 @@ class bank(design.design):
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
         route_map = list(zip(decode_pins, column_mux_pins))
-        if "li" in layer:
-            stack = self.li_stack
-            directions = "nonpref"
-        else:
-            stack = self.m1_stack
-            directions = "pref"
         self.create_vertical_channel_route(route_map,
                                            offset,
-                                           stack,
-                                           directions=directions)
+                                           stack)
 
     def add_lvs_correspondence_points(self):
         """

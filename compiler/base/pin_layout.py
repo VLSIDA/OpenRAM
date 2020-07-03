@@ -8,7 +8,7 @@
 import debug
 from tech import GDS, drc
 from vector import vector
-from tech import layer
+from tech import layer, layer_indices
 import math
 
 
@@ -31,12 +31,15 @@ class pin_layout:
         debug.check(self.width() > 0, "Zero width pin.")
         debug.check(self.height() > 0, "Zero height pin.")
 
+        # These are the valid pin layers
+        valid_layers = { x: layer[x] for x in layer_indices.keys()}
+        
         # if it's a string, use the name
         if type(layer_name_pp) == str:
             self._layer = layer_name_pp
         # else it is required to be a lpp
         else:
-            for (layer_name, lpp) in layer.items():
+            for (layer_name, lpp) in valid_layers.items():
                 if not lpp:
                     continue
                 if self.same_lpp(layer_name_pp, lpp):

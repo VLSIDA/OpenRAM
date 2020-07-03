@@ -32,14 +32,16 @@ class single_level_column_mux_array(design.design):
         self.bitcell_br = bitcell_br
         self.column_offset = column_offset
 
-        if "li" in layer:
-            self.col_mux_stack = self.li_stack
-            self.col_mux_stack_pitch = self.m1_pitch
+        if OPTS.tech_name == "sky130":
+            self.sel_layer = "m3"
+            self.sel_pitch = self.m3_pitch
+            self.bitline_layer = "m1"
         else:
-            self.col_mux_stack = self.m1_stack
-            self.col_mux_stack_pitch = self.m1_pitch
+            self.sel_layer = "m1"
+            self.sel_pitch = self.m2_pitch
+            self.bitline_layer = "m2"
             
-        if preferred_directions[self.col_mux_stack[0]] == "V":
+        if preferred_directions[self.sel_layer] == "V":
             self.via_directions = ("H", "H")
         else:
             self.via_directions = "pref"
@@ -96,7 +98,7 @@ class single_level_column_mux_array(design.design):
         self.width = self.columns * self.mux.width
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
         # one extra route pitch is to space from the sense amp
-        self.route_height = (self.words_per_row + 3) * self.col_mux_stack_pitch
+        self.route_height = (self.words_per_row + 3) * self.sel_pitch
 
     def create_array(self):
         self.mux_inst = []
@@ -155,11 +157,11 @@ class single_level_column_mux_array(design.design):
         self.route_bitlines()
 
     def add_horizontal_input_rail(self):
-        """ Create address input rails on M1 below the mux transistors  """
+        """ Create address input rails below the mux transistors  """
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height + (j - self.words_per_row) * self.col_mux_stack_pitch)
+            offset = vector(0, self.route_height + (j - self.words_per_row) * self.sel_pitch)
             self.add_layout_pin(text="sel_{}".format(j),
-                                layer=self.col_mux_stack[0],
+                                layer=self.sel_layer,
                                 offset=offset,
                                 width=self.mux.width * self.columns)
 
@@ -177,10 +179,10 @@ class single_level_column_mux_array(design.design):
             # use the y offset from the sel pin and the x offset from the gate
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
-            # Add the poly contact with a shift to account for the rotation
-            self.add_via_center(layers=self.poly_stack,
-                                offset=offset,
-                                directions=self.via_directions)
+            self.add_via_stack_center(from_layer="poly",
+                                      to_layer=self.sel_layer,
+                                      offset=offset,
+                                      directions=self.via_directions)
             self.add_path("poly", [offset, gate_offset])
 
     def route_bitlines(self):
@@ -190,42 +192,44 @@ class single_level_column_mux_array(design.design):
             bl_offset_begin = self.mux_inst[j].get_pin("bl_out").bc()
             br_offset_begin = self.mux_inst[j].get_pin("br_out").bc()
 
-            bl_out_offset_begin = bl_offset_begin - vector(0, (self.words_per_row + 1) * self.col_mux_stack_pitch)
-            br_out_offset_begin = br_offset_begin - vector(0, (self.words_per_row + 2) * self.col_mux_stack_pitch)
+            bl_out_offset_begin = bl_offset_begin - vector(0, (self.words_per_row + 1) * self.sel_pitch)
+            br_out_offset_begin = br_offset_begin - vector(0, (self.words_per_row + 2) * self.sel_pitch)
 
             # Add the horizontal wires for the first bit
             if j % self.words_per_row == 0:
                 bl_offset_end = self.mux_inst[j + self.words_per_row - 1].get_pin("bl_out").bc()
                 br_offset_end = self.mux_inst[j + self.words_per_row - 1].get_pin("br_out").bc()
-                bl_out_offset_end = bl_offset_end - vector(0, (self.words_per_row + 1) * self.col_mux_stack_pitch)
-                br_out_offset_end = br_offset_end - vector(0, (self.words_per_row + 2) * self.col_mux_stack_pitch)
+                bl_out_offset_end = bl_offset_end - vector(0, (self.words_per_row + 1) * self.sel_pitch)
+                br_out_offset_end = br_offset_end - vector(0, (self.words_per_row + 2) * self.sel_pitch)
                 
-                self.add_path(self.col_mux_stack[0], [bl_out_offset_begin, bl_out_offset_end])
-                self.add_path(self.col_mux_stack[0], [br_out_offset_begin, br_out_offset_end])
+                self.add_path(self.sel_layer, [bl_out_offset_begin, bl_out_offset_end])
+                self.add_path(self.sel_layer, [br_out_offset_begin, br_out_offset_end])
 
                 # Extend the bitline output rails and gnd downward on the first bit of each n-way mux
                 self.add_layout_pin_segment_center(text="bl_out_{}".format(int(j / self.words_per_row)),
-                                                   layer=self.col_mux_stack[2],
+                                                   layer=self.bitline_layer,
                                                    start=bl_offset_begin,
                                                    end=bl_out_offset_begin)
                 self.add_layout_pin_segment_center(text="br_out_{}".format(int(j / self.words_per_row)),
-                                                   layer=self.col_mux_stack[2],
+                                                   layer=self.bitline_layer,
                                                    start=br_offset_begin,
                                                    end=br_out_offset_begin)
 
             else:
-                self.add_path(self.col_mux_stack[2], [bl_out_offset_begin, bl_offset_begin])
-                self.add_path(self.col_mux_stack[2], [br_out_offset_begin, br_offset_begin])
+                self.add_path(self.bitline_layer, [bl_out_offset_begin, bl_offset_begin])
+                self.add_path(self.bitline_layer, [br_out_offset_begin, br_offset_begin])
 
             # This via is on the right of the wire
-            self.add_via_center(layers=self.col_mux_stack,
-                                offset=bl_out_offset_begin,
-                                directions=self.via_directions)
+            self.add_via_stack_center(from_layer=self.bitline_layer,
+                                      to_layer=self.sel_layer,
+                                      offset=bl_out_offset_begin,
+                                      directions=self.via_directions)
 
             # This via is on the left of the wire
-            self.add_via_center(layers=self.col_mux_stack,
-                                offset=br_out_offset_begin,
-                                directions=self.via_directions)
+            self.add_via_stack_center(from_layer=self.bitline_layer,
+                                      to_layer=self.sel_layer,
+                                      offset=br_out_offset_begin,
+                                      directions=self.via_directions)
 
     def get_drain_cin(self):
         """Get the relative capacitance of the drain of the NMOS pass TX"""

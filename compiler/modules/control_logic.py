@@ -523,12 +523,12 @@ class control_logic(design.design):
     def route_clk_buf(self):
         clk_pin = self.clk_buf_inst.get_pin("A")
         clk_pos = clk_pin.center()
-        self.add_layout_pin_segment_center(text="clk",
-                                           layer="m2",
-                                           start=clk_pos,
-                                           end=clk_pos.scale(1, 0))
-        self.add_via_center(layers=self.m1_stack,
-                            offset=clk_pos)
+        self.add_layout_pin_rect_center(text="clk",
+                                        layer="m2",
+                                        offset=clk_pos)
+        self.add_via_stack_center(from_layer=clk_pin.layer,
+                                  to_layer="m2",
+                                  offset=clk_pos)
 
         self.route_output_to_bus_jogged(self.clk_buf_inst,
                                         "clk_buf")
@@ -555,9 +555,15 @@ class control_logic(design.design):
         clkbuf_map = zip(["A"], ["clk_buf"])
         self.connect_vertical_bus(clkbuf_map, self.clk_bar_inst, self.input_bus)
 
-        out_pos = self.clk_bar_inst.get_pin("Z").center()
-        in_pos = self.gated_clk_bar_inst.get_pin("A").center()
-        self.add_zjog("m1", out_pos, in_pos)
+        out_pin = self.clk_bar_inst.get_pin("Z")
+        out_pos = out_pin.center()
+        in_pin = self.gated_clk_bar_inst.get_pin("A")
+        in_pos = in_pin.center()
+        self.add_zjog(out_pin.layer, out_pos, in_pos)
+        self.add_via_stack_center(from_layer=out_pin.layer,
+                                  to_layer=in_pin.layer,
+                                  offset=in_pos)
+        
 
         # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["B"], ["cs"])
@@ -796,32 +802,41 @@ class control_logic(design.design):
         """ Create an output pin on the right side from the pin of a given instance. """
         
         out_pin = inst.get_pin(pin_name)
-        right_pos = out_pin.center() + vector(self.width - out_pin.cx(), 0)
+        out_pos = out_pin.center()
+        right_pos = out_pos + vector(self.width - out_pin.cx(), 0)
+        
+        self.add_via_stack_center(from_layer=out_pin.layer,
+                                  to_layer="m2",
+                                  offset=out_pos)
         self.add_layout_pin_segment_center(text=out_name,
-                                           layer="m1",
-                                           start=out_pin.center(),
+                                           layer="m2",
+                                           start=out_pos,
                                            end=right_pos)
 
     def route_supply(self):
         """ Add vdd and gnd to the instance cells """
 
+        if OPTS.tech_name == "sky130":
+            supply_layer = "li"
+        else:
+            supply_layer = "m1"
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
-                if pin.layer == "m1":
+                if pin.layer == supply_layer:
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
-                    self.add_power_pin("vdd", pin_loc)
-                    self.add_path("m1", [row_loc, pin_loc])
+                    self.add_power_pin("vdd", pin_loc, start_layer=pin.layer)
+                    self.add_path(supply_layer, [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
             for pin in pins:
-                if pin.layer == "m1":
+                if pin.layer == supply_layer:
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
-                    self.add_power_pin("gnd", pin_loc)
-                    self.add_path("m1", [row_loc, pin_loc])
+                    self.add_power_pin("gnd", pin_loc, start_layer=pin.layer)
+                    self.add_path(supply_layer, [row_loc, pin_loc])
             
         self.copy_layout_pin(self.delay_inst, "gnd")
         self.copy_layout_pin(self.delay_inst, "vdd")
@@ -1004,12 +1019,13 @@ class control_logic(design.design):
 
     def route_output_to_bus_jogged(self, inst, name):
         # Connect this at the bottom of the buffer
-        out_pos = inst.get_pin("Z").center()
+        out_pin = inst.get_pin("Z")
+        out_pos = out_pin.center()
         mid1 = vector(out_pos.x, out_pos.y - 0.4 * inst.mod.height)
         mid2 = vector(self.input_bus[name].cx(), mid1.y)
         bus_pos = self.input_bus[name].center()
         self.add_wire(self.m2_stack[::-1], [out_pos, mid1, mid2, bus_pos])
-        # The pin is on M1, so we need another via as well
-        self.add_via_center(layers=self.m1_stack,
-                            offset=out_pos)
+        self.add_via_stack_center(from_layer=out_pin.layer,
+                                  to_layer="m2",
+                                  offset=out_pos)
     

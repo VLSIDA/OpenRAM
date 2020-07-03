@@ -48,18 +48,16 @@ class openram_test(unittest.TestCase):
             # if we ignore things like minimum metal area of pins
             drc_result=verify.run_drc(a.name, tempgds, extract=True, final_verification=final_verification)
 
-            # Always run LVS if we are using magic
-            if "magic" in OPTS.drc_exe or drc_result == 0:
-                lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
+            # We can still run LVS even if DRC fails in Magic OR Calibre
+            lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
                 
             # Only allow DRC to fail and LVS to pass if we are using magic
-            if "magic" in OPTS.drc_exe and lvs_result == 0 and drc_result != 0:
+            if lvs_result == 0 and drc_result != 0:
                 # import shutil
                 # zip_file = "/tmp/{0}_{1}".format(a.name, os.getpid())
                 # debug.info(0, "Archiving failed files to {}.zip".format(zip_file))
                 # shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
-                debug.warning("DRC failed but LVS passed: {}".format(a.name))
-                # self.fail("DRC failed but LVS passed: {}".format(a.name))
+                self.fail("DRC failed but LVS passed: {}".format(a.name))
             elif drc_result != 0:
                 # import shutil
                 # zip_file = "/tmp/{0}_{1}".format(a.name, os.getpid())

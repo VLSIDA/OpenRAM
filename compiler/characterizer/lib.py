@@ -657,8 +657,12 @@ class lib:
                         ))
 
         # information of checks
-        (drc_errors, lvs_errors) = self.sram.DRC_LVS(final_verification=True)
-        datasheet.write("{0},{1},".format(drc_errors, lvs_errors))
+        # run it only the first time
+        try:
+            datasheet.write("{0},{1},".format(self.drc_errors, self.lvs_errors))
+        except AttributeError:
+            (self.drc_errors, self.lvs_errors) = self.sram.DRC_LVS(final_verification=True)
+            datasheet.write("{0},{1},".format(self.drc_errors, self.lvs_errors))            
         
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')

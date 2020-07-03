@@ -15,7 +15,7 @@ from vector import vector
 from globals import OPTS
 
 if(OPTS.tech_name == "sky130"):
-    from tech import nmos_bins, pmos_bins, accuracy_requirement
+    from tech import nmos_bins, pmos_bins
 
     
 class pgate(design.design):
@@ -42,6 +42,9 @@ class pgate(design.design):
         self.route_layer_width = getattr(self, "{}_width".format(self.route_layer))
         self.route_layer_space = getattr(self, "{}_space".format(self.route_layer))
         self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
+
+        # hack for enclosing input pin with npc
+        self.input_pin_vias = []
 
         # This is the space from a S/D contact to the supply rail
         contact_to_vdd_rail_space = 0.5 * self.route_layer_width + self.route_layer_space
@@ -146,20 +149,23 @@ class pgate(design.design):
                              height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
+        return via
+
     def extend_wells(self):
         """ Extend the n/p wells to cover whole cell """
 
         # This should match the cells in the cell library
-        self.nwell_y_offset = 0.48 * self.height
+        self.nwell_yoffset = 0.48 * self.height
         full_height = self.height + 0.5 * self.m1_width
+
         
         # FIXME: float rounding problem
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                    full_height)
-            nwell_position = vector(0, self.nwell_y_offset) - vector(self.well_extend_active, 0)
-            nwell_height = nwell_max_offset - self.nwell_y_offset
+            nwell_position = vector(0, self.nwell_yoffset) - vector(self.well_extend_active, 0)
+            nwell_height = nwell_max_offset - self.nwell_yoffset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
                           width=self.width + 2 * self.well_extend_active,
@@ -175,7 +181,7 @@ class pgate(design.design):
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
             pwell_position = vector(-self.well_extend_active, pwell_min_offset)
-            pwell_height = self.nwell_y_offset - pwell_position.y
+            pwell_height = self.nwell_yoffset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
                           width=self.width + 2 * self.well_extend_active,
@@ -185,6 +191,9 @@ class pgate(design.design):
                               offset=pwell_position,
                               width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
+
+        if OPTS.tech_name == "sky130":
+            self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """
@@ -240,6 +249,52 @@ class pgate(design.design):
 
         # Return the top of the well
 
+    def extend_implants(self):
+        """
+        Add top-to-bottom implants for adjacency issues in s8.
+        """
+        if self.add_wells:
+            rightx = None
+        else:
+            rightx = self.width
+            
+        nmos_insts = self.get_tx_insts("nmos")
+        if len(nmos_insts) > 0:
+            self.add_enclosure(nmos_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               boty=0)
+        
+        pmos_insts = self.get_tx_insts("pmos")
+        if len(pmos_insts) > 0:
+            self.add_enclosure(pmos_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               topy=self.height)
+        
+        try:
+            ntap_insts = [self.nwell_contact]
+            self.add_enclosure(ntap_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               topy=self.height)
+        except AttributeError:
+            pass
+        try:
+            ptap_insts = [self.pwell_contact]
+            self.add_enclosure(ptap_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               boty=0)
+        except AttributeError:
+            pass
+        
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
 
@@ -268,7 +323,7 @@ class pgate(design.design):
                              offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
-        
+
         # Now add the full active and implant for the NMOS
         # active_offset = nmos_pos + vector(nmos.active_width,0)
         # This might be needed if the spacing between the actives
@@ -345,7 +400,7 @@ class pgate(design.design):
                 
             select = -1
             for i in reversed(range(0, len(scaled_bins))):
-                if abs(target_width - scaled_bins[i])/target_width <= 1-accuracy_requirement:
+                if abs(target_width - scaled_bins[i])/target_width <= 1-OPTS.accuracy_requirement:
                     select = i
                     break
             if select == -1:
@@ -379,4 +434,4 @@ class pgate(design.design):
         return(scaled_bins)
         
     def bin_accuracy(self, ideal_width, width):
-        return abs(1-(ideal_width - width)/ideal_width)
+        return 1-abs((ideal_width - width)/ideal_width)

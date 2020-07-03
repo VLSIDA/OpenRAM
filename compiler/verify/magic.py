@@ -200,13 +200,14 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
 
 
     # always display this summary
+    result_str = "DRC Errors {0}\t{1}".format(cell_name, errors)
     if errors > 0:
         for line in results:
             if "error tiles" in line:
                 debug.info(1,line.rstrip("\n"))
-        debug.error("DRC Errors {0}\t{1}".format(cell_name, errors))
+        debug.warning(result_str)
     else:
-        debug.info(1, "DRC Errors {0}\t{1}".format(cell_name, errors))
+        debug.info(1, result_str)
 
     return errors
 

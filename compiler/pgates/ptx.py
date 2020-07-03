@@ -196,7 +196,7 @@ class ptx(design.design):
         # This is the spacing between the poly gates
         self.min_poly_pitch = self.poly_space + self.poly_width
         self.contacted_poly_pitch = self.poly_space + contact.poly_contact.width
-        self.contact_pitch = 2 * self.contact_to_gate + self.poly_width + self.contact_width
+        self.contact_pitch = 2 * self.active_contact_to_gate + self.poly_width + self.contact_width
         self.poly_pitch = max(self.min_poly_pitch,
                               self.contacted_poly_pitch,
                               self.contact_pitch)
@@ -206,7 +206,7 @@ class ptx(design.design):
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
         self.active_width = 2 * self.end_to_contact + self.active_contact.width \
-                            + 2 * self.contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
+                            + 2 * self.active_contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -321,7 +321,7 @@ class ptx(design.design):
         """
         # poly is one contacted spacing from the end and down an extension
         poly_offset = self.contact_offset \
-                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.contact_to_gate, 0)
+                      + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.active_contact_to_gate, 0)
         
         # poly_positions are the bottom center of the poly gates
         self.poly_positions = []

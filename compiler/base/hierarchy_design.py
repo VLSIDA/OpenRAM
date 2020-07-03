@@ -7,7 +7,6 @@
 #
 import hierarchy_layout
 import hierarchy_spice
-import verify
 import debug
 import os
 from globals import OPTS
@@ -31,6 +30,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         except AttributeError:
             lvs_subdir = "lvs_lib"
         lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+
         if os.path.exists(lvs_dir):
             self.lvs_file = lvs_dir + name + ".sp"
         else:
@@ -54,6 +54,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         
     def DRC_LVS(self, final_verification=False, force_check=False):
         """Checks both DRC and LVS for a module"""
+        import verify
 
         # No layout to check
         if OPTS.netlist_only:
@@ -93,6 +94,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
+        import verify
+
         # Unit tests will check themselves.
         # Do not run if disabled in options.
 
@@ -116,6 +119,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
+        import verify
+
         # Unit tests will check themselves.
         # Do not run if disabled in options.
 

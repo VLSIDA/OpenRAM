@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import collections
 import geometry
 import gdsMill
 import debug
@@ -14,6 +13,7 @@ from tech import drc, GDS
 from tech import layer as techlayer
 from tech import layer_indices
 from tech import layer_stacks
+from tech import preferred_directions
 import os
 from globals import OPTS
 from vector import vector
@@ -269,6 +269,23 @@ class layout():
                                  width,
                                  end.y - start.y)
 
+    def get_tx_insts(self, tx_type=None):
+        """
+        Return a list of the instances of given tx type.
+        """
+        tx_list = []
+        for i in self.insts:
+            try:
+                if tx_type and i.mod.tx_type == tx_type:
+                    tx_list.append(i)
+                elif not tx_type:
+                    if i.mod.tx_type == "nmos" or i.mod.tx_type == "pmos":
+                        tx_list.append(i)
+            except AttributeError:
+                pass
+                        
+        return tx_list
+                        
     def get_pin(self, text):
         """
         Return the pin or list of pins
@@ -505,7 +522,6 @@ class layout():
 
     def get_preferred_direction(self, layer):
         """ Return the preferred routing directions """
-        from tech import preferred_directions
         return preferred_directions[layer]
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
@@ -551,24 +567,6 @@ class layout():
         self.connect_inst([])
         return inst
 
-    def add_via_stack(self, offset, from_layer, to_layer,
-                      directions=None,
-                      size=[1, 1],
-                      implant_type=None,
-                      well_type=None):
-        """
-        Punch a stack of vias from a start layer to a target layer.
-        """
-        return self.__add_via_stack_internal(offset=offset,
-                                             directions=directions,
-                                             from_layer=from_layer,
-                                             to_layer=to_layer,
-                                             via_func=self.add_via,
-                                             last_via=None,
-                                             size=size,
-                                             implant_type=implant_type,
-                                             well_type=well_type)
-
     def add_via_stack_center(self,
                              offset,
                              from_layer,
@@ -578,24 +576,7 @@ class layout():
                              implant_type=None,
                              well_type=None):
         """
-        Punch a stack of vias from a start layer to a target layer by the center
-        coordinate accounting for mirroring and rotation.
-        """
-        return self.__add_via_stack_internal(offset=offset,
-                                             directions=directions,
-                                             from_layer=from_layer,
-                                             to_layer=to_layer,
-                                             via_func=self.add_via_center,
-                                             last_via=None,
-                                             size=size,
-                                             implant_type=implant_type,
-                                             well_type=well_type)
-
-    def __add_via_stack_internal(self, offset, directions, from_layer, to_layer,
-                                 via_func, last_via, size, implant_type=None, well_type=None):
-        """
-        Punch a stack of vias from a start layer to a target layer. Here we
-        figure out whether to punch it up or down the stack.
+        Punch a stack of vias from a start layer to a target layer by the center.
         """
 
         if from_layer == to_layer:
@@ -603,38 +584,65 @@ class layout():
             # a metal enclosure. This helps with center-line path routing.
             self.add_rect_center(layer=from_layer,
                                  offset=offset)
-            return last_via
+            return None
 
-        from_id = layer_indices[from_layer]
-        to_id   = layer_indices[to_layer]
+        via = None
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = layer_indices[cur_layer]
+            to_id   = layer_indices[to_layer]
 
-        if from_id < to_id: # grow the stack up
-            search_id = 0
-            next_id = 2
-        else: # grow the stack down
-            search_id = 2
-            next_id = 0
+            if from_id < to_id: # grow the stack up
+                search_id = 0
+                next_id = 2
+            else: # grow the stack down
+                search_id = 2
+                next_id = 0
 
-        curr_stack = next(filter(lambda stack: stack[search_id] == from_layer, layer_stacks), None)
-        if curr_stack is None:
-            raise ValueError("Cannot create via from '{0}' to '{1}'."
-                             "Layer '{0}' not defined".format(from_layer, to_layer))
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+            
+            via = self.add_via_center(layers=curr_stack,
+                                      size=size,
+                                      offset=offset,
+                                      directions=directions,
+                                      implant_type=implant_type,
+                                      well_type=well_type)
+            
+            if cur_layer != from_layer:
+                self.add_min_area_rect_center(cur_layer,
+                                              offset,
+                                              via.mod.first_layer_width,
+                                              via.mod.first_layer_height)
+                
+            cur_layer = curr_stack[next_id]
 
-        via = via_func(layers=curr_stack,
-                       size=size,
-                       offset=offset,
-                       directions=directions,
-                       implant_type=implant_type,
-                       well_type=well_type)
-
-        via = self.__add_via_stack_internal(offset=offset,
-                                            directions=directions,
-                                            from_layer=curr_stack[next_id],
-                                            to_layer=to_layer,
-                                            via_func=via_func,
-                                            last_via=via,
-                                            size=size)
         return via
+        
+    def add_min_area_rect_center(self,
+                                 layer,
+                                 offset,
+                                 width=None,
+                                 height=None):
+        """
+        Add a minimum area retcangle at the given point.
+        Either width or height should be fixed.
+        """
+
+        min_area = drc("minarea_{}".format(layer))
+        if min_area == 0:
+            return
+        
+        min_width = drc("minwidth_{}".format(layer))
+        
+        if preferred_directions[layer] == "V":
+            height = max(min_area / width, min_width)
+        else:
+            width = max(min_area / height, min_width)
+            
+        self.add_rect_center(layer=layer,
+                             offset=offset,
+                             width=width,
+                             height=height)
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
@@ -723,7 +731,7 @@ class layout():
                                   width=width,
                                   height=height,
                                   center=False)
-                debug.info(2, "Adding {0} boundary {1}".format(self.name, boundary))
+                debug.info(4, "Adding {0} boundary {1}".format(self.name, boundary))
 
         self.visited.append(self.name)
 
@@ -909,8 +917,10 @@ class layout():
         (horizontal_layer, via_layer, vertical_layer) = layer_stack
         if horizontal:
             route_layer = vertical_layer
+            bys_layer = horizontal_layer
         else:
             route_layer = horizontal_layer
+            bus_layer = vertical_layer
 
         for (pin_name, bus_name) in mapping:
             pin = inst.get_pin(pin_name)
@@ -932,17 +942,18 @@ class layout():
             # Connect to the pin on the instances with a via if it is
             # not on the right layer
             if pin.layer != route_layer:
-                self.add_via_center(layers=layer_stack,
-                                    offset=pin_pos)
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=route_layer,
+                                          offset=pin_pos)
             # FIXME: output pins tend to not be rotate,
             # but supply pins are. Make consistent?
 
             # We only need a via if they happened to align perfectly
             # so the add_wire didn't add a via
             if (horizontal and bus_pos.y == pin_pos.y) or (not horizontal and bus_pos.x == pin_pos.x):
-                self.add_via_center(layers=layer_stack,
-                                    offset=bus_pos,
-                                    rotate=90)
+                self.add_via_stack_center(from_layer=route_layer,
+                                          to_layer=bus_layer,
+                                          offset=bus_pos)
 
     def connect_vbus(self, src_pin, dest_pin, hlayer="m3", vlayer="m2"):
         """
@@ -1002,282 +1013,24 @@ class layout():
                                   to_layer=dest_pin.layer,
                                   offset=out_pos)
 
-    def get_layer_pitch(self, layer):
-        """ Return the track pitch on a given layer """
-        try:
-            # FIXME: Using non-pref pitch here due to overlap bug in VCG constraints.
-            # It should just result in inefficient channel width but will work.
-            pitch = getattr(self, "{}_pitch".format(layer))
-            nonpref_pitch = getattr(self, "{}_nonpref_pitch".format(layer))
-            space = getattr(self, "{}_space".format(layer))
-        except AttributeError:
-            debug.error("Cannot find layer pitch.", -1)
-        return (nonpref_pitch, pitch, pitch - space, space)
-
-    def add_horizontal_trunk_route(self,
-                                   pins,
-                                   trunk_offset,
-                                   layer_stack,
-                                   pitch):
-        """
-        Create a trunk route for all pins with
-        the trunk located at the given y offset.
-        """
-        max_x = max([pin.center().x for pin in pins])
-        min_x = min([pin.center().x for pin in pins])
-
-        # if we are less than a pitch, just create a non-preferred layer jog
-        if max_x - min_x <= pitch:
-            half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
-
-            # Add the horizontal trunk on the vertical layer!
-            self.add_path(self.vertical_layer,
-                          [vector(min_x - half_layer_width, trunk_offset.y),
-                           vector(max_x + half_layer_width, trunk_offset.y)])
-
-            # Route each pin to the trunk
-            for pin in pins:
-                # No bend needed here
-                mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(self.vertical_layer, [pin.center(), mid])
-        else:
-            # Add the horizontal trunk
-            self.add_path(self.horizontal_layer,
-                          [vector(min_x, trunk_offset.y),
-                           vector(max_x, trunk_offset.y)])
-
-            # Route each pin to the trunk
-            for pin in pins:
-                mid = vector(pin.center().x, trunk_offset.y)
-                self.add_path(self.vertical_layer, [pin.center(), mid])
-                self.add_via_center(layers=layer_stack,
-                                    offset=mid,
-                                    directions=self.directions)
-
-    def add_vertical_trunk_route(self,
-                                 pins,
-                                 trunk_offset,
-                                 layer_stack,
-                                 pitch):
-        """
-        Create a trunk route for all pins with the
-        trunk located at the given x offset.
-        """
-        max_y = max([pin.center().y for pin in pins])
-        min_y = min([pin.center().y for pin in pins])
-
-        # if we are less than a pitch, just create a non-preferred layer jog
-        if max_y - min_y <= pitch:
-
-            half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
-
-            # Add the vertical trunk on the horizontal layer!
-            self.add_path(self.horizontal_layer,
-                          [vector(trunk_offset.x, min_y - half_layer_width),
-                           vector(trunk_offset.x, max_y + half_layer_width)])
-
-            # Route each pin to the trunk
-            for pin in pins:
-                # No bend needed here
-                mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(self.horizontal_layer, [pin.center(), mid])
-        else:
-            # Add the vertical trunk
-            self.add_path(self.vertical_layer,
-                          [vector(trunk_offset.x, min_y),
-                           vector(trunk_offset.x, max_y)])
-
-            # Route each pin to the trunk
-            for pin in pins:
-                mid = vector(trunk_offset.x, pin.center().y)
-                self.add_path(self.horizontal_layer, [pin.center(), mid])
-                self.add_via_center(layers=layer_stack,
-                                    offset=mid,
-                                    directions=self.directions)
-
-    def create_channel_route(self, netlist,
-                             offset,
-                             layer_stack,
-                             directions=None,
-                             vertical=False):
-        """
-        The net list is a list of the nets with each net being a list of pins
-        to be connected. The offset is the lower-left of where the
-        routing channel will start.  This does NOT try to minimize the
-        number of tracks -- instead, it picks an order to avoid the
-        vertical conflicts between pins. The track size must be the number of
-        nets times the *nonpreferred* routing of the non-track layer pitch.
-
-        """
-        def remove_net_from_graph(pin, g):
-            """
-            Remove the pin from the graph and all conflicts
-            """
-            g.pop(pin, None)
-
-            # Remove the pin from all conflicts
-            # FIXME: This is O(n^2), so maybe optimize it.
-            for other_pin, conflicts in g.items():
-                if pin in conflicts:
-                    conflicts.remove(pin)
-                    g[other_pin]=conflicts
-            return g
-
-        def vcg_nets_overlap(net1, net2, vertical):
-            """
-            Check all the pin pairs on two nets and return a pin
-            overlap if any pin overlaps.
-            """
-
-            if vertical:
-                pitch = self.horizontal_nonpref_pitch
-            else:
-                pitch = self.vertical_nonpref_pitch
-
-            for pin1 in net1:
-                for pin2 in net2:
-                    if vcg_pin_overlap(pin1, pin2, vertical, pitch):
-                        return True
-
-            return False
-
-        def vcg_pin_overlap(pin1, pin2, vertical, pitch):
-            """ Check for vertical or horizontal overlap of the two pins """
-
-            # FIXME: If the pins are not in a row, this may break.
-            # However, a top pin shouldn't overlap another top pin,
-            # for example, so the extra comparison *shouldn't* matter.
-
-            # Pin 1 must be in the "BOTTOM" set
-            x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x - pin2.center().x) < pitch
-
-            # Pin 1 must be in the "LEFT" set
-            y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y - pin2.center().y) < pitch
-            overlaps = (not vertical and x_overlap) or (vertical and y_overlap)
-            return overlaps
-
-        self.directions = directions
-        if not directions or directions == "pref":
-            # Use the preferred layer directions
-            if self.get_preferred_direction(layer_stack[0]) == "V":
-                self.vertical_layer = layer_stack[0]
-                self.horizontal_layer = layer_stack[2]
-            else:
-                self.vertical_layer = layer_stack[2]
-                self.horizontal_layer = layer_stack[0]
-        elif directions == "nonpref":
-            # Use the preferred layer directions
-            if self.get_preferred_direction(layer_stack[0]) == "V":
-                self.vertical_layer = layer_stack[2]
-                self.horizontal_layer = layer_stack[0]
-            else:
-                self.vertical_layer = layer_stack[0]
-                self.horizontal_layer = layer_stack[2]
-        else:
-            # Use the layer directions specified to the router rather than
-            # the preferred directions
-            debug.check(directions[0] != directions[1], "Must have unique layer directions.")
-            if directions[0] == "V":
-                self.vertical_layer = layer_stack[0]
-                self.horizontal_layer = layer_stack[2]
-            else:
-                self.horizontal_layer = layer_stack[0]
-                self.vertical_layer = layer_stack[2]
-
-        layer_stuff = self.get_layer_pitch(self.vertical_layer)
-        (self.vertical_nonpref_pitch, self.vertical_pitch, self.vertical_width, self.vertical_space) = layer_stuff
-
-        layer_stuff = self.get_layer_pitch(self.horizontal_layer)
-        (self.horizontal_nonpref_pitch, self.horizontal_pitch, self.horizontal_width, self.horizontal_space) = layer_stuff
-
-        # FIXME: Must extend this to a horizontal conflict graph
-        # too if we want to minimize the
-        # number of tracks!
-        # hcg = {}
-
-        # Initialize the vertical conflict graph (vcg)
-        # and make a list of all pins
-        vcg = collections.OrderedDict()
-
-        # Create names for the nets for the graphs
-        nets = collections.OrderedDict()
-        index = 0
-        # print(netlist)
-        for pin_list in netlist:
-            net_name = "n{}".format(index)
-            index += 1
-            nets[net_name] = pin_list
-
-        # print("Nets:")
-        # for net_name in nets:
-         #    print(net_name, [x.name for x in nets[net_name]])
-
-        # Find the vertical pin conflicts
-        # FIXME: O(n^2) but who cares for now
-        for net_name1 in nets:
-            if net_name1 not in vcg.keys():
-                vcg[net_name1] = []
-            for net_name2 in nets:
-                if net_name2 not in vcg.keys():
-                    vcg[net_name2] = []
-                # Skip yourself
-                if net_name1 == net_name2:
-                    continue
-                if vcg_nets_overlap(nets[net_name1],
-                                    nets[net_name2],
-                                    vertical):
-                    vcg[net_name2].append(net_name1)
-
-        # list of routes to do
-        while vcg:
-            # from pprint import pformat
-            # print("VCG:\n", pformat(vcg))
-            # get a route from conflict graph with empty fanout set
-            net_name = None
-            for net_name, conflicts in vcg.items():
-                if len(conflicts) == 0:
-                    vcg = remove_net_from_graph(net_name, vcg)
-                    break
-            else:
-                # FIXME: We don't support cyclic VCGs right now.
-                debug.error("Cyclic VCG in channel router.", -1)
-
-            # These are the pins we'll have to connect
-            pin_list = nets[net_name]
-            # print("Routing:", net_name, [x.name for x in pin_list])
-
-            # Remove the net from other constriants in the VCG
-            vcg = remove_net_from_graph(net_name, vcg)
-
-            # Add the trunk routes from the bottom up for
-            # horizontal or the left to right for vertical
-            if vertical:
-                self.add_vertical_trunk_route(pin_list,
-                                              offset,
-                                              layer_stack,
-                                              self.vertical_nonpref_pitch)
-                # This accounts for the via-to-via spacings
-                offset += vector(self.horizontal_nonpref_pitch, 0)
-            else:
-                self.add_horizontal_trunk_route(pin_list,
-                                                offset,
-                                                layer_stack,
-                                                self.horizontal_nonpref_pitch)
-                # This accounts for the via-to-via spacings
-                offset += vector(0, self.vertical_nonpref_pitch)
-
     def create_vertical_channel_route(self, netlist, offset, layer_stack, directions=None):
         """
         Wrapper to create a vertical channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, directions, vertical=True)
+        import channel_route
+        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True)
+        self.add_inst("vc", cr)
+        self.connect_inst([])
 
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
         """
         Wrapper to create a horizontal channel route
         """
-        self.create_channel_route(netlist, offset, layer_stack, directions, vertical=False)
-
+        import channel_route
+        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False)
+        self.add_inst("hc", cr)
+        self.connect_inst([])
+        
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:
@@ -1301,27 +1054,49 @@ class layout():
                                                   height=ur.y - ll.y,
                                                   width=ur.x - ll.x)
 
-    def add_enclosure(self, insts, layer="nwell"):
-        """ Add a layer that surrounds the given instances. Useful
+    def add_enclosure(self, insts, layer="nwell", extend=0, leftx=None, rightx=None, topy=None, boty=None):
+        """
+        Add a layer that surrounds the given instances. Useful
         for creating wells, for example. Doesn't check for minimum widths or
-        spacings."""
+        spacings. Extra arg can force a dimension to one side left/right top/bot.
+        """
 
-        xmin = insts[0].lx()
-        ymin = insts[0].by()
-        xmax = insts[0].rx()
-        ymax = insts[0].uy()
-        for inst in insts:
-            xmin = min(xmin, inst.lx())
-            ymin = min(ymin, inst.by())
-            xmax = max(xmax, inst.rx())
-            ymax = max(ymax, inst.uy())
+        if leftx != None:
+            xmin = leftx
+        else:
+            xmin = insts[0].lx()
+            for inst in insts:
+                xmin = min(xmin, inst.lx())
+            xmin = xmin - extend
+        if boty != None:
+            ymin = boty
+        else:
+            ymin = insts[0].by()
+            for inst in insts:
+                ymin = min(ymin, inst.by())
+            ymin = ymin - extend
+        if rightx != None:
+            xmax = rightx
+        else:
+            xmax = insts[0].rx()
+            for inst in insts:
+                xmax = max(xmax, inst.rx())
+            xmax = xmax + extend
+        if topy != None:
+            ymax = topy
+        else:
+            ymax = insts[0].uy()
+            for inst in insts:
+                ymax = max(ymax, inst.uy())
+            ymax = ymax + extend
 
-        self.add_rect(layer=layer,
-                      offset=vector(xmin, ymin),
-                      width=xmax - xmin,
-                      height=ymax - ymin)
-
-    def copy_power_pins(self, inst, name):
+        rect = self.add_rect(layer=layer,
+                             offset=vector(xmin, ymin),
+                             width=xmax - xmin,
+                             height=ymax - ymin)
+        return rect
+    
+    def copy_power_pins(self, inst, name, add_vias=True):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
@@ -1335,9 +1110,9 @@ class layout():
                                     pin.width(),
                                     pin.height())
 
-            else:
+            elif add_vias:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
- 
+
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
@@ -1355,6 +1130,7 @@ class layout():
                                             size=size,
                                             offset=loc,
                                             directions=directions)
+
             # Hack for min area
             if OPTS.tech_name == "sky130":
                 width = round_to_grid(sqrt(drc["minarea_m3"]))
@@ -1385,7 +1161,7 @@ class layout():
             layer = "m3"
         elif side == "right":
             layer = "m3"
-            peri_pin_loc = vector(right, pin_loc.x)
+            peri_pin_loc = vector(right, pin_loc.y)
         elif side == "top":
             layer = "m4"
             peri_pin_loc = vector(pin_loc.x, top)
@@ -1400,13 +1176,9 @@ class layout():
         self.add_path(layer,
                       [pin_loc, peri_pin_loc])
 
-        self.add_via_stack_center(from_layer=layer,
-                                  to_layer="m4",
-                                  offset=peri_pin_loc)
-        
-        self.add_layout_pin_rect_center(text=name,
-                                        layer="m4",
-                                        offset=peri_pin_loc)
+        return self.add_layout_pin_rect_center(text=name,
+                                               layer=layer,
+                                               offset=peri_pin_loc)
         
     def add_power_ring(self, bbox):
         """

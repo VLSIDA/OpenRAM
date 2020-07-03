@@ -183,11 +183,13 @@ class replica_column(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # For every second row and column, add a via for gnd and vdd
-        for row in range(row_range_min, row_range_max):
-            inst = self.cell_inst[row]
+        # Supplies are only connected in the ends
+        for (index, inst) in self.cell_inst.items():
             for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
+                if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+                    self.copy_power_pins(inst, pin_name)
+                else:
+                    self.copy_layout_pin(inst, pin_name)
 
     def get_bitcell_pins(self, col, row):
         """ Creates a list of connections in the bitcell,

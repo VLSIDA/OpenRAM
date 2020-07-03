@@ -219,16 +219,14 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     errors = int(re.split(r'\W+', results[2])[5])
 
     # always display this summary
-    if errors > 0:
-        debug.error("{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name,
+    result_str = "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name,
                                                                             geometries,
                                                                             rulechecks,
-                                                                            errors))
+                                                                            errors)
+    if errors > 0:
+        debug.warning(result_str)
     else:
-        debug.info(1, "{0}\tGeometries: {1}\tChecks: {2}\tErrors: {3}".format(cell_name,
-                                                                              geometries,
-                                                                              rulechecks,
-                                                                              errors))
+        debug.info(1, result_str)
     return errors
 
 
@@ -307,16 +305,15 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     out_errors = len(stdouterrors)
     total_errors = summary_errors + out_errors + ext_errors
 
-    if total_errors > 0:
-        debug.error("{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name,
+    # always display this summary
+    result_str = "{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name,
                                                                             summary_errors,
                                                                             out_errors,
-                                                                            ext_errors))
+                                                                            ext_errors)
+    if total_errors > 0:
+        debug.warning(result_str)
     else:
-        debug.info(1, "{0}\tSummary: {1}\tOutput: {2}\tExtraction: {3}".format(cell_name,
-                                                                              summary_errors,
-                                                                              out_errors,
-                                                                              ext_errors))
+        debug.info(1, result_str)
 
     return total_errors
 

@@ -234,9 +234,9 @@ drc.add_enclosure("active",
                   enclosure = 0.005)
 
 # CONTACT.6 Minimum spacing of contact and gate
-drc["contact_to_gate"] = 0.0375 #changed from 0.035
+drc["active_contact_to_gate"] = 0.0375 #changed from 0.035
 # CONTACT.7 Minimum spacing of contact and poly
-drc["contact_to_poly"] = 0.090
+drc["poly_contact_to_gate"] = 0.090
 
 # CONTACT.1 Minimum width of contact
 # CONTACT.2 Minimum spacing of contact

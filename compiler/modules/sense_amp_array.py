@@ -28,7 +28,7 @@ class sense_amp_array(design.design):
         self.add_comment("words_per_row: {0}".format(words_per_row))
 
         self.word_size = word_size
-        self.words_per_row = words_per_row        
+        self.words_per_row = words_per_row
         if not num_spare_cols:
             self.num_spare_cols = 0
         else:
@@ -36,6 +36,11 @@ class sense_amp_array(design.design):
                 
         self.column_offset = column_offset
         self.row_size = self.word_size * self.words_per_row
+
+        if OPTS.tech_name == "sky130":
+            self.en_layer = "m3"
+        else:
+            self.en_layer = "m1"
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -77,7 +82,7 @@ class sense_amp_array(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        for i in range(0,self.word_size + self.num_spare_cols):
+        for i in range(0, self.word_size + self.num_spare_cols):
             self.add_pin(self.data_name + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "INPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "INPUT")
@@ -96,7 +101,7 @@ class sense_amp_array(design.design):
 
     def create_sense_amp_array(self):
         self.local_insts = []
-        for i in range(0,self.word_size + self.num_spare_cols):
+        for i in range(0, self.word_size + self.num_spare_cols):
             name = "sa_d{0}".format(i)
             self.local_insts.append(self.add_inst(name=name,
                                                   mod=self.amp))
@@ -107,14 +112,10 @@ class sense_amp_array(design.design):
 
     def place_sense_amp_array(self):
         from tech import cell_properties
-        if self.bitcell.width > self.amp.width:
-            amp_spacing = self.bitcell.width 
-        else:
-            amp_spacing = self.amp.width
 
         for i in range(0, self.row_size, self.words_per_row):
             index = int(i / self.words_per_row)
-            xoffset = i * amp_spacing       
+            xoffset = i * self.bitcell.width
             
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
@@ -126,9 +127,9 @@ class sense_amp_array(design.design):
             self.local_insts[index].place(offset=amp_position, mirror=mirror)
             
         # place spare sense amps (will share the same enable as regular sense amps)
-        for i in range(0,self.num_spare_cols):
+        for i in range(0, self.num_spare_cols):
             index = self.word_size + i
-            xoffset = ((self.word_size * self.words_per_row) + i) * amp_spacing
+            xoffset = ((self.word_size * self.words_per_row) + i) * self.bitcell.width
 
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
@@ -143,17 +144,17 @@ class sense_amp_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
 
-            gnd_pin = inst.get_pin("gnd")
-            self.add_power_pin(name="gnd",
-                               loc=gnd_pin.center(),
-                               start_layer=gnd_pin.layer,
-                               directions=("V", "V"))
-            
-            vdd_pin = inst.get_pin("vdd")
-            self.add_power_pin(name="vdd",
-                               loc=vdd_pin.center(),
-                               start_layer=vdd_pin.layer,
-                               directions=("V", "V"))
+            for gnd_pin in inst.get_pins("gnd"):
+                self.add_power_pin(name="gnd",
+                                   loc=gnd_pin.center(),
+                                   start_layer=gnd_pin.layer,
+                                   directions=("V", "V"))
+
+            for vdd_pin in inst.get_pins("vdd"):
+                self.add_power_pin(name="vdd",
+                                   loc=vdd_pin.center(),
+                                   start_layer=vdd_pin.layer,
+                                   directions=("V", "V"))
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())
@@ -177,14 +178,18 @@ class sense_amp_array(design.design):
                                 height=dout_pin.height())
 
     def route_rails(self):
-        # add sclk rail across entire array
-        sclk = self.amp.get_pin(self.amp.en_name)
-        sclk_offset = self.amp.get_pin(self.amp.en_name).ll().scale(0, 1)
-        self.add_layout_pin(text=self.en_name,
-                            layer=sclk.layer,
-                            offset=sclk_offset,
-                            width=self.width,
-                            height=drc("minwidth_" + sclk.layer))
+        # Add enable across the array
+        en_pin = self.amp.get_pin(self.amp.en_name)
+        start_offset = en_pin.lc().scale(0, 1)
+        end_offset = start_offset + vector(self.width, 0)
+        self.add_layout_pin_segment_center(text=self.en_name,
+                                           layer=self.en_layer,
+                                           start=start_offset,
+                                           end=end_offset)
+        for inst in self.local_insts:
+            self.add_via_stack_center(from_layer=en_pin.layer,
+                                      to_layer=self.en_layer,
+                                      offset=inst.get_pin(self.amp.en_name).center())
 
     def input_load(self):
         return self.amp.input_load()

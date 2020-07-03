@@ -58,7 +58,7 @@ class options(optparse.Values):
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
 
-
+    accuracy_requirement = 0.75
 
     ###################
     # Debug options.

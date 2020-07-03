@@ -182,11 +182,12 @@ class delay(simulation):
                                                            meas.targ_name_no_port)) 
             self.dout_volt_meas[-1].meta_str = meas.meta_str
          
-        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
+        self.dout_volt_meas.append(self.sen_meas)
         
-        return self.dout_volt_meas+[self.sen_meas]
+        return self.dout_volt_meas
      
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """
@@ -232,9 +233,10 @@ class delay(simulation):
         qbar_name = cell_name+'.'+str(storage_names[1])
         
         # Bit measures, measurements times to be defined later. The measurement names must be unique
-        # but they is enforced externally
-        q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name, has_port=False)
-        qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name, has_port=False) 
+        # but they is enforced externally. {} added to names to differentiate between ports allow the
+        # measurements are independent of the ports
+        q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name)
+        qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name) 
         
         return {bit_polarity.NONINVERTING:q_meas, bit_polarity.INVERTING:qbar_meas}
          
@@ -273,13 +275,36 @@ class delay(simulation):
         self.graph.get_all_paths('{}{}'.format("clk", port), 
                                  '{}{}_{}'.format(self.dout_name, port, self.probe_data))
         
-        self.sen_name = self.get_sen_name(self.graph.all_paths)    
+        sen_with_port = self.get_sen_name(self.graph.all_paths)
+        if sen_with_port.endswith(str(port)):
+            self.sen_name = sen_with_port[:-len(str(port))]
+        else:
+            self.sen_name = sen_with_port
+            debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
+            
         debug.info(2,"s_en name = {}".format(self.sen_name))
         
-        self.bl_name,self.br_name = self.get_bl_name(self.graph.all_paths, port)
+        bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
+        port_pos = -1-len(str(self.probe_data))-len(str(port))
+        
+        if bl_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+            self.bl_name = bl_name_port[:port_pos] +"{}"+ bl_name_port[port_pos+len(str(port)):]
+        elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            self.bl_name = bl_name_port
+        else:
+            self.bl_name = bl_name_port
+            debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+            
+        if br_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+            self.br_name = br_name_port[:port_pos] +"{}"+ br_name_port[port_pos+len(str(port)):]
+        elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            self.br_name = br_name_port
+        else:
+            self.br_name = br_name_port    
+            debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
         debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
         
-    def get_sen_name(self, paths):
+    def get_sen_name(self, paths, assumed_port=None):
         """
         Gets the signal name associated with the sense amp enable from input paths.
         Only expects a single path to contain the sen signal name.
@@ -291,6 +316,7 @@ class delay(simulation):
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
+            
         return sen_name        
      
     def get_bl_name(self, paths, port):
@@ -743,13 +769,10 @@ class delay(simulation):
         # Loop through all targeted ports and collect delays and powers.
         result = [{} for i in self.all_ports]
 
-        
-        # First, check that the memory has the right values at the right times
-        if not self.check_bit_measures(self.read_bit_meas) or \
-           not self.check_bit_measures(self.write_bit_meas):
-            return(False,{})
-
         for port in self.targ_write_ports:
+            if not self.check_bit_measures(self.write_bit_meas, port):
+                return(False,{})
+                
             debug.info(2, "Checking write values for port {}".format(port))            
             write_port_dict = {}
             for measure in self.write_lib_meas:
@@ -761,6 +784,10 @@ class delay(simulation):
             
         
         for port in self.targ_read_ports:
+            # First, check that the memory has the right values at the right times
+            if not self.check_bit_measures(self.read_bit_meas, port):
+                return(False,{})
+        
             debug.info(2, "Checking read delay values for port {}".format(port))
             # Check sen timing, then bitlines, then general measurements.
             if not self.check_sen_measure(port):
@@ -837,7 +864,7 @@ class delay(simulation):
         return dout_success
         
     
-    def check_bit_measures(self, bit_measures):
+    def check_bit_measures(self, bit_measures, port):
         """
         Checks the measurements which represent the internal storage voltages
         at the end of the read cycle.
@@ -845,7 +872,7 @@ class delay(simulation):
         success = False
         for polarity, meas_list in bit_measures.items():
             for meas in meas_list:
-                val = meas.retrieve_measure()
+                val = meas.retrieve_measure(port=port)
                 debug.info(2,"{}={}".format(meas.name, val))
                 if type(val) != float:
                     continue

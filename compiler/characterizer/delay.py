@@ -237,7 +237,6 @@ class delay(simulation):
         # measurements are independent of the ports
         q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name)
         qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name) 
-        debug.info(1,"meas name:{}".format(q_meas.name))
         
         return {bit_polarity.NONINVERTING:q_meas, bit_polarity.INVERTING:qbar_meas}
          

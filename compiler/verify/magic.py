@@ -38,7 +38,7 @@ def filter_gds(cell_name, input_gds, output_gds):
     global OPTS
 
     # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:
@@ -135,7 +135,7 @@ def write_netgen_script(cell_name):
     global OPTS
 
     setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "mag_lib/" + setup_file
+    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, OPTS.openram_temp)
@@ -166,7 +166,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
 
     # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:

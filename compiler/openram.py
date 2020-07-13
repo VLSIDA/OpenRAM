@@ -54,7 +54,10 @@ from sram_config import sram_config
 c = sram_config(word_size=OPTS.word_size,
                 num_words=OPTS.num_words,
                 write_size=OPTS.write_size,
-                num_spare_rows=OPTS.num_spare_rows)
+                num_banks=OPTS.num_banks,
+                words_per_row=OPTS.words_per_row,
+                num_spare_rows=OPTS.num_spare_rows,
+                num_spare_cols=OPTS.num_spare_cols)
 debug.print_raw("Words per row: {}".format(c.words_per_row))
 
 output_extensions = ["lvs", "sp", "v", "lib", "py", "html", "log"]

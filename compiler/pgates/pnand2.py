@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import contact
 import pgate
 import debug
 from tech import drc, parameter, spice
@@ -13,6 +12,7 @@ from globals import OPTS
 from vector import vector
 import logical_effort
 from sram_factory import factory
+import contact
 
 
 class pnand2(pgate.pgate):
@@ -20,7 +20,7 @@ class pnand2(pgate.pgate):
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-    def __init__(self, name, size=1, height=None):
+    def __init__(self, name, size=1, height=None, add_wells=True):
         """ Creates a cell for a simple 2 input nand """
 
         debug.info(2,
@@ -38,12 +38,12 @@ class pnand2(pgate.pgate):
         debug.check(size == 1, "Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
             
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
    
     def create_netlist(self):
         self.add_pins()
@@ -55,13 +55,14 @@ class pnand2(pgate.pgate):
 
         self.setup_layout_constants()
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
+        self.route_output()
         self.determine_width()
         self.route_supply_rails()
         self.connect_rails()
         self.extend_wells()
         self.route_inputs()
-        self.route_output()
         self.add_boundary()
         
     def add_pins(self):
@@ -175,33 +176,52 @@ class pnand2(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B inputs """
 
-
         # Top of NMOS drain
-        nmos_pin = self.nmos2_inst.get_pin("D")
-        bottom_pin_offset = nmos_pin.uy()
-        self.inputA_yoffset = bottom_pin_offset + self.m1_pitch
-
-        self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
+        bottom_pin = self.nmos1_inst.get_pin("D")
+        # active contact metal to poly contact metal spacing
+        active_contact_to_poly_contact = bottom_pin.uy() + self.route_layer_space + 0.5 * contact.poly_contact.second_layer_height
+        # active diffusion to poly contact spacing
+        # doesn't use nmos uy because that is calculated using offset + poly height
+        active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
+        active_to_poly_contact = active_top + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
+        active_to_poly_contact2 = active_top + self.poly_contact_to_gate + 0.5 * self.route_layer_width
+        self.inputA_yoffset = max(active_contact_to_poly_contact,
+                                  active_to_poly_contact,
+                                  active_to_poly_contact2)
+        
+        apin = self.route_input_gate(self.pmos1_inst,
+                                     self.nmos1_inst,
+                                     self.inputA_yoffset,
+                                     "A",
+                                     position="center")
+        
+        self.inputB_yoffset = self.inputA_yoffset + 2 * self.m3_pitch
+        # # active contact metal to poly contact metal spacing
+        # active_contact_to_poly_contact = self.output_yoffset - self.route_layer_space - 0.5 * contact.poly_contact.second_layer_height
+        # active_bottom = self.pmos1_inst.by()
+        # active_to_poly_contact = active_bottom - self.poly_to_active - 0.5 * contact.poly_contact.first_layer_height
+        # active_to_poly_contact2 = active_bottom - self.poly_contact_to_gate - 0.5 * self.route_layer_width
+        # self.inputB_yoffset = min(active_contact_to_poly_contact,
+        #                           active_to_poly_contact,
+        #                           active_to_poly_contact2)
 
         # This will help with the wells and the input/output placement
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
+        bpin = self.route_input_gate(self.pmos2_inst,
+                                     self.nmos2_inst,
+                                     self.inputB_yoffset,
+                                     "B",
+                                     position="center")
+
+        if OPTS.tech_name == "sky130":
+            self.add_enclosure([apin, bpin], "npc", drc("npc_enclose_poly"))
         
-        self.route_input_gate(self.pmos1_inst,
-                              self.nmos1_inst,
-                              self.inputA_yoffset,
-                              "A",
-                              position="center")
 
     def route_output(self):
         """ Route the Z output """
         
         # One routing track layer below the PMOS contacts
-        route_layer_offset = 0.5 * self.route_layer_width + self.route_layer_space
-        output_yoffset = self.pmos1_inst.get_pin("D").by() - route_layer_offset
+        route_layer_offset = 0.5 * contact.poly_contact.second_layer_height + self.route_layer_space
+        self.output_yoffset = self.pmos1_inst.get_pin("D").by() - route_layer_offset
 
 
         # PMOS1 drain
@@ -213,7 +233,7 @@ class pnand2(pgate.pgate):
         
         # Output pin
         out_offset = vector(nmos_pin.cx() + self.route_layer_pitch,
-                            output_yoffset)
+                            self.output_yoffset)
 
         # This routes on M2
         # # Midpoints of the L routes go horizontal first then vertical

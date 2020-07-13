@@ -12,6 +12,7 @@ from vector import vector
 import logical_effort
 from sram_factory import factory
 from globals import OPTS
+import contact
 
 
 class pnand3(pgate.pgate):
@@ -19,7 +20,7 @@ class pnand3(pgate.pgate):
     This module generates gds of a parametrically sized 2-input nand.
     This model use ptx to generate a 2-input nand within a cetrain height.
     """
-    def __init__(self, name, size=1, height=None):
+    def __init__(self, name, size=1, height=None, add_wells=True):
         """ Creates a cell for a simple 3 input nand """
 
         debug.info(2,
@@ -40,12 +41,12 @@ class pnand3(pgate.pgate):
                     "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "s8":
+        if OPTS.tech_name == "sky130":
             (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
             (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        pgate.pgate.__init__(self, name, height, add_wells)
         
     def add_pins(self):
         """ Adds pins for spice netlist """
@@ -63,13 +64,14 @@ class pnand3(pgate.pgate):
 
         self.setup_layout_constants()
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
+        self.route_inputs()
+        self.route_output()
         self.determine_width()
         self.route_supply_rails()
         self.connect_rails()
         self.extend_wells()
-        self.route_inputs()
-        self.route_output()
         self.add_boundary()
         
     def add_ptx(self):
@@ -208,30 +210,45 @@ class pnand3(pgate.pgate):
     def route_inputs(self):
         """ Route the A and B and C inputs """
 
+        # We can use this pitch because the contacts and overlap won't be adjacent
+        non_contact_pitch = 0.5 * self.m1_width + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
-        self.inputA_yoffset = self.output_yoffset - 0.5 * self.route_layer_width - self.route_layer_space
-        self.route_input_gate(self.pmos1_inst,
-                              self.nmos1_inst,
-                              self.inputA_yoffset,
-                              "A",
-                              position="left")
+        bottom_pin = self.nmos1_inst.get_pin("D")
+        # active contact metal to poly contact metal spacing
+        active_contact_to_poly_contact = bottom_pin.uy() + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
+        # active diffusion to poly contact spacing
+        # doesn't use nmos uy because that is calculated using offset + poly height
+        active_top = self.nmos1_inst.by() + self.nmos1_inst.mod.active_height
+        active_to_poly_contact = active_top + self.poly_to_active + 0.5 * contact.poly_contact.first_layer_height
+        active_to_poly_contact2 = active_top + self.poly_contact_to_gate + 0.5 * self.route_layer_width
+        self.inputA_yoffset = max(active_contact_to_poly_contact,
+                                  active_to_poly_contact,
+                                  active_to_poly_contact2)
+        
+        apin = self.route_input_gate(self.pmos1_inst,
+                                     self.nmos1_inst,
+                                     self.inputA_yoffset,
+                                     "A",
+                                     position="left")
 
-        # Put B right on the well line
-        self.inputB_yoffset = self.inputA_yoffset - self.m1_pitch
-        self.route_input_gate(self.pmos2_inst,
-                              self.nmos2_inst,
-                              self.inputB_yoffset,
-                              "B",
-                              position="center")
+        self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
+        bpin = self.route_input_gate(self.pmos2_inst,
+                                     self.nmos2_inst,
+                                     self.inputB_yoffset,
+                                     "B",
+                                     position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset - self.m1_pitch
-        self.route_input_gate(self.pmos3_inst,
-                              self.nmos3_inst,
-                              self.inputC_yoffset,
-                              "C",
-                              position="right")
+        self.inputC_yoffset = self.inputB_yoffset + self.m3_pitch
+        cpin = self.route_input_gate(self.pmos3_inst,
+                                     self.nmos3_inst,
+                                     self.inputC_yoffset,
+                                     "C",
+                                     position="right")
+
+        if OPTS.tech_name == "sky130":
+            self.add_enclosure([apin, bpin, cpin], "npc", drc("npc_enclose_poly"))
         
     def route_output(self):
         """ Route the Z output """

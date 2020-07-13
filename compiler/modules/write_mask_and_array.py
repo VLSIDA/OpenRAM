@@ -10,7 +10,7 @@ import debug
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
-
+from tech import layer
 
 class write_mask_and_array(design.design):
     """
@@ -18,7 +18,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size, port=0):
+    def __init__(self, name, columns, word_size, write_size, column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -28,7 +28,7 @@ class write_mask_and_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
-        self.port = port
+        self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         self.num_wmasks = int(word_size / write_size)
 
@@ -60,7 +60,7 @@ class write_mask_and_array(design.design):
         # Size the AND gate for the number of write drivers it drives, which is equal to the write size.
         # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
-                                   size=self.write_size / 4.0)
+                                   size=max(self.write_size / 4.0, 1))
         self.add_mod(self.and2)
 
     def create_and2_array(self):
@@ -93,7 +93,7 @@ class write_mask_and_array(design.design):
 
         self.width = self.bitcell.width * self.columns
         self.height = self.and2.height
-        
+
         for i in range(self.num_wmasks):
             base = vector(i * self.wmask_en_len, 0)
             self.and2_insts[i].place(base)
@@ -108,8 +108,21 @@ class write_mask_and_array(design.design):
                                            end=vector(self.width, en_pin.cy()))
 
         for i in range(self.num_wmasks):
+            # Route the A pin over to the left so that it doesn't conflict with the sense
+            # amp output which is usually in the center
+            a_pin = self.and2_insts[i].get_pin("A")
+            a_pos = a_pin.center()
+            in_pos = vector(self.and2_insts[i].lx(),
+                            a_pos.y)
+            self.add_via_stack_center(from_layer=a_pin.layer,
+                                      to_layer="m2",
+                                      offset=in_pos)
+            self.add_layout_pin_rect_center(text="wmask_in_{0}".format(i),
+                                            layer="m2",
+                                            offset=in_pos)
+            self.add_path(a_pin.layer, [in_pos, a_pos])
+            
             # Copy remaining layout pins
-            self.copy_layout_pin(self.and2_insts[i], "A", "wmask_in_{0}".format(i))
             self.copy_layout_pin(self.and2_insts[i], "Z", "wmask_out_{0}".format(i))
 
             # Add via connections to metal3 for AND array's B pin
@@ -121,16 +134,14 @@ class write_mask_and_array(design.design):
 
             for supply in ["gnd", "vdd"]:
                 supply_pin=self.and2_insts[i].get_pin(supply)
-                self.add_power_pin(supply, supply_pin.center())
+                self.add_power_pin(supply, supply_pin.center(), start_layer=supply_pin.layer)
 
         for supply in ["gnd", "vdd"]:
             supply_pin_left = self.and2_insts[0].get_pin(supply)
             supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
-            self.add_path("m1", [supply_pin_left.lc(), supply_pin_right.rc()])
-            
+            self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
+
     def get_cin(self):
         """Get the relative capacitance of all the input connections in the bank"""
         # The enable is connected to an and2 for every row.
         return self.and2.get_cin() * len(self.and2_insts)
-
-

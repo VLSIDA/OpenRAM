@@ -21,7 +21,6 @@ class sense_amp_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # check sense amp array for single port
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=1")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=1)
         self.local_check(a)

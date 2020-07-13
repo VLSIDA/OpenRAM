@@ -14,8 +14,8 @@ from tech import layer, drc
 from vector import vector
 from globals import OPTS
 
-if(OPTS.tech_name == "s8"):
-    from tech import nmos_bins, pmos_bins, accuracy_requirement
+if(OPTS.tech_name == "sky130"):
+    from tech import nmos_bins, pmos_bins
 
     
 class pgate(design.design):
@@ -24,7 +24,7 @@ class pgate(design.design):
     functions for parameterized gates.
     """
 
-    def __init__(self, name, height=None):
+    def __init__(self, name, height=None, add_wells=True):
         """ Creates a generic cell """
         design.design.__init__(self, name)
 
@@ -33,7 +33,8 @@ class pgate(design.design):
         elif not height:
             # By default, something simple
             self.height = 14 * self.m1_pitch
-            
+        self.add_wells = add_wells
+        
         if "li" in layer:
             self.route_layer = "li"
         else:
@@ -42,11 +43,14 @@ class pgate(design.design):
         self.route_layer_space = getattr(self, "{}_space".format(self.route_layer))
         self.route_layer_pitch = getattr(self, "{}_pitch".format(self.route_layer))
 
+        # hack for enclosing input pin with npc
+        self.input_pin_vias = []
+
         # This is the space from a S/D contact to the supply rail
-        # Assume the contact starts at the active edge
-        contact_to_vdd_rail_space = 0.5 * self.m1_width + self.m1_space
+        contact_to_vdd_rail_space = 0.5 * self.route_layer_width + self.route_layer_space
         # This is a poly-to-poly of a flipped cell
-        poly_to_poly_gate_space = self.poly_extend_active + self.poly_space
+        poly_to_poly_gate_space = self.poly_extend_active + 0.5 * self.poly_space
+        
         self.top_bottom_space = max(contact_to_vdd_rail_space,
                                     poly_to_poly_gate_space)
         
@@ -145,28 +149,31 @@ class pgate(design.design):
                              height=contact.poly_contact.first_layer_width,
                              width=left_gate_offset.x - contact_offset.x)
 
+        return via
+
     def extend_wells(self):
         """ Extend the n/p wells to cover whole cell """
 
         # This should match the cells in the cell library
-        self.nwell_y_offset = 0.48 * self.height
-        full_height = self.height + 0.5* self.m1_width
+        self.nwell_yoffset = 0.48 * self.height
+        full_height = self.height + 0.5 * self.m1_width
+
         
         # FIXME: float rounding problem
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
             nwell_max_offset = max(self.find_highest_layer_coords("nwell").y,
                                    full_height)
-            nwell_position = vector(0, self.nwell_y_offset) - vector(self.well_extend_active, 0)
-            nwell_height = nwell_max_offset - self.nwell_y_offset
+            nwell_position = vector(0, self.nwell_yoffset) - vector(self.well_extend_active, 0)
+            nwell_height = nwell_max_offset - self.nwell_yoffset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=nwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=nwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=nwell_height)
 
         # Start this half a rail width below the cell
@@ -174,16 +181,19 @@ class pgate(design.design):
             pwell_min_offset = min(self.find_lowest_layer_coords("pwell").y,
                                    -0.5 * self.m1_width)
             pwell_position = vector(-self.well_extend_active, pwell_min_offset)
-            pwell_height = self.nwell_y_offset - pwell_position.y
+            pwell_height = self.nwell_yoffset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
-                          width=self.well_width,
+                          width=self.width + 2 * self.well_extend_active,
                           height=pwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=pwell_position,
-                              width=self.well_width,
+                              width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
+
+        if OPTS.tech_name == "sky130":
+            self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """
@@ -239,6 +249,52 @@ class pgate(design.design):
 
         # Return the top of the well
 
+    def extend_implants(self):
+        """
+        Add top-to-bottom implants for adjacency issues in s8.
+        """
+        if self.add_wells:
+            rightx = None
+        else:
+            rightx = self.width
+            
+        nmos_insts = self.get_tx_insts("nmos")
+        if len(nmos_insts) > 0:
+            self.add_enclosure(nmos_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               boty=0)
+        
+        pmos_insts = self.get_tx_insts("pmos")
+        if len(pmos_insts) > 0:
+            self.add_enclosure(pmos_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               leftx=0,
+                               rightx=rightx,
+                               topy=self.height)
+        
+        try:
+            ntap_insts = [self.nwell_contact]
+            self.add_enclosure(ntap_insts,
+                               layer="nimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               topy=self.height)
+        except AttributeError:
+            pass
+        try:
+            ptap_insts = [self.pwell_contact]
+            self.add_enclosure(ptap_insts,
+                               layer="pimplant",
+                               extend=self.implant_enclose_active,
+                               rightx=self.width,
+                               boty=0)
+        except AttributeError:
+            pass
+        
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
 
@@ -267,7 +323,7 @@ class pgate(design.design):
                              offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
                              height=contact_offset.y)
-        
+
         # Now add the full active and implant for the NMOS
         # active_offset = nmos_pos + vector(nmos.active_width,0)
         # This might be needed if the spacing between the actives
@@ -302,10 +358,18 @@ class pgate(design.design):
 
     def determine_width(self):
         """ Determine the width based on the well contacts (assumed to be on the right side) """
+
+        # It was already set or is left as default (minimum)
         # Width is determined by well contact and spacing and allowing a supply via between each cell
-        self.width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
-        self.well_width = self.width + 2 * self.nwell_enclose_active
-        # Height is an input parameter, so it is not recomputed.
+        if self.add_wells:
+            width = max(self.nwell_contact.rx(), self.pwell_contact.rx()) + self.m1_space + 0.5 * contact.m1_via.width
+            # Height is an input parameter, so it is not recomputed.
+        else:
+            max_active_xoffset = self.find_highest_layer_coords("active").x
+            max_route_xoffset = self.find_highest_layer_coords(self.route_layer).x + 0.5 * self.m1_space
+            width = max(max_active_xoffset, max_route_xoffset)
+            
+        self.width = width
 
     @staticmethod
     def bin_width(tx_type, target_width):
@@ -327,16 +391,20 @@ class pgate(design.design):
             base_bins = []
             scaled_bins = []
             scaling_factors = []
-            scaled_bins.append(bins[-1])
-            base_bins.append(bins[-1])
-            scaling_factors.append(1)
-            for width in bins[0:-1]:
+
+            for width in bins:
                 m = math.ceil(target_width / width)
                 base_bins.append(width)
                 scaling_factors.append(m)
                 scaled_bins.append(m * width)
-
-            select = bisect_left(scaled_bins, target_width)
+                
+            select = -1
+            for i in reversed(range(0, len(scaled_bins))):
+                if abs(target_width - scaled_bins[i])/target_width <= 1-OPTS.accuracy_requirement:
+                    select = i
+                    break
+            if select == -1:
+                debug.error("failed to bin tx size {}, try reducing accuracy requirement".format(target_width), 1)
             scaling_factor = scaling_factors[select]
             scaled_bin = scaled_bins[select]
             selected_bin = base_bins[select]
@@ -366,4 +434,4 @@ class pgate(design.design):
         return(scaled_bins)
         
     def bin_accuracy(self, ideal_width, width):
-        return abs(1-(ideal_width - width)/ideal_width)
+        return 1-abs((ideal_width - width)/ideal_width)

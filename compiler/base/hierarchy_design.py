@@ -7,11 +7,10 @@
 #
 import hierarchy_layout
 import hierarchy_spice
-import verify
 import debug
 import os
 from globals import OPTS
-
+import tech
 
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
@@ -26,7 +25,12 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
-        lvs_dir = OPTS.openram_tech + "lvs_lib/"
+        try:
+            lvs_subdir = tech.lvs_lib
+        except AttributeError:
+            lvs_subdir = "lvs_lib"
+        lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+
         if os.path.exists(lvs_dir):
             self.lvs_file = lvs_dir + name + ".sp"
         else:
@@ -44,12 +48,13 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if i.name == inst.name:
                 break
         else:
-            debug.error("Couldn't find instance {0}".format(inst_name), -1)
+            debug.error("Couldn't find instance {0}".format(inst.name), -1)
         inst_map = inst.mod.pin_map
         return inst_map
         
     def DRC_LVS(self, final_verification=False, force_check=False):
         """Checks both DRC and LVS for a module"""
+        import verify
 
         # No layout to check
         if OPTS.netlist_only:
@@ -80,8 +85,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                             "LVS failed for {0} with {1} errors(s)".format(self.name,
                                                                            num_lvs_errors))
 
-            os.remove(tempspice)
-            os.remove(tempgds)
+            if OPTS.purge_temp:
+                os.remove(tempspice)
+                os.remove(tempgds)
             
             return (num_drc_errors, num_lvs_errors)
         else:
@@ -89,6 +95,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
+        import verify
+
         # Unit tests will check themselves.
         # Do not run if disabled in options.
 
@@ -104,7 +112,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                         "DRC failed for {0} with {1} error(s)".format(self.name,
                                                                       num_errors))
 
-            os.remove(tempgds)
+            if OPTS.purge_temp:
+                os.remove(tempgds)
 
             return num_errors
         else:
@@ -112,6 +121,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
+        import verify
+
         # Unit tests will check themselves.
         # Do not run if disabled in options.
 
@@ -128,8 +139,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             debug.check(num_errors == 0,
                         "LVS failed for {0} with {1} error(s)".format(self.name,
                                                                       num_errors))
-            os.remove(tempspice)
-            os.remove(tempgds)
+            if OPTS.purge_temp:
+                os.remove(tempspice)
+                os.remove(tempgds)
 
             return num_errors
         else:
@@ -180,7 +192,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         """Given a list of nets, will compare the internal alias of a mod to determine
            if the nets have a connection to this mod's net (but not inst).
         """
-        if exclusion_set == None:
+        if not exclusion_set:
             exclusion_set = set()
         try:
             self.name_dict

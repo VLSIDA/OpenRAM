@@ -21,7 +21,6 @@ class hierarchical_predecode3x8_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # checking hierarchical precode 3x8 for single port
         debug.info(1, "Testing sample for hierarchy_predecode3x8")
         a = factory.create(module_type="hierarchical_predecode3x8")
         self.local_check(a)

@@ -25,17 +25,22 @@ class simulation():
         self.word_size = self.sram.word_size
         self.addr_size = self.sram.addr_size
         self.write_size = self.sram.write_size
+        self.num_spare_rows = self.sram.num_spare_rows
+        if not self.sram.num_spare_cols:
+            self.num_spare_cols = 0
+        else:
+            self.num_spare_cols = self.sram.num_spare_cols
         self.sp_file = spfile
         
         self.all_ports = self.sram.all_ports
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
+        self.words_per_row = self.sram.words_per_row
         if self.write_size:
             self.num_wmasks = int(self.word_size/self.write_size)
         else:
             self.num_wmasks = 0
-
 
     def set_corner(self,corner):
         """ Set the corner values """
@@ -59,10 +64,10 @@ class simulation():
         self.pins = self.gen_pin_names(port_signal_names=(self.addr_name,self.din_name,self.dout_name),
                                        port_info=(len(self.all_ports),self.write_ports,self.read_ports),
                                        abits=self.addr_size,
-                                       dbits=self.word_size)
+                                       dbits=self.word_size + self.num_spare_cols)
         debug.check(len(self.sram.pins) == len(self.pins),
                     "Number of pins generated for characterization \
-                    do match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(self.sram.pins,
+                    do not match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(self.sram.pins,
                                                                                     self.pins))
         #This is TODO once multiport control has been finalized.
         #self.control_name = "CSB"    
@@ -80,11 +85,13 @@ class simulation():
         self.addr_value = {port:[] for port in self.all_ports}
         self.data_value = {port:[] for port in self.write_ports}
         self.wmask_value = {port:[] for port in self.write_ports}
+        self.spare_wen_value = {port:[] for port in self.write_ports}
                            
         # Three dimensional list to handle each addr and data bits for each port over the number of checks
         self.addr_values = {port:[[] for bit in range(self.addr_size)] for port in self.all_ports}
-        self.data_values = {port:[[] for bit in range(self.word_size)] for port in self.write_ports}
+        self.data_values = {port:[[] for bit in range(self.word_size + self.num_spare_cols)] for port in self.write_ports}
         self.wmask_values = {port:[[] for bit in range(self.num_wmasks)] for port in self.write_ports}
+        self.spare_wen_values = {port:[[] for bit in range(self.num_spare_cols)] for port in self.write_ports}
         
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
@@ -111,10 +118,10 @@ class simulation():
             
     def add_data(self, data, port):
         """ Add the array of data values """
-        debug.check(len(data)==self.word_size, "Invalid data word size.")
+        debug.check(len(data)==(self.word_size + self.num_spare_cols), "Invalid data word size.")
 
         self.data_value[port].append(data)
-        bit = self.word_size - 1
+        bit = self.word_size + self.num_spare_cols - 1
         for c in data:
             if c=="0":
                 self.data_values[port][bit].append(0)
@@ -123,7 +130,6 @@ class simulation():
             else:
                 debug.error("Non-binary data string",1)
             bit -= 1
-
 
     def add_address(self, address, port):
         """ Add the array of address values """
@@ -135,7 +141,7 @@ class simulation():
             if c=="0":
                 self.addr_values[port][bit].append(0)
             elif c=="1":
-                self.addr_values[port][bit].append(1)
+                 self.addr_values[port][bit].append(1)
             else:
                 debug.error("Non-binary address string",1)
             bit -= 1
@@ -156,7 +162,21 @@ class simulation():
                 debug.error("Non-binary wmask string", 1)
             bit -= 1
 
-            
+    def add_spare_wen(self, spare_wen, port):
+        """ Add the array of spare write enable values (for spare cols) """
+        debug.check(len(spare_wen) == self.num_spare_cols, "Invalid spare enable size.")
+
+        self.spare_wen_value[port].append(spare_wen)
+        bit = self.num_spare_cols - 1
+        for c in spare_wen:
+            if c == "0":
+                self.spare_wen_values[port][bit].append(0)
+            elif c == "1":
+                self.spare_wen_values[port][bit].append(1)
+            else:
+                debug.error("Non-binary spare enable signal string", 1)
+            bit -= 1
+ 
     def add_write(self, comment, address, data, wmask, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports,
@@ -172,7 +192,8 @@ class simulation():
         self.add_control_one_port(port, "write")
         self.add_data(data,port)
         self.add_address(address,port)
-        self.add_wmask(wmask,port)
+        self.add_wmask(wmask,port)       
+        self.add_spare_wen("1" * self.num_spare_cols, port)
         
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
@@ -191,19 +212,20 @@ class simulation():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.add_control_one_port(port, "read")
-        self.add_address(address, port)
-        
+        self.add_address(address, port)        
+     
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
             try:
                 self.add_data(self.data_value[port][-1], port)
             except:
-                self.add_data("0"*self.word_size, port)
+                self.add_data("0"*(self.word_size + self.num_spare_cols), port)
             try:
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
                 self.add_wmask("0"*self.num_wmasks, port)
+            self.add_spare_wen("0" * self.num_spare_cols, port)
         
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
@@ -234,6 +256,7 @@ class simulation():
         self.add_data(data, port)
         self.add_address(address, port)
         self.add_wmask(wmask, port)
+        self.add_spare_wen("1" * self.num_spare_cols, port)
                 
     def add_read_one_port(self, comment, address, port):
         """ Add the control values for a read cycle. Does not increment the period. """
@@ -245,23 +268,24 @@ class simulation():
         
         self.add_control_one_port(port, "read")
         self.add_address(address, port)
+
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
             try:
                 self.add_data(self.data_value[port][-1], port)
             except:
-                self.add_data("0"*self.word_size, port)
+                self.add_data("0"*(self.word_size + self.num_spare_cols), port)
             try:
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
-                self.add_wmask("0"*self.num_wmasks, port)
-        
+                self.add_wmask("0"*self.num_wmasks, port)            
+            self.add_spare_wen("0" * self.num_spare_cols, port)       
                 
     def add_noop_one_port(self, port):
         """ Add the control values for a noop to a single port. Does not increment the period. """   
         self.add_control_one_port(port, "noop")
-        
+       
         try:
             self.add_address(self.addr_value[port][-1], port)
         except:
@@ -273,12 +297,13 @@ class simulation():
             try:
                 self.add_data(self.data_value[port][-1], port)
             except:
-                self.add_data("0"*self.word_size, port)
+                self.add_data("0"*(self.word_size + self.num_spare_cols), port)
             try:
                 self.add_wmask(self.wmask_value[port][-1], port)
             except:
                 self.add_wmask("0"*self.num_wmasks, port)
-
+            self.add_spare_wen("0" * self.num_spare_cols, port)
+ 
     def add_noop_clock_one_port(self, port):
         """ Add the control values for a noop to a single port. Increments the period. """
         debug.info(2, 'Clock only on port {}'.format(port))
@@ -369,6 +394,11 @@ class simulation():
             for port in write_index:
                 for bit in range(self.num_wmasks):
                     pin_names.append("WMASK{0}_{1}".format(port,bit))
+        
+        if self.num_spare_cols:
+            for port in write_index:
+                for bit in range(self.num_spare_cols):
+                    pin_names.append("SPARE_WEN{0}_{1}".format(port,bit))
             
         for read_output in read_index:
             for i in range(dbits):

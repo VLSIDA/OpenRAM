@@ -22,12 +22,10 @@ class single_bank_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
-        OPTS.bitcell = "bitcell_1rw_1r"
-        OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
-        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        globals.setup_bitcell()
         
         c = sram_config(word_size=4,
                         num_words=16)

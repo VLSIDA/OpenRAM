@@ -1,7 +1,7 @@
 before_script:
     - . /home/gitlab-runner/setup-paths.sh 
     - export OPENRAM_HOME="`pwd`/compiler"
-    - export OPENRAM_TECH="`pwd`/technology"
+    - export OPENRAM_TECH="`pwd`/technology:/home/PDKs/skywater-tech"
 
 stages:
   - test
@@ -24,6 +24,15 @@ scn4m_subm:
     paths:
       - .coverage.*
     expire_in: 1 week
+
+# s8:
+#   stage: test
+#   script: 
+#     - coverage run -p $OPENRAM_HOME/tests/regress.py -t s8
+#   artifacts:
+#     paths:
+#       - .coverage.*
+#     expire_in: 1 week
 
 coverage:
   stage: coverage

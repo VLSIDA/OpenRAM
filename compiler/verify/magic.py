@@ -33,6 +33,39 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
+def filter_gds(cell_name, input_gds, output_gds):
+    """ Run the gds through magic for any layer processing """
+    global OPTS
+
+    # Copy .magicrc file into temp dir
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+    
+
+    run_file = OPTS.openram_temp + "run_filter.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
+    f.write("gds polygon subcell true\n")
+    f.write("gds warning default\n")
+    f.write("gds read {}\n".format(input_gds))
+    f.write("load {}\n".format(cell_name))
+    f.write("cellname delete \\(UNNAMED\\)\n")
+    #f.write("writeall force\n")
+    f.write("select top cell\n")
+    f.write("gds write {}\n".format(output_gds))
+    f.write("quit -noprompt\n")
+    f.write("EOF\n")
+
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+
+    (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
+
+    
 def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
@@ -68,7 +101,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     if final_verification:
         f.write(pre + "extract unique all\n".format(cell_name))
     # Hack to work around unit scales in SkyWater
-    if OPTS.tech_name=="s8":
+    if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
     f.write(pre + "extract\n".format(cell_name))
     # f.write(pre + "ext2spice hierarchy on\n")
@@ -102,7 +135,7 @@ def write_netgen_script(cell_name):
     global OPTS
 
     setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "mag_lib/" + setup_file
+    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, OPTS.openram_temp)
@@ -133,7 +166,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
 
     # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "mag_lib/.magicrc"
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:
@@ -167,13 +200,14 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
 
 
     # always display this summary
+    result_str = "DRC Errors {0}\t{1}".format(cell_name, errors)
     if errors > 0:
         for line in results:
             if "error tiles" in line:
                 debug.info(1,line.rstrip("\n"))
-        debug.error("DRC Errors {0}\t{1}".format(cell_name, errors))
+        debug.warning(result_str)
     else:
-        debug.info(1, "DRC Errors {0}\t{1}".format(cell_name, errors))
+        debug.info(1, result_str)
 
     return errors
 

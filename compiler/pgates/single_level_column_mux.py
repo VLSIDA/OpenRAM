@@ -39,7 +39,6 @@ class single_level_column_mux(pgate.pgate):
         return "br"
 
     def create_netlist(self):
-        self.add_modules()
         self.add_pins()
         self.add_ptx()
 
@@ -54,16 +53,18 @@ class single_level_column_mux(pgate.pgate):
         self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
         self.pin_width = getattr(self, "{}_width".format(self.pin_layer))
         self.pin_height = 2 * self.pin_width
+
+        self.place_ptx()
+
         self.width = self.bitcell.width
         self.height = self.nmos_upper.uy() + self.pin_height
 
-        self.place_ptx()
         self.connect_poly()
         self.add_bitline_pins()
         self.connect_bitlines()
         self.add_pn_wells()
 
-    def add_modules(self):
+    def add_ptx(self):
         self.bitcell = factory.create(module_type="bitcell")
 
         # Adds nmos_lower,nmos_upper to the module
@@ -71,6 +72,16 @@ class single_level_column_mux(pgate.pgate):
         self.nmos = factory.create(module_type="ptx",
                                     width=self.ptx_width)
         self.add_mod(self.nmos)
+
+        # Space it in the center
+        self.nmos_lower = self.add_inst(name="mux_tx1",
+                                        mod=self.nmos)
+        self.connect_inst(["bl", "sel", "bl_out", "gnd"])
+
+        # This aligns it directly above the other tx with gates abutting
+        self.nmos_upper = self.add_inst(name="mux_tx2",
+                                        mod=self.nmos)
+        self.connect_inst(["br", "sel", "br_out", "gnd"])
 
     def add_pins(self):
         self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
@@ -100,19 +111,6 @@ class single_level_column_mux(pgate.pgate):
                             layer=self.pin_layer,
                             offset=br_pos,
                             height=self.pin_height)
-
-    def add_ptx(self):
-        """ Create the two pass gate NMOS transistors to switch the bitlines"""
-
-        # Space it in the center
-        self.nmos_lower = self.add_inst(name="mux_tx1",
-                                        mod=self.nmos)
-        self.connect_inst(["bl", "sel", "bl_out", "gnd"])
-
-        # This aligns it directly above the other tx with gates abutting
-        self.nmos_upper = self.add_inst(name="mux_tx2",
-                                        mod=self.nmos)
-        self.connect_inst(["br", "sel", "br_out", "gnd"])
         
     def place_ptx(self):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""

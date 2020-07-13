@@ -12,7 +12,6 @@ from vector import vector
 from sram_factory import factory
 import contact
 import logical_effort
-import os
 from globals import OPTS
 from pgate import pgate
 
@@ -120,11 +119,10 @@ class ptx(design.design):
     def create_netlist(self):
         pin_list = ["D", "G", "S", "B"]
         if self.tx_type == "nmos":
-            body_dir = 'GROUND'
+            body_dir = "GROUND"
         else:
-            # Assumed that the check for either pmos or nmos is done elsewhere.
-            body_dir = 'POWER'
-        dir_list = ['INOUT', 'INPUT', 'INOUT', body_dir]
+            body_dir = "POWER"
+        dir_list = ["INOUT", "INPUT", "INOUT", body_dir]
         self.add_pin_list(pin_list, dir_list)
 
         # Just make a guess since these will actually
@@ -135,9 +133,9 @@ class ptx(design.design):
             # sky130 simulation cannot use the mult parameter in simulation
             (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
-                                                                   self.mults,
-                                                                   self.tx_width,
-                                                                   drc("minwidth_poly"))
+                                                                    self.mults,
+                                                                    self.tx_width,
+                                                                    drc("minwidth_poly"))
             # Perimeters are in microns
             # Area is in u since it is microns square
             area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,

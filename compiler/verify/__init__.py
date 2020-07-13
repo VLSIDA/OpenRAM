@@ -30,13 +30,15 @@ if not OPTS.check_lvsdrc:
     OPTS.drc_exe = None
     OPTS.lvs_exe = None
     OPTS.pex_exe = None
+    if OPTS.tech_name == "sky130":
+        OPTS.magic_exe = None
 else:
     debug.info(1, "Finding DRC/LVS/PEX tools.")
     OPTS.drc_exe = get_tool("DRC", ["calibre", "assura", "magic"], drc_name)
     OPTS.lvs_exe = get_tool("LVS", ["calibre", "assura", "netgen"], lvs_name)
     OPTS.pex_exe = get_tool("PEX", ["calibre", "magic"], pex_name)
     if OPTS.tech_name == "sky130":
-        OPTS.magic_exe = get_tool("GDS", ["magic"], None)
+        OPTS.magic_exe = get_tool("GDS", ["magic"])
 
 if not OPTS.drc_exe:
     from .none import run_drc, print_drc_stats
@@ -71,7 +73,7 @@ else:
     debug.warning("Did not find a supported PEX tool.")
 
 if OPTS.tech_name == "sky130":
-    if "magic"==OPTS.magic_exe[0]:
+    if OPTS.magic_exe and "magic"==OPTS.magic_exe[0]:
         from .magic import filter_gds
     else:
         debug.warning("Did not find Magic.")

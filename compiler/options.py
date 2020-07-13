@@ -44,8 +44,9 @@ class options(optparse.Values):
     # word_size = 0
     # You can manually specify banks, but it is better to auto-detect it.
     num_banks = 1
+    words_per_row = None
     num_spare_rows = 0
-    # num_spare_cols = 0
+    num_spare_cols = 0
 
     ###################
     # Optimization options

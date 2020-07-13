@@ -13,10 +13,6 @@ from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
-if(OPTS.tech_name == "sky130"):
-    from tech import nmos_bins, pmos_bins
-
-    
 class pinv_dec(pinv.pinv):
     """
     This is another version of pinv but with layout for the decoder.

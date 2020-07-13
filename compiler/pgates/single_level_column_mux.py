@@ -39,7 +39,6 @@ class single_level_column_mux(pgate.pgate):
         return "br"
 
     def create_netlist(self):
-        self.add_modules()
         self.add_pins()
         self.add_ptx()
 
@@ -54,15 +53,18 @@ class single_level_column_mux(pgate.pgate):
         self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
         self.pin_width = getattr(self, "{}_width".format(self.pin_layer))
         self.pin_height = 2 * self.pin_width
+
+        self.place_ptx()
+
         self.width = self.bitcell.width
         self.height = self.nmos_upper.uy() + self.pin_height
-        
+
         self.connect_poly()
         self.add_bitline_pins()
         self.connect_bitlines()
         self.add_pn_wells()
 
-    def add_modules(self):
+    def add_ptx(self):
         self.bitcell = factory.create(module_type="bitcell")
 
         # Adds nmos_lower,nmos_upper to the module
@@ -70,6 +72,16 @@ class single_level_column_mux(pgate.pgate):
         self.nmos = factory.create(module_type="ptx",
                                     width=self.ptx_width)
         self.add_mod(self.nmos)
+
+        # Space it in the center
+        self.nmos_lower = self.add_inst(name="mux_tx1",
+                                        mod=self.nmos)
+        self.connect_inst(["bl", "sel", "bl_out", "gnd"])
+
+        # This aligns it directly above the other tx with gates abutting
+        self.nmos_upper = self.add_inst(name="mux_tx2",
+                                        mod=self.nmos)
+        self.connect_inst(["br", "sel", "br_out", "gnd"])
 
     def add_pins(self):
         self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
@@ -99,25 +111,19 @@ class single_level_column_mux(pgate.pgate):
                             layer=self.pin_layer,
                             offset=br_pos,
                             height=self.pin_height)
-
-    def add_ptx(self):
+        
+    def place_ptx(self):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""
 
         # Space it in the center
         nmos_lower_position = self.nmos.active_offset.scale(0, 1) \
                               + vector(0.5 * self.bitcell.width- 0.5 * self.nmos.active_width, 0)
-        self.nmos_lower = self.add_inst(name="mux_tx1",
-                                        mod=self.nmos,
-                                        offset=nmos_lower_position)
-        self.connect_inst(["bl", "sel", "bl_out", "gnd"])
+        self.nmos_lower.place(nmos_lower_position)
 
         # This aligns it directly above the other tx with gates abutting
         nmos_upper_position = nmos_lower_position \
-                                + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
-        self.nmos_upper = self.add_inst(name="mux_tx2",
-                                        mod=self.nmos,
-                                        offset=nmos_upper_position)
-        self.connect_inst(["br", "sel", "br_out", "gnd"])
+                              + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
+        self.nmos_upper.place(nmos_upper_position)
 
         if OPTS.tech_name == "sky130":
             self.add_implants()

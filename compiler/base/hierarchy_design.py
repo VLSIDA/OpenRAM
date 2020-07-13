@@ -36,6 +36,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         else:
             self.lvs_file = self.sp_file
 
+        self.drc_errors = "skipped"
+        self.lvs_errors = "skipped"
+
         self.name = name
         hierarchy_spice.spice.__init__(self, name)
         hierarchy_layout.layout.__init__(self, name)
@@ -58,41 +61,37 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         # No layout to check
         if OPTS.netlist_only:
-            return ("skipped", "skipped")
+            return
         # Unit tests will check themselves.
-        if not force_check and OPTS.is_unit_test:
-            return ("skipped", "skipped")
-        if not force_check and not OPTS.check_lvsdrc:
-            return ("skipped", "skipped")
+        elif not force_check and OPTS.is_unit_test:
+            return
+        elif not force_check and not OPTS.check_lvsdrc:
+            return
         # Do not run if disabled in options.
-        if (OPTS.inline_lvsdrc or force_check or final_verification):
+        elif (OPTS.inline_lvsdrc or force_check or final_verification):
 
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
             self.lvs_write(tempspice)
             self.gds_write(tempgds)
             # Final verification option does not allow nets to be connected by label.
-            num_drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
-            num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
+            self.drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
+            self.lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
 
             # force_check is used to determine decoder height and other things, so we shouldn't fail
             # if that flag is set
             if OPTS.inline_lvsdrc and not force_check:
-                debug.check(num_drc_errors == 0,
+                debug.check(self.drc_errors == 0,
                             "DRC failed for {0} with {1} error(s)".format(self.name,
-                                                                          num_drc_errors))
-                debug.check(num_lvs_errors == 0,
+                                                                          self.drc_errors))
+                debug.check(self.lvs_errors == 0,
                             "LVS failed for {0} with {1} errors(s)".format(self.name,
-                                                                           num_lvs_errors))
+                                                                           self.lvs_errors))
 
             if OPTS.purge_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
             
-            return (num_drc_errors, num_lvs_errors)
-        else:
-            return ("skipped", "skipped")
-
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
         import verify
@@ -102,9 +101,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         # No layout to check
         if OPTS.netlist_only:
-            return "skipped"
-        
-        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+            return
+        elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
             self.gds_write(tempgds)
             num_errors = verify.run_drc(self.name, tempgds, final_verification=final_verification)
@@ -115,10 +113,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if OPTS.purge_temp:
                 os.remove(tempgds)
 
-            return num_errors
-        else:
-            return "skipped"
-
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
         import verify
@@ -128,9 +122,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
 
         # No layout to check
         if OPTS.netlist_only:
-            return "skipped"
-
-        if (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
+            return
+        elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
             tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
             self.lvs_write(tempspice)
@@ -142,10 +135,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if OPTS.purge_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
-
-            return num_errors
-        else:
-            return "skipped"
             
     def init_graph_params(self):
         """Initializes parameters relevant to the graph creation"""

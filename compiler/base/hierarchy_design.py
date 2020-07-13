@@ -72,26 +72,28 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             self.lvs_write(tempspice)
             self.gds_write(tempgds)
             # Final verification option does not allow nets to be connected by label.
-            num_drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
-            num_lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
+            self.drc_errors = verify.run_drc(self.name, tempgds, extract=True, final_verification=final_verification)
+            self.lvs_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
 
             # force_check is used to determine decoder height and other things, so we shouldn't fail
             # if that flag is set
             if OPTS.inline_lvsdrc and not force_check:
-                debug.check(num_drc_errors == 0,
+                debug.check(self.drc_errors == 0,
                             "DRC failed for {0} with {1} error(s)".format(self.name,
-                                                                          num_drc_errors))
-                debug.check(num_lvs_errors == 0,
+                                                                          self.drc_errors))
+                debug.check(self.lvs_errors == 0,
                             "LVS failed for {0} with {1} errors(s)".format(self.name,
-                                                                           num_lvs_errors))
+                                                                           self.lvs_errors))
 
             if OPTS.purge_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
             
-            return (num_drc_errors, num_lvs_errors)
         else:
-            return ("skipped", "skipped")
+            self.drc_errors = "skipped"
+            self.lvs_errors = "skipped"
+
+        return (self.drc_errors, self.lvs_errors)
 
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""

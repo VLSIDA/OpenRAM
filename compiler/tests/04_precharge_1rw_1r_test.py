@@ -15,6 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class precharge_test(openram_test):
 
     def runTest(self):
@@ -22,26 +23,22 @@ class precharge_test(openram_test):
         globals.init_openram(config_file)
         
         # check precharge array in multi-port
-        OPTS.bitcell = "bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+
+        debug.info(2, "Checking precharge for 1rw1r port 0")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl0", bitcell_br="br0")
+        self.local_check(tx)
 
         factory.reset()
-        debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell")
-        pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
-        self.local_check(pc)
-        
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (innermost connections)")
-        # pc = precharge_array.precharge_array(name="pre3", columns=3, bitcell_bl="bl0", bitcell_br="br0")
-        # self.local_check(pc)
-        
-        # debug.info(2, "Checking 3 column precharge array for pbitcell (outermost connections)")
-        # pc = precharge_array.precharge_array(name="pre4", columns=3, bitcell_bl="bl2", bitcell_br="br2")
-        # self.local_check(pc)
+        debug.info(2, "Checking precharge for 1rw1r port 1")
+        tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl1", bitcell_br="br1")
+        self.local_check(tx)
 
         globals.end_openram()
-
+        
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

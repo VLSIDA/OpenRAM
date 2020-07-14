@@ -14,18 +14,18 @@ from sram_factory import factory
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
     
-    def __init__(self, word_size, num_words, write_size = None, num_banks=1, words_per_row=None):
+    def __init__(self, word_size, num_words, write_size = None, num_banks=1, words_per_row=None, num_spare_rows=0, num_spare_cols=0):
         self.word_size = word_size
         self.num_words = num_words
         self.write_size = write_size
         self.num_banks = num_banks
+        self.num_spare_rows = num_spare_rows
+        self.num_spare_cols = num_spare_cols
 
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
 
-        self.compute_sizes()
-
-        
+        self.compute_sizes()       
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """
@@ -78,11 +78,12 @@ class sram_config:
         
         # Fix the number of columns and rows
         self.num_cols = int(self.words_per_row*self.word_size)
-        self.num_rows = int(self.num_words_per_bank/self.words_per_row)
-        debug.info(1,"Rows: {} Cols: {}".format(self.num_rows,self.num_cols))
+        self.num_rows_temp = int(self.num_words_per_bank/self.words_per_row)
+        self.num_rows = self.num_rows_temp + self.num_spare_rows
+        debug.info(1,"Rows: {} Cols: {}".format(self.num_rows_temp,self.num_cols))
 
         # Compute the address and bank sizes
-        self.row_addr_size = int(log(self.num_rows, 2))
+        self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))

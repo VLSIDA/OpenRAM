@@ -7,10 +7,10 @@
 #
 import design
 import debug
-from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer
 
 
 class precharge_array(design.design):
@@ -19,7 +19,7 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
+    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br", column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
@@ -28,7 +28,13 @@ class precharge_array(design.design):
         self.size = size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
+        self.column_offset = column_offset
 
+        if OPTS.tech_name == "sky130":
+            self.en_bar_layer = "m3"
+        else:
+            self.en_bar_layer = "m1"
+            
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -73,14 +79,18 @@ class precharge_array(design.design):
 
     def add_layout_pins(self):
 
-        en_bar_pin = self.pc_cell.get_pin("en_bar")
-        self.add_layout_pin(text="en_bar",
-                            layer=en_bar_pin.layer,
-                            offset=en_bar_pin.ll(),
-                            width=self.width,
-                            height=en_bar_pin.height())
+        en_pin = self.pc_cell.get_pin("en_bar")
+        start_offset = en_pin.lc().scale(0, 1)
+        end_offset = start_offset + vector(self.width, 0)
+        self.add_layout_pin_segment_center(text="en_bar",
+                                           layer=self.en_bar_layer,
+                                           start=start_offset,
+                                           end=end_offset)
 
         for inst in self.local_insts:
+            self.add_via_stack_center(from_layer=en_pin.layer,
+                                      to_layer=self.en_bar_layer,
+                                      offset=inst.get_pin("en_bar").center())
             self.copy_layout_pin(inst, "vdd")
             
         for i in range(len(self.local_insts)):
@@ -106,7 +116,7 @@ class precharge_array(design.design):
         xoffset = 0
         for i in range(self.columns):
             tempx = xoffset
-            if cell_properties.bitcell.mirror.y and (i + 1) % 2:
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 tempx = tempx + self.pc_cell.width
             else:

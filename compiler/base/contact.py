@@ -7,7 +7,7 @@
 #
 import hierarchy_design
 import debug
-from tech import drc
+from tech import drc, layer
 import tech
 from vector import vector
 from sram_factory import factory
@@ -44,7 +44,8 @@ class contact(hierarchy_design.hierarchy_design):
             self.add_comment("well_type: {}\n".format(well_type))
 
         self.is_well_contact = implant_type == well_type
-        
+
+        # If we have a special tap layer, use it
         self.layer_stack = layer_stack
         self.dimensions = dimensions
 
@@ -53,6 +54,10 @@ class contact(hierarchy_design.hierarchy_design):
             first_dir = "H" if self.get_preferred_direction(layer_stack[0])=="V" else "V"
             second_dir = "H" if self.get_preferred_direction(layer_stack[2])=="V" else "V"
             self.directions = (first_dir, second_dir)
+        # Preferred directions
+        elif directions == "pref":
+            self.directions = (tech.preferred_directions[layer_stack[0]],
+                               tech.preferred_directions[layer_stack[2]])
         # User directions
         elif directions:
             self.directions = directions
@@ -149,7 +154,7 @@ class contact(hierarchy_design.hierarchy_design):
             self.first_layer_vertical_enclosure = max(self.first_layer_enclosure,
                                                       (self.first_layer_minwidth - self.contact_array_height) / 2)
         else:
-            debug.error("Invalid first layer direction.", -1)
+            debug.error("Invalid first layer direction: ".format(self.directions[0]), -1)
 
         # In some technologies, the minimum width may be larger
         # than the overlap requirement around the via, so
@@ -165,7 +170,7 @@ class contact(hierarchy_design.hierarchy_design):
             self.second_layer_vertical_enclosure = max(self.second_layer_enclosure,
                                                        (self.second_layer_minwidth - self.contact_array_width) / 2)
         else:
-            debug.error("Invalid second layer direction.", -1)
+            debug.error("Invalid secon layer direction: ".format(self.directions[1]), -1)
             
     def create_contact_array(self):
         """ Create the contact array at the origin"""
@@ -192,17 +197,19 @@ class contact(hierarchy_design.hierarchy_design):
         if "npc" not in tech.layer:
             return
 
+        npc_enclose_poly = drc("npc_enclose_poly")
+        npc_enclose_offset = vector(npc_enclose_poly, npc_enclose_poly)
         # Only add for poly layers
         if self.first_layer_name == "poly":
             self.add_rect(layer="npc",
-                          offset=self.first_layer_position,
-                          width=self.first_layer_width,
-                          height=self.first_layer_height)
+                          offset=self.first_layer_position - npc_enclose_offset,
+                          width=self.first_layer_width + 2 * npc_enclose_poly,
+                          height=self.first_layer_height + 2 * npc_enclose_poly)
         elif self.second_layer_name == "poly":
             self.add_rect(layer="npc",
-                          offset=self.second_layer_position,
-                          width=self.second_layer_width,
-                          height=self.second_layer_height)
+                          offset=self.second_layer_position - npc_enclose_offset,
+                          width=self.second_layer_width + 2 * npc_enclose_poly,
+                          height=self.second_layer_height + 2 * npc_enclose_poly)
     
     def create_first_layer_enclosure(self):
         # this is if the first and second layers are different
@@ -214,7 +221,11 @@ class contact(hierarchy_design.hierarchy_design):
                                      self.first_layer_minwidth)
         self.first_layer_height = max(self.contact_array_height + 2 * self.first_layer_vertical_enclosure,
                                       self.first_layer_minwidth)
-        self.add_rect(layer=self.first_layer_name,
+        if self.is_well_contact and self.first_layer_name == "active" and "tap" in layer:
+            first_layer_name = "tap"
+        else:
+            first_layer_name = self.first_layer_name
+        self.add_rect(layer=first_layer_name,
                       offset=self.first_layer_position,
                       width=self.first_layer_width,
                       height=self.first_layer_height)

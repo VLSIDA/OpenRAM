@@ -25,7 +25,7 @@ class hierarchical_decoder_test(openram_test):
         debug.info(1, "Testing 16 row sample for hierarchical_decoder")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=16)
         self.local_check(a)
-        
+
         # Checks 2x4 and 2-input NAND decoder with non-power-of-two
         debug.info(1, "Testing 17 row sample for hierarchical_decoder")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=17)

@@ -41,7 +41,7 @@ class single_level_column_mux_pbitcell_test(openram_test):
         self.local_check(a)
 
         debug.info(1, "Testing sample for 8-way column_mux_array  in multi-port (outermost connections)")
-        a = factory.create(module_type="single_level_column_mux_array", columns=32, word_size=4, bitcell_bl="bl2", bitcell_br="br2")
+        a = factory.create(module_type="single_level_column_mux_array", columns=32, word_size=4, bitcell_bl="bl2", bitcell_br="br2", column_offset=3)
         self.local_check(a)
 
         globals.end_openram()

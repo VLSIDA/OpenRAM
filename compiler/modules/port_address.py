@@ -3,12 +3,12 @@
 # Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
-from math import log
+from math import log, ceil
 import debug
 import design
 from sram_factory import factory
 from vector import vector
-
+from tech import layer
 from globals import OPTS
 
 
@@ -21,7 +21,7 @@ class port_address(design.design):
         
         self.num_cols = cols
         self.num_rows = rows
-        self.addr_size = int(log(self.num_rows, 2))
+        self.addr_size = ceil(log(self.num_rows, 2))
         
         if name == "":
             name = "port_address_{0}_{1}".format(cols, rows)
@@ -41,6 +41,10 @@ class port_address(design.design):
         self.create_wordline_driver()
         
     def create_layout(self):
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
         self.place_instances()
         self.route_layout()
         self.DRC_LVS()
@@ -85,11 +89,19 @@ class port_address(design.design):
     def route_internal(self):
         for row in range(self.num_rows):
             # The pre/post is to access the pin from "outside" the cell to avoid DRCs
-            decoder_out_pos = self.row_decoder_inst.get_pin("decode_{}".format(row)).rc()
-            driver_in_pos = self.wordline_driver_inst.get_pin("in_{}".format(row)).lc()
-            mid1 = decoder_out_pos.scale(0.5, 1) + driver_in_pos.scale(0.5, 0)
-            mid2 = decoder_out_pos.scale(0.5, 0) + driver_in_pos.scale(0.5, 1)
-            self.add_path("m1", [decoder_out_pos, mid1, mid2, driver_in_pos])
+            decoder_out_pin = self.row_decoder_inst.get_pin("decode_{}".format(row))
+            decoder_out_pos = decoder_out_pin.rc()
+            driver_in_pin = self.wordline_driver_inst.get_pin("in_{}".format(row))
+            driver_in_pos = driver_in_pin.lc()
+            self.add_zjog(self.route_layer, decoder_out_pos, driver_in_pos, var_offset=0.3)
+
+            self.add_via_stack_center(from_layer=decoder_out_pin.layer,
+                                      to_layer=self.route_layer,
+                                      offset=decoder_out_pos)
+
+            self.add_via_stack_center(from_layer=driver_in_pin.layer,
+                                      to_layer=self.route_layer,
+                                      offset=driver_in_pos)
         
     def add_modules(self):
 
@@ -97,7 +109,7 @@ class port_address(design.design):
                                           num_outputs=self.num_rows)
         self.add_mod(self.row_decoder)
         
-        self.wordline_driver = factory.create(module_type="wordline_driver",
+        self.wordline_driver = factory.create(module_type="wordline_driver_array",
                                               rows=self.num_rows,
                                               cols=self.num_cols)
         self.add_mod(self.wordline_driver)
@@ -139,7 +151,6 @@ class port_address(design.design):
 
         row_decoder_offset = vector(0, 0)
         wordline_driver_offset = vector(self.row_decoder.width, 0)
-        
         self.wordline_driver_inst.place(wordline_driver_offset)
         self.row_decoder_inst.place(row_decoder_offset)
 

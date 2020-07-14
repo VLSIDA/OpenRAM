@@ -160,11 +160,11 @@ class pwrite_driver(design.design):
         track_xoff = self.get_m2_track(1)
         
         din_loc = self.din_inst.get_pin("A").center()
-        self.add_via_stack("m1", "m2", din_loc)
+        self.add_via_stack_center("m1", "m2", din_loc)
         din_track = vector(track_xoff,din_loc.y)
         
         br_in = self.br_inst.get_pin("in").center()
-        self.add_via_stack("m1", "m2", br_in)
+        self.add_via_stack_center("m1", "m2", br_in)
         br_track = vector(track_xoff,br_in.y)
         
         din_in = vector(track_xoff,0)
@@ -181,11 +181,11 @@ class pwrite_driver(design.design):
         track_xoff = self.get_m4_track(self.din_bar_track)
         
         din_bar_in = self.din_inst.get_pin("Z").center()
-        self.add_via_stack("m1", "m3", din_bar_in)
+        self.add_via_stack_center("m1", "m3", din_bar_in)
         din_bar_track = vector(track_xoff,din_bar_in.y)
         
         bl_in = self.bl_inst.get_pin("in").center()
-        self.add_via_stack("m1", "m3", bl_in)
+        self.add_via_stack_center("m1", "m3", bl_in)
         bl_track = vector(track_xoff,bl_in.y)
         
         din_in = vector(track_xoff,0)
@@ -204,15 +204,15 @@ class pwrite_driver(design.design):
         # This M2 pitch is a hack since the A and Z pins align horizontally
         en_bar_loc = self.en_inst.get_pin("Z").uc()
         en_bar_track = vector(track_xoff, en_bar_loc.y)
-        self.add_via_stack("m1", "m3", en_bar_loc)
+        self.add_via_stack_center("m1", "m3", en_bar_loc)
         
         # This is a U route to the right down then left
         bl_en_loc = self.bl_inst.get_pin("en_bar").center()
         bl_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("m1", "m3", bl_en_loc)
+        self.add_via_stack_center("m1", "m3", bl_en_loc)
         br_en_loc = self.br_inst.get_pin("en_bar").center()
         br_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("m1", "m3", br_en_loc)
+        self.add_via_stack_center("m1", "m3", br_en_loc)
 
         
         # L shape
@@ -237,21 +237,21 @@ class pwrite_driver(design.design):
 
         en_loc = self.en_inst.get_pin("A").center()
         en_rail = vector(en_loc.x, vdd_yloc)        
-        self.add_via_stack("m1", "m2", en_loc)
+        self.add_via_stack_center("m1", "m2", en_loc)
         self.add_path("m2", [en_loc, en_rail])
-        self.add_via_stack("m2", "m3", en_rail)
+        self.add_via_stack_center("m2", "m3", en_rail)
 
         # Start point in the track on the pin rail
         en_track = vector(track_xoff, vdd_yloc)
-        self.add_via_stack("m3", "m4", en_track)
+        self.add_via_stack_center("m3", "m4", en_track)
         
         # This is a U route to the right down then left
         bl_en_loc = self.bl_inst.get_pin("en").center()
         bl_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("m1", "m3", bl_en_loc)
+        self.add_via_stack_center("m1", "m3", bl_en_loc)
         br_en_loc = self.br_inst.get_pin("en").center()
         br_en_track = vector(track_xoff, bl_en_loc.y)
-        self.add_via_stack("m1", "m3", br_en_loc)
+        self.add_via_stack_center("m1", "m3", br_en_loc)
 
         # U shape
         self.add_wire(self.m3_stack,

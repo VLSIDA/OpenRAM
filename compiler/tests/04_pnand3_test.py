@@ -25,6 +25,11 @@ class pnand3_test(openram_test):
         tx = factory.create(module_type="pnand3", size=1)
         self.local_check(tx)
 
+        # debug.info(2, "Checking 3-input nand gate")
+        # tx = factory.create(module_type="pnand3", size=1, add_wells=False)
+        # # Only DRC because well contacts will fail LVS
+        # self.local_drc_check(tx)
+
         globals.end_openram()
         
 

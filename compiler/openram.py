@@ -53,10 +53,14 @@ from sram_config import sram_config
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
                 num_words=OPTS.num_words,
-                write_size=OPTS.write_size)
+                write_size=OPTS.write_size,
+                num_banks=OPTS.num_banks,
+                words_per_row=OPTS.words_per_row,
+                num_spare_rows=OPTS.num_spare_rows,
+                num_spare_cols=OPTS.num_spare_cols)
 debug.print_raw("Words per row: {}".format(c.words_per_row))
 
-output_extensions = ["sp", "v", "lib", "py", "html", "log"]
+output_extensions = ["lvs", "sp", "v", "lib", "py", "html", "log"]
 # Only output lef/gds if back-end
 if not OPTS.netlist_only:
     output_extensions.extend(["lef", "gds"])

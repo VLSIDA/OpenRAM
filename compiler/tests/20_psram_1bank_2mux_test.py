@@ -22,14 +22,12 @@ class psram_1bank_2mux_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
-        OPTS.bitcell = "pbitcell"
-        OPTS.replica_bitcell="replica_pbitcell"
-        OPTS.dummy_bitcell="dummy_pbitcell"        
         
-        # testing layout of sram using pbitcell with 1 RW port (a 6T-cell equivalent)
+        OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
+        globals.setup_bitcell()
         
         c = sram_config(word_size=4,
                         num_words=32,

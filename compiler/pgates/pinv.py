@@ -19,8 +19,8 @@ import logical_effort
 from sram_factory import factory
 from errors import drc_error
 
-if(OPTS.tech_name == "s8"):
-    from tech import nmos_bins, pmos_bins, accuracy_requirement
+if(OPTS.tech_name == "sky130"):
+    from tech import nmos_bins, pmos_bins
 
     
 class pinv(pgate.pgate):
@@ -31,8 +31,11 @@ class pinv(pgate.pgate):
     height is usually the same as the 6t library cell and is measured
     from center of rail to rail.
     """
+    # binning %error tracker
+    bin_count = 0
+    bin_error = 0
 
-    def __init__(self, name, size=1, beta=parameter["beta"], height=None):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None, add_wells=True):
 
         debug.info(2,
                    "creating pinv structure {0} with size of {1}".format(name,
@@ -40,11 +43,12 @@ class pinv(pgate.pgate):
         self.add_comment("size: {}".format(size))
 
         self.size = size
+        debug.check(self.size >= 1, "Must have a size greater than or equal to 1.")
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta
-        
-        pgate.pgate.__init__(self, name, height)
+    
+        pgate.pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """
@@ -56,17 +60,18 @@ class pinv(pgate.pgate):
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.place_ptx()
-        self.add_well_contacts()
+        if self.add_wells:
+            self.add_well_contacts()
         self.determine_width()
         self.extend_wells()
-        self.route_supply_rails()
-        self.connect_rails()
         self.route_input_gate(self.pmos_inst,
                               self.nmos_inst,
                               self.output_pos.y,
                               "A",
                               position="farleft")
         self.route_outputs()
+        self.route_supply_rails()
+        self.connect_rails()
         self.add_boundary()
         
     def add_pins(self):
@@ -86,7 +91,7 @@ class pinv(pgate.pgate):
             self.tx_mults = 1
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
-            if OPTS.tech_name == "s8":
+            if OPTS.tech_name == "sky130":
                 (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
                 (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
             return
@@ -131,7 +136,7 @@ class pinv(pgate.pgate):
 
         # Determine the number of mults for each to fit width
         # into available space
-        if OPTS.tech_name != "s8":
+        if OPTS.tech_name != "sky130":
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
             nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)
@@ -164,30 +169,37 @@ class pinv(pgate.pgate):
 
             valid_pmos = []
             for bin in pmos_bins:
-                if self.bin_accuracy(self.pmos_width, bin[0]) > accuracy_requirement:
+                if abs(self.bin_accuracy(self.pmos_width, bin[0])) > OPTS.accuracy_requirement and abs(self.bin_accuracy(self.pmos_width, bin[0])) <= 1:
                     valid_pmos.append(bin)
             valid_pmos.sort(key = operator.itemgetter(1))
 
             valid_nmos = []
             for bin in nmos_bins:
-                if self.bin_accuracy(self.nmos_width, bin[0]) > accuracy_requirement:
+                if abs(self.bin_accuracy(self.nmos_width, bin[0])) > OPTS.accuracy_requirement and abs(self.bin_accuracy(self.nmos_width, bin[0])) <= 1:
                     valid_nmos.append(bin)
             valid_nmos.sort(key = operator.itemgetter(1))
 
             for bin in valid_pmos:
                 if bin[0]/bin[1] < pmos_height_available:
                     self.pmos_width = bin[0]/bin[1]
-                    pmos_mults = valid_pmos[0][1]
+                    pmos_mults = bin[1]
                     break
 
             for bin in valid_nmos:
                 if bin[0]/bin[1] < nmos_height_available:
                     self.nmos_width = bin[0]/bin[1]
-                    nmos_mults = valid_pmos[0][1]
+                    nmos_mults = bin[1]
                     break
 
             self.tx_mults = max(pmos_mults, nmos_mults)
-        
+            debug.info(2, "prebinning {0} tx, target: {4}, found {1} x {2} = {3}".format("pmos", self.pmos_width, pmos_mults, self.pmos_width * pmos_mults, self.pmos_size * drc("minwidth_tx")))
+            debug.info(2, "prebinning {0} tx, target: {4}, found {1} x {2} = {3}".format("nmos", self.nmos_width, nmos_mults, self.nmos_width * nmos_mults, self.nmos_size * drc("minwidth_tx")))
+            pinv.bin_count += 1
+            pinv.bin_error += abs(((self.pmos_width * pmos_mults) - (self.pmos_size * drc("minwidth_tx")))/(self.pmos_size * drc("minwidth_tx")))
+            pinv.bin_count += 1
+            pinv.bin_error += abs(((self.nmos_width * nmos_mults) - (self.nmos_size * drc("minwidth_tx")))/(self.nmos_size * drc("minwidth_tx")))
+            debug.info(2, "pinv bin count: {0} pinv bin error: {1} percent error {2}".format(pinv.bin_count, pinv.bin_error, pinv.bin_error/pinv.bin_count))
+
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = factory.create(module_type="ptx",

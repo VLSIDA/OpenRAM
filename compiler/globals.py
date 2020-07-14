@@ -19,7 +19,7 @@ import re
 import copy
 import importlib
 
-VERSION = "1.1.5"
+VERSION = "1.1.6"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -99,6 +99,9 @@ def parse_args():
     # Alias SCMOS to 180nm
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn4m_subm"
+    # Alias s8 to sky130
+    if OPTS.tech_name == "s8":
+        OPTS.tech_name = "sky130"
 
     return (options, args)
 
@@ -214,25 +217,18 @@ def setup_bitcell():
             if OPTS.num_r_ports > 0:
                 ports += "{}r".format(OPTS.num_r_ports)
 
-            OPTS.bitcell = "bitcell_"+ports
-            OPTS.replica_bitcell = "replica_bitcell_"+ports
-            OPTS.dummy_bitcell = "dummy_bitcell_"+ports
-    else:
-        OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-        OPTS.replica_bitcell = "dummy_" + OPTS.bitcell
+            if ports != "":
+                OPTS.bitcell_suffix = "_" + ports
+            OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
                 
     # See if bitcell exists
     try:
         __import__(OPTS.bitcell)
-        __import__(OPTS.replica_bitcell)
-        __import__(OPTS.dummy_bitcell)
     except ImportError:
         # Use the pbitcell if we couldn't find a custom bitcell
         # or its custom replica  bitcell
         # Use the pbitcell (and give a warning if not in unit test mode)
         OPTS.bitcell = "pbitcell"
-        OPTS.replica_bitcell = "replica_pbitcell"
-        OPTS.replica_bitcell = "dummy_pbitcell"
         if not OPTS.is_unit_test:
             debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))
@@ -539,7 +535,7 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
     if type(OPTS.write_size) is not int and OPTS.write_size is not None:
         debug.error("{0} is not an integer in config file.".format(OPTS.write_size))
-
+    
     # If a write mask is specified by the user, the mask write size should be the same as
     # the word size so that an entire word is written at once.
     if OPTS.write_size is not None:

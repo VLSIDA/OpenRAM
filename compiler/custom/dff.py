@@ -61,7 +61,7 @@ class dff(design.design):
         #Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
         return parameter["dff_clk_cin"]
 
-    def build_graph(self, graph, inst_name, port_nets):        
+    def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
-        self.add_graph_edges(graph, port_nets) 
+        self.add_graph_edges(graph, port_nets)
         

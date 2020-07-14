@@ -13,6 +13,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class port_address_test(openram_test):
 
     def runTest(self):
@@ -23,6 +24,10 @@ class port_address_test(openram_test):
         a = factory.create("port_address", cols=16, rows=16)
         self.local_check(a)
         
+        debug.info(1, "Port address 512 rows")
+        a = factory.create("port_address", cols=256, rows=512)
+        self.local_check(a)
+
         globals.end_openram()
         
 # run the test from the command line

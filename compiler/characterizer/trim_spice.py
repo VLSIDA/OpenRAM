@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import debug
-from math import log
+from math import log,ceil
 import re
 
 class trim_spice():
@@ -42,7 +42,7 @@ class trim_spice():
         self.word_size = word_size
 
         self.words_per_row = self.num_columns / self.word_size
-        self.row_addr_size = int(log(self.num_rows, 2))
+        self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))

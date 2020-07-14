@@ -15,8 +15,8 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 22_sram_1rw_1r_1bank_nomux_func_test")
-class psram_1bank_nomux_func_test(openram_test):
+@unittest.skip("SKIPPING 50_riscv_func_test")
+class riscv_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -24,12 +24,10 @@ class psram_1bank_nomux_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
-        OPTS.bitcell = "bitcell_1rw_1r"
-        OPTS.replica_bitcell = "replica_bitcell_1rw_1r"
-        OPTS.dummy_bitcell="dummy_bitcell_1rw_1r"
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
+        globals.setup_bitcell()
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -37,18 +35,19 @@ class psram_1bank_nomux_func_test(openram_test):
         reload(characterizer)
         from characterizer import functional, delay
         from sram_config import sram_config
-        c = sram_config(word_size=4,
-                        num_words=32,
+        c = sram_config(word_size=32,
+                        write_size=8,
+                        num_words=256,
                         num_banks=1)
         c.words_per_row=1
         c.recompute_sizes()
-        debug.info(1, "Functional test for sram 1rw,1r with "
+        debug.info(1, "Functional test RISC-V memory"
                    "{} bit words, {} words, {} words per row, {} banks".format(c.word_size,
                                                                                c.num_words,
                                                                                c.words_per_row,
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"        
+        tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])

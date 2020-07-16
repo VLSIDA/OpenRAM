@@ -13,6 +13,7 @@ from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
+
 class pinv_dec(pinv.pinv):
     """
     This is another version of pinv but with layout for the decoder.
@@ -50,9 +51,8 @@ class pinv_dec(pinv.pinv):
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
         if OPTS.tech_name == "sky130":
-            (self.nmos_width, self.tx_mults) = self.bin_width("nmos", self.nmos_width)
-            (self.pmos_width, self.tx_mults) = self.bin_width("pmos", self.pmos_width)
-            return
+            self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
+            self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
         
     # Over-ride the route input gate to call the horizontal version.
     # Other top-level netlist and layout functions are not changed.

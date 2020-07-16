@@ -14,15 +14,11 @@ from vector import vector
 from math import ceil
 from globals import OPTS
 from utils import round_to_grid
-from bisect import bisect_left
 import logical_effort
 from sram_factory import factory
 from errors import drc_error
 
-if(OPTS.tech_name == "sky130"):
-    from tech import nmos_bins, pmos_bins
 
-    
 class pinv(pgate.pgate):
     """
     Pinv generates gds of a parametrically sized inverter. The
@@ -164,8 +160,8 @@ class pinv(pgate.pgate):
         else:
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
-            nmos_bins = self.permute_widths("nmos", self.nmos_width)
-            pmos_bins = self.permute_widths("pmos", self.pmos_width)
+            nmos_bins = self.scaled_bins("nmos", self.nmos_width)
+            pmos_bins = self.scaled_bins("pmos", self.pmos_width)
 
             valid_pmos = []
             for bin in pmos_bins:

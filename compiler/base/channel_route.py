@@ -169,13 +169,13 @@ class channel_route(design.design):
                     continue
                 if net1.hcg_nets_overlap(net2):
                     try:
-                        hcg[net1.name].append(net2.name)
+                        hcg[net1.name].add(net2.name)
                     except KeyError:
-                        hcg[net1.name] = [net2.name]
+                        hcg[net1.name] = set([net2.name])
                     try:
-                        hcg[net2.name].append(net1.name)
+                        hcg[net2.name].add(net1.name)
                     except KeyError:
-                        hcg[net2.name] = [net1.name]
+                        hcg[net2.name] = set([net1.name])
 
             
         # Initialize the vertical conflict graph (vcg)
@@ -194,7 +194,7 @@ class channel_route(design.design):
             pitch = self.vertical_nonpref_pitch
 
         for net in nets:
-            vcg[net.name] = []
+            vcg[net.name] = set()
 
         for net1 in nets:
             for net2 in nets:
@@ -203,9 +203,19 @@ class channel_route(design.design):
                     continue
                 
                 if net1.vcg_nets_overlap(net2, pitch):
-                    vcg[net2.name].append(net1.name)
+                    vcg[net2.name].add(net1.name)
 
-        current_offset = self.offset
+        # Check if there are any cycles net1 <---> net2 in the VCG
+        
+
+        # Some of the pins may be to the left/below the channel offset,
+        # so adjust if this is the case
+        min_value = min([n.min_value for n in nets])
+        if self.vertical:
+            real_channel_offset = vector(self.offset.x, min_value)
+        else:
+            real_channel_offset = vector(min_value, self.offset.y)
+        current_offset = real_channel_offset
 
         # Sort nets by left edge value
         nets.sort()
@@ -221,7 +231,7 @@ class channel_route(design.design):
             # get a route from conflict graph with empty fanout set
             for net in nets:
                 # If it has no conflicts and the interval is to the right of the current offset in the track
-                if net.min_value > current_offset_value and len(vcg[net.name]) == 0:
+                if net.min_value >= current_offset_value and len(vcg[net.name]) == 0:
                     # print("Routing {}".format(net.name))
                     # Add the trunk routes from the bottom up for
                     # horizontal or the left to right for vertical
@@ -244,16 +254,16 @@ class channel_route(design.design):
             else:
                 # If we made a full pass and the offset didn't change...
                 current_offset_value = current_offset.y if self.vertical else current_offset.x
-                initial_offset_value = self.offset.y if self.vertical else self.offset.x
+                initial_offset_value = real_channel_offset.y if self.vertical else real_channel_offset.x
                 if current_offset_value == initial_offset_value:
                     # FIXME: We don't support cyclic VCGs right now.
                     debug.error("Cyclic VCG in channel router.", -1)
 
                 # Increment the track and reset the offset to the start (like a typewriter)
                 if self.vertical:
-                    current_offset = vector(current_offset.x + self.horizontal_nonpref_pitch, self.offset.y)
+                    current_offset = vector(current_offset.x + self.horizontal_nonpref_pitch, real_channel_offset.y)
                 else:
-                    current_offset = vector(self.offset.x, current_offset.y + self.vertical_nonpref_pitch)
+                    current_offset = vector(real_channel_offset.x, current_offset.y + self.vertical_nonpref_pitch)
                     
         # Return the size of the channel
         if self.vertical:

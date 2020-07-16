@@ -131,7 +131,7 @@ class ptx(design.design):
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
         if OPTS.tech_name == "sky130" and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
             # sky130 simulation cannot use the mult parameter in simulation
-            (self.tx_width, self.mults) = pgate.bin_width(self.tx_type, self.tx_width)
+            (self.tx_width, self.mults) = pgate.best_bin(self.tx_type, self.tx_width)
             main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                     self.mults,
                                                                     self.tx_width,

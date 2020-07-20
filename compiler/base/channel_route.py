@@ -213,11 +213,12 @@ class channel_route(design.design):
 
         # Some of the pins may be to the left/below the channel offset,
         # so adjust if this is the case
-        min_value = min([n.min_value for n in nets])
+        self.min_value = min([n.min_value for n in nets])
+        self.max_value = min([n.max_value for n in nets])
         if self.vertical:
-            real_channel_offset = vector(self.offset.x, min(min_value, self.offset.y))
+            real_channel_offset = vector(self.offset.x, min(self.min_value, self.offset.y))
         else:
-            real_channel_offset = vector(min(min_value, self.offset.x), self.offset.y)
+            real_channel_offset = vector(min(self.min_value, self.offset.x), self.offset.y)
         current_offset = real_channel_offset
 
         # Sort nets by left edge value
@@ -278,14 +279,12 @@ class channel_route(design.design):
                     
         # Return the size of the channel
         if self.vertical:
-            self.width = 0
-            self.height = current_offset.y
-            return current_offset.y + self.vertical_nonpref_pitch - self.offset.y
+            self.width = current_offset.x + self.horizontal_nonpref_pitch - self.offset.x
+            self.height = self.max_value + self.vertical_nonpref_pitch - self.offset.y
         else:
-            self.width = current_offset.x
-            self.height = 0
-            return current_offset.x + self.horizontal_nonpref_pitch - self.offset.x
-
+            self.width = self.max_value + self.horizontal_nonpref_pitch - self.offset.x
+            self.height = current_offset.y + self.vertical_nonpref_pitch - self.offset.y
+            
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         try:

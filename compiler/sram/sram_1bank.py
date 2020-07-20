@@ -465,7 +465,7 @@ class sram_1bank(sram_base):
                     self.add_inst("hc", cr)
                     self.connect_inst([])
                 else:
-                    self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port])
+                    self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
                 offset = vector(0,
                                 self.bank.height + 2 * self.m1_space)
@@ -477,7 +477,7 @@ class sram_1bank(sram_base):
                     self.add_inst("hc", cr)
                     self.connect_inst([])
                 else:
-                    self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port])
+                    self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
                     
     def route_clk(self):
         """ Route the clock network """

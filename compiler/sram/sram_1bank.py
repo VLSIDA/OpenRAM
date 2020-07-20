@@ -170,10 +170,10 @@ class sram_1bank(sram_base):
             x_offset = self.control_logic_insts[port].lx() - 2 * self.dff.width
             y_offset = self.bank.height + self.data_bus_size[port] + self.dff.height
             if self.col_addr_dff:
-                col_addr_pos[port] = vector(x_offset - self.col_addr_dff_insts[port].width,
+                col_addr_pos[port] = vector(x_offset,
                                             y_offset)
-                self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="MX")
-                x_offset = self.col_addr_dff_insts[port].lx()
+                self.col_addr_dff_insts[port].place(col_addr_pos[port], mirror="XY")
+                x_offset = self.col_addr_dff_insts[port].lx() - self.col_addr_dff_insts[port].width
             else:
                 col_addr_pos[port] = vector(x_offset, y_offset)
             
@@ -350,13 +350,29 @@ class sram_1bank(sram_base):
 
         route_map = []
         
-        # column mux dff
+        # column mux dff is routed on it's own since it is to the far end
+        # decoder inputs are min pitch M2, so need to use lower layer stack
         if self.col_addr_size > 0:
             dff_names = ["dout_{}".format(x) for x in range(self.col_addr_size)]
             dff_pins = [self.col_addr_dff_insts[port].get_pin(x) for x in dff_names]
             bank_names = ["addr{0}_{1}".format(port, x) for x in range(self.col_addr_size)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
+
+            if port == 0:
+                offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
+                                - self.data_bus_size[port] + 2 * self.m1_pitch)
+            else:
+                offset = vector(0,
+                                self.bank.height + 2 * self.m1_space)
+            
+            self.create_horizontal_channel_route(netlist=route_map,
+                                                 offset=offset,
+                                                 layer_stack=self.m1_stack)
+        
+
+            
+        route_map = []
         
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
@@ -397,29 +413,24 @@ class sram_1bank(sram_base):
         else:
             layer_stack = self.m1_stack
                 
-        if port == 0:
-            offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                            - self.data_bus_size[port] + 2 * self.m1_pitch)
-        else:
-            offset = vector(0,
-                            self.bank.height + 2 * self.m1_space)
-
         if len(route_map) > 0:
-            self.create_horizontal_channel_route(netlist=route_map,
+            if port == 0:
+                offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
+                                - self.data_bus_size[port] + 2 * self.m1_pitch)
+                import channel_route
+                cr = channel_route.channel_route(netlist=route_map,
                                                  offset=offset,
-                                                 layer_stack=layer_stack)
-
-        # # Route these separately because sometimes the pin pitch on the write driver is too narrow for M3 (FreePDK45)
-        # # spare wen dff
-        # if self.num_spare_cols > 0 and port in self.write_ports:
-        #     dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
-        #     dff_pins = [self.spare_wen_dff_insts[port].get_pin(x) for x in dff_names]
-        #     bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
-        #     bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-        #     route_map = zip(bank_pins, dff_pins)
-        #     self.create_horizontal_channel_route(netlist=route_map,
-        #                                          offset=offset,
-        #                                          layer_stack=self.m1_stack)
+                                                 layer_stack=layer_stack,
+                                                 parent=self)
+                self.add_inst("hc", cr)
+                self.connect_inst([])
+            
+            else:
+                offset = vector(0,
+                                self.bank.height + 2 * self.m1_space)
+                self.create_horizontal_channel_route(netlist=route_map,
+                                                     offset=offset,
+                                                     layer_stack=layer_stack)
         
     def route_clk(self):
         """ Route the clock network """

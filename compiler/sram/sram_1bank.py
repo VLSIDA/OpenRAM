@@ -206,7 +206,7 @@ class sram_1bank(sram_base):
                 self.col_addr_pos[port] = vector(x_offset,
                                                  y_offset)
                 self.col_addr_dff_insts[port].place(self.col_addr_pos[port], mirror="XY")
-                x_offset = self.col_addr_dff_insts[port].lx() - self.col_addr_dff_insts[port].width
+                x_offset = self.col_addr_dff_insts[port].lx()
             else:
                 self.col_addr_pos[port] = vector(x_offset, y_offset)
             

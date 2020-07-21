@@ -107,7 +107,6 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
-<<<<<<< HEAD
     #f.write(pre+"ext2spice lvs\n")
     f.write(pre+"ext2spice hierarchy on\n")
     f.write(pre+"ext2spice format ngspice\n")
@@ -123,23 +122,6 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     # but they all seem compatible enough.
     f.write(pre+"ext2spice format ngspice\n")
     f.write(pre+"ext2spice {}\n".format(cell_name))
-=======
-    # f.write(pre + "ext2spice lvs\n")
-    f.write(pre + "ext2spice hierarchy on\n")
-    f.write(pre + "ext2spice format ngspice\n")
-    f.write(pre + "ext2spice cthresh infinite\n")
-    f.write(pre + "ext2spice rthresh infinite\n")
-    f.write(pre + "ext2spice renumber off\n")
-    f.write(pre + "ext2spice scale off\n")
-    f.write(pre + "ext2spice blackbox on\n")
-    f.write(pre + "ext2spice subcircuit top auto\n")
-    f.write(pre + "ext2spice global off\n")
-
-    # Can choose hspice, ngspice, or spice3,
-    # but they all seem compatible enough.
-    #f.write(pre + "ext2spice format ngspice\n")
-    f.write(pre + "ext2spice {}\n".format(cell_name))
->>>>>>> dev
     f.write("quit -noprompt\n")
     f.write("EOF\n")
 

@@ -7,10 +7,11 @@
 #
 import design
 import debug
-from tech import drc
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer
+
 
 class precharge_array(design.design):
     """
@@ -18,7 +19,7 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br"):
+    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br", column_offset=0):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
@@ -27,10 +28,24 @@ class precharge_array(design.design):
         self.size = size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
+        self.column_offset = column_offset
 
+        if OPTS.tech_name == "sky130":
+            self.en_bar_layer = "m3"
+        else:
+            self.en_bar_layer = "m1"
+            
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
+
+    def get_bl_name(self):
+        bl_name = self.pc_cell.get_bl_names()
+        return bl_name
+
+    def get_br_name(self):
+        br_name = self.pc_cell.get_br_names()
+        return br_name
 
     def add_pins(self):
         """Adds pins for spice file"""
@@ -60,38 +75,29 @@ class precharge_array(design.design):
                                       size=self.size,
                                       bitcell_bl=self.bitcell_bl,
                                       bitcell_br=self.bitcell_br)
-                       
-        
         self.add_mod(self.pc_cell)
 
-        
     def add_layout_pins(self):
 
-        self.add_layout_pin(text="en_bar",
-                            layer="metal1",
-                            offset=self.pc_cell.get_pin("en_bar").ll(),
-                            width=self.width,
-                            height=drc("minwidth_metal1"))
+        en_pin = self.pc_cell.get_pin("en_bar")
+        start_offset = en_pin.lc().scale(0, 1)
+        end_offset = start_offset + vector(self.width, 0)
+        self.add_layout_pin_segment_center(text="en_bar",
+                                           layer=self.en_bar_layer,
+                                           start=start_offset,
+                                           end=end_offset)
 
         for inst in self.local_insts:
+            self.add_via_stack_center(from_layer=en_pin.layer,
+                                      to_layer=self.en_bar_layer,
+                                      offset=inst.get_pin("en_bar").center())
             self.copy_layout_pin(inst, "vdd")
             
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
-            bl_pin = inst.get_pin("bl")
-            self.add_layout_pin(text="bl_{0}".format(i),
-                                layer="metal2",
-                                offset=bl_pin.ll(),
-                                width=drc("minwidth_metal2"),
-                                height=bl_pin.height())
-            br_pin = inst.get_pin("br") 
-            self.add_layout_pin(text="br_{0}".format(i),
-                                layer="metal2",
-                                offset=br_pin.ll(),
-                                width=drc("minwidth_metal2"),
-                                height=bl_pin.height())
+            self.copy_layout_pin(inst, "bl", "bl_{0}".format(i))
+            self.copy_layout_pin(inst, "br", "br_{0}".format(i))
         
-
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""
         self.local_insts = []
@@ -104,16 +110,28 @@ class precharge_array(design.design):
             self.local_insts.append(inst)
             self.connect_inst(["bl_{0}".format(i), "br_{0}".format(i), "en_bar", "vdd"])
 
-
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
+        from tech import cell_properties
+        xoffset = 0
         for i in range(self.columns):
-            offset = vector(self.pc_cell.width * i, 0)
-            self.local_insts[i].place(offset)                                   
+            tempx = xoffset
+            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+                mirror = "MY"
+                tempx = tempx + self.pc_cell.width
+            else:
+                mirror = ""
+
+            offset = vector(tempx, 0)
+            self.local_insts[i].place(offset=offset, mirror=mirror)
+            xoffset = xoffset + self.pc_cell.width
 
     def get_en_cin(self):
-        """Get the relative capacitance of all the clk connections in the precharge array"""        
-        #Assume single port
+        """
+        Get the relative capacitance of all the clk connections
+        in the precharge array
+        """
+        # Assume single port
         precharge_en_cin = self.pc_cell.get_en_cin()
-        return precharge_en_cin*self.columns  
+        return precharge_en_cin * self.columns
         

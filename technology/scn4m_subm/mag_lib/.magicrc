@@ -1,5 +1,0 @@
-path sys +$::env(OPENRAM_TECH)/scn4m_subm/tech
-tech load SCN4M_SUBM.20 -noprompt
-scalegrid 1 4
-set GND gnd
-set VDD vdd

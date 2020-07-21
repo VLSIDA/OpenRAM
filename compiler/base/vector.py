@@ -28,6 +28,7 @@ class vector():
         else:
             self.x = float(x)
             self.y = float(y)
+        self._hash = hash((self.x,self.y))
 
     def __str__(self):
         """ override print function output """
@@ -49,7 +50,7 @@ class vector():
         else:
             self.x=float(value[0])
             self.y=float(value[1])
-
+            
     def __getitem__(self, index):
         """
         override getitem function 
@@ -97,7 +98,7 @@ class vector():
         Note: This assumes that you DON'T CHANGE THE VECTOR or it will
         break things.
         """
-        return hash((self.x,self.y))
+        return self._hash
 
     def snap_to_grid(self):
         self.x = self.snap_offset_to_grid(self.x)

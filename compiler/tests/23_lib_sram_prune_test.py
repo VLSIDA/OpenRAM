@@ -18,8 +18,10 @@ import debug
 class lib_sram_prune_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         OPTS.analytical_delay = False
+        OPTS.netlist_only = True
         OPTS.trim_netlist = True
 
         # This is a hack to reload the characterizer __init__ with the spice version

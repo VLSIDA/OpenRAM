@@ -18,7 +18,8 @@ import debug
 class pdriver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
         debug.info(2, "Testing inverter/buffer 4x 8x")
         # a tests the error message for specifying conflicting conditions
@@ -31,13 +32,13 @@ class pdriver_test(openram_test):
         c = factory.create(module_type="pdriver", fanout = 50)
         self.local_check(c)
         
-        d = factory.create(module_type="pdriver", fanout = 50, neg_polarity = True)
+        d = factory.create(module_type="pdriver", fanout = 50, inverting = True)
         self.local_check(d)
         
         e = factory.create(module_type="pdriver", fanout = 64)
         self.local_check(e)
         
-        f = factory.create(module_type="pdriver", fanout = 64, neg_polarity = True)
+        f = factory.create(module_type="pdriver", fanout = 64, inverting = True)
         self.local_check(f)
 
         globals.end_openram()

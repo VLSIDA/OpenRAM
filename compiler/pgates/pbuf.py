@@ -37,6 +37,8 @@ class pbuf(pgate.pgate):
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.route_supply_rails()
+        self.add_boundary()
         
     def add_pins(self):
         self.add_pin("A", "INPUT")
@@ -54,7 +56,8 @@ class pbuf(pgate.pgate):
         
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.size,
-                                   height=self.height)
+                                   height=self.height,
+                                   add_wells=False)
         self.add_mod(self.inv2)
 
     def create_insts(self):
@@ -77,26 +80,9 @@ class pbuf(pgate.pgate):
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
-        mid_point = vector(z1_pin.cx(), a2_pin.cy())
-        self.add_path("metal1", [z1_pin.center(), mid_point, a2_pin.center()])
+        self.add_zjog(self.route_layer, z1_pin.center(), a2_pin.center())
         
     def add_layout_pins(self):
-        # Continous vdd rail along with label.
-        vdd_pin = self.inv1_inst.get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=vdd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-        
-        # Continous gnd rail along with label.
-        gnd_pin = self.inv1_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-            
         z_pin = self.inv2_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
                                         layer=z_pin.layer,

@@ -18,7 +18,8 @@ import debug
 class ptx_3finger_pmos_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         import tech
 
         debug.info(2, "Checking three fingers PMOS")
@@ -26,7 +27,8 @@ class ptx_3finger_pmos_test(openram_test):
                              width=tech.drc["minwidth_tx"],
                              mults=3,
                              tx_type="pmos",
-                             connect_active=True,
+                             connect_source_active=True,
+                             connect_drain_active=True,
                              connect_poly=True)
         self.local_drc_check(fet)
 

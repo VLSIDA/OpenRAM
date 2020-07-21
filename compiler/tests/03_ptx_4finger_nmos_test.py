@@ -18,15 +18,17 @@ import debug
 class ptx_4finger_nmos_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         import tech
 
         debug.info(2, "Checking three fingers NMOS")
-        fet = factory.create(module_type="ptx",        
+        fet = factory.create(module_type="ptx",
                              width= tech.drc["minwidth_tx"],
                              mults=4,
                              tx_type="nmos",
-                             connect_active=True,
+                             connect_source_active=True,
+                             connect_drain_active=True,
                              connect_poly=True)
         self.local_drc_check(fet)
 

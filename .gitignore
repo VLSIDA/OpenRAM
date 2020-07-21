@@ -1,8 +1,12 @@
 .DS_Store
 *~
+*.orig
+*.rej
 *.pyc
 *.aux
 *.out
 *.toc
 *.synctex.gz
 **/model_data
+outputs
+technology/freepdk45/ncsu_basekit

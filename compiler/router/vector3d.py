@@ -27,7 +27,7 @@ class vector3d():
             self.x = x
             self.y = y
             self.z = z
-
+        self._hash = hash((self.x,self.y,self.z))
             
     def __str__(self):
         """ override print function output """
@@ -96,7 +96,7 @@ class vector3d():
         Note: This assumes that you DON'T CHANGE THE VECTOR or it will
         break things.
         """
-        return hash((self.x,self.y,self.z))
+        return self._hash
 
 
     def __rsub__(self, other):

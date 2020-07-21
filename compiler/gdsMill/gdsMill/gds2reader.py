@@ -12,14 +12,14 @@ class Gds2reader:
         self.fileHandle = None
         self.layoutObject = layoutObject
         self.debugToTerminal=debugToTerminal
-	
+
           #do we dump debug data to the screen
-    
+
     def print64AsBinary(self,number):
         for index in range(0,64):
             print((number>>(63-index))&0x1,eol='')
         print("\n")
-        
+
     def stripNonASCII(self,bytestring):
         string = bytestring.decode('utf-8')
         return string
@@ -29,20 +29,20 @@ class Gds2reader:
        #(1)sign (7)exponent (56)mantissa
        #exponent is excess 64, mantissa has no implied 1
        #a normal IEEE double is like this:
-       #(1)sign (11)exponent (52)mantissa        
+       #(1)sign (11)exponent (52)mantissa
        data = struct.unpack('>q',ibmData)[0]
        sign = (data >> 63)&0x01
        exponent = (data >> 56) & 0x7f
        mantissa = data<<8 #chop off sign and exponent
-       
+
        if mantissa == 0:
            newFloat = 0.0
-       else:           
+       else:
            exponent = ((exponent-64)*4)+1023 #convert to double exponent
            #re normalize
-           while mantissa & 0x8000000000000000 == 0:            
+           while mantissa & 0x8000000000000000 == 0:
                mantissa<<=1
-               exponent-=1 
+               exponent-=1
            mantissa<<=1  #remove the assumed high bit
            exponent-=1
            #check for underflow error  -- should handle these properly!
@@ -56,7 +56,7 @@ class Gds2reader:
            #convert back to double
            newFloat = struct.unpack('>d',asciiDouble)[0]
        return newFloat
-    
+
     def ieeeFloatCheck(self,aFloat):
         asciiDouble = struct.pack('>d',aFloat)
         data = struct.unpack('>q',asciiDouble)[0]
@@ -70,12 +70,12 @@ class Gds2reader:
         asciiDouble = struct.pack('>q',(sign<<63)|(exponent+1023<<52)|(mantissa>>12))
         newFloat = struct.unpack('>d',asciiDouble)[0]
         print("Check:"+str(newFloat))
-    
+
     def readNextRecord(self):
         global offset
         recordLengthAscii = self.fileHandle.read(2) #first 2 bytes tell us the length of the record
         if len(recordLengthAscii)==0:
-            return 
+            return
         recordLength = struct.unpack(">h",recordLengthAscii)  #gives us a tuple with a short int inside
         offset_int = int(recordLength[0])  # extract length
         offset += offset_int  # count offset
@@ -96,20 +96,20 @@ class Gds2reader:
         else:
             print("Invalid GDSII Header")
             return -1
-        
+
         #read records until we hit the UNITS section... this is the last part of the header
         while 1:
             record = self.readNextRecord()
             idBits = record[0:2]
             ## Modified Date
             if idBits==b'\x01\x02' and len(record)==26:
-                modYear = struct.unpack(">h",record[2:4])[0]                
+                modYear = struct.unpack(">h",record[2:4])[0]
                 modMonth = struct.unpack(">h",record[4:6])[0]
                 modDay = struct.unpack(">h",record[6:8])[0]
                 modHour = struct.unpack(">h",record[8:10])[0]
                 modMinute = struct.unpack(">h",record[10:12])[0]
                 modSecond = struct.unpack(">h",record[12:14])[0]
-                lastAccessYear = struct.unpack(">h",record[14:16])[0]                
+                lastAccessYear = struct.unpack(">h",record[14:16])[0]
                 lastAccessMonth = struct.unpack(">h",record[16:18])[0]
                 lastAccessDay = struct.unpack(">h",record[18:20])[0]
                 lastAccessHour = struct.unpack(">h",record[20:22])[0]
@@ -164,17 +164,19 @@ class Gds2reader:
                     print("Mask: "+mask)
             elif(idBits==b'\x03\x05'):  #this is also wrong b/c python doesn't natively have an 8 byte float
                 userUnits=self.ieeeDoubleFromIbmData(record[2:10])
-                dbUnits=self.ieeeDoubleFromIbmData
+                dbUnits=self.ieeeDoubleFromIbmData(record[10:18])
                 self.layoutObject.info["units"] = (userUnits,dbUnits)
                 if(self.debugToTerminal==1):
                     print("Units: 1 user unit="+str(userUnits)+" database units, 1 database unit="+str(dbUnits)+" meters.")
                 break;
-        if(self.debugToTerminal==1):    
+        if(self.debugToTerminal==1):
             print("End of GDSII Header Found")
         return 1
-    
+
     def readBoundary(self):
         ##reads in a boundary type structure = a filled polygon
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginBoundary")
         thisBoundary=GdsBoundary()
         while 1:
             record = self.readNextRecord()
@@ -196,16 +198,11 @@ class Gds2reader:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
                     print("\t\tDrawing Layer: "+str(drawingLayer))
-            elif(idBits==b'\x16\x02'):  #Purpose
+            elif(idBits==b'\x0E\x02'):  #Purpose DATATYPE
                 purposeLayer = struct.unpack(">h",record[2:4])[0]
-                thisBoundary.purposeLayer=purposeLayer                
+                thisBoundary.purposeLayer=purposeLayer
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
-            elif(idBits==b'\x0E\x02'):  #DataType
-                dataType = struct.unpack(">h",record[2:4])[0]
-                thisBoundary.dataType=dataType
-                if(self.debugToTerminal==1):
-                    print("\t\t\tData Type: "+str(dataType))
             elif(idBits==b'\x10\x03'):  #XY Data Points
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisBoundary.coordinates=[]
@@ -216,10 +213,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndBoundary")
                 break;
         return thisBoundary
-    
+
     def readPath(self):  #reads in a path structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginPath")
+
         thisPath=GdsPath()
         while 1:
             record = self.readNextRecord()
@@ -243,7 +245,7 @@ class Gds2reader:
                     print("\t\t\tDrawing Layer: "+str(drawingLayer))
             elif(idBits==b'\x16\x02'):  #Purpose
                 purposeLayer = struct.unpack(">h",record[2:4])[0]
-                thisPath.purposeLayer=purposeLayer                
+                thisPath.purposeLayer=purposeLayer
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
             elif(idBits==b'\x21\x02'):  #Path type
@@ -251,6 +253,11 @@ class Gds2reader:
                 thisPath.pathType=pathType
                 if(self.debugToTerminal==1):
                     print("\t\t\tPath Type: "+str(pathType))
+            elif(idBits==b'\x0E\x02'):  #Data type
+                dataType = struct.unpack(">h",record[2:4])[0]
+                thisPath.dataType=dataType
+                if(self.debugToTerminal==1):
+                    print("\t\t\tData Type: "+str(dataType))
             elif(idBits==b'\x0F\x03'):  #Path width
                 pathWidth = struct.unpack(">i",record[2:6])[0]
                 thisPath.pathWidth=pathWidth
@@ -266,10 +273,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndPath")
                 break;
         return thisPath
-    
+
     def readSref(self):  #reads in a reference to another structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginSref")
+
         thisSref=GdsSref()
         while 1:
             record = self.readNextRecord()
@@ -306,7 +318,7 @@ class Gds2reader:
                     print("\t\t\tMagnification:"+str(magFactor))
             elif(idBits==b'\x1C\x05'):  #Rotate Angle
                 rotateAngle=self.ieeeDoubleFromIbmData(record[2:10])
-                thisSref.rotateAngle=rotateAngle                
+                thisSref.rotateAngle=rotateAngle
                 if(self.debugToTerminal==1):
                     print("\t\t\tRotate Angle (CCW):"+str(rotateAngle))
             elif(idBits==b'\x10\x03'):  #XY Data Points
@@ -317,10 +329,15 @@ class Gds2reader:
                 if(self.debugToTerminal==1):
                     print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndSref")
                 break;
         return thisSref
-    
+
     def readAref(self):  #an array of references
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginAref")
+
         thisAref = GdsAref()
         while 1:
             record = self.readNextRecord()
@@ -357,7 +374,7 @@ class Gds2reader:
                     print("\t\t\tMagnification:"+str(magFactor))
             elif(idBits==b'\x1C\x05'):  #Rotate Angle
                 rotateAngle=self.ieeeDoubleFromIbmData(record[2:10])
-                thisAref.rotateAngle=rotateAngle                
+                thisAref.rotateAngle=rotateAngle
                 if(self.debugToTerminal==1):
                     print("\t\t\tRotate Angle (CCW):"+str(rotateAngle))
             elif(idBits==b'\x10\x03'):  #XY Data Points
@@ -372,11 +389,15 @@ class Gds2reader:
                     print("\t\t\t\tArray Width: "+str(rightMostX-topLeftX))
                     print("\t\t\t\tArray Height: "+str(topLeftY-bottomMostY))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndAref")
                 break;
         return thisAref
-    
+
     def readText(self):
-        ##reads in a text structure
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginText")
+
         thisText=GdsText()
         while 1:
             record = self.readNextRecord()
@@ -398,9 +419,9 @@ class Gds2reader:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
                     print("\t\tDrawing Layer: "+str(drawingLayer))
-            elif(idBits==b'\x16\x02'):  #Purpose
+            elif(idBits==b'\x16\x02'):  #Purpose TEXTTYPE
                 purposeLayer = struct.unpack(">h",record[2:4])[0]
-                thisText.purposeLayer=purposeLayer                
+                thisText.purposeLayer=purposeLayer
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
             elif(idBits==b'\x1A\x01'):  #Transformation
@@ -472,10 +493,15 @@ class Gds2reader:
                 if(self.debugToTerminal==1):
                     print("\t\t\tText String: "+textString)
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndText")
                 break;
         return thisText
-    
+
     def readNode(self):
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginNode")
+
         ##reads in a node type structure = an electrical net
         thisNode = GdsNode()
         while 1:
@@ -513,10 +539,15 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndNode")
                 break;
         return thisNode
-    
+
     def readBox(self):
+        if(self.debugToTerminal==1):
+            print("\t\t\tBeginBox")
+
         ##reads in a gds BOX structure
         thisBox = GdsBox()
         while 1:
@@ -539,9 +570,9 @@ class Gds2reader:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
                     print("\t\tDrawing Layer: "+str(drawingLayer))
-            elif(idBits==b'\x16\x02'):  #Purpose
+            elif(idBits==b'\x16\x02'):  #Purpose TEXTYPE
                 purposeLayer = struct.unpack(">h",record[2:4])[0]
-                thisBox.purposeLayer=purposeLayer                
+                thisBox.purposeLayer=purposeLayer
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
             elif(idBits==b'\x2D\x00'):  #Box
@@ -559,15 +590,18 @@ class Gds2reader:
                     if(self.debugToTerminal==1):
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
+                if(self.debugToTerminal==1):
+                    print("\t\t\tEndBox")
                 break;
         return thisBox
-    
+
     def readNextStructure(self):
-        thisStructure = GdsStructure()        
+        thisStructure = GdsStructure()
         record = self.readNextRecord()
         idBits = record[0:2]
+        # Begin structure
         if(idBits==b'\x05\x02' and len(record)==26):
-            createYear = struct.unpack(">h",record[2:4])[0]            
+            createYear = struct.unpack(">h",record[2:4])[0]
             createMonth = struct.unpack(">h",record[4:6])[0]
             createDay = struct.unpack(">h",record[6:8])[0]
             createHour = struct.unpack(">h",record[8:10])[0]
@@ -581,6 +615,10 @@ class Gds2reader:
             modSecond = struct.unpack(">h",record[24:26])[0]
             thisStructure.createDate=(createYear,createMonth,createDay,createHour,createMinute,createSecond)
             thisStructure.modDate=(modYear,modMonth,modDay,modHour,modMinute,modSecond)
+            if(self.debugToTerminal==1):
+                print("Date Created:"+str(createYear)+","+str(createMonth)+","+str(createDay)+\
+                      ","+str(createHour)+","+str(createMinute)+","+str(createSecond))
+                print("Date Modified:"+str(modYear)+","+str(modMonth)+","+str(modDay)+","+str(modHour)+","+str(modMinute)+","+str(modSecond))
         else:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it
@@ -590,7 +628,7 @@ class Gds2reader:
             idBits = record[0:2]
             if idBits==b'\x07\x00': break; #we've reached the end of the structure
             elif(idBits==b'\x06\x06'):
-                structName = self.stripNonASCII(record[2::]) 
+                structName = self.stripNonASCII(record[2::])
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
                     print("\tStructure Name: "+structName)
@@ -608,11 +646,11 @@ class Gds2reader:
                 thisStructure.nodes+=[self.readNode()]
             elif(idBits==b'\x2E\x02'):
                 thisStructure.boxes+=[self.readBox()]
-        if(self.debugToTerminal==1):        
+        if(self.debugToTerminal==1):
             print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
         return 1
-    
+
     def readGds2(self):
         if(self.readHeader()):  #did the header read ok?
             record = self.readNextStructure()
@@ -629,7 +667,7 @@ class Gds2reader:
                 print("There was an error reading the structure list.")
         else:
             print("There was an error parsing the GDS header.  Aborting...")
-            
+
     def loadFromFile(self, fileName):
         self.fileHandle = open(fileName,"rb")
         self.readGds2()
@@ -657,11 +695,11 @@ class Gds2reader:
 
     def findStruct_readNextStruct(self,findStructName):
         self.debugToTerminal=0
-        thisStructure = GdsStructure()        
+        thisStructure = GdsStructure()
         record = self.readNextRecord()
         idBits = record[0:2]
         if(idBits==('\x05','\x02') and len(record)==26):
-            createYear = struct.unpack(">h",record[2]+record[3])[0]            
+            createYear = struct.unpack(">h",record[2]+record[3])[0]
             createMonth = struct.unpack(">h",record[4]+record[5])[0]
             createDay = struct.unpack(">h",record[6]+record[7])[0]
             createHour = struct.unpack(">h",record[8]+record[9])[0]
@@ -686,10 +724,6 @@ class Gds2reader:
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print(''.[x for x in structName if ord(x) < 128])
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
-#                print(self.stripNonASCII(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(findStructName==thisStructure.name):
                     wantedStruct=1
@@ -709,7 +743,7 @@ class Gds2reader:
                 thisStructure.nodes+=[self.readNode()]
             elif(idBits==('\x2E','\x02')):
                 thisStructure.boxes+=[self.readBox()]
-        if(self.debugToTerminal==1):        
+        if(self.debugToTerminal==1):
             print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
         if(wantedStruct == 0):
@@ -737,11 +771,11 @@ class Gds2reader:
 
     def findLabel_readNextStruct(self,findLabelName):
         self.debugToTerminal=0
-        thisStructure = GdsStructure()        
+        thisStructure = GdsStructure()
         record = self.readNextRecord()
         idBits = record[0:2]
         if(idBits==('\x05','\x02') and len(record)==26):
-            createYear = struct.unpack(">h",record[2]+record[3])[0]            
+            createYear = struct.unpack(">h",record[2]+record[3])[0]
             createMonth = struct.unpack(">h",record[4]+record[5])[0]
             createDay = struct.unpack(">h",record[6]+record[7])[0]
             createHour = struct.unpack(">h",record[8]+record[9])[0]
@@ -767,10 +801,6 @@ class Gds2reader:
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print(''.[x for x in structName if ord(x) < 128])
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
-#                print(self.stripNonASCIIx(structName)) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
                     print("\tStructure Name: "+structName)
@@ -795,7 +825,7 @@ class Gds2reader:
                 thisStructure.nodes+=[self.readNode()]
             elif(idBits==('\x2E','\x02')):
                 thisStructure.boxes+=[self.readBox()]
-        if(self.debugToTerminal==1):        
+        if(self.debugToTerminal==1):
             print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
         if(wantedLabel == 0):
@@ -803,4 +833,3 @@ class Gds2reader:
         else:
             #print("\tDone with collectting bound. Return")
             return [0,wantedtexts]
-

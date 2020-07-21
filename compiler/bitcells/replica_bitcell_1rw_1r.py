@@ -9,6 +9,7 @@ import design
 import debug
 import utils
 from tech import GDS,layer,drc,parameter
+from tech import cell_properties as props
 
 class replica_bitcell_1rw_1r(design.design):
     """
@@ -17,7 +18,15 @@ class replica_bitcell_1rw_1r(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = ["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"]
+    pin_names = [props.bitcell.cell_1rw1r.pin.bl0,
+                 props.bitcell.cell_1rw1r.pin.br0,
+                 props.bitcell.cell_1rw1r.pin.bl1,
+                 props.bitcell.cell_1rw1r.pin.br1,
+                 props.bitcell.cell_1rw1r.pin.wl0,
+                 props.bitcell.cell_1rw1r.pin.wl1,
+                 props.bitcell.cell_1rw1r.pin.vdd,
+                 props.bitcell.cell_1rw1r.pin.gnd]
+
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]  
     (width,height) = utils.get_libcell_size("replica_cell_1rw_1r", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1rw_1r", GDS["unit"])
@@ -47,14 +56,15 @@ class replica_bitcell_1rw_1r(design.design):
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]
         return 2*access_tx_cin
 
-    def build_graph(self, graph, inst_name, port_nets):        
+    def build_graph(self, graph, inst_name, port_nets):
         """Adds edges to graph. Multiport bitcell timing graph is too complex
            to use the add_graph_edges function."""
-        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)} 
+        pin_dict = {pin:port for pin,port in zip(self.pins, port_nets)}
+        pins = props.bitcell.cell_1rw1r.pin
         #Edges hardcoded here. Essentially wl->bl/br for both ports.
         # Port 0 edges
-        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"], self)   
-        graph.add_edge(pin_dict["wl0"], pin_dict["br0"], self)   
+        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.bl0], self)
+        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.br0], self)
         # Port 1 edges
-        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)   
-        graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)  
+        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.bl1], self)
+        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.br1], self)

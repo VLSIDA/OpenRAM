@@ -7,12 +7,34 @@
 #
 import os
 from design_rules import *
+from module_type import *
+from custom_cell_properties import cell_properties
 
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
 """
 
-#GDS file info
+###################################################
+# Custom modules
+###################################################
+
+# This uses the default classes to instantiate module from
+# '$OPENRAM_HOME/compiler/modules'.
+# Using tech_modules['cellname'] you can override each class by providing a custom
+# implementation in '$OPENRAM_TECHDIR/modules/'
+# For example: tech_modules['contact'] = 'contact_scn4m'
+tech_modules = module_type()
+
+###################################################
+# Custom cell properties
+###################################################
+cell_properties = cell_properties()
+cell_properties.bitcell.mirror.x = True
+cell_properties.bitcell.mirror.y = False
+
+###################################################
+# GDS file info
+###################################################
 GDS={}
 # gds units
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
@@ -28,40 +50,73 @@ GDS["unit"]=(0.001,1e-6)
 # default label zoom
 GDS["zoom"] = 0.5
 
+###################################################
+# Interconnect stacks
+###################################################
+
+poly_stack = ("poly", "poly_contact", "m1")
+active_stack = ("active", "active_contact", "m1")
+m1_stack = ("m1", "via1", "m2")
+m2_stack = ("m2", "via2", "m3")
+m3_stack = ("m3", "via3", "m4")
+
+layer_indices = {"poly": 0,
+                 "active": 0,
+                 "m1": 1,
+                 "m2": 2,
+                 "m3": 3,
+                 "m4": 4}
+
+# The FEOL stacks get us up to m1
+feol_stacks = [poly_stack,
+               active_stack]
+
+# The BEOL stacks are m1 and up
+beol_stacks = [m1_stack,
+               m2_stack,
+               m3_stack]
+
+layer_stacks = feol_stacks + beol_stacks
+
+preferred_directions = {"poly": "V",
+                        "active": "V",
+                        "m1": "H",
+                        "m2": "V",
+                        "m3": "H",
+                        "m4": "V"}
+
+###################################################
+# Power grid
+###################################################
+# Use M3/M4
+power_grid = m3_stack
 
 ###################################################
 ##GDS Layer Map
 ###################################################
 
 # create the GDS layer map
-layer={} 
-layer["vtg"]            = -1 
-layer["vth"]            = -1 
-layer["contact"]        = 47 
-layer["pwell"]          = 41 
-layer["nwell"]          = 42 
-layer["active"]         = 43 
-layer["pimplant"]       = 44
-layer["nimplant"]       = 45
-layer["poly"]           = 46 
-layer["active_contact"] = 48
-layer["metal1"]         = 49 
-layer["via1"]           = 50 
-layer["metal2"]         = 51 
-layer["via2"]           = 61 
-layer["metal3"]         = 62 
-layer["via3"]           = 30
-layer["metal4"]         = 31 
-layer["text"]           = 63 
-layer["boundary"]       = 63 
-layer["blockage"]       = 83
+layer={}
+layer["pwell"]          = (41, 0)
+layer["nwell"]          = (42, 0)
+layer["active"]         = (43, 0)
+layer["pimplant"]       = (44, 0)
+layer["nimplant"]       = (45, 0)
+layer["poly"]           = (46, 0)
+layer["poly_contact"]   = (47, 0)
+layer["active_contact"] = (48, 0)
+layer["m1"]         = (49, 0)
+layer["via1"]           = (50, 0)
+layer["m2"]         = (51, 0)
+layer["via2"]           = (61, 0)
+layer["m3"]         = (62, 0)
+layer["via3"]           = (30, 0)
+layer["m4"]         = (31, 0)
+layer["text"]           = (63, 0)
+layer["boundary"]       = (63, 0)
 
 ###################################################
-##END GDS Layer Map
-###################################################
-
-###################################################
-##DRC/LVS Rules Setup
+# DRC/LVS Rules Setup
 ###################################################
 _lambda_ = 0.2
 
@@ -79,10 +134,6 @@ drclvs_home=os.environ.get("DRCLVS_HOME")
 
 drc = design_rules("scn4me_sub")
 
-drc["body_tie_down"] = 0
-drc["has_pwell"] = True
-drc["has_nwell"] = True
-
 #grid size is 1/2 a lambda
 drc["grid"]=0.5*_lambda_
 
@@ -95,150 +146,173 @@ drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
 drc["minwidth_tx"] = 4*_lambda_
 drc["minlength_channel"] = 2*_lambda_
 
-# 1.3 Minimum spacing between wells of same type (if both are drawn) 
-drc["well_to_well"] = 6*_lambda_
-# 1.4 Minimum spacing between wells of different type (if both are drawn) 
+# 1.4 Minimum spacing between wells of different type (if both are drawn)
 drc["pwell_to_nwell"] = 0
-# 1.1 Minimum width 
-drc["minwidth_well"] = 12*_lambda_
+# 1.3 Minimum spacing between wells of same type (if both are drawn)
+# 1.1 Minimum width
+drc.add_layer("nwell",
+              width = 12*_lambda_,
+              spacing = 6*_lambda_)
+drc.add_layer("pwell",
+              width = 12*_lambda_,
+              spacing = 6*_lambda_)
 
 # 3.1 Minimum width 
-drc["minwidth_poly"] = 2*_lambda_
 # 3.2 Minimum spacing over active
-drc["poly_to_poly"] = 3*_lambda_
+drc.add_layer("poly",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
 # 3.3 Minimum gate extension of active 
 drc["poly_extend_active"] = 2*_lambda_
 # 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
-drc["poly_to_polycontact"] = 4*_lambda_
+drc["poly_to_contact"] = 4*_lambda_
 # ??
-drc["active_enclosure_gate"] = 0.0
+drc["active_enclose_gate"] = 0.0
 # 3.5 Minimum field poly to active 
 drc["poly_to_active"] = _lambda_
 # 3.2.a Minimum spacing over field poly
 drc["poly_to_field_poly"] = 3*_lambda_
-# Not a rule
-drc["minarea_poly"] = 0.0
 
-# ??
-drc["active_to_body_active"] = 4*_lambda_  # Fix me
 # 2.1 Minimum width 
-drc["minwidth_active"] = 3*_lambda_
 # 2.2 Minimum spacing
-drc["active_to_active"] = 3*_lambda_
+drc.add_layer("active",
+              width = 3*_lambda_,
+              spacing = 4*_lambda_)
+
 # 2.3 Source/drain active to well edge 
-drc["well_enclosure_active"] = 6*_lambda_
-# Reserved for asymmetric enclosures
-drc["well_extend_active"] = 6*_lambda_
-# Not a rule
-drc["minarea_active"] = 0.0
+drc.add_enclosure("nwell",
+                  layer = "active",
+                  enclosure = 6*_lambda_)
+drc.add_enclosure("pwell",
+                  layer = "active",
+                  enclosure = 6*_lambda_)
 
 # 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width 
 drc["implant_to_channel"] = 3*_lambda_
 # 4.2 Minimum select overlap of active
-drc["implant_enclosure_active"] = 2*_lambda_
+drc.add_enclosure("implant",
+                  layer = "active",
+                  enclosure = 2*_lambda_)
 # 4.3 Minimum select overlap of contact  
-drc["implant_enclosure_contact"] = _lambda_
+drc.add_enclosure("implant",
+                  layer = "contact",
+                  enclosure = _lambda_)
 # Not a rule
 drc["implant_to_contact"] = 0
 # Not a rule
-drc["implant_to_implant"] = 0
-# Not a rule
-drc["minwidth_implant"] = 0
+drc.add_layer("implant",
+              width = 0,
+              spacing = 0)
 
 # 6.1 Exact contact size
-drc["minwidth_contact"] = 2*_lambda_
 # 5.3 Minimum contact spacing
-drc["contact_to_contact"] = 3*_lambda_               
-# 6.2.b Minimum active overlap 
-drc["active_enclosure_contact"] = _lambda_
-# Reserved for asymmetric enclosure
-drc["active_extend_contact"] = _lambda_
-# 5.2.b Minimum poly overlap 
-drc["poly_enclosure_contact"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["poly_extend_contact"] = _lambda_
+drc.add_layer("active_contact",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
+# 6.2.b Minimum active overlap
+drc.add_enclosure("active",
+                  layer = "active_contact",
+                  enclosure = _lambda_)
+drc.add_enclosure("active",
+                  layer = "contact",
+                  enclosure = _lambda_)
 # Reserved for other technologies
-drc["contact_to_gate"] = 2*_lambda_
+drc["active_contact_to_gate"] = 2*_lambda_
 # 5.4 Minimum spacing to gate of transistor
-drc["contact_to_poly"] = 2*_lambda_
-        
+drc["poly_contact_to_gate"] = 2*_lambda_
+
+# 6.1 Exact contact size
+# 5.3 Minimum contact spacing
+drc.add_layer("poly_contact",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
+# 5.2.b Minimum poly overlap 
+drc.add_enclosure("poly",
+                  layer = "poly_contact",
+                  enclosure = _lambda_)
+# Reserved for other technologies
+drc["poly_contact_to_gate"] = 2*_lambda_
+# 5.4 Minimum spacing to gate of transistor
+drc["poly_contact_to_poly"] = 2*_lambda_
+
 # 7.1 Minimum width 
-drc["minwidth_metal1"] = 3*_lambda_
 # 7.2 Minimum spacing 
-drc["metal1_to_metal1"] = 3*_lambda_
+drc.add_layer("m1",
+              width = 3*_lambda_,
+              spacing = 3*_lambda_)
 # 7.3 Minimum overlap of any contact 
-drc["metal1_enclosure_contact"] = _lambda_
-# Reserved for asymmetric enclosure
-drc["metal1_extend_contact"] = _lambda_
-# 8.3 Minimum overlap by metal1 
-drc["metal1_enclosure_via1"] = _lambda_           
-# Reserve for asymmetric enclosures
-drc["metal1_extend_via1"] = _lambda_
-# Not a rule
-drc["minarea_metal1"] = 0
+drc.add_enclosure("m1",
+                  layer = "poly_contact",
+                  enclosure = _lambda_)
+drc.add_enclosure("m1",
+                  layer = "active_contact",
+                  enclosure = _lambda_)
+# 8.3 Minimum overlap by m1
+drc.add_enclosure("m1",
+                  layer = "via1",
+                  enclosure = _lambda_)
 
 # 8.1 Exact size 
-drc["minwidth_via1"] = 2*_lambda_
 # 8.2 Minimum via1 spacing 
-drc["via1_to_via1"] = 3*_lambda_
+drc.add_layer("via1",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
 
 # 9.1 Minimum width
-drc["minwidth_metal2"] = 3*_lambda_
 # 9.2 Minimum spacing 
-drc["metal2_to_metal2"] = 3*_lambda_
+drc.add_layer("m2",
+              width = 3*_lambda_,
+              spacing = 3*_lambda_)
 # 9.3 Minimum overlap of via1 
-drc["metal2_extend_via1"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal2_enclosure_via1"] = _lambda_
-# 14.3 Minimum overlap by metal2
-drc["metal2_extend_via2"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal2_enclosure_via2"] = _lambda_
-# Not a rule
-drc["minarea_metal2"] = 0
+drc.add_enclosure("m2",
+                  layer = "via1",
+                  enclosure = _lambda_)
+# 14.3 Minimum overlap by m2
+drc.add_enclosure("m2",
+                  layer = "via2",
+                  enclosure = _lambda_)
 
 # 14.1 Exact size
-drc["minwidth_via2"] = 2*_lambda_
 # 14.2 Minimum spacing
-drc["via2_to_via2"] = 3*_lambda_
+drc.add_layer("via2",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
 
 # 15.1 Minimum width
-drc["minwidth_metal3"] = 3*_lambda_
-# 15.2 Minimum spacing to metal3
-drc["metal3_to_metal3"] = 3*_lambda_
+# 15.2 Minimum spacing to m3
+drc.add_layer("m3",
+              width = 3*_lambda_,
+              spacing = 3*_lambda_)
+
 # 15.3 Minimum overlap of via 2
-drc["metal3_extend_via2"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal3_enclosure_via2"] = _lambda_
-# 21.3 Minimum overlap by metal3
-drc["metal3_extend_via3"] = _lambda_
-# Reserved for asymmetric enclosures
-drc["metal3_enclosure_via3"] = _lambda_
-# Not a rule
-drc["minarea_metal3"] = 0
+drc.add_enclosure("m3",
+                  layer = "via2",
+                  enclosure = _lambda_)
+
+# 21.3 Minimum overlap by m3
+drc.add_enclosure("m3",
+                  layer = "via3",
+                  enclosure = _lambda_)
 
 # 21.1 Exact size
-drc["minwidth_via3"] = 2*_lambda_
 # 21.2 Minimum spacing
-drc["via3_to_via3"] = 3*_lambda_
+drc.add_layer("via3",
+              width = 2*_lambda_,
+              spacing = 3*_lambda_)
 
 # 22.1 Minimum width
-drc["minwidth_metal4"] = 6*_lambda_
-# 22.2 Minimum spacing to metal4
-drc["metal4_to_metal4"] = 6*_lambda_
+# 22.2 Minimum spacing to m4
+drc.add_layer("m4",
+              width = 6*_lambda_,
+              spacing = 6*_lambda_)
+
 # 22.3 Minimum overlap of via 3
-drc["metal4_extend_via3"] = 2*_lambda_
-# Reserved for asymmetric enclosures
-drc["metal4_enclosure_via3"] = 2*_lambda_
-# Not a rule
-drc["minarea_metal4"] = 0
+drc.add_enclosure("m4",
+                  layer = "via3",
+                  enclosure = 2*_lambda_)
 
 ###################################################
-##END DRC/LVS Rules
-###################################################
-
-###################################################
-##Spice Simulation Parameters
+# Spice Simulation Parameters
 ###################################################
 
 # spice model info
@@ -303,5 +377,11 @@ parameter["sa_inv_nmos_size"] = 9*_lambda_
 parameter["bitcell_drain_cap"] = 0.2        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################
-##END Spice Simulation Parameters
+# Technology Tool Preferences
 ###################################################
+
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
+
+blackbox_bitcell = False

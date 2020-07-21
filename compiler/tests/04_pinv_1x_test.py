@@ -18,13 +18,14 @@ import debug
 class pinv_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
         debug.info(2, "Checking 1x size inverter")
         tx = factory.create(module_type="pinv", size=1)
         self.local_check(tx)
 
-        globals.end_openram()        
+        globals.end_openram()
 
 # run the test from the command line
 if __name__ == "__main__":

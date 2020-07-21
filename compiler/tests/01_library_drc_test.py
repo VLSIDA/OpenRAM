@@ -17,19 +17,19 @@ import debug
 class library_drc_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         import verify
 
-        (gds_dir, gds_files) = setup_files()
+        (gds_dir, allnames) = setup_files()
         drc_errors = 0
-        debug.info(1, "\nPerforming DRC on: " + ", ".join(gds_files))
-        for f in gds_files:
-            name = re.sub('\.gds$', '', f)
-            gds_name = "{0}/{1}".format(gds_dir, f)
+        debug.info(1, "\nPerforming DRC on: " + ", ".join(allnames))
+        for f in allnames:
+            gds_name = "{0}/{1}.gds".format(gds_dir, f)            
             if not os.path.isfile(gds_name):
                 drc_errors += 1
                 debug.error("Missing GDS file: {}".format(gds_name))
-            drc_errors += verify.run_drc(name, gds_name)
+            drc_errors += verify.run_drc(f, gds_name)
 
         # fails if there are any DRC errors on any cells
         self.assertEqual(drc_errors, 0)
@@ -41,7 +41,23 @@ def setup_files():
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
     gds_files = list(filter(nametest.search, files))
-    return (gds_dir, gds_files)
+
+    tempnames = gds_files
+    
+    # remove the .gds and .sp suffixes
+    for i in range(len(tempnames)):
+        gds_files[i] = re.sub('\.gds$', '', tempnames[i])
+
+    try:
+        from tech import blackbox_cells
+        nameset = list(set(tempnames) - set(blackbox_cells))
+    except ImportError:
+        # remove duplicate base names
+        nameset = set(tempnames)
+
+    allnames = list(nameset)
+
+    return (gds_dir, allnames)
 
 
 # run the test from the command line

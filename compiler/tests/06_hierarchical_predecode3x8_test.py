@@ -18,20 +18,10 @@ import debug
 class hierarchical_predecode3x8_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
-        # checking hierarchical precode 3x8 for single port
         debug.info(1, "Testing sample for hierarchy_predecode3x8")
-        a = factory.create(module_type="hierarchical_predecode3x8")
-        self.local_check(a)
-        
-        # checking hierarchical precode 3x8 for multi-port
-        OPTS.bitcell = "pbitcell"
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 0
-        OPTS.num_r_ports = 0
-        
-        debug.info(1, "Testing sample for hierarchy_predecode3x8 (multi-port case)")
         a = factory.create(module_type="hierarchical_predecode3x8")
         self.local_check(a)
 

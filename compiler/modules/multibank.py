@@ -160,7 +160,7 @@ class multibank(design.design):
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell"] + drc["well_enclosure_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell"] + drc["well_enclose_active"),
                           2*self.m2_pitch)
 
 
@@ -451,14 +451,14 @@ class multibank(design.design):
             # Connect the inverter output to the central bus
             out_pos = self.bank_select_inst.get_pin(gated_name).rc()
             bus_pos = vector(self.bus_xoffset[gated_name], out_pos.y)
-            self.add_path("metal3",[out_pos, bus_pos])
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_path("m3",[out_pos, bus_pos])
+            self.add_via_center(layers=self.m2_stack,
                                 offset=bus_pos,
                                 rotate=90)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_via_center(layers=self.m1_stack,
                                 offset=out_pos,
                                 rotate=90)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=out_pos,
                                 rotate=90)
         
@@ -512,7 +512,7 @@ class multibank(design.design):
         # 2 pitches on the right for vias/jogs to access the inputs 
         control_bus_offset = vector(-self.m2_pitch * self.num_control_lines - self.m2_width, 0)
         control_bus_length = self.bitcell_array_inst.uy()
-        self.bus_xoffset = self.create_vertical_bus(layer="metal2",
+        self.bus_xoffset = self.create_vertical_bus(layer="m2",
                                                     pitch=self.m2_pitch,
                                                     offset=control_bus_offset,
                                                     names=self.control_signals,
@@ -530,9 +530,9 @@ class multibank(design.design):
             bitcell_br = self.bitcell_array_inst.get_pin("br_{}".format(i)).uc()
 
             yoffset = 0.5*(precharge_bl.y+bitcell_bl.y)
-            self.add_path("metal2",[precharge_bl, vector(precharge_bl.x,yoffset),
+            self.add_path("m2",[precharge_bl, vector(precharge_bl.x,yoffset),
                                     vector(bitcell_bl.x,yoffset), bitcell_bl])
-            self.add_path("metal2",[precharge_br, vector(precharge_br.x,yoffset),
+            self.add_path("m2",[precharge_br, vector(precharge_br.x,yoffset),
                                     vector(bitcell_br.x,yoffset), bitcell_br])
 
 
@@ -550,9 +550,9 @@ class multibank(design.design):
             bitcell_br = self.bitcell_array_inst.get_pin("br_{}".format(i)).bc()
 
             yoffset = 0.5*(col_mux_bl.y+bitcell_bl.y)
-            self.add_path("metal2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
+            self.add_path("m2",[col_mux_bl, vector(col_mux_bl.x,yoffset),
                                     vector(bitcell_bl.x,yoffset), bitcell_bl])
-            self.add_path("metal2",[col_mux_br, vector(col_mux_br.x,yoffset),
+            self.add_path("m2",[col_mux_br, vector(col_mux_br.x,yoffset),
                                     vector(bitcell_br.x,yoffset), bitcell_br])
         
     def route_sense_amp_to_col_mux_or_bitcell_array(self):
@@ -573,9 +573,9 @@ class multibank(design.design):
             
                 
             yoffset = 0.5*(sense_amp_bl.y+connect_bl.y)
-            self.add_path("metal2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
+            self.add_path("m2",[sense_amp_bl, vector(sense_amp_bl.x,yoffset),
                                     vector(connect_bl.x,yoffset), connect_bl])
-            self.add_path("metal2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
+            self.add_path("m2",[sense_amp_br, vector(sense_amp_br.x,yoffset),
                                     vector(connect_br.x,yoffset), connect_br])
             
     def route_sense_amp_to_trigate(self):
@@ -586,11 +586,11 @@ class multibank(design.design):
             tri_gate_in = self.tri_gate_array_inst.get_pin("in_{}".format(i)).lc()
             sa_data_out = self.sense_amp_array_inst.get_pin("data_{}".format(i)).bc()
 
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=tri_gate_in)
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
+            self.add_via_center(layers=self.m2_stack,
                                 offset=sa_data_out)
-            self.add_path("metal3",[sa_data_out,tri_gate_in])
+            self.add_path("m3",[sa_data_out,tri_gate_in])
 
     def route_sense_amp_out(self):
         """ Add pins for the sense amp output """
@@ -644,14 +644,14 @@ class multibank(design.design):
             driver_in_pos = self.wordline_driver_inst.get_pin("in_{}".format(i)).lc()
             mid1 = decoder_out_pos.scale(0.5,1)+driver_in_pos.scale(0.5,0)
             mid2 = decoder_out_pos.scale(0.5,0)+driver_in_pos.scale(0.5,1)
-            self.add_path("metal1", [decoder_out_pos, mid1, mid2, driver_in_pos])
+            self.add_path("m1", [decoder_out_pos, mid1, mid2, driver_in_pos])
 
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pos = self.wordline_driver_inst.get_pin("wl_{}".format(i)).rc()
             bitcell_wl_pos = self.bitcell_array_inst.get_pin("wl_{}".format(i)).lc()
             mid1 = driver_wl_pos.scale(0.5,1)+bitcell_wl_pos.scale(0.5,0)
             mid2 = driver_wl_pos.scale(0.5,0)+bitcell_wl_pos.scale(0.5,1)
-            self.add_path("metal1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path("m1", [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 
         
 
@@ -698,8 +698,8 @@ class multibank(design.design):
             else:
                 mid1_pos = vector(decode_out_pos.x + delta_offset + (self.num_col_addr_lines-i)*self.m2_pitch,decode_out_pos.y)
             mid2_pos = vector(mid1_pos.x,mux_addr_pos.y)
-            #self.add_wire(("metal1","via1","metal2"),[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
-            self.add_path("metal1",[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            #self.add_wire(self.m1_stack,[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
+            self.add_path("m1",[decode_out_pos, mid1_pos, mid2_pos, mux_addr_pos])
             
 
             
@@ -715,7 +715,7 @@ class multibank(design.design):
             wl_name = "wl_{}".format(i)
             wl_pin = self.bitcell_array_inst.get_pin(wl_name)
             self.add_label(text=wl_name,
-                           layer="metal1",  
+                           layer="m1",  
                            offset=wl_pin.center())
         
         # Add the bitline names
@@ -725,10 +725,10 @@ class multibank(design.design):
             bl_pin = self.bitcell_array_inst.get_pin(bl_name)
             br_pin = self.bitcell_array_inst.get_pin(br_name)
             self.add_label(text=bl_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=bl_pin.center())
             self.add_label(text=br_name,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=br_pin.center())
 
         # # Add the data output names to the sense amp output     
@@ -736,7 +736,7 @@ class multibank(design.design):
         #     data_name = "data_{}".format(i)
         #     data_pin = self.sense_amp_array_inst.get_pin(data_name)
         #     self.add_label(text="sa_out_{}".format(i),
-        #                    layer="metal2",  
+        #                    layer="m2",  
         #                    offset=data_pin.center())
 
         # Add labels on the decoder
@@ -745,7 +745,7 @@ class multibank(design.design):
             pin_name = "in_{}".format(i)            
             data_pin = self.wordline_driver_inst.get_pin(pin_name)
             self.add_label(text=data_name,
-                           layer="metal1",  
+                           layer="m1",  
                            offset=data_pin.center())
             
             
@@ -765,8 +765,8 @@ class multibank(design.design):
   
         for (control_signal, pin_pos) in connection:
             control_pos = vector(self.bus_xoffset[control_signal].x ,pin_pos.y)
-            self.add_path("metal1", [control_pos, pin_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
+            self.add_path("m1", [control_pos, pin_pos])
+            self.add_via_center(layers=self.m1_stack,
                                 offset=control_pos,
                                 rotate=90)
 
@@ -776,9 +776,9 @@ class multibank(design.design):
         mid_pos = pin_pos + vector(0,self.m1_pitch)
         control_x_offset = self.bus_xoffset[control_signal].x
         control_pos = vector(control_x_offset + self.m1_width, mid_pos.y)
-        self.add_wire(("metal1","via1","metal2"),[pin_pos, mid_pos, control_pos])
+        self.add_wire(self.m1_stack,[pin_pos, mid_pos, control_pos])
         control_via_pos = vector(control_x_offset, mid_pos.y)
-        self.add_via_center(layers=("metal1", "via1", "metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=control_via_pos,
                             rotate=90)
         
@@ -791,13 +791,13 @@ class multibank(design.design):
             if self.num_banks > 1:
                 # it's not an input pin if we have multiple banks
                 self.add_label_pin(text=ctrl,
-                                    layer="metal2",  
+                                    layer="m2",  
                                     offset=vector(x_offset, self.min_y_offset), 
                                     width=self.m2_width, 
                                     height=self.max_y_offset-self.min_y_offset)
             else:
                 self.add_layout_pin(text=ctrl,
-                                    layer="metal2",  
+                                    layer="m2",  
                                     offset=vector(x_offset, self.min_y_offset), 
                                     width=self.m2_width, 
                                     height=self.max_y_offset-self.min_y_offset)
@@ -807,12 +807,12 @@ class multibank(design.design):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
         in_pin = inst.get_pin(pin).lc()
         rail_pos = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
+        self.add_wire(("m3","via2","m2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
         # Bring it up to M2 for M2/M3 routing
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + contact.m1m2.offset,
+        self.add_via(layers=self.m1_stack,
+                     offset=in_pin + contact.m1_via.offset,
                      rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
+        self.add_via(layers=self.m2_stack,
                      offset=in_pin + self.m2m3_via_offset,
                      rotate=90)
         
@@ -821,10 +821,10 @@ class multibank(design.design):
         """ Helper routine to connect an unrotated/mirrored oriented instance to the rails """
         in_pin = inst.get_pin(pin).rc()
         rail_pos = vector(self.rail_1_x_offsets[rail], in_pin.y)
-        self.add_wire(("metal3","via2","metal2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
-        self.add_via(layers=("metal1","via1","metal2"),
-                     offset=in_pin + contact.m1m2.offset,
+        self.add_wire(("m3","via2","m2"),[in_pin, rail_pos, rail_pos - vector(0,self.m2_pitch)])
+        self.add_via(layers=self.m1_stack,
+                     offset=in_pin + contact.m1_via.offset,
                      rotate=90)
-        self.add_via(layers=("metal2","via2","metal3"),
+        self.add_via(layers=self.m2_stack,
                      offset=in_pin + self.m2m3_via_offset,
                      rotate=90)

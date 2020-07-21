@@ -42,9 +42,11 @@ class bank_select(design.design):
         self.place_instances()
         self.route_instances()
 
+        self.height = max([x.uy() for x in self.inv_inst]) + self.m1_width
+        self.width = max([x.rx() for x in self.inv_inst])
+        
         self.add_boundary()
         self.DRC_LVS()
-
 
     def add_pins(self):
         
@@ -61,19 +63,18 @@ class bank_select(design.design):
         if (self.port == "rw") or (self.port == "r"):
             self.input_control_signals.append("s_en")
         # These will be outputs of the gaters if this is multibank
-        self.control_signals = ["gated_"+str for str in self.input_control_signals]
+        self.control_signals = ["gated_" + str for str in self.input_control_signals]
 
         self.add_pin_list(self.input_control_signals, "INPUT")
         self.add_pin("bank_sel")
         self.add_pin_list(self.control_signals, "OUTPUT")
-        self.add_pin("vdd","POWER")  
-        self.add_pin("gnd","GROUND")  
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
         """ Create modules for later instantiation """
-        self.bitcell = factory.create(module_type="bitcell")
-        
-        height = self.bitcell.height + drc("poly_to_active")
+        self.dff = factory.create(module_type="dff")
+        height = self.dff.height + drc("poly_to_active")
 
         # 1x Inverter
         self.inv_sel = factory.create(module_type="pinv", height=height)
@@ -94,20 +95,15 @@ class bank_select(design.design):
 
     def calculate_module_offsets(self):
         
-        self.xoffset_nand =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
-        self.xoffset_nor =  self.inv4x.width + 2*self.m2_pitch + drc("pwell_to_nwell")
-        self.xoffset_inv = max(self.xoffset_nand + self.nand2.width, self.xoffset_nor + self.nor2.width) 
-        self.xoffset_bank_sel_inv = 0 
+        self.xoffset_nand = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
+        self.xoffset_nor = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
+        self.xoffset_bank_sel_inv = 0
         self.xoffset_inputs = 0
-
         self.yoffset_maxpoint = self.num_control_lines * self.inv4x.height
-        # Include the M1 pitches for the supply rails and spacing
-        self.height = self.yoffset_maxpoint + 2*self.m1_pitch
-        self.width = self.xoffset_inv + self.inv4x.width
         
     def create_instances(self):
         
-        self.bank_sel_inv=self.add_inst(name="bank_sel_inv", 
+        self.bank_sel_inv=self.add_inst(name="bank_sel_inv",
                                         mod=self.inv_sel)
         self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
 
@@ -124,36 +120,36 @@ class bank_select(design.design):
             # (writes occur on clk low)
             if input_name in ("clk_buf"):
                 
-                self.logic_inst.append(self.add_inst(name=name_nor, 
-                                         mod=self.nor2))
+                self.logic_inst.append(self.add_inst(name=name_nor,
+                                                     mod=self.nor2))
                 self.connect_inst([input_name,
                                    "bank_sel_bar",
-                                   gated_name+"_temp_bar",
+                                   gated_name + "_temp_bar",
                                    "vdd",
                                    "gnd"])
                 
                 # They all get inverters on the output
-                self.inv_inst.append(self.add_inst(name=name_inv, 
+                self.inv_inst.append(self.add_inst(name=name_inv,
                                                    mod=self.inv4x_nor))
-                self.connect_inst([gated_name+"_temp_bar",
+                self.connect_inst([gated_name + "_temp_bar",
                                    gated_name,
                                    "vdd",
                                    "gnd"])
                 
             # the rest are AND (nand2+inv) gates
             else:
-                self.logic_inst.append(self.add_inst(name=name_nand, 
+                self.logic_inst.append(self.add_inst(name=name_nand,
                                                      mod=self.nand2))
                 self.connect_inst([input_name,
                                    "bank_sel",
-                                   gated_name+"_temp_bar",
+                                   gated_name + "_temp_bar",
                                    "vdd",
                                    "gnd"])
 
                 # They all get inverters on the output
-                self.inv_inst.append(self.add_inst(name=name_inv, 
+                self.inv_inst.append(self.add_inst(name=name_inv,
                                                    mod=self.inv4x))
-                self.connect_inst([gated_name+"_temp_bar",
+                self.connect_inst([gated_name + "_temp_bar",
                                    gated_name,
                                    "vdd",
                                    "gnd"])
@@ -176,9 +172,9 @@ class bank_select(design.design):
             if i == 0:
                 y_offset = 0
             else:
-                y_offset = self.inv4x_nor.height + self.inv4x.height * (i-1)
+                y_offset = self.inv4x_nor.height + self.inv4x.height * (i - 1)
             
-            if i%2:
+            if i % 2:
                 y_offset += self.inv4x.height
                 mirror = "MX"
             else:
@@ -197,9 +193,8 @@ class bank_select(design.design):
                                  mirror=mirror)
 
             # They all get inverters on the output
-            inv_inst.place(offset=[self.xoffset_inv, y_offset],
+            inv_inst.place(offset=[logic_inst.rx(), y_offset],
                            mirror=mirror)
-            
 
     def route_instances(self):
         
@@ -208,31 +203,30 @@ class bank_select(design.design):
         xoffset_bank_sel = bank_sel_inv_pin.lx()
         bank_sel_line_pos = vector(xoffset_bank_sel, 0)
         bank_sel_line_end = vector(xoffset_bank_sel, self.yoffset_maxpoint)
-        self.add_path("metal2", [bank_sel_line_pos, bank_sel_line_end])
-        self.add_via_center(layers=("metal1","via1","metal2"),
-                            offset=bank_sel_inv_pin.lc())
+        self.add_path("m2", [bank_sel_line_pos, bank_sel_line_end])
+        self.add_via_center(layers=self.m1_stack,
+                            offset=bank_sel_inv_pin.center())
 
         # Route the pin to the left edge as well
         bank_sel_pin_pos=vector(0, 0)
         bank_sel_pin_end=vector(bank_sel_line_pos.x, bank_sel_pin_pos.y)
         self.add_layout_pin_segment_center(text="bank_sel",
-                                           layer="metal3",
+                                           layer="m3",
                                            start=bank_sel_pin_pos,
                                            end=bank_sel_pin_end)
-        self.add_via_center(layers=("metal2","via2","metal3"),
+        self.add_via_center(layers=self.m2_stack,
                             offset=bank_sel_pin_end,
-                            directions=("H","H"))
+                            directions=("H", "H"))
 
         # bank_sel_bar is vertical wire
         bank_sel_bar_pin = self.bank_sel_inv.get_pin("Z")
         xoffset_bank_sel_bar = bank_sel_bar_pin.rx()
         self.add_label_pin(text="bank_sel_bar",
-                           layer="metal2",  
-                           offset=vector(xoffset_bank_sel_bar, 0), 
+                           layer="m2",
+                           offset=vector(xoffset_bank_sel_bar, 0),
                            height=self.inv4x.height)
-        self.add_via_center(layers=("metal1","via1","metal2"),
+        self.add_via_center(layers=self.m1_stack,
                             offset=bank_sel_bar_pin.rc())
-            
             
         for i in range(self.num_control_lines):
 
@@ -240,40 +234,41 @@ class bank_select(design.design):
             inv_inst = self.inv_inst[i]
             
             input_name = self.input_control_signals[i]
-            gated_name = self.control_signals[i]            
+            gated_name = self.control_signals[i]
             if input_name in ("clk_buf"):
                 xoffset_bank_signal = xoffset_bank_sel_bar
             else:
                 xoffset_bank_signal = xoffset_bank_sel
                 
             # Connect the logic output to inverter input
-            pre = logic_inst.get_pin("Z").lc()
-            out_position = logic_inst.get_pin("Z").rc() + vector(0.5*self.m1_width,0)
-            in_position = inv_inst.get_pin("A").lc() + vector(0.5*self.m1_width,0)
-            post = inv_inst.get_pin("A").rc()
-            self.add_path("metal1", [pre, out_position, in_position, post])
+            out_pin = logic_inst.get_pin("Z")
+            out_pos = out_pin.center()
+            in_pin = inv_inst.get_pin("A")
+            in_pos = in_pin.center()
+            mid1_pos = vector(0.5 * (out_pos.x + in_pos.x), out_pos.y)
+            mid2_pos = vector(0.5 * (out_pos.x + in_pos.x), in_pos.y)
+            self.add_path("m1", [out_pos, mid1_pos, mid2_pos, in_pos])
             
-            
-            # Connect the logic B input to bank_sel/bank_sel_bar
-            logic_pos = logic_inst.get_pin("B").lc() - vector(0.5*contact.m1m2.height,0)
+            # Connect the logic B input to bank_sel / bank_sel_bar
+            logic_pin = logic_inst.get_pin("B")
+            logic_pos = logic_pin.center()
             input_pos = vector(xoffset_bank_signal, logic_pos.y)
-            self.add_path("metal2",[logic_pos, input_pos])
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=logic_pos,
-                                directions=("H","H"))
+            self.add_path("m3", [logic_pos, input_pos])
+            self.add_via_center(self.m2_stack,
+                                input_pos)
+            self.add_via_stack_center(from_layer=logic_pin.layer,
+                                      to_layer="m3",
+                                      offset=logic_pos)
 
-            
             # Connect the logic A input to the input pin
-            logic_pos = logic_inst.get_pin("A").lc()
-            input_pos = vector(0,logic_pos.y)
-            self.add_via_center(layers=("metal1", "via1", "metal2"),
-                                offset=logic_pos,
-                                directions=("H","H"))
-            self.add_via_center(layers=("metal2", "via2", "metal3"),
-                                offset=logic_pos,
-                                directions=("H","H"))
+            logic_pin = logic_inst.get_pin("A")
+            logic_pos = logic_pin.center()
+            input_pos = vector(0, logic_pos.y)
+            self.add_via_stack_center(from_layer=logic_pin.layer,
+                                      to_layer="m3",
+                                      offset=logic_pos)
             self.add_layout_pin_segment_center(text=input_name,
-                                               layer="metal3",
+                                               layer="m3",
                                                start=input_pos,
                                                end=logic_pos)
 
@@ -285,7 +280,6 @@ class bank_select(design.design):
                                 width=inv_inst.rx() - out_pin.lx(),
                                 height=out_pin.height())
 
-
         # Find the x offsets for where the vias/pins should be placed
         a_xoffset = self.logic_inst[0].lx()
         b_xoffset = self.inv_inst[0].lx()
@@ -293,35 +287,35 @@ class bank_select(design.design):
             # Route both supplies
             for n in ["vdd", "gnd"]:
                 supply_pin = self.inv_inst[num].get_pin(n)
-                supply_offset = supply_pin.ll().scale(0,1)
-                self.add_rect(layer="metal1",
+                supply_offset = supply_pin.ll().scale(0, 1)
+                self.add_rect(layer="m1",
                               offset=supply_offset,
                               width=self.width)
 
                 # Add pins in two locations
                 for xoffset in [a_xoffset, b_xoffset]:
                     pin_pos = vector(xoffset, supply_pin.cy())
-                    self.add_via_center(layers=("metal1", "via1", "metal2"),
+                    self.add_via_center(layers=self.m1_stack,
                                         offset=pin_pos,
-                                        directions=("H","H"))
-                    self.add_via_center(layers=("metal2", "via2", "metal3"),
+                                        directions=("H", "H"))
+                    self.add_via_center(layers=self.m2_stack,
                                         offset=pin_pos,
-                                        directions=("H","H"))
+                                        directions=("H", "H"))
                     self.add_layout_pin_rect_center(text=n,
-                                                    layer="metal3",
+                                                    layer="m3",
                                                     offset=pin_pos)
             
             # Add vdd/gnd supply rails
-            gnd_pin = inv_inst.get_pin("gnd")
+            gnd_pin = self.inv_inst[num].get_pin("gnd")
             left_gnd_pos = vector(0, gnd_pin.cy())
             self.add_layout_pin_segment_center(text="gnd",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=left_gnd_pos,
                                                end=gnd_pin.rc())
             
-            vdd_pin = inv_inst.get_pin("vdd")
+            vdd_pin = self.inv_inst[num].get_pin("vdd")
             left_vdd_pos = vector(0, vdd_pin.cy())
             self.add_layout_pin_segment_center(text="vdd",
-                                               layer="metal1",
+                                               layer="m1",
                                                start=left_vdd_pos,
                                                end=vdd_pin.rc())

@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc,layer
+from tech import drc, layer, preferred_directions
 from contact import contact
-from pin_group import pin_group
 from vector import vector
 import debug
 import math
+
 
 class router_tech:
     """
@@ -18,16 +18,15 @@ class router_tech:
     """
     def __init__(self, layers, rail_track_width):
         """
-        Allows us to change the layers that we are routing on. First layer
-        is always horizontal, middle is via, and last is always
-        vertical.
+        Allows us to change the layers that we are routing on.
+        This uses the preferreed directions.
         """
         self.layers = layers
         self.rail_track_width = rail_track_width
 
-        if len(self.layers)==1:
+        if len(self.layers) == 1:
             self.horiz_layer_name = self.vert_layer_name = self.layers[0]
-            self.horiz_layer_number = self.vert_layer_number = layer[self.layers[0]]
+            self.horiz_lpp = self.vert_lpp = layer[self.layers[0]]
             
             (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
             (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
@@ -35,13 +34,31 @@ class router_tech:
             self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
             self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
         else:
-            (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
+            (try_horiz_layer, self.via_layer_name, try_vert_layer) = self.layers
+
+            # figure out wich of the two layers prefers horizontal/vertical
+            # routing
+            self.horiz_layer_name = None
+            self.vert_layer_name = None
+            
+            if preferred_directions[try_horiz_layer] == "H":
+                self.horiz_layer_name = try_horiz_layer
+            else:
+                self.horiz_layer_name = try_vert_layer
+            if preferred_directions[try_vert_layer] == "V":
+                self.vert_layer_name = try_vert_layer
+            else:
+                self.vert_layer_name = try_horiz_layer
+
+            if not self.horiz_layer_name or not self.vert_layer_name:
+                raise ValueError("Layer '{}' and '{}' are using the wrong "
+                                 "preferred_directions '{}' and '{}'.")
 
             via_connect = contact(self.layers, (1, 1))
             max_via_size = max(via_connect.width,via_connect.height)
 
-            self.horiz_layer_number = layer[self.horiz_layer_name]
-            self.vert_layer_number = layer[self.vert_layer_name]
+            self.horiz_lpp = layer[self.horiz_layer_name]
+            self.vert_lpp = layer[self.vert_layer_name]
         
             (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
             (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
@@ -68,8 +85,18 @@ class router_tech:
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_wire, 1, self.track_wire]
         
-    def get_zindex(self,layer_num):
-        if layer_num==self.horiz_layer_number:
+    def same_lpp(self, lpp1, lpp2):
+        """
+        Check if the layers and purposes are the same.
+        Ignore if purpose is a None.
+        """
+        if lpp1[1] == None or lpp2[1] == None:
+            return lpp1[0] == lpp2[0]
+        
+        return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
+
+    def get_zindex(self, lpp):
+        if self.same_lpp(lpp, self.horiz_lpp):
             return 0
         else:
             return 1

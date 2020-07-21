@@ -17,7 +17,8 @@ import debug
 class library_lvs_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         import verify
 
         (gds_dir, sp_dir, allnames) = setup_files()
@@ -34,7 +35,7 @@ class library_lvs_test(openram_test):
                 debug.error("Missing GDS file {}".format(gds_name))
             if not os.path.isfile(sp_name):
                 lvs_errors += 1
-                debug.error("Missing SPICE file {}".format(gds_name))
+                debug.error("Missing SPICE file {}".format(sp_name))
             drc_errors += verify.run_drc(name, gds_name)
             lvs_errors += verify.run_lvs(f, gds_name, sp_name)
 
@@ -44,7 +45,9 @@ class library_lvs_test(openram_test):
 
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"
-    sp_dir = OPTS.openram_tech + "/sp_lib"
+    sp_dir = OPTS.openram_tech + "/lvs_lib"
+    if not os.path.exists(sp_dir):
+        sp_dir = OPTS.openram_tech + "/sp_lib"
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
     gds_files = list(filter(nametest.search, files))
@@ -61,8 +64,13 @@ def setup_files():
         tempnames[i] = re.sub('\.gds$', '', tempnames[i])
         tempnames[i] = re.sub('\.sp$', '', tempnames[i])
 
-    # remove duplicate base names
-    nameset = set(tempnames)
+    try:
+        from tech import blackbox_cells
+        nameset = list(set(tempnames) - set(blackbox_cells))
+    except ImportError:
+        # remove duplicate base names
+        nameset = set(tempnames)
+
     allnames = list(nameset)
 
     return (gds_dir, sp_dir, allnames)

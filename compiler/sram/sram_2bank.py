@@ -103,25 +103,25 @@ class sram_2bank(sram_base):
         for n in self.control_logic_outputs + ["vdd", "gnd"]:
             pins = self.control_logic_inst.get_pins(n)
             for pin in pins:
-                if pin.layer=="metal2":
+                if pin.layer=="m2":
                     pin_pos = pin.bc()
                     break
             rail_pos = vector(pin_pos.x,self.horz_control_bus_positions[n].y)
-            self.add_path("metal2",[pin_pos,rail_pos])
-            self.add_via_center(("metal1","via1","metal2"),rail_pos)
+            self.add_path("m2",[pin_pos,rail_pos])
+            self.add_via_center(self.m1_stack,rail_pos)
         
         # connect the control logic cross bar
         for n in self.control_logic_outputs:
             cross_pos = vector(self.vert_control_bus_positions[n].x,self.horz_control_bus_positions[n].y)
-            self.add_via_center(("metal1","via1","metal2"),cross_pos)
+            self.add_via_center(self.m1_stack,cross_pos)
 
         # connect the bank select signals to the vertical bus
         for i in range(self.num_banks):
             pin = self.bank_inst[i].get_pin("bank_sel")
             pin_pos = pin.rc() if i==0 else pin.lc()
             rail_pos = vector(self.vert_control_bus_positions["bank_sel[{}]".format(i)].x,pin_pos.y)
-            self.add_path("metal3",[pin_pos,rail_pos])
-            self.add_via_center(("metal2","via2","metal3"),rail_pos)
+            self.add_path("m3",[pin_pos,rail_pos])
+            self.add_via_center(self.m2_stack,rail_pos)
 
     def route_single_msb_address(self):
         """ Route one MSB address bit for 2-bank SRAM """
@@ -129,37 +129,37 @@ class sram_2bank(sram_base):
         # connect the bank MSB flop supplies
         vdd_pins = self.msb_address_inst.get_pins("vdd")
         for vdd_pin in vdd_pins:
-            if vdd_pin.layer != "metal1": continue
+            if vdd_pin.layer != "m1": continue
             vdd_pos = vdd_pin.bc()
             down_pos = vdd_pos - vector(0,self.m1_pitch)
             rail_pos = vector(vdd_pos.x,self.horz_control_bus_positions["vdd"].y)
-            self.add_path("metal1",[vdd_pos,down_pos])            
-            self.add_via_center(("metal1","via1","metal2"),down_pos,rotate=90)   
-            self.add_path("metal2",[down_pos,rail_pos])
-            self.add_via_center(("metal1","via1","metal2"),rail_pos)
+            self.add_path("m1",[vdd_pos,down_pos])            
+            self.add_via_center(self.m1_stack,down_pos,rotate=90)   
+            self.add_path("m2",[down_pos,rail_pos])
+            self.add_via_center(self.m1_stack,rail_pos)
         
         gnd_pins = self.msb_address_inst.get_pins("gnd")
         # Only add the ground connection to the lowest metal2 rail in the flop array
         # FIXME: SCMOS doesn't have a vertical rail in the cell, or we could use those
         lowest_y = None
         for gnd_pin in gnd_pins:
-            if gnd_pin.layer != "metal2": continue
+            if gnd_pin.layer != "m2": continue
             if lowest_y==None or gnd_pin.by()<lowest_y:
                 lowest_y=gnd_pin.by()
                 gnd_pos = gnd_pin.ur()
         rail_pos = vector(gnd_pos.x,self.horz_control_bus_positions["gnd"].y)
-        self.add_path("metal2",[gnd_pos,rail_pos])
-        self.add_via_center(("metal1","via1","metal2"),rail_pos)            
+        self.add_path("m2",[gnd_pos,rail_pos])
+        self.add_via_center(self.m1_stack,rail_pos)            
         
         # connect the MSB flop to the address input bus 
         msb_pins = self.msb_address_inst.get_pins("din[0]")
         for msb_pin in msb_pins:
-            if msb_pin.layer == "metal3":
+            if msb_pin.layer == "m3":
                 msb_pin_pos = msb_pin.lc()
                 break
         rail_pos = vector(self.vert_control_bus_positions[self.msb_bank_sel_addr].x,msb_pin_pos.y)
-        self.add_path("metal3",[msb_pin_pos,rail_pos])
-        self.add_via_center(("metal2","via2","metal3"),rail_pos)
+        self.add_path("m3",[msb_pin_pos,rail_pos])
+        self.add_via_center(self.m2_stack,rail_pos)
 
         # Connect the output bar to select 0
         msb_out_pin = self.msb_address_inst.get_pin("dout_bar[0]")
@@ -167,9 +167,9 @@ class sram_2bank(sram_base):
         out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_up_pos = out_extend_right_pos + vector(0,self.m2_width)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[0]"].x,out_extend_up_pos.y)
-        self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_up_pos])
-        self.add_wire(("metal3","via2","metal2"),[out_extend_right_pos,out_extend_up_pos,rail_pos])
-        self.add_via_center(("metal2","via2","metal3"),rail_pos)
+        self.add_path("m2",[msb_out_pos,out_extend_right_pos,out_extend_up_pos])
+        self.add_wire(("m3","via2","m2"),[out_extend_right_pos,out_extend_up_pos,rail_pos])
+        self.add_via_center(self.m2_stack,rail_pos)
         
         # Connect the output to select 1
         msb_out_pin = self.msb_address_inst.get_pin("dout[0]")
@@ -177,16 +177,16 @@ class sram_2bank(sram_base):
         out_extend_right_pos = msb_out_pos + vector(2*self.m2_pitch,0)
         out_extend_down_pos = out_extend_right_pos - vector(0,2*self.m1_pitch)
         rail_pos = vector(self.vert_control_bus_positions["bank_sel[1]"].x,out_extend_down_pos.y)
-        self.add_path("metal2",[msb_out_pos,out_extend_right_pos,out_extend_down_pos])
-        self.add_wire(("metal3","via2","metal2"),[out_extend_right_pos,out_extend_down_pos,rail_pos])
-        self.add_via_center(("metal2","via2","metal3"),rail_pos)
+        self.add_path("m2",[msb_out_pos,out_extend_right_pos,out_extend_down_pos])
+        self.add_wire(("m3","via2","m2"),[out_extend_right_pos,out_extend_down_pos,rail_pos])
+        self.add_via_center(self.m2_stack,rail_pos)
         
         # Connect clk
         clk_pin = self.msb_address_inst.get_pin("clk")
         clk_pos = clk_pin.bc()
         rail_pos = self.horz_control_bus_positions["clk_buf"]
         bend_pos = vector(clk_pos.x,self.horz_control_bus_positions["clk_buf"].y)
-        self.add_path("metal1",[clk_pos,bend_pos,rail_pos])
+        self.add_path("m1",[clk_pos,bend_pos,rail_pos])
         
 
             
@@ -201,8 +201,8 @@ class sram_2bank(sram_base):
             for i in [0,1]:
                 pin_pos = self.bank_inst[i].get_pin(n).uc()
                 rail_pos = vector(pin_pos.x,self.data_bus_positions[n].y)
-                self.add_path("metal2",[pin_pos,rail_pos])
-                self.add_via_center(("metal2","via2","metal3"),rail_pos)
+                self.add_path("m2",[pin_pos,rail_pos])
+                self.add_via_center(self.m2_stack,rail_pos)
 
         self.route_single_msb_address()
 
@@ -216,8 +216,8 @@ class sram_2bank(sram_base):
             pin0_pos = self.bank_inst[0].get_pin(n).rc()
             pin1_pos = self.bank_inst[1].get_pin(n).lc()
             rail_pos = vector(self.vert_control_bus_positions[n].x,pin0_pos.y)
-            self.add_path("metal3",[pin0_pos,pin1_pos])
-            self.add_via_center(("metal2","via2","metal3"),rail_pos)
+            self.add_path("m3",[pin0_pos,pin1_pos])
+            self.add_via_center(self.m2_stack,rail_pos)
 
 
         
@@ -232,9 +232,9 @@ class sram_2bank(sram_base):
         
         for n in self.control_bus_names:
             self.add_label(text=n,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=self.vert_control_bus_positions[n])
         for n in self.bank_sel_bus_names:
             self.add_label(text=n,
-                           layer="metal2",  
+                           layer="m2",  
                            offset=self.vert_control_bus_positions[n])

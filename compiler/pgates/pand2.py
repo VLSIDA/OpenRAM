@@ -13,16 +13,16 @@ from sram_factory import factory
 
 class pand2(pgate.pgate):
     """
-    This is a simple buffer used for driving loads.
+    This is an AND (or NAND) with configurable drive strength.
     """
-    def __init__(self, name, size=1, height=None):
-        debug.info(1, "Creating pnand2 {}".format(name))
+    def __init__(self, name, size=1, height=None, vertical=False, add_wells=True):
+        debug.info(1, "Creating pand2 {}".format(name))
         self.add_comment("size: {}".format(size))
-        
+
+        self.vertical = vertical
         self.size = size
-        
-        # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+
+        pgate.pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()
@@ -30,21 +30,30 @@ class pand2(pgate.pgate):
         self.create_insts()
 
     def create_modules(self):
-        # Shield the cap, but have at least a stage effort of 4
-        self.nand = factory.create(module_type="pnand2", height=self.height)
-        self.add_mod(self.nand)
+        self.nand = factory.create(module_type="pnand2",
+                                   height=self.height,
+                                   add_wells=self.vertical)
 
         self.inv = factory.create(module_type="pdriver",
-                                  neg_polarity=True,
-                                  fanout=3*self.size,
-                                  height=self.height)
+                                  size_list=[self.size],
+                                  height=self.height,
+                                  add_wells=self.add_wells)
+            
+        self.add_mod(self.nand)
         self.add_mod(self.inv)
 
     def create_layout(self):
-        self.width = self.nand.width + self.inv.width
+        if self.vertical:
+            self.height = 2 * self.nand.height
+            self.width = max(self.nand.width, self.inv.width)
+        else:
+            self.width = self.nand.width + self.inv.width
+            
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
+        self.route_supply_rails()
+        self.add_boundary()
         self.DRC_LVS()
         
     def add_pins(self):
@@ -67,35 +76,62 @@ class pand2(pgate.pgate):
         # Add NAND to the right
         self.nand_inst.place(offset=vector(0, 0))
 
-        # Add INV to the right
-        self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
+        if self.vertical:
+            # Add INV above
+            self.inv_inst.place(offset=vector(self.inv.width,
+                                              2 * self.nand.height),
+                                mirror="XY")
+        else:
+            # Add INV to the right
+            self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
+
+    def route_supply_rails(self):
+        """ Add vdd/gnd rails to the top, (middle), and bottom. """
+        self.add_layout_pin_rect_center(text="gnd",
+                                        layer=self.route_layer,
+                                        offset=vector(0.5 * self.width, 0),
+                                        width=self.width)
+
+        # Second gnd of the inverter gate
+        if self.vertical:
+            self.add_layout_pin_rect_center(text="gnd",
+                                            layer=self.route_layer,
+                                            offset=vector(0.5 * self.width, self.height),
+                                            width=self.width)
         
+        if self.vertical:
+            # Shared between two gates
+            y_offset = 0.5 * self.height
+        else:
+            y_offset = self.height
+        self.add_layout_pin_rect_center(text="vdd",
+                                        layer=self.route_layer,
+                                        offset=vector(0.5 * self.width, y_offset),
+                                        width=self.width)
+            
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
         a2_pin = self.inv_inst.get_pin("A")
-        mid1_point = vector(0.5 * (z1_pin.cx() + a2_pin.cx()), z1_pin.cy())
-        mid2_point = vector(mid1_point, a2_pin.cy())
-        self.add_path("metal1",
-                      [z1_pin.center(), mid1_point, mid2_point, a2_pin.center()])
+        if self.vertical:
+            route_layer = "m2"
+            self.add_via_stack_center(offset=z1_pin.center(),
+                                      from_layer=z1_pin.layer,
+                                      to_layer=route_layer)
+            self.add_zjog(route_layer,
+                          z1_pin.uc(),
+                          a2_pin.bc(),
+                          "V")
+            self.add_via_stack_center(offset=a2_pin.center(),
+                                      from_layer=a2_pin.layer,
+                                      to_layer=route_layer)
+        else:
+            route_layer = self.route_layer
+            mid1_point = vector(z1_pin.cx(), a2_pin.cy())
+            self.add_path(route_layer,
+                          [z1_pin.center(), mid1_point, a2_pin.center()])
         
     def add_layout_pins(self):
-        # Continous vdd rail along with label.
-        vdd_pin = self.inv_inst.get_pin("vdd")
-        self.add_layout_pin(text="vdd",
-                            layer="metal1",
-                            offset=vdd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-        
-        # Continous gnd rail along with label.
-        gnd_pin = self.inv_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
-                            layer="metal1",
-                            offset=gnd_pin.ll().scale(0, 1),
-                            width=self.width,
-                            height=vdd_pin.height())
-            
         pin = self.inv_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
                                         layer=pin.layer,

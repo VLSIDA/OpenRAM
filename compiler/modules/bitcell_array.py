@@ -17,8 +17,8 @@ class bitcell_array(bitcell_base_array):
     and word line is connected by abutment.
     Connects the word lines and bit lines.
     """
-    def __init__(self, cols, rows, name, column_offset=0):
-        super().__init__(cols, rows, name, column_offset)
+    def __init__(self, rows, cols, column_offset=0, name=""):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -57,8 +57,8 @@ class bitcell_array(bitcell_base_array):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.cell)
-                self.connect_inst(self.get_bitcell_pins(col, row))
-        
+                self.connect_inst(self.get_bitcell_pins(row, col))
+                
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
         

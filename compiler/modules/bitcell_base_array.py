@@ -14,7 +14,7 @@ class bitcell_base_array(design.design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy
     """
-    def __init__(self, cols, rows, name, column_offset):
+    def __init__(self, name, rows, cols, column_offset):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
@@ -61,7 +61,7 @@ class bitcell_base_array(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-    def get_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
 

@@ -102,22 +102,22 @@ class replica_column(design.design):
             if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(0, row))
+                self.connect_inst(self.get_bitcell_pins(row, 0))
             elif row==self.replica_bit:
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(0, row))
+                self.connect_inst(self.get_bitcell_pins(row, 0))
             elif (row == 0 or row == self.total_size - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.edge_cell)
                 if end_caps_enabled:
-                    self.connect_inst(self.get_bitcell_pins_col_cap(0, row))
+                    self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
                 else:
-                    self.connect_inst(self.get_bitcell_pins(0, row))
+                    self.connect_inst(self.get_bitcell_pins(row, 0))
             else:
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(0, row))
+                self.connect_inst(self.get_bitcell_pins(row, 0))
 
     def place_instances(self):
         from tech import cell_properties
@@ -191,7 +191,7 @@ class replica_column(design.design):
                 else:
                     self.copy_layout_pin(inst, pin_name)
 
-    def get_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
 
@@ -208,7 +208,7 @@ class replica_column(design.design):
 
         return bitcell_pins
 
-    def get_bitcell_pins_col_cap(self, col, row):
+    def get_bitcell_pins_col_cap(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
 

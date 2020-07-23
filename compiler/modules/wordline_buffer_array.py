@@ -13,10 +13,9 @@ from sram_factory import factory
 from globals import OPTS
 
 
-class wordline_driver_array(design.design):
+class wordline_buffer_array(design.design):
     """
-    Creates a Wordline Driver
-    Generates the wordline-driver to drive the bitcell
+    Creates a Wordline Buffer/Inverter array
     """
 
     def __init__(self, name, rows, cols):
@@ -55,12 +54,11 @@ class wordline_driver_array(design.design):
         # Outputs from wordline_driver.
         for i in range(self.rows):
             self.add_pin("wl_{0}".format(i), "OUTPUT")
-        self.add_pin("en", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.wl_driver = factory.create(module_type="wordline_driver",
+        self.wl_driver = factory.create(module_type="inv_dec",
                                         size=self.cols)
         self.add_mod(self.wl_driver)
         
@@ -99,13 +97,9 @@ class wordline_driver_array(design.design):
     def create_drivers(self):
         self.wld_inst = []
         for row in range(self.rows):
-            name_and = "wl_driver_and{}".format(row)
-
-            # add and2
-            self.wld_inst.append(self.add_inst(name=name_and,
-                                                mod=self.wl_driver))
+            self.wld_inst.append(self.add_inst(name="wld{0}".format(row),
+                                               mod=self.wl_driver))
             self.connect_inst(["in_{0}".format(row),
-                               "en",
                                "wl_{0}".format(row),
                                "vdd", "gnd"])
 
@@ -119,64 +113,25 @@ class wordline_driver_array(design.design):
                 y_offset = self.wl_driver.height * row
                 inst_mirror = "R0"
 
-            and2_offset = [self.wl_driver.width, y_offset]
+            offset = [0, y_offset]
             
-            # add and2
-            self.wld_inst[row].place(offset=and2_offset,
+            self.wld_inst[row].place(offset=offset,
                                      mirror=inst_mirror)
 
-        # Leave a well gap to separate the bitcell array well from this well
-        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
-        self.width = self.wl_driver.width + well_gap
+        self.width = self.wl_driver.width
         self.height = self.wl_driver.height * self.rows
 
     def route_layout(self):
         """ Route all of the signals """
 
-        # Wordline enable connection
-        en_pin = self.wld_inst[0].get_pin("B")
-        en_bottom_pos = vector(en_pin.lx(), 0)
-        en_pin = self.add_layout_pin(text="en",
-                                     layer="m2",
-                                     offset=en_bottom_pos,
-                                     height=self.height)
-        
         for row in range(self.rows):
-            and_inst = self.wld_inst[row]
+            inst = self.wld_inst[row]
 
-            # Drop a via
-            b_pin = and_inst.get_pin("B")
-            self.add_via_stack_center(from_layer=b_pin.layer,
-                                      to_layer="m2",
-                                      offset=b_pin.center())
-            
-            # connect the decoder input pin to and2 A
-            self.copy_layout_pin(and_inst, "A", "in_{0}".format(row))
+            self.copy_layout_pin(inst, "A", "in_{0}".format(row))
 
             # output each WL on the right
-            wl_offset = and_inst.get_pin("Z").rc()
+            wl_offset = inst.get_pin("Z").rc()
             self.add_layout_pin_segment_center(text="wl_{0}".format(row),
                                                layer=self.route_layer,
                                                start=wl_offset,
                                                end=wl_offset - vector(self.m1_width, 0))
-
-    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
-        """
-        Follows the clk_buf to a wordline signal adding
-        each stages stage effort to a list.
-        """
-        stage_effort_list = []
-        
-        stage1 = self.wl_driver.get_stage_effort(external_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        
-        return stage_effort_list
-        
-    def get_wl_en_cin(self):
-        """
-        Get the relative capacitance of all
-        the enable connections in the bank
-        """
-        # The enable is connected to a and2 for every row.
-        total_cin = self.wl_driver.get_cin() * self.rows
-        return total_cin

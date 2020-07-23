@@ -21,7 +21,7 @@ class replica_bitcell_array(design.design):
     Requires a regular bitcell array, replica bitcell, and dummy
     bitcell (Bl/BR disconnected).
     """
-    def __init__(self, cols, rows, left_rbl, right_rbl, bitcell_ports, name):
+    def __init__(self, rows, cols, left_rbl, right_rbl, bitcell_ports, name):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))

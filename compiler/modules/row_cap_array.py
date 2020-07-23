@@ -49,9 +49,9 @@ class row_cap_array(bitcell_base_array):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(col, row))
+                self.connect_inst(self.get_bitcell_pins(row, col))
 
-    def get_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, row, col):
         """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array

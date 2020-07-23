@@ -153,6 +153,8 @@ class port_address(design.design):
         wordline_driver_offset = vector(self.row_decoder.width, 0)
         self.wordline_driver_inst.place(wordline_driver_offset)
         self.row_decoder_inst.place(row_decoder_offset)
+        # Pass this up
+        self.predecoder_height = self.row_decoder.predecoder_height
 
         self.height = self.row_decoder.height
         self.width = self.wordline_driver_inst.rx()

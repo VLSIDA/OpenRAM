@@ -13,12 +13,12 @@ from sram_factory import factory
 
 class local_bitcell_array(bitcell_base_array):
     """
-    A local wordline array is a bitcell array with a wordline driver.
+    A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
     def __init__(self, name, rows, cols):
-        super().__init__(name, rows, cols)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -36,7 +36,7 @@ class local_bitcell_array(bitcell_base_array):
 
     def create_layout(self):
 
-        self.place_array("bit_r{0}_c{1}")
+        self.place()
 
         self.add_layout_pins()
 
@@ -46,21 +46,26 @@ class local_bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.bit_array = factory.create(module_type="bitcell_array",
-                                        rows=self.rows,
-                                        cols=self.cols,
-                                        column_offset=self.column_offset)
-        self.add_mod(self.bit_array)
+        # This is just used for names
+        self.cell = factory.create(module_type="bitcell")
+        
+        self.bitcell_array = factory.create(module_type="bitcell_array",
+                                            rows=self.row_size,
+                                            cols=self.column_size)
+        self.add_mod(self.bitcell_array)
 
-        self.wl_array = factory.create(module_type="wordline_driver_array",
-                                       rows=self.rows,
-                                       cols=self.cols)
+        self.wl_array = factory.create(module_type="wordline_buffer_array",
+                                       rows=self.row_size,
+                                       cols=self.column_size)
         self.add_mod(self.wl_array)
         
     def create_instances(self):
         """ Create the module instances used in this design """
-        self.bitcell_inst = self.add_inst(mod=self.bitcell_array)
-        self.connect_inst(self.get_bitcell_pins(row, col))
-        self.wl_inst = self.add_inst(mod=self.wl_array)
+        self.array_inst = self.add_inst(mod=self.bitcell_array)
+        self.connect_inst(self.pins)
+
+        #wl_names = self.get_
+        self.wl_inst = self.add_inst(mod=self.wl_array,
+                                     offset=self.bitcell_inst.lr())
         self.connect_inst(self.get_bitcell_pins(row, col))
         

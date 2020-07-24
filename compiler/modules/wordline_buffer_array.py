@@ -53,7 +53,7 @@ class wordline_buffer_array(design.design):
             self.add_pin("in_{0}".format(i), "INPUT")
         # Outputs from wordline_driver.
         for i in range(self.rows):
-            self.add_pin("wl_{0}".format(i), "OUTPUT")
+            self.add_pin("out_{0}".format(i), "OUTPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -100,7 +100,7 @@ class wordline_buffer_array(design.design):
             self.wld_inst.append(self.add_inst(name="wld{0}".format(row),
                                                mod=self.wl_driver))
             self.connect_inst(["in_{0}".format(row),
-                               "wl_{0}".format(row),
+                               "out_{0}".format(row),
                                "vdd", "gnd"])
 
     def place_drivers(self):
@@ -131,7 +131,7 @@ class wordline_buffer_array(design.design):
 
             # output each WL on the right
             wl_offset = inst.get_pin("Z").rc()
-            self.add_layout_pin_segment_center(text="wl_{0}".format(row),
+            self.add_layout_pin_segment_center(text="out_{0}".format(row),
                                                layer=self.route_layer,
                                                start=wl_offset,
                                                end=wl_offset - vector(self.m1_width, 0))

@@ -192,18 +192,29 @@ class stimuli():
                                             targ_name,
                                             time_at))
 
-    def gen_meas_power(self, meas_name, t_initial, t_final):
+    def gen_meas_power(self, meas_name, t_initial, t_final, leakage=False):
         """ Creates the .meas statement for the measurement of avg power """
         # power mea cmd is different in different spice:
         if OPTS.spice_name == "hspice":
             power_exp = "power"
         else:
             power_exp = "par('(-1*v(" + str(self.vdd_name) + ")*I(v" + str(self.vdd_name) + "))')"
-        self.sf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name,
-                                                                            power_exp,
-                                                                            t_initial,
-                                                                            t_final))
-                                                                            
+        if leakage:
+            self.sf.write(".meas tran {0} avg {1} from={2}n to={3}n\n".format(meas_name,
+                                                                                    power_exp,
+                                                                                    t_initial,
+                                                                                    t_final))
+        else:
+            self.sf.write(".meas tran {0}_total avg {1} from={2}n to={3}n\n".format(meas_name,
+                                                                                power_exp,
+                                                                                t_initial,
+                                                                                t_final))
+            self.sf.write(".meas tran {0}_leakage avg {1} from={2}n to={3}n\n".format(meas_name,
+                                                                                power_exp,
+                                                                                t_final-0.02*(t_final-t_initial),
+                                                                                t_final))
+            self.sf.write(".meas tran {0} param='{0}_total - 50.0 * {0}_leakage'\n\n".format(meas_name))
+
     def gen_meas_value(self, meas_name, dout, t_intital, t_final):
         measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
         self.sf.write(measure_string)

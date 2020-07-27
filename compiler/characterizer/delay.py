@@ -667,7 +667,7 @@ class delay(simulation):
         t_final = 2*self.period
         self.stim.gen_meas_power(meas_name="leakage_power",
                                  t_initial=t_initial,
-                                 t_final=t_final)
+                                 t_final=t_final, leakage=True)
         
     def find_feasible_period_one_port(self, port):
         """

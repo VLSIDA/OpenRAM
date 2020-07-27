@@ -13,8 +13,8 @@ class col_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, column_offset=0, mirror=0, name=""):
-        super().__init__(cols, rows, name, column_offset)
+    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
 
         self.no_instances = True

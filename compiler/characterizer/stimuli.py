@@ -299,13 +299,15 @@ class stimuli():
             valid_retcode=0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
-            cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
+            cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
+                                                         OPTS.num_threads,
                                                          temp_stim,
                                                          OPTS.openram_temp)
             valid_retcode=0
         elif OPTS.spice_name == "alps":
             # TODO: Should make multithreading parameter a configuration option
-            cmd = "{0} -mode pro -mt 2 -lqtimeout 0 -i {1} -o {2}timing".format(OPTS.spice_exe,
+            cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
+                                                         OPTS.num_threads,
                                                          temp_stim,
                                                          OPTS.openram_temp)
             valid_retcode=0

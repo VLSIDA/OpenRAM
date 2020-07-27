@@ -211,10 +211,11 @@ class bank(design.design):
         self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width, 0)
 
         # UPPER LEFT QUADRANT
-        # To the left of the bitcell array
+        # To the left of the bitcell array above the predecoders and control logic
         x_offset = self.m2_gap + self.port_address.width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
+        self.predecoder_height = self.port_address.predecoder_height + self.port_address_offsets[port].y
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver

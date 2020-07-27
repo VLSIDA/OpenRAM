@@ -372,66 +372,78 @@ class pgate(design.design):
         self.width = width
 
     @staticmethod
-    def bin_width(tx_type, target_width):
+    def best_bin(tx_type, target_width):
+        """
+        Determine the width transistor that meets the accuracy requirement and is larger than target_width.
+        """
+
+        # Find all of the relavent scaled bins and multiples
+        scaled_bins = pgate.scaled_bins(tx_type, target_width)
         
+        for (scaled_width, multiple) in scaled_bins:
+            if abs(target_width - scaled_width) / target_width <= 1 - OPTS.accuracy_requirement:
+                break
+        else:
+            debug.error("failed to bin tx size {}, try reducing accuracy requirement".format(target_width), 1)
+
+        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type,
+                                                                                  multiple,
+                                                                                  scaled_width / multiple,
+                                                                                  scaled_width,
+                                                                                  target_width))
+
+        return(scaled_width / multiple, multiple)
+
+    @staticmethod
+    def scaled_bins(tx_type, target_width):
+        """
+        Determine a set of widths and multiples that could be close to the right size
+        sorted by the fewest number of fingers.
+        """
         if tx_type == "nmos":
             bins = nmos_bins[drc("minwidth_poly")]
         elif tx_type == "pmos":
             bins = pmos_bins[drc("minwidth_poly")]
         else:
             debug.error("invalid tx type")
-        
+
+        # Prune out bins that are too big, except for one bigger
         bins = bins[0:bisect_left(bins, target_width) + 1]
+
+        # Determine multiple of target width for each bin
         if len(bins) == 1:
-            selected_bin = bins[0]
-            scaling_factor = math.ceil(target_width / selected_bin)
-            scaled_bin = bins[0] * scaling_factor
-            
+            scaled_bins = [(bins[0], math.ceil(target_width / bins[0]))]
         else:
-            base_bins = []
             scaled_bins = []
-            scaling_factors = []
+            # Add the biggest size as 1x multiple
+            scaled_bins.append((bins[-1], 1))
+            # Compute discrete multiple of other sizes
+            for width in reversed(bins[:-1]):
+                multiple = math.ceil(target_width / width)
+                scaled_bins.append((multiple * width, multiple))
 
-            for width in bins:
-                m = math.ceil(target_width / width)
-                base_bins.append(width)
-                scaling_factors.append(m)
-                scaled_bins.append(m * width)
-                
-            select = -1
-            for i in reversed(range(0, len(scaled_bins))):
-                if abs(target_width - scaled_bins[i])/target_width <= 1-OPTS.accuracy_requirement:
-                    select = i
-                    break
-            if select == -1:
-                debug.error("failed to bin tx size {}, try reducing accuracy requirement".format(target_width), 1)
-            scaling_factor = scaling_factors[select]
-            scaled_bin = scaled_bins[select]
-            selected_bin = base_bins[select]
+        return(scaled_bins)
 
-        debug.info(2, "binning {0} tx, target: {4}, found {1} x {2} = {3}".format(tx_type, selected_bin, scaling_factor, selected_bin * scaling_factor, target_width))
-
-        return(selected_bin, scaling_factor)
-
-    def permute_widths(self, tx_type, target_width):
-
+    @staticmethod
+    def nearest_bin(tx_type, target_width):
+        """
+        Determine the nearest width to the given target_width
+        while assuming a single multiple.
+        """
         if tx_type == "nmos":
             bins = nmos_bins[drc("minwidth_poly")]
         elif tx_type == "pmos":
             bins = pmos_bins[drc("minwidth_poly")]
         else:
-            debug.error("invalid tx type")       
-        bins = bins[0:bisect_left(bins, target_width) + 1]
-        if len(bins) == 1:
-            scaled_bins = [(bins[0], math.ceil(target_width / bins[0]))]
-        else:
-            scaled_bins = []
-            scaled_bins.append((bins[-1], 1))
-            for width in bins[:-1]:
-                m = math.ceil(target_width / width)
-                scaled_bins.append((m * width, m))
+            debug.error("invalid tx type")
 
-        return(scaled_bins)
-        
-    def bin_accuracy(self, ideal_width, width):
-        return 1-abs((ideal_width - width)/ideal_width)
+        # Find the next larger bin
+        bin_loc = bisect_left(bins, target_width)
+        if bin_loc < len(bins):
+            return bins[bin_loc]
+        else:
+            return bins[-1]
+
+    @staticmethod
+    def bin_accuracy(ideal_width, width):
+        return 1 - abs((ideal_width - width) / ideal_width)

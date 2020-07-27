@@ -21,7 +21,7 @@ class pbuf_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing inverter/buffer 4x 8x")
+        debug.info(2, "Testing buffer 8x")
         a = factory.create(module_type="pbuf", size=8)
         self.local_check(a)
 

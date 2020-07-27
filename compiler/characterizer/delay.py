@@ -185,8 +185,7 @@ class delay(simulation):
         self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
-        self.dout_volt_meas.append(self.sen_meas)
-        
+
         return self.dout_volt_meas
      
     def create_read_bit_measures(self):

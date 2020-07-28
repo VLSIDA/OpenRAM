@@ -15,6 +15,8 @@ Dev:
 
 An open-source static random access memory (SRAM) compiler.
 
+This is forked from github.com/VLSIDA/OpenRAM
+
 # What is OpenRAM?
 <img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
 
@@ -55,6 +57,7 @@ You must set two environment variables:
 For example add this to your .bashrc:
 
 ```
+  export SW_PDK_ROOT=<path to PDK root>/sky130A
   export OPENRAM_HOME="$HOME/openram/compiler"
   export OPENRAM_TECH="$HOME/openram/technology"
 ```

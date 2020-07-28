@@ -1,0 +1,53 @@
+|==============================================================================|
+|=========                       OpenRAM v1.1.6                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========            Temp dir: /tmp/openram_me_542_temp/             =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 07/26/2020 17:31:11
+Technology: sky130
+Total size: 8192 bits
+Word size: 256
+Words: 32
+Banks: 1
+Write size: 8
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+tmp path will be cleared after the compiler runs (to print all the output files for debugging in the tmp file, cleanup_paths=False to disable
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+Words per row: 1
+Output files are: 
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.lvs
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.sp
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.v
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.lib
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.py
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.html
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.log
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.lef
+/home/me/openram-sky130/macros/sram_1rw1r_256_32_8/sram_1rw1r_256_32_8.gds
+** Submodules: 15.7 seconds
+** Placement: 0.0 seconds
+*** Init supply router: 402.3 seconds
+**** Retrieving pins: 0.6 seconds
+**** Analyzing pins: 95.1 seconds
+**** Finding blockages: 8.8 seconds
+**** Converting blockages: 6.2 seconds
+**** Converting pins: 33.5 seconds
+**** Separating adjacent pins: 92.2 seconds
+**** Enclosing pins: 9.6 seconds
+*** Finding pins and blockages: 246.0 seconds
+*** Routing supply rails: 2269.7 seconds
+*** Simple overlap routing: 0.0 seconds
+*** Maze routing supplies: 64647.1 seconds
+** Routing: 67575.8 seconds
+ERROR: file magic.py: line 188: Unable to load DRC results file from /tmp/openram_me_542_temp/sram_1rw1r_256_32_8.drc.out. Is magic set up?
+

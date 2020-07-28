@@ -1,0 +1,33 @@
+//===========================================================
+//==              CONFIGURATION                            ==
+//===========================================================
+
+#UNDEFINE PEX
+
+// UNIT LENGTH 1
+
+LVS FILTER Dpar                    OPEN  SOURCE
+LVS FILTER Dpar                    OPEN  LAYOUT
+
+// LVS FILTER D                    OPEN  SOURCE
+
+LVS FILTER Probe                   OPEN  SOURCE
+LVS FILTER Probe                   OPEN  LAYOUT
+
+// LVS Filter icecap 	open source
+// LVS Filter C 		open source
+// LVS Filter s8fmlt_iref_termx  open source
+// LVS Filter s8fmlt_neg_termx  open source
+// LVS Filter s8fmlt_termx  open source
+// LVS Filter s8fmlt_vdac_termx  open source
+
+//# allows exact m-factor comparison
+//LVS SPICE     REPLICATE  DEVICES   YES
+
+//INCLUDE "$PDK_HOME/LVS/Calibre/s8_filter_devices"
+
+//INCLUDE $PDK_HOME/PEX/xRC/extLvsRules_s8_5lm
+INCLUDE $PDK_HOME/PEX/xRC/xrcControlFile_s8
+
+
+

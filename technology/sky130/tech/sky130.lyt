@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<technology>
+ <name>sky130</name>
+ <description>sky130 5-metals</description>
+ <layer-properties_file>sky130.lyp</layer-properties_file>
+ <add-other-layers>true</add-other-layers>
+ <layer-map>
+'66/15 : PY_SHORT	';
+'72/15 : M5_SHORT	';
+'81/14 : LDID	';
+'122/16 :PWELL_PIN	';
+'64/5  : NWELLLABEL	';
+'64/16 : NWELLPT ';
+'64/59 : PWELLLABEL	';
+'64/20 : NWELL	';
+'64/18 : DNWELL ';
+'65/20 : DIFF	';
+'65/44 : TAP	';
+'125/44 : LVTN	';
+'78/44 : HVTP	';
+'75/20 : HVI	';
+'80/20 : TUNM	';
+'66/20 : POLY	';
+'95/20 : NPC	';
+'94/20 : PSDM	';
+'93/44 : NSDM	';
+'66/44 : LICON1 ';
+'67/20 : LI1	';
+'67/16 : LI1T	';
+'67/5  : LI1P	';
+'67/44 : MCON	';
+'68/20 : MET1	';
+'68/16 : MET1T  ';
+'68/5  : MET1P  ';
+'68/44 : VIA1	';
+'69/20 : MET2	';
+'69/16 : MET2T  ';
+'69/5  : MET2P  ';
+'69/44 : VIA2	';
+'70/20 : MET3	';
+'70/16 : MET3T  ';
+'70/5  : MET3P  ';
+'70/44 : VIA3	';
+'71/20 : MET4	';
+'71/16 : MET4T  ';
+'71/5  : MET4P  ';
+'71/44 : VIA4	';
+'72/20 : MET5	';
+'72/16 : MET5T  ';
+'72/5  : MET5P  ';
+'76/20 : PAD	';
+'76/16 : PADT	';
+'76/5  : PADP	';
+'81/4  : BOUND  ';
+'83/44 : TEXT	';
+'18/20 : HVTR	';
+'92/44 : NCM	';
+'86/20 : RPM	';
+'61/20 : NSM	';
+'74/20 : RDL	';
+'74/21 : VHVI	';
+'11/44 : LDNTM  ';
+'125/20 : HVNTM  ';
+'85/44 : PMM	';
+'82/44 : PNP	';
+'82/64 : CAP	';
+'82/24 : IND	';
+'64/13 : PWRES  ';
+'66/13 : POLYRES';
+'65/13 : DIFFRES';
+'81/23 : DIODE  ';
+</layer-map>
+ <create-other-layers>true</create-other-layers>
+ <lef-def-import>
+  <read-all-layers>true</read-all-layers>
+  <layer-map/>
+  <produce-net-names>true</produce-net-names>
+  <net-property-name>#1</net-property-name>
+  <produce-cell-outlines>true</produce-cell-outlines>
+  <cell-outline-layer>OUTLINE</cell-outline-layer>
+  <produce-placement-blockages>true</produce-placement-blockages>
+  <placement-blockage-layer>PLACEMENT_BLK</placement-blockage-layer>
+  <produce-via-geometry>true</produce-via-geometry>
+  <via-geometry-suffix/>
+  <via-geometry-datatype>0</via-geometry-datatype>
+  <produce-pins>true</produce-pins>
+  <pins-suffix>.PIN</pins-suffix>
+  <pins-datatype>2</pins-datatype>
+  <produce-obstructions>true</produce-obstructions>
+  <obstructions-suffix>.OBS</obstructions-suffix>
+  <obstructions-datatype>3</obstructions-datatype>
+  <produce-blockages>true</produce-blockages>
+  <blockages-suffix>.BLK</blockages-suffix>
+  <blockages-datatype>4</blockages-datatype>
+  <produce-labels>true</produce-labels>
+  <labels-suffix>.LABEL</labels-suffix>
+  <labels-datatype>1</labels-datatype>
+  <produce-routing>true</produce-routing>
+  <routing-suffix/>
+  <routing-datatype>0</routing-datatype>
+ </lef-def-import>
+ <connectivity>
+  <connection>LI1,LICON1,SRCDRN</connection>
+  <connection>LI1,LICON1,POLY</connection>
+  <connection>MET1,MCON,LI1</connection>
+  <connection>MET1,VIA1,MET2</connection>
+  <connection>MET2,VIA2,MET3</connection>
+  <connection>MET3,VIA3,MET4</connection>
+  <connection>MET4,VIA4,MET5</connection>
+  <connection>LI1,LICON1,NWP</connection>
+  <symbols>SRCDRN='DIFF-POLY'</symbols>
+  <symbols>PTAP='TAP'</symbols>
+  <symbols>NWP='TAP+NWELL'</symbols>
+  <symbols>DIFF='65/20'</symbols>
+  <symbols>POLY='66/20'</symbols>
+  <symbols>LICON1='66/44'</symbols>
+  <symbols>LI1='67/20'</symbols>
+  <symbols>MCON='67/44'</symbols>
+  <symbols>MET1='68/20'</symbols>
+  <symbols>VIA1='68/44'</symbols>
+  <symbols>MET2='69/20'</symbols>
+  <symbols>VIA2='69/44'</symbols>
+  <symbols>MET3='70/20'</symbols>
+  <symbols>VIA3='70/44'</symbols>
+  <symbols>MET4='71/20'</symbols>
+  <symbols>VIA4='71/44'</symbols>
+  <symbols>MET5='72/20'</symbols>
+  <symbols>MET1='68/16'</symbols>
+  <symbols>MET2='69/16'</symbols>
+  <symbols>MET3='70/16'</symbols>
+  <symbols>MET4='71/16'</symbols>
+  <symbols>MET5='72/16'</symbols>
+  <symbols>MET1='68/5'</symbols>
+  <symbols>MET2='69/5'</symbols>
+  <symbols>MET3='70/5'</symbols>
+  <symbols>MET4='71/5'</symbols>
+  <symbols>MET5='72/5'</symbols>
+ </connectivity>
+</technology>

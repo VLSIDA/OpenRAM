@@ -1,0 +1,52 @@
+|==============================================================================|
+|=========                       OpenRAM v1.1.6                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========           Temp dir: /tmp/openram_mk_25808_temp/            =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 07/16/2020 03:55:52
+Technology: sky130
+Total size: 16384 bits
+WARNING: file globals.py: line 558: Requesting such a large memory size (16384) will have a large run-time. Consider using multiple smaller banks.
+
+Word size: 32
+Words: 512
+Banks: 1
+Write size: 8
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+Words per row: 4
+Output files are: 
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.lvs
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.sp
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.v
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.lib
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.py
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.html
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.log
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.lef
+/home/mk/foss/openram/OpenRAM.macros/sram_1rw1r_32_512_8_sky130/sram_1rw1r_32_512_8_sky130.gds
+** Submodules: 17.5 seconds
+** Placement: 0.0 seconds
+*** Init supply router: 575.0 seconds
+**** Retrieving pins: 0.4 seconds
+**** Analyzing pins: 22.3 seconds
+**** Finding blockages: 12.4 seconds
+**** Converting blockages: 0.4 seconds
+**** Converting pins: 19.7 seconds
+**** Separating adjacent pins: 30.5 seconds
+**** Enclosing pins: 5.2 seconds
+*** Finding pins and blockages: 90.8 seconds
+*** Routing supply rails: 277.1 seconds
+*** Simple overlap routing: 0.0 seconds
+*** Maze routing supplies: 13886.9 seconds
+** Routing: 14830.8 seconds

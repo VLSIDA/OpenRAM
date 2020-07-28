@@ -186,7 +186,7 @@ class delay(simulation):
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
 
-        return self.dout_volt_meas
+        return self.dout_volt_meas + [self.sen_meas]
      
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """

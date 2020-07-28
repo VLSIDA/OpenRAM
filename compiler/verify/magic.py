@@ -38,7 +38,7 @@ def filter_gds(cell_name, input_gds, output_gds):
     global OPTS
 
     # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    magic_file = OPTS.openram_tech + "sky130/tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:
@@ -48,7 +48,7 @@ def filter_gds(cell_name, input_gds, output_gds):
     run_file = OPTS.openram_temp + "run_filter.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
+    f.write("{0} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[0]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(input_gds))
@@ -134,8 +134,8 @@ def write_netgen_script(cell_name):
 
     global OPTS
 
-    setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
+    setup_file = "setup.tcl" 
+    full_setup_file = OPTS.openram_tech + "tech/" + setup_file 
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, OPTS.openram_temp)
@@ -225,6 +225,13 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         shutil.copy(gds_name, OPTS.openram_temp)
     if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(sp_name, OPTS.openram_temp)
+
+    # Copy .magicrc file into temp dir
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, OPTS.openram_temp)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
     write_netgen_script(cell_name)
 

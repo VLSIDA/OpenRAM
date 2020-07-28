@@ -1,0 +1,562 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1309 -1311 6400 20041
+<< locali >>
+rect 3890 8467 5056 8501
+rect 3890 7053 5056 7087
+rect 3283 6790 3502 6824
+rect 3468 6308 3502 6790
+rect 4030 5639 5056 5673
+rect 4330 4225 5056 4259
+rect 4330 2811 5056 2845
+rect 3265 2541 3450 2575
+rect 3265 2176 3299 2541
+rect 3132 2142 3299 2176
+rect 4698 1397 5056 1431
+<< metal1 >>
+rect 5024 8458 5088 8510
+rect 2362 8200 3032 8228
+rect 2446 8076 3165 8104
+rect 2782 7952 3298 7980
+rect 3582 7777 3646 7829
+rect 203 7039 2362 7067
+rect 5024 7044 5088 7096
+rect 3936 6299 4000 6351
+rect 2362 6160 3165 6188
+rect 2530 5912 3065 5940
+rect 5024 5630 5088 5682
+rect 2446 4973 3017 5001
+rect 4202 4923 4266 4975
+rect 5024 4216 5088 4268
+rect 3804 3493 3868 3545
+rect 2782 3332 3165 3360
+rect 2614 3084 3065 3112
+rect 383 2814 2614 2842
+rect 5024 2802 5088 2854
+rect 3501 2284 3565 2336
+rect 2614 2145 3017 2173
+rect 4172 2111 4236 2163
+rect 5024 1388 5088 1440
+rect 2985 643 3049 695
+rect 4534 665 4598 717
+rect 5024 -26 5088 26
+<< metal2 >>
+rect 1748 8644 1776 9166
+rect 189 7053 217 8644
+rect 369 1414 397 2828
+rect 137 538 203 590
+rect 2264 0 2292 8560
+rect 2348 0 2376 8560
+rect 2432 0 2460 8560
+rect 2516 0 2544 8560
+rect 2600 0 2628 8560
+rect 2684 0 2712 8560
+rect 2768 0 2796 8560
+rect 5028 8460 5084 8508
+rect 3614 7789 5140 7817
+rect 5028 7046 5084 7094
+rect 3968 6311 5140 6339
+rect 5028 5632 5084 5680
+rect 4234 4935 5140 4963
+rect 5028 4218 5084 4266
+rect 3808 3495 3864 3543
+rect 5028 2804 5084 2852
+rect 3505 2286 3561 2334
+rect 4190 1571 4218 2137
+rect 5028 1390 5084 1438
+rect 4566 691 5140 705
+rect 3003 655 3031 683
+rect 4552 677 5140 691
+rect 4552 125 4580 677
+rect 5028 -24 5084 24
+<< metal3 >>
+rect 399 18675 497 18773
+rect 1135 18675 1233 18773
+rect 399 17555 497 17653
+rect 1135 17555 1233 17653
+rect 399 16435 497 16533
+rect 1135 16435 1233 16533
+rect 399 15315 497 15413
+rect 1135 15315 1233 15413
+rect 399 14195 497 14293
+rect 1135 14195 1233 14293
+rect 399 13075 497 13173
+rect 1135 13075 1233 13173
+rect 399 11955 497 12053
+rect 1135 11955 1233 12053
+rect 399 10835 497 10933
+rect 1135 10835 1233 10933
+rect 399 9715 497 9813
+rect 1135 9715 1233 9813
+rect 399 8595 497 8693
+rect 1135 8595 1233 8693
+rect 5007 8435 5105 8533
+rect 5007 7021 5105 7119
+rect 5007 5607 5105 5705
+rect 5007 4193 5105 4291
+rect 2530 3489 3836 3549
+rect 5007 2779 5105 2877
+rect 2782 2280 3533 2340
+rect 2446 1541 4204 1601
+rect -49 1365 49 1463
+rect 5007 1365 5105 1463
+rect 1582 855 2782 915
+rect 2088 473 2698 533
+rect 2614 95 4566 155
+rect -49 -51 49 47
+rect 5007 -49 5105 49
+use pand3_0  pand3_0_0
+timestamp 1595931502
+transform 1 0 2936 0 -1 8484
+box -36 -17 990 1471
+use pdriver_4  pdriver_4_0
+timestamp 1595931502
+transform 1 0 3404 0 1 5656
+box -36 -17 662 1471
+use contact_9  contact_9_16
+timestamp 1595931502
+transform 1 0 1549 0 1 848
+box 0 0 66 74
+use contact_9  contact_9_15
+timestamp 1595931502
+transform 1 0 2055 0 1 466
+box 0 0 66 74
+use contact_9  contact_9_14
+timestamp 1595931502
+transform 1 0 3500 0 1 2273
+box 0 0 66 74
+use contact_9  contact_9_13
+timestamp 1595931502
+transform 1 0 3500 0 1 2273
+box 0 0 66 74
+use contact_9  contact_9_12
+timestamp 1595931502
+transform 1 0 3803 0 1 3482
+box 0 0 66 74
+use contact_9  contact_9_11
+timestamp 1595931502
+transform 1 0 5023 0 1 1377
+box 0 0 66 74
+use contact_9  contact_9_10
+timestamp 1595931502
+transform 1 0 5023 0 1 -37
+box 0 0 66 74
+use contact_9  contact_9_9
+timestamp 1595931502
+transform 1 0 5023 0 1 1377
+box 0 0 66 74
+use contact_9  contact_9_8
+timestamp 1595931502
+transform 1 0 5023 0 1 2791
+box 0 0 66 74
+use contact_9  contact_9_7
+timestamp 1595931502
+transform 1 0 5023 0 1 4205
+box 0 0 66 74
+use contact_9  contact_9_6
+timestamp 1595931502
+transform 1 0 5023 0 1 2791
+box 0 0 66 74
+use contact_9  contact_9_5
+timestamp 1595931502
+transform 1 0 5023 0 1 4205
+box 0 0 66 74
+use contact_9  contact_9_4
+timestamp 1595931502
+transform 1 0 5023 0 1 5619
+box 0 0 66 74
+use contact_9  contact_9_3
+timestamp 1595931502
+transform 1 0 5023 0 1 7033
+box 0 0 66 74
+use contact_9  contact_9_2
+timestamp 1595931502
+transform 1 0 5023 0 1 5619
+box 0 0 66 74
+use contact_9  contact_9_1
+timestamp 1595931502
+transform 1 0 5023 0 1 7033
+box 0 0 66 74
+use contact_9  contact_9_0
+timestamp 1595931502
+transform 1 0 5023 0 1 8447
+box 0 0 66 74
+use pdriver_1  pdriver_1_0
+timestamp 1595931502
+transform 1 0 2936 0 -1 5656
+box -36 -17 1508 1471
+use pand2  pand2_1
+timestamp 1595931502
+transform 1 0 3304 0 -1 2828
+box -36 -17 1430 1471
+use pand2  pand2_0
+timestamp 1595931502
+transform 1 0 2936 0 1 2828
+box -36 -17 1430 1471
+use delay_chain  delay_chain_0
+timestamp 1595931502
+transform -1 0 1840 0 1 8644
+box -36 -49 1876 10137
+use pdriver_5  pdriver_5_0
+timestamp 1595931502
+transform 1 0 2936 0 1 0
+box -36 -17 2156 1471
+use contact_8  contact_8_35
+timestamp 1595931502
+transform 1 0 351 0 1 2796
+box 0 0 64 64
+use contact_8  contact_8_34
+timestamp 1595931502
+transform 1 0 2582 0 1 2796
+box 0 0 64 64
+use contact_8  contact_8_33
+timestamp 1595931502
+transform 1 0 2414 0 1 4955
+box 0 0 64 64
+use contact_8  contact_8_32
+timestamp 1595931502
+transform 1 0 4202 0 1 4917
+box 0 0 64 64
+use contact_8  contact_8_31
+timestamp 1595931502
+transform 1 0 2330 0 1 8182
+box 0 0 64 64
+use contact_8  contact_8_30
+timestamp 1595931502
+transform 1 0 2414 0 1 8058
+box 0 0 64 64
+use contact_8  contact_8_29
+timestamp 1595931502
+transform 1 0 2750 0 1 7934
+box 0 0 64 64
+use contact_8  contact_8_28
+timestamp 1595931502
+transform 1 0 3582 0 1 7771
+box 0 0 64 64
+use contact_8  contact_8_27
+timestamp 1595931502
+transform 1 0 171 0 1 7021
+box 0 0 64 64
+use contact_8  contact_8_26
+timestamp 1595931502
+transform 1 0 2330 0 1 7021
+box 0 0 64 64
+use contact_8  contact_8_25
+timestamp 1595931502
+transform 1 0 2498 0 1 5894
+box 0 0 64 64
+use contact_8  contact_8_24
+timestamp 1595931502
+transform 1 0 2330 0 1 6142
+box 0 0 64 64
+use contact_8  contact_8_23
+timestamp 1595931502
+transform 1 0 3936 0 1 6293
+box 0 0 64 64
+use contact_8  contact_8_22
+timestamp 1595931502
+transform 1 0 2985 0 1 637
+box 0 0 64 64
+use contact_8  contact_8_21
+timestamp 1595931502
+transform 1 0 4534 0 1 659
+box 0 0 64 64
+use contact_8  contact_8_20
+timestamp 1595931502
+transform 1 0 4534 0 1 659
+box 0 0 64 64
+use contact_8  contact_8_19
+timestamp 1595931502
+transform 1 0 2582 0 1 2127
+box 0 0 64 64
+use contact_8  contact_8_18
+timestamp 1595931502
+transform 1 0 3501 0 1 2278
+box 0 0 64 64
+use contact_8  contact_8_17
+timestamp 1595931502
+transform 1 0 3501 0 1 2278
+box 0 0 64 64
+use contact_8  contact_8_16
+timestamp 1595931502
+transform 1 0 4172 0 1 2105
+box 0 0 64 64
+use contact_8  contact_8_15
+timestamp 1595931502
+transform 1 0 2582 0 1 3066
+box 0 0 64 64
+use contact_8  contact_8_14
+timestamp 1595931502
+transform 1 0 2750 0 1 3314
+box 0 0 64 64
+use contact_8  contact_8_13
+timestamp 1595931502
+transform 1 0 3804 0 1 3487
+box 0 0 64 64
+use contact_8  contact_8_12
+timestamp 1595931502
+transform 1 0 3804 0 1 3487
+box 0 0 64 64
+use contact_8  contact_8_11
+timestamp 1595931502
+transform 1 0 5024 0 1 1382
+box 0 0 64 64
+use contact_8  contact_8_10
+timestamp 1595931502
+transform 1 0 5024 0 1 -32
+box 0 0 64 64
+use contact_8  contact_8_9
+timestamp 1595931502
+transform 1 0 5024 0 1 1382
+box 0 0 64 64
+use contact_8  contact_8_8
+timestamp 1595931502
+transform 1 0 5024 0 1 2796
+box 0 0 64 64
+use contact_8  contact_8_7
+timestamp 1595931502
+transform 1 0 5024 0 1 4210
+box 0 0 64 64
+use contact_8  contact_8_6
+timestamp 1595931502
+transform 1 0 5024 0 1 2796
+box 0 0 64 64
+use contact_8  contact_8_5
+timestamp 1595931502
+transform 1 0 5024 0 1 4210
+box 0 0 64 64
+use contact_8  contact_8_4
+timestamp 1595931502
+transform 1 0 5024 0 1 5624
+box 0 0 64 64
+use contact_8  contact_8_3
+timestamp 1595931502
+transform 1 0 5024 0 1 7038
+box 0 0 64 64
+use contact_8  contact_8_2
+timestamp 1595931502
+transform 1 0 5024 0 1 5624
+box 0 0 64 64
+use contact_8  contact_8_1
+timestamp 1595931502
+transform 1 0 5024 0 1 7038
+box 0 0 64 64
+use contact_8  contact_8_0
+timestamp 1595931502
+transform 1 0 5024 0 1 8452
+box 0 0 64 64
+use dff_buf_array_0  dff_buf_array_0_0
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box -49 -51 2300 1471
+use contact_7  contact_7_31
+timestamp 1595931502
+transform 1 0 2988 0 1 4954
+box 0 0 58 66
+use contact_7  contact_7_30
+timestamp 1595931502
+transform 1 0 4205 0 1 4916
+box 0 0 58 66
+use contact_7  contact_7_29
+timestamp 1595931502
+transform 1 0 3003 0 1 8181
+box 0 0 58 66
+use contact_7  contact_7_28
+timestamp 1595931502
+transform 1 0 3136 0 1 8057
+box 0 0 58 66
+use contact_7  contact_7_27
+timestamp 1595931502
+transform 1 0 3269 0 1 7933
+box 0 0 58 66
+use contact_7  contact_7_26
+timestamp 1595931502
+transform 1 0 3585 0 1 7770
+box 0 0 58 66
+use contact_7  contact_7_25
+timestamp 1595931502
+transform 1 0 3036 0 1 5893
+box 0 0 58 66
+use contact_7  contact_7_24
+timestamp 1595931502
+transform 1 0 3136 0 1 6141
+box 0 0 58 66
+use contact_7  contact_7_23
+timestamp 1595931502
+transform 1 0 3939 0 1 6292
+box 0 0 58 66
+use contact_7  contact_7_22
+timestamp 1595931502
+transform 1 0 2988 0 1 636
+box 0 0 58 66
+use contact_7  contact_7_21
+timestamp 1595931502
+transform 1 0 4537 0 1 658
+box 0 0 58 66
+use contact_7  contact_7_20
+timestamp 1595931502
+transform 1 0 4537 0 1 658
+box 0 0 58 66
+use contact_7  contact_7_19
+timestamp 1595931502
+transform 1 0 2988 0 1 2126
+box 0 0 58 66
+use contact_7  contact_7_18
+timestamp 1595931502
+transform 1 0 3504 0 1 2277
+box 0 0 58 66
+use contact_7  contact_7_17
+timestamp 1595931502
+transform 1 0 3504 0 1 2277
+box 0 0 58 66
+use contact_7  contact_7_16
+timestamp 1595931502
+transform 1 0 4175 0 1 2104
+box 0 0 58 66
+use contact_7  contact_7_15
+timestamp 1595931502
+transform 1 0 3036 0 1 3065
+box 0 0 58 66
+use contact_7  contact_7_14
+timestamp 1595931502
+transform 1 0 3136 0 1 3313
+box 0 0 58 66
+use contact_7  contact_7_13
+timestamp 1595931502
+transform 1 0 3807 0 1 3486
+box 0 0 58 66
+use contact_7  contact_7_12
+timestamp 1595931502
+transform 1 0 3807 0 1 3486
+box 0 0 58 66
+use contact_7  contact_7_11
+timestamp 1595931502
+transform 1 0 5027 0 1 1381
+box 0 0 58 66
+use contact_7  contact_7_10
+timestamp 1595931502
+transform 1 0 5027 0 1 -33
+box 0 0 58 66
+use contact_7  contact_7_9
+timestamp 1595931502
+transform 1 0 5027 0 1 1381
+box 0 0 58 66
+use contact_7  contact_7_8
+timestamp 1595931502
+transform 1 0 5027 0 1 2795
+box 0 0 58 66
+use contact_7  contact_7_7
+timestamp 1595931502
+transform 1 0 5027 0 1 4209
+box 0 0 58 66
+use contact_7  contact_7_6
+timestamp 1595931502
+transform 1 0 5027 0 1 2795
+box 0 0 58 66
+use contact_7  contact_7_5
+timestamp 1595931502
+transform 1 0 5027 0 1 4209
+box 0 0 58 66
+use contact_7  contact_7_4
+timestamp 1595931502
+transform 1 0 5027 0 1 5623
+box 0 0 58 66
+use contact_7  contact_7_3
+timestamp 1595931502
+transform 1 0 5027 0 1 7037
+box 0 0 58 66
+use contact_7  contact_7_2
+timestamp 1595931502
+transform 1 0 5027 0 1 5623
+box 0 0 58 66
+use contact_7  contact_7_1
+timestamp 1595931502
+transform 1 0 5027 0 1 7037
+box 0 0 58 66
+use contact_7  contact_7_0
+timestamp 1595931502
+transform 1 0 5027 0 1 8451
+box 0 0 58 66
+use pinv_2  pinv_2_0
+timestamp 1595931502
+transform 1 0 2936 0 -1 2828
+box -36 -17 404 1471
+use contact_27  contact_27_7
+timestamp 1595931502
+transform 1 0 2749 0 1 848
+box 0 0 66 74
+use contact_27  contact_27_6
+timestamp 1595931502
+transform 1 0 2665 0 1 466
+box 0 0 66 74
+use contact_27  contact_27_5
+timestamp 1595931502
+transform 1 0 4533 0 1 88
+box 0 0 66 74
+use contact_27  contact_27_4
+timestamp 1595931502
+transform 1 0 2581 0 1 88
+box 0 0 66 74
+use contact_27  contact_27_3
+timestamp 1595931502
+transform 1 0 2749 0 1 2273
+box 0 0 66 74
+use contact_27  contact_27_2
+timestamp 1595931502
+transform 1 0 4171 0 1 1534
+box 0 0 66 74
+use contact_27  contact_27_1
+timestamp 1595931502
+transform 1 0 2413 0 1 1534
+box 0 0 66 74
+use contact_27  contact_27_0
+timestamp 1595931502
+transform 1 0 2497 0 1 3482
+box 0 0 66 74
+use pnand2_0  pnand2_0_0
+timestamp 1595931502
+transform 1 0 2936 0 1 5656
+box -36 -17 504 1471
+<< labels >>
+rlabel metal2 s 4853 691 4853 691 4 clk_buf
+rlabel metal3 s 448 13124 448 13124 4 gnd
+rlabel metal3 s 448 15364 448 15364 4 gnd
+rlabel metal3 s 5056 0 5056 0 4 gnd
+rlabel metal3 s 448 17604 448 17604 4 gnd
+rlabel metal3 s 448 10884 448 10884 4 gnd
+rlabel metal3 s 1184 15364 1184 15364 4 gnd
+rlabel metal3 s 1184 8644 1184 8644 4 gnd
+rlabel metal3 s 0 -2 0 -2 4 gnd
+rlabel metal3 s 1184 13124 1184 13124 4 gnd
+rlabel metal3 s 1184 17604 1184 17604 4 gnd
+rlabel metal3 s 5056 2828 5056 2828 4 gnd
+rlabel metal3 s 1184 10884 1184 10884 4 gnd
+rlabel metal3 s 5056 5656 5056 5656 4 gnd
+rlabel metal3 s 5056 8484 5056 8484 4 gnd
+rlabel metal3 s 448 8644 448 8644 4 gnd
+rlabel metal2 s 170 564 170 564 4 csb
+rlabel metal2 s 4687 4949 4687 4949 4 wl_en
+rlabel metal2 s 1762 8905 1762 8905 4 rbl_bl
+rlabel metal2 s 3017 669 3017 669 4 clk
+rlabel metal2 s 4377 7803 4377 7803 4 s_en
+rlabel metal3 s 448 14244 448 14244 4 vdd
+rlabel metal3 s 1184 12004 1184 12004 4 vdd
+rlabel metal3 s 0 1414 0 1414 4 vdd
+rlabel metal3 s 448 9764 448 9764 4 vdd
+rlabel metal3 s 5056 1414 5056 1414 4 vdd
+rlabel metal3 s 1184 14244 1184 14244 4 vdd
+rlabel metal3 s 448 16484 448 16484 4 vdd
+rlabel metal3 s 448 12004 448 12004 4 vdd
+rlabel metal3 s 1184 9764 1184 9764 4 vdd
+rlabel metal3 s 1184 18724 1184 18724 4 vdd
+rlabel metal3 s 448 18724 448 18724 4 vdd
+rlabel metal3 s 1184 16484 1184 16484 4 vdd
+rlabel metal3 s 5056 4242 5056 4242 4 vdd
+rlabel metal3 s 5056 7070 5056 7070 4 vdd
+rlabel metal2 s 4554 6325 4554 6325 4 p_en_bar
+<< properties >>
+string FIXED_BBOX 0 0 5140 18884
+<< end >>

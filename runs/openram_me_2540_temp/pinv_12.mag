@@ -1,0 +1,49 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1296 -1277 2310 2731
+<< nwell >>
+rect -36 679 1050 1471
+<< poly >>
+rect 114 724 144 907
+rect 81 658 144 724
+rect 114 443 144 658
+<< locali >>
+rect 0 1397 1014 1431
+rect 62 1130 96 1397
+rect 274 1130 308 1397
+rect 490 1130 524 1397
+rect 706 1130 740 1397
+rect 918 1130 952 1397
+rect 64 658 98 724
+rect 490 708 524 1096
+rect 490 674 541 708
+rect 490 286 524 674
+rect 62 17 96 186
+rect 274 17 308 186
+rect 490 17 524 186
+rect 706 17 740 186
+rect 918 17 952 186
+rect 0 -17 1014 17
+use pmos_m8_w2_000_sli_dli_da_p  pmos_m8_w2_000_sli_dli_da_p_0
+timestamp 1595931502
+transform 1 0 54 0 1 963
+box -59 -56 965 454
+use contact_12  contact_12_0
+timestamp 1595931502
+transform 1 0 48 0 1 658
+box 0 0 66 66
+use nmos_m8_w1_680_sli_dli_da_p  nmos_m8_w1_680_sli_dli_da_p_0
+timestamp 1595931502
+transform 1 0 54 0 1 51
+box 0 -26 906 392
+<< labels >>
+rlabel corelocali s 507 0 507 0 4 gnd
+rlabel corelocali s 524 691 524 691 4 Z
+rlabel corelocali s 507 1414 507 1414 4 vdd
+rlabel corelocali s 81 691 81 691 4 A
+<< properties >>
+string FIXED_BBOX 0 0 1014 1414
+<< end >>

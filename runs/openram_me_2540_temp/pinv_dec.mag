@@ -1,0 +1,61 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1216 -1260 1896 1750
+<< nwell >>
+rect 304 0 636 490
+<< poly >>
+rect 77 182 136 212
+rect 260 182 332 212
+<< locali >>
+rect 60 164 94 230
+rect 165 130 618 164
+<< metal1 >>
+rect 184 0 212 395
+rect 456 0 484 395
+use pmos_m1_w1_120_sli_dli_da_p  pmos_m1_w1_120_sli_dli_da_p_0
+timestamp 1595931502
+transform 0 1 358 -1 0 272
+box -59 -54 209 278
+use contact_13  contact_13_0
+timestamp 1595931502
+transform 1 0 445 0 1 354
+box -59 -43 109 125
+use nmos_m1_w0_360_sli_dli_da_p  nmos_m1_w0_360_sli_dli_da_p_0
+timestamp 1595931502
+transform 0 1 162 -1 0 272
+box 0 -26 150 98
+use contact_7  contact_7_0
+timestamp 1595931502
+transform 1 0 441 0 1 214
+box 0 0 58 66
+use contact_7  contact_7_1
+timestamp 1595931502
+transform 1 0 169 0 1 214
+box 0 0 58 66
+use contact_12  contact_12_0
+timestamp 1595931502
+transform 1 0 44 0 1 164
+box 0 0 66 66
+use contact_7  contact_7_2
+timestamp 1595931502
+transform 1 0 169 0 1 362
+box 0 0 58 66
+use contact_18  contact_18_0
+timestamp 1595931502
+transform 1 0 173 0 1 354
+box 0 0 50 82
+use contact_7  contact_7_3
+timestamp 1595931502
+transform 1 0 441 0 1 362
+box 0 0 58 66
+<< labels >>
+rlabel metal1 s 198 197 198 197 4 gnd
+rlabel corelocali s 391 147 391 147 4 Z
+rlabel metal1 s 470 197 470 197 4 vdd
+rlabel corelocali s 77 197 77 197 4 A
+<< properties >>
+string FIXED_BBOX 0 0 618 395
+<< end >>

@@ -1,0 +1,16 @@
+magic
+tech sky130A
+timestamp 1595931502
+<< checkpaint >>
+rect -630 -630 662 662
+<< metal1 >>
+rect 3 29 29 32
+rect 3 0 29 3
+<< via1 >>
+rect 3 3 29 29
+<< metal2 >>
+rect 0 3 3 29
+rect 29 3 32 29
+<< properties >>
+string FIXED_BBOX 0 0 32 32
+<< end >>

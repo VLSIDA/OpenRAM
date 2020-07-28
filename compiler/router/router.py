@@ -1170,7 +1170,7 @@ def snap_to_grid(offset):
 
 
 def snap_val_to_grid(x):
-    grid = drc("grid")
+    grid = drc("grid") 
     xgrid = int(round(round((x / grid), 2), 0))
     xoff = xgrid * grid
     return xoff

@@ -1,0 +1,1188 @@
+* NGSPICE file created from sram_2_16_sky130.ext - technology: sky130A
+
+.subckt dff clk Q gnd vdd D
+M1000 gnd a_47_611# a_28_102# gnd nshort w=1u l=0.15u
++  ad=1.105p pd=10.21u as=0.265p ps=2.53u
+M1001 a_547_102# a_28_102# gnd gnd nshort w=1u l=0.15u
++  ad=0.21p pd=2.42u as=0p ps=0u
+M1002 vdd a_47_611# a_28_102# vdd pshort w=3u l=0.15u
++  ad=3.315p pd=26.21u as=0.795p ps=6.53u
+M1003 a_547_712# a_28_102# vdd vdd pshort w=3u l=0.15u
++  ad=0.63p pd=6.42u as=0p ps=0u
+M1004 a_389_102# clk a_47_611# gnd nshort w=1u l=0.15u
++  ad=0.21p pd=2.42u as=0.45p ps=2.9u
+M1005 a_389_712# a_239_76# a_47_611# vdd pshort w=3u l=0.15u
++  ad=0.63p pd=6.42u as=1.35p ps=6.9u
+M1006 gnd a_28_102# a_389_102# gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1007 vdd a_28_102# a_389_712# vdd pshort w=3u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1008 a_47_611# clk a_197_712# vdd pshort w=3u l=0.15u
++  ad=0p pd=0u as=0.63p ps=6.42u
+M1009 a_47_611# a_239_76# a_197_102# gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0.21p ps=2.42u
+M1010 a_239_76# clk gnd gnd nshort w=1u l=0.15u
++  ad=0.265p pd=2.53u as=0p ps=0u
+M1011 a_239_76# clk vdd vdd pshort w=3u l=0.15u
++  ad=0.795p pd=6.53u as=0p ps=0u
+M1012 a_739_102# a_239_76# ON gnd nshort w=1u l=0.15u
++  ad=0.21p pd=2.42u as=0.45p ps=2.9u
+M1013 a_739_712# clk ON vdd pshort w=3u l=0.15u
++  ad=0.63p pd=6.42u as=1.35p ps=6.9u
+M1014 a_197_102# D gnd gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1015 a_197_712# D vdd vdd pshort w=3u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1016 Q ON gnd gnd nshort w=1u l=0.15u
++  ad=0.265p pd=2.53u as=0p ps=0u
+M1017 Q ON vdd vdd pshort w=3u l=0.15u
++  ad=0.795p pd=6.53u as=0p ps=0u
+M1018 vdd Q a_739_712# vdd pshort w=3u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1019 gnd Q a_739_102# gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1020 ON clk a_547_102# gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1021 ON a_239_76# a_547_712# vdd pshort w=3u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt data_dff gnd clk din_1 dout_0 dout_1 din_0 vdd
+Xdff_0 clk dout_1 gnd vdd din_1 dff
+Xdff_1 clk dout_0 gnd vdd din_0 dff
+.ends
+
+.subckt nmos_m1_w0_740_sli_dactive VSUBS S G a_90_0#
+M1000 a_90_0# G S VSUBS nshort w=0.74u l=0.15u
++  ad=0.222p pd=2.08u as=0.07705p ps=-0.07u
+.ends
+
+.subckt nmos_m1_w0_740_sactive_dli VSUBS a_0_0# D G
+M1000 D G a_0_0# VSUBS nshort w=0.74u l=0.15u
++  ad=0.07705p pd=-0.07u as=0.222p ps=2.08u
+.ends
+
+.subckt pmos_m1_w1_120_sli_dli VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=1.12u l=0.15u
++  ad=0.19105p pd=0.69u as=0.19105p ps=0.69u
+.ends
+
+.subckt nmos_m1_w0_740_sactive_dactive VSUBS a_0_0# G a_90_0#
+M1000 a_90_0# G a_0_0# VSUBS nshort w=0.74u l=0.15u
++  ad=0.222p pd=2.08u as=0.222p ps=2.08u
+.ends
+
+.subckt pnand3 VSUBS Z gnd vdd A B C w_n36_679#
+Xnmos_m1_w0_740_sli_dactive_0 VSUBS gnd A nmos_m1_w0_740_sli_dactive_0/a_90_0# nmos_m1_w0_740_sli_dactive
+Xnmos_m1_w0_740_sactive_dli_0 VSUBS nmos_m1_w0_740_sactive_dli_0/a_0_0# Z C nmos_m1_w0_740_sactive_dli
+Xpmos_m1_w1_120_sli_dli_0 VSUBS vdd w_n36_679# Z C pmos_m1_w1_120_sli_dli
+Xpmos_m1_w1_120_sli_dli_1 VSUBS Z w_n36_679# vdd B pmos_m1_w1_120_sli_dli
+Xpmos_m1_w1_120_sli_dli_2 VSUBS vdd w_n36_679# Z A pmos_m1_w1_120_sli_dli
+Xnmos_m1_w0_740_sactive_dactive_0 VSUBS nmos_m1_w0_740_sli_dactive_0/a_90_0# B nmos_m1_w0_740_sactive_dli_0/a_0_0#
++ nmos_m1_w0_740_sactive_dactive
+.ends
+
+.subckt nmos_m2_w0_740_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=0.74u l=0.15u
++  ad=0.14365p pd=0.11u as=0.15405p ps=-0.15u
+M1001 S G D VSUBS nshort w=0.74u l=0.15u
++  ad=0p pd=-0u as=0p ps=0u
+.ends
+
+.subckt pmos_m2_w1_260_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=1.26u l=0.15u
++  ad=0.34645p pd=1.15u as=0.46605p ps=1.93u
+M1001 S G D w_n54_n54# pshort w=1.26u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_9 VSUBS Z gnd vdd A
+Xnmos_m2_w0_740_sli_dli_da_p_0 VSUBS gnd Z A nmos_m2_w0_740_sli_dli_da_p
+Xpmos_m2_w1_260_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m2_w1_260_sli_dli_da_p
+.ends
+
+.subckt pdriver_3 VSUBS Z gnd vdd A
+Xpinv_9_0 VSUBS Z gnd vdd A pinv_9
+.ends
+
+.subckt pand3_0 VSUBS Z vdd gnd A B C
+Xpnand3_0 VSUBS pnand3_0/Z gnd vdd A B C vdd pnand3
+Xpdriver_3_0 VSUBS Z gnd vdd pnand3_0/Z pdriver_3
+.ends
+
+.subckt pinv VSUBS Z gnd vdd A
+Xnmos_m2_w0_740_sli_dli_da_p_0 VSUBS gnd Z A nmos_m2_w0_740_sli_dli_da_p
+Xpmos_m2_w1_260_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m2_w1_260_sli_dli_da_p
+.ends
+
+.subckt nmos_m3_w1_680_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0.86925p pd=3.79u as=0.86925p ps=3.79u
+M1001 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pmos_m3_w1_680_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=1.68u l=0.15u
++  ad=0.86925p pd=3.79u as=0.86925p ps=3.79u
+M1001 D G S w_n54_n54# pshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_0 VSUBS Z gnd vdd A
+Xnmos_m3_w1_680_sli_dli_da_p_0 VSUBS gnd Z A nmos_m3_w1_680_sli_dli_da_p
+Xpmos_m3_w1_680_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m3_w1_680_sli_dli_da_p
+.ends
+
+.subckt dff_buf_0 gnd clk vdd Q D Qb
+Xpinv_0 gnd Qb gnd vdd dff_0/Q pinv
+Xdff_0 clk dff_0/Q gnd vdd D dff
+Xpinv_0_0 gnd Q gnd vdd Qb pinv_0
+.ends
+
+.subckt dff_buf_array gnd din_1 clk din_0 dout_1 dout_bar_1 dout_bar_0 vdd
+Xdff_buf_0_1 gnd clk vdd dout_0 din_0 dout_bar_0 dff_buf_0
+Xdff_buf_0_0 gnd clk vdd dout_1 din_1 dout_bar_1 dff_buf_0
+.ends
+
+.subckt nmos_m6_w2_000_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=2u l=0.15u
++  ad=1.90505p pd=7.87u as=2.18005p ps=10.13u
+M1001 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pmos_m6_w2_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=2.18005p pd=10.13u as=1.90505p ps=7.87u
+M1001 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_8 VSUBS Z gnd vdd A
+Xnmos_m6_w2_000_sli_dli_da_p_0 VSUBS gnd Z A nmos_m6_w2_000_sli_dli_da_p
+Xpmos_m6_w2_000_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m6_w2_000_sli_dli_da_p
+.ends
+
+.subckt pdriver_2 VSUBS Z gnd vdd A
+Xpinv_8_0 VSUBS Z gnd vdd A pinv_8
+.ends
+
+.subckt pand3 VSUBS Z vdd gnd A B C
+Xpnand3_0 VSUBS pnand3_0/Z gnd vdd A B C vdd pnand3
+Xpdriver_2_0 VSUBS Z gnd vdd pnand3_0/Z pdriver_2
+.ends
+
+.subckt pnand2_0 VSUBS Z gnd vdd A B
+Xnmos_m1_w0_740_sli_dactive_0 VSUBS gnd A nmos_m1_w0_740_sactive_dli_0/a_0_0# nmos_m1_w0_740_sli_dactive
+Xnmos_m1_w0_740_sactive_dli_0 VSUBS nmos_m1_w0_740_sactive_dli_0/a_0_0# Z B nmos_m1_w0_740_sactive_dli
+Xpmos_m1_w1_120_sli_dli_0 VSUBS Z vdd vdd B pmos_m1_w1_120_sli_dli
+Xpmos_m1_w1_120_sli_dli_1 VSUBS vdd vdd Z A pmos_m1_w1_120_sli_dli
+.ends
+
+.subckt nmos_m1_w0_360_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=0.36u l=0.15u
++  ad=-0.03695p pd=-0.83u as=-0.03695p ps=-0.83u
+.ends
+
+.subckt pmos_m1_w1_120_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=1.12u l=0.15u
++  ad=0.19105p pd=0.69u as=0.19105p ps=0.69u
+.ends
+
+.subckt pinv_7 VSUBS Z gnd vdd A w_n36_679#
+Xnmos_m1_w0_360_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_360_sli_dli_da_p
+Xpmos_m1_w1_120_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m1_w1_120_sli_dli_da_p
+.ends
+
+.subckt nmos_m3_w2_000_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=2u l=0.15u
++  ad=1.09005p pd=5.07u as=1.09005p ps=5.07u
+M1001 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pmos_m3_w2_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=1.09005p pd=5.07u as=1.09005p ps=5.07u
+M1001 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_5 VSUBS Z gnd vdd A w_n36_679#
+Xnmos_m3_w2_000_sli_dli_da_p_0 VSUBS gnd Z A nmos_m3_w2_000_sli_dli_da_p
+Xpmos_m3_w2_000_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m3_w2_000_sli_dli_da_p
+.ends
+
+.subckt pinv_3 VSUBS Z gnd vdd A w_n36_679#
+Xnmos_m2_w0_740_sli_dli_da_p_0 VSUBS gnd Z A nmos_m2_w0_740_sli_dli_da_p
+Xpmos_m2_w1_260_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m2_w1_260_sli_dli_da_p
+.ends
+
+.subckt pinv_4 VSUBS gnd vdd Z A
+Xnmos_m1_w0_360_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_360_sli_dli_da_p
+Xpmos_m1_w1_120_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m1_w1_120_sli_dli_da_p
+.ends
+
+.subckt pdriver_1 VSUBS vdd A Z gnd
+Xpinv_7_0 VSUBS pinv_3_0/A gnd vdd pinv_7_0/A vdd pinv_7
+Xpinv_5_0 VSUBS Z gnd vdd pinv_5_0/A vdd pinv_5
+Xpinv_3_0 VSUBS pinv_5_0/A gnd vdd pinv_3_0/A vdd pinv_3
+Xpinv_4_0 VSUBS gnd vdd pinv_7_0/A A pinv_4
+.ends
+
+.subckt pinv_10 VSUBS Z gnd vdd A
+Xnmos_m1_w0_360_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_360_sli_dli_da_p
+Xpmos_m1_w1_120_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m1_w1_120_sli_dli_da_p
+.ends
+
+.subckt delay_chain VSUBS in gnd out vdd
+Xpinv_10_7 VSUBS pinv_10_7/Z gnd vdd pinv_10_4/A pinv_10
+Xpinv_10_8 VSUBS pinv_10_8/Z gnd vdd pinv_10_4/A pinv_10
+Xpinv_10_9 VSUBS pinv_10_4/A gnd vdd pinv_10_9/A pinv_10
+Xpinv_10_40 VSUBS pinv_10_40/Z gnd vdd pinv_10_39/A pinv_10
+Xpinv_10_41 VSUBS pinv_10_41/Z gnd vdd pinv_10_39/A pinv_10
+Xpinv_10_30 VSUBS pinv_10_30/Z gnd vdd pinv_10_29/A pinv_10
+Xpinv_10_20 VSUBS pinv_10_20/Z gnd vdd pinv_10_19/A pinv_10
+Xpinv_10_42 VSUBS pinv_10_42/Z gnd vdd pinv_10_39/A pinv_10
+Xpinv_10_31 VSUBS pinv_10_31/Z gnd vdd pinv_10_29/A pinv_10
+Xpinv_10_10 VSUBS pinv_10_10/Z gnd vdd pinv_10_9/A pinv_10
+Xpinv_10_21 VSUBS pinv_10_21/Z gnd vdd pinv_10_19/A pinv_10
+Xpinv_10_43 VSUBS pinv_10_43/Z gnd vdd pinv_10_39/A pinv_10
+Xpinv_10_32 VSUBS pinv_10_32/Z gnd vdd pinv_10_29/A pinv_10
+Xpinv_10_11 VSUBS pinv_10_11/Z gnd vdd pinv_10_9/A pinv_10
+Xpinv_10_22 VSUBS pinv_10_22/Z gnd vdd pinv_10_19/A pinv_10
+Xpinv_10_44 VSUBS pinv_10_39/A gnd vdd in pinv_10
+Xpinv_10_33 VSUBS pinv_10_33/Z gnd vdd pinv_10_29/A pinv_10
+Xpinv_10_12 VSUBS pinv_10_12/Z gnd vdd pinv_10_9/A pinv_10
+Xpinv_10_23 VSUBS pinv_10_23/Z gnd vdd pinv_10_19/A pinv_10
+Xpinv_10_34 VSUBS pinv_10_29/A gnd vdd pinv_10_34/A pinv_10
+Xpinv_10_13 VSUBS pinv_10_13/Z gnd vdd pinv_10_9/A pinv_10
+Xpinv_10_24 VSUBS pinv_10_19/A gnd vdd pinv_10_24/A pinv_10
+Xpinv_10_35 VSUBS pinv_10_35/Z gnd vdd pinv_10_34/A pinv_10
+Xpinv_10_14 VSUBS pinv_10_9/A gnd vdd pinv_10_14/A pinv_10
+Xpinv_10_25 VSUBS pinv_10_25/Z gnd vdd pinv_10_24/A pinv_10
+Xpinv_10_36 VSUBS pinv_10_36/Z gnd vdd pinv_10_34/A pinv_10
+Xpinv_10_15 VSUBS pinv_10_15/Z gnd vdd pinv_10_14/A pinv_10
+Xpinv_10_26 VSUBS pinv_10_26/Z gnd vdd pinv_10_24/A pinv_10
+Xpinv_10_37 VSUBS pinv_10_37/Z gnd vdd pinv_10_34/A pinv_10
+Xpinv_10_16 VSUBS pinv_10_16/Z gnd vdd pinv_10_14/A pinv_10
+Xpinv_10_27 VSUBS pinv_10_27/Z gnd vdd pinv_10_24/A pinv_10
+Xpinv_10_38 VSUBS pinv_10_38/Z gnd vdd pinv_10_34/A pinv_10
+Xpinv_10_17 VSUBS pinv_10_17/Z gnd vdd pinv_10_14/A pinv_10
+Xpinv_10_39 VSUBS pinv_10_34/A gnd vdd pinv_10_39/A pinv_10
+Xpinv_10_28 VSUBS pinv_10_28/Z gnd vdd pinv_10_24/A pinv_10
+Xpinv_10_18 VSUBS pinv_10_18/Z gnd vdd pinv_10_14/A pinv_10
+Xpinv_10_29 VSUBS pinv_10_24/A gnd vdd pinv_10_29/A pinv_10
+Xpinv_10_19 VSUBS pinv_10_14/A gnd vdd pinv_10_19/A pinv_10
+Xpinv_10_0 VSUBS pinv_10_0/Z gnd vdd out pinv_10
+Xpinv_10_1 VSUBS pinv_10_1/Z gnd vdd out pinv_10
+Xpinv_10_2 VSUBS pinv_10_2/Z gnd vdd out pinv_10
+Xpinv_10_3 VSUBS pinv_10_3/Z gnd vdd out pinv_10
+Xpinv_10_4 VSUBS out gnd vdd pinv_10_4/A pinv_10
+Xpinv_10_5 VSUBS pinv_10_5/Z gnd vdd pinv_10_4/A pinv_10
+Xpinv_10_6 VSUBS pinv_10_6/Z gnd vdd pinv_10_4/A pinv_10
+.ends
+
+.subckt pdriver_4 gnd vdd VSUBS Z A
+Xpinv_7_0 VSUBS Z gnd vdd pinv_7_0/A vdd pinv_7
+Xpinv_4_0 VSUBS gnd vdd pinv_7_0/A A pinv_4
+.ends
+
+.subckt nmos_m7_w1_680_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=1.88965p pd=7.75u as=1.88965p ps=7.75u
+M1001 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pmos_m7_w2_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=2.36005p pd=10.31u as=2.36005p ps=10.31u
+M1001 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_1 VSUBS Z gnd vdd A
+Xnmos_m7_w1_680_sli_dli_da_p_0 VSUBS gnd Z A nmos_m7_w1_680_sli_dli_da_p
+Xpmos_m7_w2_000_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m7_w2_000_sli_dli_da_p
+.ends
+
+.subckt pdriver Z VSUBS vdd gnd A
+Xpinv_1_0 VSUBS Z gnd vdd A pinv_1
+.ends
+
+.subckt pnand2 VSUBS vdd Z gnd A B w_n36_679#
+Xnmos_m1_w0_740_sli_dactive_0 VSUBS gnd A nmos_m1_w0_740_sactive_dli_0/a_0_0# nmos_m1_w0_740_sli_dactive
+Xnmos_m1_w0_740_sactive_dli_0 VSUBS nmos_m1_w0_740_sactive_dli_0/a_0_0# Z B nmos_m1_w0_740_sactive_dli
+Xpmos_m1_w1_120_sli_dli_0 VSUBS Z w_n36_679# vdd B pmos_m1_w1_120_sli_dli
+Xpmos_m1_w1_120_sli_dli_1 VSUBS vdd w_n36_679# Z A pmos_m1_w1_120_sli_dli
+.ends
+
+.subckt pand2 VSUBS gnd A vdd B Z
+Xpdriver_0 Z VSUBS vdd gnd pnand2_0/Z pdriver
+Xpnand2_0 VSUBS vdd pnand2_0/Z gnd A B vdd pnand2
+.ends
+
+.subckt pinv_2 VSUBS Z gnd A vdd
+Xnmos_m1_w0_360_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_360_sli_dli_da_p
+Xpmos_m1_w1_120_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m1_w1_120_sli_dli_da_p
+.ends
+
+.subckt pmos_m9_w2_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=2.99505p pd=12.93u as=2.99505p ps=12.93u
+M1001 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1007 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1008 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt nmos_m9_w2_000_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=2u l=0.15u
++  ad=2.99505p pd=12.93u as=2.99505p ps=12.93u
+M1001 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1007 D G S VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1008 S G D VSUBS nshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_6 VSUBS Z gnd vdd A w_n36_679#
+Xpmos_m9_w2_000_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m9_w2_000_sli_dli_da_p
+Xnmos_m9_w2_000_sli_dli_da_p_0 VSUBS gnd Z A nmos_m9_w2_000_sli_dli_da_p
+.ends
+
+.subckt pdriver_0 VSUBS vdd A Z gnd
+Xpinv_5_0 VSUBS pinv_6_0/A gnd vdd pinv_5_0/A vdd pinv_5
+Xpinv_3_0 VSUBS pinv_5_0/A gnd vdd pinv_3_0/A vdd pinv_3
+Xpinv_6_0 VSUBS Z gnd vdd pinv_6_0/A vdd pinv_6
+Xpinv_4_0 VSUBS gnd vdd pinv_3_0/A A pinv_4
+.ends
+
+.subckt control_logic_rw rbl_bl gnd p_en_bar clk web csb vdd s_en wl_en clk_buf w_en
+Xpand3_0_0 gnd s_en vdd gnd pinv_2_0/A pand3_0/C pand3_0_0/C pand3_0
+Xdff_buf_array_0 gnd web clk_buf csb pand3_0_0/C pand3_0/A pand2_1/B vdd dff_buf_array
+Xpand3_0 gnd w_en vdd gnd pand3_0/A pand3_0/B pand3_0/C pand3
+Xpnand2_0_0 gnd pnand2_0_0/Z gnd vdd pand2_0/Z pinv_2_0/A pnand2_0
+Xpdriver_1_0 gnd vdd pand3_0/C wl_en gnd pdriver_1
+Xdelay_chain_0 gnd rbl_bl gnd pinv_2_0/A vdd delay_chain
+Xpdriver_4_0 gnd vdd gnd p_en_bar pnand2_0_0/Z pdriver_4
+Xpand2_0 gnd gnd clk_buf vdd pand2_1/B pand2_0/Z pand2
+Xpand2_1 gnd gnd pand2_1/A vdd pand2_1/B pand3_0/C pand2
+Xpinv_2_0 gnd pand3_0/B gnd pinv_2_0/A vdd pinv_2
+Xpinv_2_1 gnd pand2_1/A gnd clk_buf vdd pinv_2
+Xpdriver_0_0 gnd vdd clk clk_buf gnd pdriver_0
+.ends
+
+.subckt pinv_11 VSUBS Z gnd vdd A w_n36_679#
+Xnmos_m3_w1_680_sli_dli_da_p_0 VSUBS gnd Z A nmos_m3_w1_680_sli_dli_da_p
+Xpmos_m3_w1_680_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m3_w1_680_sli_dli_da_p
+.ends
+
+.subckt nmos_m8_w1_680_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=2.04085p pd=7.93u as=2.24865p ps=9.55u
+M1001 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 D G S VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1007 S G D VSUBS nshort w=1.68u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pmos_m8_w2_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=2.81505p pd=12.75u as=2.54005p ps=10.49u
+M1001 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1002 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1003 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1004 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 S G D w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1007 D G S w_n54_n54# pshort w=2u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt pinv_12 VSUBS Z gnd vdd A w_n36_679#
+Xnmos_m8_w1_680_sli_dli_da_p_0 VSUBS gnd Z A nmos_m8_w1_680_sli_dli_da_p
+Xpmos_m8_w2_000_sli_dli_da_p_0 VSUBS vdd w_n36_679# Z A pmos_m8_w2_000_sli_dli_da_p
+.ends
+
+.subckt pdriver_5 VSUBS vdd A Z gnd
+Xpinv_7_0 VSUBS pinv_7_0/Z gnd vdd pinv_7_0/A vdd pinv_7
+Xpinv_11_0 VSUBS pinv_12_0/A gnd vdd pinv_7_0/Z vdd pinv_11
+Xpinv_12_0 VSUBS Z gnd vdd pinv_12_0/A vdd pinv_12
+Xpinv_4_0 VSUBS gnd vdd pinv_7_0/A A pinv_4
+.ends
+
+.subckt dff_buf_array_0 gnd din_0 clk dout_0 dout_bar_0 vdd
+Xdff_buf_0_0 gnd clk vdd dout_0 din_0 dout_bar_0 dff_buf_0
+.ends
+
+.subckt control_logic_r gnd rbl_bl p_en_bar clk vdd csb s_en wl_en clk_buf
+Xpand3_0_0 gnd s_en vdd gnd pand3_0_0/A pand2_1/Z pand2_1/B pand3_0
+Xpdriver_5_0 gnd vdd clk clk_buf gnd pdriver_5
+Xpnand2_0_0 gnd pnand2_0_0/Z gnd vdd pand2_0/Z pand3_0_0/A pnand2_0
+Xpdriver_1_0 gnd vdd pand2_1/Z wl_en gnd pdriver_1
+Xdelay_chain_0 gnd rbl_bl gnd pand3_0_0/A vdd delay_chain
+Xpdriver_4_0 gnd vdd gnd p_en_bar pnand2_0_0/Z pdriver_4
+Xpand2_0 gnd gnd clk_buf vdd pand2_1/B pand2_0/Z pand2
+Xdff_buf_array_0_0 gnd csb clk_buf dff_buf_array_0_0/dout_0 pand2_1/B vdd dff_buf_array_0
+Xpand2_1 gnd gnd pand2_1/A vdd pand2_1/B pand2_1/Z pand2
+Xpinv_2_0 gnd pand2_1/A gnd clk_buf vdd pinv_2
+.ends
+
+.subckt row_addr_dff gnd dout_0 clk dout_2 din_1 din_3 dout_1 dout_3 din_0 vdd din_2
+Xdff_0 clk dout_3 gnd vdd din_3 dff
+Xdff_1 clk dout_2 gnd vdd din_2 dff
+Xdff_2 clk dout_1 gnd vdd din_1 dff
+Xdff_3 clk dout_0 gnd vdd din_0 dff
+.ends
+
+.subckt sense_amp en bl br dout gnd vdd
+M1000 a_184_1689# a_154_1298# a_96_1689# gnd nshort w=0.65u l=0.15u
++  ad=0.377p pd=3.76u as=0.1885p ps=1.88u
+M1001 gnd a_154_1298# dout gnd nshort w=0.65u l=0.15u
++  ad=0.3705p pd=3.74u as=0.1885p ps=1.88u
+M1002 bl en a_96_1689# vdd pshort w=2u l=0.15u
++  ad=0.54p pd=4.54u as=0.8802p ps=7.6u
+M1003 vdd a_154_1298# a_96_1689# vdd pshort w=1.26u l=0.15u
++  ad=0.7056p pd=6.16u as=0p ps=0u
+M1004 gnd en a_184_1689# gnd nshort w=0.65u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1005 a_154_1298# a_96_1689# a_184_1689# gnd nshort w=0.65u l=0.15u
++  ad=0.1885p pd=1.88u as=0p ps=0u
+M1006 a_154_1298# a_96_1689# vdd vdd pshort w=1.26u l=0.15u
++  ad=0.8802p pd=7.6u as=0p ps=0u
+M1007 a_154_1298# en br vdd pshort w=2u l=0.15u
++  ad=0p pd=0u as=0.54p ps=4.54u
+M1008 vdd a_154_1298# dout vdd pshort w=1.26u l=0.15u
++  ad=0p pd=0u as=0.3654p ps=3.1u
+.ends
+
+.subckt sense_amp_array gnd bl_0 bl_1 en data_0 br_1 data_1 vdd br_0
+Xsense_amp_0 en bl_1 br_1 data_1 gnd vdd sense_amp
+Xsense_amp_1 en bl_0 br_0 data_0 gnd vdd sense_amp
+.ends
+
+.subckt pmos_m1_w0_550_sli_dli VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=0.55u l=0.15u
++  ad=0.02005p pd=-0.45u as=0.02005p ps=-0.45u
+.ends
+
+.subckt precharge_1 VSUBS bl br en_bar vdd
+Xpmos_m1_w0_550_sli_dli_0 VSUBS vdd vdd br en_bar pmos_m1_w0_550_sli_dli
+Xpmos_m1_w0_550_sli_dli_1 VSUBS bl vdd vdd en_bar pmos_m1_w0_550_sli_dli
+Xpmos_m1_w0_550_sli_dli_2 VSUBS bl vdd br en_bar pmos_m1_w0_550_sli_dli
+.ends
+
+.subckt precharge_array_0 VSUBS bl_0 br_0 bl_1 vdd bl_2 en_bar br_2 br_1
+Xprecharge_1_0 VSUBS bl_2 br_2 en_bar vdd precharge_1
+Xprecharge_1_1 VSUBS bl_1 br_1 en_bar vdd precharge_1
+Xprecharge_1_2 VSUBS bl_0 br_0 en_bar vdd precharge_1
+.ends
+
+.subckt port_data_0 gnd rbl_bl vdd p_en_bar dout_0 dout_1 rbl_br bl_0 bl_1 s_en br_0
++ br_1
+Xsense_amp_array_0 gnd bl_0 bl_1 s_en dout_0 br_1 dout_1 vdd br_0 sense_amp_array
+Xprecharge_array_0_0 gnd bl_0 br_0 bl_1 vdd rbl_bl p_en_bar rbl_br br_1 precharge_array_0
+.ends
+
+.subckt write_driver bl en br gnd din vdd
+M1000 gnd din a_145_492# gnd nshort w=0.55u l=0.15u
++  ad=0.7312p pd=7.36u as=0.1595p ps=1.68u
+M1001 a_271_690# din vdd vdd pshort w=0.55u l=0.15u
++  ad=0.15125p pd=1.65u as=0.627p ps=6.68u
+M1002 a_129_736# a_271_690# vdd vdd pshort w=0.55u l=0.15u
++  ad=0.29975p pd=3.29u as=0p ps=0u
+M1003 br a_121_1585# gnd gnd nshort w=1u l=0.15u
++  ad=0.27p pd=2.54u as=0p ps=0u
+M1004 a_183_1687# a_129_736# gnd gnd nshort w=0.36u l=0.15u
++  ad=0.0972p pd=1.26u as=0p ps=0u
+M1005 vdd a_41_1120# a_121_1585# vdd pshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0.1485p ps=1.64u
+M1006 a_213_736# en a_129_736# gnd nshort w=0.55u l=0.15u
++  ad=0.1595p pd=1.68u as=0.1485p ps=1.64u
+M1007 vdd din a_41_1120# vdd pshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0.1595p ps=1.68u
+M1008 a_145_492# en a_41_1120# gnd nshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0.1485p ps=1.64u
+M1009 vdd en a_129_736# vdd pshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1010 a_183_1687# a_129_736# vdd vdd pshort w=0.55u l=0.15u
++  ad=0.1485p pd=1.64u as=0p ps=0u
+M1011 a_271_690# din gnd gnd nshort w=0.36u l=0.15u
++  ad=0.1044p pd=1.3u as=0p ps=0u
+M1012 gnd a_183_1687# bl gnd nshort w=1u l=0.15u
++  ad=0p pd=0u as=0.27p ps=2.54u
+M1013 a_41_1120# en vdd vdd pshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1014 gnd a_41_1120# a_121_1585# gnd nshort w=0.36u l=0.15u
++  ad=0p pd=0u as=0.0972p ps=1.26u
+M1015 gnd a_271_690# a_213_736# gnd nshort w=0.55u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt write_driver_array gnd en data_0 bl_0 bl_1 data_1 vdd br_0 br_1
+Xwrite_driver_0 bl_1 en br_1 gnd data_1 vdd write_driver
+Xwrite_driver_1 bl_0 en br_0 gnd data_0 vdd write_driver
+.ends
+
+.subckt precharge_0 VSUBS en_bar bl br vdd
+Xpmos_m1_w0_550_sli_dli_0 VSUBS vdd vdd br en_bar pmos_m1_w0_550_sli_dli
+Xpmos_m1_w0_550_sli_dli_1 VSUBS bl vdd vdd en_bar pmos_m1_w0_550_sli_dli
+Xpmos_m1_w0_550_sli_dli_2 VSUBS bl vdd br en_bar pmos_m1_w0_550_sli_dli
+.ends
+
+.subckt precharge_array bl_1 vdd VSUBS br_1 bl_0 bl_2 en_bar br_0 br_2
+Xprecharge_0_0 VSUBS en_bar bl_2 br_2 vdd precharge_0
+Xprecharge_0_1 VSUBS en_bar bl_1 br_1 vdd precharge_0
+Xprecharge_0_2 VSUBS en_bar bl_0 br_0 vdd precharge_0
+.ends
+
+.subckt port_data p_en_bar gnd rbl_bl vdd dout_0 din_1 dout_1 s_en rbl_br bl_0 bl_1
++ din_0 w_en br_0 br_1
+Xsense_amp_array_0 gnd bl_0 bl_1 s_en dout_0 br_1 dout_1 vdd br_0 sense_amp_array
+Xwrite_driver_array_0 gnd w_en din_0 bl_0 bl_1 din_1 vdd br_0 br_1 write_driver_array
+Xprecharge_array_0 bl_0 vdd gnd br_0 rbl_bl bl_1 p_en_bar rbl_br br_1 precharge_array
+.ends
+
+.subckt pinv_dec VSUBS Z vdd gnd A
+Xnmos_m1_w0_360_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_360_sli_dli_da_p
+Xpmos_m1_w1_120_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m1_w1_120_sli_dli_da_p
+.ends
+
+.subckt nand2_dec Z gnd vdd A B
+M1000 Z A vdd vdd pshort w=1.12u l=0.15u
++  ad=0.6048p pd=5.56u as=0.336p ps=2.84u
+M1001 a_196_224# B gnd gnd nshort w=0.74u l=0.15u
++  ad=0.1554p pd=1.9u as=0.3182p ps=2.34u
+M1002 Z A a_196_224# gnd nshort w=0.74u l=0.15u
++  ad=0.222p pd=2.08u as=0p ps=0u
+M1003 vdd B Z vdd pshort w=1.12u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt and2_dec gnd vdd Z A B
+Xpinv_dec_0 gnd Z vdd gnd pinv_dec_0/A pinv_dec
+Xnand2_dec_0 pinv_dec_0/A gnd vdd A B nand2_dec
+.ends
+
+.subckt hierarchical_predecode2x4 gnd out_0 out_1 out_2 out_3 in_0 in_1 vdd
+Xand2_dec_0 gnd vdd out_3 in_0 in_1 and2_dec
+Xand2_dec_1 gnd vdd out_2 and2_dec_3/A in_1 and2_dec
+Xand2_dec_2 gnd vdd out_1 in_0 pinv_dec_0/Z and2_dec
+Xand2_dec_3 gnd vdd out_0 and2_dec_3/A pinv_dec_0/Z and2_dec
+Xpinv_dec_0 gnd pinv_dec_0/Z vdd gnd in_1 pinv_dec
+Xpinv_dec_1 gnd and2_dec_3/A vdd gnd in_0 pinv_dec
+.ends
+
+.subckt hierarchical_decoder addr_0 gnd addr_1 addr_2 addr_3 vdd decode_0 decode_1
++ decode_2 decode_3 decode_4 decode_5 decode_6 decode_7 decode_10 decode_8 decode_11
++ decode_9 decode_12 decode_13 decode_14 decode_15
+Xand2_dec_0 gnd vdd decode_15 predecode_3 predecode_7 and2_dec
+Xand2_dec_1 gnd vdd decode_14 predecode_2 predecode_7 and2_dec
+Xand2_dec_2 gnd vdd decode_13 predecode_1 predecode_7 and2_dec
+Xand2_dec_3 gnd vdd decode_12 predecode_0 predecode_7 and2_dec
+Xand2_dec_4 gnd vdd decode_11 predecode_3 predecode_6 and2_dec
+Xand2_dec_5 gnd vdd decode_10 predecode_2 predecode_6 and2_dec
+Xand2_dec_6 gnd vdd decode_9 predecode_1 predecode_6 and2_dec
+Xand2_dec_7 gnd vdd decode_8 predecode_0 predecode_6 and2_dec
+Xhierarchical_predecode2x4_0 gnd predecode_4 predecode_5 predecode_6 predecode_7 addr_2
++ addr_3 vdd hierarchical_predecode2x4
+Xand2_dec_8 gnd vdd decode_7 predecode_3 predecode_5 and2_dec
+Xand2_dec_9 gnd vdd decode_6 predecode_2 predecode_5 and2_dec
+Xhierarchical_predecode2x4_1 gnd predecode_0 predecode_1 predecode_2 predecode_3 addr_0
++ addr_1 vdd hierarchical_predecode2x4
+Xand2_dec_10 gnd vdd decode_5 predecode_1 predecode_5 and2_dec
+Xand2_dec_11 gnd vdd decode_4 predecode_0 predecode_5 and2_dec
+Xand2_dec_12 gnd vdd decode_3 predecode_3 predecode_4 and2_dec
+Xand2_dec_13 gnd vdd decode_2 predecode_2 predecode_4 and2_dec
+Xand2_dec_14 gnd vdd decode_1 predecode_1 predecode_4 and2_dec
+Xand2_dec_15 gnd vdd decode_0 predecode_0 predecode_4 and2_dec
+.ends
+
+.subckt nmos_m1_w0_740_sli_dli_da_p VSUBS S D G
+M1000 D G S VSUBS nshort w=0.74u l=0.15u
++  ad=0.07705p pd=-0.07u as=0.07705p ps=-0.07u
+.ends
+
+.subckt pmos_m1_w3_000_sli_dli_da_p VSUBS S w_n54_n54# D G
+M1000 D G S w_n54_n54# pshort w=3u l=0.15u
++  ad=0.75505p pd=4.45u as=0.75505p ps=4.45u
+.ends
+
+.subckt pinv_dec_0 VSUBS Z vdd gnd A
+Xnmos_m1_w0_740_sli_dli_da_p_0 VSUBS gnd Z A nmos_m1_w0_740_sli_dli_da_p
+Xpmos_m1_w3_000_sli_dli_da_p_0 VSUBS vdd vdd Z A pmos_m1_w3_000_sli_dli_da_p
+.ends
+
+.subckt wordline_driver gnd vdd Z B A
+Xnand2_dec_0 nand2_dec_0/Z gnd vdd A B nand2_dec
+Xpinv_dec_0_0 gnd Z vdd gnd nand2_dec_0/Z pinv_dec_0
+.ends
+
+.subckt wordline_driver_array gnd en wl_0 wl_1 wl_2 in_11 in_10 wl_10 wl_3 in_12 wl_11
++ wl_4 in_13 wl_12 wl_6 wl_5 in_0 in_14 wl_13 wl_7 in_1 in_15 wl_14 wl_8 in_2 wl_15
++ wl_9 in_3 in_4 in_5 in_7 in_6 in_8 in_9 vdd
+Xwordline_driver_10 gnd vdd wl_5 en in_5 wordline_driver
+Xwordline_driver_11 gnd vdd wl_4 en in_4 wordline_driver
+Xwordline_driver_12 gnd vdd wl_3 en in_3 wordline_driver
+Xwordline_driver_13 gnd vdd wl_2 en in_2 wordline_driver
+Xwordline_driver_14 gnd vdd wl_1 en in_1 wordline_driver
+Xwordline_driver_15 gnd vdd wl_0 en in_0 wordline_driver
+Xwordline_driver_0 gnd vdd wl_15 en in_15 wordline_driver
+Xwordline_driver_1 gnd vdd wl_14 en in_14 wordline_driver
+Xwordline_driver_2 gnd vdd wl_13 en in_13 wordline_driver
+Xwordline_driver_3 gnd vdd wl_12 en in_12 wordline_driver
+Xwordline_driver_4 gnd vdd wl_11 en in_11 wordline_driver
+Xwordline_driver_5 gnd vdd wl_10 en in_10 wordline_driver
+Xwordline_driver_6 gnd vdd wl_9 en in_9 wordline_driver
+Xwordline_driver_7 gnd vdd wl_8 en in_8 wordline_driver
+Xwordline_driver_8 gnd vdd wl_7 en in_7 wordline_driver
+Xwordline_driver_9 gnd vdd wl_6 en in_6 wordline_driver
+.ends
+
+.subckt port_address gnd addr_0 addr_1 addr_2 addr_3 wl_0 wl_1 wl_2 wl_10 wl_3 wl_11
++ wl_4 wl_12 wl_6 wl_5 wl_13 wl_7 wl_14 wl_8 wl_15 wl_9 vdd wl_en
+Xhierarchical_decoder_0 addr_0 gnd addr_1 addr_2 addr_3 vdd wordline_driver_array_0/in_0
++ wordline_driver_array_0/in_1 wordline_driver_array_0/in_2 wordline_driver_array_0/in_3
++ wordline_driver_array_0/in_4 wordline_driver_array_0/in_5 wordline_driver_array_0/in_6
++ wordline_driver_array_0/in_7 wordline_driver_array_0/in_10 wordline_driver_array_0/in_8
++ wordline_driver_array_0/in_11 wordline_driver_array_0/in_9 wordline_driver_array_0/in_12
++ wordline_driver_array_0/in_13 wordline_driver_array_0/in_14 wordline_driver_array_0/in_15
++ hierarchical_decoder
+Xwordline_driver_array_0 gnd wl_en wl_0 wl_1 wl_2 wordline_driver_array_0/in_11 wordline_driver_array_0/in_10
++ wl_10 wl_3 wordline_driver_array_0/in_12 wl_11 wl_4 wordline_driver_array_0/in_13
++ wl_12 wl_6 wl_5 wordline_driver_array_0/in_0 wordline_driver_array_0/in_14 wl_13
++ wl_7 wordline_driver_array_0/in_1 wordline_driver_array_0/in_15 wl_14 wl_8 wordline_driver_array_0/in_2
++ wl_15 wl_9 wordline_driver_array_0/in_3 wordline_driver_array_0/in_4 wordline_driver_array_0/in_5
++ wordline_driver_array_0/in_7 wordline_driver_array_0/in_6 wordline_driver_array_0/in_8
++ wordline_driver_array_0/in_9 vdd wordline_driver_array
+.ends
+
+.subckt dummy_cell_1rw_1r VSUBS bl0 bl1 a_400_n79# a_38_n25# wl0 w_144_n79# wl1 gnd
++ a_38_n79# vdd br0 br1 a_400_n25#
+M1000 bl0 wl0 a_38_291# VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.0525p ps=0.92u
+M1001 br0 wl0 a_400_291# VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.0525p ps=0.92u
+M1002 gnd gnd a_38_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0.2768p pd=4u as=0.0525p ps=0.92u
+M1003 gnd gnd a_400_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0.0525p ps=0.92u
+M1004 br1 gnd br1 VSUBS nshort w=0.105u l=0.185u
++  ad=0.0504p pd=0.9u as=0p ps=0u
+M1005 a_38_291# gnd gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 a_38_n79# gnd a_38_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+M1007 a_400_291# gnd gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1008 a_400_n79# gnd a_400_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+M1009 a_38_133# wl1 bl1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0.0504p ps=0.9u
+M1010 a_400_133# wl1 br1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1011 bl1 gnd bl1 VSUBS nshort w=0.105u l=0.185u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt dummy_array br1_0 wl0_0 VSUBS wl1_0 gnd bl0_0 dummy_cell_1rw_1r_0/a_400_n25#
++ bl1_0 dummy_cell_1rw_1r_1/a_400_n79# br0_0 bl0_1 br0_1 dummy_cell_1rw_1r_0/a_400_n79#
++ dummy_cell_1rw_1r_1/a_38_n25# br1_1 dummy_cell_1rw_1r_1/a_38_n79# bl1_1 dummy_cell_1rw_1r_0/a_38_n79#
++ dummy_cell_1rw_1r_1/w_144_n79# vdd dummy_cell_1rw_1r_0/w_144_n79#
+Xdummy_cell_1rw_1r_0 VSUBS bl0_1 bl1_1 dummy_cell_1rw_1r_0/a_400_n79# dummy_cell_1rw_1r_0/a_38_n25#
++ wl0_0 dummy_cell_1rw_1r_0/w_144_n79# wl1_0 gnd dummy_cell_1rw_1r_0/a_38_n79# vdd
++ br0_1 br1_1 dummy_cell_1rw_1r_0/a_400_n25# dummy_cell_1rw_1r
+Xdummy_cell_1rw_1r_1 VSUBS bl0_0 bl1_0 dummy_cell_1rw_1r_1/a_400_n79# dummy_cell_1rw_1r_1/a_38_n25#
++ wl0_0 dummy_cell_1rw_1r_1/w_144_n79# wl1_0 gnd dummy_cell_1rw_1r_1/a_38_n79# vdd
++ br0_0 br1_0 dummy_cell_1rw_1r_1/a_400_n25# dummy_cell_1rw_1r
+.ends
+
+.subckt replica_cell_1rw_1r VSUBS bl0 bl1 a_400_n79# a_38_133# a_38_n25# wl0 w_144_n79#
++ wl1 gnd a_38_n79# vdd br0 br1 a_400_n25#
+M1000 bl0 wl0 a_38_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.105p ps=1.84u
+M1001 br0 wl0 vdd VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.105p ps=1.84u
+M1002 vdd wl1 vdd w_144_n79# pshort w=0.07u l=0.15u
++  ad=0.0714p pd=1.58u as=0p ps=0u
+M1003 a_38_133# wl0 a_38_133# w_144_n79# pshort w=0.07u l=0.15u
++  ad=0.035p pd=0.78u as=0p ps=0u
+M1004 gnd vdd a_38_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0.2768p pd=4u as=0p ps=0u
+M1005 gnd a_38_133# vdd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 br1 gnd br1 VSUBS nshort w=0.105u l=0.185u
++  ad=0.0504p pd=0.9u as=0p ps=0u
+X0 wl0 w_144_n79# w_144_n79# xcnwvc w=0.14u l=0.15u
+M1007 vdd a_38_133# vdd w_144_n79# pshort w=0.14u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1008 a_38_133# vdd gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1009 a_38_n79# gnd a_38_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+M1010 vdd a_38_133# gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1011 a_400_n79# gnd a_400_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+X1 a_38_133# w_144_n79# w_144_n79# xcnwvc w=0.14u l=0.15u
+M1012 a_38_133# wl1 bl1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0.0504p ps=0.9u
+M1013 a_38_133# vdd vdd w_144_n79# pshort w=0.14u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1014 vdd wl1 br1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1015 bl1 gnd bl1 VSUBS nshort w=0.105u l=0.185u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt replica_column br1 bl0 VSUBS bl1 vdd wl0_17 wl1_17 wl0_6 br0 wl1_18 wl1_10
++ wl1_6 wl1_11 wl0_14 gnd wl1_12 wl0_3 wl1_14 wl1_13 wl1_3 wl0_11 wl1_15 wl1_1 wl1_16
++ wl1_2 wl0_8 wl1_8 wl1_4 wl1_5 wl0_7 wl1_7 wl0_15 wl0_4 wl1_9 wl0_12 wl0_1 wl0_9
++ wl0_10 wl0_16 wl0_5 wl0_2 wl0_13 wl0_18
+Xreplica_cell_1rw_1r_0 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_0/a_38_133# dummy_cell_1rw_1r_0/a_400_n25#
++ wl0_17 dummy_cell_1rw_1r_0/w_144_n79# wl1_17 gnd bl1 vdd br0 br1 dummy_cell_1rw_1r_0/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_1 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_1/a_38_133# replica_cell_1rw_1r_1/a_38_n25#
++ wl0_16 dummy_cell_1rw_1r_0/w_144_n79# wl1_16 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_2/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_2 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_2/a_38_133# replica_cell_1rw_1r_2/a_38_n25#
++ wl0_15 dummy_cell_1rw_1r_0/w_144_n79# wl1_15 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_2/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_3 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_3/a_38_133# replica_cell_1rw_1r_3/a_38_n25#
++ wl0_14 dummy_cell_1rw_1r_0/w_144_n79# wl1_14 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_4/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_10 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_10/a_38_133# replica_cell_1rw_1r_9/a_400_n25#
++ wl0_7 dummy_cell_1rw_1r_0/w_144_n79# wl1_7 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_9/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_11 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_11/a_38_133# replica_cell_1rw_1r_11/a_38_n25#
++ wl0_6 dummy_cell_1rw_1r_0/w_144_n79# wl1_6 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_12/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_4 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_4/a_38_133# replica_cell_1rw_1r_4/a_38_n25#
++ wl0_13 dummy_cell_1rw_1r_0/w_144_n79# wl1_13 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_4/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_5 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_5/a_38_133# replica_cell_1rw_1r_5/a_38_n25#
++ wl0_12 dummy_cell_1rw_1r_0/w_144_n79# wl1_12 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_6/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_12 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_12/a_38_133# replica_cell_1rw_1r_12/a_38_n25#
++ wl0_5 dummy_cell_1rw_1r_0/w_144_n79# wl1_5 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_12/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_6 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_6/a_38_133# replica_cell_1rw_1r_6/a_38_n25#
++ wl0_11 dummy_cell_1rw_1r_0/w_144_n79# wl1_11 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_6/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_13 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_13/a_38_133# replica_cell_1rw_1r_13/a_38_n25#
++ wl0_4 dummy_cell_1rw_1r_0/w_144_n79# wl1_4 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_14/a_38_n25#
++ replica_cell_1rw_1r
+Xdummy_cell_1rw_1r_0 VSUBS bl0 bl1 br1 dummy_cell_1rw_1r_0/a_38_n25# wl0_18 dummy_cell_1rw_1r_0/w_144_n79#
++ wl1_18 gnd bl1 vdd br0 br1 dummy_cell_1rw_1r_0/a_400_n25# dummy_cell_1rw_1r
+Xreplica_cell_1rw_1r_7 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_7/a_38_133# replica_cell_1rw_1r_7/a_38_n25#
++ wl0_10 dummy_cell_1rw_1r_0/w_144_n79# wl1_10 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_8/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_14 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_14/a_38_133# replica_cell_1rw_1r_14/a_38_n25#
++ wl0_3 dummy_cell_1rw_1r_0/w_144_n79# wl1_3 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_14/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_8 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_8/a_38_133# replica_cell_1rw_1r_8/a_38_n25#
++ wl0_9 dummy_cell_1rw_1r_0/w_144_n79# wl1_9 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_8/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_15 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_15/a_38_133# replica_cell_1rw_1r_15/a_38_n25#
++ wl0_2 dummy_cell_1rw_1r_0/w_144_n79# wl1_2 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_16/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_9 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_9/a_38_133# replica_cell_1rw_1r_9/a_38_n25#
++ wl0_8 dummy_cell_1rw_1r_0/w_144_n79# wl1_8 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_9/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_16 VSUBS bl0 bl1 br1 replica_cell_1rw_1r_16/a_38_133# replica_cell_1rw_1r_16/a_38_n25#
++ wl0_1 dummy_cell_1rw_1r_0/w_144_n79# wl1_1 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_16/a_38_n25#
++ replica_cell_1rw_1r
+.ends
+
+.subckt cell_1rw_1r VSUBS bl0 bl1 a_400_n79# a_16_183# a_38_133# a_38_n25# wl0 w_144_n79#
++ wl1 gnd a_38_n79# vdd br0 br1 a_400_n25#
+M1000 bl0 wl0 a_38_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.105p ps=1.84u
+M1001 br0 wl0 a_16_183# VSUBS nshort w=0.21u l=0.15u
++  ad=0.0252p pd=0.66u as=0.105p ps=1.84u
+M1002 a_16_183# wl1 a_16_183# w_144_n79# pshort w=0.07u l=0.15u
++  ad=0.035p pd=0.78u as=0p ps=0u
+M1003 a_38_133# wl0 a_38_133# w_144_n79# pshort w=0.07u l=0.15u
++  ad=0.035p pd=0.78u as=0p ps=0u
+M1004 gnd a_16_183# a_38_133# VSUBS nshort w=0.21u l=0.15u
++  ad=0.2768p pd=4u as=0p ps=0u
+M1005 gnd a_38_133# a_16_183# VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1006 br1 gnd br1 VSUBS nshort w=0.105u l=0.185u
++  ad=0.0504p pd=0.9u as=0p ps=0u
+X0 wl0 w_144_n79# w_144_n79# xcnwvc w=0.14u l=0.15u
+M1007 vdd a_38_133# a_16_183# w_144_n79# pshort w=0.14u l=0.15u
++  ad=0.0364p pd=0.8u as=0p ps=0u
+M1008 a_38_133# a_16_183# gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1009 a_38_n79# gnd a_38_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+M1010 a_16_183# a_38_133# gnd VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1011 a_400_n79# gnd a_400_n79# VSUBS nshort w=0.105u l=0.185u
++  ad=0.0252p pd=0.66u as=0p ps=0u
+X1 a_38_133# w_144_n79# w_144_n79# xcnwvc w=0.14u l=0.15u
+M1012 a_38_133# wl1 bl1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0.0504p ps=0.9u
+M1013 a_38_133# a_16_183# vdd w_144_n79# pshort w=0.14u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1014 a_16_183# wl1 br1 VSUBS nshort w=0.21u l=0.15u
++  ad=0p pd=0u as=0p ps=0u
+M1015 bl1 gnd bl1 VSUBS nshort w=0.105u l=0.185u
++  ad=0p pd=0u as=0p ps=0u
+.ends
+
+.subckt bitcell_array wl0_5 wl0_14 li_1021_4567# li_875_6059# bl1_1 li_193_2035# VSUBS
++ gnd wl1_5 wl1_14 li_1021_2987# li_875_4479# li_1021_1407# bl0_0 br0_1 bl0_1 wl1_10
++ li_875_2899# cell_1rw_1r_15/a_400_n79# bl1_0 li_193_6147# br1_1 li_875_1319# wl0_2
++ wl1_11 wl0_15 br0_0 li_193_5985# li_107_213# wl1_2 wl1_12 wl1_15 br1_0 li_193_301#
++ wl1_13 wl0_12 li_107_4163# wl1_0 cell_1rw_1r_0/a_38_n25# cell_1rw_1r_31/a_400_n25#
++ wl1_1 li_107_2583# wl0_0 li_193_4251# wl0_9 li_1107_4947# li_139_997# li_193_2671#
++ wl1_9 li_1107_3367# wl1_3 li_875_4973# li_193_1091# li_1107_1787# wl1_4 cell_1rw_1r_16/a_38_n25#
++ li_875_3393# wl0_6 li_1107_207# li_875_1813# wl1_6 cell_1rw_1r_31/a_38_n25# li_107_4953#
++ li_193_617# li_875_233# li_193_5041# cell_1rw_1r_0/a_38_n79# li_193_455# cell_1rw_1r_31/a_400_n79#
++ wl1_7 wl0_3 wl1_8 li_193_4567# li_193_2987# li_193_4405# cell_1rw_1r_16/a_38_n79#
++ wl0_13 li_1021_5357# li_193_1407# li_193_2825# cell_1rw_1r_31/a_38_n79# li_1021_3777#
++ li_875_5269# li_193_1245# li_1021_2197# wl0_1 wl0_10 cell_1rw_1r_15/a_38_n25# li_875_3689#
++ cell_1rw_1r_0/a_400_n25# li_1021_617# li_875_2109# cell_1rw_1r_0/w_144_n79# li_193_5357#
++ li_875_529# wl0_7 li_193_5195# wl0_4 li_107_3373# cell_1rw_1r_15/a_38_n79# cell_1rw_1r_0/a_400_n79#
++ li_1107_5737# li_107_1793# li_193_3461# wl0_11 li_1107_4157# li_875_5763# li_193_1881#
++ li_1107_2577# vdd li_875_4183# li_1107_997# cell_1rw_1r_16/a_400_n25# li_875_2603#
++ cell_1rw_1r_16/w_144_n79# li_107_5743# li_875_1023# li_193_5831# cell_1rw_1r_15/a_400_n25#
++ wl0_8 li_193_3777# cell_1rw_1r_16/a_400_n79# li_1021_6147# li_193_2197# li_193_3615#
+Xcell_1rw_1r_6 VSUBS bl0_1 bl1_1 br1_1 li_1021_3777# li_875_3689# cell_1rw_1r_6/a_38_n25#
++ wl0_9 cell_1rw_1r_0/w_144_n79# wl1_9 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_6/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_7 VSUBS bl0_1 bl1_1 br1_1 li_1107_3367# li_875_3393# cell_1rw_1r_7/a_38_n25#
++ wl0_8 cell_1rw_1r_0/w_144_n79# wl1_8 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_8/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_8 VSUBS bl0_1 bl1_1 br1_1 li_1021_2987# li_875_2899# cell_1rw_1r_8/a_38_n25#
++ wl0_7 cell_1rw_1r_0/w_144_n79# wl1_7 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_8/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_9 VSUBS bl0_1 bl1_1 br1_1 li_1107_2577# li_875_2603# cell_1rw_1r_9/a_38_n25#
++ wl0_6 cell_1rw_1r_0/w_144_n79# wl1_6 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_9/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_30 VSUBS bl0_0 bl1_0 br1_0 li_193_617# li_193_455# cell_1rw_1r_29/a_38_n25#
++ wl0_1 cell_1rw_1r_16/w_144_n79# wl1_1 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_29/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_20 VSUBS bl0_0 bl1_0 br1_0 li_193_4567# li_193_4405# cell_1rw_1r_19/a_38_n25#
++ wl0_11 cell_1rw_1r_16/w_144_n79# wl1_11 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_19/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_21 VSUBS bl0_0 bl1_0 br1_0 li_107_4163# li_193_4251# cell_1rw_1r_21/a_38_n25#
++ wl0_10 cell_1rw_1r_16/w_144_n79# wl1_10 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_21/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_10 VSUBS bl0_1 bl1_1 br1_1 li_1021_2197# li_875_2109# cell_1rw_1r_9/a_400_n25#
++ wl0_5 cell_1rw_1r_0/w_144_n79# wl1_5 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_9/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_31 VSUBS bl0_0 bl1_0 cell_1rw_1r_31/a_400_n79# li_107_213# li_193_301#
++ cell_1rw_1r_31/a_38_n25# wl0_0 cell_1rw_1r_16/w_144_n79# wl1_0 gnd cell_1rw_1r_31/a_38_n79#
++ vdd br0_0 br1_0 cell_1rw_1r_31/a_400_n25# cell_1rw_1r
+Xcell_1rw_1r_22 VSUBS bl0_0 bl1_0 br1_0 li_193_3777# li_193_3615# cell_1rw_1r_21/a_38_n25#
++ wl0_9 cell_1rw_1r_16/w_144_n79# wl1_9 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_21/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_11 VSUBS bl0_1 bl1_1 br1_1 li_1107_1787# li_875_1813# cell_1rw_1r_11/a_38_n25#
++ wl0_4 cell_1rw_1r_0/w_144_n79# wl1_4 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_12/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_23 VSUBS bl0_0 bl1_0 br1_0 li_107_3373# li_193_3461# cell_1rw_1r_23/a_38_n25#
++ wl0_8 cell_1rw_1r_16/w_144_n79# wl1_8 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_23/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_12 VSUBS bl0_1 bl1_1 br1_1 li_1021_1407# li_875_1319# cell_1rw_1r_12/a_38_n25#
++ wl0_3 cell_1rw_1r_0/w_144_n79# wl1_3 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_12/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_24 VSUBS bl0_0 bl1_0 br1_0 li_193_2987# li_193_2825# cell_1rw_1r_23/a_38_n25#
++ wl0_7 cell_1rw_1r_16/w_144_n79# wl1_7 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_23/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_13 VSUBS bl0_1 bl1_1 br1_1 li_1107_997# li_875_1023# cell_1rw_1r_13/a_38_n25#
++ wl0_2 cell_1rw_1r_0/w_144_n79# wl1_2 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_14/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_25 VSUBS bl0_0 bl1_0 br1_0 li_107_2583# li_193_2671# cell_1rw_1r_25/a_38_n25#
++ wl0_6 cell_1rw_1r_16/w_144_n79# wl1_6 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_25/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_14 VSUBS bl0_1 bl1_1 br1_1 li_1021_617# li_875_529# cell_1rw_1r_14/a_38_n25#
++ wl0_1 cell_1rw_1r_0/w_144_n79# wl1_1 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_14/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_26 VSUBS bl0_0 bl1_0 br1_0 li_193_2197# li_193_2035# cell_1rw_1r_25/a_38_n25#
++ wl0_5 cell_1rw_1r_16/w_144_n79# wl1_5 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_25/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_15 VSUBS bl0_1 bl1_1 cell_1rw_1r_15/a_400_n79# li_1107_207# li_875_233#
++ cell_1rw_1r_15/a_38_n25# wl0_0 cell_1rw_1r_0/w_144_n79# wl1_0 gnd cell_1rw_1r_15/a_38_n79#
++ vdd br0_1 br1_1 cell_1rw_1r_15/a_400_n25# cell_1rw_1r
+Xcell_1rw_1r_16 VSUBS bl0_0 bl1_0 cell_1rw_1r_16/a_400_n79# li_193_6147# li_193_5985#
++ cell_1rw_1r_16/a_38_n25# wl0_15 cell_1rw_1r_16/w_144_n79# wl1_15 gnd cell_1rw_1r_16/a_38_n79#
++ vdd br0_0 br1_0 cell_1rw_1r_16/a_400_n25# cell_1rw_1r
+Xcell_1rw_1r_27 VSUBS bl0_0 bl1_0 br1_0 li_107_1793# li_193_1881# cell_1rw_1r_27/a_38_n25#
++ wl0_4 cell_1rw_1r_16/w_144_n79# wl1_4 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_27/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_17 VSUBS bl0_0 bl1_0 br1_0 li_107_5743# li_193_5831# cell_1rw_1r_17/a_38_n25#
++ wl0_14 cell_1rw_1r_16/w_144_n79# wl1_14 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_17/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_28 VSUBS bl0_0 bl1_0 br1_0 li_193_1407# li_193_1245# cell_1rw_1r_27/a_38_n25#
++ wl0_3 cell_1rw_1r_16/w_144_n79# wl1_3 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_27/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_18 VSUBS bl0_0 bl1_0 br1_0 li_193_5357# li_193_5195# cell_1rw_1r_17/a_38_n25#
++ wl0_13 cell_1rw_1r_16/w_144_n79# wl1_13 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_17/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_19 VSUBS bl0_0 bl1_0 br1_0 li_107_4953# li_193_5041# cell_1rw_1r_19/a_38_n25#
++ wl0_12 cell_1rw_1r_16/w_144_n79# wl1_12 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_19/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_29 VSUBS bl0_0 bl1_0 br1_0 li_139_997# li_193_1091# cell_1rw_1r_29/a_38_n25#
++ wl0_2 cell_1rw_1r_16/w_144_n79# wl1_2 gnd bl1_0 vdd br0_0 br1_0 cell_1rw_1r_29/a_400_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_0 VSUBS bl0_1 bl1_1 cell_1rw_1r_0/a_400_n79# li_1021_6147# li_875_6059#
++ cell_1rw_1r_0/a_38_n25# wl0_15 cell_1rw_1r_0/w_144_n79# wl1_15 gnd cell_1rw_1r_0/a_38_n79#
++ vdd br0_1 br1_1 cell_1rw_1r_0/a_400_n25# cell_1rw_1r
+Xcell_1rw_1r_1 VSUBS bl0_1 bl1_1 br1_1 li_1107_5737# li_875_5763# cell_1rw_1r_1/a_38_n25#
++ wl0_14 cell_1rw_1r_0/w_144_n79# wl1_14 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_2/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_2 VSUBS bl0_1 bl1_1 br1_1 li_1021_5357# li_875_5269# cell_1rw_1r_2/a_38_n25#
++ wl0_13 cell_1rw_1r_0/w_144_n79# wl1_13 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_2/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_3 VSUBS bl0_1 bl1_1 br1_1 li_1107_4947# li_875_4973# cell_1rw_1r_3/a_38_n25#
++ wl0_12 cell_1rw_1r_0/w_144_n79# wl1_12 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_4/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_4 VSUBS bl0_1 bl1_1 br1_1 li_1021_4567# li_875_4479# cell_1rw_1r_4/a_38_n25#
++ wl0_11 cell_1rw_1r_0/w_144_n79# wl1_11 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_4/a_38_n25#
++ cell_1rw_1r
+Xcell_1rw_1r_5 VSUBS bl0_1 bl1_1 br1_1 li_1107_4157# li_875_4183# cell_1rw_1r_5/a_38_n25#
++ wl0_10 cell_1rw_1r_0/w_144_n79# wl1_10 gnd bl1_1 vdd br0_1 br1_1 cell_1rw_1r_6/a_38_n25#
++ cell_1rw_1r
+.ends
+
+.subckt replica_column_0 br1 bl0 VSUBS bl1 vdd wl0_1 wl0_7 wl1_18 br0 wl1_10 wl1_7
++ wl1_11 wl0_15 gnd wl1_12 wl0_4 wl1_15 wl1_13 wl1_4 wl1_14 wl0_12 wl1_1 wl1_16 wl1_2
++ wl1_17 wl0_9 wl1_3 wl1_9 wl1_5 wl0_8 wl1_6 wl1_8 wl0_16 wl0_5 wl0_13 wl0_2 wl0_10
++ wl0_17 wl0_6 wl0_11 wl0_14 wl0_3 wl0_18
+Xreplica_cell_1rw_1r_0 VSUBS bl0 bl1 br1 li_193_7411# replica_cell_1rw_1r_0/a_38_n25#
++ wl0_18 dummy_cell_1rw_1r_0/w_144_n79# wl1_18 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_0/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_1 VSUBS bl0 bl1 br1 li_193_6775# replica_cell_1rw_1r_0/a_38_n25#
++ wl0_17 dummy_cell_1rw_1r_0/w_144_n79# wl1_17 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_0/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_2 VSUBS bl0 bl1 br1 li_193_6621# replica_cell_1rw_1r_2/a_38_n25#
++ wl0_16 dummy_cell_1rw_1r_0/w_144_n79# wl1_16 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_2/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_3 VSUBS bl0 bl1 br1 li_193_5985# replica_cell_1rw_1r_2/a_38_n25#
++ wl0_15 dummy_cell_1rw_1r_0/w_144_n79# wl1_15 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_2/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_10 VSUBS bl0 bl1 br1 li_193_3461# replica_cell_1rw_1r_10/a_38_n25#
++ wl0_8 dummy_cell_1rw_1r_0/w_144_n79# wl1_8 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_10/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_11 VSUBS bl0 bl1 br1 li_193_2825# replica_cell_1rw_1r_10/a_38_n25#
++ wl0_7 dummy_cell_1rw_1r_0/w_144_n79# wl1_7 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_10/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_4 VSUBS bl0 bl1 br1 li_193_5831# replica_cell_1rw_1r_4/a_38_n25#
++ wl0_14 dummy_cell_1rw_1r_0/w_144_n79# wl1_14 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_4/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_5 VSUBS bl0 bl1 br1 li_193_5195# replica_cell_1rw_1r_4/a_38_n25#
++ wl0_13 dummy_cell_1rw_1r_0/w_144_n79# wl1_13 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_4/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_12 VSUBS bl0 bl1 br1 li_193_2671# replica_cell_1rw_1r_12/a_38_n25#
++ wl0_6 dummy_cell_1rw_1r_0/w_144_n79# wl1_6 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_12/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_6 VSUBS bl0 bl1 br1 li_193_5041# replica_cell_1rw_1r_6/a_38_n25#
++ wl0_12 dummy_cell_1rw_1r_0/w_144_n79# wl1_12 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_6/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_13 VSUBS bl0 bl1 br1 li_193_2035# replica_cell_1rw_1r_12/a_38_n25#
++ wl0_5 dummy_cell_1rw_1r_0/w_144_n79# wl1_5 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_12/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_7 VSUBS bl0 bl1 br1 li_193_4405# replica_cell_1rw_1r_6/a_38_n25#
++ wl0_11 dummy_cell_1rw_1r_0/w_144_n79# wl1_11 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_6/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_14 VSUBS bl0 bl1 br1 li_193_1881# replica_cell_1rw_1r_14/a_38_n25#
++ wl0_4 dummy_cell_1rw_1r_0/w_144_n79# wl1_4 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_14/a_400_n25#
++ replica_cell_1rw_1r
+Xdummy_cell_1rw_1r_0 VSUBS bl0 bl1 br1 dummy_cell_1rw_1r_0/a_38_n25# wl0_1 dummy_cell_1rw_1r_0/w_144_n79#
++ wl1_1 gnd bl1 vdd br0 br1 dummy_cell_1rw_1r_0/a_38_n25# dummy_cell_1rw_1r
+Xreplica_cell_1rw_1r_8 VSUBS bl0 bl1 br1 li_193_4251# replica_cell_1rw_1r_8/a_38_n25#
++ wl0_10 dummy_cell_1rw_1r_0/w_144_n79# wl1_10 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_8/a_400_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_15 VSUBS bl0 bl1 br1 li_193_1245# replica_cell_1rw_1r_14/a_38_n25#
++ wl0_3 dummy_cell_1rw_1r_0/w_144_n79# wl1_3 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_14/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_9 VSUBS bl0 bl1 br1 li_193_3615# replica_cell_1rw_1r_8/a_38_n25#
++ wl0_9 dummy_cell_1rw_1r_0/w_144_n79# wl1_9 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_8/a_38_n25#
++ replica_cell_1rw_1r
+Xreplica_cell_1rw_1r_16 VSUBS bl0 bl1 br1 li_193_1091# dummy_cell_1rw_1r_0/a_38_n25#
++ wl0_2 dummy_cell_1rw_1r_0/w_144_n79# wl1_2 gnd bl1 vdd br0 br1 replica_cell_1rw_1r_16/a_400_n25#
++ replica_cell_1rw_1r
+.ends
+
+.subckt replica_bitcell_array wl1_5 rbl_br1_1 VSUBS wl1_10 gnd rbl_wl0_0 br0_0 wl1_6
++ wl1_11 wl0_0 wl1_7 br1_1 wl1_12 wl0_1 wl1_13 wl0_2 rbl_wl1_1 wl1_14 wl0_3 wl1_15
++ wl0_4 rbl_bl1_1 wl1_0 wl0_5 bl0_0 vdd wl1_1 wl0_6 bl1_1 wl1_2 wl0_7 wl1_3 wl1_4
++ br1_0 bl0_1 wl1_8 br0_1 wl1_9 wl0_8 wl0_9 bl1_0 wl0_10 wl0_11 wl0_12 wl0_13 wl0_14
++ wl0_15 rbl_br0_0 rbl_bl0_0
+Xdummy_array_0 br1_0 dummy_array_0/wl0_0 VSUBS rbl_wl1_1 gnd bl0_0 bitcell_array_0/cell_1rw_1r_0/a_38_n25#
++ bl1_0 br1_0 br0_0 bl0_1 br0_1 br1_1 bitcell_array_0/cell_1rw_1r_0/a_38_n25# br1_1
++ bl1_0 bl1_1 bl1_1 bitcell_array_0/cell_1rw_1r_16/w_144_n79# vdd bitcell_array_0/cell_1rw_1r_0/w_144_n79#
++ dummy_array
+Xreplica_column_0 rbl_br1_0 rbl_bl0_0 VSUBS rbl_bl1_0 vdd wl0_15 wl1_15 wl0_4 rbl_br0_0
++ rbl_wl1_1 wl1_8 wl1_4 wl1_9 wl0_12 gnd wl1_10 wl0_1 wl1_12 wl1_11 wl1_1 wl0_9 wl1_13
++ dummy_array_1/wl1_0 wl1_14 wl1_0 wl0_6 wl1_6 wl1_2 wl1_3 wl0_5 wl1_5 wl0_13 wl0_2
++ wl1_7 wl0_10 rbl_wl0_0 wl0_7 wl0_8 wl0_14 wl0_3 wl0_0 wl0_11 dummy_array_0/wl0_0
++ replica_column
+Xdummy_array_1 br1_0 rbl_wl0_0 VSUBS dummy_array_1/wl1_0 gnd bl0_0 bitcell_array_0/cell_1rw_1r_31/a_38_n25#
++ bl1_0 br1_0 br0_0 bl0_1 br0_1 br1_1 bitcell_array_0/cell_1rw_1r_31/a_38_n25# br1_1
++ bl1_0 bl1_1 bl1_1 bitcell_array_0/cell_1rw_1r_16/w_144_n79# vdd bitcell_array_0/cell_1rw_1r_0/w_144_n79#
++ dummy_array
+Xbitcell_array_0 wl0_5 wl0_14 li_2269_5357# li_2123_6849# bl1_1 li_1441_2825# VSUBS
++ gnd wl1_5 wl1_14 li_2269_3777# li_2123_5269# li_2269_2197# bl0_0 br0_1 bl0_1 wl1_10
++ li_2123_3689# br1_1 bl1_0 li_1441_6937# br1_1 li_2123_2109# wl0_2 wl1_11 wl0_15
++ br0_0 li_1441_6775# li_1387_997# wl1_2 wl1_12 wl1_15 br1_0 li_1441_1091# wl1_13
++ wl0_12 li_1355_4953# wl1_0 bitcell_array_0/cell_1rw_1r_0/a_38_n25# bitcell_array_0/cell_1rw_1r_31/a_38_n25#
++ wl1_1 li_1355_3373# wl0_0 li_1441_5041# wl0_9 li_2355_5737# li_1355_1793# li_1441_3461#
++ wl1_9 li_2355_4157# wl1_3 li_2123_5763# li_1441_1881# li_2355_2577# wl1_4 bitcell_array_0/cell_1rw_1r_0/a_38_n25#
++ li_2123_4183# wl0_6 li_2355_997# li_2123_2603# wl1_6 bitcell_array_0/cell_1rw_1r_31/a_38_n25#
++ li_1355_5743# li_1441_1407# li_2123_1023# li_1441_5831# bl1_1 li_1441_1245# br1_0
++ wl1_7 wl0_3 wl1_8 li_1441_5357# li_1441_3777# li_1441_5195# bl1_0 wl0_13 li_2269_6147#
++ li_1441_2197# li_1441_3615# bl1_0 li_2269_4567# li_2123_6059# li_1441_2035# li_2269_2987#
++ wl0_1 wl0_10 bitcell_array_0/cell_1rw_1r_31/a_38_n25# li_2123_4479# bitcell_array_0/cell_1rw_1r_0/a_38_n25#
++ li_2269_1407# li_2123_2899# bitcell_array_0/cell_1rw_1r_0/w_144_n79# li_1441_6147#
++ li_2123_1319# wl0_7 li_1441_5985# wl0_4 li_1355_4163# bl1_1 br1_1 li_2355_6527#
++ li_1355_2583# li_1441_4251# wl0_11 li_2355_4947# li_2123_6553# li_1441_2671# li_2355_3367#
++ vdd li_2123_4973# li_2355_1787# bitcell_array_0/cell_1rw_1r_0/a_38_n25# li_2123_3393#
++ bitcell_array_0/cell_1rw_1r_16/w_144_n79# li_1355_6533# li_2123_1813# li_1441_6621#
++ bitcell_array_0/cell_1rw_1r_31/a_38_n25# wl0_8 li_1441_4567# br1_0 li_2269_6937#
++ li_1441_2987# li_1441_4405# bitcell_array
+Xreplica_column_0_0 rbl_br1_1 rbl_bl0_1 VSUBS rbl_bl1_1 vdd rbl_wl0_0 wl0_5 rbl_wl1_1
++ rbl_br0_1 wl1_8 wl1_5 wl1_9 wl0_13 gnd wl1_10 wl0_2 wl1_13 wl1_11 wl1_2 wl1_12 wl0_10
++ dummy_array_1/wl1_0 wl1_14 wl1_0 wl1_15 wl0_7 wl1_1 wl1_7 wl1_3 wl0_6 wl1_4 wl1_6
++ wl0_14 wl0_3 wl0_11 wl0_0 wl0_8 wl0_15 wl0_4 wl0_9 wl0_12 wl0_1 dummy_array_0/wl0_0
++ replica_column_0
+.ends
+
+.subckt bank gnd vdd dout1_1 w_en0 dout0_1 dout0_0 dout1_0 p_en_bar0 s_en0 addr0_0
++ p_en_bar1 s_en1 addr0_1 addr0_2 addr0_3 din0_0 wl_en0 wl_en1 rbl_bl0 addr1_0 addr1_1
++ addr1_2 addr1_3 rbl_bl1 din0_1
+Xport_data_0_0 gnd rbl_bl1 vdd p_en_bar1 dout1_0 dout1_1 port_data_0_0/rbl_br port_data_0_0/bl_0
++ port_data_0_0/bl_1 s_en1 port_data_0_0/br_0 port_data_0_0/br_1 port_data_0
+Xport_data_0 p_en_bar0 gnd rbl_bl0 vdd dout0_0 din0_1 dout0_1 s_en0 port_data_0/rbl_br
++ port_data_0/bl_0 port_data_0/bl_1 din0_0 w_en0 port_data_0/br_0 port_data_0/br_1
++ port_data
+Xport_address_0 gnd addr1_0 addr1_1 addr1_2 addr1_3 port_address_0/wl_0 port_address_0/wl_1
++ port_address_0/wl_2 port_address_0/wl_10 port_address_0/wl_3 port_address_0/wl_11
++ port_address_0/wl_4 port_address_0/wl_12 port_address_0/wl_6 port_address_0/wl_5
++ port_address_0/wl_13 port_address_0/wl_7 port_address_0/wl_14 port_address_0/wl_8
++ port_address_0/wl_15 port_address_0/wl_9 vdd wl_en1 port_address
+Xreplica_bitcell_array_0 port_address_0/wl_5 port_data_0_0/rbl_br gnd port_address_0/wl_10
++ gnd wl_en0 port_data_0/br_0 port_address_0/wl_6 port_address_0/wl_11 port_address_1/wl_0
++ port_address_0/wl_7 port_data_0_0/br_1 port_address_0/wl_12 port_address_1/wl_1
++ port_address_0/wl_13 port_address_1/wl_2 wl_en1 port_address_0/wl_14 port_address_1/wl_3
++ port_address_0/wl_15 port_address_1/wl_4 rbl_bl1 port_address_0/wl_0 port_address_1/wl_5
++ port_data_0/bl_0 vdd port_address_0/wl_1 port_address_1/wl_6 port_data_0_0/bl_1
++ port_address_0/wl_2 port_address_1/wl_7 port_address_0/wl_3 port_address_0/wl_4
++ port_data_0_0/br_0 port_data_0/bl_1 port_address_0/wl_8 port_data_0/br_1 port_address_0/wl_9
++ port_address_1/wl_8 port_address_1/wl_9 port_data_0_0/bl_0 port_address_1/wl_10
++ port_address_1/wl_11 port_address_1/wl_12 port_address_1/wl_13 port_address_1/wl_14
++ port_address_1/wl_15 port_data_0/rbl_br rbl_bl0 replica_bitcell_array
+Xport_address_1 gnd addr0_0 addr0_1 addr0_2 addr0_3 port_address_1/wl_0 port_address_1/wl_1
++ port_address_1/wl_2 port_address_1/wl_10 port_address_1/wl_3 port_address_1/wl_11
++ port_address_1/wl_4 port_address_1/wl_12 port_address_1/wl_6 port_address_1/wl_5
++ port_address_1/wl_13 port_address_1/wl_7 port_address_1/wl_14 port_address_1/wl_8
++ port_address_1/wl_15 port_address_1/wl_9 vdd wl_en0 port_address
+.ends
+
+.subckt sram_2_16_sky130 s_en w_en p_en_bar wl_en clk_buf din0[1] addr0[2] dout0[1]
++ dout1[0] clk0 addr0[0] dout0[0] rbl_bl0 csb0 din0[0] gnd addr1[2] addr1[1] addr0[3]
++ csb1 addr1[3] rbl_bl1 addr1[0] clk1 addr0[1] web0 vdd dout1[1]
+Xdata_dff_0 gnd clk_buf din0[1] bank_0/din0_0 bank_0/din0_1 din0[0] vdd data_dff
+Xcontrol_logic_rw_0 rbl_bl0 gnd p_en_bar clk0 web0 csb0 vdd s_en wl_en clk_buf w_en
++ control_logic_rw
+Xcontrol_logic_r_0 gnd rbl_bl1 bank_0/p_en_bar1 clk1 vdd csb1 bank_0/s_en1 bank_0/wl_en1
++ row_addr_dff_0/clk control_logic_r
+Xrow_addr_dff_0 gnd bank_0/addr1_0 row_addr_dff_0/clk bank_0/addr1_2 addr1[1] addr1[3]
++ bank_0/addr1_1 bank_0/addr1_3 addr1[0] vdd addr1[2] row_addr_dff
+Xbank_0 gnd vdd dout1[1] w_en dout0[1] dout0[0] dout1[0] p_en_bar s_en bank_0/addr0_0
++ bank_0/p_en_bar1 bank_0/s_en1 bank_0/addr0_1 bank_0/addr0_2 bank_0/addr0_3 bank_0/din0_0
++ wl_en bank_0/wl_en1 rbl_bl0 bank_0/addr1_0 bank_0/addr1_1 bank_0/addr1_2 bank_0/addr1_3
++ rbl_bl1 bank_0/din0_1 bank
+Xrow_addr_dff_1 gnd bank_0/addr0_0 clk_buf bank_0/addr0_2 addr0[1] addr0[3] bank_0/addr0_1
++ bank_0/addr0_3 addr0[0] vdd addr0[2] row_addr_dff
+.ends
+

@@ -1,0 +1,48 @@
+|==============================================================================|
+|=========                       OpenRAM v1.1.6                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========           Temp dir: /tmp/openram_me_14164_temp/            =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 07/20/2020 20:57:57
+Technology: sky130
+Total size: 32 bits
+Word size: 2
+Words: 16
+Banks: 1
+Write size: None
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+Words per row: 1
+Output files are: 
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.lvs
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.sp
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.v
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.lib
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.py
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.html
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.log
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.lef
+/home/me/openram-sky130/compiler/macros/sram_1rw1r_2_16_sky130/sram_1rw1r_2_16_sky130.gds
+** Submodules: 1.4 seconds
+** Placement: 0.0 seconds
+*** Init supply router: 7.3 seconds
+**** Retrieving pins: 0.0 seconds
+**** Analyzing pins: 0.4 seconds
+**** Finding blockages: 0.3 seconds
+**** Converting blockages: 0.0 seconds
+**** Converting pins: 2.2 seconds
+**** Separating adjacent pins: 0.4 seconds
+**** Enclosing pins: 0.6 seconds
+*** Finding pins and blockages: 3.8 seconds
+*** Routing supply rails: 9.2 seconds
+*** Simple overlap routing: 0.0 seconds

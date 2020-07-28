@@ -1,0 +1,1866 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1260 -1287 6770 7665
+<< locali >>
+rect 5039 6185 5492 6219
+rect 5039 5689 5492 5723
+rect 5039 5395 5492 5429
+rect 5039 4899 5492 4933
+rect 5039 4605 5492 4639
+rect 5039 4109 5492 4143
+rect 3261 3815 3363 3849
+rect 5039 3815 5492 3849
+rect 3329 3601 3363 3815
+rect 3329 3567 3932 3601
+rect 3261 3319 3363 3353
+rect 5039 3319 5492 3353
+rect 3329 3206 3363 3319
+rect 3329 3172 3852 3206
+rect 3261 3025 3363 3059
+rect 5039 3025 5492 3059
+rect 3329 2811 3363 3025
+rect 3329 2777 3772 2811
+rect 3261 2529 3363 2563
+rect 5039 2529 5492 2563
+rect 3329 2416 3363 2529
+rect 3329 2382 3692 2416
+rect 5039 2235 5492 2269
+rect 5039 1739 5492 1773
+rect 3261 1445 3363 1479
+rect 5039 1445 5492 1479
+rect 3329 1231 3363 1445
+rect 3329 1197 3612 1231
+rect 3261 949 3363 983
+rect 5039 949 5492 983
+rect 3329 836 3363 949
+rect 3329 802 3532 836
+rect 3261 655 3363 689
+rect 5039 655 5492 689
+rect 3329 441 3363 655
+rect 3329 407 3452 441
+rect 3261 159 3363 193
+rect 5039 159 5492 193
+rect 3329 46 3363 159
+rect 3329 12 3372 46
+<< metal1 >>
+rect 18 29 46 3979
+rect 98 29 126 3979
+rect 178 29 206 3979
+rect 258 29 286 3979
+rect 3358 29 3386 6377
+rect 3438 29 3466 6377
+rect 3518 29 3546 6377
+rect 3598 29 3626 6377
+rect 3678 29 3706 6377
+rect 3758 29 3786 6377
+rect 3838 29 3866 6377
+rect 3918 29 3946 6377
+rect 4069 6132 4133 6184
+rect 4069 6024 4133 6076
+rect 4069 5832 4133 5884
+rect 4069 5724 4133 5776
+rect 4069 5342 4133 5394
+rect 4069 5234 4133 5286
+rect 4069 5042 4133 5094
+rect 4069 4934 4133 4986
+rect 4069 4552 4133 4604
+rect 4069 4444 4133 4496
+rect 4069 4252 4133 4304
+rect 4069 4144 4133 4196
+rect 4069 3762 4133 3814
+rect 4069 3654 4133 3706
+rect 4069 3462 4133 3514
+rect 4069 3354 4133 3406
+rect 4069 2972 4133 3024
+rect 4069 2864 4133 2916
+rect 4069 2672 4133 2724
+rect 4069 2564 4133 2616
+rect 4069 2182 4133 2234
+rect 4069 2074 4133 2126
+rect 4069 1882 4133 1934
+rect 4069 1774 4133 1826
+rect 4069 1392 4133 1444
+rect 4069 1284 4133 1336
+rect 4069 1092 4133 1144
+rect 4069 984 4133 1036
+rect 4069 602 4133 654
+rect 4069 494 4133 546
+rect 4069 302 4133 354
+rect 4069 194 4133 246
+rect 4244 27 4292 6319
+rect 4668 25 4718 6317
+rect 5058 57 5086 6349
+rect 5330 57 5358 6349
+<< metal2 >>
+rect 3932 6144 4101 6172
+rect 3612 6036 4101 6064
+rect 4240 5937 4296 5985
+rect 4665 5937 4721 5985
+rect 5044 5930 5100 5978
+rect 5316 5930 5372 5978
+rect 3532 5844 4101 5872
+rect 3932 5736 4101 5764
+rect 4240 5565 4296 5613
+rect 4665 5567 4721 5615
+rect 5044 5535 5100 5583
+rect 5316 5535 5372 5583
+rect 3932 5354 4101 5382
+rect 3452 5246 4101 5274
+rect 4240 5147 4296 5195
+rect 4665 5147 4721 5195
+rect 5044 5140 5100 5188
+rect 5316 5140 5372 5188
+rect 3372 5054 4101 5082
+rect 3932 4946 4101 4974
+rect 4240 4775 4296 4823
+rect 4665 4777 4721 4825
+rect 5044 4745 5100 4793
+rect 5316 4745 5372 4793
+rect 3852 4564 4101 4592
+rect 3612 4456 4101 4484
+rect 4240 4357 4296 4405
+rect 4665 4357 4721 4405
+rect 5044 4350 5100 4398
+rect 5316 4350 5372 4398
+rect 3532 4264 4101 4292
+rect 3852 4156 4101 4184
+rect 4240 3985 4296 4033
+rect 4665 3987 4721 4035
+rect 5044 3955 5100 4003
+rect 5316 3955 5372 4003
+rect 3852 3774 4101 3802
+rect 3452 3666 4101 3694
+rect 4240 3567 4296 3615
+rect 4665 3567 4721 3615
+rect 5044 3560 5100 3608
+rect 5316 3560 5372 3608
+rect 3372 3474 4101 3502
+rect 3852 3366 4101 3394
+rect 4240 3195 4296 3243
+rect 4665 3197 4721 3245
+rect 5044 3165 5100 3213
+rect 5316 3165 5372 3213
+rect 272 2978 540 3006
+rect 3772 2984 4101 3012
+rect 3612 2876 4101 2904
+rect 4240 2777 4296 2825
+rect 4665 2777 4721 2825
+rect 5044 2770 5100 2818
+rect 5316 2770 5372 2818
+rect 3532 2684 4101 2712
+rect 192 2582 460 2610
+rect 3772 2576 4101 2604
+rect 4240 2405 4296 2453
+rect 4665 2407 4721 2455
+rect 5044 2375 5100 2423
+rect 5316 2375 5372 2423
+rect 3772 2194 4101 2222
+rect 3452 2086 4101 2114
+rect 4240 1987 4296 2035
+rect 4665 1987 4721 2035
+rect 5044 1980 5100 2028
+rect 5316 1980 5372 2028
+rect 3372 1894 4101 1922
+rect 3772 1786 4101 1814
+rect 4240 1615 4296 1663
+rect 4665 1617 4721 1665
+rect 5044 1585 5100 1633
+rect 5316 1585 5372 1633
+rect 3692 1404 4101 1432
+rect 3612 1296 4101 1324
+rect 4240 1197 4296 1245
+rect 4665 1197 4721 1245
+rect 5044 1190 5100 1238
+rect 5316 1190 5372 1238
+rect 3532 1104 4101 1132
+rect 3692 996 4101 1024
+rect 4240 825 4296 873
+rect 4665 827 4721 875
+rect 5044 795 5100 843
+rect 5316 795 5372 843
+rect 112 608 540 636
+rect 3692 614 4101 642
+rect 3452 506 4101 534
+rect 4240 407 4296 455
+rect 4665 407 4721 455
+rect 5044 400 5100 448
+rect 5316 400 5372 448
+rect 3372 314 4101 342
+rect 32 212 460 240
+rect 3692 206 4101 234
+<< metal3 >>
+rect 4219 5912 4317 6010
+rect 4644 5912 4742 6010
+rect 5023 5905 5121 6003
+rect 5295 5905 5393 6003
+rect 4219 5540 4317 5638
+rect 4644 5542 4742 5640
+rect 5023 5510 5121 5608
+rect 5295 5510 5393 5608
+rect 4219 5122 4317 5220
+rect 4644 5122 4742 5220
+rect 5023 5115 5121 5213
+rect 5295 5115 5393 5213
+rect 4219 4750 4317 4848
+rect 4644 4752 4742 4850
+rect 5023 4720 5121 4818
+rect 5295 4720 5393 4818
+rect 4219 4332 4317 4430
+rect 4644 4332 4742 4430
+rect 5023 4325 5121 4423
+rect 5295 4325 5393 4423
+rect 4219 3960 4317 4058
+rect 4644 3962 4742 4060
+rect 5023 3930 5121 4028
+rect 5295 3930 5393 4028
+rect 2005 3542 2103 3640
+rect 2430 3542 2528 3640
+rect 2809 3535 2907 3633
+rect 3081 3535 3179 3633
+rect 4219 3542 4317 3640
+rect 4644 3542 4742 3640
+rect 5023 3535 5121 3633
+rect 5295 3535 5393 3633
+rect 4219 3170 4317 3268
+rect 4644 3172 4742 3270
+rect 5023 3140 5121 3238
+rect 5295 3140 5393 3238
+rect 835 2745 933 2843
+rect 1107 2745 1205 2843
+rect 2005 2752 2103 2850
+rect 2430 2752 2528 2850
+rect 2809 2745 2907 2843
+rect 3081 2745 3179 2843
+rect 4219 2752 4317 2850
+rect 4644 2752 4742 2850
+rect 5023 2745 5121 2843
+rect 5295 2745 5393 2843
+rect 4219 2380 4317 2478
+rect 4644 2382 4742 2480
+rect 5023 2350 5121 2448
+rect 5295 2350 5393 2448
+rect 4219 1962 4317 2060
+rect 4644 1962 4742 2060
+rect 5023 1955 5121 2053
+rect 5295 1955 5393 2053
+rect 4219 1590 4317 1688
+rect 4644 1592 4742 1690
+rect 5023 1560 5121 1658
+rect 5295 1560 5393 1658
+rect 2005 1172 2103 1270
+rect 2430 1172 2528 1270
+rect 2809 1165 2907 1263
+rect 3081 1165 3179 1263
+rect 4219 1172 4317 1270
+rect 4644 1172 4742 1270
+rect 5023 1165 5121 1263
+rect 5295 1165 5393 1263
+rect 4219 800 4317 898
+rect 4644 802 4742 900
+rect 5023 770 5121 868
+rect 5295 770 5393 868
+rect 835 375 933 473
+rect 1107 375 1205 473
+rect 2005 382 2103 480
+rect 2430 382 2528 480
+rect 2809 375 2907 473
+rect 3081 375 3179 473
+rect 4219 382 4317 480
+rect 4644 382 4742 480
+rect 5023 375 5121 473
+rect 5295 375 5393 473
+use contact_9  contact_9_119
+timestamp 1595931502
+transform 1 0 4660 0 1 394
+box 0 0 66 74
+use contact_9  contact_9_118
+timestamp 1595931502
+transform 1 0 4660 0 1 394
+box 0 0 66 74
+use contact_9  contact_9_117
+timestamp 1595931502
+transform 1 0 5311 0 1 387
+box 0 0 66 74
+use contact_9  contact_9_116
+timestamp 1595931502
+transform 1 0 5311 0 1 387
+box 0 0 66 74
+use contact_9  contact_9_115
+timestamp 1595931502
+transform 1 0 4660 0 1 814
+box 0 0 66 74
+use contact_9  contact_9_114
+timestamp 1595931502
+transform 1 0 4660 0 1 814
+box 0 0 66 74
+use contact_9  contact_9_113
+timestamp 1595931502
+transform 1 0 5311 0 1 782
+box 0 0 66 74
+use contact_9  contact_9_112
+timestamp 1595931502
+transform 1 0 5311 0 1 782
+box 0 0 66 74
+use contact_9  contact_9_111
+timestamp 1595931502
+transform 1 0 4660 0 1 1184
+box 0 0 66 74
+use contact_9  contact_9_110
+timestamp 1595931502
+transform 1 0 4660 0 1 1184
+box 0 0 66 74
+use contact_9  contact_9_109
+timestamp 1595931502
+transform 1 0 5311 0 1 1177
+box 0 0 66 74
+use contact_9  contact_9_108
+timestamp 1595931502
+transform 1 0 5311 0 1 1177
+box 0 0 66 74
+use contact_9  contact_9_107
+timestamp 1595931502
+transform 1 0 4660 0 1 1604
+box 0 0 66 74
+use contact_9  contact_9_106
+timestamp 1595931502
+transform 1 0 4660 0 1 1604
+box 0 0 66 74
+use contact_9  contact_9_105
+timestamp 1595931502
+transform 1 0 5311 0 1 1572
+box 0 0 66 74
+use contact_9  contact_9_104
+timestamp 1595931502
+transform 1 0 5311 0 1 1572
+box 0 0 66 74
+use contact_9  contact_9_103
+timestamp 1595931502
+transform 1 0 4660 0 1 1974
+box 0 0 66 74
+use contact_9  contact_9_102
+timestamp 1595931502
+transform 1 0 4660 0 1 1974
+box 0 0 66 74
+use contact_9  contact_9_101
+timestamp 1595931502
+transform 1 0 5311 0 1 1967
+box 0 0 66 74
+use contact_9  contact_9_100
+timestamp 1595931502
+transform 1 0 5311 0 1 1967
+box 0 0 66 74
+use contact_9  contact_9_99
+timestamp 1595931502
+transform 1 0 4660 0 1 2394
+box 0 0 66 74
+use contact_9  contact_9_98
+timestamp 1595931502
+transform 1 0 4660 0 1 2394
+box 0 0 66 74
+use contact_9  contact_9_97
+timestamp 1595931502
+transform 1 0 5311 0 1 2362
+box 0 0 66 74
+use contact_9  contact_9_96
+timestamp 1595931502
+transform 1 0 5311 0 1 2362
+box 0 0 66 74
+use contact_9  contact_9_95
+timestamp 1595931502
+transform 1 0 4660 0 1 2764
+box 0 0 66 74
+use contact_9  contact_9_94
+timestamp 1595931502
+transform 1 0 4660 0 1 2764
+box 0 0 66 74
+use contact_9  contact_9_93
+timestamp 1595931502
+transform 1 0 5311 0 1 2757
+box 0 0 66 74
+use contact_9  contact_9_92
+timestamp 1595931502
+transform 1 0 5311 0 1 2757
+box 0 0 66 74
+use contact_9  contact_9_91
+timestamp 1595931502
+transform 1 0 4660 0 1 3184
+box 0 0 66 74
+use contact_9  contact_9_90
+timestamp 1595931502
+transform 1 0 4660 0 1 3184
+box 0 0 66 74
+use contact_9  contact_9_89
+timestamp 1595931502
+transform 1 0 5311 0 1 3152
+box 0 0 66 74
+use contact_9  contact_9_88
+timestamp 1595931502
+transform 1 0 5311 0 1 3152
+box 0 0 66 74
+use contact_9  contact_9_87
+timestamp 1595931502
+transform 1 0 4660 0 1 3554
+box 0 0 66 74
+use contact_9  contact_9_86
+timestamp 1595931502
+transform 1 0 4660 0 1 3554
+box 0 0 66 74
+use contact_9  contact_9_85
+timestamp 1595931502
+transform 1 0 5311 0 1 3547
+box 0 0 66 74
+use contact_9  contact_9_84
+timestamp 1595931502
+transform 1 0 5311 0 1 3547
+box 0 0 66 74
+use contact_9  contact_9_83
+timestamp 1595931502
+transform 1 0 4660 0 1 3974
+box 0 0 66 74
+use contact_9  contact_9_82
+timestamp 1595931502
+transform 1 0 4660 0 1 3974
+box 0 0 66 74
+use contact_9  contact_9_81
+timestamp 1595931502
+transform 1 0 5311 0 1 3942
+box 0 0 66 74
+use contact_9  contact_9_80
+timestamp 1595931502
+transform 1 0 5311 0 1 3942
+box 0 0 66 74
+use contact_9  contact_9_79
+timestamp 1595931502
+transform 1 0 4660 0 1 4344
+box 0 0 66 74
+use contact_9  contact_9_78
+timestamp 1595931502
+transform 1 0 4660 0 1 4344
+box 0 0 66 74
+use contact_9  contact_9_77
+timestamp 1595931502
+transform 1 0 5311 0 1 4337
+box 0 0 66 74
+use contact_9  contact_9_76
+timestamp 1595931502
+transform 1 0 5311 0 1 4337
+box 0 0 66 74
+use contact_9  contact_9_75
+timestamp 1595931502
+transform 1 0 4660 0 1 4764
+box 0 0 66 74
+use contact_9  contact_9_74
+timestamp 1595931502
+transform 1 0 4660 0 1 4764
+box 0 0 66 74
+use contact_9  contact_9_73
+timestamp 1595931502
+transform 1 0 5311 0 1 4732
+box 0 0 66 74
+use contact_9  contact_9_72
+timestamp 1595931502
+transform 1 0 5311 0 1 4732
+box 0 0 66 74
+use contact_9  contact_9_71
+timestamp 1595931502
+transform 1 0 4660 0 1 5134
+box 0 0 66 74
+use contact_9  contact_9_70
+timestamp 1595931502
+transform 1 0 4660 0 1 5134
+box 0 0 66 74
+use contact_9  contact_9_69
+timestamp 1595931502
+transform 1 0 5311 0 1 5127
+box 0 0 66 74
+use contact_9  contact_9_68
+timestamp 1595931502
+transform 1 0 5311 0 1 5127
+box 0 0 66 74
+use contact_9  contact_9_67
+timestamp 1595931502
+transform 1 0 4660 0 1 5554
+box 0 0 66 74
+use contact_9  contact_9_66
+timestamp 1595931502
+transform 1 0 4660 0 1 5554
+box 0 0 66 74
+use contact_9  contact_9_65
+timestamp 1595931502
+transform 1 0 5311 0 1 5522
+box 0 0 66 74
+use contact_9  contact_9_64
+timestamp 1595931502
+transform 1 0 5311 0 1 5522
+box 0 0 66 74
+use contact_9  contact_9_63
+timestamp 1595931502
+transform 1 0 4660 0 1 5924
+box 0 0 66 74
+use contact_9  contact_9_62
+timestamp 1595931502
+transform 1 0 4660 0 1 5924
+box 0 0 66 74
+use contact_9  contact_9_61
+timestamp 1595931502
+transform 1 0 5311 0 1 5917
+box 0 0 66 74
+use contact_9  contact_9_60
+timestamp 1595931502
+transform 1 0 5311 0 1 5917
+box 0 0 66 74
+use contact_9  contact_9_59
+timestamp 1595931502
+transform 1 0 4235 0 1 394
+box 0 0 66 74
+use contact_9  contact_9_58
+timestamp 1595931502
+transform 1 0 4235 0 1 394
+box 0 0 66 74
+use contact_9  contact_9_57
+timestamp 1595931502
+transform 1 0 5039 0 1 387
+box 0 0 66 74
+use contact_9  contact_9_56
+timestamp 1595931502
+transform 1 0 5039 0 1 387
+box 0 0 66 74
+use contact_9  contact_9_55
+timestamp 1595931502
+transform 1 0 4235 0 1 812
+box 0 0 66 74
+use contact_9  contact_9_54
+timestamp 1595931502
+transform 1 0 4235 0 1 812
+box 0 0 66 74
+use contact_9  contact_9_53
+timestamp 1595931502
+transform 1 0 5039 0 1 782
+box 0 0 66 74
+use contact_9  contact_9_52
+timestamp 1595931502
+transform 1 0 5039 0 1 782
+box 0 0 66 74
+use contact_9  contact_9_51
+timestamp 1595931502
+transform 1 0 4235 0 1 1184
+box 0 0 66 74
+use contact_9  contact_9_50
+timestamp 1595931502
+transform 1 0 4235 0 1 1184
+box 0 0 66 74
+use contact_9  contact_9_49
+timestamp 1595931502
+transform 1 0 5039 0 1 1177
+box 0 0 66 74
+use contact_9  contact_9_48
+timestamp 1595931502
+transform 1 0 5039 0 1 1177
+box 0 0 66 74
+use contact_9  contact_9_47
+timestamp 1595931502
+transform 1 0 4235 0 1 1602
+box 0 0 66 74
+use contact_9  contact_9_46
+timestamp 1595931502
+transform 1 0 4235 0 1 1602
+box 0 0 66 74
+use contact_9  contact_9_45
+timestamp 1595931502
+transform 1 0 5039 0 1 1572
+box 0 0 66 74
+use contact_9  contact_9_44
+timestamp 1595931502
+transform 1 0 5039 0 1 1572
+box 0 0 66 74
+use contact_9  contact_9_43
+timestamp 1595931502
+transform 1 0 4235 0 1 1974
+box 0 0 66 74
+use contact_9  contact_9_42
+timestamp 1595931502
+transform 1 0 4235 0 1 1974
+box 0 0 66 74
+use contact_9  contact_9_41
+timestamp 1595931502
+transform 1 0 5039 0 1 1967
+box 0 0 66 74
+use contact_9  contact_9_40
+timestamp 1595931502
+transform 1 0 5039 0 1 1967
+box 0 0 66 74
+use contact_9  contact_9_39
+timestamp 1595931502
+transform 1 0 4235 0 1 2392
+box 0 0 66 74
+use contact_9  contact_9_38
+timestamp 1595931502
+transform 1 0 4235 0 1 2392
+box 0 0 66 74
+use contact_9  contact_9_37
+timestamp 1595931502
+transform 1 0 5039 0 1 2362
+box 0 0 66 74
+use contact_9  contact_9_36
+timestamp 1595931502
+transform 1 0 5039 0 1 2362
+box 0 0 66 74
+use contact_9  contact_9_35
+timestamp 1595931502
+transform 1 0 4235 0 1 2764
+box 0 0 66 74
+use contact_9  contact_9_34
+timestamp 1595931502
+transform 1 0 4235 0 1 2764
+box 0 0 66 74
+use contact_9  contact_9_33
+timestamp 1595931502
+transform 1 0 5039 0 1 2757
+box 0 0 66 74
+use contact_9  contact_9_32
+timestamp 1595931502
+transform 1 0 5039 0 1 2757
+box 0 0 66 74
+use contact_9  contact_9_31
+timestamp 1595931502
+transform 1 0 4235 0 1 3182
+box 0 0 66 74
+use contact_9  contact_9_30
+timestamp 1595931502
+transform 1 0 4235 0 1 3182
+box 0 0 66 74
+use contact_9  contact_9_29
+timestamp 1595931502
+transform 1 0 5039 0 1 3152
+box 0 0 66 74
+use contact_9  contact_9_28
+timestamp 1595931502
+transform 1 0 5039 0 1 3152
+box 0 0 66 74
+use contact_9  contact_9_27
+timestamp 1595931502
+transform 1 0 4235 0 1 3554
+box 0 0 66 74
+use contact_9  contact_9_26
+timestamp 1595931502
+transform 1 0 4235 0 1 3554
+box 0 0 66 74
+use contact_9  contact_9_25
+timestamp 1595931502
+transform 1 0 5039 0 1 3547
+box 0 0 66 74
+use contact_9  contact_9_24
+timestamp 1595931502
+transform 1 0 5039 0 1 3547
+box 0 0 66 74
+use contact_9  contact_9_23
+timestamp 1595931502
+transform 1 0 4235 0 1 3972
+box 0 0 66 74
+use contact_9  contact_9_22
+timestamp 1595931502
+transform 1 0 4235 0 1 3972
+box 0 0 66 74
+use contact_9  contact_9_21
+timestamp 1595931502
+transform 1 0 5039 0 1 3942
+box 0 0 66 74
+use contact_9  contact_9_20
+timestamp 1595931502
+transform 1 0 5039 0 1 3942
+box 0 0 66 74
+use contact_9  contact_9_19
+timestamp 1595931502
+transform 1 0 4235 0 1 4344
+box 0 0 66 74
+use contact_9  contact_9_18
+timestamp 1595931502
+transform 1 0 4235 0 1 4344
+box 0 0 66 74
+use contact_9  contact_9_17
+timestamp 1595931502
+transform 1 0 5039 0 1 4337
+box 0 0 66 74
+use contact_9  contact_9_16
+timestamp 1595931502
+transform 1 0 5039 0 1 4337
+box 0 0 66 74
+use contact_9  contact_9_15
+timestamp 1595931502
+transform 1 0 4235 0 1 4762
+box 0 0 66 74
+use contact_9  contact_9_14
+timestamp 1595931502
+transform 1 0 4235 0 1 4762
+box 0 0 66 74
+use contact_9  contact_9_13
+timestamp 1595931502
+transform 1 0 5039 0 1 4732
+box 0 0 66 74
+use contact_9  contact_9_12
+timestamp 1595931502
+transform 1 0 5039 0 1 4732
+box 0 0 66 74
+use contact_9  contact_9_11
+timestamp 1595931502
+transform 1 0 4235 0 1 5134
+box 0 0 66 74
+use contact_9  contact_9_10
+timestamp 1595931502
+transform 1 0 4235 0 1 5134
+box 0 0 66 74
+use contact_9  contact_9_9
+timestamp 1595931502
+transform 1 0 5039 0 1 5127
+box 0 0 66 74
+use contact_9  contact_9_8
+timestamp 1595931502
+transform 1 0 5039 0 1 5127
+box 0 0 66 74
+use contact_9  contact_9_7
+timestamp 1595931502
+transform 1 0 4235 0 1 5552
+box 0 0 66 74
+use contact_9  contact_9_6
+timestamp 1595931502
+transform 1 0 4235 0 1 5552
+box 0 0 66 74
+use contact_9  contact_9_5
+timestamp 1595931502
+transform 1 0 5039 0 1 5522
+box 0 0 66 74
+use contact_9  contact_9_4
+timestamp 1595931502
+transform 1 0 5039 0 1 5522
+box 0 0 66 74
+use contact_9  contact_9_3
+timestamp 1595931502
+transform 1 0 4235 0 1 5924
+box 0 0 66 74
+use contact_9  contact_9_2
+timestamp 1595931502
+transform 1 0 4235 0 1 5924
+box 0 0 66 74
+use contact_9  contact_9_1
+timestamp 1595931502
+transform 1 0 5039 0 1 5917
+box 0 0 66 74
+use contact_9  contact_9_0
+timestamp 1595931502
+transform 1 0 5039 0 1 5917
+box 0 0 66 74
+use contact_20  contact_20_35
+timestamp 1595931502
+transform 1 0 0 0 1 194
+box 0 0 64 64
+use contact_20  contact_20_34
+timestamp 1595931502
+transform 1 0 80 0 1 590
+box 0 0 64 64
+use contact_20  contact_20_33
+timestamp 1595931502
+transform 1 0 160 0 1 2564
+box 0 0 64 64
+use contact_20  contact_20_32
+timestamp 1595931502
+transform 1 0 240 0 1 2960
+box 0 0 64 64
+use contact_20  contact_20_31
+timestamp 1595931502
+transform 1 0 3340 0 1 296
+box 0 0 64 64
+use contact_20  contact_20_30
+timestamp 1595931502
+transform 1 0 3660 0 1 188
+box 0 0 64 64
+use contact_20  contact_20_29
+timestamp 1595931502
+transform 1 0 3420 0 1 488
+box 0 0 64 64
+use contact_20  contact_20_28
+timestamp 1595931502
+transform 1 0 3660 0 1 596
+box 0 0 64 64
+use contact_20  contact_20_27
+timestamp 1595931502
+transform 1 0 3500 0 1 1086
+box 0 0 64 64
+use contact_20  contact_20_26
+timestamp 1595931502
+transform 1 0 3660 0 1 978
+box 0 0 64 64
+use contact_20  contact_20_25
+timestamp 1595931502
+transform 1 0 3580 0 1 1278
+box 0 0 64 64
+use contact_20  contact_20_24
+timestamp 1595931502
+transform 1 0 3660 0 1 1386
+box 0 0 64 64
+use contact_20  contact_20_23
+timestamp 1595931502
+transform 1 0 3340 0 1 1876
+box 0 0 64 64
+use contact_20  contact_20_22
+timestamp 1595931502
+transform 1 0 3740 0 1 1768
+box 0 0 64 64
+use contact_20  contact_20_21
+timestamp 1595931502
+transform 1 0 3420 0 1 2068
+box 0 0 64 64
+use contact_20  contact_20_20
+timestamp 1595931502
+transform 1 0 3740 0 1 2176
+box 0 0 64 64
+use contact_20  contact_20_19
+timestamp 1595931502
+transform 1 0 3500 0 1 2666
+box 0 0 64 64
+use contact_20  contact_20_18
+timestamp 1595931502
+transform 1 0 3740 0 1 2558
+box 0 0 64 64
+use contact_20  contact_20_17
+timestamp 1595931502
+transform 1 0 3580 0 1 2858
+box 0 0 64 64
+use contact_20  contact_20_16
+timestamp 1595931502
+transform 1 0 3740 0 1 2966
+box 0 0 64 64
+use contact_20  contact_20_15
+timestamp 1595931502
+transform 1 0 3340 0 1 3456
+box 0 0 64 64
+use contact_20  contact_20_14
+timestamp 1595931502
+transform 1 0 3820 0 1 3348
+box 0 0 64 64
+use contact_20  contact_20_13
+timestamp 1595931502
+transform 1 0 3420 0 1 3648
+box 0 0 64 64
+use contact_20  contact_20_12
+timestamp 1595931502
+transform 1 0 3820 0 1 3756
+box 0 0 64 64
+use contact_20  contact_20_11
+timestamp 1595931502
+transform 1 0 3500 0 1 4246
+box 0 0 64 64
+use contact_20  contact_20_10
+timestamp 1595931502
+transform 1 0 3820 0 1 4138
+box 0 0 64 64
+use contact_20  contact_20_9
+timestamp 1595931502
+transform 1 0 3580 0 1 4438
+box 0 0 64 64
+use contact_20  contact_20_8
+timestamp 1595931502
+transform 1 0 3820 0 1 4546
+box 0 0 64 64
+use contact_20  contact_20_7
+timestamp 1595931502
+transform 1 0 3340 0 1 5036
+box 0 0 64 64
+use contact_20  contact_20_6
+timestamp 1595931502
+transform 1 0 3900 0 1 4928
+box 0 0 64 64
+use contact_20  contact_20_5
+timestamp 1595931502
+transform 1 0 3420 0 1 5228
+box 0 0 64 64
+use contact_20  contact_20_4
+timestamp 1595931502
+transform 1 0 3900 0 1 5336
+box 0 0 64 64
+use contact_20  contact_20_3
+timestamp 1595931502
+transform 1 0 3500 0 1 5826
+box 0 0 64 64
+use contact_20  contact_20_2
+timestamp 1595931502
+transform 1 0 3900 0 1 5718
+box 0 0 64 64
+use contact_20  contact_20_1
+timestamp 1595931502
+transform 1 0 3580 0 1 6018
+box 0 0 64 64
+use contact_20  contact_20_0
+timestamp 1595931502
+transform 1 0 3900 0 1 6126
+box 0 0 64 64
+use hierarchical_predecode2x4  hierarchical_predecode2x4_1
+timestamp 1595931502
+transform 1 0 366 0 1 29
+box 62 -56 2930 1636
+use hierarchical_predecode2x4  hierarchical_predecode2x4_0
+timestamp 1595931502
+transform 1 0 366 0 1 2399
+box 62 -56 2930 1636
+use and2_dec  and2_dec_15
+timestamp 1595931502
+transform 1 0 3998 0 1 29
+box 70 -56 1512 490
+use and2_dec  and2_dec_14
+timestamp 1595931502
+transform 1 0 3998 0 -1 819
+box 70 -56 1512 490
+use and2_dec  and2_dec_13
+timestamp 1595931502
+transform 1 0 3998 0 1 819
+box 70 -56 1512 490
+use and2_dec  and2_dec_12
+timestamp 1595931502
+transform 1 0 3998 0 -1 1609
+box 70 -56 1512 490
+use and2_dec  and2_dec_11
+timestamp 1595931502
+transform 1 0 3998 0 1 1609
+box 70 -56 1512 490
+use and2_dec  and2_dec_10
+timestamp 1595931502
+transform 1 0 3998 0 -1 2399
+box 70 -56 1512 490
+use and2_dec  and2_dec_9
+timestamp 1595931502
+transform 1 0 3998 0 1 2399
+box 70 -56 1512 490
+use and2_dec  and2_dec_8
+timestamp 1595931502
+transform 1 0 3998 0 -1 3189
+box 70 -56 1512 490
+use and2_dec  and2_dec_7
+timestamp 1595931502
+transform 1 0 3998 0 1 3189
+box 70 -56 1512 490
+use and2_dec  and2_dec_6
+timestamp 1595931502
+transform 1 0 3998 0 -1 3979
+box 70 -56 1512 490
+use and2_dec  and2_dec_5
+timestamp 1595931502
+transform 1 0 3998 0 1 3979
+box 70 -56 1512 490
+use and2_dec  and2_dec_4
+timestamp 1595931502
+transform 1 0 3998 0 -1 4769
+box 70 -56 1512 490
+use and2_dec  and2_dec_3
+timestamp 1595931502
+transform 1 0 3998 0 1 4769
+box 70 -56 1512 490
+use and2_dec  and2_dec_2
+timestamp 1595931502
+transform 1 0 3998 0 -1 5559
+box 70 -56 1512 490
+use and2_dec  and2_dec_1
+timestamp 1595931502
+transform 1 0 3998 0 1 5559
+box 70 -56 1512 490
+use and2_dec  and2_dec_0
+timestamp 1595931502
+transform 1 0 3998 0 -1 6349
+box 70 -56 1512 490
+use contact_8  contact_8_0
+timestamp 1595931502
+transform 1 0 5040 0 1 5922
+box 0 0 64 64
+use contact_8  contact_8_1
+timestamp 1595931502
+transform 1 0 5040 0 1 5922
+box 0 0 64 64
+use contact_8  contact_8_2
+timestamp 1595931502
+transform 1 0 4236 0 1 5929
+box 0 0 64 64
+use contact_8  contact_8_3
+timestamp 1595931502
+transform 1 0 4236 0 1 5929
+box 0 0 64 64
+use contact_8  contact_8_4
+timestamp 1595931502
+transform 1 0 5040 0 1 5527
+box 0 0 64 64
+use contact_8  contact_8_5
+timestamp 1595931502
+transform 1 0 5040 0 1 5527
+box 0 0 64 64
+use contact_8  contact_8_6
+timestamp 1595931502
+transform 1 0 4236 0 1 5557
+box 0 0 64 64
+use contact_8  contact_8_7
+timestamp 1595931502
+transform 1 0 4236 0 1 5557
+box 0 0 64 64
+use contact_8  contact_8_8
+timestamp 1595931502
+transform 1 0 5040 0 1 5132
+box 0 0 64 64
+use contact_8  contact_8_9
+timestamp 1595931502
+transform 1 0 5040 0 1 5132
+box 0 0 64 64
+use contact_8  contact_8_10
+timestamp 1595931502
+transform 1 0 4236 0 1 5139
+box 0 0 64 64
+use contact_8  contact_8_11
+timestamp 1595931502
+transform 1 0 4236 0 1 5139
+box 0 0 64 64
+use contact_8  contact_8_12
+timestamp 1595931502
+transform 1 0 5040 0 1 4737
+box 0 0 64 64
+use contact_8  contact_8_13
+timestamp 1595931502
+transform 1 0 5040 0 1 4737
+box 0 0 64 64
+use contact_8  contact_8_14
+timestamp 1595931502
+transform 1 0 4236 0 1 4767
+box 0 0 64 64
+use contact_8  contact_8_15
+timestamp 1595931502
+transform 1 0 4236 0 1 4767
+box 0 0 64 64
+use contact_8  contact_8_16
+timestamp 1595931502
+transform 1 0 5040 0 1 4342
+box 0 0 64 64
+use contact_8  contact_8_17
+timestamp 1595931502
+transform 1 0 5040 0 1 4342
+box 0 0 64 64
+use contact_8  contact_8_18
+timestamp 1595931502
+transform 1 0 4236 0 1 4349
+box 0 0 64 64
+use contact_8  contact_8_19
+timestamp 1595931502
+transform 1 0 4236 0 1 4349
+box 0 0 64 64
+use contact_8  contact_8_20
+timestamp 1595931502
+transform 1 0 5040 0 1 3947
+box 0 0 64 64
+use contact_8  contact_8_21
+timestamp 1595931502
+transform 1 0 5040 0 1 3947
+box 0 0 64 64
+use contact_8  contact_8_22
+timestamp 1595931502
+transform 1 0 4236 0 1 3977
+box 0 0 64 64
+use contact_8  contact_8_23
+timestamp 1595931502
+transform 1 0 4236 0 1 3977
+box 0 0 64 64
+use contact_8  contact_8_24
+timestamp 1595931502
+transform 1 0 5040 0 1 3552
+box 0 0 64 64
+use contact_8  contact_8_25
+timestamp 1595931502
+transform 1 0 5040 0 1 3552
+box 0 0 64 64
+use contact_8  contact_8_26
+timestamp 1595931502
+transform 1 0 4236 0 1 3559
+box 0 0 64 64
+use contact_8  contact_8_27
+timestamp 1595931502
+transform 1 0 4236 0 1 3559
+box 0 0 64 64
+use contact_8  contact_8_28
+timestamp 1595931502
+transform 1 0 5040 0 1 3157
+box 0 0 64 64
+use contact_8  contact_8_29
+timestamp 1595931502
+transform 1 0 5040 0 1 3157
+box 0 0 64 64
+use contact_8  contact_8_30
+timestamp 1595931502
+transform 1 0 4236 0 1 3187
+box 0 0 64 64
+use contact_8  contact_8_31
+timestamp 1595931502
+transform 1 0 4236 0 1 3187
+box 0 0 64 64
+use contact_8  contact_8_32
+timestamp 1595931502
+transform 1 0 5040 0 1 2762
+box 0 0 64 64
+use contact_8  contact_8_33
+timestamp 1595931502
+transform 1 0 5040 0 1 2762
+box 0 0 64 64
+use contact_8  contact_8_34
+timestamp 1595931502
+transform 1 0 4236 0 1 2769
+box 0 0 64 64
+use contact_8  contact_8_35
+timestamp 1595931502
+transform 1 0 4236 0 1 2769
+box 0 0 64 64
+use contact_8  contact_8_36
+timestamp 1595931502
+transform 1 0 5040 0 1 2367
+box 0 0 64 64
+use contact_8  contact_8_37
+timestamp 1595931502
+transform 1 0 5040 0 1 2367
+box 0 0 64 64
+use contact_8  contact_8_38
+timestamp 1595931502
+transform 1 0 4236 0 1 2397
+box 0 0 64 64
+use contact_8  contact_8_39
+timestamp 1595931502
+transform 1 0 4236 0 1 2397
+box 0 0 64 64
+use contact_8  contact_8_40
+timestamp 1595931502
+transform 1 0 5040 0 1 1972
+box 0 0 64 64
+use contact_8  contact_8_41
+timestamp 1595931502
+transform 1 0 5040 0 1 1972
+box 0 0 64 64
+use contact_8  contact_8_42
+timestamp 1595931502
+transform 1 0 4236 0 1 1979
+box 0 0 64 64
+use contact_8  contact_8_43
+timestamp 1595931502
+transform 1 0 4236 0 1 1979
+box 0 0 64 64
+use contact_8  contact_8_44
+timestamp 1595931502
+transform 1 0 5040 0 1 1577
+box 0 0 64 64
+use contact_8  contact_8_45
+timestamp 1595931502
+transform 1 0 5040 0 1 1577
+box 0 0 64 64
+use contact_8  contact_8_46
+timestamp 1595931502
+transform 1 0 4236 0 1 1607
+box 0 0 64 64
+use contact_8  contact_8_47
+timestamp 1595931502
+transform 1 0 4236 0 1 1607
+box 0 0 64 64
+use contact_8  contact_8_48
+timestamp 1595931502
+transform 1 0 5040 0 1 1182
+box 0 0 64 64
+use contact_8  contact_8_49
+timestamp 1595931502
+transform 1 0 5040 0 1 1182
+box 0 0 64 64
+use contact_8  contact_8_50
+timestamp 1595931502
+transform 1 0 4236 0 1 1189
+box 0 0 64 64
+use contact_8  contact_8_51
+timestamp 1595931502
+transform 1 0 4236 0 1 1189
+box 0 0 64 64
+use contact_8  contact_8_52
+timestamp 1595931502
+transform 1 0 5040 0 1 787
+box 0 0 64 64
+use contact_8  contact_8_53
+timestamp 1595931502
+transform 1 0 5040 0 1 787
+box 0 0 64 64
+use contact_8  contact_8_54
+timestamp 1595931502
+transform 1 0 4236 0 1 817
+box 0 0 64 64
+use contact_8  contact_8_55
+timestamp 1595931502
+transform 1 0 4236 0 1 817
+box 0 0 64 64
+use contact_8  contact_8_56
+timestamp 1595931502
+transform 1 0 5040 0 1 392
+box 0 0 64 64
+use contact_8  contact_8_57
+timestamp 1595931502
+transform 1 0 5040 0 1 392
+box 0 0 64 64
+use contact_8  contact_8_58
+timestamp 1595931502
+transform 1 0 4236 0 1 399
+box 0 0 64 64
+use contact_8  contact_8_59
+timestamp 1595931502
+transform 1 0 4236 0 1 399
+box 0 0 64 64
+use contact_8  contact_8_60
+timestamp 1595931502
+transform 1 0 5312 0 1 5922
+box 0 0 64 64
+use contact_8  contact_8_61
+timestamp 1595931502
+transform 1 0 5312 0 1 5922
+box 0 0 64 64
+use contact_8  contact_8_62
+timestamp 1595931502
+transform 1 0 4661 0 1 5929
+box 0 0 64 64
+use contact_8  contact_8_63
+timestamp 1595931502
+transform 1 0 4661 0 1 5929
+box 0 0 64 64
+use contact_8  contact_8_64
+timestamp 1595931502
+transform 1 0 5312 0 1 5527
+box 0 0 64 64
+use contact_8  contact_8_65
+timestamp 1595931502
+transform 1 0 5312 0 1 5527
+box 0 0 64 64
+use contact_8  contact_8_66
+timestamp 1595931502
+transform 1 0 4661 0 1 5559
+box 0 0 64 64
+use contact_8  contact_8_67
+timestamp 1595931502
+transform 1 0 4661 0 1 5559
+box 0 0 64 64
+use contact_8  contact_8_68
+timestamp 1595931502
+transform 1 0 5312 0 1 5132
+box 0 0 64 64
+use contact_8  contact_8_69
+timestamp 1595931502
+transform 1 0 5312 0 1 5132
+box 0 0 64 64
+use contact_8  contact_8_70
+timestamp 1595931502
+transform 1 0 4661 0 1 5139
+box 0 0 64 64
+use contact_8  contact_8_71
+timestamp 1595931502
+transform 1 0 4661 0 1 5139
+box 0 0 64 64
+use contact_8  contact_8_72
+timestamp 1595931502
+transform 1 0 5312 0 1 4737
+box 0 0 64 64
+use contact_8  contact_8_73
+timestamp 1595931502
+transform 1 0 5312 0 1 4737
+box 0 0 64 64
+use contact_8  contact_8_74
+timestamp 1595931502
+transform 1 0 4661 0 1 4769
+box 0 0 64 64
+use contact_8  contact_8_75
+timestamp 1595931502
+transform 1 0 4661 0 1 4769
+box 0 0 64 64
+use contact_8  contact_8_76
+timestamp 1595931502
+transform 1 0 5312 0 1 4342
+box 0 0 64 64
+use contact_8  contact_8_77
+timestamp 1595931502
+transform 1 0 5312 0 1 4342
+box 0 0 64 64
+use contact_8  contact_8_78
+timestamp 1595931502
+transform 1 0 4661 0 1 4349
+box 0 0 64 64
+use contact_8  contact_8_79
+timestamp 1595931502
+transform 1 0 4661 0 1 4349
+box 0 0 64 64
+use contact_8  contact_8_80
+timestamp 1595931502
+transform 1 0 5312 0 1 3947
+box 0 0 64 64
+use contact_8  contact_8_81
+timestamp 1595931502
+transform 1 0 5312 0 1 3947
+box 0 0 64 64
+use contact_8  contact_8_82
+timestamp 1595931502
+transform 1 0 4661 0 1 3979
+box 0 0 64 64
+use contact_8  contact_8_83
+timestamp 1595931502
+transform 1 0 4661 0 1 3979
+box 0 0 64 64
+use contact_8  contact_8_84
+timestamp 1595931502
+transform 1 0 5312 0 1 3552
+box 0 0 64 64
+use contact_8  contact_8_85
+timestamp 1595931502
+transform 1 0 5312 0 1 3552
+box 0 0 64 64
+use contact_8  contact_8_86
+timestamp 1595931502
+transform 1 0 4661 0 1 3559
+box 0 0 64 64
+use contact_8  contact_8_87
+timestamp 1595931502
+transform 1 0 4661 0 1 3559
+box 0 0 64 64
+use contact_8  contact_8_88
+timestamp 1595931502
+transform 1 0 5312 0 1 3157
+box 0 0 64 64
+use contact_8  contact_8_89
+timestamp 1595931502
+transform 1 0 5312 0 1 3157
+box 0 0 64 64
+use contact_8  contact_8_90
+timestamp 1595931502
+transform 1 0 4661 0 1 3189
+box 0 0 64 64
+use contact_8  contact_8_91
+timestamp 1595931502
+transform 1 0 4661 0 1 3189
+box 0 0 64 64
+use contact_8  contact_8_92
+timestamp 1595931502
+transform 1 0 5312 0 1 2762
+box 0 0 64 64
+use contact_8  contact_8_93
+timestamp 1595931502
+transform 1 0 5312 0 1 2762
+box 0 0 64 64
+use contact_8  contact_8_94
+timestamp 1595931502
+transform 1 0 4661 0 1 2769
+box 0 0 64 64
+use contact_8  contact_8_95
+timestamp 1595931502
+transform 1 0 4661 0 1 2769
+box 0 0 64 64
+use contact_8  contact_8_96
+timestamp 1595931502
+transform 1 0 5312 0 1 2367
+box 0 0 64 64
+use contact_8  contact_8_97
+timestamp 1595931502
+transform 1 0 5312 0 1 2367
+box 0 0 64 64
+use contact_8  contact_8_98
+timestamp 1595931502
+transform 1 0 4661 0 1 2399
+box 0 0 64 64
+use contact_8  contact_8_99
+timestamp 1595931502
+transform 1 0 4661 0 1 2399
+box 0 0 64 64
+use contact_8  contact_8_100
+timestamp 1595931502
+transform 1 0 5312 0 1 1972
+box 0 0 64 64
+use contact_8  contact_8_101
+timestamp 1595931502
+transform 1 0 5312 0 1 1972
+box 0 0 64 64
+use contact_8  contact_8_102
+timestamp 1595931502
+transform 1 0 4661 0 1 1979
+box 0 0 64 64
+use contact_8  contact_8_103
+timestamp 1595931502
+transform 1 0 4661 0 1 1979
+box 0 0 64 64
+use contact_8  contact_8_104
+timestamp 1595931502
+transform 1 0 5312 0 1 1577
+box 0 0 64 64
+use contact_8  contact_8_105
+timestamp 1595931502
+transform 1 0 5312 0 1 1577
+box 0 0 64 64
+use contact_8  contact_8_106
+timestamp 1595931502
+transform 1 0 4661 0 1 1609
+box 0 0 64 64
+use contact_8  contact_8_107
+timestamp 1595931502
+transform 1 0 4661 0 1 1609
+box 0 0 64 64
+use contact_8  contact_8_108
+timestamp 1595931502
+transform 1 0 5312 0 1 1182
+box 0 0 64 64
+use contact_8  contact_8_109
+timestamp 1595931502
+transform 1 0 5312 0 1 1182
+box 0 0 64 64
+use contact_8  contact_8_110
+timestamp 1595931502
+transform 1 0 4661 0 1 1189
+box 0 0 64 64
+use contact_8  contact_8_111
+timestamp 1595931502
+transform 1 0 4661 0 1 1189
+box 0 0 64 64
+use contact_8  contact_8_112
+timestamp 1595931502
+transform 1 0 5312 0 1 787
+box 0 0 64 64
+use contact_8  contact_8_113
+timestamp 1595931502
+transform 1 0 5312 0 1 787
+box 0 0 64 64
+use contact_8  contact_8_114
+timestamp 1595931502
+transform 1 0 4661 0 1 819
+box 0 0 64 64
+use contact_8  contact_8_115
+timestamp 1595931502
+transform 1 0 4661 0 1 819
+box 0 0 64 64
+use contact_8  contact_8_116
+timestamp 1595931502
+transform 1 0 5312 0 1 392
+box 0 0 64 64
+use contact_8  contact_8_117
+timestamp 1595931502
+transform 1 0 5312 0 1 392
+box 0 0 64 64
+use contact_8  contact_8_118
+timestamp 1595931502
+transform 1 0 4661 0 1 399
+box 0 0 64 64
+use contact_8  contact_8_119
+timestamp 1595931502
+transform 1 0 4661 0 1 399
+box 0 0 64 64
+use contact_22  contact_22_0
+timestamp 1595931502
+transform 1 0 4069 0 1 6132
+box 0 0 64 52
+use contact_21  contact_21_0
+timestamp 1595931502
+transform 1 0 4068 0 1 6135
+box 0 0 66 46
+use contact_22  contact_22_1
+timestamp 1595931502
+transform 1 0 4069 0 1 6024
+box 0 0 64 52
+use contact_21  contact_21_1
+timestamp 1595931502
+transform 1 0 4068 0 1 6027
+box 0 0 66 46
+use contact_22  contact_22_2
+timestamp 1595931502
+transform 1 0 4069 0 1 5724
+box 0 0 64 52
+use contact_21  contact_21_2
+timestamp 1595931502
+transform 1 0 4068 0 1 5727
+box 0 0 66 46
+use contact_22  contact_22_3
+timestamp 1595931502
+transform 1 0 4069 0 1 5832
+box 0 0 64 52
+use contact_21  contact_21_3
+timestamp 1595931502
+transform 1 0 4068 0 1 5835
+box 0 0 66 46
+use contact_22  contact_22_4
+timestamp 1595931502
+transform 1 0 4069 0 1 5342
+box 0 0 64 52
+use contact_21  contact_21_4
+timestamp 1595931502
+transform 1 0 4068 0 1 5345
+box 0 0 66 46
+use contact_22  contact_22_5
+timestamp 1595931502
+transform 1 0 4069 0 1 5234
+box 0 0 64 52
+use contact_21  contact_21_5
+timestamp 1595931502
+transform 1 0 4068 0 1 5237
+box 0 0 66 46
+use contact_22  contact_22_6
+timestamp 1595931502
+transform 1 0 4069 0 1 4934
+box 0 0 64 52
+use contact_21  contact_21_6
+timestamp 1595931502
+transform 1 0 4068 0 1 4937
+box 0 0 66 46
+use contact_22  contact_22_7
+timestamp 1595931502
+transform 1 0 4069 0 1 5042
+box 0 0 64 52
+use contact_21  contact_21_7
+timestamp 1595931502
+transform 1 0 4068 0 1 5045
+box 0 0 66 46
+use contact_22  contact_22_8
+timestamp 1595931502
+transform 1 0 4069 0 1 4552
+box 0 0 64 52
+use contact_21  contact_21_8
+timestamp 1595931502
+transform 1 0 4068 0 1 4555
+box 0 0 66 46
+use contact_22  contact_22_9
+timestamp 1595931502
+transform 1 0 4069 0 1 4444
+box 0 0 64 52
+use contact_21  contact_21_9
+timestamp 1595931502
+transform 1 0 4068 0 1 4447
+box 0 0 66 46
+use contact_22  contact_22_10
+timestamp 1595931502
+transform 1 0 4069 0 1 4144
+box 0 0 64 52
+use contact_21  contact_21_10
+timestamp 1595931502
+transform 1 0 4068 0 1 4147
+box 0 0 66 46
+use contact_22  contact_22_11
+timestamp 1595931502
+transform 1 0 4069 0 1 4252
+box 0 0 64 52
+use contact_21  contact_21_11
+timestamp 1595931502
+transform 1 0 4068 0 1 4255
+box 0 0 66 46
+use contact_22  contact_22_12
+timestamp 1595931502
+transform 1 0 4069 0 1 3762
+box 0 0 64 52
+use contact_21  contact_21_12
+timestamp 1595931502
+transform 1 0 4068 0 1 3765
+box 0 0 66 46
+use contact_22  contact_22_13
+timestamp 1595931502
+transform 1 0 4069 0 1 3654
+box 0 0 64 52
+use contact_21  contact_21_13
+timestamp 1595931502
+transform 1 0 4068 0 1 3657
+box 0 0 66 46
+use contact_22  contact_22_14
+timestamp 1595931502
+transform 1 0 4069 0 1 3354
+box 0 0 64 52
+use contact_21  contact_21_14
+timestamp 1595931502
+transform 1 0 4068 0 1 3357
+box 0 0 66 46
+use contact_22  contact_22_15
+timestamp 1595931502
+transform 1 0 4069 0 1 3462
+box 0 0 64 52
+use contact_21  contact_21_15
+timestamp 1595931502
+transform 1 0 4068 0 1 3465
+box 0 0 66 46
+use contact_22  contact_22_16
+timestamp 1595931502
+transform 1 0 4069 0 1 2972
+box 0 0 64 52
+use contact_21  contact_21_16
+timestamp 1595931502
+transform 1 0 4068 0 1 2975
+box 0 0 66 46
+use contact_22  contact_22_17
+timestamp 1595931502
+transform 1 0 4069 0 1 2864
+box 0 0 64 52
+use contact_21  contact_21_17
+timestamp 1595931502
+transform 1 0 4068 0 1 2867
+box 0 0 66 46
+use contact_22  contact_22_18
+timestamp 1595931502
+transform 1 0 4069 0 1 2564
+box 0 0 64 52
+use contact_21  contact_21_18
+timestamp 1595931502
+transform 1 0 4068 0 1 2567
+box 0 0 66 46
+use contact_22  contact_22_19
+timestamp 1595931502
+transform 1 0 4069 0 1 2672
+box 0 0 64 52
+use contact_21  contact_21_19
+timestamp 1595931502
+transform 1 0 4068 0 1 2675
+box 0 0 66 46
+use contact_22  contact_22_20
+timestamp 1595931502
+transform 1 0 4069 0 1 2182
+box 0 0 64 52
+use contact_21  contact_21_20
+timestamp 1595931502
+transform 1 0 4068 0 1 2185
+box 0 0 66 46
+use contact_22  contact_22_21
+timestamp 1595931502
+transform 1 0 4069 0 1 2074
+box 0 0 64 52
+use contact_21  contact_21_21
+timestamp 1595931502
+transform 1 0 4068 0 1 2077
+box 0 0 66 46
+use contact_22  contact_22_22
+timestamp 1595931502
+transform 1 0 4069 0 1 1774
+box 0 0 64 52
+use contact_21  contact_21_22
+timestamp 1595931502
+transform 1 0 4068 0 1 1777
+box 0 0 66 46
+use contact_22  contact_22_23
+timestamp 1595931502
+transform 1 0 4069 0 1 1882
+box 0 0 64 52
+use contact_21  contact_21_23
+timestamp 1595931502
+transform 1 0 4068 0 1 1885
+box 0 0 66 46
+use contact_22  contact_22_24
+timestamp 1595931502
+transform 1 0 4069 0 1 1392
+box 0 0 64 52
+use contact_21  contact_21_24
+timestamp 1595931502
+transform 1 0 4068 0 1 1395
+box 0 0 66 46
+use contact_22  contact_22_25
+timestamp 1595931502
+transform 1 0 4069 0 1 1284
+box 0 0 64 52
+use contact_21  contact_21_25
+timestamp 1595931502
+transform 1 0 4068 0 1 1287
+box 0 0 66 46
+use contact_22  contact_22_26
+timestamp 1595931502
+transform 1 0 4069 0 1 984
+box 0 0 64 52
+use contact_21  contact_21_26
+timestamp 1595931502
+transform 1 0 4068 0 1 987
+box 0 0 66 46
+use contact_22  contact_22_27
+timestamp 1595931502
+transform 1 0 4069 0 1 1092
+box 0 0 64 52
+use contact_21  contact_21_27
+timestamp 1595931502
+transform 1 0 4068 0 1 1095
+box 0 0 66 46
+use contact_22  contact_22_28
+timestamp 1595931502
+transform 1 0 4069 0 1 602
+box 0 0 64 52
+use contact_21  contact_21_28
+timestamp 1595931502
+transform 1 0 4068 0 1 605
+box 0 0 66 46
+use contact_22  contact_22_29
+timestamp 1595931502
+transform 1 0 4069 0 1 494
+box 0 0 64 52
+use contact_21  contact_21_29
+timestamp 1595931502
+transform 1 0 4068 0 1 497
+box 0 0 66 46
+use contact_22  contact_22_30
+timestamp 1595931502
+transform 1 0 4069 0 1 194
+box 0 0 64 52
+use contact_21  contact_21_30
+timestamp 1595931502
+transform 1 0 4068 0 1 197
+box 0 0 66 46
+use contact_22  contact_22_31
+timestamp 1595931502
+transform 1 0 4069 0 1 302
+box 0 0 64 52
+use contact_21  contact_21_31
+timestamp 1595931502
+transform 1 0 4068 0 1 305
+box 0 0 66 46
+use contact_19  contact_19_0
+timestamp 1595931502
+transform 1 0 3899 0 1 3555
+box 0 0 66 58
+use contact_19  contact_19_1
+timestamp 1595931502
+transform 1 0 3819 0 1 3160
+box 0 0 66 58
+use contact_19  contact_19_2
+timestamp 1595931502
+transform 1 0 3739 0 1 2765
+box 0 0 66 58
+use contact_19  contact_19_3
+timestamp 1595931502
+transform 1 0 3659 0 1 2370
+box 0 0 66 58
+use contact_19  contact_19_4
+timestamp 1595931502
+transform 1 0 3579 0 1 1185
+box 0 0 66 58
+use contact_19  contact_19_5
+timestamp 1595931502
+transform 1 0 3499 0 1 790
+box 0 0 66 58
+use contact_19  contact_19_6
+timestamp 1595931502
+transform 1 0 3419 0 1 395
+box 0 0 66 58
+use contact_19  contact_19_7
+timestamp 1595931502
+transform 1 0 3339 0 1 0
+box 0 0 66 58
+use contact_8  contact_8_120
+timestamp 1595931502
+transform 1 0 508 0 1 2960
+box 0 0 64 64
+use contact_8  contact_8_121
+timestamp 1595931502
+transform 1 0 428 0 1 2564
+box 0 0 64 64
+use contact_8  contact_8_122
+timestamp 1595931502
+transform 1 0 508 0 1 590
+box 0 0 64 64
+use contact_8  contact_8_123
+timestamp 1595931502
+transform 1 0 428 0 1 194
+box 0 0 64 64
+<< labels >>
+rlabel corelocali s 5265 2546 5265 2546 4 decode_6
+rlabel corelocali s 5265 1462 5265 1462 4 decode_3
+rlabel corelocali s 5265 4126 5265 4126 4 decode_10
+rlabel corelocali s 5265 3042 5265 3042 4 decode_7
+rlabel metal1 s 32 2004 32 2004 4 addr_0
+rlabel metal1 s 3932 3203 3932 3203 4 predecode_7
+rlabel corelocali s 5265 1756 5265 1756 4 decode_4
+rlabel metal1 s 3372 3203 3372 3203 4 predecode_0
+rlabel corelocali s 5265 176 5265 176 4 decode_0
+rlabel metal1 s 3532 3203 3532 3203 4 predecode_2
+rlabel corelocali s 5265 672 5265 672 4 decode_1
+rlabel corelocali s 5265 5706 5265 5706 4 decode_14
+rlabel metal1 s 192 2004 192 2004 4 addr_2
+rlabel metal1 s 112 2004 112 2004 4 addr_1
+rlabel metal3 s 4268 2801 4268 2801 4 gnd
+rlabel metal3 s 5072 3189 5072 3189 4 gnd
+rlabel metal3 s 2858 424 2858 424 4 gnd
+rlabel metal3 s 4268 431 4268 431 4 gnd
+rlabel metal3 s 5072 4374 5072 4374 4 gnd
+rlabel metal3 s 4268 4009 4268 4009 4 gnd
+rlabel metal3 s 2054 2801 2054 2801 4 gnd
+rlabel metal3 s 5072 2399 5072 2399 4 gnd
+rlabel metal3 s 2054 3591 2054 3591 4 gnd
+rlabel metal3 s 4268 4799 4268 4799 4 gnd
+rlabel metal3 s 5072 4769 5072 4769 4 gnd
+rlabel metal3 s 5072 2794 5072 2794 4 gnd
+rlabel metal3 s 5072 1609 5072 1609 4 gnd
+rlabel metal3 s 4268 1639 4268 1639 4 gnd
+rlabel metal3 s 2054 431 2054 431 4 gnd
+rlabel metal3 s 4268 3219 4268 3219 4 gnd
+rlabel metal3 s 2858 1214 2858 1214 4 gnd
+rlabel metal3 s 5072 3584 5072 3584 4 gnd
+rlabel metal3 s 5072 5164 5072 5164 4 gnd
+rlabel metal3 s 4268 3591 4268 3591 4 gnd
+rlabel metal3 s 4268 5171 4268 5171 4 gnd
+rlabel metal3 s 5072 2004 5072 2004 4 gnd
+rlabel metal3 s 4268 2429 4268 2429 4 gnd
+rlabel metal3 s 5072 819 5072 819 4 gnd
+rlabel metal3 s 4268 5589 4268 5589 4 gnd
+rlabel metal3 s 5072 1214 5072 1214 4 gnd
+rlabel metal3 s 5072 424 5072 424 4 gnd
+rlabel metal3 s 4268 849 4268 849 4 gnd
+rlabel metal3 s 2858 2794 2858 2794 4 gnd
+rlabel metal3 s 2858 3584 2858 3584 4 gnd
+rlabel metal3 s 2054 1221 2054 1221 4 gnd
+rlabel metal3 s 884 424 884 424 4 gnd
+rlabel metal3 s 4268 5961 4268 5961 4 gnd
+rlabel metal3 s 4268 2011 4268 2011 4 gnd
+rlabel metal3 s 5072 3979 5072 3979 4 gnd
+rlabel metal3 s 5072 5559 5072 5559 4 gnd
+rlabel metal3 s 5072 5954 5072 5954 4 gnd
+rlabel metal3 s 884 2794 884 2794 4 gnd
+rlabel metal3 s 4268 1221 4268 1221 4 gnd
+rlabel metal3 s 4268 4381 4268 4381 4 gnd
+rlabel metal1 s 3692 3203 3692 3203 4 predecode_4
+rlabel corelocali s 5265 3832 5265 3832 4 decode_9
+rlabel metal1 s 3612 3203 3612 3203 4 predecode_3
+rlabel corelocali s 5265 5412 5265 5412 4 decode_13
+rlabel corelocali s 5265 3336 5265 3336 4 decode_8
+rlabel corelocali s 5265 2252 5265 2252 4 decode_5
+rlabel metal1 s 3772 3203 3772 3203 4 predecode_5
+rlabel corelocali s 5265 966 5265 966 4 decode_2
+rlabel metal1 s 3452 3203 3452 3203 4 predecode_1
+rlabel corelocali s 5265 4622 5265 4622 4 decode_11
+rlabel corelocali s 5265 4916 5265 4916 4 decode_12
+rlabel corelocali s 5265 6202 5265 6202 4 decode_15
+rlabel metal1 s 272 2004 272 2004 4 addr_3
+rlabel metal3 s 2479 1221 2479 1221 4 vdd
+rlabel metal3 s 4693 5591 4693 5591 4 vdd
+rlabel metal3 s 4693 4011 4693 4011 4 vdd
+rlabel metal3 s 5344 5954 5344 5954 4 vdd
+rlabel metal3 s 4693 3591 4693 3591 4 vdd
+rlabel metal3 s 4693 5961 4693 5961 4 vdd
+rlabel metal3 s 3130 424 3130 424 4 vdd
+rlabel metal3 s 2479 431 2479 431 4 vdd
+rlabel metal3 s 5344 2399 5344 2399 4 vdd
+rlabel metal3 s 5344 3189 5344 3189 4 vdd
+rlabel metal3 s 4693 2801 4693 2801 4 vdd
+rlabel metal3 s 4693 3221 4693 3221 4 vdd
+rlabel metal3 s 2479 3591 2479 3591 4 vdd
+rlabel metal3 s 4693 5171 4693 5171 4 vdd
+rlabel metal3 s 4693 4801 4693 4801 4 vdd
+rlabel metal3 s 1156 424 1156 424 4 vdd
+rlabel metal3 s 5344 1609 5344 1609 4 vdd
+rlabel metal3 s 5344 2794 5344 2794 4 vdd
+rlabel metal3 s 5344 819 5344 819 4 vdd
+rlabel metal3 s 4693 1221 4693 1221 4 vdd
+rlabel metal3 s 4693 851 4693 851 4 vdd
+rlabel metal3 s 4693 4381 4693 4381 4 vdd
+rlabel metal3 s 4693 431 4693 431 4 vdd
+rlabel metal3 s 5344 424 5344 424 4 vdd
+rlabel metal3 s 1156 2794 1156 2794 4 vdd
+rlabel metal3 s 4693 2011 4693 2011 4 vdd
+rlabel metal3 s 5344 4769 5344 4769 4 vdd
+rlabel metal3 s 3130 2794 3130 2794 4 vdd
+rlabel metal3 s 5344 5164 5344 5164 4 vdd
+rlabel metal3 s 5344 5559 5344 5559 4 vdd
+rlabel metal3 s 5344 1214 5344 1214 4 vdd
+rlabel metal3 s 5344 4374 5344 4374 4 vdd
+rlabel metal3 s 2479 2801 2479 2801 4 vdd
+rlabel metal3 s 5344 2004 5344 2004 4 vdd
+rlabel metal3 s 3130 3584 3130 3584 4 vdd
+rlabel metal3 s 5344 3584 5344 3584 4 vdd
+rlabel metal3 s 4693 2431 4693 2431 4 vdd
+rlabel metal3 s 5344 3979 5344 3979 4 vdd
+rlabel metal3 s 4693 1641 4693 1641 4 vdd
+rlabel metal3 s 3130 1214 3130 1214 4 vdd
+rlabel metal1 s 3852 3203 3852 3203 4 predecode_6
+<< properties >>
+string FIXED_BBOX 0 0 5520 6348
+<< end >>

@@ -1,0 +1,33 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1296 -1277 2250 2731
+<< locali >>
+rect 0 1397 954 1431
+rect 430 698 464 1167
+rect 430 664 559 698
+rect 661 664 695 698
+rect 345 485 379 551
+rect 212 361 246 427
+rect 79 237 113 303
+rect 0 -17 954 17
+use pdriver_3  pdriver_3_0
+timestamp 1595931502
+transform 1 0 478 0 1 0
+box -36 -17 512 1471
+use pnand3  pnand3_0
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box -36 -17 514 1471
+<< labels >>
+rlabel corelocali s 477 0 477 0 4 gnd
+rlabel corelocali s 229 394 229 394 4 B
+rlabel corelocali s 96 270 96 270 4 A
+rlabel corelocali s 678 681 678 681 4 Z
+rlabel corelocali s 362 518 362 518 4 C
+rlabel corelocali s 477 1414 477 1414 4 vdd
+<< properties >>
+string FIXED_BBOX 0 0 954 1414
+<< end >>

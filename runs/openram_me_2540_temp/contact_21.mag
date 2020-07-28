@@ -1,0 +1,18 @@
+magic
+tech sky130A
+timestamp 1595931502
+<< checkpaint >>
+rect -630 -630 663 653
+<< locali >>
+rect 0 3 8 20
+rect 25 3 33 20
+<< viali >>
+rect 8 3 25 20
+<< metal1 >>
+rect 2 20 31 23
+rect 2 3 8 20
+rect 25 3 31 20
+rect 2 0 31 3
+<< properties >>
+string FIXED_BBOX 0 0 33 23
+<< end >>

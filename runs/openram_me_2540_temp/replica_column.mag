@@ -1,0 +1,267 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1260 -1260 1926 9160
+<< metal1 >>
+rect 222 0 258 7900
+rect 294 0 330 7900
+rect 366 7189 402 7530
+rect 366 6399 402 7031
+rect 366 5609 402 6241
+rect 366 4819 402 5451
+rect 366 4029 402 4661
+rect 366 3239 402 3871
+rect 366 2449 402 3081
+rect 366 1659 402 2291
+rect 366 869 402 1501
+rect 366 370 402 711
+rect 438 0 474 7900
+rect 510 0 546 7900
+<< metal2 >>
+rect 0 7433 624 7481
+rect 330 7309 438 7385
+rect 0 7213 624 7261
+rect 330 7055 438 7165
+rect 0 6959 624 7007
+rect 330 6835 438 6911
+rect 0 6739 624 6787
+rect 0 6643 624 6691
+rect 330 6519 438 6595
+rect 0 6423 624 6471
+rect 330 6265 438 6375
+rect 0 6169 624 6217
+rect 330 6045 438 6121
+rect 0 5949 624 5997
+rect 0 5853 624 5901
+rect 330 5729 438 5805
+rect 0 5633 624 5681
+rect 330 5475 438 5585
+rect 0 5379 624 5427
+rect 330 5255 438 5331
+rect 0 5159 624 5207
+rect 0 5063 624 5111
+rect 330 4939 438 5015
+rect 0 4843 624 4891
+rect 330 4685 438 4795
+rect 0 4589 624 4637
+rect 330 4465 438 4541
+rect 0 4369 624 4417
+rect 0 4273 624 4321
+rect 330 4149 438 4225
+rect 0 4053 624 4101
+rect 330 3895 438 4005
+rect 0 3799 624 3847
+rect 330 3675 438 3751
+rect 0 3579 624 3627
+rect 0 3483 624 3531
+rect 330 3359 438 3435
+rect 0 3263 624 3311
+rect 330 3105 438 3215
+rect 0 3009 624 3057
+rect 330 2885 438 2961
+rect 0 2789 624 2837
+rect 0 2693 624 2741
+rect 330 2569 438 2645
+rect 0 2473 624 2521
+rect 330 2315 438 2425
+rect 0 2219 624 2267
+rect 330 2095 438 2171
+rect 0 1999 624 2047
+rect 0 1903 624 1951
+rect 330 1779 438 1855
+rect 0 1683 624 1731
+rect 330 1525 438 1635
+rect 0 1429 624 1477
+rect 330 1305 438 1381
+rect 0 1209 624 1257
+rect 0 1113 624 1161
+rect 330 989 438 1065
+rect 0 893 624 941
+rect 330 735 438 845
+rect 0 639 624 687
+rect 330 515 438 591
+rect 0 419 624 467
+<< metal3 >>
+rect 263 7622 361 7720
+rect 263 180 361 278
+use contact_9  contact_9_1
+timestamp 1595931502
+transform 1 0 279 0 1 192
+box 0 0 66 74
+use contact_9  contact_9_0
+timestamp 1595931502
+transform 1 0 279 0 1 7634
+box 0 0 66 74
+use replica_cell_1rw_1r  replica_cell_1rw_1r_16
+timestamp 1595931502
+transform -1 0 624 0 -1 790
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_15
+timestamp 1595931502
+transform -1 0 624 0 1 790
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_14
+timestamp 1595931502
+transform -1 0 624 0 -1 1580
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_13
+timestamp 1595931502
+transform -1 0 624 0 1 1580
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_12
+timestamp 1595931502
+transform -1 0 624 0 -1 2370
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_11
+timestamp 1595931502
+transform -1 0 624 0 1 2370
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_10
+timestamp 1595931502
+transform -1 0 624 0 -1 3160
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_9
+timestamp 1595931502
+transform -1 0 624 0 1 3160
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_8
+timestamp 1595931502
+transform -1 0 624 0 -1 3950
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_7
+timestamp 1595931502
+transform -1 0 624 0 1 3950
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_6
+timestamp 1595931502
+transform -1 0 624 0 -1 4740
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_5
+timestamp 1595931502
+transform -1 0 624 0 1 4740
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_4
+timestamp 1595931502
+transform -1 0 624 0 -1 5530
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_3
+timestamp 1595931502
+transform -1 0 624 0 1 5530
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_2
+timestamp 1595931502
+transform -1 0 624 0 -1 6320
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_1
+timestamp 1595931502
+transform -1 0 624 0 1 6320
+box -42 -104 624 420
+use replica_cell_1rw_1r  replica_cell_1rw_1r_0
+timestamp 1595931502
+transform -1 0 624 0 -1 7110
+box -42 -104 624 420
+use dummy_cell_1rw_1r  dummy_cell_1rw_1r_0
+timestamp 1595931502
+transform -1 0 624 0 1 7110
+box -42 -104 624 420
+use col_cap_cell_1rw_1r  col_cap_cell_1rw_1r_1
+timestamp 1595931502
+transform -1 0 624 0 1 0
+box 0 0 624 474
+use col_cap_cell_1rw_1r  col_cap_cell_1rw_1r_0
+timestamp 1595931502
+transform -1 0 624 0 -1 7900
+box 0 0 624 474
+<< labels >>
+rlabel metal2 s 312 6667 312 6667 4 wl0_16
+rlabel metal2 s 312 4613 312 4613 4 wl1_11
+rlabel metal2 s 312 6193 312 6193 4 wl1_15
+rlabel metal2 s 312 1927 312 1927 4 wl0_4
+rlabel metal2 s 312 917 312 917 4 wl1_2
+rlabel metal2 s 312 7237 312 7237 4 wl1_18
+rlabel metal2 s 312 5403 312 5403 4 wl1_13
+rlabel metal1 s 456 3950 456 3950 4 br0
+rlabel metal2 s 312 3823 312 3823 4 wl1_9
+rlabel metal2 s 312 663 312 663 4 wl1_1
+rlabel metal2 s 312 1453 312 1453 4 wl1_3
+rlabel metal2 s 312 3033 312 3033 4 wl1_7
+rlabel metal1 s 312 3950 312 3950 4 bl1
+rlabel metal2 s 312 5657 312 5657 4 wl1_14
+rlabel metal2 s 312 4393 312 4393 4 wl0_11
+rlabel metal2 s 312 7457 312 7457 4 wl0_18
+rlabel metal2 s 312 6447 312 6447 4 wl1_16
+rlabel metal2 s 312 4077 312 4077 4 wl1_10
+rlabel metal2 s 312 1707 312 1707 4 wl1_4
+rlabel metal2 s 312 1233 312 1233 4 wl0_3
+rlabel metal2 s 384 5293 384 5293 4 gnd
+rlabel metal2 s 384 6320 384 6320 4 gnd
+rlabel metal2 s 384 4740 384 4740 4 gnd
+rlabel metal2 s 384 6083 384 6083 4 gnd
+rlabel metal2 s 384 3713 384 3713 4 gnd
+rlabel metal2 s 384 7347 384 7347 4 gnd
+rlabel metal2 s 384 790 384 790 4 gnd
+rlabel metal2 s 384 6557 384 6557 4 gnd
+rlabel metal2 s 384 7110 384 7110 4 gnd
+rlabel metal2 s 384 2370 384 2370 4 gnd
+rlabel metal2 s 384 5767 384 5767 4 gnd
+rlabel metal2 s 384 1343 384 1343 4 gnd
+rlabel metal2 s 384 4187 384 4187 4 gnd
+rlabel metal2 s 384 2133 384 2133 4 gnd
+rlabel metal2 s 384 1817 384 1817 4 gnd
+rlabel metal2 s 384 4503 384 4503 4 gnd
+rlabel metal2 s 384 3950 384 3950 4 gnd
+rlabel metal2 s 384 2923 384 2923 4 gnd
+rlabel metal2 s 384 1027 384 1027 4 gnd
+rlabel metal2 s 384 3397 384 3397 4 gnd
+rlabel metal2 s 384 3160 384 3160 4 gnd
+rlabel metal2 s 384 6873 384 6873 4 gnd
+rlabel metal2 s 384 1580 384 1580 4 gnd
+rlabel metal2 s 384 553 384 553 4 gnd
+rlabel metal2 s 384 4977 384 4977 4 gnd
+rlabel metal2 s 384 2607 384 2607 4 gnd
+rlabel metal2 s 384 5530 384 5530 4 gnd
+rlabel metal2 s 312 2497 312 2497 4 wl1_6
+rlabel metal2 s 312 2717 312 2717 4 wl0_6
+rlabel metal2 s 312 6763 312 6763 4 wl0_17
+rlabel metal2 s 312 3603 312 3603 4 wl0_9
+rlabel metal2 s 312 2813 312 2813 4 wl0_7
+rlabel metal1 s 384 3409 384 3409 4 vdd
+rlabel metal1 s 384 4490 384 4490 4 vdd
+rlabel metal3 s 312 229 312 229 4 vdd
+rlabel metal1 s 384 5280 384 5280 4 vdd
+rlabel metal1 s 384 1829 384 1829 4 vdd
+rlabel metal1 s 384 2120 384 2120 4 vdd
+rlabel metal1 s 384 1039 384 1039 4 vdd
+rlabel metal1 s 384 4199 384 4199 4 vdd
+rlabel metal1 s 384 6860 384 6860 4 vdd
+rlabel metal1 s 384 7359 384 7359 4 vdd
+rlabel metal1 s 384 2619 384 2619 4 vdd
+rlabel metal1 s 384 4989 384 4989 4 vdd
+rlabel metal1 s 384 5779 384 5779 4 vdd
+rlabel metal1 s 384 6070 384 6070 4 vdd
+rlabel metal1 s 384 6569 384 6569 4 vdd
+rlabel metal1 s 384 3700 384 3700 4 vdd
+rlabel metal3 s 312 7671 312 7671 4 vdd
+rlabel metal1 s 384 540 384 540 4 vdd
+rlabel metal1 s 384 1330 384 1330 4 vdd
+rlabel metal1 s 384 2910 384 2910 4 vdd
+rlabel metal2 s 312 5973 312 5973 4 wl0_15
+rlabel metal2 s 312 3287 312 3287 4 wl1_8
+rlabel metal2 s 312 5087 312 5087 4 wl0_12
+rlabel metal2 s 312 4867 312 4867 4 wl1_12
+rlabel metal2 s 312 5877 312 5877 4 wl0_14
+rlabel metal2 s 312 2243 312 2243 4 wl1_5
+rlabel metal2 s 312 6983 312 6983 4 wl1_17
+rlabel metal2 s 312 2023 312 2023 4 wl0_5
+rlabel metal2 s 312 5183 312 5183 4 wl0_13
+rlabel metal2 s 312 443 312 443 4 wl0_1
+rlabel metal2 s 312 1137 312 1137 4 wl0_2
+rlabel metal1 s 240 3950 240 3950 4 br1
+rlabel metal2 s 312 4297 312 4297 4 wl0_10
+rlabel metal2 s 312 3507 312 3507 4 wl0_8
+rlabel metal1 s 528 3950 528 3950 4 bl0
+<< properties >>
+string FIXED_BBOX 0 0 624 7900
+<< end >>

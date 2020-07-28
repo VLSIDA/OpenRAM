@@ -1,0 +1,56 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1260 -1272 3132 2028
+<< metal1 >>
+rect 66 0 94 754
+rect 530 0 558 754
+rect 690 0 718 754
+rect 1154 0 1182 754
+rect 1314 0 1342 754
+rect 1778 0 1806 754
+<< metal3 >>
+rect 144 595 242 693
+rect 1006 595 1104 693
+rect 1392 595 1490 693
+rect 0 -5 1872 55
+use contact_9  contact_9_2
+timestamp 1595931502
+transform 1 0 279 0 1 -12
+box 0 0 66 74
+use contact_9  contact_9_1
+timestamp 1595931502
+transform 1 0 903 0 1 -12
+box 0 0 66 74
+use contact_9  contact_9_0
+timestamp 1595931502
+transform 1 0 1527 0 1 -12
+box 0 0 66 74
+use precharge_1  precharge_1_0
+timestamp 1595931502
+transform 1 0 1248 0 1 0
+box 0 -8 624 768
+use precharge_1  precharge_1_1
+timestamp 1595931502
+transform -1 0 1248 0 1 0
+box 0 -8 624 768
+use precharge_1  precharge_1_2
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box 0 -8 624 768
+<< labels >>
+rlabel metal1 s 544 377 544 377 4 br_0
+rlabel metal3 s 1441 644 1441 644 4 vdd
+rlabel metal3 s 1055 644 1055 644 4 vdd
+rlabel metal3 s 193 644 193 644 4 vdd
+rlabel metal1 s 704 377 704 377 4 br_1
+rlabel metal1 s 1328 377 1328 377 4 bl_2
+rlabel metal3 s 936 25 936 25 4 en_bar
+rlabel metal1 s 1792 377 1792 377 4 br_2
+rlabel metal1 s 1168 377 1168 377 4 bl_1
+rlabel metal1 s 80 377 80 377 4 bl_0
+<< properties >>
+string FIXED_BBOX 0 0 1872 754
+<< end >>

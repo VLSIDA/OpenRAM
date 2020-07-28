@@ -1,0 +1,145 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1412 -1256 2536 3271
+<< metal1 >>
+rect 126 1959 156 2011
+rect 328 1959 358 2011
+rect 766 1959 796 2011
+rect 968 1959 998 2011
+rect 0 94 1248 122
+rect 255 4 315 60
+rect 809 4 869 60
+<< metal2 >>
+rect 239 1554 295 1602
+rect 829 1554 885 1602
+rect 228 1117 284 1165
+rect 840 1117 896 1165
+rect 349 785 405 833
+rect 719 785 775 833
+rect 234 583 290 631
+rect 834 583 890 631
+rect 248 167 304 215
+rect 820 167 876 215
+<< metal3 >>
+rect 218 1529 316 1627
+rect 808 1529 906 1627
+rect 207 1092 305 1190
+rect 819 1092 917 1190
+rect 328 760 426 858
+rect 698 760 796 858
+rect 213 558 311 656
+rect 813 558 911 656
+rect 227 142 325 240
+rect 799 142 897 240
+use contact_15  contact_15_0
+timestamp 1595931502
+transform 1 0 824 0 1 1541
+box 0 0 66 74
+use contact_14  contact_14_0
+timestamp 1595931502
+transform 1 0 831 0 1 1546
+box 0 0 52 64
+use contact_15  contact_15_1
+timestamp 1595931502
+transform 1 0 714 0 1 772
+box 0 0 66 74
+use contact_14  contact_14_1
+timestamp 1595931502
+transform 1 0 721 0 1 778
+box 0 0 52 64
+use contact_15  contact_15_2
+timestamp 1595931502
+transform 1 0 829 0 1 570
+box 0 0 66 74
+use contact_14  contact_14_2
+timestamp 1595931502
+transform 1 0 836 0 1 575
+box 0 0 52 64
+use contact_15  contact_15_3
+timestamp 1595931502
+transform 1 0 835 0 1 1104
+box 0 0 66 74
+use contact_14  contact_14_3
+timestamp 1595931502
+transform 1 0 842 0 1 1109
+box 0 0 52 64
+use contact_15  contact_15_4
+timestamp 1595931502
+transform 1 0 815 0 1 154
+box 0 0 66 74
+use contact_14  contact_14_4
+timestamp 1595931502
+transform 1 0 822 0 1 159
+box 0 0 52 64
+use contact_15  contact_15_5
+timestamp 1595931502
+transform 1 0 234 0 1 1541
+box 0 0 66 74
+use contact_14  contact_14_5
+timestamp 1595931502
+transform 1 0 241 0 1 1546
+box 0 0 52 64
+use contact_15  contact_15_6
+timestamp 1595931502
+transform 1 0 344 0 1 772
+box 0 0 66 74
+use contact_14  contact_14_6
+timestamp 1595931502
+transform 1 0 351 0 1 778
+box 0 0 52 64
+use contact_15  contact_15_7
+timestamp 1595931502
+transform 1 0 229 0 1 570
+box 0 0 66 74
+use contact_14  contact_14_7
+timestamp 1595931502
+transform 1 0 236 0 1 575
+box 0 0 52 64
+use contact_15  contact_15_8
+timestamp 1595931502
+transform 1 0 223 0 1 1104
+box 0 0 66 74
+use contact_14  contact_14_8
+timestamp 1595931502
+transform 1 0 230 0 1 1109
+box 0 0 52 64
+use contact_15  contact_15_9
+timestamp 1595931502
+transform 1 0 243 0 1 154
+box 0 0 66 74
+use contact_14  contact_14_9
+timestamp 1595931502
+transform 1 0 250 0 1 159
+box 0 0 52 64
+use write_driver  write_driver_0
+timestamp 1595931502
+transform -1 0 1124 0 1 0
+box -152 4 656 2011
+use write_driver  write_driver_1
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box -152 4 656 2011
+<< labels >>
+rlabel metal3 s 747 809 747 809 4 gnd
+rlabel metal3 s 377 809 377 809 4 gnd
+rlabel metal3 s 862 607 862 607 4 gnd
+rlabel metal3 s 262 607 262 607 4 gnd
+rlabel metal3 s 267 1578 267 1578 4 gnd
+rlabel metal3 s 857 1578 857 1578 4 gnd
+rlabel metal1 s 343 1985 343 1985 4 br_0
+rlabel metal1 s 141 1985 141 1985 4 bl_0
+rlabel metal1 s 781 1985 781 1985 4 br_1
+rlabel metal1 s 983 1985 983 1985 4 bl_1
+rlabel metal1 s 839 32 839 32 4 data_1
+rlabel metal1 s 285 32 285 32 4 data_0
+rlabel metal1 s 624 108 624 108 4 en
+rlabel metal3 s 868 1141 868 1141 4 vdd
+rlabel metal3 s 276 191 276 191 4 vdd
+rlabel metal3 s 848 191 848 191 4 vdd
+rlabel metal3 s 256 1141 256 1141 4 vdd
+<< properties >>
+string FIXED_BBOX 0 0 1248 2011
+<< end >>

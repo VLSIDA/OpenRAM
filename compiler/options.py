@@ -67,7 +67,9 @@ class options(optparse.Values):
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
-        openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
+        # openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
+        openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))+"/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                           os.getpid())
     except:
         # Else use a unique temporary directory
         openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
@@ -93,7 +95,8 @@ class options(optparse.Values):
     trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
-
+    # This determines whether to clean up the tmp file.
+    cleanup_paths = True
 
     ###################
     # Tool options
@@ -108,8 +111,8 @@ class options(optparse.Values):
     pex_name = ""
     # The DRC/LVS/PEX executable being used
     # which is derived from the user PATH.
-    drc_exe = None
-    lvs_exe = None
+    drc_exe = None 
+    lvs_exe = None 
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None

@@ -1,0 +1,34 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1319 -1314 1469 1538
+<< nwell >>
+rect -54 -54 204 278
+<< scpmos >>
+rect 60 0 90 224
+<< pdiff >>
+rect 0 0 60 224
+rect 90 0 150 224
+<< poly >>
+rect 60 224 90 250
+rect 60 -26 90 0
+<< locali >>
+rect 8 79 42 145
+rect 108 79 142 145
+use contact_11  contact_11_1
+timestamp 1595931502
+transform 1 0 0 0 1 79
+box -59 -51 109 117
+use contact_11  contact_11_0
+timestamp 1595931502
+transform 1 0 100 0 1 79
+box -59 -51 109 117
+<< labels >>
+rlabel poly s 75 112 75 112 4 G
+rlabel corelocali s 25 112 25 112 4 S
+rlabel corelocali s 125 112 125 112 4 D
+<< properties >>
+string FIXED_BBOX -54 -54 204 278
+<< end >>

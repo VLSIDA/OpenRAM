@@ -1,0 +1,70 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1420 -1022 3132 4774
+<< metal1 >>
+rect 104 3260 150 3514
+rect 974 3260 1020 3514
+rect 199 1192 227 1258
+rect 66 1164 227 1192
+rect 66 252 94 1164
+rect 272 1112 300 1258
+rect 824 1112 852 1258
+rect 897 1192 925 1258
+rect 897 1164 1182 1192
+rect 272 1084 558 1112
+rect 530 252 558 1084
+rect 690 1084 852 1112
+rect 690 252 718 1084
+rect 1154 252 1182 1164
+rect 1314 252 1342 1006
+rect 1778 252 1806 1006
+<< metal3 >>
+rect 332 3357 430 3455
+rect 694 3357 792 3455
+rect 332 3035 430 3133
+rect 694 3035 792 3133
+rect 320 2197 418 2295
+rect 706 2197 804 2295
+rect 402 1423 500 1521
+rect 624 1423 722 1521
+rect 0 1290 1248 1350
+rect 0 951 1872 1011
+rect 144 313 242 411
+rect 1006 313 1104 411
+rect 1392 313 1490 411
+use sense_amp_array  sense_amp_array_0
+timestamp 1595931502
+transform 1 0 0 0 -1 3514
+box -160 0 1284 2256
+use precharge_array_0  precharge_array_0_0
+timestamp 1595931502
+transform 1 0 0 0 -1 1006
+box 0 -12 1872 768
+<< labels >>
+rlabel metal3 s 381 3406 381 3406 4 gnd
+rlabel metal3 s 451 1472 451 1472 4 gnd
+rlabel metal3 s 673 1472 673 1472 4 gnd
+rlabel metal3 s 743 3406 743 3406 4 gnd
+rlabel metal1 s 127 3387 127 3387 4 dout_0
+rlabel metal1 s 80 629 80 629 4 bl_0
+rlabel metal1 s 1328 629 1328 629 4 rbl_bl
+rlabel metal3 s 624 1320 624 1320 4 s_en
+rlabel metal1 s 544 629 544 629 4 br_0
+rlabel metal1 s 1168 629 1168 629 4 bl_1
+rlabel metal3 s 936 981 936 981 4 p_en_bar
+rlabel metal1 s 997 3387 997 3387 4 dout_1
+rlabel metal1 s 704 629 704 629 4 br_1
+rlabel metal3 s 369 2246 369 2246 4 vdd
+rlabel metal3 s 1055 362 1055 362 4 vdd
+rlabel metal3 s 193 362 193 362 4 vdd
+rlabel metal3 s 381 3084 381 3084 4 vdd
+rlabel metal3 s 1441 362 1441 362 4 vdd
+rlabel metal3 s 755 2246 755 2246 4 vdd
+rlabel metal3 s 743 3084 743 3084 4 vdd
+rlabel metal1 s 1792 629 1792 629 4 rbl_br
+<< properties >>
+string FIXED_BBOX 0 0 1872 3514
+<< end >>

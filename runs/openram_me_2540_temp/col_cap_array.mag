@@ -1,0 +1,48 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1260 -1260 2508 1734
+<< metal1 >>
+rect 78 0 114 395
+rect 150 0 186 395
+rect 294 0 330 395
+rect 366 0 402 395
+rect 846 0 882 395
+rect 918 0 954 395
+rect 1062 0 1098 395
+rect 1134 0 1170 395
+<< metal3 >>
+rect 263 180 361 278
+rect 887 180 985 278
+use contact_9  contact_9_1
+timestamp 1595931502
+transform 1 0 279 0 1 192
+box 0 0 66 74
+use contact_9  contact_9_0
+timestamp 1595931502
+transform 1 0 903 0 1 192
+box 0 0 66 74
+use col_cap_cell_1rw_1r  col_cap_cell_1rw_1r_0
+timestamp 1595931502
+transform -1 0 1248 0 1 0
+box 0 0 624 474
+use col_cap_cell_1rw_1r  col_cap_cell_1rw_1r_1
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box 0 0 624 474
+<< labels >>
+rlabel metal1 s 168 197 168 197 4 br0_0
+rlabel metal1 s 96 197 96 197 4 bl0_0
+rlabel metal3 s 936 229 936 229 4 vdd
+rlabel metal3 s 312 229 312 229 4 vdd
+rlabel metal1 s 384 197 384 197 4 br1_0
+rlabel metal1 s 864 197 864 197 4 br1_1
+rlabel metal1 s 1080 197 1080 197 4 br0_1
+rlabel metal1 s 1152 197 1152 197 4 bl0_1
+rlabel metal1 s 936 197 936 197 4 bl1_1
+rlabel metal1 s 312 197 312 197 4 bl1_0
+<< properties >>
+string FIXED_BBOX 0 0 1248 395
+<< end >>

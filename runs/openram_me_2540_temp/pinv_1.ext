@@ -1,0 +1,35 @@
+timestamp 1595931505
+version 8.3
+tech sky130A
+style ngspice(si)
+scale 1000 1 0.5
+resistclasses 2200000 3050000 1700000 3050000 120000 197000 114000 191000 120000 197000 114000 191000 48200 319800 2000000 48200 48200 12200 125 125 47 47 29
+use nmos_m7_w1_680_sli_dli_da_p nmos_m7_w1_680_sli_dli_da_p_0 1 0 54 0 1 51
+use pmos_m7_w2_000_sli_dli_da_p pmos_m7_w2_000_sli_dli_da_p_0 1 0 54 0 1 963
+use contact_24 contact_24_0 1 0 906 0 1 1281
+use contact_12 contact_12_0 1 0 48 0 1 658
+use contact_25 contact_25_0 1 0 906 0 1 51
+node "gnd" 634 0 0 -17 li 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 60078 3602 0 0 0 0 0 0 0 0 0 0
+node "Z" 297 0 488 286 li 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 28118 1722 0 0 0 0 0 0 0 0 0 0
+node "A" 24 0 64 658 li 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2244 200 0 0 0 0 0 0 0 0 0 0
+node "vdd" 775 0 0 1397 li 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 73406 4386 0 0 0 0 0 0 0 0 0 0
+node "a_81_658#" 732 48.4986 81 658 p 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 16098 1054 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+node "w_n36_679#" 2335 646.272 -36 679 nw 0 0 0 0 861696 3760 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+substrate "VSUBS" 0 0 -1073741817 -1073741817 space 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+merge "contact_25_0/VSUBS" "contact_12_0/VSUBS" 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+merge "contact_12_0/VSUBS" "contact_24_0/VSUBS"
+merge "contact_24_0/VSUBS" "pmos_m7_w2_000_sli_dli_da_p_0/VSUBS"
+merge "pmos_m7_w2_000_sli_dli_da_p_0/VSUBS" "nmos_m7_w1_680_sli_dli_da_p_0/VSUBS"
+merge "nmos_m7_w1_680_sli_dli_da_p_0/VSUBS" "VSUBS"
+merge "pmos_m7_w2_000_sli_dli_da_p_0/D" "nmos_m7_w1_680_sli_dli_da_p_0/D" 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2312 -272 0 0 0 0 0 0 0 0 0 0
+merge "nmos_m7_w1_680_sli_dli_da_p_0/D" "Z"
+merge "contact_12_0/a_0_0#" "pmos_m7_w2_000_sli_dli_da_p_0/G" -13.5776 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2178 -318 0 0 -2244 -200 0 0 0 0 0 0 0 0 0 0
+merge "pmos_m7_w2_000_sli_dli_da_p_0/G" "nmos_m7_w1_680_sli_dli_da_p_0/G"
+merge "nmos_m7_w1_680_sli_dli_da_p_0/G" "a_81_658#"
+merge "a_81_658#" "A"
+merge "contact_25_0/a_0_0#" "nmos_m7_w1_680_sli_dli_da_p_0/S" 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1122 -406 0 0 0 0 0 0 0 0 0 0
+merge "nmos_m7_w1_680_sli_dli_da_p_0/S" "gnd"
+merge "contact_24_0/w_n59_n43#" "pmos_m7_w2_000_sli_dli_da_p_0/w_n54_n54#" -367.614 0 0 0 0 -490152 -3520 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -10098 -934 0 0 0 0 0 0 0 0 0 0
+merge "pmos_m7_w2_000_sli_dli_da_p_0/w_n54_n54#" "w_n36_679#"
+merge "w_n36_679#" "pmos_m7_w2_000_sli_dli_da_p_0/S"
+merge "pmos_m7_w2_000_sli_dli_da_p_0/S" "vdd"

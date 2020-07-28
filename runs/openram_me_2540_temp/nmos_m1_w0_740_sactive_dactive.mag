@@ -1,0 +1,21 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1260 -1286 1410 1434
+<< scnmos >>
+rect 60 0 90 148
+<< ndiff >>
+rect 0 0 60 148
+rect 90 0 150 148
+<< poly >>
+rect 60 148 90 174
+rect 60 -26 90 0
+<< labels >>
+rlabel poly s 75 74 75 74 4 G
+rlabel mvpdiff s 25 74 25 74 4 S
+rlabel mvpdiff s 125 74 125 74 4 D
+<< properties >>
+string FIXED_BBOX -25 -26 175 174
+<< end >>

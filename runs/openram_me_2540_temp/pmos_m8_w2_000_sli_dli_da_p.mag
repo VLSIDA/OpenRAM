@@ -1,0 +1,103 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1319 -1316 2225 1714
+<< nwell >>
+rect -54 -54 960 454
+<< scpmos >>
+rect 60 0 90 400
+rect 168 0 198 400
+rect 276 0 306 400
+rect 384 0 414 400
+rect 492 0 522 400
+rect 600 0 630 400
+rect 708 0 738 400
+rect 816 0 846 400
+<< pdiff >>
+rect 0 0 60 400
+rect 90 0 168 400
+rect 198 0 276 400
+rect 306 0 384 400
+rect 414 0 492 400
+rect 522 0 600 400
+rect 630 0 708 400
+rect 738 0 816 400
+rect 846 0 906 400
+<< poly >>
+rect 60 400 90 426
+rect 168 400 198 426
+rect 276 400 306 426
+rect 384 400 414 426
+rect 492 400 522 426
+rect 600 400 630 426
+rect 708 400 738 426
+rect 816 400 846 426
+rect 60 -26 90 0
+rect 168 -26 198 0
+rect 276 -26 306 0
+rect 384 -26 414 0
+rect 492 -26 522 0
+rect 600 -26 630 0
+rect 708 -26 738 0
+rect 816 -26 846 0
+rect 60 -56 846 -26
+<< locali >>
+rect 8 167 42 233
+rect 112 133 146 200
+rect 220 167 254 233
+rect 328 133 362 200
+rect 436 167 470 233
+rect 544 133 578 200
+rect 652 167 686 233
+rect 760 133 794 200
+rect 864 167 898 233
+rect 112 99 794 133
+use contact_11  contact_11_8
+timestamp 1595931502
+transform 1 0 0 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_7
+timestamp 1595931502
+transform 1 0 104 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_6
+timestamp 1595931502
+transform 1 0 212 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_5
+timestamp 1595931502
+transform 1 0 320 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_4
+timestamp 1595931502
+transform 1 0 428 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_3
+timestamp 1595931502
+transform 1 0 536 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_2
+timestamp 1595931502
+transform 1 0 644 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_1
+timestamp 1595931502
+transform 1 0 752 0 1 167
+box -59 -51 109 117
+use contact_11  contact_11_0
+timestamp 1595931502
+transform 1 0 856 0 1 167
+box -59 -51 109 117
+<< labels >>
+rlabel poly s 453 -41 453 -41 4 G
+rlabel corelocali s 669 200 669 200 4 S
+rlabel corelocali s 453 200 453 200 4 S
+rlabel corelocali s 881 200 881 200 4 S
+rlabel corelocali s 25 200 25 200 4 S
+rlabel corelocali s 237 200 237 200 4 S
+rlabel corelocali s 453 116 453 116 4 D
+<< properties >>
+string FIXED_BBOX -54 -54 960 454
+<< end >>

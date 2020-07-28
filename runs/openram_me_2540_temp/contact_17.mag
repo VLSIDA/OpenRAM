@@ -1,0 +1,18 @@
+magic
+tech sky130A
+timestamp 1595931502
+<< checkpaint >>
+rect -630 -630 655 663
+<< ndiff >>
+rect 0 25 25 31
+rect 0 8 4 25
+rect 21 8 25 25
+rect 0 2 25 8
+<< ndiffc >>
+rect 4 8 21 25
+<< locali >>
+rect 4 25 21 33
+rect 4 0 21 8
+<< properties >>
+string FIXED_BBOX -12 -10 37 43
+<< end >>

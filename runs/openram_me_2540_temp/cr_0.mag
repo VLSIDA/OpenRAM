@@ -1,0 +1,41 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect 823 -3735 11133 1296
+<< metal1 >>
+rect 3283 -1460 9841 -1432
+rect 2115 -1562 9287 -1534
+<< metal2 >>
+rect 2101 -2475 2129 -1548
+rect 3269 -2475 3297 -1446
+rect 9273 -1548 9301 4
+rect 9827 -1446 9855 4
+use contact_8  contact_8_0
+timestamp 1595931502
+transform 1 0 3251 0 1 -1478
+box 0 0 64 64
+use contact_8  contact_8_1
+timestamp 1595931502
+transform 1 0 9809 0 1 -28
+box 0 0 64 64
+use contact_8  contact_8_2
+timestamp 1595931502
+transform 1 0 9809 0 1 -1478
+box 0 0 64 64
+use contact_8  contact_8_3
+timestamp 1595931502
+transform 1 0 2083 0 1 -1580
+box 0 0 64 64
+use contact_8  contact_8_4
+timestamp 1595931502
+transform 1 0 9255 0 1 -28
+box 0 0 64 64
+use contact_8  contact_8_5
+timestamp 1595931502
+transform 1 0 9255 0 1 -1580
+box 0 0 64 64
+<< properties >>
+string FIXED_BBOX 2083 -2475 9873 36
+<< end >>

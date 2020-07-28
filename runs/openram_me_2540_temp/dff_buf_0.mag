@@ -1,0 +1,72 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1268 -1280 3560 2731
+<< locali >>
+rect 0 1396 2264 1432
+rect 1565 724 1599 885
+rect 1565 698 1761 724
+rect 1404 690 1761 698
+rect 1986 690 2105 724
+rect 1404 664 1599 690
+rect 2071 503 2105 690
+rect 0 -20 2264 16
+<< metal1 >>
+rect 1551 859 1615 911
+rect 1253 655 1317 707
+rect 2056 477 2120 529
+<< metal2 >>
+rect 1568 871 1596 899
+rect 369 692 423 756
+rect 1259 661 1311 681
+rect 1115 609 1311 661
+rect 137 538 203 590
+rect 2074 489 2102 517
+use pinv  pinv_0
+timestamp 1595931502
+transform 1 0 1204 0 1 0
+box -36 -17 512 1471
+use contact_8  contact_8_2
+timestamp 1595931502
+transform 1 0 1253 0 1 649
+box 0 0 64 64
+use contact_8  contact_8_1
+timestamp 1595931502
+transform 1 0 2056 0 1 471
+box 0 0 64 64
+use contact_8  contact_8_0
+timestamp 1595931502
+transform 1 0 1550 0 1 853
+box 0 0 64 64
+use contact_7  contact_7_2
+timestamp 1595931502
+transform 1 0 1256 0 1 648
+box 0 0 58 66
+use contact_7  contact_7_1
+timestamp 1595931502
+transform 1 0 2059 0 1 470
+box 0 0 58 66
+use contact_7  contact_7_0
+timestamp 1595931502
+transform 1 0 1554 0 1 852
+box 0 0 58 66
+use pinv_0  pinv_0_0
+timestamp 1595931502
+transform 1 0 1680 0 1 0
+box -36 -17 620 1471
+use dff  dff_0
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box -8 -20 1176 1467
+<< labels >>
+rlabel corelocali s 1132 -2 1132 -2 4 gnd
+rlabel metal2 s 170 564 170 564 4 D
+rlabel metal2 s 396 724 396 724 4 clk
+rlabel metal2 s 1582 885 1582 885 4 Qb
+rlabel metal2 s 2088 503 2088 503 4 Q
+rlabel corelocali s 1132 1414 1132 1414 4 vdd
+<< properties >>
+string FIXED_BBOX 0 0 2264 1414
+<< end >>

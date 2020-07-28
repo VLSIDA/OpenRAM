@@ -1,0 +1,262 @@
+timestamp 1595931505
+version 8.3
+tech sky130A
+style ngspice(si)
+scale 1000 1 0.5
+resistclasses 2200000 3050000 1700000 3050000 120000 197000 114000 191000 120000 197000 114000 191000 48200 319800 2000000 48200 48200 12200 125 125 47 47 29
+use sense_amp_array sense_amp_array_0 1 0 624 0 -1 3514
+use write_driver_array write_driver_array_0 1 0 624 0 -1 5777
+use precharge_array precharge_array_0 1 0 0 0 -1 1006
+node "vdd" 0 5.3802 1630 313 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 768 313 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 382 313 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "p_en_bar" 1 49.926 0 951 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 112320 3864 0 0 0 0
+node "s_en" 1 36.444 624 1290 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 74880 2616 0 0 0 0
+node "gnd" 0 5.3802 1248 1423 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 1026 1423 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 1330 2197 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 944 2197 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 1318 3035 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 956 3035 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 1318 3357 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 956 3357 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 1432 4150 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 842 4150 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 1443 4587 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 831 4587 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 1322 4919 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 952 4919 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 1437 5121 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "gnd" 0 5.3802 837 5121 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 1423 5537 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "vdd" 0 5.3802 851 5537 m3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9604 392 0 0 0 0
+node "bl_1" 6 55.3974 1521 1164 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 35364 2582 0 0 0 0 0 0 0 0
+node "br_1" 5 50.1115 1314 252 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 31920 2336 0 0 0 0 0 0 0 0
+node "br_0" 6 55.4404 896 1084 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 35392 2584 0 0 0 0 0 0 0 0
+node "rbl_bl" 3 33.5231 530 252 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 21112 1564 0 0 0 0 0 0 0 0
+node "rbl_br" 3 33.5231 66 252 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 21112 1564 0 0 0 0 0 0 0 0
+node "bl_0" 5 50.0685 690 252 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 31892 2334 0 0 0 0 0 0 0 0
+node "dout_1" 1 13.2414 1598 3260 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 11684 600 0 0 0 0 0 0 0 0
+node "m1_1521_2384#" 6 63.6056 1521 2384 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 40712 2964 0 0 0 0 0 0 0 0
+node "m1_1391_3592#" 6 63.4767 1391 3592 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 40628 2958 0 0 0 0 0 0 0 0
+node "m1_896_2372#" 6 63.4767 896 2372 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 40628 2958 0 0 0 0 0 0 0 0
+node "dout_0" 1 13.2414 728 3260 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 11684 600 0 0 0 0 0 0 0 0
+node "m1_751_3672#" 6 63.6056 751 3672 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 40712 2964 0 0 0 0 0 0 0 0
+node "w_en" 6 54.7528 624 5655 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 34944 2552 0 0 0 0 0 0 0 0
+node "din_1" 0 4.997 1433 5717 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3360 232 0 0 0 0 0 0 0 0
+node "din_0" 0 4.997 879 5717 m1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3360 232 0 0 0 0 0 0 0 0
+substrate "VSUBS" 0 0 -1073741817 -1073741817 space 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+cap "gnd" "vdd" 26.177
+cap "m1_751_3672#" "m1_1391_3592#" 526.872
+cap "p_en_bar" "vdd" 18.5111
+cap "p_en_bar" "gnd" 24.2621
+cap "din_1" "w_en" 398.824
+cap "br_0" "br_1" 1535.39
+cap "vdd" "vdd" 11.8541
+cap "vdd" "vdd" 21.0886
+cap "m1_751_3672#" "m1_1521_2384#" 443.904
+cap "m1_1391_3592#" "m1_896_2372#" 622.095
+cap "vdd" "gnd" 44.625
+cap "rbl_bl" "br_0" 285.913
+cap "gnd" "gnd" 36.75
+cap "rbl_bl" "br_1" 225.402
+cap "m1_751_3672#" "dout_1" 76.8461
+cap "s_en" "gnd" 136.932
+cap "vdd" "gnd" 2.4142
+cap "m1_1521_2384#" "m1_896_2372#" 526.872
+cap "vdd" "gnd" 26.177
+cap "vdd" "gnd" 26.9434
+cap "gnd" "vdd" 44.625
+cap "vdd" "gnd" 21.5229
+cap "dout_1" "m1_896_2372#" 85.1691
+cap "vdd" "vdd" 19.4475
+cap "dout_0" "m1_1391_3592#" 85.1691
+cap "p_en_bar" "s_en" 456.258
+cap "bl_0" "br_0" 1004.93
+cap "rbl_bl" "rbl_br" 390.835
+cap "bl_0" "br_1" 377.791
+cap "vdd" "gnd" 26.9434
+cap "br_0" "bl_1" 361.692
+cap "vdd" "gnd" 2.4142
+cap "br_1" "bl_1" 963.222
+cap "p_en_bar" "br_0" 1.1375
+cap "dout_0" "m1_1521_2384#" 76.8461
+cap "vdd" "vdd" 11.8541
+cap "p_en_bar" "br_1" 1.1375
+cap "rbl_bl" "bl_0" 1290.94
+cap "m1_751_3672#" "m1_896_2372#" 6470.45
+cap "s_en" "gnd" 136.932
+cap "p_en_bar" "rbl_bl" 0.634375
+cap "rbl_br" "bl_0" 285.913
+cap "gnd" "gnd" 19.9124
+cap "vdd" "gnd" 21.5229
+cap "vdd" "vdd" 34.7083
+cap "gnd" "gnd" 37.8636
+cap "p_en_bar" "rbl_br" 0.634375
+cap "p_en_bar" "vdd" 18.5111
+cap "p_en_bar" "gnd" 24.2621
+cap "m1_751_3672#" "dout_0" 1204.41
+cap "din_1" "din_0" 25.6194
+cap "m1_1391_3592#" "m1_1521_2384#" 6470.45
+cap "bl_0" "bl_1" 31.7075
+cap "p_en_bar" "bl_0" 1.1375
+cap "vdd" "vdd" 34.7083
+cap "vdd" "vdd" 37.8636
+cap "p_en_bar" "vdd" 18.5111
+cap "p_en_bar" "bl_1" 1.1375
+cap "w_en" "din_0" 398.824
+cap "m1_1391_3592#" "dout_1" 470.525
+cap "vdd" "vdd" 13.0838
+cap "dout_0" "m1_896_2372#" 470.525
+cap "gnd" "gnd" 80.6129
+cap "gnd" "gnd" 20.3171
+cap "m1_1521_2384#" "dout_1" 1204.41
+subcap "gnd" -33.5319
+subcap "gnd" -33.5319
+subcap "vdd" -6.86692
+subcap "vdd" -6.86692
+subcap "gnd" -33.5319
+subcap "gnd" -33.5319
+subcap "bl_1" -3.62039
+subcap "rbl_bl" -6.64315
+subcap "bl_0" -3.62039
+subcap "dout_1" -16.78
+subcap "m1_1521_2384#" -11.8286
+subcap "dout_0" -16.78
+subcap "m1_751_3672#" -17.1575
+cap "bl_0" "s_en" 164.996
+cap "vdd" "bl_1" 36.6881
+cap "bl_0" "p_en_bar" 99.7326
+cap "br_1" "s_en" 35.3458
+cap "rbl_bl" "p_en_bar" -0.634375
+cap "br_0" "p_en_bar" 0.826843
+cap "bl_0" "rbl_br" -285.913
+cap "bl_1" "s_en" 147.049
+cap "gnd" "br_0" 56.253
+cap "vdd" "s_en" 1.24519
+cap "vdd" "vdd" -11.8541
+cap "br_1" "p_en_bar" 0.482331
+cap "vdd" "vdd" -11.8541
+cap "rbl_bl" "rbl_br" -390.835
+cap "gnd" "br_1" 6.26522
+cap "bl_1" "p_en_bar" 98.5555
+cap "sense_amp_array_0/sense_amp_1/a_154_1298#" "p_en_bar" 3.99828
+cap "gnd" "vdd" -4.8284
+cap "vdd" "p_en_bar" -55.5333
+cap "rbl_bl" "bl_0" -1290.94
+cap "bl_0" "br_0" -3631.77
+cap "vdd" "vdd" -1.15909
+cap "bl_0" "br_1" -533.491
+cap "p_en_bar" "s_en" 79.8271
+cap "gnd" "s_en" -273.863
+cap "rbl_bl" "br_0" -285.913
+cap "vdd" "gnd" -15.6677
+cap "br_0" "br_1" -1578.18
+cap "bl_0" "bl_1" -220.603
+cap "rbl_bl" "br_1" -225.402
+cap "vdd" "gnd" -15.6677
+cap "vdd" "bl_0" 37.6693
+cap "br_0" "bl_1" -533.491
+cap "gnd" "p_en_bar" 25.7091
+cap "p_en_bar" "rbl_br" -0.634375
+cap "br_1" "bl_1" -3511.02
+subcap "gnd" -0.49695
+subcap "gnd" -0.49695
+subcap "dout_1" -6.06657
+subcap "m1_1521_2384#" -50.9736
+subcap "m1_1391_3592#" -42.207
+subcap "m1_896_2372#" -42.207
+subcap "dout_0" -6.06657
+subcap "m1_751_3672#" -50.9736
+cap "gnd" "write_driver_array_0/bl_1" 7.67123
+cap "write_driver_array_0/bl_1" "sense_amp_array_0/sense_amp_1/br" -180.194
+cap "w_en" "din_0" -398.824
+cap "gnd" "vdd" -44.625
+cap "dout_0" "sense_amp_array_0/sense_amp_0/br" -85.1691
+cap "sense_amp_array_0/sense_amp_0/a_154_1298#" "write_driver_array_0/write_driver_0/a_41_1120#" 0.246736
+cap "write_driver_array_0/bl_1" "write_driver_array_0/bl_0" -160.561
+cap "din_1" "din_0" -25.6194
+cap "w_en" "din_1" -398.824
+cap "vdd" "vdd" -5.9031
+cap "dout_0" "write_driver_array_0/bl_1" -76.8461
+cap "vdd" "gnd" -26.9434
+cap "gnd" "sense_amp_array_0/sense_amp_1/br" 24.189
+cap "dout_1" "sense_amp_array_0/sense_amp_0/br" -470.525
+cap "vdd" "vdd" -5.9031
+cap "gnd" "write_driver_array_0/bl_0" 7.67123
+cap "sense_amp_array_0/sense_amp_1/br" "write_driver_array_0/bl_0" -2390.58
+cap "sense_amp_array_0/sense_amp_0/a_154_1298#" "write_driver_array_0/write_driver_0/a_121_1585#" 2.87234
+cap "gnd" "vdd" -26.9434
+cap "vdd" "gnd" -21.5229
+cap "sense_amp_array_0/sense_amp_0/br" "write_driver_array_0/bl_1" -2390.58
+cap "dout_0" "sense_amp_array_0/sense_amp_1/br" -470.525
+cap "vdd" "sense_amp_array_0/sense_amp_0/br" 1.62198
+cap "dout_1" "write_driver_array_0/bl_1" -1169.87
+cap "gnd" "gnd" -19.9124
+cap "vdd" "gnd" -21.5229
+cap "dout_0" "write_driver_array_0/bl_0" -1169.87
+cap "sense_amp_array_0/sense_amp_1/a_154_1298#" "write_driver_array_0/write_driver_1/a_41_1120#" 0.246736
+cap "vdd" "vdd" -36.7045
+cap "write_driver_array_0/write_driver_1/a_183_1687#" "sense_amp_array_0/sense_amp_1/a_154_1298#" 0.65625
+cap "gnd" "sense_amp_array_0/sense_amp_0/br" 24.189
+cap "sense_amp_array_0/sense_amp_0/br" "sense_amp_array_0/sense_amp_1/br" -205.298
+cap "write_driver_array_0/write_driver_0/a_183_1687#" "sense_amp_array_0/sense_amp_0/a_154_1298#" 0.65625
+cap "dout_1" "sense_amp_array_0/sense_amp_1/br" -85.1691
+cap "gnd" "vdd" -52.354
+cap "sense_amp_array_0/sense_amp_0/br" "write_driver_array_0/bl_0" -180.194
+cap "gnd" "vdd" -44.625
+cap "vdd" "sense_amp_array_0/sense_amp_1/br" 1.62198
+cap "dout_1" "write_driver_array_0/bl_0" -76.8461
+cap "sense_amp_array_0/sense_amp_1/a_154_1298#" "write_driver_array_0/write_driver_1/a_121_1585#" 2.87234
+merge "sense_amp_array_0/sense_amp_1/bl" "precharge_array_0/precharge_0_1/bl" -86.861 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -66080 -3992 0 0 0 0 0 0 0 0
+merge "precharge_array_0/precharge_0_1/bl" "precharge_array_0/bl_1"
+merge "precharge_array_0/bl_1" "write_driver_array_0/bl_0"
+merge "write_driver_array_0/bl_0" "sense_amp_array_0/bl_0"
+merge "sense_amp_array_0/bl_0" "m1_751_3672#"
+merge "m1_751_3672#" "bl_0"
+merge "sense_amp_array_0/sense_amp_0/br" "precharge_array_0/precharge_0_0/br" -85.9606 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -53088 -4016 0 0 0 0 0 0 0 0
+merge "precharge_array_0/precharge_0_0/br" "precharge_array_0/br_2"
+merge "precharge_array_0/br_2" "write_driver_array_0/br_1"
+merge "write_driver_array_0/br_1" "sense_amp_array_0/br_1"
+merge "sense_amp_array_0/br_1" "m1_1391_3592#"
+merge "m1_1391_3592#" "br_1"
+merge "precharge_array_0/precharge_0_2/bl" "precharge_array_0/bl_0" -33.5231 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -21112 -1564 0 0 0 0 0 0 0 0
+merge "precharge_array_0/bl_0" "rbl_bl"
+merge "precharge_array_0/VSUBS" "write_driver_array_0/VSUBS" 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+merge "write_driver_array_0/VSUBS" "sense_amp_array_0/VSUBS"
+merge "sense_amp_array_0/VSUBS" "VSUBS"
+merge "write_driver_array_0/vdd" "precharge_array_0/precharge_0_2/vdd" -51.9008 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 39984 -4312 0 0 0 0
+merge "precharge_array_0/precharge_0_2/vdd" "precharge_array_0/precharge_0_1/vdd"
+merge "precharge_array_0/precharge_0_1/vdd" "precharge_array_0/precharge_0_0/vdd"
+merge "precharge_array_0/precharge_0_0/vdd" "precharge_array_0/vdd"
+merge "precharge_array_0/vdd" "sense_amp_array_0/vdd"
+merge "sense_amp_array_0/vdd" "vdd"
+merge "precharge_array_0/en_bar" "p_en_bar" -51.354 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -112320 -3864 0 0 0 0
+merge "sense_amp_array_0/sense_amp_0/bl" "precharge_array_0/precharge_0_0/bl" -86.861 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -66080 -3992 0 0 0 0 0 0 0 0
+merge "precharge_array_0/precharge_0_0/bl" "precharge_array_0/bl_2"
+merge "precharge_array_0/bl_2" "write_driver_array_0/bl_1"
+merge "write_driver_array_0/bl_1" "sense_amp_array_0/bl_1"
+merge "sense_amp_array_0/bl_1" "m1_1521_2384#"
+merge "m1_1521_2384#" "bl_1"
+merge "sense_amp_array_0/sense_amp_1/dout" "sense_amp_array_0/data_0" -12.1564 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1472 -600 0 0 0 0 0 0 0 0
+merge "sense_amp_array_0/data_0" "dout_0"
+merge "write_driver_array_0/write_driver_0/din" "write_driver_array_0/data_1" -4.997 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -3360 -232 0 0 0 0 0 0 0 0
+merge "write_driver_array_0/data_1" "din_1"
+merge "sense_amp_array_0/sense_amp_0/dout" "sense_amp_array_0/data_1" -12.1564 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1472 -600 0 0 0 0 0 0 0 0
+merge "sense_amp_array_0/data_1" "dout_1"
+merge "sense_amp_array_0/sense_amp_1/br" "precharge_array_0/precharge_0_1/br" -85.9606 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -53088 -4016 0 0 0 0 0 0 0 0
+merge "precharge_array_0/precharge_0_1/br" "precharge_array_0/br_1"
+merge "precharge_array_0/br_1" "write_driver_array_0/br_0"
+merge "write_driver_array_0/br_0" "sense_amp_array_0/br_0"
+merge "sense_amp_array_0/br_0" "m1_896_2372#"
+merge "m1_896_2372#" "br_0"
+merge "precharge_array_0/precharge_0_2/br" "precharge_array_0/br_0" -33.5231 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -21112 -1564 0 0 0 0 0 0 0 0
+merge "precharge_array_0/br_0" "rbl_br"
+merge "write_driver_array_0/write_driver_1/en" "write_driver_array_0/write_driver_0/en" -54.7528 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -34944 -2552 0 0 0 0 0 0 0 0
+merge "write_driver_array_0/write_driver_0/en" "write_driver_array_0/en"
+merge "write_driver_array_0/en" "w_en"
+merge "write_driver_array_0/gnd" "sense_amp_array_0/gnd" -50.6758 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -33516 -3920 0 0 0 0
+merge "sense_amp_array_0/gnd" "gnd"
+merge "write_driver_array_0/write_driver_1/din" "write_driver_array_0/data_0" -4.997 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -3360 -232 0 0 0 0 0 0 0 0
+merge "write_driver_array_0/data_0" "din_0"
+merge "sense_amp_array_0/en" "s_en" -36.444 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -74880 -2616 0 0 0 0

@@ -1,0 +1,25 @@
+magic
+tech sky130A
+magscale 1 2
+timestamp 1595931502
+<< checkpaint >>
+rect -1296 -1277 2204 2731
+<< nwell >>
+rect -36 679 944 1471
+<< locali >>
+rect 0 1397 908 1431
+rect 64 674 98 740
+rect 399 690 433 724
+rect 0 -17 908 17
+use pinv_8  pinv_8_0
+timestamp 1595931502
+transform 1 0 0 0 1 0
+box -36 -17 944 1471
+<< labels >>
+rlabel corelocali s 454 0 454 0 4 gnd
+rlabel corelocali s 416 707 416 707 4 Z
+rlabel corelocali s 454 1414 454 1414 4 vdd
+rlabel corelocali s 81 707 81 707 4 A
+<< properties >>
+string FIXED_BBOX 0 0 908 1414
+<< end >>

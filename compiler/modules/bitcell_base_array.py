@@ -12,7 +12,7 @@ from tech import cell_properties
 
 class bitcell_base_array(design.design):
     """
-    Abstract base class for bitcell-arrays -- bitcell, dummy
+    Abstract base class for bitcell-arrays -- bitcell, dummy, replica
     """
     def __init__(self, name, rows, cols, column_offset):
         design.design.__init__(self, name)

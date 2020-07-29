@@ -213,7 +213,7 @@ class stimuli():
                                                                                 power_exp,
                                                                                 t_final-0.02*(t_final-t_initial),
                                                                                 t_final))
-            self.sf.write(".meas tran {0} param='{0}_total - 50.0 * {0}_leakage'\n\n".format(meas_name))
+            self.sf.write(".meas tran {0} param='{0}_total - {0}_leakage'\n\n".format(meas_name))
 
     def gen_meas_value(self, meas_name, dout, t_intital, t_final):
         measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
@@ -241,11 +241,11 @@ class stimuli():
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
+            self.sf.write(".OPTIONS POST={1} RELTOL={0} PROBE method=gear\n".format(reltol, 0 if OPTS.purge_temp else 1))
         elif OPTS.spice_name == "alps":
-            self.sf.write(".OPTIONS POST=0 RUNLVL={0} RELTOL={1} PROBE ABSTOL=1e-6 LEAST_DISK_SPACE=2000\n".format(runlvl, reltol))
+            self.sf.write(".OPTIONS POST={2} RUNLVL={0} RELTOL={1} PROBE LEAST_DISK_SPACE=2000\n".format(runlvl, reltol, 0 if OPTS.purge_temp else 1))
         else:
-            self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
+            self.sf.write(".OPTIONS POST={1} RUNLVL={0} PROBE\n".format(runlvl, 0 if OPTS.purge_temp else 1))
 
         # create plots for all signals
         self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")

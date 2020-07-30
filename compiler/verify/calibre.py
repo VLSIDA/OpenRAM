@@ -135,11 +135,11 @@ def write_calibre_lvs_script(cell_name, final_verification):
 def write_calibre_pex_script(cell_name, extract, output, final_verification):
     """ Write a pex script that can either just extract the netlist or the netlist+parasitics """
     if output == None:
-        output = cell_name + ".pex.netlist"
+        output = name + ".pex.netlist"
 
     # check if lvs report has been done
     # if not run drc and lvs
-    if not os.path.isfile(OPTS.openram_temp + cell_name + ".lvs.report"):
+    if not os.path.isfile(cell_name + ".lvs.report"):
         gds_name = OPTS.openram_temp +"/"+ cell_name + ".gds"
         sp_name = OPTS.openram_temp +"/"+ cell_name + ".sp"
         run_drc(cell_name, gds_name)
@@ -155,7 +155,7 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
         'pexSourcePath': cell_name + ".sp",
         'pexSourcePrimary': cell_name,
         'pexReportFile': cell_name + ".pex.report",
-        'pexPexNetlistFile': output,
+        'pexPexNetlistFile': cell_name + ".pex.netlist",
         'pexPexReportFile': cell_name + ".pex.report",
         'pexMaskDBFile': cell_name + ".maskdb",
         'cmnFDIDEFLayoutPath': cell_name + ".def",
@@ -195,8 +195,8 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")
     else:
         # Copy file to local dir if it isn't already
-        if not os.path.isfile(gds_name):
-            shutil.copy(OPTS.output_path+os.path.basename(gds_name),gds_name)
+        if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+            shutil.copy(gds_name, OPTS.openram_temp)
 
     drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
 
@@ -241,14 +241,10 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     lvs_runset = write_calibre_lvs_script(cell_name, final_verification)
 
     # Copy file to local dir if it isn't already
-#    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
-#        shutil.copy(gds_name, OPTS.openram_temp)
-#    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
-#        shutil.copy(sp_name, OPTS.openram_temp)
-    if not os.path.isfile(gds_name):
-        shutil.copy(OPTS.output_path+os.path.basename(gds_name), gds_name)
-    if not os.path.isfile(sp_name):
-        shutil.copy(OPTS.output_path+os.path.basename(sp_name), sp_name)
+    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(gds_name, OPTS.openram_temp)
+    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
+        shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -330,11 +326,6 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
     num_pex_runs += 1
 
     write_calibre_pex_script(cell_name,True,output,final_verification)
-
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-        shutil.copy(sp_name, OPTS.openram_temp + os.path.basename(sp_name))
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 

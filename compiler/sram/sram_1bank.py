@@ -109,7 +109,10 @@ class sram_1bank(sram_base):
 
         # Add the col address flops below the bank to the right of the control logic
         x_offset = self.control_logic_insts[port].rx() + self.dff.width
-        y_offset = - self.data_bus_size[port] - self.dff.height
+        # Place it a data bus below the x-axis, but at least as low as the control logic to not block
+        # the control logic signals
+        y_offset = min(-self.data_bus_size[port] - self.dff.height,
+                       self.control_logic_insts[port].by())
         if self.col_addr_dff:
             col_addr_pos[port] = vector(x_offset,
                                         y_offset)
@@ -168,7 +171,10 @@ class sram_1bank(sram_base):
 
             # Add the col address flops below the bank to the right of the control logic
             x_offset = self.control_logic_insts[port].lx() - 2 * self.dff.width
-            y_offset = self.bank.height + self.data_bus_size[port] + self.dff.height
+            # Place it a data bus below the x-axis, but at least as high as the control logic to not block
+            # the control logic signals
+            y_offset = max(self.bank.height + self.data_bus_size[port] + self.dff.height,
+                           self.control_logic_insts[port].uy() - self.dff.height)
             if self.col_addr_dff:
                 col_addr_pos[port] = vector(x_offset - self.col_addr_dff_insts[port].width,
                                             y_offset)

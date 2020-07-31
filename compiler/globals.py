@@ -341,8 +341,8 @@ def read_config(config_file, is_unit_test=True):
         
 def end_openram():
     """ Clean up openram for a proper exit """
-    if OPTS.cleanup_paths:
-        cleanup_paths()
+    #if OPTS.cleanup_paths:
+    cleanup_paths()
 
     if OPTS.check_lvsdrc:
         import verify

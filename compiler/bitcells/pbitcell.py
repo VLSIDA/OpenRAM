@@ -401,16 +401,16 @@ class pbitcell(bitcell_base.bitcell_base):
         gate_offset_left = vector(self.inverter_nmos_left.get_pin("G").rc().x,
                                   contact_offset_right.y)
         self.add_path("poly", [contact_offset_right, gate_offset_left])
-
+        if OPTS.use_pex:
         # add labels to cross couple inverter for extracted simulation
-        contact_offset_left_output =  vector(self.inverter_nmos_left.get_pin("D").rc().x \
-                                + 0.5 * contact.poly.height,
-                                self.cross_couple_upper_ypos)
-        
-        contact_offset_right_output =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
-                                - 0.5*contact.poly.height,
-                                self.cross_couple_lower_ypos)
-        self.add_pex_labels(contact_offset_left_output, contact_offset_right_output)
+            contact_offset_left_output =  vector(self.inverter_nmos_left.get_pin("D").rc().x \
+                                    + 0.5 * contact.poly.height,
+                                    self.cross_couple_upper_ypos)
+            
+            contact_offset_right_output =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
+                                    - 0.5*contact.poly.height,
+                                    self.cross_couple_lower_ypos)
+            self.add_pex_labels(contact_offset_left_output, contact_offset_right_output)
 
     def route_rails(self):
         """ Adds gnd and vdd rails and connects them to the inverters """

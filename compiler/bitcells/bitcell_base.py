@@ -89,7 +89,7 @@ class bitcell_base(design.design):
         if OPTS.bitcell is not "pbitcell":
             self.storage_net_offsets = []
             for i in range(len(self.get_storage_net_names())):
-                for text in self.gds.getTexts(layer["metal1"]):
+                for text in self.gds.getTexts(layer["m1"]):
                     if self.storage_nets[i] == text.textString.rstrip('\x00'):
                         self.storage_net_offsets.append(text.coordinates[0])
                     
@@ -111,7 +111,7 @@ class bitcell_base(design.design):
         self.br_offsets = []
 
         for i in range(len(bl_names)):
-            for text in self.gds.getTexts(layer["metal2"]):
+            for text in self.gds.getTexts(layer["m2"]):
                 if not bl_names[i] in found_bl:
                     if bl_names[i] == text.textString.rstrip('\x00'):
                         self.bl_offsets.append(text.coordinates[0])
@@ -120,7 +120,7 @@ class bitcell_base(design.design):
                         continue
 
         for i in range(len(br_names)):
-            for text in self.gds.getTexts(layer["metal2"]):
+            for text in self.gds.getTexts(layer["m2"]):
                 if not br_names[i] in found_br:
                     if br_names[i] == text.textString.rstrip('\x00'):
                         self.br_offsets.append(text.coordinates[0])

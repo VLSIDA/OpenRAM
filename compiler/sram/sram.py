@@ -100,9 +100,9 @@ class sram():
             import verify
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
-            sp_file = OPTS.output_path + "temp_pex.sp"
+            pexname = OPTS.output_path + self.s.name + ".pex.sp"
             spname = OPTS.output_path + self.s.name + ".sp"
-            verify.run_pex(self.s.name, gdsname, spname, output=sp_file)
+            verify.run_pex(self.s.name, gdsname, spname, output=pexname)
             print_time("Extraction", datetime.datetime.now(), start_time)
         else:
             # Use generated spice file for characterization

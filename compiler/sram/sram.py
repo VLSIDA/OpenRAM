@@ -103,6 +103,7 @@ class sram():
             pexname = OPTS.output_path + self.s.name + ".pex.sp"
             spname = OPTS.output_path + self.s.name + ".sp"
             verify.run_pex(self.s.name, gdsname, spname, output=pexname)
+            sp_file = pexname
             print_time("Extraction", datetime.datetime.now(), start_time)
         else:
             # Use generated spice file for characterization

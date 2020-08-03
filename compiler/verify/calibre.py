@@ -30,7 +30,7 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
-def write_calibre_drc_script(cell_name, extract, final_verification):
+def write_calibre_drc_script(cell_name, extract, final_verification, gds_name):
     """ Write a Calibre runset file and script to run DRC """
     # the runset file contains all the options to run calibre
     from tech import drc
@@ -39,7 +39,7 @@ def write_calibre_drc_script(cell_name, extract, final_verification):
     drc_runset = {
         'drcRulesFile': drc_rules,
         'drcRunDir': OPTS.openram_temp,
-        'drcLayoutPaths': cell_name + ".gds",
+        'drcLayoutPaths': gds_name,
         'drcLayoutPrimary': cell_name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
@@ -68,7 +68,7 @@ def write_calibre_drc_script(cell_name, extract, final_verification):
     return drc_runset
 
 
-def write_calibre_lvs_script(cell_name, final_verification):
+def write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name):
     """ Write a Calibre runset file and script to run LVS """
 
     from tech import drc
@@ -76,9 +76,9 @@ def write_calibre_lvs_script(cell_name, final_verification):
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
         'lvsRunDir': OPTS.openram_temp,
-        'lvsLayoutPaths': cell_name + ".gds",
+        'lvsLayoutPaths': gds_name,
         'lvsLayoutPrimary': cell_name,
-        'lvsSourcePath': cell_name + ".sp",
+        'lvsSourcePath': sp_name,
         'lvsSourcePrimary': cell_name,
         'lvsSourceSystem': 'SPICE',
         'lvsSpiceFile': "{}.spice".format(cell_name),
@@ -198,7 +198,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
             shutil.copy(gds_name, OPTS.openram_temp)
 
-    drc_runset = write_calibre_drc_script(cell_name, extract, final_verification)
+    drc_runset = write_calibre_drc_script(cell_name, extract, final_verification, gds_name)
 
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
         shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
@@ -241,7 +241,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
 
-    lvs_runset = write_calibre_lvs_script(cell_name, final_verification)
+    lvs_runset = write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name)
 
     # Copy file to local dir if it isn't already
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):

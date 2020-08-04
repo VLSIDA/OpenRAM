@@ -180,8 +180,12 @@ class delay(simulation):
             self.dout_volt_meas.append(voltage_at_measure("v_{}".format(meas.name), 
                                                            meas.targ_name_no_port)) 
             self.dout_volt_meas[-1].meta_str = meas.meta_str
-         
-        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
+        
+            if not OPTS.use_pex:
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
+            else:
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
         self.dout_volt_meas.append(self.sen_meas)

@@ -464,7 +464,7 @@ def correct_port(name, output_file_name, ref_file_name):
 
     control_list = "+ "
     for bank in range(OPTS.num_banks):
-        control_list += "s_en{0}".format(bank)
+        control_list += "bank_{}/s_en0".format(bank)
     control_list += '\n'
 
     part2 = bitcell_list + control_list + part2

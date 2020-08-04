@@ -450,21 +450,22 @@ def correct_port(name, output_file_name, ref_file_name):
     part2 = pex_file.read()
 
     bitcell_list = "+ "
-    for bank in range(OPTS.num_banks):
+    if OPTS.words_per_row:
         for bank in range(OPTS.num_banks):
-            row = int(OPTS.num_words / OPTS.words_per_row) - 1
-            col = int(OPTS.word_size * OPTS.words_per_row) - 1 
-            bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col)
-            bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col)
-        for col in range(OPTS.word_size * OPTS.words_per_row):
-            for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
-                bitcell_list += "bl{0}_{1} ".format(bank, col)
-                bitcell_list += "br{0}_{1} ".format(bank, col)
+            for bank in range(OPTS.num_banks):
+                row = int(OPTS.num_words / OPTS.words_per_row) - 1
+                col = int(OPTS.word_size * OPTS.words_per_row) - 1 
+                bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col)
+                bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col)
+            for col in range(OPTS.word_size * OPTS.words_per_row):
+                for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
+                    bitcell_list += "bl{0}_{1} ".format(bank, col)
+                    bitcell_list += "br{0}_{1} ".format(bank, col)
     bitcell_list += "\n"
-
     control_list = "+ "
-    for bank in range(OPTS.num_banks):
-        control_list += "bank_{}/s_en0".format(bank)
+    if OPTS.words_per_row:
+        for bank in range(OPTS.num_banks):
+            control_list += "bank_{}/s_en0".format(bank)
     control_list += '\n'
 
     part2 = bitcell_list + control_list + part2

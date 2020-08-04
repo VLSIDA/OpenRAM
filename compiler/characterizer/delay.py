@@ -1350,7 +1350,7 @@ class delay(simulation):
         Return the analytical model results for the SRAM. 
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
-            debug.warning("Analytical characterization for multiple read ports may be inaccurate.")
+            debug.warning("In analytical mode, all ports have the timing of the first read port.")
         
         # Probe set to 0th bit, does not matter for analytical delay.
         self.set_probe('0'*self.addr_size, 0)

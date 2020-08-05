@@ -38,7 +38,7 @@ def filter_gds(cell_name, input_gds, output_gds):
     global OPTS
 
     # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "sky130/tech/.magicrc"
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:
@@ -77,6 +77,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
+    f.write("gds readonly true\n")
     f.write("gds read {}.gds\n".format(cell_name))
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
@@ -134,8 +135,8 @@ def write_netgen_script(cell_name):
 
     global OPTS
 
-    setup_file = "setup.tcl" 
-    full_setup_file = OPTS.openram_tech + "tech/" + setup_file 
+    setup_file = "sky130A.tcl" 
+    full_setup_file = "~/woow/SW.2/sky130A/libs.tech/magic/current" 
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, OPTS.openram_temp)
@@ -363,7 +364,7 @@ def write_batch_pex_rule(gds_name,name,sp_name,output):
     rm -f $1.ext
     rm -f $1.spice
     magic -dnull -noconsole << EOF
-    tech load SCN3ME_SUBM.30
+    tech load sky130 
     #scalegrid 1 2
     gds rescale no
     gds polygon subcell true

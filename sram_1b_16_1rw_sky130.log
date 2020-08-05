@@ -1,0 +1,194 @@
+WARNING: file regress.py: line 32: Skipping: 04_dummy_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 04_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 04_precharge_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 04_replica_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 04_single_level_column_mux_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 05_bitcell_1rw_1r_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 05_bitcell_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 05_dummy_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 05_pbitcell_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_decoder_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_decoder_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_predecode2x4_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_predecode2x4_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_predecode3x8_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_predecode3x8_test.py
+
+WARNING: file regress.py: line 32: Skipping: 06_hierarchical_predecode4x16_test.py
+
+WARNING: file regress.py: line 32: Skipping: 07_single_level_column_mux_array_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 08_wordline_driver_array_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 08_wordline_driver_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 09_sense_amp_array_test_pbitcell.py
+
+WARNING: file regress.py: line 32: Skipping: 09_sense_amp_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_driver_array_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_driver_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_driver_array_wmask_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_driver_array_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_mask_and_array_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 10_write_mask_and_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 12_tri_gate_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 14_replica_pbitcell_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 14_replica_bitcell_array_test.py
+
+WARNING: file regress.py: line 32: Skipping: 14_replica_column_test.py
+
+WARNING: file regress.py: line 32: Skipping: 14_replica_column_1rw_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 18_port_address_test.py
+
+WARNING: file regress.py: line 32: Skipping: 18_port_data_test.py
+
+WARNING: file regress.py: line 32: Skipping: 18_port_data_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_bank_select_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_bank_select_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_psingle_bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_bank_select_pbitcell_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_pmulti_bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_multi_bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_psingle_bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_single_bank_1w_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_single_bank_wmask_1rw_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_single_bank_1rw_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_single_bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 19_single_bank_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_psram_1bank_2mux_1rw_1w_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_psram_1bank_2mux_1rw_1w_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_psram_1bank_2mux_1w_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_psram_1bank_2mux_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_psram_1bank_4mux_1rw_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_2mux_1w_1r_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_2mux_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_2mux_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_32b_1024_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_4mux_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_8mux_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_nomux_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_1bank_nomux_wmask_test.py
+
+WARNING: file regress.py: line 32: Skipping: 20_sram_2bank_test.py
+
+WARNING: file regress.py: line 32: Skipping: 21_hspice_delay_test.py
+
+WARNING: file regress.py: line 32: Skipping: 21_hspice_setuphold_test.py
+
+WARNING: file regress.py: line 32: Skipping: 21_model_delay_test.py
+
+WARNING: file regress.py: line 32: Skipping: 21_ngspice_delay_test.py
+
+WARNING: file regress.py: line 32: Skipping: 21_ngspice_setuphold_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_psram_1bank_2mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_psram_1bank_4mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_psram_1bank_8mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_psram_1bank_nomux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_1bank_2mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_1bank_4mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_1bank_8mux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_1bank_nomux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_1rw_1r_1bank_nomux_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 22_sram_wmask_func_test.py
+
+WARNING: file regress.py: line 32: Skipping: 23_lib_sram_model_corners_test.py
+
+WARNING: file regress.py: line 32: Skipping: 23_lib_sram_model_test.py
+
+WARNING: file regress.py: line 32: Skipping: 23_lib_sram_prune_test.py
+
+WARNING: file regress.py: line 32: Skipping: 23_lib_sram_test.py
+
+WARNING: file regress.py: line 32: Skipping: 24_lef_sram_test.py
+
+WARNING: file regress.py: line 32: Skipping: 25_verilog_sram_test.py
+
+WARNING: file regress.py: line 32: Skipping: 26_hspice_pex_pinv_test.py
+
+WARNING: file regress.py: line 32: Skipping: 26_ngspice_pex_pinv_test.py
+
+WARNING: file regress.py: line 32: Skipping: 26_pex_test.py
+
+WARNING: file regress.py: line 32: Skipping: 30_openram_back_end_test.py
+
+WARNING: file regress.py: line 32: Skipping: 30_openram_front_end_test.py
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_rowendb	20
+
+WARNING: file magic.py: line 208: DRC Errors s8sram16x16_colenda	20
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_swldrv_opt1a	98
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_swldrv_opt1d	95
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_colend_opt2	68
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_swldrv_opt4d	96
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_horstrap1a	68
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_colend_opt5a	75
+
+WARNING: file magic.py: line 208: DRC Errors s8Dp_swldrv_opt2di	105
+
+WARNING: file magic.py: line 208: DRC Errors s8sram16x16_rowenda	62
+

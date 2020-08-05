@@ -1,0 +1,64 @@
+|==============================================================================|
+|=========                       OpenRAM v1.1.6                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========           Temp dir: /tmp/openram_me_20701_temp/            =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 08/04/2020 12:24:42
+Technology: sky130
+Total size: 32 bits
+Word size: 2
+Words: 16
+Banks: 1
+Write size: None
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+Design supply routing skipped. Supplies will have multiple must-connect pins. (route_supplies=True to enable supply routing).
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+Only characterizing nominal corner.
+Words per row: 1
+Output files are: 
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.lvs
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.sp
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.v
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.lib
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.py
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.html
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.log
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.lef
+/home/me/woow/OpenRAM/runs/sram_2_16_sky130.gds
+** Submodules: 1.4 seconds
+** Placement: 0.0 seconds
+** Routing: 0.1 seconds
+WARNING: file magic.py: line 208: DRC Errors sram_2_16_sky130	16861
+
+ERROR: file magic.py: line 290: sram_2_16_sky130	LVS mismatch (results in /tmp/openram_me_20701_temp/sram_2_16_sky130.lvs.report)
+
+** Verification: 15.8 seconds
+** SRAM creation: 17.3 seconds
+LEF: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.lef
+** LEF: 0.9 seconds
+GDS: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.gds
+** GDS: 0.2 seconds
+SP: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.sp
+** Spice writing: 0.0 seconds
+LVS: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.lvs
+** LVS writing: 0.0 seconds
+LIB: Characterizing... 
+** Characterization: 0.1 seconds
+Config: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.py
+** Config: 0.0 seconds
+Datasheet: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.html
+** Datasheet: 0.0 seconds
+Verilog: Writing to /home/me/woow/OpenRAM/runs/sram_2_16_sky130.v
+** Verilog: 0.0 seconds
+[globals/cleanup_paths]: Preserving temp directory: /tmp/openram_me_20701_temp/
+** End: 18.6 seconds

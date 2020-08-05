@@ -37,7 +37,7 @@ class library_drc_test(openram_test):
 
 
 def setup_files():
-    gds_dir = OPTS.openram_tech + "/gds_lib"
+    gds_dir =  "/home/me/woow/skywater-tech/sky130/gds_lib"
     files = os.listdir(gds_dir)
     nametest = re.compile("\.gds$", re.IGNORECASE)
     gds_files = list(filter(nametest.search, files))

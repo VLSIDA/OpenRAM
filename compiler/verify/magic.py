@@ -74,7 +74,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     run_file = OPTS.openram_temp + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
+    f.write("{} -T ~/woow/SW.2/sky130A/libs.tech/magic/current/sky130A.tech -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds readonly true\n")

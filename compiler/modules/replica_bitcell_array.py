@@ -5,14 +5,14 @@
 #
 
 import debug
-import design
+import bitcell_base_array
 from tech import drc, spice, cell_properties
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class replica_bitcell_array(design.design):
+class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     Creates a bitcell arrow of cols x rows and then adds the replica
     and dummy columns and rows.  Replica columns are on the left and
@@ -22,7 +22,7 @@ class replica_bitcell_array(design.design):
     bitcell (Bl/BR disconnected).
     """
     def __init__(self, rows, cols, left_rbl, right_rbl, bitcell_ports, name, add_replica=True):
-        design.design.__init__(self, name)
+        super().__init__(name, rows, cols, column_offset=0)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
@@ -89,9 +89,6 @@ class replica_bitcell_array(design.design):
         ^ dummy columns  ^
           1 x (rows + 4)
         """
-
-        # Bitcell for port names only
-        self.cell = factory.create(module_type="bitcell")
 
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",

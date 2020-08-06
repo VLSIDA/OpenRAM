@@ -24,7 +24,7 @@ class bank_select(design.design):
     """
 
     def __init__(self, name="bank_select", port="rw"):
-        design.design.__init__(self, name)
+        super().__init__(name)
 
         self.port = port
         

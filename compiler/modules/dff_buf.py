@@ -27,7 +27,7 @@ class dff_buf(design.design):
         if name=="":
             name = "dff_buf_{0}".format(dff_buf.unique_id)
             dff_buf.unique_id += 1
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {}".format(self.name))
         self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
         

@@ -20,7 +20,7 @@ class design(hierarchy_design):
     """
 
     def __init__(self, name):
-        hierarchy_design.__init__(self, name)
+        super().__init__(name)
         
         self.setup_drc_constants()
         self.setup_layer_constants()

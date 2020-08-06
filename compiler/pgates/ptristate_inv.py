@@ -38,7 +38,7 @@ class ptristate_inv(pgate.pgate):
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
         
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        super().__init__(name, height)
 
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """

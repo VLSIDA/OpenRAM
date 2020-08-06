@@ -19,7 +19,7 @@ class wordline_driver_array(design.design):
     """
 
     def __init__(self, name, rows, cols):
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         

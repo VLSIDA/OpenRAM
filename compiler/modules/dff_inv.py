@@ -25,7 +25,7 @@ class dff_inv(design.design):
         if name=="":
             name = "dff_inv_{0}".format(dff_inv.unique_id)
             dff_inv.unique_id += 1
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {}".format(self.name))
         self.add_comment("inv: {0}".format(inv_size))
 

@@ -21,7 +21,7 @@ class single_level_column_mux_array(design.design):
     """
 
     def __init__(self, name, columns, word_size, bitcell_bl="bl", bitcell_br="br", column_offset=0):
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} word_size: {1} bl: {2} br: {3}".format(columns, word_size, bitcell_bl, bitcell_br))
 

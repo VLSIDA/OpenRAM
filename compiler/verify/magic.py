@@ -135,8 +135,8 @@ def write_netgen_script(cell_name):
 
     global OPTS
 
-    setup_file = "sky130A.tcl" 
-    full_setup_file = "~/woow/SW.2/sky130A/libs.tech/magic/current" 
+    setup_file = "sky130A_setup.tcl" 
+    full_setup_file = "/home/me/open_pdks/sky130/sky130A/libs.tech/netgen/sky130A_setup.tcl"
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, OPTS.openram_temp)

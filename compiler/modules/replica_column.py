@@ -188,8 +188,6 @@ class replica_column(design.design):
             for pin_name in ["vdd", "gnd"]:
                 if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
                     self.copy_power_pins(inst, pin_name)
-                else:
-                    self.copy_layout_pin(inst, pin_name)
 
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,

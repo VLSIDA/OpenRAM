@@ -392,7 +392,7 @@ class bank(design.design):
         
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
-
+        import pdb; pdb.set_trace()
         self.bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                               mod=self.bitcell_array)
                     

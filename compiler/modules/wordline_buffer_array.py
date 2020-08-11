@@ -58,8 +58,11 @@ class wordline_buffer_array(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
+        b = factory.create(module_type="bitcell")
+        
         self.wl_driver = factory.create(module_type="inv_dec",
-                                        size=self.cols)
+                                        size=self.cols,
+                                        height=b.height)
         self.add_mod(self.wl_driver)
         
     def route_vdd_gnd(self):

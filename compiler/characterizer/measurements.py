@@ -58,7 +58,7 @@ class delay_measure(spice_measurement):
     
     def __init__(self, measure_name, trig_name, targ_name,  trig_dir_str, targ_dir_str,\
                  trig_vdd=0.5, targ_vdd=0.5, measure_scale=None, has_port=True):
-        super().__init__(measure_name, measure_scale, has_port)
+        spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(trig_name, targ_name, trig_dir_str, targ_dir_str, trig_vdd, targ_vdd)
     
     def get_measure_function(self):
@@ -95,7 +95,7 @@ class delay_measure(spice_measurement):
 class slew_measure(delay_measure):        
     
     def __init__(self, measure_name, signal_name, slew_dir_str, measure_scale=None, has_port=True):
-        super().__init__(measure_name, measure_scale, has_port)
+        spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(signal_name, slew_dir_str)
     
     def set_meas_constants(self, signal_name, slew_dir_str):
@@ -120,7 +120,7 @@ class power_measure(spice_measurement):
     """Generates a spice measurement for the average power between two time points."""
     
     def __init__(self, measure_name, power_type="", measure_scale=None, has_port=True):
-        super().__init__(measure_name, measure_scale, has_port)
+        spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(power_type)
     
     def get_measure_function(self):
@@ -144,7 +144,7 @@ class voltage_when_measure(spice_measurement):
     """Generates a spice measurement to measure the voltage of a signal based on the voltage of another."""
     
     def __init__(self, measure_name, trig_name, targ_name, trig_dir_str, trig_vdd, measure_scale=None, has_port=True):
-        super().__init__(measure_name, measure_scale, has_port)
+        spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(trig_name, targ_name, trig_dir_str, trig_vdd)
     
     def get_measure_function(self):
@@ -177,7 +177,7 @@ class voltage_at_measure(spice_measurement):
        The time is considered variant with different periods."""
     
     def __init__(self, measure_name, targ_name, measure_scale=None, has_port=True):
-        super().__init__(measure_name, measure_scale, has_port)
+        spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(targ_name)
     
     def get_measure_function(self):

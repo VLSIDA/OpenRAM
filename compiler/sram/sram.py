@@ -90,9 +90,9 @@ class sram():
 
         # Save the LVS file
         start_time = datetime.datetime.now()
-        spname = OPTS.output_path + self.s.name + ".lvs"
-        debug.print_raw("LVS: Writing to {0}".format(spname))
-        self.lvs_write(spname)
+        lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
+        debug.print_raw("LVS: Writing to {0}".format(lvsname))
+        self.lvs_write(lvsname)
         print_time("LVS writing", datetime.datetime.now(), start_time)
         
         # Save the extracted spice file

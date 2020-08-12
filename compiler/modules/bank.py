@@ -83,7 +83,7 @@ class bank(design.design):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}_{1}".format(port, bit), "OUTPUT")
         for port in self.all_ports:
-            self.add_pin(self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port]), "OUTPUT")
+            self.add_pin_list(self.bitcell_array.get_rbl_bitline_names(self.port_rbl_map[port]), "OUTPUT")
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}_{1}".format(port, bit), "INPUT")
@@ -392,24 +392,14 @@ class bank(design.design):
         
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
-        import pdb; pdb.set_trace()
         self.bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                               mod=self.bitcell_array)
-                    
         temp = []
-        for col in range(self.num_cols + self.num_spare_cols):
-            for bitline in self.bitline_names:
-                temp.append("{0}_{1}".format(bitline, col))
-        for rbl in range(self.num_rbl):
-            rbl_bl_name=self.bitcell_array.get_rbl_bl_name(rbl)
-            temp.append(rbl_bl_name)
-            rbl_br_name=self.bitcell_array.get_rbl_br_name(rbl)
-            temp.append(rbl_br_name)
-        for row in range(self.num_rows):
-            for wordline in self.wl_names:
-                temp.append("{0}_{1}".format(wordline, row))
-        for port in self.all_ports:
-            temp.append("wl_en{0}".format(port))
+        bitline_names = self.bitcell_array.get_bitline_names()
+        temp.extend(bitline_names)
+        # Replace RBL wordline with wl_en#
+        wordline_names = [x.replace("rbl_wl_", "wl_en") for x in self.bitcell_array.get_wordline_names()]
+        temp.extend(wordline_names)
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
@@ -427,10 +417,8 @@ class bank(design.design):
                                                     mod=self.port_data[port])
 
             temp = []
-            rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-            rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
-            temp.append(rbl_bl_name)
-            temp.append(rbl_br_name)
+            rbl_bl_names=self.bitcell_array.get_rbl_bitline_names(self.port_rbl_map[port])
+            temp.extend(rbl_bl_names)
             for col in range(self.num_cols + self.num_spare_cols):
                 temp.append("{0}_{1}".format(self.bl_names[port], col))
                 temp.append("{0}_{1}".format(self.br_names[port], col))
@@ -718,10 +706,9 @@ class bank(design.design):
             self.connect_bitline(inst1, inst2, inst1_br_name.format(self.num_cols+i), "spare" + inst2_br_name.format(i))
 
         # Connect the replica bitlines
-        rbl_bl_name=self.bitcell_array.get_rbl_bl_name(self.port_rbl_map[port])
-        rbl_br_name=self.bitcell_array.get_rbl_br_name(self.port_rbl_map[port])
-        self.connect_bitline(inst1, inst2, rbl_bl_name, "rbl_bl")
-        self.connect_bitline(inst1, inst2, rbl_br_name, "rbl_br")
+        rbl_bl_names=self.bitcell_array.get_rbl_bitline_names(self.port_rbl_map[port])
+        for (array_name, data_name) in zip(rbl_bl_names, ["rbl_bl", "rbl_br"]):
+            self.connect_bitline(inst1, inst2, array_name, data_name)
         
     def route_port_data_out(self, port):
         """ Add pins for the port data out """
@@ -974,9 +961,10 @@ class bank(design.design):
         connection.append((self.prefix + "p_en_bar{}".format(port),
                            self.port_data_inst[port].get_pin("p_en_bar")))
 
-        rbl_wl_name = self.bitcell_array.get_rbl_wl_name(self.port_rbl_map[port])
-        connection.append((self.prefix + "wl_en{}".format(port),
-                           self.bitcell_array_inst.get_pin(rbl_wl_name)))
+        rbl_wl_names = self.bitcell_array.get_rbl_wordline_names(self.port_rbl_map[port])
+        for rbl_wl_name in rbl_wl_names:
+            connection.append((self.prefix + "wl_en{}".format(port),
+                               self.bitcell_array_inst.get_pin(rbl_wl_name)))
             
         if port in self.write_ports:
             connection.append((self.prefix + "w_en{}".format(port),

@@ -463,13 +463,21 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             for inst in list(self.replica_col_inst.values()):
                 self.copy_layout_pin(inst, pin_name)
 
-    def get_rbl_wl_name(self, port):
+    def get_rbl_wordline_names(self, port):
         """ Return the WL for the given RBL port """
         return self.replica_wordline_names[port]
 
-    def get_rbl_bl_name(self, port):
+    def get_rbl_bitline_names(self, port):
         """ Return the BL for the given RBL port """
-        return self.replica_bl_names[port]
+        return self.replica_bitline_names[port]
+
+    def get_wordline_names(self):
+        """ Return the wordline names """
+        return self.wordline_names
+
+    def get_bitline_names(self):
+        """ Return the bitline names """
+        return self.bitline_names
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

@@ -75,7 +75,7 @@ class ptx(design.design):
         # replace periods with underscore for newer spice compatibility
         name = name.replace('.', '_')
         debug.info(3, "creating ptx {0}".format(name))
-        super().__init__(, name)
+        super().__init__(name)
 
         self.tx_type = tx_type
         self.mults = mults

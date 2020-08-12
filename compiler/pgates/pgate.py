@@ -26,7 +26,7 @@ class pgate(design.design):
 
     def __init__(self, name, height=None, add_wells=True):
         """ Creates a generic cell """
-        super().__init__(, name)
+        super().__init__(name)
 
         if height:
             self.height = height

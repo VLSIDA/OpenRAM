@@ -25,7 +25,7 @@ class pbuf(pgate.pgate):
         self.height = height
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height)
+        super().__init__(name, height)
 
     def create_netlist(self):
         self.add_pins()

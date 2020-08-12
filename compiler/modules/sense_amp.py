@@ -50,7 +50,7 @@ class sense_amp(design.design):
         return props.sense_amp.pin.en
 
     def __init__(self, name):
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(2, "Create sense_amp")
 
         self.width = sense_amp.width

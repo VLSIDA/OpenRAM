@@ -160,7 +160,7 @@ class instance(geometry):
     """
     def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """Initializes an instance to represent a module"""
-        geometry.__init__(self)
+        super().__init__()
         debug.check(mirror not in ["R90", "R180", "R270"],
                     "Please use rotation and not mirroring during instantiation.")
 
@@ -284,7 +284,7 @@ class path(geometry):
 
     def __init__(self, lpp, coordinates, path_width):
         """Initializes a path for the specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "path"
         self.layerNumber = lpp[0]
         self.layerPurpose = lpp[1]
@@ -322,7 +322,7 @@ class label(geometry):
 
     def __init__(self, text, lpp, offset, zoom=-1):
         """Initializes a text label for specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "label"
         self.text = text
         self.layerNumber = lpp[0]
@@ -366,7 +366,7 @@ class rectangle(geometry):
 
     def __init__(self, lpp, offset, width, height):
         """Initializes a rectangular shape for specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "rect"
         self.layerNumber = lpp[0]
         self.layerPurpose = lpp[1]

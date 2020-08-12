@@ -24,7 +24,7 @@ class dff_array(design.design):
 
         if name=="":
             name = "dff_array_{0}x{1}".format(rows, columns)
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0} rows={1} cols={2}".format(self.name, self.rows, self.columns))
         self.add_comment("rows: {0} cols: {1}".format(rows, columns))
         

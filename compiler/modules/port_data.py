@@ -32,7 +32,7 @@ class port_data(design.design):
 
         if name == "":
             name = "port_data_{0}".format(self.port)
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(2,
                    "create data port of size {0} with {1} words per row".format(self.word_size,
                                                                                    self.words_per_row))

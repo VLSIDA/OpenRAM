@@ -21,7 +21,7 @@ class write_driver_array(design.design):
 
     def __init__(self, name, columns, word_size, num_spare_cols=None, write_size=None, column_offset=0):
 
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
         self.add_comment("word_size {0}".format(word_size))

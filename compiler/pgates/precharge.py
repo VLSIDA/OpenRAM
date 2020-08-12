@@ -23,7 +23,7 @@ class precharge(design.design):
     def __init__(self, name, size=1, bitcell_bl="bl", bitcell_br="br"):
 
         debug.info(2, "creating precharge cell {0}".format(name))
-        design.design.__init__(self, name)
+        super().__init__(name)
 
         self.bitcell = factory.create(module_type="bitcell")
         self.beta = parameter["beta"]

@@ -21,7 +21,7 @@ class wordline_driver(design.design):
     def __init__(self, name, size=1, height=None):
         debug.info(1, "Creating wordline_driver {}".format(name))
         self.add_comment("size: {}".format(size))
-        design.design.__init__(self, name)
+        super().__init__(name)
 
         if height is None:
             b = factory.create(module_type="bitcell")

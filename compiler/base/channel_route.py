@@ -97,7 +97,7 @@ class channel_route(design.design):
         """
         name = "cr_{0}".format(channel_route.unique_id)
         channel_route.unique_id += 1
-        design.design.__init__(self, name)
+        super().__init__(name)
         
         self.netlist = netlist
         self.offset = offset

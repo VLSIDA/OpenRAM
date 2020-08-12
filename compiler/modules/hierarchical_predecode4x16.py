@@ -14,7 +14,7 @@ class hierarchical_predecode4x16(hierarchical_predecode):
     Pre 4x16 decoder used in hierarchical_decoder.
     """
     def __init__(self, name, height=None):
-        hierarchical_predecode.__init__(self, name, 4, height)
+        super().__init__(name, 4, height)
 
         self.create_netlist()
         if not OPTS.netlist_only:

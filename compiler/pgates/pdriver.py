@@ -35,7 +35,7 @@ class pdriver(pgate.pgate):
             debug.error("Cannot specify both size_list and inverting.", -1)
  
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height, add_wells)
+        super().__init__(name, height, add_wells)
         
     def compute_sizes(self):
         # size_list specified

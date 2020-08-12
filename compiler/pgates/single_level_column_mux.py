@@ -30,7 +30,7 @@ class single_level_column_mux(pgate.pgate):
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
 
-        pgate.pgate.__init__(self, name)
+        super().__init__(name)
 
     def get_bl_names(self):
         return "bl"

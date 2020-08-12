@@ -22,7 +22,7 @@ class pwrite_driver(design.design):
     def __init__(self, name, size=0):
         debug.error("pwrite_driver not implemented yet.", -1)
         debug.info(1, "creating pwrite_driver {}".format(name))
-        design.design.__init__(self, name)
+        super().__init__(name)
         self.size = size
         self.beta = parameter["beta"]
         self.pmos_width = self.beta*self.size*parameter["min_tx_size"]

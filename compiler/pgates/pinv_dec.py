@@ -120,6 +120,10 @@ class pinv_dec(pinv.pinv):
         # center the transistors in the y-dimension (it is rotated, so use the width)
         y_offset = 0.5 * (self.height - self.nmos.width) + self.nmos.width
 
+        if OPTS.tech_name == "sky130":
+            # make room for well contacts between cells
+            y_offset = (0.5 * (self.height - self.nmos.width) + self.nmos.width) * 0.9
+
         # offset so that the input contact is over from the left edge by poly spacing
         x_offset = self.nmos.active_offset.y + contact.poly_contact.width + self.poly_space
         self.nmos_pos = vector(x_offset, y_offset)

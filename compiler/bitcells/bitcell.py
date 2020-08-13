@@ -51,7 +51,7 @@ class bitcell(bitcell_base.bitcell_base):
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
-        debug.check(OPTS.tech_name != "sky130", "sky130 does not yet support single port cells")
+        #debug.check(OPTS.tech_name != "sky130", "sky130 does not yet support single port cells")
               
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """

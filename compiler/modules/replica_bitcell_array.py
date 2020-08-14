@@ -101,15 +101,15 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.replica_columns = {}
         for bit in range(self.add_left_rbl + self.add_right_rbl):
             # Creating left_rbl
-            if bit<self.add_left_rbl:
-                replica_bit = bit + 1
-                # dummy column
-                column_offset = self.add_left_rbl - bit
+            if bit < self.add_left_rbl:
+                # These go from the top (where the bitcell array starts ) down
+                replica_bit = self.left_rbl - bit
             # Creating right_rbl
             else:
-                replica_bit = bit + self.row_size + 1
-                # dummy column + replica column + bitcell colums
-                column_offset = self.add_left_rbl - bit + self.row_size
+                # These go from the bottom up
+                replica_bit = self.left_rbl + self.row_size + 1 + bit
+            # If we have an odd numer on the bottom
+            column_offset = self.left_rbl + 1
             self.replica_columns[bit] = factory.create(module_type="replica_column",
                                                        rows=self.row_size,
                                                        left_rbl=self.add_left_rbl,
@@ -338,18 +338,22 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """
 
-        # To the left of the bitcell array
+        # Grow from left to right, toward the array
         for bit in range(self.add_left_rbl):
-            self.replica_col_inst[bit].place(offset=self.bitcell_offset.scale(-bit - 1, -self.add_left_rbl - 1))
-        # To the right of the bitcell array
+            offset = self.bitcell_offset.scale(-self.add_left_rbl + bit, -self.add_left_rbl - 1)
+            self.replica_col_inst[bit].place(offset)
+        # Grow to the right of the bitcell array, array outward
         for bit in range(self.add_right_rbl):
-            self.replica_col_inst[self.add_left_rbl + bit].place(offset=self.bitcell_offset.scale(bit, -self.add_left_rbl - 1) + self.bitcell_array_inst.lr())
+            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.add_left_rbl - 1)
+            self.replica_col_inst[self.add_left_rbl + bit].place(offset)
 
         # Replica dummy rows
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array
+        # These grow up, toward the array
         for bit in range(self.left_rbl):
-            self.dummy_row_replica_inst[bit].place(offset=self.bitcell_offset.scale(0, -bit - bit % 2),
-                                                   mirror="R0" if bit % 2 else "MX")
+            self.dummy_row_replica_inst[bit].place(offset=self.bitcell_offset.scale(0, -self.left_rbl + bit + (-self.left_rbl + bit) % 2),
+                                                   mirror="MX" if (-self.left_rbl + bit) % 2 else "R0")
+        # These grow up, away from the array
         for bit in range(self.right_rbl):
             self.dummy_row_replica_inst[self.left_rbl + bit].place(offset=self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul(),
                                                                    mirror="MX" if bit % 2 else "R0")

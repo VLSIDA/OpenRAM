@@ -77,6 +77,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
+    f.write("gds readonly true\n")
     f.write("gds read {}.gds\n".format(cell_name))
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers

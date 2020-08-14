@@ -977,7 +977,7 @@ class bank(design.design):
         for wl_name in gnd_wl_names:
             pin = self.bitcell_array_inst.get_pin(wl_name)
             pin_layer = pin.layer
-            layer_pitch = getattr(self, "{}_pitch".format(pin_layer))
+            layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
             left_pin_loc = pin.lc()
             right_pin_loc = pin.rc()
 

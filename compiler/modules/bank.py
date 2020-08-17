@@ -257,7 +257,7 @@ class bank(design.design):
         self.port_data_offsets[port] = vector(self.main_bitcell_array_left, self.bitcell_array_top)
             
         # LOWER RIGHT QUADRANT
-        # To the left of the bitcell array
+        # To the right of the bitcell array
         x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
         self.port_address_offsets[port] = vector(x_offset,
                                                  self.main_bitcell_array_bottom)
@@ -682,7 +682,7 @@ class bank(design.design):
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
             control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2 * self.m1_pitch
-            control_bus_offset = vector(self.bitcell_array_right + 2 * self.m3_pitch,
+            control_bus_offset = vector(self.bitcell_array_right + 2.5 * self.m3_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
             self.bus_pins[1] = self.create_bus(layer="m2",

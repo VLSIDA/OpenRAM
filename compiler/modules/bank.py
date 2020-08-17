@@ -984,8 +984,8 @@ class bank(design.design):
             # Place the pins a track outside of the array
             left_loc = left_pin_loc - vector(layer_pitch, 0)
             right_loc = right_pin_loc + vector(layer_pitch, 0)
-            self.add_power_pin("gnd", left_loc)
-            self.add_power_pin("gnd", right_loc)
+            self.add_power_pin("gnd", left_loc, directions=("H", "H"))
+            self.add_power_pin("gnd", right_loc, directions=("H", "H"))
 
             # Add a path to connect to the array
             self.add_path(pin_layer, [left_loc, left_pin_loc])

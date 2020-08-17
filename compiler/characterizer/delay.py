@@ -41,7 +41,7 @@ class delay(simulation):
     """
 
     def __init__(self, sram, spfile, corner):
-        simulation.__init__(self, sram, spfile, corner)
+        super().__init__(sram, spfile, corner)
 
         self.targ_read_ports = []
         self.targ_write_ports = []

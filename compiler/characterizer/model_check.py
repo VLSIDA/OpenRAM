@@ -26,7 +26,7 @@ class model_check(delay):
     """
 
     def __init__(self, sram, spfile, corner, custom_delaychain=False):
-        delay.__init__(self,sram,spfile,corner)
+        super().__init__(sram, spfile, corner)
         self.period = tech.spice["feasible_period"]
         self.create_data_names()
         self.custom_delaychain=custom_delaychain

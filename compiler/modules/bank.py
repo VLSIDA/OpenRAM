@@ -36,7 +36,7 @@ class bank(design.design):
                 
         if name == "":
             name = "bank_{0}_{1}".format(self.word_size, self.num_words)
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(2, "create sram of size {0} with {1} words".format(self.word_size,
                                                                       self.num_words))
         

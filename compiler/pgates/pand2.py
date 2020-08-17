@@ -22,7 +22,7 @@ class pand2(pgate.pgate):
         self.vertical = vertical
         self.size = size
 
-        pgate.pgate.__init__(self, name, height, add_wells)
+        super().__init__(name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()

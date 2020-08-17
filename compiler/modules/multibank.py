@@ -26,7 +26,7 @@ class multibank(design.design):
 
     def __init__(self, name, word_size, num_words, words_per_row, num_banks=1):
 
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(2, "create sram of size {0} with {1} words".format(word_size,num_words))
 
         self.word_size = word_size

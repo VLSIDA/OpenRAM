@@ -27,7 +27,7 @@ class dff_inv_array(design.design):
         if name=="":
             name = "dff_inv_array_{0}x{1}_{2}".format(rows, columns, dff_inv_array.unique_id)
             dff_inv_array.unique_id += 1
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, columns))
         self.add_comment("inv1: {0}".format(inv1_size))

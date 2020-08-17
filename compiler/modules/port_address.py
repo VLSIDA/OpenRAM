@@ -25,7 +25,7 @@ class port_address(design.design):
         
         if name == "":
             name = "port_address_{0}_{1}".format(cols, rows)
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(2, "create data port of cols {0} rows {1}".format(cols, rows))
 
         self.create_netlist()

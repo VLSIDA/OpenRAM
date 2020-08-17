@@ -34,7 +34,7 @@ class contact(hierarchy_design.hierarchy_design):
         # This will ignore the name parameter since
         # we can guarantee a unique name here
         
-        hierarchy_design.hierarchy_design.__init__(self, name)
+        super().__init__(name)
         debug.info(4, "create contact object {0}".format(name))
 
         self.add_comment("layers: {0}".format(layer_stack))

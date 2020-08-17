@@ -22,7 +22,7 @@ class replica_column(design.design):
 
     def __init__(self, name, rows, left_rbl, right_rbl, replica_bit,
                  column_offset=0):
-        design.design.__init__(self, name)
+        super().__init__(name)
 
         self.rows = rows
         self.left_rbl = left_rbl

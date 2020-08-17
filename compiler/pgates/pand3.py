@@ -23,7 +23,7 @@ class pand3(pgate.pgate):
         self.size = size
         
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height, add_wells)
+        super().__init__(name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()

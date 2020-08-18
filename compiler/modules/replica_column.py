@@ -15,18 +15,17 @@ class replica_column(design.design):
     """
     Generate a replica bitline column for the replica array.
     Rows is the total number of rows i the main array.
-    Left_rbl and right_rbl are the number of left and right replica bitlines.
+    rbl is a tuple with the number of left and right replica bitlines.
     Replica bit specifies which replica column this is (to determine where to put the
-    replica cell.
+    replica cell relative to the bottom (including the dummy bit at 0).
     """
 
-    def __init__(self, name, rows, left_rbl, right_rbl, replica_bit,
-                 column_offset=0):
+    def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
         super().__init__(name)
 
         self.rows = rows
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        self.left_rbl = rbl[0]
+        self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl + rows + self.right_rbl + 2
@@ -34,10 +33,10 @@ class replica_column(design.design):
 
         debug.check(replica_bit != 0 and replica_bit != rows,
                     "Replica bit cannot be the dummy row.")
-        debug.check(replica_bit <= left_rbl or replica_bit >= self.total_size - right_rbl - 1,
+        debug.check(replica_bit <= self.left_rbl or replica_bit >= self.total_size - self.right_rbl - 1,
                     "Replica bit cannot be in the regular array.")
         if OPTS.tech_name == "sky130":
-            debug.check(rows % 2 == 0 and (left_rbl + 1) % 2 == 0,
+            debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
                         "sky130 currently requires rows to be even and to start with X mirroring"
                         + " (left_rbl must be odd) for LVS.")
 

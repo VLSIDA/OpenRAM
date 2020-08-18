@@ -30,7 +30,7 @@ class route(design):
     def __init__(self, obj, layer_stack, path, layer_widths=[None,1,None]):
         name = "route_{0}".format(route.unique_route_id)
         route.unique_route_id += 1
-        design.__init__(self, name)
+        super().__init__(name)
         debug.info(3, "create route obj {0}".format(name))
 
         self.obj = obj

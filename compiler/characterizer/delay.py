@@ -41,7 +41,7 @@ class delay(simulation):
     """
 
     def __init__(self, sram, spfile, corner):
-        simulation.__init__(self, sram, spfile, corner)
+        super().__init__(sram, spfile, corner)
 
         self.targ_read_ports = []
         self.targ_write_ports = []
@@ -188,9 +188,8 @@ class delay(simulation):
 
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
-        self.dout_volt_meas.append(self.sen_meas)
-        
-        return self.dout_volt_meas
+
+        return self.dout_volt_meas + [self.sen_meas]
      
     def create_read_bit_measures(self):
         """ Adds bit measurements for read0 and read1 cycles """
@@ -1380,7 +1379,7 @@ class delay(simulation):
         Return the analytical model results for the SRAM. 
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
-            debug.warning("Analytical characterization results are not supported for multiport.")
+            debug.warning("In analytical mode, all ports have the timing of the first read port.")
         
         # Probe set to 0th bit, does not matter for analytical delay.
         self.set_probe('0'*self.addr_size, 0)

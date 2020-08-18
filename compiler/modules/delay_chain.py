@@ -21,7 +21,7 @@ class delay_chain(design.design):
 
     def __init__(self, name, fanout_list):
         """init function"""
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "creating delay chain {0}".format(str(fanout_list)))
         self.add_comment("fanouts: {0}".format(str(fanout_list)))
         

@@ -13,8 +13,8 @@ class col_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, cols, rows, column_offset=0, mirror=0, name=""):
-        super().__init__(cols, rows, name, column_offset)
+    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
 
         self.no_instances = True
@@ -50,9 +50,9 @@ class col_cap_array(bitcell_base_array):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(col, row))
+                self.connect_inst(self.get_bitcell_pins(row, col))
 
-    def get_bitcell_pins(self, col, row):
+    def get_bitcell_pins(self, row, col):
         """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array

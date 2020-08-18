@@ -414,6 +414,7 @@ class sram_base(design, verilog, lef):
                 temp.append("dout{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             temp.append("rbl_bl{0}".format(port))
+            temp.append("rbl_br{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("bank_din{0}[{1}]".format(port, bit))

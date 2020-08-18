@@ -15,19 +15,21 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class pbuf_test(openram_test):
+
+class wordline_buffer_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing buffer 8x")
-        a = factory.create(module_type="pbuf", size=8)
-        self.local_check(a)
+        # check wordline driver for single port
+        debug.info(2, "Checking driver")
+        tx = factory.create(module_type="wordline_buffer_array", rows=8, cols=32)
+        self.local_check(tx)
 
         globals.end_openram()
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

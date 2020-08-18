@@ -43,7 +43,7 @@ The OpenRAM compiler has very few dependencies:
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45])
-+ [Magic] 8.2.79 or higher (for [SCMOS])
++ [Magic] 8.3.27 or higher (for [SCMOS])
 + [Netgen] 1.5 (for [SCMOS])
 
 You must set two environment variables: 
@@ -80,6 +80,8 @@ If you are using [SCMOS], you should install [Magic] and [Netgen].
 We have included the most recent SCN4M_SUBM design rules from [Qflow].
 
 ## Docker Image
+
+**WARNING! Some OpenRAM dependency tools installed in the Docker image are out-of-date.**
 
 We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
 available that has all tools installed for the [SCMOS] process. It is

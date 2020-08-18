@@ -22,7 +22,7 @@ class sense_amp_array(design.design):
 
     def __init__(self, name, word_size, words_per_row, num_spare_cols=None, column_offset=0):
 
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("word_size {0}".format(word_size))
         self.add_comment("words_per_row: {0}".format(words_per_row))

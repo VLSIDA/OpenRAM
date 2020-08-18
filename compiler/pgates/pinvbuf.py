@@ -32,7 +32,7 @@ class pinvbuf(pgate.pgate):
         self.predriver_size = max(int(self.size / (self.stage_effort / 2)), 1)
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name)
+        super().__init__(name)
 
     def create_netlist(self):
         self.add_pins()

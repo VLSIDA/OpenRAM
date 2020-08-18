@@ -19,7 +19,7 @@ class tri_gate_array(design.design):
 
     def __init__(self, columns, word_size, name):
         """Intial function of tri gate array """
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
 
         self.columns = columns

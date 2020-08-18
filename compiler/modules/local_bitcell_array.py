@@ -64,7 +64,8 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.cols,
                                             rows=self.rows,
-                                            rbl=self.rbl)
+                                            rbl=self.rbl,
+                                            add_rbl=self.add_rbl)
         self.add_mod(self.bitcell_array)
 
         self.wl_array = factory.create(module_type="wordline_buffer_array",
@@ -82,7 +83,6 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.replica_names = self.bitcell_array.get_rbl_wordline_names()
 
         self.bitline_names = self.bitcell_array.get_inouts()
-        
         # Arrays are always:
         # word lines (bottom to top)
         # bit lines (left to right)

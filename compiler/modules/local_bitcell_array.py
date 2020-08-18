@@ -20,8 +20,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     def __init__(self, rows, cols, rbl, add_rbl=None, name=""):
         super().__init__(name, rows, cols, 0)
-        debug.info(2, "create local array of size {} rows x {} cols words".format(rows,
-                                                                                  cols + sum(rbl)))
+        debug.info(2, "create local array of size {} rows x {} cols words".format(rows, cols))
 
         self.rows = rows
         self.cols = cols
@@ -103,7 +102,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitcell_array_inst = self.add_inst(name="array",
                                                 mod=self.bitcell_array,
                                                 offset=self.wl_inst.lr())
-        self.connect_inst(self.bitline_names + self.array_wordline_inputs + ["vdd", "gnd"])
+        self.connect_inst(self.array_wordline_inputs + self.bitline_names + ["vdd", "gnd"])
 
     def place(self):
         """ Place the bitcelll array to the right of the wl driver. """

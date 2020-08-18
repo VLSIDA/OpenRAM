@@ -22,12 +22,17 @@ class local_bitcell_array_1rw_1r_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+
         debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 0], add_rbl=[0, 0])
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[0, 0])
         self.local_check(a)
 
         debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 0], add_rbl=[1, 0])
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[0, 1])
         self.local_check(a)
 
         globals.end_openram()

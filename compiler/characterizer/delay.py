@@ -136,19 +136,18 @@ class delay(simulation):
         """
         
         self.bitline_volt_meas = []
-
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
-                                                         self.bl_name))
+                                                        self.bl_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ZERO", 
-                                                         self.br_name))
+                                                        self.br_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
-                                                         self.bl_name)) 
+                                                        self.bl_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
-                                                         self.br_name)) 
+                                                        self.br_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         
@@ -181,8 +180,12 @@ class delay(simulation):
             self.dout_volt_meas.append(voltage_at_measure("v_{}".format(meas.name), 
                                                            meas.targ_name_no_port)) 
             self.dout_volt_meas[-1].meta_str = meas.meta_str
-         
-        self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
+        
+            if not OPTS.use_pex:
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name+"{}", "FALL", "RISE", measure_scale=1e9)
+            else:
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+
         self.sen_meas.meta_str = sram_op.READ_ZERO        
         self.sen_meas.meta_add_delay = True
 
@@ -228,8 +231,13 @@ class delay(simulation):
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
-        q_name = cell_name+'.'+str(storage_names[0])
-        qbar_name = cell_name+'.'+str(storage_names[1])
+        if not OPTS.use_pex:                                              
+            q_name = cell_name+'.'+str(storage_names[0])
+            qbar_name = cell_name+'.'+str(storage_names[1])
+        else:
+            bank_num = self.sram.get_bank_num(self.sram.name, bit_row, bit_col)
+            q_name = "bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
+            qbar_name = "bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
         
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally. {} added to names to differentiate between ports allow the
@@ -271,37 +279,50 @@ class delay(simulation):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""
         
         port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format("clk", port), 
-                                 '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-        
-        sen_with_port = self.get_sen_name(self.graph.all_paths)
-        if sen_with_port.endswith(str(port)):
-            self.sen_name = sen_with_port[:-len(str(port))]
-        else:
-            self.sen_name = sen_with_port
-            debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
+        if not OPTS.use_pex:
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                                    '{}{}_{}'.format(self.dout_name, port, self.probe_data))
             
-        debug.info(2,"s_en name = {}".format(self.sen_name))
-        
-        bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
-        port_pos = -1-len(str(self.probe_data))-len(str(port))
-        
-        if bl_name_port.endswith(str(port)+"_"+str(self.probe_data)):
-            self.bl_name = bl_name_port[:port_pos] +"{}"+ bl_name_port[port_pos+len(str(port)):]
-        elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
-            self.bl_name = bl_name_port
-        else:
-            self.bl_name = bl_name_port
-            debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+            sen_with_port = self.get_sen_name(self.graph.all_paths)
+            if sen_with_port.endswith(str(port)):
+                self.sen_name = sen_with_port[:-len(str(port))]
+            else:
+                self.sen_name = sen_with_port
+                debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
+                
+            debug.info(2,"s_en name = {}".format(self.sen_name))
             
-        if br_name_port.endswith(str(port)+"_"+str(self.probe_data)):
-            self.br_name = br_name_port[:port_pos] +"{}"+ br_name_port[port_pos+len(str(port)):]
-        elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
-            self.br_name = br_name_port
+            bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
+            port_pos = -1-len(str(self.probe_data))-len(str(port))
+            
+            if bl_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+                self.bl_name = bl_name_port[:port_pos] +"{}"+ bl_name_port[port_pos+len(str(port)):]
+            elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+                self.bl_name = bl_name_port
+            else:
+                self.bl_name = bl_name_port
+                debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+                
+            if br_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+                self.br_name = br_name_port[:port_pos] +"{}"+ br_name_port[port_pos+len(str(port)):]
+            elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+                self.br_name = br_name_port
+            else:
+                self.br_name = br_name_port    
+                debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
         else:
-            self.br_name = br_name_port    
-            debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
-        debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                        '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+            
+            self.sen_name = self.get_sen_name(self.graph.all_paths)    
+            debug.info(2,"s_en name = {}".format(self.sen_name))
+
+            
+            self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size-1)
+            self.br_name = "br{0}_{1}".format(port, OPTS.word_size-1)
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+
         
     def get_sen_name(self, paths, assumed_port=None):
         """
@@ -315,7 +336,8 @@ class delay(simulation):
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
-            
+        if OPTS.use_pex:
+            sen_name = sen_name.split('.')[-1]
         return sen_name        
      
     def get_bl_name(self, paths, port):
@@ -331,7 +353,9 @@ class delay(simulation):
         exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
-                
+        if OPTS.use_pex:
+            for i in range(len(bl_names)):
+                bl_names[i] = bl_names[i].split('.')[-1]
         return bl_names[0], bl_names[1]         
 
     
@@ -422,8 +446,13 @@ class delay(simulation):
 
         # instantiate the sram
         self.sf.write("\n* Instantiation of the SRAM\n")
-        self.stim.inst_model(pins=self.pins,
-                             model_name=self.sram.name)
+        if not OPTS.use_pex:
+            self.stim.inst_model(pins=self.pins,
+                            model_name=self.sram.name)
+        else:
+            self.stim.inst_sram_pex(pins=self.pins, 
+                            model_name=self.sram.name)
+
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
             for i in range(self.word_size):

@@ -29,6 +29,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
+        self.rbl = rbl
         self.left_rbl = rbl[0]
         self.right_rbl = rbl[1]
         # This is how many RBLs are added to THIS array
@@ -110,8 +111,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             column_offset = self.left_rbl + 1
             self.replica_columns[bit] = factory.create(module_type="replica_column",
                                                        rows=self.row_size,
-                                                       left_rbl=self.add_left_rbl,
-                                                       right_rbl=self.add_right_rbl,
+                                                       rbl=self.rbl,
                                                        column_offset=column_offset,
                                                        replica_bit=replica_bit)
             self.add_mod(self.replica_columns[bit])

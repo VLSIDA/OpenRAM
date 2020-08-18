@@ -164,9 +164,14 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def add_pins(self):
 
-        self.add_bitline_pins()
+        # Arrays are always:
+        # word lines (bottom to top)
+        # bit lines (left to right)
+        # vdd
+        # gnd
+        
         self.add_wordline_pins()
-
+        self.add_bitline_pins()
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -178,8 +183,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitline_names_by_port = [[] for x in self.all_ports]
         # Replica wordlines by port
         self.replica_bitline_names = [[] for x in self.all_ports]
-        # Replica wordlines by port (bl only)
-        self.replica_bl_names = [[] for x in self.all_ports]
         # Dummy wordlines by port
         self.dummy_bitline_names = []
 
@@ -192,20 +195,26 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.dummy_bitline_names.append([x + "_right" for x in dummy_bitline_names])
 
         # Array of all port bitline names
-        for port in range(self.add_left_rbl + self.add_right_rbl):
+        for port in range(self.add_left_rbl):
             left_names=["rbl_{0}_{1}".format(self.cell.get_bl_name(x), port) for x in range(len(self.all_ports))]
             right_names=["rbl_{0}_{1}".format(self.cell.get_br_name(x), port) for x in range(len(self.all_ports))]
-            # Keep track of the left pins that are the RBL
-            self.replica_bl_names[port]=left_names[self.all_ports[port]]
             # Interleave the left and right lists
             bitline_names = [x for t in zip(left_names, right_names) for x in t]
             self.replica_bitline_names[port] = bitline_names
+            self.add_pin_list(bitline_names, "INOUT")
 
         # Dummy bitlines are not connected to anything
         self.bitline_names.extend(self.bitcell_array_bitline_names)
 
-        for port in self.all_ports:
-            self.add_pin_list(self.replica_bitline_names[port], "INOUT")
+        # Array of all port bitline names
+        for port in range(self.add_left_rbl, self.add_left_rbl + self.add_right_rbl):
+            left_names=["rbl_{0}_{1}".format(self.cell.get_bl_name(x), port) for x in range(len(self.all_ports))]
+            right_names=["rbl_{0}_{1}".format(self.cell.get_br_name(x), port) for x in range(len(self.all_ports))]
+            # Interleave the left and right lists
+            bitline_names = [x for t in zip(left_names, right_names) for x in t]
+            self.replica_bitline_names[port] = bitline_names
+            self.add_pin_list(bitline_names, "INOUT")
+
         self.add_pin_list(self.bitline_names, "INOUT")
             
     def add_wordline_pins(self):
@@ -338,11 +347,11 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Grow from left to right, toward the array
         for bit in range(self.add_left_rbl):
-            offset = self.bitcell_offset.scale(-self.add_left_rbl + bit, -self.add_left_rbl - 1)
+            offset = self.bitcell_offset.scale(-self.add_left_rbl + bit, -self.left_rbl - 1)
             self.replica_col_inst[bit].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit in range(self.add_right_rbl):
-            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.add_left_rbl - 1)
+            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.left_rbl - 1)
             self.replica_col_inst[self.add_left_rbl + bit].place(offset)
 
         # Replica dummy rows
@@ -433,11 +442,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             inst = self.replica_col_inst[port]
             for (pin_name, bl_name) in zip(self.cell.get_all_bitline_names(), self.replica_bitline_names[port]):
                 pin = inst.get_pin(pin_name)
-
-                if bl_name in self.replica_bl_names:
-                    name = bl_name
-                else:
-                    name = "rbl_{0}_{1}".format(pin_name, port)
+                name = "rbl_{0}_{1}".format(pin_name, port)
                 self.add_layout_pin(text=name,
                                     layer=pin.layer,
                                     offset=pin.ll().scale(1, 0),

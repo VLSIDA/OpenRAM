@@ -23,11 +23,11 @@ class local_bitcell_array_test(openram_test):
         globals.init_openram(config_file)
 
         debug.info(2, "Testing 4x4 local bitcell array for 6t_cell without replica")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, ports=[0], add_replica=False)
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 0], add_rbl=[0, 0])
         self.local_check(a)
 
         debug.info(2, "Testing 4x4 local bitcell array for 6t_cell with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, left_rbl=1, rows=4, ports=[0])
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 0], add_rbl=[1, 0])
         self.local_check(a)
         
         globals.end_openram()

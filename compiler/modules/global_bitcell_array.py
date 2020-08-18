@@ -16,13 +16,11 @@ class global_bitcell_array(bitcell_base_array):
     Creates a global bitcell array with a number
     of local arrays of a sizes given by a tuple in the list.
     """
-    def __init__(self, sizes, name=""):
-        # Each bank will have the same number of rows
-        self.rows = sizes[0][0]
-        for (r, c) in sizes:
-            debug.check(r[0] == self.rows, "Cannot have non-uniform number of rows in global array.")
+    def __init__(self, rows, cols, ports, add_replica, name=""):
         # The total of all columns will be the number of columns
-        self.cols = sum(x[1] for x in sizes)
+        self.cols = sum(cols)
+        self.local_cols = cols
+        self.rows = rows
         self.sizes = sizes
         super().__init__(rows=self.rows, cols=self.cols, name=name)
 
@@ -49,9 +47,15 @@ class global_bitcell_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.local_mods = []
-        for (row, col) in self.sizes:
-            la = factory.create(module_type="local_bitcell_array", rows=row, cols=col)
-            self.add_mod(la)
+        for i, col in enumerate(self.local_cols):
+            if i==self.add_replica[0]:
+                la = factory.create(module_type="local_bitcell_array", rows=row, cols=col, left_rbl=i, add_replica=True)
+            elif len(self.add_replica)==2 and i==self.add_replica[2]:
+                la = factory.create(module_type="local_bitcell_array", rows=row, cols=col, left_rbl=i, add_replica=True)
+            else:
+                la = factory.create(module_type="local_bitcell_array", rows=row, cols=col, add_replica=False)
+                
+                self.add_mod(la)
             self.local_mods.append(la)
 
     def create_instances(self):

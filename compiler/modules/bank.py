@@ -382,9 +382,8 @@ class bank(design.design):
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.num_cols + self.num_spare_cols,
                                             rows=self.num_rows,
-                                            left_rbl=1,
-                                            right_rbl=1 if len(self.all_ports)>1 else 0,
-                                            bitcell_ports=self.all_ports)
+                                            rbl=[1, 1 if len(self.all_ports)>1 else 0])
+
         self.add_mod(self.bitcell_array)
 
         if(self.num_banks > 1):

@@ -21,34 +21,32 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     Requires a regular bitcell array, replica bitcell, and dummy
     bitcell (Bl/BR disconnected).
     """
-    def __init__(self, rows, cols, left_rbl, right_rbl, bitcell_ports, name, add_replica=True):
+    def __init__(self, rows, cols, rbl, name, add_rbl=None):
         super().__init__(name, rows, cols, column_offset=0)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
-        self.bitcell_ports = bitcell_ports
-        # If set to false, we increase the height for the replica wordline row, but don't
-        # actually add the column to this array. This is so the height matches other
-        # banks that have the replica columns.
-        # Number of replica columns to actually add
-        if add_replica:
-            self.add_left_rbl = self.left_rbl
-            self.add_right_rbl = self.right_rbl
+        # This is how many RBLs are in all the arrays
+        self.left_rbl = rbl[0]
+        self.right_rbl = rbl[1]
+        # This is how many RBLs are added to THIS array
+        if add_rbl == None:
+            self.add_left_rbl = rbl[0]
+            self.add_right_rbl = rbl[1]
         else:
-            self.add_left_rbl = 0
-            self.add_right_rbl = 0
+            self.add_left_rbl = add_rbl[0]
+            self.add_right_rbl = add_rbl[1]
+            for a, b in zip(add_rbl, rbl):
+                debug.check(a <= b,
+                            "Invalid number of RBLs for port configuration.")
 
-        debug.check(left_rbl + right_rbl <= len(self.all_ports),
+        debug.check(sum(rbl) <= len(self.all_ports),
                     "Invalid number of RBLs for port configuration.")
-        debug.check(left_rbl + right_rbl <= len(self.bitcell_ports),
-                    "Bitcell ports must match total RBLs.")
 
         # Two dummy rows plus replica even if we don't add the column
-        self.extra_rows = 2 + self.left_rbl + self.right_rbl
+        self.extra_rows = 2 + sum(rbl)
         # Two dummy cols plus replica if we add the column
         self.extra_cols = 2 + self.add_left_rbl + self.add_right_rbl
 
@@ -198,7 +196,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             left_names=["rbl_{0}_{1}".format(self.cell.get_bl_name(x), port) for x in range(len(self.all_ports))]
             right_names=["rbl_{0}_{1}".format(self.cell.get_br_name(x), port) for x in range(len(self.all_ports))]
             # Keep track of the left pins that are the RBL
-            self.replica_bl_names[port]=left_names[self.bitcell_ports[port]]
+            self.replica_bl_names[port]=left_names[self.all_ports[port]]
             # Interleave the left and right lists
             bitline_names = [x for t in zip(left_names, right_names) for x in t]
             self.replica_bitline_names[port] = bitline_names

@@ -25,15 +25,15 @@ class replica_column_test(openram_test):
         globals.setup_bitcell()
 
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4, left_rbl=1, right_rbl=0, replica_bit=1)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=1)
         self.local_check(a)
 
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4, left_rbl=1, right_rbl=1, replica_bit=6)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=6)
         self.local_check(a)
         
         debug.info(2, "Testing replica column for 6t_cell")
-        a = factory.create(module_type="replica_column", rows=4, left_rbl=2, right_rbl=0, replica_bit=2)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[2, 0], replica_bit=2)
         self.local_check(a)
         
         globals.end_openram()

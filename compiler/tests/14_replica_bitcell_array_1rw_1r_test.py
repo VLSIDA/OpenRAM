@@ -28,19 +28,15 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
-                           left_rbl=1,
-                           right_rbl=1,
-                           bitcell_ports=[0, 1],
-                           add_replica=False)
+                           rbl=[1, 1],
+                           add_rbl=[0, 0])
         self.local_check(a)
 
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
-                           left_rbl=1,
-                           right_rbl=1,
-                           bitcell_ports=[0, 1])
+                           rbl=[1, 1])
         self.local_check(a)
 
         
@@ -50,9 +46,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
             a = factory.create(module_type="replica_bitcell_array",
                                cols=4,
                                rows=4,
-                               left_rbl=2,
-                               right_rbl=0,
-                               bitcell_ports=[0, 1])
+                               rbl=[2, 0])
             self.local_check(a)
 
         globals.end_openram()

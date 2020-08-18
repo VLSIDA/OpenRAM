@@ -18,15 +18,16 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
-    def __init__(self, rows, cols, ports, left_rbl=0, right_rbl=0, add_replica=True, name=""):
+    def __init__(self, rows, cols, rbl, add_rbl=None, name=""):
         super().__init__(name, rows, cols, 0)
         debug.info(2, "create local array of size {} rows x {} cols words".format(rows,
-                                                                                  cols + left_rbl + right_rbl))
+                                                                                  cols + sum(rbl)))
 
         self.rows = rows
         self.cols = cols
-        self.add_replica=add_replica
-        self.all_ports = ports
+        self.rbl = rbl
+        if add_rbl == None:
+            self.add_rbl = rbl
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -62,10 +63,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.cols,
                                             rows=self.rows,
-                                            left_rbl=1,
-                                            right_rbl=1 if len(self.all_ports)>1 else 0,
-                                            bitcell_ports=self.all_ports,
-                                            add_replica=self.add_replica)
+                                            rbl=self.rbl)
         self.add_mod(self.bitcell_array)
 
         self.wl_array = factory.create(module_type="wordline_buffer_array",

@@ -1018,7 +1018,7 @@ class layout():
         Wrapper to create a vertical channel route
         """
         import channel_route
-        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True)
+        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
         self.add_inst("vc", cr)
         self.connect_inst([])
 
@@ -1027,7 +1027,7 @@ class layout():
         Wrapper to create a horizontal channel route
         """
         import channel_route
-        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False)
+        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
         self.add_inst("hc", cr)
         self.connect_inst([])
         

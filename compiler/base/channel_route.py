@@ -38,7 +38,7 @@ class channel_net():
     def __lt__(self, other):
         return self.min_value < other.min_value
 
-    def vcg_pin_overlap(self, pin1, pin2, pitch):
+    def pin_overlap(self, pin1, pin2, pitch):
         """ Check for vertical or horizontal overlap of the two pins """
         
         # FIXME: If the pins are not in a row, this may break.
@@ -53,7 +53,7 @@ class channel_net():
         overlaps = (not self.vertical and x_overlap) or (self.vertical and y_overlap)
         return overlaps
         
-    def vcg_nets_overlap(self, other, pitch):
+    def pins_overlap(self, other, pitch):
         """
         Check all the pin pairs on two nets and return a pin
         overlap if any pin overlaps.
@@ -61,12 +61,12 @@ class channel_net():
 
         for pin1 in self.pins:
             for pin2 in other.pins:
-                if self.vcg_pin_overlap(pin1, pin2, pitch):
+                if self.pin_overlap(pin1, pin2, pitch):
                     return True
 
         return False
 
-    def hcg_nets_overlap(self, other):
+    def segment_overlap(self, other):
         """
         Check if the horizontal span of the two nets overlaps eachother.
         """
@@ -84,7 +84,8 @@ class channel_route(design.design):
                  offset,
                  layer_stack,
                  directions=None,
-                 vertical=False):
+                 vertical=False,
+                 parent=None):
         """
         The net list is a list of the nets with each net being a list of pins
         to be connected. The offset is the lower-left of where the
@@ -103,6 +104,8 @@ class channel_route(design.design):
         self.layer_stack = layer_stack
         self.directions = directions
         self.vertical = vertical
+        # For debugging...
+        self.parent = parent
         
         if not directions or directions == "pref":
             # Use the preferred layer directions
@@ -167,7 +170,7 @@ class channel_route(design.design):
             for net2 in nets:
                 if net1.name == net2.name:
                     continue
-                if net1.hcg_nets_overlap(net2):
+                if net1.segment_overlap(net2):
                     try:
                         hcg[net1.name].add(net2.name)
                     except KeyError:
@@ -202,7 +205,7 @@ class channel_route(design.design):
                 if net1.name == net2.name:
                     continue
                 
-                if net1.vcg_nets_overlap(net2, pitch):
+                if net1.pins_overlap(net2, pitch):
                     vcg[net2.name].add(net1.name)
 
         # Check if there are any cycles net1 <---> net2 in the VCG
@@ -210,11 +213,12 @@ class channel_route(design.design):
 
         # Some of the pins may be to the left/below the channel offset,
         # so adjust if this is the case
-        min_value = min([n.min_value for n in nets])
+        self.min_value = min([n.min_value for n in nets])
+        self.max_value = min([n.max_value for n in nets])
         if self.vertical:
-            real_channel_offset = vector(self.offset.x, min_value)
+            real_channel_offset = vector(self.offset.x, min(self.min_value, self.offset.y))
         else:
-            real_channel_offset = vector(min_value, self.offset.y)
+            real_channel_offset = vector(min(self.min_value, self.offset.x), self.offset.y)
         current_offset = real_channel_offset
 
         # Sort nets by left edge value
@@ -256,7 +260,15 @@ class channel_route(design.design):
                 current_offset_value = current_offset.y if self.vertical else current_offset.x
                 initial_offset_value = real_channel_offset.y if self.vertical else real_channel_offset.x
                 if current_offset_value == initial_offset_value:
-                    # FIXME: We don't support cyclic VCGs right now.
+                    debug.info(0, "Channel offset: {}".format(real_channel_offset))
+                    debug.info(0, "Current offset: {}".format(current_offset))
+                    debug.info(0, "VCG {}".format(str(vcg)))
+                    debug.info(0, "HCG {}".format(str(hcg)))
+                    for net in nets:
+                        debug.info(0, "{0} pin: {1}".format(net.name, str(net.pins)))
+                    if self.parent:
+                        debug.info(0, "Saving vcg.gds")
+                        self.parent.gds_write("vcg.gds")
                     debug.error("Cyclic VCG in channel router.", -1)
 
                 # Increment the track and reset the offset to the start (like a typewriter)
@@ -267,14 +279,12 @@ class channel_route(design.design):
                     
         # Return the size of the channel
         if self.vertical:
-            self.width = 0
-            self.height = current_offset.y
-            return current_offset.y + self.vertical_nonpref_pitch - self.offset.y
+            self.width = current_offset.x + self.horizontal_nonpref_pitch - self.offset.x
+            self.height = self.max_value + self.vertical_nonpref_pitch - self.offset.y
         else:
-            self.width = current_offset.x
-            self.height = 0
-            return current_offset.x + self.horizontal_nonpref_pitch - self.offset.x
-
+            self.width = self.max_value + self.horizontal_nonpref_pitch - self.offset.x
+            self.height = current_offset.y + self.vertical_nonpref_pitch - self.offset.y
+            
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         try:

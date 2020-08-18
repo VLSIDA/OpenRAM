@@ -314,24 +314,23 @@ class hierarchical_decoder(design.design):
         for i in range(self.no_of_pre3x8):
             self.place_pre3x8(i)
 
+        self.predecode_height = 0
+        if self.no_of_pre2x4 > 0:
+            self.predecode_height = self.pre2x4_inst[-1].uy()
+        if self.no_of_pre3x8 > 0:
+            self.predecode_height = self.pre3x8_inst[-1].uy()
+
     def place_pre2x4(self, num):
         """ Place 2x4 predecoder to the left of the origin """
         
-        if (self.num_inputs == 2):
-            base = vector(-self.pre2_4.width, 0)
-        else:
-            base= vector(-self.pre2_4.width, num * (self.pre2_4.height + self.predecoder_spacing))
-
+        base= vector(-self.pre2_4.width, num * (self.pre2_4.height + self.predecoder_spacing))
         self.pre2x4_inst[num].place(base)
         
     def place_pre3x8(self, num):
         """ Place 3x8 predecoder to the left of the origin and above any 2x4 decoders """
-        if (self.num_inputs == 3):
-            offset = vector(-self.pre_3_8.width, 0)
-        else:
-            height = self.no_of_pre2x4 * (self.pre2_4.height + self.predecoder_spacing) + num * (self.pre3_8.height + self.predecoder_spacing)
-            offset = vector(-self.pre3_8.width, height)
-
+        height = self.no_of_pre2x4 * (self.pre2_4.height + self.predecoder_spacing) \
+                 + num * (self.pre3_8.height + self.predecoder_spacing)
+        offset = vector(-self.pre3_8.width, height)
         self.pre3x8_inst[num].place(offset)
 
     def create_row_decoder(self):

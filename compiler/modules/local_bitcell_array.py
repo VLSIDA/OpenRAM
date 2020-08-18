@@ -28,7 +28,8 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.rbl = rbl
         if add_rbl == None:
             self.add_rbl = rbl
-        
+        else:
+            self.add_rbl = add_rbl
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -74,14 +75,21 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     def add_pins(self):
 
         self.bitline_names = self.bitcell_array.get_all_bitline_names()
-        self.add_pin_list(self.bitline_names, "INOUT")
+        
         self.driver_wordline_inputs = [x for x in self.bitcell_array.get_all_wordline_names() if not x.startswith("dummy")]
         self.driver_wordline_outputs = [x + "i" for x in self.driver_wordline_inputs]
         self.array_wordline_inputs = [x + "i" if not x.startswith("dummy") else "gnd" for x in self.bitcell_array.get_all_wordline_names()]
-        self.add_pin_list(self.wordline_names, "INPUT")
         self.replica_names = self.bitcell_array.get_rbl_wordline_names()
-        self.add_pin_list(self.replica_names, "INPUT")
+
         self.bitline_names = self.bitcell_array.get_inouts()
+        
+        # Arrays are always:
+        # word lines (bottom to top)
+        # bit lines (left to right)
+        # vdd
+        # gnd
+        self.add_pin_list(self.driver_wordline_inputs, "INPUT")
+        self.add_pin_list(self.bitline_names, "INOUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 

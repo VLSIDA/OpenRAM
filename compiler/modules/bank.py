@@ -394,18 +394,20 @@ class bank(design.design):
         """ Creating Bitcell Array """
         self.bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                               mod=self.bitcell_array)
+        # Arrays are always:
+        # word lines (bottom to top)
+        # bit lines (left to right)
+        # vdd
+        # gnd
+
         temp = []
-        rbl_names = self.bitcell_array.get_rbl_bitline_names()
-        temp.extend(rbl_names)
-        bitline_names = self.bitcell_array.get_bitline_names()
-        temp.extend(bitline_names)
         # Replace RBL wordline with wl_en#
         wordline_names = self.bitcell_array.get_wordline_names()
-
+        
         rbl_wl_names = []
         for port in self.all_ports:
             rbl_wl_names.append(self.bitcell_array.get_rbl_wordline_names(port))
-            
+
         # Rename the RBL WL to the enable name
         for port in self.all_ports:
             wordline_names = [x.replace(rbl_wl_names[port], "wl_en{0}".format(port)) for x in wordline_names]
@@ -414,6 +416,12 @@ class bank(design.design):
         # Connect the dummy WL to gnd
         wordline_names = ["gnd" if x.startswith("dummy") else x for x in wordline_names]
         temp.extend(wordline_names)
+
+        rbl_names = self.bitcell_array.get_rbl_bitline_names()
+        temp.extend(rbl_names)
+        bitline_names = self.bitcell_array.get_bitline_names()
+        temp.extend(bitline_names)
+        
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)

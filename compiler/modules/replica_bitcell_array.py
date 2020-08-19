@@ -218,8 +218,10 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.add_pin_list(self.bitline_names, "INOUT")
             
     def add_wordline_pins(self):
-        
-        # All wordline names for all ports
+
+        # Regular wordline names
+        self.main_wordline_names = []
+        # Create the full WL names include dummy, replica, and regular bit cells
         self.wordline_names = []
         # Wordline names for each port
         self.wordline_names_by_port = [[] for x in self.all_ports]
@@ -234,9 +236,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # These are the non-indexed names
         dummy_cell_wl_names = ["dummy_" + x for x in self.cell.get_all_wl_names()]
         
-        # Create the full WL names include dummy, replica, and regular bit cells
-        self.wordline_names = []
-        
         self.dummy_wordline_names["bot"] = ["{0}_bot".format(x) for x in dummy_cell_wl_names]
         self.wordline_names.extend(self.dummy_wordline_names["bot"])
         
@@ -250,6 +249,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             
         # Regular WLs
         self.wordline_names.extend(self.bitcell_array_wordline_names)
+        self.main_wordline_names = self.bitcell_array_wordline_names
         
         # Right port WLs
         for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
@@ -490,9 +490,14 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             bl_names = self.replica_bitline_names[port]
             return bl_names[2 * port:2 * port + 2]
 
-    def get_wordline_names(self):
+    def get_wordline_names(self, port=None):
         """ Return the wordline names """
-        return self.wordline_names
+        if port == None:
+            return self.wordline_names
+        else:
+            wl_name = self.cell.get_all_wl_names()[port]
+            temp = [x for x in self.wordline_names if wl_name in x]
+            return temp
 
     def get_bitline_names(self):
         """ Return the bitline names """

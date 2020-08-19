@@ -595,6 +595,9 @@ class hierarchical_decoder(design.design):
         mid_point2 = vector(x_offset, y_offset)
         rail_pos = vector(self.predecode_bus[rail_name].cx(), mid_point2.y)
         self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
+        if OPTS.tech_name == "sky130":
+            above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height/2))
+            self.add_path(self.bus_layer, [rail_pos, above_rail], width = self.li_width + self.m1_enclose_mcon * 2)
 
         # pin_pos = pin.center()
         # rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)

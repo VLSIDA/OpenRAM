@@ -274,6 +274,10 @@ class hierarchical_predecode(design.design):
                                             height=via.mod.second_layer_height,
                                             width=via.mod.second_layer_width)
             
+            if OPTS.tech_name == "sky130":
+                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height/2))
+                self.add_path(self.bus_layer, [rail_pos, below_rail], width = self.li_width + self.m1_enclose_mcon * 2)
+            
     def route_and_to_rails(self):
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()

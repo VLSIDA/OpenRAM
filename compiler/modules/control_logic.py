@@ -23,7 +23,7 @@ class control_logic(design.design):
     def __init__(self, num_rows, words_per_row, word_size, spare_columns=None, sram=None, port_type="rw", name=""):
         """ Constructor """
         name = "control_logic_" + port_type
-        design.design.__init__(self, name)
+        super().__init__(name)
         debug.info(1, "Creating {}".format(name))
         self.add_comment("num_rows: {0}".format(num_rows))
         self.add_comment("words_per_row: {0}".format(words_per_row))
@@ -869,7 +869,6 @@ class control_logic(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
-
     def get_delays_to_wl(self):
         """Get the delay (in delay units) of the clk to a wordline in the bitcell array"""
         debug.check(self.sram.all_mods_except_control_done, "Cannot calculate sense amp enable delay unless all module have been added.")

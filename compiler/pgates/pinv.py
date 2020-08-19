@@ -44,7 +44,7 @@ class pinv(pgate.pgate):
         self.pmos_size = beta * size
         self.beta = beta
     
-        pgate.pgate.__init__(self, name, height, add_wells)
+        super().__init__(name, height, add_wells)
 
     def create_netlist(self):
         """ Calls all functions related to the generation of the netlist """

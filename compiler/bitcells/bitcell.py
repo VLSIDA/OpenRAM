@@ -33,7 +33,7 @@ class bitcell(bitcell_base.bitcell_base):
                      props.bitcell.cell_6t.pin.vdd,
                      props.bitcell.cell_6t.pin.gnd]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    storage_nets = ['Q', 'Qbar']
+    storage_nets = ['Q', 'Q_bar']
 
     (width, height) = utils.get_libcell_size("cell_6t",
                                              GDS["unit"],

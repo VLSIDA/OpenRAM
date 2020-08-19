@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<technology>
+ <name>SCMOS</name>
+ <description/>
+ <dbu>0.001</dbu>
+ <base-path/>
+ <layer-properties_file>mosis.lyp</layer-properties_file>
+ <add-other-layers>true</add-other-layers>
+ <connectivity>
+  <connection>Active,ActX,Metal1</connection>
+  <connection>Poly1,P1Con,Metal1</connection>
+  <connection>Metal1,Via,Metal2</connection>
+  <connection>Metal2,Via2,Metal3</connection>
+  <connection>Metal3,Via3,Metal4</connection>
+  <symbols>Active='43/0'</symbols>
+  <symbols>Poly1='46/0'</symbols>
+  <symbols>P1Con='47/0'</symbols>
+  <symbols>ActX='48/0'</symbols>
+  <symbols>Metal1='49/0'</symbols>
+  <symbols>Via='50/0'</symbols>
+  <symbols>Metal2='51/0'</symbols>
+  <symbols>Via2='61/0'</symbols>
+  <symbols>Metal3.='62/0'</symbols>
+  <symbols>Via3='30/0'</symbols>
+  <symbols>Metal4='31/0'</symbols>
+ </connectivity>
+</technology>

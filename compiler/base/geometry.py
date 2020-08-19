@@ -12,6 +12,8 @@ import debug
 from vector import vector
 import tech
 import math
+import copy
+import numpy as np
 from globals import OPTS
 from utils import round_to_grid
 
@@ -160,7 +162,7 @@ class instance(geometry):
     """
     def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """Initializes an instance to represent a module"""
-        geometry.__init__(self)
+        super().__init__()
         debug.check(mirror not in ["R90", "R180", "R270"],
                     "Please use rotation and not mirroring during instantiation.")
 
@@ -269,6 +271,134 @@ class instance(geometry):
             p.transform(self.offset, self.mirror, self.rotate)
             new_pins.append(p)
         return new_pins
+    
+    def calculate_transform(self, node):
+        #set up the rotation matrix        
+        angle = math.radians(float(node.rotate))
+        mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
+                            [math.sin(angle),math.cos(angle),0.0],
+                            [0.0,0.0,1.0]])
+
+        #set up translation matrix
+        translateX = float(node.offset[0])
+        translateY = float(node.offset[1])
+        mTranslate = np.array([[1.0,0.0,translateX],
+                                [0.0,1.0,translateY],
+                                [0.0,0.0,1.0]])
+        
+        #set up the scale matrix (handles mirror X)
+        scaleX = 1.0
+        if(node.mirror == 'MX'):
+            scaleY = -1.0
+        else:
+            scaleY = 1.0
+        mScale = np.array([[scaleX,0.0,0.0],
+                            [0.0,scaleY,0.0],
+                            [0.0,0.0,1.0]])
+        
+        return (mRotate, mScale, mTranslate)
+
+    def apply_transform(self, mtransforms, uVector, vVector, origin):
+        origin = np.dot(mtransforms[0], origin)  #rotate
+        uVector = np.dot(mtransforms[0], uVector)  #rotate
+        vVector = np.dot(mtransforms[0], vVector)  #rotate
+        origin = np.dot(mtransforms[1], origin)  #scale
+        uVector = np.dot(mtransforms[1], uVector)  #scale
+        vVector = np.dot(mtransforms[1], vVector)  #scale
+        origin = np.dot(mtransforms[2], origin)
+
+        return(uVector, vVector, origin)
+
+    def apply_path_transform(self, path):
+        uVector = np.array([[1.0],[0.0],[0.0]])
+        vVector = np.array([[0.0],[1.0],[0.0]])
+        origin = np.array([[0.0],[0.0],[1.0]]) 
+
+        while(path):
+            instance = path.pop(-1)
+            mtransforms = self.calculate_transform(instance)
+            (uVector, vVector, origin) = self.apply_transform(mtransforms, uVector, vVector, origin)
+        
+        return (uVector, vVector, origin)
+
+    def reverse_transformation_bitcell(self, cell_name):
+        path = [] # path currently follwed in bitcell search
+        cell_paths = [] # saved paths to bitcells
+        origin_offsets = [] # cell to bank offset
+        Q_offsets = [] # Q to cell offet
+        Q_bar_offsets = [] # Q_bar to cell offset
+        bl_offsets = [] # bl to cell offset
+        br_offsets = [] # br to cell offset
+        bl_meta = [] # bl offset metadata (row,col,name)
+        br_meta  = [] #br offset metadata (row,col,name)
+
+        def walk_subtree(node):
+            path.append(node)
+
+            if node.mod.name == cell_name:
+                cell_paths.append(copy.copy(path))
+
+                inst_name = path[-1].name
+                
+                # get the row and col names from the path
+                row = int(path[-1].name.split('_')[-2][1:])
+                col = int(path[-1].name.split('_')[-1][1:])
+
+                cell_bl_meta = []
+                cell_br_meta = []
+
+                normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
+                (normalized_bl_offsets, normalized_br_offsets, bl_names, br_names) = node.mod.get_normalized_bitline_offset()
+                
+                for offset in range(len(normalized_bl_offsets)):
+                    for port in range(len(bl_names)):
+                        cell_bl_meta.append([bl_names[offset], row, col, port])
+
+                for offset in range(len(normalized_br_offsets)):
+                    for port in range(len(br_names)):
+                        cell_br_meta.append([br_names[offset], row, col, port])
+
+                Q_x = normalized_storage_nets[0][0]
+                Q_y = normalized_storage_nets[0][1]
+
+                Q_bar_x = normalized_storage_nets[1][0]
+                Q_bar_y = normalized_storage_nets[1][1]
+
+                if node.mirror == 'MX':
+                    Q_y = -1 * Q_y
+                    Q_bar_y = -1 * Q_bar_y
+
+                    for pair in range(len(normalized_bl_offsets)):
+                        normalized_bl_offsets[pair] = (normalized_bl_offsets[pair][0], 
+                                -1 * normalized_bl_offsets[pair][1])
+
+                    for pair in range(len(normalized_br_offsets)):
+                        normalized_br_offsets[pair] = (normalized_br_offsets[pair][0], 
+                                -1 * normalized_br_offsets[pair][1])
+                            
+
+                Q_offsets.append([Q_x, Q_y])    
+                Q_bar_offsets.append([Q_bar_x, Q_bar_y])
+                
+                
+                bl_offsets.append(normalized_bl_offsets)
+                br_offsets.append(normalized_br_offsets)
+
+                bl_meta.append(cell_bl_meta)
+                br_meta.append(cell_br_meta)
+
+            elif node.mod.insts is not []:
+                for instance in node.mod.insts:
+                    walk_subtree(instance)
+            path.pop(-1)
+
+        walk_subtree(self)
+        for path in cell_paths:
+            vector_spaces = self.apply_path_transform(path)
+            origin = vector_spaces[2]
+            origin_offsets.append([origin[0], origin[1]])
+
+        return(origin_offsets, Q_offsets, Q_bar_offsets, bl_offsets, br_offsets, bl_meta, br_meta)
 
     def __str__(self):
         """ override print function output """
@@ -284,7 +414,7 @@ class path(geometry):
 
     def __init__(self, lpp, coordinates, path_width):
         """Initializes a path for the specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "path"
         self.layerNumber = lpp[0]
         self.layerPurpose = lpp[1]
@@ -322,7 +452,7 @@ class label(geometry):
 
     def __init__(self, text, lpp, offset, zoom=-1):
         """Initializes a text label for specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "label"
         self.text = text
         self.layerNumber = lpp[0]
@@ -366,7 +496,7 @@ class rectangle(geometry):
 
     def __init__(self, lpp, offset, width, height):
         """Initializes a rectangular shape for specified layer"""
-        geometry.__init__(self)
+        super().__init__()
         self.name = "rect"
         self.layerNumber = lpp[0]
         self.layerPurpose = lpp[1]

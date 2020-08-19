@@ -31,7 +31,7 @@ class hierarchical_predecode(design.design):
         self.column_decoder = (height != b.height)
             
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
-        design.design.__init__(self, name)
+        super().__init__(name)
     
     def add_pins(self):
         for k in range(self.number_of_inputs):

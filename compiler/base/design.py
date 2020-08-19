@@ -20,7 +20,7 @@ class design(hierarchy_design):
     """
 
     def __init__(self, name):
-        hierarchy_design.__init__(self, name)
+        super().__init__(name)
         
         self.setup_drc_constants()
         self.setup_layer_constants()
@@ -230,13 +230,14 @@ class design(hierarchy_design):
         self.write_ports = []
         # These are the write-only port indices.
         self.writeonly_ports = []
-        # These are teh read/write and read-only port indice
+        # These are the read/write and read-only port indices
         self.read_ports = []
         # These are the read-only port indices.
         self.readonly_ports = []
         # These are all the ports
         self.all_ports = list(range(total_ports))
-        
+
+        # The order is always fixed as RW, W, R
         port_number = 0
         for port in range(OPTS.num_rw_ports):
             self.readwrite_ports.append(port_number)

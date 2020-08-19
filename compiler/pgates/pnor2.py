@@ -42,7 +42,7 @@ class pnor2(pgate.pgate):
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
 
         # Creates the netlist and layout
-        pgate.pgate.__init__(self, name, height, add_wells)
+        super().__init__(name, height, add_wells)
         
     def create_netlist(self):
         self.add_pins()

@@ -56,7 +56,30 @@ class stimuli():
         for pin in pins:
             self.sf.write("{0} ".format(pin))
         self.sf.write("{0}\n".format(model_name))
+    
+    def inst_sram_pex(self, pins, model_name):
+        self.sf.write("X{0} ".format(model_name))
+        for pin in pins:
+            self.sf.write("{0} ".format(pin))
+        for bank in range(OPTS.num_banks):
+            row = int(OPTS.num_words / OPTS.words_per_row) - 1
+            col = int(OPTS.word_size * OPTS.words_per_row) - 1 
+            self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
+            self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
+        #    can't add all bitcells to top level due to ngspice max port count of 1005
+        #    for row in range(int(OPTS.num_words / OPTS.words_per_row)):
+        #        for col in range(int(OPTS.word_size * OPTS.words_per_row)):
+        #            self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
+        #            self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
+        for bank in range(OPTS.num_banks):
+            for col in range(OPTS.word_size * OPTS.words_per_row):
+                for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
+                    self.sf.write("bl{0}_{1} ".format(port, col))
+                    self.sf.write("br{0}_{1} ".format(port, col))
+                  
 
+            self.sf.write("s_en{0} ".format(bank))
+        self.sf.write("{0}\n".format(model_name))
 
     def create_inverter(self, size=1, beta=2.5):
         """ Generates inverter for the top level signals (only for sim purposes) """

@@ -38,7 +38,7 @@ class pinv_dec(pinv.pinv):
         else:
             self.supply_layer = "m2"
         
-        pinv.pinv.__init__(self, name, size, beta, self.cell_height, add_wells)
+        super().__init__(name, size, beta, self.cell_height, add_wells)
 
     def determine_tx_mults(self):
         """

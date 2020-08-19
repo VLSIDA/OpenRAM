@@ -18,7 +18,7 @@ class hierarchical_decoder(design.design):
     Dynamically generated hierarchical decoder.
     """
     def __init__(self, name, num_outputs):
-        design.design.__init__(self, name)
+        super().__init__(name)
 
         self.AND_FORMAT = "DEC_AND_{0}"
         

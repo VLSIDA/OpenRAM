@@ -24,7 +24,7 @@ class functional(simulation):
     """
 
     def __init__(self, sram, spfile, corner):
-        simulation.__init__(self, sram, spfile, corner)
+        super().__init__(sram, spfile, corner)
         
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:

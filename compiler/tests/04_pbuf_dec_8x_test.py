@@ -15,14 +15,19 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-class pbuf_test(openram_test):
+class pbuf_dec_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing buffer 8x")
-        a = factory.create(module_type="pbuf", size=8)
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+        
+        debug.info(2, "Checking 8x size decoder buffer")
+        a = factory.create(module_type="pbuf_dec", size=8)
         self.local_check(a)
 
         globals.end_openram()

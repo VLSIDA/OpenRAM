@@ -60,13 +60,20 @@ class replica_column(design.design):
 
     def add_pins(self):
 
-        for bl_name in self.cell.get_all_bitline_names():
-            # In the replica column, these are only outputs!
-            self.add_pin("{0}_{1}".format(bl_name, 0), "OUTPUT")
+        self.bitline_names = [[] for port in self.all_ports]
+        col = 0
+        for port in self.all_ports:
+            self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
+            self.bitline_names[port].append("br_{0}_{1}".format(port, col))
+        self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
+        self.add_pin_list(self.all_bitline_names, "OUTPUT")
 
+        self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.total_size):
-            for wl_name in self.cell.get_all_wl_names():
-                self.add_pin("{0}_{1}".format(wl_name, row), "INPUT")
+            for port in self.all_ports:
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        self.add_pin_list(self.all_wordline_names, "INPUT")
 
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
@@ -153,9 +160,15 @@ class replica_column(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        for bl_name in self.cell.get_all_bitline_names():
-            bl_pin = self.cell_inst[0].get_pin(bl_name)
-            self.add_layout_pin(text=bl_name,
+        for port in self.all_ports:
+            bl_pin = self.cell_inst[0].get_pin(self.cell.get_bl_name(port))
+            self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
+                                layer=bl_pin.layer,
+                                offset=bl_pin.ll().scale(1, 0),
+                                width=bl_pin.width(),
+                                height=self.height)
+            bl_pin = self.cell_inst[0].get_pin(self.cell.get_br_name(port))
+            self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
                                 layer=bl_pin.layer,
                                 offset=bl_pin.ll().scale(1, 0),
                                 width=bl_pin.width(),
@@ -173,10 +186,10 @@ class replica_column(design.design):
             row_range_max = self.total_size
             row_range_min = 0
 
-        for row in range(row_range_min, row_range_max):
-            for wl_name in self.cell.get_all_wl_names():
-                wl_pin = self.cell_inst[row].get_pin(wl_name)
-                self.add_layout_pin(text="{0}_{1}".format(wl_name, row),
+        for port in self.all_ports:
+            for row in range(row_range_min, row_range_max):
+                wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,

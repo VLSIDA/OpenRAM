@@ -424,6 +424,7 @@ class bank(design.design):
         
         temp.append("vdd")
         temp.append("gnd")
+        import pdb; pdb.set_trace()
         self.connect_inst(temp)
         
     def place_bitcell_array(self, offset):

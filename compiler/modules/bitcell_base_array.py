@@ -31,32 +31,43 @@ class bitcell_base_array(design.design):
         self.create_all_wordline_names()
 
     def get_all_bitline_names(self, prefix=""):
-        return [prefix + x for x in self.bitline_names]
+        return [prefix + x for x in self.all_bitline_names]
 
     def create_all_bitline_names(self):
-        self.bitline_names = list()
-        bitline_names = self.cell.get_all_bitline_names()
-
+        self.bitline_names = [[] for port in self.all_ports]
         for col in range(self.column_size):
-            for cell_column in bitline_names:
-                self.bitline_names.append("{0}_{1}".format(cell_column, col))
-
+            for port in self.all_ports:
+                self.bitline_names[port].extend(["bl_{0}_{1}".format(port, col),
+                                                 "br_{0}_{1}".format(port, col)])
+        # Make a flat list too
+        self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
+                
     def get_all_wordline_names(self, prefix=""):
-        return [prefix + x for x in self.wordline_names]
+        return [prefix + x for x in self.all_wordline_names]
 
     def create_all_wordline_names(self):
-
-        self.wordline_names = list()
-        wordline_names = self.cell.get_all_wl_names()
-
+        self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.row_size):
-            for cell_row in wordline_names:
-                self.wordline_names.append("{0}_{1}".format(cell_row, row))
-
+            for port in self.all_ports:
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        
+    def get_bitline_names(self, port=None):
+        if port == None:
+            return self.all_bitline_names
+        else:
+            return self.bitline_names[port]
+        
+    def get_wordline_names(self, port=None):
+        if port == None:
+            return self.all_wordline_names
+        else:
+            return self.wordline_names[port]
+        
     def add_pins(self):
-        for bl_name in self.bitline_names:
+        for bl_name in self.get_bitline_names():
             self.add_pin(bl_name, "INOUT")
-        for wl_name in self.wordline_names:
+        for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
@@ -64,12 +75,10 @@ class bitcell_base_array(design.design):
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
-
         bitcell_pins = []
-        # bitlines
-        bitcell_pins.extend([x for x in self.bitline_names if x.endswith("_{0}".format(col))])
-        # wordlines
-        bitcell_pins.extend([x for x in self.wordline_names if x.endswith("_{0}".format(row))])
+        for port in self.all_ports:
+            bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
+        bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
 
@@ -80,19 +89,25 @@ class bitcell_base_array(design.design):
 
         bitline_names = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
-            for bl_name in bitline_names:
-                bl_pin = self.cell_inst[0, col].get_pin(bl_name)
-                self.add_layout_pin(text="{0}_{1}".format(bl_name, col),
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
                                     layer=bl_pin.layer,
                                     offset=bl_pin.ll().scale(1, 0),
                                     width=bl_pin.width(),
                                     height=self.height)
+                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                self.add_layout_pin(text="br_{0}_{1}".format(port, col),
+                                    layer=br_pin.layer,
+                                    offset=br_pin.ll().scale(1, 0),
+                                    width=br_pin.width(),
+                                    height=self.height)
 
         wl_names = self.cell.get_all_wl_names()
         for row in range(self.row_size):
-            for wl_name in wl_names:
-                wl_pin = self.cell_inst[row, 0].get_pin(wl_name)
-                self.add_layout_pin(text="{0}_{1}".format(wl_name, row),
+            for port in self.all_ports:
+                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,

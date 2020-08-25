@@ -15,7 +15,7 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 05_global_bitcell_array_test")
+@unittest.skip("SKIPPING 05_global_bitcell_array_test")
 class global_bitcell_array_test(openram_test):
 
     def runTest(self):

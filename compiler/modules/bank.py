@@ -68,7 +68,7 @@ class bank(design.design):
         self.route_layout()
         
         # Can remove the following, but it helps for debug!
-        # self.add_lvs_correspondence_points()
+        self.add_lvs_correspondence_points()
 
         # Remember the bank center for further placement
         self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)
@@ -83,7 +83,7 @@ class bank(design.design):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}_{1}".format(port, bit), "OUTPUT")
         for port in self.all_ports:
-            self.add_pin_list(self.bitcell_array.get_rbl_bitline_names(port), "OUTPUT")
+            self.add_pin("rbl_bl_{0}_{0}".format(port), "OUTPUT")
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}_{1}".format(port, bit), "INPUT")
@@ -145,7 +145,7 @@ class bank(design.design):
                                   to_layer="m3",
                                   offset=pin_offset)
         self.add_path(bl_pin.layer, [pin_offset, pin_pos])
-        self.add_layout_pin_segment_center(text="rbl_bl{0}".format(port),
+        self.add_layout_pin_segment_center(text="rbl_bl_{0}_{0}".format(port),
                                            layer="m3",
                                            start=left_right_offset,
                                            end=pin_offset)
@@ -357,13 +357,6 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
         
-        # create arrays of bitline and bitline_bar names for read, write, or all ports
-        self.bitcell = factory.create(module_type="bitcell")
-        self.bl_names = self.bitcell.get_all_bl_names()
-        self.br_names = self.bitcell.get_all_br_names()
-        self.wl_names = self.bitcell.get_all_wl_names()
-        self.bitline_names = self.bitcell.get_all_bitline_names()
-
         self.port_data = []
         for port in self.all_ports:
             temp_pre = factory.create(module_type="port_data",
@@ -401,30 +394,34 @@ class bank(design.design):
         # gnd
 
         temp = []
-        # Replace RBL wordline with wl_en#
-        wordline_names = self.bitcell_array.get_wordline_names()
         
-        rbl_wl_names = []
-        for port in self.all_ports:
-            rbl_wl_names.append(self.bitcell_array.get_rbl_wordline_names(port))
+        temp.extend(self.bitcell_array.get_dummy_bitline_names(0))
+        temp.extend(self.bitcell_array.get_rbl_bitline_names(0))
+        temp.extend(self.bitcell_array.get_bitline_names())
+        if len(self.all_ports) > 1:
+            temp.extend(self.bitcell_array.get_rbl_bitline_names(1))
+        temp.extend(self.bitcell_array.get_dummy_bitline_names(1))
 
+        wordline_names = self.bitcell_array.get_dummy_wordline_names(0)
+        wordline_names.extend(self.bitcell_array.get_rbl_wordline_names(0))
+        wordline_names.extend(self.bitcell_array.get_wordline_names())
+        if len(self.all_ports) > 1:
+            wordline_names.extend(self.bitcell_array.get_rbl_wordline_names(1))
+        wordline_names.extend(self.bitcell_array.get_dummy_wordline_names(1))
+        
         # Rename the RBL WL to the enable name
         for port in self.all_ports:
-            wordline_names = [x.replace(rbl_wl_names[port], "wl_en{0}".format(port)) for x in wordline_names]
+            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
+            wordline_names = [x.replace(rbl_wl_name[port], "wl_en{0}".format(port)) for x in wordline_names]
         # Connect the other RBL WL to gnd
         wordline_names = ["gnd" if x.startswith("rbl_wl") else x for x in wordline_names]
         # Connect the dummy WL to gnd
         wordline_names = ["gnd" if x.startswith("dummy") else x for x in wordline_names]
         temp.extend(wordline_names)
-
-        rbl_names = self.bitcell_array.get_rbl_bitline_names()
-        temp.extend(rbl_names)
-        bitline_names = self.bitcell_array.get_bitline_names()
-        temp.extend(bitline_names)
         
         temp.append("vdd")
         temp.append("gnd")
-        import pdb; pdb.set_trace()
+
         self.connect_inst(temp)
         
     def place_bitcell_array(self, offset):
@@ -433,17 +430,15 @@ class bank(design.design):
 
     def create_port_data(self):
         """ Creating Port Data """
+
         self.port_data_inst = [None] * len(self.all_ports)
         for port in self.all_ports:
             self.port_data_inst[port]=self.add_inst(name="port_data{}".format(port),
                                                     mod=self.port_data[port])
 
             temp = []
-            rbl_bl_names = self.bitcell_array.get_rbl_bitline_names(port)
-            temp.extend(rbl_bl_names)
-            for col in range(self.num_cols + self.num_spare_cols):
-                temp.append("{0}_{1}".format(self.bl_names[port], col))
-                temp.append("{0}_{1}".format(self.br_names[port], col))
+            temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
+            temp.extend(self.bitcell_array.get_bitline_names(port))
             if port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
                     temp.append("dout{0}_{1}".format(port, bit))
@@ -488,8 +483,7 @@ class bank(design.design):
             for bit in range(self.row_addr_size):
                 temp.append("addr{0}_{1}".format(port, bit + self.col_addr_size))
             temp.append("wl_en{}".format(port))
-            for row in range(self.num_rows):
-                temp.append("{0}_{1}".format(self.wl_names[port], row))
+            temp.extend(self.bitcell_array.get_wordline_names(port))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
             
@@ -707,27 +701,28 @@ class bank(design.design):
         # Connect the regular bitlines
         inst2 = self.port_data_inst[port]
         inst1 = self.bitcell_array_inst
-        inst1_bl_name = self.bl_names[port] + "_{}"
-        inst1_br_name = self.br_names[port] + "_{}"
+        inst1_bl_name = [x for x in self.bitcell_array.get_bitline_names(port) if "bl" in x]
+        inst1_br_name = [x for x in self.bitcell_array.get_bitline_names(port) if "br" in x]
 
-        inst2_bl_name = inst2.mod.get_bl_names() + "_{}"
-        inst2_br_name = inst2.mod.get_br_names() + "_{}"
-        
+        inst2_bl_name = []
+        inst2_br_name = []
+        for col in range(self.num_cols):
+            inst2_bl_name.append(inst2.mod.get_bl_names() + "_{}".format(col))
+            inst2_br_name.append(inst2.mod.get_br_names() + "_{}".format(col))
+        for col in range(self.num_spare_cols):
+            inst2_bl_name.append("spare" + inst2.mod.get_bl_names() + "_{}".format(col))
+            inst2_br_name.append("spare" + inst2.mod.get_br_names() + "_{}".format(col))
+
         self.connect_bitlines(inst1=inst1,
                               inst2=inst2,
-                              num_bits=self.num_cols,
                               inst1_bl_name=inst1_bl_name,
                               inst1_br_name=inst1_br_name,
                               inst2_bl_name=inst2_bl_name,
                               inst2_br_name=inst2_br_name)
         
-        # connect spare bitlines
-        for i in range(self.num_spare_cols):
-            self.connect_bitline(inst1, inst2, inst1_bl_name.format(self.num_cols + i), "spare" + inst2_bl_name.format(i))
-            self.connect_bitline(inst1, inst2, inst1_br_name.format(self.num_cols + i), "spare" + inst2_br_name.format(i))
 
         # Connect the replica bitlines
-        rbl_bl_names = self.bitcell_array.get_rbl_bitline_names(port)
+        rbl_bl_names = self.bitcell_array.get_rbl_bitline_names(port)[2 * port: 2 * port + 2]
         for (array_name, data_name) in zip(rbl_bl_names, ["rbl_bl", "rbl_br"]):
             self.connect_bitline(inst1, inst2, array_name, data_name)
         
@@ -826,16 +821,16 @@ class bank(design.design):
                        vector(top_loc.x, yoffset),
                        top_loc])
         
-    def connect_bitlines(self, inst1, inst2, num_bits,
+    def connect_bitlines(self, inst1, inst2,
                          inst1_bl_name, inst1_br_name,
                          inst2_bl_name, inst2_br_name):
         """
         Connect the bl and br of two modules.
         """
-
-        for col in range(num_bits):
-            self.connect_bitline(inst1, inst2, inst1_bl_name.format(col), inst2_bl_name.format(col))
-            self.connect_bitline(inst1, inst2, inst1_br_name.format(col), inst2_br_name.format(col))
+        for (name1, name2) in zip(inst1_bl_name, inst2_bl_name):
+            self.connect_bitline(inst1, inst2, name1, name2)
+        for (name1, name2) in zip(inst1_br_name, inst2_br_name):
+            self.connect_bitline(inst1, inst2, name1, name2)
 
     def route_port_address(self, port):
         """ Connect Wordline driver to bitcell array wordline """
@@ -850,11 +845,12 @@ class bank(design.design):
     def route_port_address_left(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        for row in range(self.num_rows):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
             driver_wl_pos = driver_wl_pin.rc()
-            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(array_name)
             bitcell_wl_pos = bitcell_wl_pin.lc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
@@ -867,11 +863,12 @@ class bank(design.design):
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        for row in range(self.num_rows):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
             # The mid guarantees we exit the input cell to the right.
-            driver_wl_pin = self.port_address_inst[port].get_pin("wl_{}".format(row))
+            driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
             driver_wl_pos = driver_wl_pin.lc()
-            bitcell_wl_pin = self.bitcell_array_inst.get_pin(self.wl_names[port] + "_{}".format(row))
+            bitcell_wl_pin = self.bitcell_array_inst.get_pin(array_name)
             bitcell_wl_pos = bitcell_wl_pin.rc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].lx() + 0.5 * self.bitcell_array_inst.rx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
@@ -932,26 +929,29 @@ class bank(design.design):
         These should probably be turned off by default though, since extraction
         will show these as ports in the extracted netlist.
         """
+
+        for pin_name in self.bitcell_array.get_all_bitline_names():
+            self.copy_layout_pin(self.bitcell_array, pin_name)
         # Add the wordline names
-        for i in range(self.num_rows):
-            wl_name = "wl_{}".format(i)
-            wl_pin = self.bitcell_array_inst.get_pin(wl_name)
-            self.add_label(text=wl_name,
-                           layer="m1",
-                           offset=wl_pin.center())
+        # for i in range(self.num_rows):
+        #     wl_name = "wl_{}".format(i)
+        #     wl_pin = self.bitcell_array_inst.get_pin(wl_name)
+        #     self.add_label(text=wl_name,
+        #                    layer="m1",
+        #                    offset=wl_pin.center())
         
-        # Add the bitline names
-        for i in range(self.num_cols):
-            bl_name = "bl_{}".format(i)
-            br_name = "br_{}".format(i)
-            bl_pin = self.bitcell_array_inst.get_pin(bl_name)
-            br_pin = self.bitcell_array_inst.get_pin(br_name)
-            self.add_label(text=bl_name,
-                           layer="m2",
-                           offset=bl_pin.center())
-            self.add_label(text=br_name,
-                           layer="m2",
-                           offset=br_pin.center())
+        # # Add the bitline names
+        # for i in range(self.num_cols):
+        #     bl_name = "bl_{}".format(i)
+        #     br_name = "br_{}".format(i)
+        #     bl_pin = self.bitcell_array_inst.get_pin(bl_name)
+        #     br_pin = self.bitcell_array_inst.get_pin(br_name)
+        #     self.add_label(text=bl_name,
+        #                    layer="m2",
+        #                    offset=bl_pin.center())
+        #     self.add_label(text=br_name,
+        #                    layer="m2",
+        #                    offset=br_pin.center())
 
         # # Add the data output names to the sense amp output
         # for i in range(self.word_size):
@@ -962,24 +962,27 @@ class bank(design.design):
         #                    offset=data_pin.center())
 
         # Add labels on the decoder
-        for port in self.write_ports:
-            for i in range(self.word_size):
-                data_name = "dec_out_{}".format(i)
-                pin_name = "in_{}".format(i)
-                data_pin = self.wordline_driver_inst[port].get_pin(pin_name)
-                self.add_label(text=data_name,
-                               layer="m1",
-                               offset=data_pin.center())
+        # for port in self.write_ports:
+        #     for i in range(self.word_size):
+        #         data_name = "dec_out_{}".format(i)
+        #         pin_name = "in_{}".format(i)
+        #         data_pin = self.wordline_driver_inst[port].get_pin(pin_name)
+        #         self.add_label(text=data_name,
+        #                        layer="m1",
+        #                        offset=data_pin.center())
 
     def route_unused_wordlines(self):
         """ Connect the unused RBL and dummy wordlines to gnd """
         gnd_wl_names = []
 
         # Connect unused RBL WL to gnd
-        array_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("rbl")])
-        dummy_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("dummy")])
-        rbl_wl_names = set([self.bitcell_array.get_rbl_wordline_names(x) for x in self.all_ports])
-
+        # All RBL WL names
+        array_rbl_names = set(self.bitcell_array.get_rbl_wordline_names())
+        dummy_rbl_names = set(self.bitcell_array.get_dummy_wordline_names())
+        # List of used RBL WL names
+        rbl_wl_names = set()
+        for port in self.all_ports:
+            rbl_wl_names.add(self.bitcell_array.get_rbl_wordline_names(port)[port])
         gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
 
         for wl_name in gnd_wl_names:
@@ -1012,7 +1015,7 @@ class bank(design.design):
 
         rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
         connection.append((self.prefix + "wl_en{}".format(port),
-                           self.bitcell_array_inst.get_pin(rbl_wl_name)))
+                           self.bitcell_array_inst.get_pin(rbl_wl_name[port])))
 
         if port in self.write_ports:
             connection.append((self.prefix + "w_en{}".format(port),

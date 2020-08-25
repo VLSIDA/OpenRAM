@@ -58,7 +58,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         # self.offset_all_coordinates()
-
+        
     def create_netlist(self):
         """ Create and connect the netlist """
         self.add_modules()
@@ -165,6 +165,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def add_pins(self):
 
         # Arrays are always:
+        # bitlines (column first then port order)
+        # word lines (row first then port order)
         # dummy wordlines
         # replica wordlines
         # regular wordlines (bottom to top)
@@ -175,8 +177,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # vdd
         # gnd
         
-        self.add_wordline_pins()
         self.add_bitline_pins()
+        self.add_wordline_pins()
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -193,7 +195,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             for port in self.all_ports:
                 bitline_names = ["dummy_{0}_{1}".format(x, loc) for x in self.row_cap_left.get_bitline_names(port)]
                 self.dummy_col_bitline_names[-1].extend(bitline_names)
-                self.add_pin_list(bitline_names, "INOUT")
         self.all_dummy_col_bitline_names = [x for sl in self.dummy_col_bitline_names for x in sl]
 
         for port in range(self.add_left_rbl + self.add_right_rbl):
@@ -201,17 +202,23 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             right_names=["rbl_br_{0}_{1}".format(x, port) for x in self.all_ports]
             bitline_names = [x for t in zip(left_names, right_names) for x in t]
             self.rbl_bitline_names.append(bitline_names)
-            self.add_pin_list(bitline_names, "INOUT")
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in self.rbl_bitline_names for x in sl]
         
         for port in self.all_ports:
             bitline_names = self.bitcell_array.get_bitline_names(port)
             self.bitline_names.append(bitline_names)
-            self.add_pin_list(bitline_names, "INOUT")
         # Make a flat list too
-        self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
-            
+        self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
+
+        self.add_pin_list(self.dummy_col_bitline_names[0], "INOUT")
+        for port in range(self.add_left_rbl):
+            self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
+        self.add_pin_list(self.all_bitline_names, "INOUT")
+        for port in range(self.add_left_rbl, self.add_left_rbl + self.add_right_rbl):
+            self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
+        self.add_pin_list(self.dummy_col_bitline_names[1], "INOUT")
+        
     def add_wordline_pins(self):
 
         # Regular wordlines by port
@@ -225,19 +232,16 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         for loc in ["bot", "top"]:
             wordline_names = ["{0}_{1}".format(wl_name, loc) for wl_name in dummy_row_wordline_names]
             self.dummy_row_wordline_names.append(wordline_names)
-            self.add_pin_list(wordline_names, "INPUT")
         self.all_dummy_row_wordline_names = [x for sl in self.dummy_row_wordline_names for x in sl]
 
         for port in range(self.left_rbl + self.right_rbl):
             wordline_names=["rbl_wl_{0}_{1}".format(x, port) for x in self.all_ports]
             self.rbl_wordline_names.append(wordline_names)
-            self.add_pin_list(wordline_names, "INPUT")
         self.all_rbl_wordline_names = [x for sl in self.rbl_wordline_names for x in sl]
 
         for port in self.all_ports:
             wordline_names = self.bitcell_array.get_wordline_names(port)
             self.wordline_names.append(wordline_names)
-            self.add_pin_list(wordline_names, "INPUT")
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
 
         # All wordlines including dummy and RBL
@@ -249,6 +253,14 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         for p in range(self.left_rbl, self.left_rbl + self.right_rbl):
             self.replica_array_wordline_names.extend(self.rbl_wordline_names[p])
         self.replica_array_wordline_names.extend(self.dummy_row_wordline_names[1])
+
+        self.add_pin_list(self.dummy_row_wordline_names[0], "INPUT")
+        for port in range(self.left_rbl):
+            self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
+        self.add_pin_list(self.all_wordline_names)
+        for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
+            self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
+        self.add_pin_list(self.dummy_row_wordline_names[1], "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -447,38 +459,40 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         Inactive will be set to gnd. 
         """
         if port == None:
-            temp = []
-            for port in self.all_ports:
-                temp.extend(self.replica_wordline_names[port])
-            return temp
+            return self.all_rbl_wordline_names
         else:
-            wl_names = self.replica_wordline_names[port]
-            return wl_names[port]
+            return self.rbl_wordline_names[port]
 
     def get_rbl_bitline_names(self, port=None):
         """ Return the BL for the given RBL port """
         if port == None:
-            temp = []
-            for port in self.all_ports:
-                temp.extend(self.replica_bitline_names[port])
-            return temp
+            return self.all_rbl_bitline_names
         else:
-            bl_names = self.replica_bitline_names[port]
-            return bl_names[2 * port:2 * port + 2]
+            return self.rbl_bitline_names[port]
 
-    def get_wordline_names(self, port=None):
-        """ Return the wordline names """
+    def get_bitline_names(self, port=None):
+        """ Return the BL for the given RBL port """
         if port == None:
-            return self.wordline_names
+            return self.all_bitline_names
         else:
-            wl_name = self.cell.get_all_wl_names()[port]
-            temp = [x for x in self.wordline_names if wl_name in x]
-            return temp
+            return self.bitline_names[port]
+        
+    def get_dummy_wordline_names(self, port=None):
+        """ 
+        Return the ACTIVE WL for the given dummy port.
+        """
+        if port == None:
+            return self.all_dummy_row_wordline_names
+        else:
+            return self.dummy_row_wordline_names[port]
 
-    def get_bitline_names(self):
-        """ Return the bitline names """
-        return self.bitline_names
-
+    def get_dummy_bitline_names(self, port=None):
+        """ Return the BL for the given dummy port """
+        if port == None:
+            return self.all_dummy_col_bitline_names
+        else:
+            return self.dummy_col_bitline_names[port]
+        
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
         # Dynamic Power from Bitline

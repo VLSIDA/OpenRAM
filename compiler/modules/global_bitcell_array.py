@@ -70,7 +70,6 @@ class global_bitcell_array(design.design):
             self.add_mod(la)
             self.local_mods.append(la)
 
-        import pdb; pdb.set_trace()
         
     def add_pins(self):
         return

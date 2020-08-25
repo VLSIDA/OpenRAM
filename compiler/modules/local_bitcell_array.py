@@ -110,7 +110,6 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_wordline_names()]
 
         self.bitline_names = self.bitcell_array.bitline_names
-        import pdb; pdb.set_trace()
         
         # Arrays are always:
         # word lines (bottom to top)

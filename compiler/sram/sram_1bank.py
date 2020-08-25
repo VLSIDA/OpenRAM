@@ -554,7 +554,7 @@ class sram_1bank(sram_base):
         for port in self.all_ports:
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
-            dest_pin = self.bank_inst.get_pin("rbl_bl{}".format(port))
+            dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
             self.add_wire(self.m2_stack[::-1],
                           [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
             self.add_via_stack_center(from_layer=src_pin.layer,

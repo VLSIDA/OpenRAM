@@ -21,14 +21,15 @@ class hierarchical_predecode(design.design):
         self.number_of_inputs = input_number
 
         b = factory.create(module_type="bitcell")
+
         if not height:
             self.cell_height = b.height
             self.column_decoder = False
         else:
             self.cell_height = height
-        # If we are pitch matched to the bitcell, it's a predecoder
-        # otherwise it's a column decoder (out of pgates)
-        self.column_decoder = (height != b.height)
+            # If we are pitch matched to the bitcell, it's a predecoder
+            # otherwise it's a column decoder (out of pgates)
+            self.column_decoder = (height != b.height)
             
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         super().__init__(name)

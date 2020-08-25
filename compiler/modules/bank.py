@@ -68,7 +68,7 @@ class bank(design.design):
         self.route_layout()
         
         # Can remove the following, but it helps for debug!
-        self.add_lvs_correspondence_points()
+        # self.add_lvs_correspondence_points()
 
         # Remember the bank center for further placement
         self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)

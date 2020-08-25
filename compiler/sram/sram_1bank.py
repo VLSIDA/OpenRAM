@@ -260,6 +260,8 @@ class sram_1bank(sram_base):
             for signal in self.control_logic_inputs[port]:
                 if signal == "clk":
                     continue
+                if signal.startswith("rbl"):
+                    continue
                 if OPTS.perimeter_pins:
                     self.add_perimeter_pin(name=signal + "{}".format(port),
                                            pin=self.control_logic_insts[port].get_pin(signal),
@@ -590,7 +592,7 @@ class sram_1bank(sram_base):
         These should probably be turned off by default though, since extraction
         will show these as ports in the extracted netlist.
         """
-        
+        return
         for n in self.control_logic_outputs[0]:
             pin = self.control_logic_insts[0].get_pin(n)
             self.add_label(text=n,

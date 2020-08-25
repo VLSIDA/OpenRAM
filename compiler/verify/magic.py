@@ -150,7 +150,7 @@ def write_netgen_script(cell_name):
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
     f.write("readnet spice {0}.spice\n".format(cell_name))
     f.write("readnet spice {0}.sp\n".format(cell_name))
-    f.write("lvs {{{0}.spice {0}}} {{{0}.sp {0}}} {1} {0}.lvs.report\n".format(cell_name, setup_file))
+    f.write("lvs {{{0}.spice {0}}} {{{0}.sp {0}}} {1} {0}.lvs.report -json\n".format(cell_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()

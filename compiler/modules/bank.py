@@ -392,21 +392,9 @@ class bank(design.design):
         # vdd
         # gnd
 
-        temp = []
-        
-        temp.extend(self.bitcell_array.get_dummy_bitline_names(0))
-        temp.extend(self.bitcell_array.get_rbl_bitline_names(0))
-        temp.extend(self.bitcell_array.get_bitline_names())
-        if len(self.all_ports) > 1:
-            temp.extend(self.bitcell_array.get_rbl_bitline_names(1))
-        temp.extend(self.bitcell_array.get_dummy_bitline_names(1))
+        temp = self.bitcell_array.get_all_bitline_names()
 
-        wordline_names = self.bitcell_array.get_dummy_wordline_names(0)
-        wordline_names.extend(self.bitcell_array.get_rbl_wordline_names(0))
-        wordline_names.extend(self.bitcell_array.get_wordline_names())
-        if len(self.all_ports) > 1:
-            wordline_names.extend(self.bitcell_array.get_rbl_wordline_names(1))
-        wordline_names.extend(self.bitcell_array.get_dummy_wordline_names(1))
+        wordline_names = self.bitcell_array.get_all_wordline_names()
         
         # Rename the RBL WL to the enable name
         for port in self.all_ports:

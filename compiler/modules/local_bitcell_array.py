@@ -104,7 +104,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Connect unused RBL WL to gnd
         array_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("rbl")])
         dummy_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("dummy")])
-        rbl_wl_names = set([self.bitcell_array.get_rbl_wordline_names(x) for x in self.all_ports])
+        rbl_wl_names = set([x for port in self.all_ports for x in self.bitcell_array.get_rbl_wordline_names(port)])
         self.gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
         
         self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_wordline_names()]

@@ -495,14 +495,17 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         else:
             return self.wordline_names[port]
     
-    def get_all_wordline_names(self):
+    def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
         temp.extend(self.get_dummy_wordline_names(0))
         temp.extend(self.get_rbl_wordline_names(0))
-        temp.extend(self.all_wordline_names)
+        if port == None:
+            temp.extend(self.all_wordline_names)
+        else:
+            temp.extend(self.wordline_names[port])
         if len(self.all_ports) > 1:
-            temp.extend(self.rbl_wordline_names(1))
+            temp.extend(self.get_rbl_wordline_names(1))
         temp.extend(self.get_dummy_wordline_names(1))
         return temp
         

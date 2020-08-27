@@ -366,36 +366,6 @@ class delay(simulation):
         # so it makes the search awkward
         return set(factory.get_mods(OPTS.replica_bitline))
         
-    def get_primary_cell_mod(self, cell_mods):
-        """
-        Distinguish bitcell array mod from replica bitline array.
-        Assume there are no replica bitcells in the primary array.
-        """
-        if len(cell_mods) == 1:
-            return cell_mods[0]
-        rbc_mods = factory.get_mods(OPTS.replica_bitcell)
-        non_rbc_mods = []
-        for bitcell in cell_mods:
-            has_cell = False
-            for replica_cell in rbc_mods:
-                has_cell = has_cell or replica_cell.contains(bitcell, replica_cell.mods)
-            if not has_cell:
-                non_rbc_mods.append(bitcell)
-        if len(non_rbc_mods) != 1:
-            debug.error('Multiple bitcell mods found. Cannot distinguish for characterization',1)
-        return non_rbc_mods[0]
-        
-    def are_mod_pins_equal(self, mods):
-        """Determines if there are pins differences in the input mods"""
-        
-        if len(mods) == 0:
-            return True
-        pins = mods[0].pins
-        for mod in mods[1:]:
-            if pins != mod.pins:
-                return False
-        return True
-        
     def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None): 
         """
         Finds a single alias for the int_net in given paths. 

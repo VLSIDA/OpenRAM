@@ -222,16 +222,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         return self == mod and \
                child_net.lower() == alias_net.lower() and \
                parent_net.lower() == alias_net.lower()
-           
-    def get_mod_net(self, parent_net, child_inst, child_conns):
-        """
-        Given an instance and net, returns the internal net in the mod
-        corresponding to input net.
-        """
-        for conn, pin in zip(child_conns, child_inst.mod.pins):
-            if parent_net.lower() == conn.lower():
-                return pin
-        return None
       
     def translate_nets(self, subinst_ports, port_dict, inst_name):
         """Converts connection names to their spice hierarchy equivalent"""

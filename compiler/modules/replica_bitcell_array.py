@@ -204,7 +204,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             self.rbl_bitline_names.append(bitline_names)
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in self.rbl_bitline_names for x in sl]
-        
+
         for port in self.all_ports:
             bitline_names = self.bitcell_array.get_bitline_names(port)
             self.bitline_names.append(bitline_names)
@@ -257,7 +257,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.add_pin_list(self.dummy_row_wordline_names[0], "INPUT")
         for port in range(self.left_rbl):
             self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
-        self.add_pin_list(self.all_wordline_names)
+        self.add_pin_list(self.all_wordline_names, "INPUT")
         for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
             self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
         self.add_pin_list(self.dummy_row_wordline_names[1], "INPUT")
@@ -481,10 +481,11 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         """ Return ALL the bitline names (including dummy and rbl) """
         temp = []
         temp.extend(self.get_dummy_bitline_names(0))
-        temp.extend(self.get_rbl_bitline_names(0))
+        if self.add_left_rbl > 0:
+            temp.extend(self.get_rbl_bitline_names(0))
         temp.extend(self.get_bitline_names())
-        if len(self.all_ports) > 1:
-            temp.extend(self.get_rbl_bitline_names(1))
+        if self.add_right_rbl > 0:
+            temp.extend(self.get_rbl_bitline_names(self.add_left_rbl))
         temp.extend(self.get_dummy_bitline_names(1))
         return temp
 

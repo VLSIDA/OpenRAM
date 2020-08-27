@@ -5,20 +5,20 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import bitcell_base_array
+import design
 from globals import OPTS
 from sram_factory import factory
 from vector import vector
 import debug
 
-class local_bitcell_array(bitcell_base_array.bitcell_base_array):
+class local_bitcell_array(design.design):
     """
     A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
     def __init__(self, rows, cols, rbl, add_rbl=None, name=""):
-        super().__init__(name, rows, cols, 0)
+        super().__init__(name=name)
         debug.info(2, "create local array of size {} rows x {} cols words".format(rows, cols))
 
         self.rows = rows
@@ -76,50 +76,43 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def add_pins(self):
 
+        # Inputs to the wordline driver (by port)
         self.wordline_names = []
+        # Outputs from the wordline driver (by port)
         self.driver_wordline_outputs = []
+        # Inputs to the bitcell array (by port)
         self.array_wordline_inputs = []
-        
-        # Port 0
-        wordline_inputs = [x for x in self.bitcell_array.get_wordline_names(0) if not x.startswith("dummy")]
-        if len(self.all_ports) > 1:
-            # Drop off the RBL for port 1
-            self.wordline_names.append(wordline_inputs[:-1])
-        else:
+
+        for port in self.all_ports:
+            wordline_inputs = []
+            if port == 0:
+                wordline_inputs += [self.bitcell_array.get_rbl_wordline_names(0)[0]]
+            wordline_inputs += self.bitcell_array.get_wordline_names(port)
+            if port == 1:
+                wordline_inputs += [self.bitcell_array.get_rbl_wordline_names(1)[1]]
             self.wordline_names.append(wordline_inputs)
-        self.driver_wordline_outputs.append([x + "i" for x in self.wordline_names[-1]])
-        self.array_wordline_inputs.append([x + "i" if not x.startswith("dummy") else "gnd" for x in self.bitcell_array.get_wordline_names(0)])
-
-        # Port 1
-        if len(self.all_ports) > 1:
-            self.wordline_names.append([x for x in self.bitcell_array.get_wordline_names(1) if not x.startswith("dummy")][1:])
             self.driver_wordline_outputs.append([x + "i" for x in self.wordline_names[-1]])
-            self.array_wordline_inputs.append([x + "i" if not x.startswith("dummy") else "gnd" for x in self.bitcell_array.get_wordline_names(1)])
-
-        self.all_driver_wordline_inputs = [x for x in self.bitcell_array.get_wordline_names() if not x.startswith("dummy")]
-        self.replica_names = self.bitcell_array.get_rbl_wordline_names()
-
+            
         self.gnd_wl_names = []
 
         # Connect unused RBL WL to gnd
         array_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("rbl")])
         dummy_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("dummy")])
-        rbl_wl_names = set([x for port in self.all_ports for x in self.bitcell_array.get_rbl_wordline_names(port)])
+        rbl_wl_names = set([x for rbl_port_names in self.wordline_names for x in rbl_port_names if x.startswith("rbl")])
         self.gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
         
-        self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_wordline_names()]
+        self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_all_wordline_names()]
 
         self.bitline_names = self.bitcell_array.bitline_names
-        
+        self.all_array_bitline_names = self.bitcell_array.get_all_bitline_names()
         # Arrays are always:
-        # word lines (bottom to top)
         # bit lines (left to right)
+        # word lines (bottom to top)
         # vdd
         # gnd
+        self.add_pin_list([x for x in self.all_array_bitline_names if not x.startswith("dummy")], "INOUT")
         for port in self.all_ports:
             self.add_pin_list(self.wordline_names[port], "INPUT")
-        for port in self.all_ports:
-            self.add_pin_list(self.bitline_names[port], "INOUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -135,7 +128,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitcell_array_inst = self.add_inst(name="array",
                                                 mod=self.bitcell_array)
 
-        self.connect_inst(self.all_array_wordline_inputs + self.bitline_names + ["vdd", "gnd"])
+        self.connect_inst(self.all_array_bitline_names + self.all_array_wordline_inputs + ["vdd", "gnd"])
 
     def place(self):
         """ Place the bitcelll array to the right of the wl driver. """
@@ -177,9 +170,9 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         
     def add_layout_pins(self):
 
-        for (x, y) in zip(self.bitline_names, self.bitcell_array.get_inouts()):
-            self.copy_layout_pin(self.bitcell_array_inst, y, x)
-
+        for x in self.get_inouts():
+            self.copy_layout_pin(self.bitcell_array_inst, x)
+                
         for port in self.all_ports:
             for (x, y) in zip(self.wordline_names[port], self.wl_array.get_inputs()):
                 self.copy_layout_pin(self.wl_insts[port], y, x)
@@ -196,15 +189,8 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     def route(self):
 
         for port in self.all_ports:
-            if port == 0:
-                array_names = [x for x in self.bitcell_array.get_wordline_names(port) if not x.startswith("dummy")]
-                if len(self.all_ports) > 1:
-                    # Drop off the RBL for port 1
-                    array_names = array_names[:-1]
-            else:
-                array_names = [x for x in self.bitcell_array.get_wordline_names(port) if not x.startswith("dummy")][1:]
-
-            for (driver_name, array_name) in zip(self.wl_array.get_outputs(), array_names):
+            for (driver_name, net_name) in zip(self.wl_insts[port].mod.get_outputs(), self.driver_wordline_outputs[port]):
+                array_name = net_name[:-1]
                 out_pin = self.wl_insts[port].get_pin(driver_name)
                 in_pin = self.bitcell_array_inst.get_pin(array_name)
                 if port == 0:

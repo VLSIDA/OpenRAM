@@ -15,7 +15,7 @@ from sram_factory import factory
 import debug
 
 
-@unittest.skip("SKIPPING 05_local_bitcell_array_test")
+# @unittest.skip("SKIPPING 05_local_bitcell_array_test")
 class local_bitcell_array_1rw_1r_test(openram_test):
 
     def runTest(self):
@@ -32,9 +32,16 @@ class local_bitcell_array_1rw_1r_test(openram_test):
         self.local_check(a)
 
         debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[0, 1])
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[1, 0])
         self.local_check(a)
 
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[0, 1])
+        self.local_check(a)
+        
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], add_rbl=[1, 1])
+        self.local_check(a)
         globals.end_openram()
 
 

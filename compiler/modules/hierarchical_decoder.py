@@ -606,11 +606,3 @@ class hierarchical_decoder(design.design):
                                   to_layer=self.output_layer,
                                   offset=rail_pos,
                                   directions=self.bus_directions)
-
-    def input_load(self):
-        if self.determine_predecodes(self.num_inputs)[1]==0:
-            pre = self.pre2_4
-        else:
-            pre = self.pre3_8
-        return pre.input_load()
-        

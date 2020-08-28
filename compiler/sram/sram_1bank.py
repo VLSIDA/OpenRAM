@@ -626,20 +626,6 @@ class sram_1bank(sram_base):
         # Insts located in control logic, exclusion function called here
         for inst in self.control_logic_insts:
             inst.mod.graph_exclude_dffs()
-            
-    def get_sen_name(self, sram_name, port=0):
-        """Returns the s_en spice name."""
-        # Naming scheme is hardcoded using this function, should be built into the
-        # graph in someway.
-        sen_name = "s_en{}".format(port)
-        control_conns = self.get_conns(self.control_logic_insts[port])
-        # Sanity checks
-        if sen_name not in control_conns:
-            debug.error("Signal={} not contained in control logic connections={}".format(sen_name,
-                                                                                         control_conns))
-        if sen_name in self.pins:
-            debug.error("Internal signal={} contained in port list. Name defined by the parent.".format(sen_name))
-        return "X{}.{}".format(sram_name, sen_name)
         
     def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""

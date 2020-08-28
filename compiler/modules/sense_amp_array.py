@@ -190,18 +190,3 @@ class sense_amp_array(design.design):
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer=self.en_layer,
                                       offset=inst.get_pin(self.amp.en_name).center())
-
-    def input_load(self):
-        return self.amp.input_load()
-
-    def get_en_cin(self):
-        """Get the relative capacitance of all the sense amp enable connections in the array"""
-        sense_amp_en_cin = self.amp.get_en_cin()
-        return sense_amp_en_cin * self.word_size
-
-    def get_drain_cin(self):
-        """Get the relative capacitance of the drain of the PMOS isolation TX"""
-        from tech import parameter
-        # Bitcell drain load being used to estimate PMOS drain load
-        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
-        return drain_load

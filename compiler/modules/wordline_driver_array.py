@@ -159,24 +159,3 @@ class wordline_driver_array(design.design):
                                                layer=self.route_layer,
                                                start=wl_offset,
                                                end=wl_offset - vector(self.m1_width, 0))
-
-    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
-        """
-        Follows the clk_buf to a wordline signal adding
-        each stages stage effort to a list.
-        """
-        stage_effort_list = []
-        
-        stage1 = self.wl_driver.get_stage_effort(external_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        
-        return stage_effort_list
-        
-    def get_wl_en_cin(self):
-        """
-        Get the relative capacitance of all
-        the enable connections in the bank
-        """
-        # The enable is connected to a and2 for every row.
-        total_cin = self.wl_driver.get_cin() * self.rows
-        return total_cin

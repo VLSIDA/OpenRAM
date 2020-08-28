@@ -196,10 +196,3 @@ class dff_buf(design.design):
         self.add_via_stack_center(from_layer=a2_pin.layer,
                                   to_layer="m2",
                                   offset=qb_pos)
-         
-    def get_clk_cin(self):
-        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
-        # This is a handmade cell so the value must be entered in the tech.py file or estimated.
-        # Calculated in the tech file by summing the widths of all the gates and dividing by the minimum width.
-        # FIXME: Dff changed in a past commit. The parameter need to be updated.
-        return parameter["dff_clk_cin"]

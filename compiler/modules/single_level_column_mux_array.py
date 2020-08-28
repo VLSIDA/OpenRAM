@@ -230,10 +230,3 @@ class single_level_column_mux_array(design.design):
                                       to_layer=self.sel_layer,
                                       offset=br_out_offset_begin,
                                       directions=self.via_directions)
-
-    def get_drain_cin(self):
-        """Get the relative capacitance of the drain of the NMOS pass TX"""
-        from tech import parameter
-        # Bitcell drain load being used to estimate mux NMOS drain load
-        drain_load = logical_effort.convert_farad_to_relative_c(parameter['bitcell_drain_cap'])
-        return drain_load

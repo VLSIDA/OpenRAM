@@ -125,13 +125,3 @@ class precharge_array(design.design):
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
             xoffset = xoffset + self.pc_cell.width
-
-    def get_en_cin(self):
-        """
-        Get the relative capacitance of all the clk connections
-        in the precharge array
-        """
-        # Assume single port
-        precharge_en_cin = self.pc_cell.get_en_cin()
-        return precharge_en_cin * self.columns
-        

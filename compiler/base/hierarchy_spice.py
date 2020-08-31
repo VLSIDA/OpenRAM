@@ -490,3 +490,48 @@ class spice():
     def return_power(self, dynamic=0.0, leakage=0.0):
         return power_data(dynamic, leakage)
 
+    def find_aliases(self, inst_name, port_nets, path_nets, alias, alias_mod, exclusion_set=None):
+        """Given a list of nets, will compare the internal alias of a mod to determine
+           if the nets have a connection to this mod's net (but not inst).
+        """
+        if not exclusion_set:
+            exclusion_set = set()
+        try:
+            self.name_dict
+        except AttributeError:
+            self.name_dict = {}
+            self.build_names(self.name_dict, inst_name, port_nets)
+        aliases = []
+        for net in path_nets:
+            net = net.lower()
+            int_net = self.name_dict[net]['int_net']
+            int_mod = self.name_dict[net]['mod']
+            if int_mod.is_net_alias(int_net, alias, alias_mod, exclusion_set):
+                aliases.append(net)
+        return aliases
+            
+    def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
+        """Checks if the alias_net in input mod is the same as the input net for this mod (self)."""
+        if self in exclusion_set:
+            return False
+        # Check ports of this mod
+        for pin in self.pins:
+            if self.is_net_alias_name_check(known_net, pin, net_alias, mod):
+                return True
+        # Check connections of all other subinsts
+        mod_set = set()
+        for subinst, inst_conns in zip(self.insts, self.conns):
+            for inst_conn, mod_pin in zip(inst_conns, subinst.mod.pins):
+                if self.is_net_alias_name_check(known_net, inst_conn, net_alias, mod):
+                    return True
+                elif inst_conn.lower() == known_net.lower() and subinst.mod not in mod_set:
+                    if subinst.mod.is_net_alias(mod_pin, net_alias, mod, exclusion_set):
+                        return True
+                    mod_set.add(subinst.mod)
+        return False
+     
+    def is_net_alias_name_check(self, parent_net, child_net, alias_net, mod):
+        """Utility function for checking single net alias."""
+        return self == mod and \
+               child_net.lower() == alias_net.lower() and \
+               parent_net.lower() == alias_net.lower()

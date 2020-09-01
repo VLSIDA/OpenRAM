@@ -22,8 +22,13 @@ class global_bitcell_array_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell without replica")
-        a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4, ports=[0])
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+
+        debug.info(2, "Testing 2 x 4x4 global bitcell array for cell_1rw_1r")
+        a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
         self.local_check(a)
 
         # debug.info(2, "Testing 4x4 local bitcell array for 6t_cell with replica column")

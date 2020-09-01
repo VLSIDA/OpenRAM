@@ -110,7 +110,7 @@ class local_bitcell_array(design.design):
         # word lines (bottom to top)
         # vdd
         # gnd
-        self.add_pin_list([x for x in self.all_array_bitline_names if not x.startswith("dummy")], "INOUT")
+        self.add_pin_list(self.all_array_bitline_names, "INOUT")
         for port in self.all_ports:
             self.add_pin_list(self.wordline_names[port], "INPUT")
         self.add_pin("vdd", "POWER")
@@ -146,7 +146,7 @@ class local_bitcell_array(design.design):
                                    mirror="MY")
 
         self.height = self.bitcell_array.height
-        self.width = self.bitcell_array_inst.rx()
+        self.width = max(self.bitcell_array_inst.rx(), max([x.rx() for x in self.wl_insts]))
 
     def route_unused_wordlines(self):
         """ Connect the unused RBL and dummy wordlines to gnd """

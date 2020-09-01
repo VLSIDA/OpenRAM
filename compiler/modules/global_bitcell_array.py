@@ -5,27 +5,35 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from bitcell_base_array import bitcell_base_array
-from tech import drc, spice
+import design
 from globals import OPTS
 from sram_factory import factory
+from vector import vector
 import debug
 
-class global_bitcell_array(bitcell_base_array):
-    """
-    Creates a global bitcell array with a number
-    of local arrays of a sizes given by a tuple in the list.
-    """
-    def __init__(self, sizes, name=""):
-        # Each bank will have the same number of rows
-        self.rows = sizes[0][0]
-        for (r, c) in sizes:
-            debug.check(r[0] == self.rows, "Cannot have non-uniform number of rows in global array.")
-        # The total of all columns will be the number of columns
-        self.cols = sum(x[1] for x in sizes)
-        self.sizes = sizes
-        super().__init__(rows=self.rows, cols=self.cols, name=name)
 
+class global_bitcell_array(design.design):
+    """
+    Creates a global bitcell array.
+    Rows is an integer number for all local arrays.
+    Cols is a list of the array widths.
+    add_left_rbl and add_right_
+    """
+    def __init__(self, rows, cols, ports, name=""):
+        # The total of all columns will be the number of columns
+        super().__init__(name=name)
+        self.cols = cols
+        self.rows = rows
+        self.all_ports = ports
+
+        debug.check(len(ports)<=2, "Only support dual port or less in global bitcell array.")
+        self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
+        self.left_rbl = self.rbl[0]
+        self.right_rbl = self.rbl[1]
+
+        # Just used for pin names
+        self.cell = factory.create(module_type="bitcell")
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -49,18 +57,92 @@ class global_bitcell_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.local_mods = []
-        for (row, col) in self.sizes:
-            la = factory.create(module_type="local_bitcell_array", rows=row, cols=col)
+
+        for i, cols in enumerate(self.cols):
+            # Always add the left RBLs to the first subarray and the right RBLs to the last subarray
+            if i == 0:
+                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[self.left_rbl, 0])
+            elif i == len(self.cols) - 1:
+                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, self.right_rbl])
+            else:
+                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, 0])
+                
             self.add_mod(la)
             self.local_mods.append(la)
 
+        
+    def add_pins(self):
+        return
+        self.add_bitline_pins()
+        self.add_wordline_pins()
+
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
+
+    def add_bitline_pins(self):
+
+        for port in self.all_ports:
+            self.add_pin_list(self.replica_bitline_names[port], "INOUT")
+        self.add_pin_list(self.bitline_names, "INOUT")
+            
+    def add_wordline_pins(self):
+
+        # All wordline names for all ports
+        self.wordline_names = []
+        # Wordline names for each port
+        self.wordline_names_by_port = [[] for x in self.all_ports]
+        # Replica wordlines by port
+        self.replica_wordline_names = [[] for x in self.all_ports]
+
+        # Regular array wordline names
+        self.bitcell_array_wordline_names = self.bitcell_array.get_all_wordline_names()
+        
+        self.wordline_names = []
+        
+        # Left port WLs 
+        for port in range(self.left_rbl):
+            # Make names for all RBLs
+            wl_names=["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
+            # Keep track of the pin that is the RBL
+            self.replica_wordline_names[port] = wl_names
+            self.wordline_names.extend(wl_names)
+            
+        # Regular WLs
+        self.wordline_names.extend(self.bitcell_array_wordline_names)
+        
+        # Right port WLs
+        for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
+            # Make names for all RBLs
+            wl_names=["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
+            # Keep track of the pin that is the RBL
+            self.replica_wordline_names[port] = wl_names
+            self.wordline_names.extend(wl_names)
+            
+        # Array of all port wl names
+        for port in range(self.left_rbl + self.right_rbl):
+            wl_names = ["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
+            self.replica_wordline_names[port] = wl_names
+
+        self.add_pin_list(self.wordline_names, "INPUT")
+
+        
     def create_instances(self):
         """ Create the module instances used in this design """
-        self.local_inst = {}
-        for i in range(self.sizes):
-            name = "local_array_{0}".format(i)
-                self.local_inst.append(self.add_inst(name=name,
-                                                     mod=self.local_mods[i])
-                self.connect_inst(self.get_bitcell_pins(row, col))
+        self.local_insts = []
+        for i, mod in enumerate(self.local_mods):
+            name = "la_{0}".format(i)
+            self.local_insts.append(self.add_inst(name=name,
+                                                 mod=mod))
+            self.connect_inst(mod.pins)
         
- 
+    def place(self):
+        offset = vector(0, 0)
+        for inst in self.local_insts:
+            inst.place(offset)
+            offset = inst.rx() + 3 * self.m3_pitch
+
+        self.height = self.local_mods[0].height
+        self.width = self.local_insts[-1].rx()
+
+    def add_layout_pins(self):
+        pass

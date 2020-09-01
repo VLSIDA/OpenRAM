@@ -15,18 +15,17 @@ class replica_column(design.design):
     """
     Generate a replica bitline column for the replica array.
     Rows is the total number of rows i the main array.
-    Left_rbl and right_rbl are the number of left and right replica bitlines.
+    rbl is a tuple with the number of left and right replica bitlines.
     Replica bit specifies which replica column this is (to determine where to put the
-    replica cell.
+    replica cell relative to the bottom (including the dummy bit at 0).
     """
 
-    def __init__(self, name, rows, left_rbl, right_rbl, replica_bit,
-                 column_offset=0):
+    def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
         super().__init__(name)
 
         self.rows = rows
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        self.left_rbl = rbl[0]
+        self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl + rows + self.right_rbl + 2
@@ -34,10 +33,10 @@ class replica_column(design.design):
 
         debug.check(replica_bit != 0 and replica_bit != rows,
                     "Replica bit cannot be the dummy row.")
-        debug.check(replica_bit <= left_rbl or replica_bit >= self.total_size - right_rbl - 1,
+        debug.check(replica_bit <= self.left_rbl or replica_bit >= self.total_size - self.right_rbl - 1,
                     "Replica bit cannot be in the regular array.")
         if OPTS.tech_name == "sky130":
-            debug.check(rows % 2 == 0 and (left_rbl + 1) % 2 == 0,
+            debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
                         "sky130 currently requires rows to be even and to start with X mirroring"
                         + " (left_rbl must be odd) for LVS.")
 
@@ -61,13 +60,20 @@ class replica_column(design.design):
 
     def add_pins(self):
 
-        for bl_name in self.cell.get_all_bitline_names():
-            # In the replica column, these are only outputs!
-            self.add_pin("{0}_{1}".format(bl_name, 0), "OUTPUT")
+        self.bitline_names = [[] for port in self.all_ports]
+        col = 0
+        for port in self.all_ports:
+            self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
+            self.bitline_names[port].append("br_{0}_{1}".format(port, col))
+        self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
+        self.add_pin_list(self.all_bitline_names, "OUTPUT")
 
+        self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.total_size):
-            for wl_name in self.cell.get_all_wl_names():
-                self.add_pin("{0}_{1}".format(wl_name, row), "INPUT")
+            for port in self.all_ports:
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        self.add_pin_list(self.all_wordline_names, "INPUT")
 
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
@@ -154,9 +160,15 @@ class replica_column(design.design):
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        for bl_name in self.cell.get_all_bitline_names():
-            bl_pin = self.cell_inst[0].get_pin(bl_name)
-            self.add_layout_pin(text=bl_name,
+        for port in self.all_ports:
+            bl_pin = self.cell_inst[0].get_pin(self.cell.get_bl_name(port))
+            self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
+                                layer=bl_pin.layer,
+                                offset=bl_pin.ll().scale(1, 0),
+                                width=bl_pin.width(),
+                                height=self.height)
+            bl_pin = self.cell_inst[0].get_pin(self.cell.get_br_name(port))
+            self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
                                 layer=bl_pin.layer,
                                 offset=bl_pin.ll().scale(1, 0),
                                 width=bl_pin.width(),
@@ -174,10 +186,10 @@ class replica_column(design.design):
             row_range_max = self.total_size
             row_range_min = 0
 
-        for row in range(row_range_min, row_range_max):
-            for wl_name in self.cell.get_all_wl_names():
-                wl_pin = self.cell_inst[row].get_pin(wl_name)
-                self.add_layout_pin(text="{0}_{1}".format(wl_name, row),
+        for port in self.all_ports:
+            for row in range(row_range_min, row_range_max):
+                wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,
@@ -191,18 +203,19 @@ class replica_column(design.design):
                 else:
                     self.copy_layout_pin(inst, pin_name)
 
+    def get_bitline_names(self, port=None):
+        if port == None:
+            return self.all_bitline_names
+        else:
+            return self.bitline_names[port]
+
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
-
         bitcell_pins = []
-
-        pin_names = self.cell.get_all_bitline_names()
-        for pin in pin_names:
-            bitcell_pins.append(pin + "_{0}".format(col))
-        pin_names = self.cell.get_all_wl_names()
-        for pin in pin_names:
-            bitcell_pins.append(pin + "_{0}".format(row))
+        for port in self.all_ports:
+            bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
+        bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
         bitcell_pins.append("vdd")
         bitcell_pins.append("gnd")
 
@@ -211,13 +224,11 @@ class replica_column(design.design):
     def get_bitcell_pins_col_cap(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
-
         bitcell_pins = []
-
-        pin_names = self.cell.get_all_bitline_names()
-        for pin in pin_names:
-            bitcell_pins.append(pin + "_{0}".format(col))
+        for port in self.all_ports:
+            bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
         bitcell_pins.append("vdd")
+        bitcell_pins.append("gnd")
 
         return bitcell_pins
 

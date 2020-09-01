@@ -8,7 +8,7 @@
 import debug
 import design
 from sram_factory import factory
-from math import log, ceil
+from math import log, ceil, floor
 from tech import drc, layer
 from vector import vector
 from globals import OPTS
@@ -371,14 +371,30 @@ class bank(design.design):
         self.add_mod(self.port_address)
 
         self.num_rbl = len(self.all_ports)
-                
-        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                            cols=self.num_cols + self.num_spare_cols,
-                                            rows=self.num_rows,
-                                            rbl=[1, 1 if len(self.all_ports)>1 else 0])
 
+        try:
+            local_bitline_size = OPTS.local_bitline_size
+        except AttributeError:
+            local_bitline_size = 0
+            
+        if local_bitline_size > 0:
+            # Find the even multiple that satisfies the fanout with equal sized local arrays
+            total_cols = self.num_cols + self.num_spare_cols
+            num_lb = floor(total_cols / local_bitline_size)
+            final_size = total_cols - num_lb * local_bitline_size
+            cols = [local_bitline_size] * (num_lb - 1)
+            # Add the odd bits to the last local array
+            cols.append(local_bitline_size + final_size)
+            self.bitcell_array = factory.create(module_type="global_bitcell_array",
+                                                cols=cols,
+                                                rows=self.num_rows)
+        else:
+            self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+                                                cols=self.num_cols + self.num_spare_cols,
+                                                rows=self.num_rows,
+                                                rbl=[1, 1 if len(self.all_ports)>1 else 0])
         self.add_mod(self.bitcell_array)
-
+        
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
@@ -392,7 +408,7 @@ class bank(design.design):
         # bit lines (left to right)
         # vdd
         # gnd
-
+        import pdb; pdb.set_trace()
         temp = self.bitcell_array.get_all_bitline_names()
 
         wordline_names = self.bitcell_array.get_all_wordline_names()

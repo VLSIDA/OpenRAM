@@ -26,13 +26,12 @@ class bitcell_base_array(design.design):
 
         # Bitcell for port names only
         self.cell = factory.create(module_type="bitcell")
-        
+
+        # This will create a default set of bitline/wordline names
+        # They may get over-riden in the super module
         self.create_all_bitline_names()
         self.create_all_wordline_names()
-
-    def get_all_bitline_names(self, prefix=""):
-        return [prefix + x for x in self.all_bitline_names]
-
+        
     def create_all_bitline_names(self):
         self.bitline_names = [[] for port in self.all_ports]
         for col in range(self.column_size):
@@ -42,8 +41,8 @@ class bitcell_base_array(design.design):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
                 
-    def get_all_wordline_names(self, prefix=""):
-        return [prefix + x for x in self.all_wordline_names]
+    # def get_all_wordline_names(self, prefix=""):
+    #     return [prefix + x for x in self.all_wordline_names]
 
     def create_all_wordline_names(self):
         self.wordline_names = [[] for port in self.all_ports]
@@ -51,18 +50,6 @@ class bitcell_base_array(design.design):
             for port in self.all_ports:
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-        
-    def get_bitline_names(self, port=None):
-        if port == None:
-            return self.all_bitline_names
-        else:
-            return self.bitline_names[port]
-        
-    def get_wordline_names(self, port=None):
-        if port == None:
-            return self.all_wordline_names
-        else:
-            return self.wordline_names[port]
         
     def add_pins(self):
         for bl_name in self.get_bitline_names():
@@ -84,6 +71,70 @@ class bitcell_base_array(design.design):
 
         return bitcell_pins
 
+    def get_rbl_wordline_names(self, port=None):
+        """ 
+        Return the ACTIVE WL for the given RBL port.
+        Inactive will be set to gnd. 
+        """
+        if port == None:
+            return self.all_rbl_wordline_names
+        else:
+            return self.rbl_wordline_names[port]
+
+    def get_rbl_bitline_names(self, port=None):
+        """ Return the BL for the given RBL port """
+        if port == None:
+            return self.all_rbl_bitline_names
+        else:
+            return self.rbl_bitline_names[port]
+
+    def get_bitline_names(self, port=None):
+        """ Return the regular bitlines for the given port or all"""
+        if port == None:
+            return self.all_bitline_names
+        else:
+            return self.bitline_names[port]
+        
+    def get_all_bitline_names(self):
+        """ Return ALL the bitline names (including dummy and rbl) """
+        temp = []
+        if self.add_left_rbl > 0:
+            temp.extend(self.get_rbl_bitline_names(0))
+        temp.extend(self.get_bitline_names())
+        if self.add_right_rbl > 0:
+            temp.extend(self.get_rbl_bitline_names(self.add_left_rbl))
+        return temp
+
+    def get_wordline_names(self, port=None):
+        """ Return the regular wordline names """
+        if port == None:
+            return self.all_wordline_names
+        else:
+            return self.wordline_names[port]
+    
+    def get_all_wordline_names(self, port=None):
+        """ Return all the wordline names """
+        temp = []
+        temp.extend(self.get_dummy_wordline_names(0))
+        temp.extend(self.get_rbl_wordline_names(0))
+        if port == None:
+            temp.extend(self.all_wordline_names)
+        else:
+            temp.extend(self.wordline_names[port])
+        if len(self.all_ports) > 1:
+            temp.extend(self.get_rbl_wordline_names(1))
+        temp.extend(self.get_dummy_wordline_names(1))
+        return temp
+        
+    def get_dummy_wordline_names(self, port=None):
+        """ 
+        Return the ACTIVE WL for the given dummy port.
+        """
+        if port == None:
+            return self.all_dummy_row_wordline_names
+        else:
+            return self.dummy_row_wordline_names[port]
+    
     def add_layout_pins(self):
         """ Add the layout pins """
 

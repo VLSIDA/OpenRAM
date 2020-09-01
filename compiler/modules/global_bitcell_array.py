@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
 from vector import vector
@@ -13,7 +13,7 @@ import debug
 from numpy import cumsum
 
 
-class global_bitcell_array(design.design):
+class global_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     Creates a global bitcell array.
     Rows is an integer number for all local arrays.
@@ -22,7 +22,7 @@ class global_bitcell_array(design.design):
     """
     def __init__(self, rows, cols, name=""):
         # The total of all columns will be the number of columns
-        super().__init__(name=name)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
         self.cols = cols
         self.num_cols = sum(cols)
         self.col_offsets = [0] + list(cumsum(self.cols)[:-1])
@@ -32,7 +32,6 @@ class global_bitcell_array(design.design):
         self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
         self.left_rbl = self.rbl[0]
         self.right_rbl = self.rbl[1]
-
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -77,7 +76,15 @@ class global_bitcell_array(design.design):
                 
             self.add_mod(la)
             self.local_mods.append(la)
-        
+
+    # We make these on our own and don't use the base names
+    def create_all_wordline_names(self):
+        pass
+
+    # We make these on our own and don't use the base names
+    def create_all_bitline_names(self):
+        pass
+            
     def add_pins(self):
 
         self.add_bitline_pins()

@@ -51,6 +51,9 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Two dummy cols plus replica if we add the column
         self.extra_cols = 2 + self.add_left_rbl + self.add_right_rbl
 
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -439,70 +442,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             for inst in self.replica_col_insts:
                 self.copy_layout_pin(inst, pin_name)
 
-    def get_rbl_wordline_names(self, port=None):
-        """ 
-        Return the ACTIVE WL for the given RBL port.
-        Inactive will be set to gnd. 
-        """
-        if port == None:
-            return self.all_rbl_wordline_names
-        else:
-            return self.rbl_wordline_names[port]
-
-    def get_rbl_bitline_names(self, port=None):
-        """ Return the BL for the given RBL port """
-        if port == None:
-            return self.all_rbl_bitline_names
-        else:
-            return self.rbl_bitline_names[port]
-
-    def get_bitline_names(self, port=None):
-        """ Return the regular bitlines for the given port or all"""
-        if port == None:
-            return self.all_bitline_names
-        else:
-            return self.bitline_names[port]
-        
-    def get_all_bitline_names(self):
-        """ Return ALL the bitline names (including dummy and rbl) """
-        temp = []
-        if self.add_left_rbl > 0:
-            temp.extend(self.get_rbl_bitline_names(0))
-        temp.extend(self.get_bitline_names())
-        if self.add_right_rbl > 0:
-            temp.extend(self.get_rbl_bitline_names(self.add_left_rbl))
-        return temp
-
-    def get_wordline_names(self, port=None):
-        """ Return the regular wordline names """
-        if port == None:
-            return self.all_wordline_names
-        else:
-            return self.wordline_names[port]
-    
-    def get_all_wordline_names(self, port=None):
-        """ Return all the wordline names """
-        temp = []
-        temp.extend(self.get_dummy_wordline_names(0))
-        temp.extend(self.get_rbl_wordline_names(0))
-        if port == None:
-            temp.extend(self.all_wordline_names)
-        else:
-            temp.extend(self.wordline_names[port])
-        if len(self.all_ports) > 1:
-            temp.extend(self.get_rbl_wordline_names(1))
-        temp.extend(self.get_dummy_wordline_names(1))
-        return temp
-        
-    def get_dummy_wordline_names(self, port=None):
-        """ 
-        Return the ACTIVE WL for the given dummy port.
-        """
-        if port == None:
-            return self.all_dummy_row_wordline_names
-        else:
-            return self.dummy_row_wordline_names[port]
-        
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
         # Dynamic Power from Bitline

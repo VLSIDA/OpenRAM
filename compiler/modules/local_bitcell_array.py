@@ -5,20 +5,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
 from vector import vector
 import debug
 
-class local_bitcell_array(design.design):
+
+class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
     def __init__(self, rows, cols, rbl, add_rbl=None, name=""):
-        super().__init__(name=name)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
         debug.info(2, "create local array of size {} rows x {} cols words".format(rows, cols))
 
         self.rows = rows
@@ -74,8 +75,15 @@ class local_bitcell_array(design.design):
                                        cols=self.cols)
         self.add_mod(self.wl_array)
 
-    def add_pins(self):
+    # We make these on our own and don't use the base names
+    def create_all_wordline_names(self):
+        pass
 
+    # We make these on our own and don't use the base names
+    def create_all_bitline_names(self):
+        pass
+    
+    def add_pins(self):
         # Inputs to the wordline driver (by port)
         self.wordline_names = []
         # Outputs from the wordline driver (by port)
@@ -105,6 +113,7 @@ class local_bitcell_array(design.design):
 
         self.bitline_names = self.bitcell_array.bitline_names
         self.all_array_bitline_names = self.bitcell_array.get_all_bitline_names()
+
         # Arrays are always:
         # bit lines (left to right)
         # word lines (bottom to top)

@@ -187,21 +187,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.bitline_names = []
         # Replica bitlines by port
         self.rbl_bitline_names = []
-        # Dummy bitlines by left/right
-        self.dummy_col_bitline_names = []
 
-        for loc in ["left", "right"]:
-            self.dummy_col_bitline_names.append([])
+        for x in range(self.add_left_rbl + self.add_right_rbl):
+            self.rbl_bitline_names.append([])
             for port in self.all_ports:
-                bitline_names = ["dummy_{0}_{1}".format(x, loc) for x in self.row_cap_left.get_bitline_names(port)]
-                self.dummy_col_bitline_names[-1].extend(bitline_names)
-        self.all_dummy_col_bitline_names = [x for sl in self.dummy_col_bitline_names for x in sl]
-
-        for port in range(self.add_left_rbl + self.add_right_rbl):
-            left_names=["rbl_bl_{0}_{1}".format(x, port) for x in self.all_ports]
-            right_names=["rbl_br_{0}_{1}".format(x, port) for x in self.all_ports]
-            bitline_names = [x for t in zip(left_names, right_names) for x in t]
-            self.rbl_bitline_names.append(bitline_names)
+                self.rbl_bitline_names[-1].append("rbl_bl_{0}_{1}".format(port, x))
+                self.rbl_bitline_names[-1].append("rbl_br_{0}_{1}".format(port, x))
+                
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in self.rbl_bitline_names for x in sl]
 
@@ -211,13 +203,11 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
 
-        self.add_pin_list(self.dummy_col_bitline_names[0], "INOUT")
         for port in range(self.add_left_rbl):
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
         self.add_pin_list(self.all_bitline_names, "INOUT")
         for port in range(self.add_left_rbl, self.add_left_rbl + self.add_right_rbl):
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
-        self.add_pin_list(self.dummy_col_bitline_names[1], "INOUT")
         
     def add_wordline_pins(self):
 
@@ -288,29 +278,25 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         for port in range(self.left_rbl + self.right_rbl):
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
                                                              mod=self.dummy_row))
-            self.connect_inst(self.all_bitline_names + self.rbl_wordline_names[port] + supplies)
+            self.connect_inst(self.rbl_wordline_names[port] + supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                  mod=self.col_cap))
-        self.connect_inst(self.all_bitline_names
-                          + self.dummy_row_wordline_names[0]
-                          + supplies)
+        self.connect_inst(self.dummy_row_wordline_names[0] + supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap))
-        self.connect_inst(self.all_bitline_names
-                          + self.dummy_row_wordline_names[1]
-                          + supplies)
+        self.connect_inst(self.dummy_row_wordline_names[1] + supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
                                                   mod=self.row_cap_left))
-        self.connect_inst(self.dummy_col_bitline_names[0] + self.replica_array_wordline_names + supplies)
+        self.connect_inst(self.replica_array_wordline_names + supplies)
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
                                                   mod=self.row_cap_right))
-        self.connect_inst(self.dummy_col_bitline_names[1] + self.replica_array_wordline_names + supplies)
+        self.connect_inst(self.replica_array_wordline_names + supplies)
 
     def create_layout(self):
 
@@ -480,13 +466,11 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def get_all_bitline_names(self):
         """ Return ALL the bitline names (including dummy and rbl) """
         temp = []
-        temp.extend(self.get_dummy_bitline_names(0))
         if self.add_left_rbl > 0:
             temp.extend(self.get_rbl_bitline_names(0))
         temp.extend(self.get_bitline_names())
         if self.add_right_rbl > 0:
             temp.extend(self.get_rbl_bitline_names(self.add_left_rbl))
-        temp.extend(self.get_dummy_bitline_names(1))
         return temp
 
     def get_wordline_names(self, port=None):
@@ -518,13 +502,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             return self.all_dummy_row_wordline_names
         else:
             return self.dummy_row_wordline_names[port]
-
-    def get_dummy_bitline_names(self, port=None):
-        """ Return the BL for the given dummy port """
-        if port == None:
-            return self.all_dummy_col_bitline_names
-        else:
-            return self.dummy_col_bitline_names[port]
         
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

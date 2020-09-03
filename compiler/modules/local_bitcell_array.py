@@ -101,15 +101,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
             self.wordline_names.append(wordline_inputs)
             self.driver_wordline_outputs.append([x + "i" for x in self.wordline_names[-1]])
             
-        self.gnd_wl_names = []
-
-        # Connect unused RBL WL to gnd
-        array_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("rbl")])
-        dummy_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("dummy")])
-        rbl_wl_names = set([x for rbl_port_names in self.wordline_names for x in rbl_port_names if x.startswith("rbl")])
-        self.gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
-        
-        self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_all_wordline_names()]
+        self.all_array_wordline_inputs = [x + "i" for x in self.bitcell_array.get_all_wordline_names() if x != "gnd"]
 
         self.bitline_names = self.bitcell_array.bitline_names
         self.all_array_bitline_names = self.bitcell_array.get_all_bitline_names()
@@ -157,26 +149,6 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.height = self.bitcell_array.height
         self.width = max(self.bitcell_array_inst.rx(), max([x.rx() for x in self.wl_insts]))
 
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-
-        for wl_name in self.gnd_wl_names:
-            pin = self.bitcell_array_inst.get_pin(wl_name)
-            pin_layer = pin.layer
-            layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
-            left_pin_loc = pin.lc()
-            right_pin_loc = pin.rc()
-
-            # Place the pins a track outside of the array
-            left_loc = left_pin_loc - vector(layer_pitch, 0)
-            right_loc = right_pin_loc + vector(layer_pitch, 0)
-            self.add_power_pin("gnd", left_loc, directions=("H", "H"))
-            self.add_power_pin("gnd", right_loc, directions=("H", "H"))
-
-            # Add a path to connect to the array
-            self.add_path(pin_layer, [left_loc, left_pin_loc])
-            self.add_path(pin_layer, [right_loc, right_pin_loc])
-        
     def add_layout_pins(self):
 
         for x in self.get_inouts():
@@ -212,5 +184,4 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     in_loc = in_pin.rc()
                 self.add_path(out_pin.layer, [out_loc, mid_loc, in_loc])
             
-        self.route_unused_wordlines()
             

@@ -218,14 +218,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.wordline_names = []
         # Replica wordlines by port
         self.rbl_wordline_names = []
-        # Dummy wordlines by bot/top
-        self.dummy_row_wordline_names = []
 
-        dummy_row_wordline_names = ["dummy_" + x for x in self.col_cap.get_wordline_names()]
-        for loc in ["bot", "top"]:
-            wordline_names = ["{0}_{1}".format(wl_name, loc) for wl_name in dummy_row_wordline_names]
-            self.dummy_row_wordline_names.append(wordline_names)
-        self.all_dummy_row_wordline_names = [x for sl in self.dummy_row_wordline_names for x in sl]
+        self.dummy_row_wordline_names = ["gnd"] * len(self.col_cap.get_wordline_names())
 
         for port in range(self.left_rbl + self.right_rbl):
             wordline_names=["rbl_wl_{0}_{1}".format(x, port) for x in self.all_ports]
@@ -239,21 +233,19 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names[0])
+        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names)
         for p in range(self.left_rbl):
             self.replica_array_wordline_names.extend(self.rbl_wordline_names[p])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for p in range(self.left_rbl, self.left_rbl + self.right_rbl):
             self.replica_array_wordline_names.extend(self.rbl_wordline_names[p])
-        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names[1])
+        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names)
 
-        self.add_pin_list(self.dummy_row_wordline_names[0], "INPUT")
         for port in range(self.left_rbl):
             self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
         for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
             self.add_pin_list(self.rbl_wordline_names[port], "INPUT")
-        self.add_pin_list(self.dummy_row_wordline_names[1], "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -287,10 +279,10 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                  mod=self.col_cap))
-        self.connect_inst(self.dummy_row_wordline_names[0] + supplies)
+        self.connect_inst(self.dummy_row_wordline_names + supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap))
-        self.connect_inst(self.dummy_row_wordline_names[1] + supplies)
+        self.connect_inst(self.dummy_row_wordline_names + supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
@@ -316,12 +308,15 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         
         self.add_end_caps()
 
+
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         self.translate_all(self.bitcell_offset.scale(-1 - self.add_left_rbl, -1 - self.left_rbl))
 
         self.add_layout_pins()
 
+        self.route_unused_wordlines()
+        
         self.add_boundary()
 
         self.DRC_LVS()
@@ -395,17 +390,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     width=pin.width(),
                                     height=self.height)
 
-        # Dummy wordlines
-        for (names, inst) in zip(self.dummy_row_wordline_names, self.dummy_row_insts):
-            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                # It's always a single row
-                pin = inst.get_pin(pin_name)
-                self.add_layout_pin(text=wl_name,
-                                    layer=pin.layer,
-                                    offset=pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=pin.height())
-
         # Replica wordlines (go by the row instead of replica column because we may have to add a pin
         # even though the column is in another local bitcell array)
         for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
@@ -459,6 +443,27 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                         cell_power.leakage * self.column_size * self.row_size)
         return total_power
 
+    def route_unused_wordlines(self):
+        """ Connect the unused RBL and dummy wordlines to gnd """
+
+        for inst in self.dummy_row_insts:
+            for wl_name in self.col_cap.get_wordline_names():
+                pin = inst.get_pin(wl_name)
+                pin_layer = pin.layer
+                layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
+                left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
+                right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
+
+                # Place the pins a track outside of the array
+                left_loc = left_pin_loc - vector(layer_pitch, 0)
+                right_loc = right_pin_loc + vector(layer_pitch, 0)
+                self.add_power_pin("gnd", left_loc, directions=("H", "H"))
+                self.add_power_pin("gnd", right_loc, directions=("H", "H"))
+
+                # Add a path to connect to the array
+                self.add_path(pin_layer, [left_loc, left_pin_loc])
+                self.add_path(pin_layer, [right_loc, right_pin_loc])
+        
     def gen_bl_wire(self):
         if OPTS.netlist_only:
             height = 0

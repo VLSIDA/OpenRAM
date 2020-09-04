@@ -38,6 +38,7 @@ class functional(simulation):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        self.probe_address, self.probe_data = '0'*self.addr_size,0
         self.set_corner(corner)
         self.set_spice_constants()
         self.set_stimulus_variables()
@@ -47,6 +48,8 @@ class functional(simulation):
         self.add_graph_exclusions()
         self.create_graph()
         self.set_internal_spice_names()
+        self.q_name, self.qbar_name = self.get_bit_name()	
+        debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
         
         # Number of checks can be changed
         self.num_cycles = 15
@@ -433,6 +436,7 @@ class functional(simulation):
         self.sram_spc_name = "X{}".format(self.sram.name)
         self.sram.build_graph(self.graph, self.sram_spc_name, self.pins)
  
+    #FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)

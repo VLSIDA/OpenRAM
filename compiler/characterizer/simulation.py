@@ -15,6 +15,7 @@ from .trim_spice import *
 from .charutils import *
 import utils
 from globals import OPTS
+from sram_factory import factory
 
 class simulation():
 

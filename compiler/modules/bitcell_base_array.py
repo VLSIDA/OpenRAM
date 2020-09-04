@@ -115,7 +115,7 @@ class bitcell_base_array(design.design):
     def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
-        temp.extend(self.get_dummy_wordline_names(0))
+        temp.extend(self.get_dummy_wordline_names())
         temp.extend(self.get_rbl_wordline_names(0))
         if port == None:
             temp.extend(self.all_wordline_names)
@@ -123,17 +123,14 @@ class bitcell_base_array(design.design):
             temp.extend(self.wordline_names[port])
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
-        temp.extend(self.get_dummy_wordline_names(1))
+        temp.extend(self.get_dummy_wordline_names())
         return temp
         
-    def get_dummy_wordline_names(self, port=None):
+    def get_dummy_wordline_names(self):
         """ 
         Return the ACTIVE WL for the given dummy port.
         """
-        if port == None:
-            return self.all_dummy_row_wordline_names
-        else:
-            return self.dummy_row_wordline_names[port]
+        return self.dummy_row_wordline_names
     
     def add_layout_pins(self):
         """ Add the layout pins """

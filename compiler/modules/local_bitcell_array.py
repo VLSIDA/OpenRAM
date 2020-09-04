@@ -100,8 +100,8 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                 wordline_inputs += [self.bitcell_array.get_rbl_wordline_names(1)[1]]
             self.wordline_names.append(wordline_inputs)
             self.driver_wordline_outputs.append([x + "i" for x in self.wordline_names[-1]])
-            
-        self.all_array_wordline_inputs = [x + "i" for x in self.bitcell_array.get_all_wordline_names() if x != "gnd"]
+
+        self.all_array_wordline_inputs = [x + "i" for x in self.bitcell_array.get_inputs() if "wl" in x]
 
         self.bitline_names = self.bitcell_array.bitline_names
         self.all_array_bitline_names = self.bitcell_array.get_all_bitline_names()

@@ -22,16 +22,14 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     def __init__(self, rows, cols, name=""):
         # The total of all columns will be the number of columns
-        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
-        self.cols = cols
-        self.num_cols = sum(cols)
-        self.col_offsets = [0] + list(cumsum(self.cols)[:-1])
-        self.rows = rows
+        super().__init__(name=name, rows=rows, cols=sum(cols), column_offset=0)
+        self.column_sizes = cols
+        self.col_offsets = [0] + list(cumsum(cols)[:-1])
 
         debug.check(len(self.all_ports)<=2, "Only support dual port or less in global bitcell array.")
         self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
-        self.left_rbl = self.rbl[0]
-        self.right_rbl = self.rbl[1]
+        self.add_left_rbl = self.rbl[0]
+        self.add_right_rbl = self.rbl[1]
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -59,32 +57,24 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         """ Add the modules used in this design """
         self.local_mods = []
 
-        if self.cols == 1:
-            la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=self.cols[0], rbl=self.rbl, add_rbl=[self.left_rbl, self.right_rbl])
+        if len(self.column_sizes) == 1:
+            la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=self.column_sizes[0], rbl=self.rbl, add_rbl=[self.add_left_rbl, self.add_right_rbl])
             self.add_mod(la)
             self.local_mods.append(la)
             return
         
-        for i, cols in enumerate(self.cols):
+        for i, cols in enumerate(self.column_sizes):
             # Always add the left RBLs to the first subarray and the right RBLs to the last subarray
             if i == 0:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[self.left_rbl, 0])
-            elif i == len(self.cols) - 1:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, self.right_rbl])
+                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[self.add_left_rbl, 0])
+            elif i == len(self.column_sizes) - 1:
+                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[0, self.add_right_rbl])
             else:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, 0])
+                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[0, 0])
                 
             self.add_mod(la)
             self.local_mods.append(la)
 
-    # We make these on our own and don't use the base names
-    def create_all_wordline_names(self):
-        pass
-
-    # We make these on our own and don't use the base names
-    def create_all_bitline_names(self):
-        pass
-            
     def add_pins(self):
 
         self.add_bitline_pins()
@@ -94,37 +84,55 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        self.bitline_names = []
+        self.bitline_names = [[] for x in self.all_ports]
+        self.rbl_bitline_names = [[] for x in self.all_ports]
 
         for port in self.all_ports:
-            self.bitline_names.append("rbl_bl_{0}_{1}".format(port, 0))
-            self.bitline_names.append("rbl_br_{0}_{1}".format(port, 0))
+            self.bitline_names[port].append("rbl_bl_{}_0".format(port))
+            self.rbl_bitline_names[port].append("rbl_bl_{}_0".format(port))
+        for port in self.all_ports:
+            self.bitline_names[port].append("rbl_br_{}_0".format(port))
+            self.rbl_bitline_names[port].append("rbl_br_{}_0".format(port))
         
-        for col in range(self.num_cols):
+        for col in range(self.column_size):
             for port in self.all_ports:
-                self.bitline_names.append("bl_{0}_{1}".format(port, col))
-                self.bitline_names.append("br_{0}_{1}".format(port, col))
+                self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
+            for port in self.all_ports:
+                self.bitline_names[port].append("br_{0}_{1}".format(port, col))
 
         if len(self.all_ports) > 1:
             for port in self.all_ports:
-                self.bitline_names.append("rbl_bl_{0}_{1}".format(port, 1))
-                self.bitline_names.append("rbl_br_{0}_{1}".format(port, 1))
+                self.bitline_names[port].append("rbl_bl_{}_1".format(port))
+                self.rbl_bitline_names[port].append("rbl_bl_{}_1".format(port))
+            for port in self.all_ports:
+                self.bitline_names[port].append("rbl_br_{}_1".format(port))
+                self.rbl_bitline_names[port].append("rbl_br_{}_1".format(port))
                 
-        self.add_pin_list(self.bitline_names, "INOUT")
+        # Make a flat list too
+        self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
+        
+        self.add_pin_list(self.all_bitline_names, "INOUT")
             
     def add_wordline_pins(self):
 
-        self.wordline_names = []
+        self.dummy_row_wordline_names = [[] for x in self.all_ports]
         
+        self.rbl_wordline_names = []
+        
+        self.wordline_names = []
+
         self.wordline_names.append("rbl_wl_0_0")
+        # This is to keep it the same as a plain replica_bitline_array
+        self.rbl_wordline_names.append("rbl_wl_0_0")
             
         # Regular WLs
-        for row in range(self.rows):
+        for row in range(self.row_size):
             for port in self.all_ports:
                 self.wordline_names.append("wl_{0}_{1}".format(port, row))
 
         if len(self.all_ports) > 1:
             self.wordline_names.append("rbl_wl_1_1")
+            self.rbl_wordline_names.append("rbl_wl_1_1")
 
         self.add_pin_list(self.wordline_names, "INPUT")
 
@@ -141,9 +149,10 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             temp = []
             if col == 0:
                 temp.append("rbl_bl_0_0")
-                temp.append("rbl_br_0_0")
                 if len(self.all_ports) > 1:
                     temp.append("rbl_bl_1_0")
+                temp.append("rbl_br_0_0")
+                if len(self.all_ports) > 1:
                     temp.append("rbl_br_1_0")
         
             port_inouts = [x for x in mod.get_inouts() if x.startswith("bl") or x.startswith("br")]
@@ -161,8 +170,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             
             if len(self.all_ports) > 1 and mod == self.local_mods[-1]:
                 temp.append("rbl_bl_0_1")
-                temp.append("rbl_br_0_1")
                 temp.append("rbl_bl_1_1")
+                temp.append("rbl_br_0_1")
                 temp.append("rbl_br_1_1")
 
             for port in self.all_ports:
@@ -228,14 +237,22 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                     new_name = "{0}_{1}".format(base_name, col + col_value)
                     self.copy_layout_pin(inst, pin_name, new_name)
 
+        # Replica wordlines
+        self.copy_layout_pin(self.local_insts[0], "rbl_wl_0_0")
+        if len(self.all_ports) > 1:
+            self.copy_layout_pin(self.local_insts[-1], "rbl_wl_1_1")
                     
         # Replica bitlines
         self.copy_layout_pin(self.local_insts[0], "rbl_bl_0_0")
         self.copy_layout_pin(self.local_insts[0], "rbl_br_0_0")
         
         if len(self.all_ports) > 1:
-            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_1_0")
-            self.copy_layout_pin(self.local_insts[-1], "rbl_br_1_0")
+            self.copy_layout_pin(self.local_insts[0], "rbl_bl_1_0")
+            self.copy_layout_pin(self.local_insts[0], "rbl_br_1_0")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_0_0", "rbl_bl_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_0_0", "rbl_br_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_1_0", "rbl_bl_1_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_1_0", "rbl_br_1_1")
 
         for inst in self.insts:
             self.copy_power_pins(inst, "vdd")

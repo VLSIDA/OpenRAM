@@ -439,7 +439,7 @@ class bank(design.design):
         for port in self.all_ports:
             self.port_data_inst[port]=self.add_inst(name="port_data{}".format(port),
                                                     mod=self.port_data[port])
-
+            import pdb; pdb.set_trace()
             temp = []
             temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))

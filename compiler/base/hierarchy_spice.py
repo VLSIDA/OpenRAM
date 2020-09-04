@@ -161,14 +161,23 @@ class spice():
         there is a problem. The check option can be set to false
         where we dynamically generate groups of connections after a
         group of modules are generated."""
-        if (check and (len(self.insts[-1].mod.pins) != len(args))):
+        num_pins = len(self.insts[-1].mod.pins)
+        num_args = len(args)
+        if (check and num_pins != num_args):
             from pprint import pformat
-            modpins_string=pformat(self.insts[-1].mod.pins)
-            argpins_string=pformat(args)
-            debug.error("Mod  connections: {}".format(modpins_string))
-            debug.error("Inst connections: {}".format(argpins_string))
-            debug.error("Number of net connections ({0}) does not match last instance ({1})".format(len(self.insts[-1].mod.pins),
-                                                                                                    len(args)), 1)
+            if num_pins < num_args:
+                mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
+                arg_pins = args
+            else:
+                arg_pins = args + [""] * (num_pins - num_args)
+                mod_pins = self.insts[-1].mod.pins
+
+            modpins_string = "\n".join(["{0} -> {1}".format(arg, mod) for (arg, mod) in zip(arg_pins, mod_pins)])
+            debug.error("Connection mismatch:\nInst ({0}) -> Mod ({1})\n{2}".format(num_args,
+                                                                                    num_pins,
+                                                                                    modpins_string),
+                        1)
+
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):

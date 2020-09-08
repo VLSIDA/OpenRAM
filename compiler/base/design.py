@@ -26,6 +26,12 @@ class design(hierarchy_design):
         self.setup_layer_constants()
         self.setup_multiport_constants()
 
+    def check_pins(self):
+        for pin_name in self.pins:
+            pins = self.get_pins(pin_name)
+            for pin in pins:
+                print(pin_name, pin)
+            
     def setup_layer_constants(self):
         """
         These are some layer constants used

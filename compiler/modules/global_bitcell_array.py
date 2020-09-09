@@ -101,9 +101,9 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.rbl_bitline_names = [[] for x in self.all_ports]
 
         for port in self.all_ports:
-            self.rbl_bitline_names[port].append("rbl_bl_{}_0".format(port))
+            self.rbl_bitline_names[0].append("rbl_bl_{}_0".format(port))
         for port in self.all_ports:
-            self.rbl_bitline_names[port].append("rbl_br_{}_0".format(port))
+            self.rbl_bitline_names[0].append("rbl_br_{}_0".format(port))
         
         for col in range(self.column_size):
             for port in self.all_ports:
@@ -113,14 +113,17 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         if len(self.all_ports) > 1:
             for port in self.all_ports:
-                self.rbl_bitline_names[port].append("rbl_bl_{}_1".format(port))
+                self.rbl_bitline_names[1].append("rbl_bl_{}_1".format(port))
             for port in self.all_ports:
-                self.rbl_bitline_names[port].append("rbl_br_{}_1".format(port))
+                self.rbl_bitline_names[1].append("rbl_br_{}_1".format(port))
                 
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
-        
+
+        self.add_pin_list(self.rbl_bitline_names[0], "INPUT")
         self.add_pin_list(self.all_bitline_names, "INOUT")
+        if len(self.all_ports) > 1:
+            self.add_pin_list(self.rbl_bitline_names[1], "INPUT")
             
     def add_wordline_pins(self):
 
@@ -155,12 +158,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             
             temp = []
             if col == 0:
-                temp.append("rbl_bl_0_0")
-                if len(self.all_ports) > 1:
-                    temp.append("rbl_bl_1_0")
-                temp.append("rbl_br_0_0")
-                if len(self.all_ports) > 1:
-                    temp.append("rbl_br_1_0")
+                temp.extend(self.get_rbl_bitline_names(0))
         
             port_inouts = [x for x in mod.get_inouts() if x.startswith("bl") or x.startswith("br")]
             for pin_name in port_inouts:
@@ -176,10 +174,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                 temp.append(new_name)
             
             if len(self.all_ports) > 1 and mod == self.local_mods[-1]:
-                temp.append("rbl_bl_0_1")
-                temp.append("rbl_bl_1_1")
-                temp.append("rbl_br_0_1")
-                temp.append("rbl_br_1_1")
+                temp.extend(self.get_rbl_bitline_names(1))
 
             for port in self.all_ports:
                 port_inputs = [x for x in mod.get_inputs() if "wl_{}".format(port) in x]

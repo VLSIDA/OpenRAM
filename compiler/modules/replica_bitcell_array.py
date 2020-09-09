@@ -196,6 +196,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         for bit in self.rbls:
             for port in self.all_ports:
                 self.rbl_bitline_names[bit].append("rbl_bl_{0}_{1}".format(port, bit))
+            for port in self.all_ports:
                 self.rbl_bitline_names[bit].append("rbl_br_{0}_{1}".format(port, bit))
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in self.rbl_bitline_names for x in sl]

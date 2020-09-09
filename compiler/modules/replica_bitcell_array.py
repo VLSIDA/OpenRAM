@@ -501,7 +501,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def graph_exclude_replica_col_bits(self):
         """Exclude all replica/dummy cells in the replica columns except the replica bit."""
 
-        for port in range(self.left_rbl + self.right_rbl):
+        for port in self.left_rbl + self.right_rbl:
             self.replica_columns[port].exclude_all_but_replica()
 
     def get_cell_name(self, inst_name, row, col):

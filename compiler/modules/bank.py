@@ -392,7 +392,9 @@ class bank(design.design):
             self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows,
-                                                rbl=[1, 1 if len(self.all_ports)>1 else 0])
+                                                rbl=[1, 1 if len(self.all_ports)>1 else 0],
+                                                left_rbl=[0],
+                                                right_rbl=[1] if len(self.all_ports) > 1 else [])
         self.add_mod(self.bitcell_array)
         
         if(self.num_banks > 1):
@@ -408,19 +410,14 @@ class bank(design.design):
         # bit lines (left to right)
         # vdd
         # gnd
-        import pdb; pdb.set_trace()
-        temp = self.bitcell_array.get_all_bitline_names()
+        temp = self.bitcell_array.get_inouts()
 
-        wordline_names = self.bitcell_array.get_all_wordline_names()
+        wordline_names = self.bitcell_array.get_inputs()
         
         # Rename the RBL WL to the enable name
         for port in self.all_ports:
-            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
-            wordline_names = [x.replace(rbl_wl_name[port], "wl_en{0}".format(port)) for x in wordline_names]
-        # Connect the other RBL WL to gnd
-        wordline_names = ["gnd" if x.startswith("rbl_wl") else x for x in wordline_names]
-        # Connect the dummy WL to gnd
-        wordline_names = ["gnd" if x.startswith("dummy") else x for x in wordline_names]
+            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+            wordline_names = [x.replace(rbl_wl_name, "wl_en{0}".format(port)) for x in wordline_names]
         temp.extend(wordline_names)
         
         temp.append("vdd")
@@ -439,7 +436,6 @@ class bank(design.design):
         for port in self.all_ports:
             self.port_data_inst[port]=self.add_inst(name="port_data{}".format(port),
                                                     mod=self.port_data[port])
-            import pdb; pdb.set_trace()
             temp = []
             temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))
@@ -978,16 +974,15 @@ class bank(design.design):
     def route_unused_wordlines(self):
         """ Connect the unused RBL and dummy wordlines to gnd """
         gnd_wl_names = []
-
+        return
         # Connect unused RBL WL to gnd
         # All RBL WL names
         array_rbl_names = set(self.bitcell_array.get_rbl_wordline_names())
-        dummy_rbl_names = set(self.bitcell_array.get_dummy_wordline_names())
         # List of used RBL WL names
         rbl_wl_names = set()
         for port in self.all_ports:
             rbl_wl_names.add(self.bitcell_array.get_rbl_wordline_names(port)[port])
-        gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
+        gnd_wl_names = list((array_rbl_names - rbl_wl_names))
 
         for wl_name in gnd_wl_names:
             pin = self.bitcell_array_inst.get_pin(wl_name)

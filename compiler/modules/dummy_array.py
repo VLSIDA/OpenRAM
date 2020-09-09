@@ -16,6 +16,10 @@ class dummy_array(bitcell_base_array):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
 
+        # This will create a default set of bitline/wordline names
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

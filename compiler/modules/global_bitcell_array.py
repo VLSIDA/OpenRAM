@@ -18,7 +18,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
     Creates a global bitcell array.
     Rows is an integer number for all local arrays.
     Cols is a list of the array widths.
-    add_left_rbl and add_right_
     """
     def __init__(self, rows, cols, name=""):
         # The total of all columns will be the number of columns
@@ -28,8 +27,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         debug.check(len(self.all_ports)<=2, "Only support dual port or less in global bitcell array.")
         self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
-        self.add_left_rbl = self.rbl[0]
-        self.add_right_rbl = self.rbl[1]
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -58,19 +55,35 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.local_mods = []
 
         if len(self.column_sizes) == 1:
-            la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=self.column_sizes[0], rbl=self.rbl, add_rbl=[self.add_left_rbl, self.add_right_rbl])
+            la = factory.create(module_type="local_bitcell_array",
+                                rows=self.row_size,
+                                cols=self.column_sizes[0],
+                                rbl=self.rbl,
+                                left_rbl=[0],
+                                right_rbl=[1])
             self.add_mod(la)
             self.local_mods.append(la)
             return
-        
+
         for i, cols in enumerate(self.column_sizes):
             # Always add the left RBLs to the first subarray and the right RBLs to the last subarray
             if i == 0:
-                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[self.add_left_rbl, 0])
-            elif i == len(self.column_sizes) - 1:
-                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[0, self.add_right_rbl])
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl,
+                                    left_rbl=[0])
+            elif i == len(self.column_sizes) - 1 and len(self.all_ports) > 1:
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl,
+                                    right_rbl=[1])
             else:
-                la = factory.create(module_type="local_bitcell_array", rows=self.row_size, cols=cols, rbl=self.rbl, add_rbl=[0, 0])
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl)
                 
             self.add_mod(la)
             self.local_mods.append(la)
@@ -88,10 +101,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.rbl_bitline_names = [[] for x in self.all_ports]
 
         for port in self.all_ports:
-            self.bitline_names[port].append("rbl_bl_{}_0".format(port))
             self.rbl_bitline_names[port].append("rbl_bl_{}_0".format(port))
         for port in self.all_ports:
-            self.bitline_names[port].append("rbl_br_{}_0".format(port))
             self.rbl_bitline_names[port].append("rbl_br_{}_0".format(port))
         
         for col in range(self.column_size):
@@ -102,10 +113,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         if len(self.all_ports) > 1:
             for port in self.all_ports:
-                self.bitline_names[port].append("rbl_bl_{}_1".format(port))
                 self.rbl_bitline_names[port].append("rbl_bl_{}_1".format(port))
             for port in self.all_ports:
-                self.bitline_names[port].append("rbl_br_{}_1".format(port))
                 self.rbl_bitline_names[port].append("rbl_br_{}_1".format(port))
                 
         # Make a flat list too
@@ -138,8 +147,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def create_instances(self):
         """ Create the module instances used in this design """
-
-        
         self.local_insts = []
         for col, mod in zip(self.col_offsets, self.local_mods):
             name = "la_{0}".format(col)
@@ -193,32 +200,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def route(self):
 
-        # Route the global wordlines (assumes pins all line up)
-        for port in self.all_ports:
-            port_inputs = [x for x in self.local_mods[0].get_inputs() if "wl_{}".format(port) in x]
-            for i, pin_name in enumerate(port_inputs):
-                pins = [x.get_pin(pin_name) for x in self.local_insts]
-
-                y_offset = pins[0].cy()
-                if port == 0:
-                    y_offset -= 1.5 * self.m3_pitch
-                else:
-                    y_offset += 1.5 * self.m3_pitch
-                    
-                start_offset = vector(pins[0].lx(), y_offset)
-                end_offset = vector(pins[-1].rx(), y_offset)
-                self.add_layout_pin_segment_center(text=pin_name,
-                                                   layer="m3",
-                                                   start=start_offset,
-                                                   end=end_offset)
-
-                for pin in pins:
-                    self.add_via_stack_center(from_layer=pin.layer,
-                                              to_layer="m3",
-                                              offset=pin.center())
-                    end_offset = vector(pin.cx(), y_offset)
-                    self.add_path("m3", [pin.center(), end_offset])                                  
-            
+        pass
+    
     def add_layout_pins(self):
 
         # Regular bitlines
@@ -237,10 +220,13 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                     new_name = "{0}_{1}".format(base_name, col + col_value)
                     self.copy_layout_pin(inst, pin_name, new_name)
 
-        # Replica wordlines
-        self.copy_layout_pin(self.local_insts[0], "rbl_wl_0_0")
-        if len(self.all_ports) > 1:
-            self.copy_layout_pin(self.local_insts[-1], "rbl_wl_1_1")
+        for wl_name in self.local_mods[0].get_inputs():
+            left_pin = self.local_insts[0].get_pin(wl_name)
+            right_pin = self.local_insts[-1].get_pin(wl_name)
+            self.add_layout_pin_segment_center(text=wl_name,
+                                               layer=left_pin.layer,
+                                               start=left_pin.lc(),
+                                               end=right_pin.rc())
                     
         # Replica bitlines
         self.copy_layout_pin(self.local_insts[0], "rbl_bl_0_0")
@@ -249,10 +235,10 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         if len(self.all_ports) > 1:
             self.copy_layout_pin(self.local_insts[0], "rbl_bl_1_0")
             self.copy_layout_pin(self.local_insts[0], "rbl_br_1_0")
-            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_0_0", "rbl_bl_0_1")
-            self.copy_layout_pin(self.local_insts[-1], "rbl_br_0_0", "rbl_br_0_1")
-            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_1_0", "rbl_bl_1_1")
-            self.copy_layout_pin(self.local_insts[-1], "rbl_br_1_0", "rbl_br_1_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_1_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_1_1")
 
         for inst in self.insts:
             self.copy_power_pins(inst, "vdd")

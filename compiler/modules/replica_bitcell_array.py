@@ -21,39 +21,37 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     Requires a regular bitcell array, replica bitcell, and dummy
     bitcell (Bl/BR disconnected).
     """
-    def __init__(self, rows, cols, rbl, name, add_rbl=None):
+    def __init__(self, rows, cols, rbl, name, left_rbl=[], right_rbl=[]):
         super().__init__(name, rows, cols, column_offset=0)
-        debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
+        debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
+                                                                                             rows,
+                                                                                             cols,
+                                                                                             rbl,
+                                                                                             left_rbl,
+                                                                                             right_rbl))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
+        self.add_comment("rbl: {0} left_rbl: {1} right_rbl: {2}".format(rbl, left_rbl, right_rbl))
 
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
         self.rbl = rbl
-        self.left_rbl = rbl[0]
-        self.right_rbl = rbl[1]
-        # This is how many RBLs are added to THIS array
-        if add_rbl == None:
-            self.add_left_rbl = rbl[0]
-            self.add_right_rbl = rbl[1]
-        else:
-            self.add_left_rbl = add_rbl[0]
-            self.add_right_rbl = add_rbl[1]
-            for a, b in zip(add_rbl, rbl):
-                debug.check(a <= b,
-                            "Invalid number of RBLs for port configuration.")
-
-        debug.check(sum(rbl) <= len(self.all_ports),
+        # This specifies which RBL to put on the left or right
+        # by port number
+        self.left_rbl = left_rbl
+        self.right_rbl = right_rbl
+        self.rbls = self.left_rbl + self.right_rbl
+        
+        debug.check(sum(rbl) == len(self.all_ports),
+                    "Invalid number of RBLs for port configuration.")
+        debug.check(sum(rbl) >= len(self.left_rbl) + len(self.right_rbl),
                     "Invalid number of RBLs for port configuration.")
 
         # Two dummy rows plus replica even if we don't add the column
         self.extra_rows = 2 + sum(rbl)
         # Two dummy cols plus replica if we add the column
-        self.extra_cols = 2 + self.add_left_rbl + self.add_right_rbl
+        self.extra_cols = 2 + len(self.left_rbl) + len(self.right_rbl)
 
-        self.create_all_bitline_names()
-        self.create_all_wordline_names()
-        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -94,37 +92,45 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            column_offset=1 + self.add_left_rbl,
+                                            column_offset=1 + len(self.left_rbl),
                                             cols=self.column_size,
                                             rows=self.row_size)
         self.add_mod(self.bitcell_array)
 
         # Replica bitlines
         self.replica_columns = {}
-        for bit in range(self.add_left_rbl + self.add_right_rbl):
-            # Creating left_rbl
-            if bit < self.add_left_rbl:
+        
+        for port in self.all_ports:
+            if port in self.left_rbl:
+                # We will always have self.rbl[0] rows of replica wordlines below
+                # the array.
                 # These go from the top (where the bitcell array starts ) down
-                replica_bit = self.left_rbl - bit
-            # Creating right_rbl
-            else:
+                replica_bit = self.rbl[0] - port
+            elif port in self.right_rbl:
+                
+                # We will always have self.rbl[0] rows of replica wordlines below
+                # the array.
                 # These go from the bottom up
-                replica_bit = self.left_rbl + self.row_size + 1 + bit
+                replica_bit = self.rbl[0] + self.row_size + 1 + port
+            else:
+                continue
+            
             # If we have an odd numer on the bottom
-            column_offset = self.left_rbl + 1
-            self.replica_columns[bit] = factory.create(module_type="replica_column",
-                                                       rows=self.row_size,
-                                                       rbl=self.rbl,
-                                                       column_offset=column_offset,
-                                                       replica_bit=replica_bit)
-            self.add_mod(self.replica_columns[bit])
+            column_offset = self.rbl[0] + 1
+                
+            self.replica_columns[port] = factory.create(module_type="replica_column",
+                                                        rows=self.row_size,
+                                                        rbl=self.rbl,
+                                                        column_offset=column_offset,
+                                                        replica_bit=replica_bit)
+            self.add_mod(self.replica_columns[port])
 
         # Dummy row
         self.dummy_row = factory.create(module_type="dummy_array",
                                         cols=self.column_size,
                                         rows=1,
                                         # dummy column + left replica column
-                                        column_offset=1 + self.add_left_rbl,
+                                        column_offset=1 + len(self.left_rbl),
                                         mirror=0)
         self.add_mod(self.dummy_row)
 
@@ -140,7 +146,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                        cols=self.column_size,
                                        rows=1,
                                        # dummy column + left replica column(s)
-                                       column_offset=1 + self.add_left_rbl,
+                                       column_offset=1 + len(self.left_rbl),
                                        mirror=0)
         self.add_mod(self.col_cap)
 
@@ -151,7 +157,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                             cols=1,
                                             column_offset=0,
                                             rows=self.row_size + self.extra_rows,
-                                            mirror=(self.left_rbl + 1) % 2)
+                                            mirror=(self.rbl[0] + 1) % 2)
         self.add_mod(self.row_cap_left)
 
         self.row_cap_right = factory.create(module_type=row_cap_module_type,
@@ -160,9 +166,9 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                              # + left replica column(s)
                                              # + bitcell columns
                                              # + right replica column(s)
-                                             column_offset = 1 + self.add_left_rbl + self.column_size + self.add_right_rbl,
+                                             column_offset = 1 + len(self.left_rbl) + self.column_size + len(self.right_rbl),
                                              rows=self.row_size + self.extra_rows,
-                                             mirror=(self.left_rbl + 1) %2)
+                                             mirror=(self.rbl[0] + 1) %2)
         self.add_mod(self.row_cap_right)
 
     def add_pins(self):
@@ -186,73 +192,55 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        # Regular bitline names by port
-        self.bitline_names = []
-        # Replica bitlines by port
-        self.rbl_bitline_names = []
-
-        for x in range(self.add_left_rbl + self.add_right_rbl):
-            self.rbl_bitline_names.append([])
+        # The bit is which port the RBL is for
+        for bit in self.rbls:
             for port in self.all_ports:
-                self.rbl_bitline_names[-1].append("rbl_bl_{0}_{1}".format(port, x))
-            for port in self.all_ports:
-                self.rbl_bitline_names[-1].append("rbl_br_{0}_{1}".format(port, x))
-                
+                self.rbl_bitline_names[bit].append("rbl_bl_{0}_{1}".format(port, bit))
+                self.rbl_bitline_names[bit].append("rbl_br_{0}_{1}".format(port, bit))
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in self.rbl_bitline_names for x in sl]
 
-        for port in self.all_ports:
-            bitline_names = self.bitcell_array.get_bitline_names(port)
-            self.bitline_names.append(bitline_names)
+        self.bitline_names = self.bitcell_array.bitline_names
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
 
-        for port in range(self.add_left_rbl):
+        for port in self.left_rbl:
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
         self.add_pin_list(self.all_bitline_names, "INOUT")
-        for port in range(self.add_left_rbl, self.add_left_rbl + self.add_right_rbl):
+        for port in self.right_rbl:
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
         
     def add_wordline_pins(self):
 
-        # Regular wordlines by port
-        self.wordline_names = []
-        # Replica wordlines by port
-        self.rbl_wordline_names = []
         # Wordlines to ground
         self.gnd_wordline_names = []
 
-        self.dummy_row_wordline_names = ["gnd"] * len(self.col_cap.get_wordline_names())
-
-        for port in range(self.left_rbl + self.right_rbl):
-            self.rbl_wordline_names.append([])
-            for x in self.all_ports:
-                self.rbl_wordline_names[-1].append("rbl_wl_{0}_{1}".format(x, port))
-                if x != port:
-                    self.gnd_wordline_names.append("rbl_wl_{0}_{1}".format(x, port))
+        for port in self.all_ports:
+            for bit in self.all_ports:
+                self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
+                if bit != port:
+                    self.gnd_wordline_names.append("rbl_wl_{0}_{1}".format(port, bit))
 
         self.all_rbl_wordline_names = [x for sl in self.rbl_wordline_names for x in sl]
 
-        for port in self.all_ports:
-            wordline_names = self.bitcell_array.get_wordline_names(port)
-            self.wordline_names.append(wordline_names)
-        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        self.wordline_names = self.bitcell_array.wordline_names
+        self.all_wordline_names = self.bitcell_array.all_wordline_names
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names)
-        for p in range(self.left_rbl):
-            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[p]])
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
+        for bit in range(self.rbl[0]):
+            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
-        for p in range(self.left_rbl, self.left_rbl + self.right_rbl):
-            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[p]])
-        self.replica_array_wordline_names.extend(self.dummy_row_wordline_names)
+        for bit in range(self.rbl[1]):
+            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
 
-        for port in range(self.left_rbl):
-            self.add_pin(self.rbl_wordline_names[port][0], "INPUT")
+        for port in range(self.rbl[0]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
-        for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
-            self.add_pin(self.rbl_wordline_names[port][1], "INPUT")
+        for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -269,27 +257,30 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Replica columns
         self.replica_col_insts = []
-        for port in range(self.add_left_rbl + self.add_right_rbl):
-            self.replica_col_insts.append(self.add_inst(name="replica_col_{}".format(port),
-                                                       mod=self.replica_columns[port]))
-            self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + supplies)
+        for port in self.all_ports:
+            if port in self.rbls:
+                self.replica_col_insts.append(self.add_inst(name="replica_col_{}".format(port),
+                                                            mod=self.replica_columns[port]))
+                self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + supplies)
+            else:
+                self.replica_col_insts.append(None)
                 
         # Dummy rows under the bitcell array (connected with with the replica cell wl)
         self.dummy_row_replica_insts = []
         # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
-        for port in range(self.left_rbl + self.right_rbl):
+        for port in self.all_ports:
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
-                                                             mod=self.dummy_row))
+                                                              mod=self.dummy_row))
             self.connect_inst([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
-                                                 mod=self.col_cap))
-        self.connect_inst(self.dummy_row_wordline_names + supplies)
+                                                  mod=self.col_cap))
+        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap))
-        self.connect_inst(self.dummy_row_wordline_names + supplies)
+        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
@@ -318,7 +309,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
-        self.translate_all(self.bitcell_offset.scale(-1 - self.add_left_rbl, -1 - self.left_rbl))
+        self.translate_all(self.bitcell_offset.scale(-1 - len(self.left_rbl), -1 - self.rbl[0]))
 
         self.add_layout_pins()
 
@@ -332,47 +323,47 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         """ Add replica columns on left and right of array """
 
         # Grow from left to right, toward the array
-        for bit in range(self.add_left_rbl):
-            offset = self.bitcell_offset.scale(-self.add_left_rbl + bit, -self.left_rbl - 1)
-            self.replica_col_insts[bit].place(offset)
+        for bit, port in enumerate(self.left_rbl):
+            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1)
+            self.replica_col_insts[port].place(offset)
         # Grow to the right of the bitcell array, array outward
-        for bit in range(self.add_right_rbl):
-            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.left_rbl - 1)
-            self.replica_col_insts[self.add_left_rbl + bit].place(offset)
+        for bit, port in enumerate(self.right_rbl):
+            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - 1)
+            self.replica_col_insts[port].place(offset)
 
         # Replica dummy rows
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array
         # These grow up, toward the array
-        for bit in range(self.left_rbl):
-            self.dummy_row_replica_insts[bit].place(offset=self.bitcell_offset.scale(0, -self.left_rbl + bit + (-self.left_rbl + bit) % 2),
-                                                   mirror="MX" if (-self.left_rbl + bit) % 2 else "R0")
+        for bit in range(self.rbl[0]):
+            self.dummy_row_replica_insts[bit].place(offset=self.bitcell_offset.scale(0, -self.rbl[0] + bit + (-self.rbl[0] + bit) % 2),
+                                                    mirror="MX" if (-self.rbl[0] + bit) % 2 else "R0")
         # These grow up, away from the array
-        for bit in range(self.right_rbl):
-            self.dummy_row_replica_insts[self.left_rbl + bit].place(offset=self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul(),
-                                                                   mirror="MX" if bit % 2 else "R0")
+        for bit in range(self.rbl[1]):
+            self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul(),
+                                                                  mirror="MX" if bit % 2 else "R0")
         
     def add_end_caps(self):
         """ Add dummy cells or end caps around the array """
 
         # FIXME: These depend on the array size itself
         # Far top dummy row (first row above array is NOT flipped)
-        flip_dummy = self.right_rbl % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, self.right_rbl + flip_dummy) + self.bitcell_array_inst.ul()
+        flip_dummy = self.rbl[1] % 2
+        dummy_row_offset = self.bitcell_offset.scale(0, self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
         self.dummy_row_insts[1].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
         # FIXME: These depend on the array size itself
         # Far bottom dummy row (first row below array IS flipped)
-        flip_dummy = (self.left_rbl + 1) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, -self.left_rbl - 1 + flip_dummy)
+        flip_dummy = (self.rbl[0] + 1) % 2
+        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy)
         self.dummy_row_insts[0].place(offset=dummy_row_offset,
                                           mirror="MX" if flip_dummy else "R0")
         # Far left dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(-self.add_left_rbl - 1, -self.left_rbl - 1)
+        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1)
         self.dummy_col_insts[0].place(offset=dummy_col_offset)
         # Far right dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(self.add_right_rbl, -self.left_rbl - 1) + self.bitcell_array_inst.lr()
+        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] - 1) + self.bitcell_array_inst.lr()
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
     def add_layout_pins(self):
@@ -412,14 +403,15 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     height=pin.height())
 
         # Replica bitlines
-        for (names, inst) in zip(self.rbl_bitline_names, self.replica_col_insts):
-            for (bl_name, pin_name) in zip(names, self.replica_columns[0].all_bitline_names):
-                pin = inst.get_pin(pin_name)
-                self.add_layout_pin(text=bl_name,
-                                    layer=pin.layer,
-                                    offset=pin.ll().scale(1, 0),
-                                    width=pin.width(),
-                                    height=self.height)
+        if len(self.rbls) > 0:
+            for (names, inst) in zip(self.rbl_bitline_names, self.replica_col_insts):
+                for (bl_name, pin_name) in zip(names, self.replica_columns[self.rbls[0]].all_bitline_names):
+                    pin = inst.get_pin(pin_name)
+                    self.add_layout_pin(text=bl_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(1, 0),
+                                        width=pin.width(),
+                                        height=self.height)
 
         # vdd/gnd are only connected in the perimeter cells
         # replica column should only have a vdd/gnd in the dummy cell on top/bottom
@@ -434,7 +426,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                        start_layer=pin.layer)
 
             for inst in self.replica_col_insts:
-                self.copy_layout_pin(inst, pin_name)
+                if inst:
+                    self.copy_layout_pin(inst, pin_name)
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

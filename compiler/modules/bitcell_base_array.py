@@ -18,7 +18,6 @@ class bitcell_base_array(design.design):
     def __init__(self, name, rows, cols, column_offset):
         super().__init__(name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
-        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
@@ -27,13 +26,16 @@ class bitcell_base_array(design.design):
         # Bitcell for port names only
         self.cell = factory.create(module_type="bitcell")
 
-        # This will create a default set of bitline/wordline names
-        # They may get over-riden in the super module
-        self.create_all_bitline_names()
-        self.create_all_wordline_names()
+        self.wordline_names = [[] for port in self.all_ports]
+        self.all_wordline_names = []
+        self.bitline_names = [[] for port in self.all_ports]
+        self.all_bitline_names = []
+        self.rbl_bitline_names = [[] for port in self.all_ports]
+        self.all_rbl_bitline_names = []
+        self.rbl_wordline_names = [[] for port in self.all_ports]
+        self.all_rbl_wordline_names = []
         
     def create_all_bitline_names(self):
-        self.bitline_names = [[] for port in self.all_ports]
         for col in range(self.column_size):
             for port in self.all_ports:
                 self.bitline_names[port].extend(["bl_{0}_{1}".format(port, col),
@@ -45,7 +47,6 @@ class bitcell_base_array(design.design):
     #     return [prefix + x for x in self.all_wordline_names]
 
     def create_all_wordline_names(self):
-        self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.row_size):
             for port in self.all_ports:
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
@@ -73,8 +74,7 @@ class bitcell_base_array(design.design):
 
     def get_rbl_wordline_names(self, port=None):
         """ 
-        Return the ACTIVE WL for the given RBL port.
-        Inactive will be set to gnd. 
+        Return the WL for the given RBL port.
         """
         if port == None:
             return self.all_rbl_wordline_names
@@ -82,7 +82,7 @@ class bitcell_base_array(design.design):
             return self.rbl_wordline_names[port]
 
     def get_rbl_bitline_names(self, port=None):
-        """ Return the BL for the given RBL port """
+        """ Return all the BL for the given RBL port """
         if port == None:
             return self.all_rbl_bitline_names
         else:
@@ -95,14 +95,16 @@ class bitcell_base_array(design.design):
         else:
             return self.bitline_names[port]
         
-    def get_all_bitline_names(self):
-        """ Return ALL the bitline names (including dummy and rbl) """
+    def get_all_bitline_names(self, port=None):
+        """ Return ALL the bitline names (including rbl) """
         temp = []
-        if self.add_left_rbl > 0:
-            temp.extend(self.get_rbl_bitline_names(0))
-        temp.extend(self.get_bitline_names())
-        if self.add_right_rbl > 0:
-            temp.extend(self.get_rbl_bitline_names(self.add_left_rbl))
+        temp.extend(self.get_rbl_bitline_names(0))
+        if port == None:
+            temp.extend(self.all_bitline_names)
+        else:
+            temp.extend(self.bitline_names[port])
+        if len(self.all_ports) > 1:
+            temp.extend(self.get_rbl_bitline_names(1))
         return temp
 
     def get_wordline_names(self, port=None):
@@ -115,7 +117,6 @@ class bitcell_base_array(design.design):
     def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
-        temp.extend(self.get_dummy_wordline_names())
         temp.extend(self.get_rbl_wordline_names(0))
         if port == None:
             temp.extend(self.all_wordline_names)
@@ -123,15 +124,8 @@ class bitcell_base_array(design.design):
             temp.extend(self.wordline_names[port])
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
-        temp.extend(self.get_dummy_wordline_names())
         return temp
         
-    def get_dummy_wordline_names(self):
-        """ 
-        Return the ACTIVE WL for the given dummy port.
-        """
-        return self.dummy_row_wordline_names
-    
     def add_layout_pins(self):
         """ Add the layout pins """
 

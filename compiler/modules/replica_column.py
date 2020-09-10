@@ -4,14 +4,14 @@
 # All rights reserved.
 #
 import debug
-import design
+from bitcell_base_array import bitcell_base_array
 from tech import cell_properties
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
 
-class replica_column(design.design):
+class replica_column(bitcell_base_array):
     """
     Generate a replica bitline column for the replica array.
     Rows is the total number of rows i the main array.
@@ -21,7 +21,7 @@ class replica_column(design.design):
     """
 
     def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
-        super().__init__(name)
+        super().__init__(rows=sum(rbl) + rows + 2, cols=1, column_offset=column_offset, name=name)
 
         self.rows = rows
         self.left_rbl = rbl[0]
@@ -60,19 +60,9 @@ class replica_column(design.design):
 
     def add_pins(self):
 
-        self.bitline_names = [[] for port in self.all_ports]
-        col = 0
-        for port in self.all_ports:
-            self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
-            self.bitline_names[port].append("br_{0}_{1}".format(port, col))
-        self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
-
-        self.wordline_names = [[] for port in self.all_ports]
-        for row in range(self.total_size):
-            for port in self.all_ports:
-                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
         self.add_pin_list(self.all_wordline_names, "INPUT")
 
         self.add_pin("vdd", "POWER")

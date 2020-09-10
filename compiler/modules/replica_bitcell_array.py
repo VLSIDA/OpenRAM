@@ -111,7 +111,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the bottom up
-                replica_bit = self.rbl[0] + self.row_size + 1 + port
+                replica_bit = self.rbl[0] + self.row_size + port
             else:
                 continue
             
@@ -406,7 +406,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Replica bitlines
         if len(self.rbls) > 0:
             for (names, inst) in zip(self.rbl_bitline_names, self.replica_col_insts):
-                for (bl_name, pin_name) in zip(names, self.replica_columns[self.rbls[0]].all_bitline_names):
+                pin_names = self.replica_columns[self.rbls[0]].all_bitline_names
+                for (bl_name, pin_name) in zip(names, pin_names):
                     pin = inst.get_pin(pin_name)
                     self.add_layout_pin(text=bl_name,
                                         layer=pin.layer,

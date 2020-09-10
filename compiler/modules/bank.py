@@ -703,7 +703,6 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = [x for x in self.bitcell_array.get_bitline_names(port) if "bl" in x]
         inst1_br_name = [x for x in self.bitcell_array.get_bitline_names(port) if "br" in x]
-
         inst2_bl_name = []
         inst2_br_name = []
         for col in range(self.num_cols):
@@ -722,8 +721,7 @@ class bank(design.design):
         
 
         # Connect the replica bitlines
-        rbl_bl_names = self.bitcell_array.get_rbl_bitline_names(port)[2 * port: 2 * port + 2]
-        for (array_name, data_name) in zip(rbl_bl_names, ["rbl_bl", "rbl_br"]):
+        for (array_name, data_name) in zip(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)], ["rbl_bl", "rbl_br"]):
             self.connect_bitline(inst1, inst2, array_name, data_name)
         
     def route_port_data_out(self, port):

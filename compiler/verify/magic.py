@@ -109,21 +109,21 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
-    # f.write(pre + "ext2spice lvs\n")
-    f.write(pre + "ext2spice hierarchy on\n")
-    f.write(pre + "ext2spice format ngspice\n")
-    f.write(pre + "ext2spice cthresh infinite\n")
-    f.write(pre + "ext2spice rthresh infinite\n")
-    f.write(pre + "ext2spice renumber off\n")
-    f.write(pre + "ext2spice scale off\n")
-    f.write(pre + "ext2spice blackbox on\n")
-    f.write(pre + "ext2spice subcircuit top auto\n")
-    f.write(pre + "ext2spice global off\n")
+    #f.write(pre+"ext2spice lvs\n")
+    f.write(pre+"ext2spice hierarchy on\n")
+    f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice cthresh infinite\n")
+    f.write(pre+"ext2spice rthresh infinite\n")
+    f.write(pre+"ext2spice renumber off\n")
+    f.write(pre+"ext2spice scale off\n")
+    f.write(pre+"ext2spice blackbox on\n")
+    f.write(pre+"ext2spice subcircuit top on\n")
+    f.write(pre+"ext2spice global off\n")
 
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
-    #f.write(pre + "ext2spice format ngspice\n")
-    f.write(pre + "ext2spice {}\n".format(cell_name))
+    f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
 
@@ -413,13 +413,13 @@ def write_script_pex_rule(gds_name,cell_name,output):
     else:
         pre = ""
     f.write(pre+"extract\n".format(cell_name))
-    #f.write(pre+"ext2spice hierarchy on\n")
-    #f.write(pre+"ext2spice format ngspice\n")
-    #f.write(pre+"ext2spice renumber off\n")
-    #f.write(pre+"ext2spice scale off\n")
-    #f.write(pre+"ext2spice blackbox on\n")
+    f.write(pre+"ext2spice hierarchy off\n")
+    f.write(pre+"ext2spice format ngspice\n")
+    f.write(pre+"ext2spice renumber off\n")
+    f.write(pre+"ext2spice scale off\n")
+    f.write(pre+"ext2spice blackbox on\n")
     f.write(pre+"ext2spice subcircuit top on\n")
-    #f.write(pre+"ext2spice global off\n")
+    f.write(pre+"ext2spice global off\n")
     f.write(pre+"ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("eof\n")
@@ -442,31 +442,49 @@ def correct_port(name, output_file_name, ref_file_name):
     pex_file = open(output_file_name, "r")
     contents = pex_file.read()
     # locate the start of circuit definition line
-    match = re.search(".subckt " + str(name) + ".*", contents)
+    match = re.search(r'^\.subckt+[^M]*', contents, re.MULTILINE)
     match_index_start = match.start()
-    pex_file.seek(match_index_start)
-    rest_text = pex_file.read()
-    # locate the end of circuit definition line
-    match = re.search(r'\n', rest_text)
-    match_index_end = match.start()
+    match_index_end = match.end()
     # store the unchanged part of pex file in memory
     pex_file.seek(0)
     part1 = pex_file.read(match_index_start)
-    pex_file.seek(match_index_start + match_index_end)
+    pex_file.seek(match_index_end)
     part2 = pex_file.read()
+
+    bitcell_list = "+ "
+    if OPTS.words_per_row:
+        for bank in range(OPTS.num_banks):
+            for bank in range(OPTS.num_banks):
+                row = int(OPTS.num_words / OPTS.words_per_row) - 1
+                col = int(OPTS.word_size * OPTS.words_per_row) - 1 
+                bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col)
+                bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col)
+            for col in range(OPTS.word_size * OPTS.words_per_row):
+                for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
+                    bitcell_list += "bl{0}_{1} ".format(bank, col)
+                    bitcell_list += "br{0}_{1} ".format(bank, col)
+    bitcell_list += "\n"
+    control_list = "+ "
+    if OPTS.words_per_row:
+        for bank in range(OPTS.num_banks):
+            control_list += "bank_{}/s_en0".format(bank)
+    control_list += '\n'
+
+    part2 = bitcell_list + control_list + part2
+
     pex_file.close()
 
     # obtain the correct definition line from the original spice file
     sp_file = open(ref_file_name, "r")
     contents = sp_file.read()
-    circuit_title = re.search(".SUBCKT " + str(name) + ".*\n", contents)
+    circuit_title = re.search(".SUBCKT " + str(name) + ".*", contents)
     circuit_title = circuit_title.group()
     sp_file.close()
 
     # write the new pex file with info in the memory
     output_file = open(output_file_name, "w")
     output_file.write(part1)
-    output_file.write(circuit_title)
+    output_file.write(circuit_title+'\n')
     output_file.write(part2)
     output_file.close()
 

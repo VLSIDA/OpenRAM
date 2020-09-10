@@ -93,6 +93,8 @@ class options(optparse.Values):
     trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
+    # Output config with all options
+    output_extended_config = False
 
 
     ###################

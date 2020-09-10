@@ -38,6 +38,7 @@ class functional(simulation):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        self.probe_address, self.probe_data = '0'*self.addr_size,0
         self.set_corner(corner)
         self.set_spice_constants()
         self.set_stimulus_variables()
@@ -47,6 +48,8 @@ class functional(simulation):
         self.add_graph_exclusions()
         self.create_graph()
         self.set_internal_spice_names()
+        self.q_name, self.qbar_name = self.get_bit_name()	
+        debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
         
         # Number of checks can be changed
         self.num_cycles = 15
@@ -419,18 +422,6 @@ class functional(simulation):
         
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
-
-    # FIXME: refactor to share with delay.py
-    def add_graph_exclusions(self):
-        """Exclude portions of SRAM from timing graph which are not relevant"""
-        
-        # other initializations can only be done during analysis when a bit has been selected
-        # for testing.
-        self.sram.bank.graph_exclude_precharge()
-        self.sram.graph_exclude_addr_dff()
-        self.sram.graph_exclude_data_dff()
-        self.sram.graph_exclude_ctrl_dffs()
-        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
         
     # FIXME: refactor to share with delay.py
     def create_graph(self):
@@ -444,25 +435,8 @@ class functional(simulation):
         self.graph = graph_util.timing_graph()
         self.sram_spc_name = "X{}".format(self.sram.name)
         self.sram.build_graph(self.graph, self.sram_spc_name, self.pins)
-
-    # FIXME: refactor to share with delay.py
-    def set_internal_spice_names(self):
-        """Sets important names for characterization such as Sense amp enable and internal bit nets."""
-        
-        # For now, only testing these using first read port.
-        port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format("clk", port),
-                                 '{}{}_{}'.format(self.dout_name, port, 0).lower())
-
-        self.sen_name = self.get_sen_name(self.graph.all_paths)
-        debug.info(2, "s_en name = {}".format(self.sen_name))
-        
-        self.bl_name, self.br_name = self.get_bl_name(self.graph.all_paths, port)
-        debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
-
-        self.q_name, self.qbar_name = self.get_bit_name()
-        debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
-        
+ 
+    #FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
@@ -473,37 +447,6 @@ class functional(simulation):
         qbar_name = cell_name + '.' + str(storage_names[1])
 
         return (q_name, qbar_name)
-        
-    # FIXME: refactor to share with delay.py
-    def get_sen_name(self, paths):
-        """
-        Gets the signal name associated with the sense amp enable from input paths.
-        Only expects a single path to contain the sen signal name.
-        """
-        
-        sa_mods = factory.get_mods(OPTS.sense_amp)
-        # Any sense amp instantiated should be identical, any change to that
-        # will require some identification to determine the mod desired.
-        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
-        enable_name = sa_mods[0].get_enable_name()
-        sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
-        return sen_name
-     
-    # FIXME: refactor to share with delay.py
-    def get_bl_name(self, paths, port):
-        """Gets the signal name associated with the bitlines in the bank."""
-        
-        cell_mod = factory.create(module_type=OPTS.bitcell)
-        cell_bl = cell_mod.get_bl_name(port)
-        cell_br = cell_mod.get_br_name(port)
-        
-        # Only a single path should contain a single s_en name. Anything else is an error.
-        bl_names = []
-        exclude_set = self.get_bl_name_search_exclusions()
-        for int_net in [cell_bl, cell_br]:
-            bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
-                
-        return bl_names[0], bl_names[1]
 
     def get_bl_name_search_exclusions(self):
         """Gets the mods as a set which should be excluded while searching for name."""

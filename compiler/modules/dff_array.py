@@ -155,9 +155,3 @@ class dff_array(design.design):
             self.add_via_stack_center(from_layer=clk_pin.layer,
                                       to_layer="m3",
                                       offset=vector(clk_pin.cx(), clk_ypos))
-            
-    def get_clk_cin(self):
-        """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
-        dff_clk_cin = self.dff.get_clk_cin()
-        total_cin = dff_clk_cin * self.rows * self.columns
-        return total_cin

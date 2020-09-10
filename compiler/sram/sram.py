@@ -63,6 +63,18 @@ class sram():
     def verilog_write(self, name):
         self.s.verilog_write(name)
 
+    def extended_config_write(self, name):
+        """Dump config file with all options. 
+           Include defaults and anything changed by input config."""
+        f = open(name, "w")
+        var_dict = dict((name, getattr(OPTS, name)) for name in dir(OPTS) if not name.startswith('__') and not callable(getattr(OPTS, name))) 
+        for var_name, var_value in var_dict.items():
+            if isinstance(var_value, str):
+                f.write(str(var_name) + " = " + "\"" + str(var_value) + "\"\n")
+            else:
+                f.write(str(var_name) + " = " + str(var_value)+ "\n")
+        f.close()
+        
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
@@ -137,3 +149,11 @@ class sram():
         debug.print_raw("Verilog: Writing to {0}".format(vname))
         self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)
+
+        # Write out options if specified
+        if OPTS.output_extended_config:
+            start_time = datetime.datetime.now()
+            oname = OPTS.output_path + OPTS.output_name + "_extended.py"
+            debug.print_raw("Extended Config: Writing to {0}".format(oname))
+            self.extended_config_write(oname)
+            print_time("Extended Config", datetime.datetime.now(), start_time)

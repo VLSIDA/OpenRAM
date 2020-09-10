@@ -15,6 +15,7 @@ from .trim_spice import *
 from .charutils import *
 import utils
 from globals import OPTS
+from sram_factory import factory
 
 class simulation():
 
@@ -408,3 +409,96 @@ class simulation():
         pin_names.append("{0}".format("gnd"))
         return pin_names
         
+    def add_graph_exclusions(self):
+        """Exclude portions of SRAM from timing graph which are not relevant"""
+        
+        # other initializations can only be done during analysis when a bit has been selected
+        # for testing.
+        self.sram.bank.graph_exclude_precharge()
+        self.sram.graph_exclude_addr_dff()
+        self.sram.graph_exclude_data_dff()
+        self.sram.graph_exclude_ctrl_dffs()
+        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()    
+        
+    def set_internal_spice_names(self):
+        """Sets important names for characterization such as Sense amp enable and internal bit nets."""
+        
+        port = self.read_ports[0]
+        if not OPTS.use_pex:
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                                    '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+            
+            sen_with_port = self.get_sen_name(self.graph.all_paths)
+            if sen_with_port.endswith(str(port)):
+                self.sen_name = sen_with_port[:-len(str(port))]
+            else:
+                self.sen_name = sen_with_port
+                debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
+                
+            debug.info(2,"s_en name = {}".format(self.sen_name))
+            
+            bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
+            port_pos = -1-len(str(self.probe_data))-len(str(port))
+            
+            if bl_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+                self.bl_name = bl_name_port[:port_pos] +"{}"+ bl_name_port[port_pos+len(str(port)):]
+            elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+                self.bl_name = bl_name_port
+            else:
+                self.bl_name = bl_name_port
+                debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+                
+            if br_name_port.endswith(str(port)+"_"+str(self.probe_data)):
+                self.br_name = br_name_port[:port_pos] +"{}"+ br_name_port[port_pos+len(str(port)):]
+            elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+                self.br_name = br_name_port
+            else:
+                self.br_name = br_name_port    
+                debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))
+        else:
+            self.graph.get_all_paths('{}{}'.format("clk", port), 
+                        '{}{}_{}'.format(self.dout_name, port, self.probe_data))
+            
+            self.sen_name = self.get_sen_name(self.graph.all_paths)    
+            debug.info(2,"s_en name = {}".format(self.sen_name))
+
+            
+            self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size-1)
+            self.br_name = "br{0}_{1}".format(port, OPTS.word_size-1)
+            debug.info(2,"bl name={}, br name={}".format(self.bl_name,self.br_name))    
+        
+    def get_sen_name(self, paths, assumed_port=None):
+        """
+        Gets the signal name associated with the sense amp enable from input paths.
+        Only expects a single path to contain the sen signal name.
+        """
+        
+        sa_mods = factory.get_mods(OPTS.sense_amp)
+        # Any sense amp instantiated should be identical, any change to that 
+        # will require some identification to determine the mod desired.
+        debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
+        enable_name = sa_mods[0].get_enable_name()
+        sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
+        if OPTS.use_pex:
+            sen_name = sen_name.split('.')[-1]
+        return sen_name  
+        
+        
+    def get_bl_name(self, paths, port):
+        """Gets the signal name associated with the bitlines in the bank."""
+        
+        cell_mod = factory.create(module_type=OPTS.bitcell)  
+        cell_bl = cell_mod.get_bl_name(port)
+        cell_br = cell_mod.get_br_name(port)
+        
+        bl_found = False
+        # Only a single path should contain a single s_en name. Anything else is an error.
+        bl_names = []
+        exclude_set = self.get_bl_name_search_exclusions()
+        for int_net in [cell_bl, cell_br]:
+            bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
+        if OPTS.use_pex:
+            for i in range(len(bl_names)):
+                bl_names[i] = bl_names[i].split('.')[-1]
+        return bl_names[0], bl_names[1]      

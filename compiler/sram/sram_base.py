@@ -15,6 +15,9 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
+from tech import drc
+import numpy as np
+import logical_effort
 
 
 class sram_base(design, verilog, lef):
@@ -84,8 +87,71 @@ class sram_base(design, verilog, lef):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
         
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
+        self.add_pin("vdd","POWER")
+        self.add_pin("gnd","GROUND")
+
+    def add_global_pex_labels(self):
+        """
+        Add pex labels at the sram level for spice analysis
+        """
+
+        # add pex labels for bitcells
+        for bank_num in range(len(self.bank_insts)):
+            bank = self.bank_insts[bank_num]
+            pex_data = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
+
+            bank_offset = pex_data[0] # offset bank relative to sram
+            Q_offset = pex_data[1] # offset of storage relative to bank
+            Q_bar_offset = pex_data[2] # offset of storage relative to bank
+            bl_offsets = pex_data[3]
+            br_offsets = pex_data[4]
+            bl_meta = pex_data[5]
+            br_meta = pex_data[6]
+            
+            bl = []
+            br = []
+
+            storage_layer_name = "m1"
+            bitline_layer_name = "m2"
+            
+            for cell in range(len(bank_offset)):
+                Q = [bank_offset[cell][0] + Q_offset[cell][0], bank_offset[cell][1] + Q_offset[cell][1]]
+                Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0], bank_offset[cell][1] + Q_bar_offset[cell][1]]
+                OPTS.words_per_row = self.words_per_row
+                self.add_layout_pin_rect_center("bitcell_Q_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))) , storage_layer_name, Q) 
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))), storage_layer_name, Q_bar)
+
+            for cell in range(len(bl_offsets)):
+                col = bl_meta[cell][0][2]
+                for bitline in range(len(bl_offsets[cell])):
+                    bitline_location = [float(bank_offset[cell][0]) + bl_offsets[cell][bitline][0], float(bank_offset[cell][1]) + bl_offsets[cell][bitline][1]]
+                    bl.append([bitline_location, bl_meta[cell][bitline][3], col])
+
+            for cell in range(len(br_offsets)):
+                col = br_meta[cell][0][2]
+                for bitline in range(len(br_offsets[cell])):
+                    bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
+                    br.append([bitline_location, br_meta[cell][bitline][3], col])           
+
+            for i in range(len(bl)):
+                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])               
+
+            for i in range(len(br)):
+                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                           
+
+        # add pex labels for control logic
+        for i in range  (len(self.control_logic_insts)):
+            instance = self.control_logic_insts[i]
+            control_logic_offset = instance.offset
+            for output in instance.mod.output_list:
+                pin = instance.mod.get_pin(output)
+                pin.transform([0,0], instance.mirror, instance.rotate)
+                offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
+                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), storage_layer_name, offset)
+
+             
+            
+
 
     def create_netlist(self):
         """ Netlist creation """
@@ -124,6 +190,8 @@ class sram_base(design, verilog, lef):
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
+        if OPTS.use_pex:
+            self.add_global_pex_labels()
         self.add_boundary(ll=vector(0, 0),
                           ur=vector(self.width, self.height))
 
@@ -563,49 +631,3 @@ class sram_base(design, verilog, lef):
     def lvs_write(self, sp_name):
         self.sp_write(sp_name, lvs_netlist=True)
         
-    def get_wordline_stage_efforts(self, inp_is_rise=True):
-        """Get the all the stage efforts for each stage in the path from clk_buf to a wordline"""
-        stage_effort_list = []
-
-        # Clk_buf originates from the control logic so only the bank is related to the wordline path
-        # No loading on the wordline other than in the bank.
-        external_wordline_cout = 0
-        stage_effort_list += self.bank.determine_wordline_stage_efforts(external_wordline_cout, inp_is_rise)
-        
-        return stage_effort_list
-        
-    def get_wl_en_cin(self):
-        """Gets the capacitive load the of clock (clk_buf) for the sram"""
-        # Only the wordline drivers within the bank use this signal
-        return self.bank.get_wl_en_cin()
-
-    def get_w_en_cin(self):
-        """Gets the capacitive load the of write enable (w_en) for the sram"""
-        # Only the write drivers within the bank use this signal
-        return self.bank.get_w_en_cin()
-    
-    def get_p_en_bar_cin(self):
-        """Gets the capacitive load the of precharge enable (p_en_bar) for the sram"""
-        # Only the precharges within the bank use this signal
-        return self.bank.get_p_en_bar_cin()
-    
-    def get_clk_bar_cin(self):
-        """Gets the capacitive load the of clock (clk_buf_bar) for the sram"""
-        # As clk_buf_bar is an output of the control logic. The cap for that module is not determined here.
-        # Only the precharge cells use this signal (other than the control logic)
-        return self.bank.get_clk_bar_cin()
-    
-    def get_sen_cin(self):
-        """Gets the capacitive load the of sense amp enable for the sram"""
-        # Only the sense_amps use this signal (other than the control logic)
-        return self.bank.get_sen_cin()
-    
-    def get_dff_clk_buf_cin(self):
-        """Get the relative capacitance of the clk_buf signal.
-           Does not get the control logic loading but everything else"""
-        total_cin = 0
-        total_cin += self.row_addr_dff.get_clk_cin()
-        total_cin += self.data_dff.get_clk_cin()
-        if self.col_addr_size > 0:
-            total_cin += self.col_addr_dff.get_clk_cin()
-        return total_cin

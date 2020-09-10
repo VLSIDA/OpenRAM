@@ -1,6 +1,6 @@
 magic
 tech scmos
-timestamp 1560809302
+timestamp 1577163318
 << nwell >>
 rect -8 35 42 57
 << pwell >>
@@ -115,4 +115,6 @@ rlabel m2contact 17 52 17 52 5 vdd
 rlabel metal2 8 49 8 49 1 bl
 rlabel metal2 26 49 26 49 1 br
 rlabel metal1 4 13 4 13 1 wl
+rlabel polycontact 17 37 17 37 1 Q
+rlabel polycontact 23 28 23 28 1 Q_bar
 << end >>

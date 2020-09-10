@@ -140,8 +140,3 @@ class write_mask_and_array(design.design):
             supply_pin_left = self.and2_insts[0].get_pin(supply)
             supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
             self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
-
-    def get_cin(self):
-        """Get the relative capacitance of all the input connections in the bank"""
-        # The enable is connected to an and2 for every row.
-        return self.and2.get_cin() * len(self.and2_insts)

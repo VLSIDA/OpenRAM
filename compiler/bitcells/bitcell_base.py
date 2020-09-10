@@ -8,8 +8,9 @@
 
 import debug
 import design
+from globals import OPTS
 import logical_effort
-from tech import parameter, drc
+from tech import parameter, drc, layer
 
 
 class bitcell_base(design.design):
@@ -78,7 +79,85 @@ class bitcell_base(design.design):
             fmt_str = "Storage nodes={} not found in spice file."
             debug.info(1, fmt_str.format(self.storage_nets))
             return None
-    
+
+    def get_storage_net_offset(self):
+        """
+        Gets the location of the storage net labels to add top level 
+        labels for pex simulation.
+        """
+        # If we generated the bitcell, we already know where Q and Q_bar are
+        if OPTS.bitcell is not "pbitcell":
+            self.storage_net_offsets = []
+            for i in range(len(self.get_storage_net_names())):
+                for text in self.gds.getTexts(layer["m1"]):
+                    if self.storage_nets[i] == text.textString.rstrip('\x00'):
+                        self.storage_net_offsets.append(text.coordinates[0])
+                    
+            for i in range(len(self.storage_net_offsets)):
+                self.storage_net_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.storage_net_offsets[i]])
+
+
+        return(self.storage_net_offsets)
+
+    def get_bitline_offset(self):
+
+        bl_names = self.get_all_bl_names()
+        br_names = self.get_all_br_names()
+
+        found_bl = []
+        found_br = []
+
+        self.bl_offsets = []
+        self.br_offsets = []
+
+        for i in range(len(bl_names)):
+            for text in self.gds.getTexts(layer["m2"]):
+                if not bl_names[i] in found_bl:
+                    if bl_names[i] == text.textString.rstrip('\x00'):
+                        self.bl_offsets.append(text.coordinates[0])
+                        found_bl.append(bl_names[i])
+                        
+                        continue
+
+        for i in range(len(br_names)):
+            for text in self.gds.getTexts(layer["m2"]):
+                if not br_names[i] in found_br:
+                    if br_names[i] == text.textString.rstrip('\x00'):
+                        self.br_offsets.append(text.coordinates[0])
+                        found_br.append(br_names[i])
+                        continue
+
+        for i in range(len(self.bl_offsets)):
+            self.bl_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.bl_offsets[i]])
+
+        for i in range(len(self.br_offsets)):
+            self.br_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.br_offsets[i]]) 
+
+        return(self.bl_offsets, self.br_offsets, found_bl, found_br)
+
+    def get_normalized_storage_nets_offset(self):               
+        """
+        Convert storage net offset to be relative to the bottom left corner
+        of the bitcell. This is useful for making sense of offsets outside 
+        of the bitcell.
+        """     
+        if OPTS.bitcell is not "pbitcell":
+            normalized_storage_net_offset = self.get_storage_net_offset()
+
+        else:
+            net_offset = self.get_storage_net_offset()
+            Q_x = net_offset[0][0] - self.leftmost_xpos
+            Q_y = net_offset[0][1] - self.botmost_ypos
+            Q_bar_x = net_offset[1][0] - self.leftmost_xpos
+            Q_bar_y = net_offset[1][1] - self.botmost_ypos
+
+            normalized_storage_net_offset = [[Q_x,Q_y],[Q_bar_x,Q_bar_y]]
+
+        return normalized_storage_net_offset
+
+    def get_normalized_bitline_offset(self):
+            return self.get_bitline_offset()
+
     def build_graph(self, graph, inst_name, port_nets):
         """
         By default, bitcells won't be part of the graph.

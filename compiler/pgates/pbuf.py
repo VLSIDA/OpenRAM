@@ -96,21 +96,4 @@ class pbuf(pgate.pgate):
                                         offset=a_pin.center(),
                                         width=a_pin.width(),
                                         height=a_pin.height())
-        
-    def get_stage_efforts(self, external_cout, inp_is_rise=False):
-        """Get the stage efforts of the A -> Z path"""
-        stage_effort_list = []
-        stage1_cout = self.inv2.get_cin()
-        stage1 = self.inv1.get_stage_effort(stage1_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        last_stage_is_rise = stage1.is_rise
-        
-        stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage2)
-        
-        return stage_effort_list
-
-    def get_cin(self):
-        """Returns the relative capacitance of the input"""
-        input_cin = self.inv1.get_cin()
-        return input_cin
+                                        

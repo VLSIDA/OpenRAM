@@ -21,7 +21,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     Requires a regular bitcell array, replica bitcell, and dummy
     bitcell (Bl/BR disconnected).
     """
-    def __init__(self, rows, cols, name, rbl=None, left_rbl=[0], right_rbl=[]):
+    def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         super().__init__(name, rows, cols, column_offset=0)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
@@ -41,8 +41,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             self.rbl=[1, 1 if len(self.all_ports)>1 else 0]
         # This specifies which RBL to put on the left or right
         # by port number
-        self.left_rbl = left_rbl
-        if right_rbl:
+        # This could be an empty list
+        if left_rbl != None:
+            self.left_rbl = left_rbl
+        else:
+            self.left_rbl = [0]
+        # This could be an empty list
+        if right_rbl != None:
             self.right_rbl = right_rbl
         else:
             self.right_rbl=[1] if len(self.all_ports) > 1 else []
@@ -326,6 +331,18 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         self.DRC_LVS()
 
+    def get_main_array_top(self):
+        return self.bitcell_array_inst.uy()
+
+    def get_main_array_bottom(self):
+        return self.bitcell_array_inst.by()
+
+    def get_main_array_left(self):
+        return self.bitcell_array_inst.lx()
+
+    def get_main_array_right(self):
+        return self.bitcell_array_inst.rx()
+    
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """
 

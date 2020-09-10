@@ -243,4 +243,15 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     in_loc = in_pin.rc()
                 self.add_path(out_pin.layer, [out_loc, mid_loc, in_loc])
             
+    def get_main_array_top(self):
+        return self.bitcell_array_inst.offset.y + self.bitcell_array.get_main_array_top()
+
+    def get_main_array_bottom(self):
+        return self.bitcell_array_inst.offset.y + self.bitcell_array.get_main_array_bottom()
+
+    def get_main_array_left(self):
+        return self.bitcell_array_inst.offset.x + self.bitcell_array.get_main_array_left()
+
+    def get_main_array_right(self):
+        return self.bitcell_array_inst.offset.x + self.bitcell_array.get_main_array_right()
             

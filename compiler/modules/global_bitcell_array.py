@@ -119,6 +119,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                 
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
+        # Make a flat list too
+        self.all_rbl_bitline_names = [x for sl in zip(*self.rbl_bitline_names) for x in sl]
 
         self.add_pin_list(self.rbl_bitline_names[0], "INPUT")
         self.add_pin_list(self.all_bitline_names, "INOUT")
@@ -127,26 +129,27 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             
     def add_wordline_pins(self):
 
-        self.dummy_row_wordline_names = [[] for x in self.all_ports]
+        self.rbl_wordline_names = [[] for x in self.all_ports]
         
-        self.rbl_wordline_names = []
-        
-        self.wordline_names = []
+        self.wordline_names = [[] for x in self.all_ports]
 
-        self.wordline_names.append("rbl_wl_0_0")
-        # This is to keep it the same as a plain replica_bitline_array
-        self.rbl_wordline_names.append("rbl_wl_0_0")
+        for bit in self.all_ports:
+            for port in self.all_ports:
+                self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
             
+        self.all_rbl_wordline_names = [x for sl in zip(*self.rbl_wordline_names) for x in sl]
+        
         # Regular WLs
         for row in range(self.row_size):
             for port in self.all_ports:
-                self.wordline_names.append("wl_{0}_{1}".format(port, row))
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 
+        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        
+        self.add_pin_list(self.rbl_wordline_names[0], "INPUT")
+        self.add_pin_list(self.all_wordline_names, "INPUT")
         if len(self.all_ports) > 1:
-            self.wordline_names.append("rbl_wl_1_1")
-            self.rbl_wordline_names.append("rbl_wl_1_1")
-
-        self.add_pin_list(self.wordline_names, "INPUT")
+            self.add_pin_list(self.rbl_wordline_names[1], "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -238,3 +241,16 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         for inst in self.insts:
             self.copy_power_pins(inst, "vdd")
             self.copy_power_pins(inst, "gnd")
+
+    def get_main_array_top(self):
+        return self.local_insts[0].offset.y + self.local_mods[0].get_main_array_top()
+
+    def get_main_array_bottom(self):
+        return self.local_insts[0].offset.y + self.local_mods[0].get_main_array_bottom()
+
+    def get_main_array_left(self):
+        return self.local_insts[0].offset.x + self.local_mods[0].get_main_array_left()
+
+    def get_main_array_right(self):
+        return self.local_insts[-1].offset.x + self.local_mods[-1].get_main_array_right()
+            

@@ -186,11 +186,11 @@ class bank(design.design):
         self.bitcell_array_right = self.bitcell_array.width
         
         # These are the offsets of the main array (excluding dummy and replica rows/cols)
-        self.main_bitcell_array_top = self.bitcell_array.bitcell_array_inst.uy()
+        self.main_bitcell_array_top = self.bitcell_array.get_main_array_top()
         # Just past the dummy column
-        self.main_bitcell_array_left = self.bitcell_array.bitcell_array_inst.lx()
+        self.main_bitcell_array_left = self.bitcell_array.get_main_array_left()
         # Just past the dummy row and replica row
-        self.main_bitcell_array_bottom = self.bitcell_array.bitcell_array_inst.by()
+        self.main_bitcell_array_bottom = self.bitcell_array.get_main_array_bottom()
         
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:

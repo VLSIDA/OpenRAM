@@ -21,7 +21,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     Requires a regular bitcell array, replica bitcell, and dummy
     bitcell (Bl/BR disconnected).
     """
-    def __init__(self, rows, cols, rbl, name, left_rbl=[], right_rbl=[]):
+    def __init__(self, rows, cols, name, rbl=None, left_rbl=[0], right_rbl=[]):
         super().__init__(name, rows, cols, column_offset=0)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
@@ -35,20 +35,26 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
-        self.rbl = rbl
+        if rbl:
+            self.rbl = rbl
+        else:
+            self.rbl=[1, 1 if len(self.all_ports)>1 else 0]
         # This specifies which RBL to put on the left or right
         # by port number
         self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        if right_rbl:
+            self.right_rbl = right_rbl
+        else:
+            self.right_rbl=[1] if len(self.all_ports) > 1 else []
         self.rbls = self.left_rbl + self.right_rbl
         
-        debug.check(sum(rbl) == len(self.all_ports),
+        debug.check(sum(self.rbl) == len(self.all_ports),
                     "Invalid number of RBLs for port configuration.")
-        debug.check(sum(rbl) >= len(self.left_rbl) + len(self.right_rbl),
+        debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
                     "Invalid number of RBLs for port configuration.")
 
         # Two dummy rows plus replica even if we don't add the column
-        self.extra_rows = 2 + sum(rbl)
+        self.extra_rows = 2 + sum(self.rbl)
         # Two dummy cols plus replica if we add the column
         self.extra_cols = 2 + len(self.left_rbl) + len(self.right_rbl)
 

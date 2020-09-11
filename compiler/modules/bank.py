@@ -191,11 +191,17 @@ class bank(design.design):
         self.main_bitcell_array_left = self.bitcell_array.get_main_array_left()
         # Just past the dummy row and replica row
         self.main_bitcell_array_bottom = self.bitcell_array.get_main_array_bottom()
-        
+
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
             self.compute_instance_port1_offsets()
-        
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        return self.bitcell_array.get_column_offsets()
+    
     def compute_instance_port0_offsets(self):
         """
         Compute the instance offsets for port0 on the left/bottom of the bank.
@@ -355,14 +361,6 @@ class bank(design.design):
 
     def add_modules(self):
         """ Add all the modules using the class loader """
-        
-        self.port_data = []
-        for port in self.all_ports:
-            temp_pre = factory.create(module_type="port_data",
-                                      sram_config=self.sram_config,
-                                      port=port)
-            self.port_data.append(temp_pre)
-            self.add_mod(self.port_data[port])
 
         self.port_address = factory.create(module_type="port_address",
                                            cols=self.num_cols + self.num_spare_cols,
@@ -392,6 +390,15 @@ class bank(design.design):
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
+
+        self.port_data = []
+        for port in self.all_ports:
+            temp_pre = factory.create(module_type="port_data",
+                                      sram_config=self.sram_config,
+                                      port=port,
+                                      bit_offsets=self.bitcell_array.get_column_offsets())
+            self.port_data.append(temp_pre)
+            self.add_mod(self.port_data[port])
         
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
@@ -432,6 +439,7 @@ class bank(design.design):
         for port in self.all_ports:
             self.port_data_inst[port]=self.add_inst(name="port_data{}".format(port),
                                                     mod=self.port_data[port])
+
             temp = []
             temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))

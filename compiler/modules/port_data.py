@@ -18,7 +18,7 @@ class port_data(design.design):
     Port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, name=""):
+    def __init__(self, sram_config, port, bit_offsets=None, name=""):
 
         sram_config.set_local_config(self)
         self.port = port
@@ -30,6 +30,14 @@ class port_data(design.design):
         if self.num_spare_cols is None:
             self.num_spare_cols = 0
 
+        if not bit_offsets:
+            bitcell = factory.create(module_type="bitcell")
+            self.bit_offsets = []
+            for i in range(self.num_cols + self.num_spare_cols):
+                self.bit_offsets.append(i * bitcell.width)
+        else:
+            self.bit_offsets = bit_offsets
+        
         if name == "":
             name = "port_data_{0}".format(self.port)
         super().__init__(name)
@@ -181,6 +189,7 @@ class port_data(design.design):
         # and mirroring happens correctly
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + self.num_spare_cols + 1,
+                                              offsets=self.bit_offsets,
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port],
                                               column_offset=self.port - 1)
@@ -190,6 +199,7 @@ class port_data(design.design):
             # RBLs don't get a sense amp
             self.sense_amp_array = factory.create(module_type="sense_amp_array",
                                                   word_size=self.word_size,
+                                                  offsets=self.bit_offsets,
                                                   words_per_row=self.words_per_row,
                                                   num_spare_cols=self.num_spare_cols)
             self.add_mod(self.sense_amp_array)
@@ -201,6 +211,7 @@ class port_data(design.design):
             self.column_mux_array = factory.create(module_type="column_mux_array",
                                                    columns=self.num_cols,
                                                    word_size=self.word_size,
+                                                   offsets=self.bit_offsets,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
             self.add_mod(self.column_mux_array)
@@ -212,6 +223,7 @@ class port_data(design.design):
             self.write_driver_array = factory.create(module_type="write_driver_array",
                                                      columns=self.num_cols,
                                                      word_size=self.word_size,
+                                                     offsets=self.bit_offsets,
                                                      write_size=self.write_size,
                                                      num_spare_cols=self.num_spare_cols)
             self.add_mod(self.write_driver_array)

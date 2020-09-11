@@ -20,7 +20,7 @@ class sense_amp_array(design.design):
     Dynamically generated sense amp array for all bitlines.
     """
 
-    def __init__(self, name, word_size, words_per_row, num_spare_cols=None, column_offset=0):
+    def __init__(self, name, word_size, words_per_row, offsets=None, num_spare_cols=None, column_offset=0):
 
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
@@ -29,6 +29,7 @@ class sense_amp_array(design.design):
 
         self.word_size = word_size
         self.words_per_row = words_per_row
+        self.offsets = offsets
         if not num_spare_cols:
             self.num_spare_cols = 0
         else:

@@ -11,6 +11,7 @@ from tech import drc
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import cell_properties
 
 
 class write_driver_array(design.design):
@@ -19,7 +20,7 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, name, columns, word_size, num_spare_cols=None, write_size=None, column_offset=0):
+    def __init__(self, name, columns, word_size, offsets=None, num_spare_cols=None, write_size=None, column_offset=0):
 
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
@@ -29,6 +30,7 @@ class write_driver_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
+        self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         if not num_spare_cols:
@@ -155,30 +157,32 @@ class write_driver_array(design.design):
                                self.en_name + "_{0}".format(i + offset), "vdd", "gnd"])
 
     def place_write_array(self):
-        from tech import cell_properties
         if self.bitcell.width > self.driver.width:
             self.driver_spacing = self.bitcell.width
         else:
             self.driver_spacing = self.driver.width
-        for i in range(0, self.columns, self.words_per_row):
-            index = int(i / self.words_per_row)
-            xoffset = i * self.driver_spacing
 
-            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+        if not self.offsets:
+            self.offsets = []
+            for i in range(self.columns + self.num_spare_cols):
+                self.offsets.append(i * self.driver_spacing)
+
+        for i, xoffset in enumerate(self.offsets[0:self.columns:self.words_per_row]):
+            if cell_properties.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
                 mirror = ""
 
             base = vector(xoffset, 0)
-            self.driver_insts[index].place(offset=base, mirror=mirror)
+            self.driver_insts[i].place(offset=base, mirror=mirror)
 
         # place spare write drivers (if spare columns are specified)
-        for i in range(self.num_spare_cols):
+
+        for i, xoffset in enumerate(self.offsets[self.columns:]):
             index = self.word_size + i
-            xoffset = (self.columns + i) * self.driver_spacing
-                
-            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+            
+            if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:

@@ -206,3 +206,9 @@ class bitcell_base_array(design.design):
                                                mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        return [self.cell_inst[0, col].lx() for col in range(self.column_size)]

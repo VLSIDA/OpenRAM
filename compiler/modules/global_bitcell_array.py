@@ -253,4 +253,12 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def get_main_array_right(self):
         return self.local_insts[-1].offset.x + self.local_mods[-1].get_main_array_right()
-            
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        offsets = []
+        for inst in self.local_insts:
+            offsets.extend(inst.lx() + inst.mod.get_column_offsets())
+        return offsets

@@ -342,7 +342,14 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def get_main_array_right(self):
         return self.bitcell_array_inst.rx()
-    
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        # This works because the instance of the module is placed at 0,0
+        return self.bitcell_array.get_column_offsets()
+
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """
 

@@ -244,14 +244,21 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                 self.add_path(out_pin.layer, [out_loc, mid_loc, in_loc])
             
     def get_main_array_top(self):
-        return self.bitcell_array_inst.offset.y + self.bitcell_array.get_main_array_top()
+        return self.bitcell_array_inst.by() + self.bitcell_array.get_main_array_top()
 
     def get_main_array_bottom(self):
-        return self.bitcell_array_inst.offset.y + self.bitcell_array.get_main_array_bottom()
+        return self.bitcell_array_inst.by() + self.bitcell_array.get_main_array_bottom()
 
     def get_main_array_left(self):
-        return self.bitcell_array_inst.offset.x + self.bitcell_array.get_main_array_left()
+        return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_left()
 
     def get_main_array_right(self):
-        return self.bitcell_array_inst.offset.x + self.bitcell_array.get_main_array_right()
-            
+        return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_right()
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        # must add the offset of the instance
+        return [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
+    

@@ -123,7 +123,7 @@ class single_level_column_mux_array(design.design):
             self.offsets = [n * self.mux.width for n in range(self.columns)]
         
         # For every column, add a pass gate
-        for col_num, xoffset in enumerate(self.offsets):
+        for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
             xoffset = col_num * self.mux.width
             if cell_properties.bitcell.mirror.y and (col_num + self.column_offset) % 2:
                 mirror = "MY"

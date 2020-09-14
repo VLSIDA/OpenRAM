@@ -28,7 +28,7 @@ class sense_amp_array(design.design):
 
         self.word_size = word_size
         self.words_per_row = words_per_row
-        self.columns = word_size * words_per_row
+        self.num_cols = word_size * words_per_row
         self.offsets = offsets
         if not num_spare_cols:
             self.num_spare_cols = 0
@@ -121,7 +121,7 @@ class sense_amp_array(design.design):
             for i in range(self.num_cols + self.num_spare_cols):
                 self.offsets.append(i * self.bitcell.width)
 
-        for i, xoffset in enumerate(self.offsets[0:self.columns:self.words_per_row]):
+        for i, xoffset in enumerate(self.offsets[0:self.num_cols:self.words_per_row]):
             if cell_properties.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.amp_spacing
@@ -132,7 +132,7 @@ class sense_amp_array(design.design):
             self.local_insts[i].place(offset=amp_position, mirror=mirror)
             
         # place spare sense amps (will share the same enable as regular sense amps)
-        for i, xoffset in enumerate(self.offsets[self.columns:]):
+        for i, xoffset in enumerate(self.offsets[self.num_cols:]):
             index = self.word_size + i
             if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"

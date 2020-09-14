@@ -70,7 +70,7 @@ class write_driver_array(design.design):
 
         self.place_write_array()
         self.width = self.driver_insts[-1].rx()
-        self.width_regular_cols = self.driver_insts[-self.num_spare_cols].rx()
+        self.width_regular_cols = self.driver_insts[-self.num_spare_cols].lx()
         self.height = self.driver.height
         self.add_layout_pins()
         self.add_boundary()
@@ -252,7 +252,7 @@ class write_driver_array(design.design):
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + 1),
                                     layer="m1",
-                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
+                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"), 0))
 
         else:
             inst = self.driver_insts[0]

@@ -260,5 +260,6 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         Return an array of the x offsets of all the regular bits
         """
         # must add the offset of the instance
-        return [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
+        offsets = [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
+        return offsets
     

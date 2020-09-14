@@ -321,7 +321,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
-        self.translate_all(self.bitcell_offset.scale(-1 - len(self.left_rbl), -1 - self.rbl[0]))
+        array_offset = self.bitcell_offset.scale(1 + len(self.left_rbl), 1 + self.rbl[0])
+        self.translate_all(array_offset.scale(-1, -1))
 
         self.add_layout_pins()
 
@@ -347,8 +348,8 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         """
         Return an array of the x offsets of all the regular bits
         """
-        # This works because the instance of the module is placed at 0,0
-        return self.bitcell_array.get_column_offsets()
+        offsets = [x + self.bitcell_array_inst.lx() for x in self.bitcell_array.get_column_offsets()]
+        return offsets
 
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """

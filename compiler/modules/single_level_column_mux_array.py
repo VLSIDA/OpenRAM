@@ -117,14 +117,12 @@ class single_level_column_mux_array(design.design):
                                "gnd"])
 
     def place_array(self):
-
         # Default to single spaced columns
         if not self.offsets:
             self.offsets = [n * self.mux.width for n in range(self.columns)]
         
         # For every column, add a pass gate
         for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
-            xoffset = col_num * self.mux.width
             if cell_properties.bitcell.mirror.y and (col_num + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.mux.width
@@ -168,7 +166,7 @@ class single_level_column_mux_array(design.design):
             self.add_layout_pin(text="sel_{}".format(j),
                                 layer=self.sel_layer,
                                 offset=offset,
-                                width=self.mux.width * self.columns)
+                                width=self.mux_inst[-1].rx())
 
     def add_vertical_poly_rail(self):
         """  Connect the poly to the address rails """

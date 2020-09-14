@@ -118,7 +118,7 @@ class precharge_array(design.design):
         # Default to single spaced columns
         if not self.offsets:
             self.offsets = [n * self.pc_cell.width for n in range(self.columns)]
-            
+
         for i, xoffset in enumerate(self.offsets):
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
@@ -129,4 +129,5 @@ class precharge_array(design.design):
 
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
-            xoffset = xoffset + self.pc_cell.width
+
+        

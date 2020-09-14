@@ -68,17 +68,10 @@ class write_driver_array(design.design):
 
     def create_layout(self):
 
-        if self.bitcell.width > self.driver.width:
-            self.width = (self.columns + self.num_spare_cols) * self.bitcell.width
-            self.width_regular_cols = self.columns * self.bitcell.width
-            self.single_col_width = self.bitcell.width
-        else:
-            self.width = (self.columns + self.num_spare_cols) * self.driver.width
-            self.width_regular_cols = self.columns * self.driver.width
-            self.single_col_width = self.driver.width
-        self.height = self.driver.height
-
         self.place_write_array()
+        self.width = self.driver_insts[-1].rx()
+        self.width_regular_cols = self.driver_insts[-self.num_spare_cols].rx()
+        self.height = self.driver.height
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -109,14 +102,14 @@ class write_driver_array(design.design):
         self.bitcell = factory.create(module_type="bitcell")
 
     def create_write_array(self):
-        self.driver_insts = {}
+        self.driver_insts = []
         w = 0
         windex=0
         for i in range(0, self.columns, self.words_per_row):
             name = "write_driver{}".format(i)
             index = int(i / self.words_per_row)
-            self.driver_insts[index]=self.add_inst(name=name,
-                                                   mod=self.driver)
+            self.driver_insts.append(self.add_inst(name=name,
+                                                   mod=self.driver))
 
             if self.write_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
@@ -148,8 +141,8 @@ class write_driver_array(design.design):
             else:
                 offset = 1
             name = "write_driver{}".format(self.columns + i)
-            self.driver_insts[index]=self.add_inst(name=name,
-                                                   mod=self.driver)
+            self.driver_insts.append(self.add_inst(name=name,
+                                                   mod=self.driver))
 
             self.connect_inst([self.data_name + "_{0}".format(index),
                                self.get_bl_name() + "_{0}".format(index),
@@ -178,7 +171,6 @@ class write_driver_array(design.design):
             self.driver_insts[i].place(offset=base, mirror=mirror)
 
         # place spare write drivers (if spare columns are specified)
-
         for i, xoffset in enumerate(self.offsets[self.columns:]):
             index = self.word_size + i
             

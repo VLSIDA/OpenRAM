@@ -211,4 +211,5 @@ class bitcell_base_array(design.design):
         """
         Return an array of the x offsets of all the regular bits
         """
-        return [self.cell_inst[0, col].lx() for col in range(self.column_size)]
+        offsets = [self.cell_inst[0, col].lx() for col in range(self.column_size)]
+        return offsets

@@ -189,6 +189,8 @@ class bank(design.design):
         self.main_bitcell_array_top = self.bitcell_array.get_main_array_top()
         # Just past the dummy column
         self.main_bitcell_array_left = self.bitcell_array.get_main_array_left()
+        # Just past the dummy column
+        self.main_bitcell_array_right = self.bitcell_array.get_main_array_right()
         # Just past the dummy row and replica row
         self.main_bitcell_array_bottom = self.bitcell_array.get_main_array_bottom()
 
@@ -200,8 +202,10 @@ class bank(design.design):
         """
         Return an array of the x offsets of all the regular bits
         """
-        return self.bitcell_array.get_column_offsets()
-    
+        # Assumes bitcell_array is at 0,0
+        offsets = self.bitcell_array.get_column_offsets()
+        return offsets
+
     def compute_instance_port0_offsets(self):
         """
         Compute the instance offsets for port0 on the left/bottom of the bank.
@@ -215,7 +219,7 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width, 0)
+        self.port_data_offsets[port] = vector(0, 0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array above the predecoders and control logic
@@ -259,7 +263,7 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # Above the bitcell array
-        self.port_data_offsets[port] = vector(self.main_bitcell_array_left, self.bitcell_array_top)
+        self.port_data_offsets[port] = vector(0, self.bitcell_array_top)
             
         # LOWER RIGHT QUADRANT
         # To the right of the bitcell array
@@ -392,11 +396,12 @@ class bank(design.design):
         self.add_mod(self.bitcell_array)
 
         self.port_data = []
+        self.bit_offsets = self.get_column_offsets()
         for port in self.all_ports:
             temp_pre = factory.create(module_type="port_data",
                                       sram_config=self.sram_config,
                                       port=port,
-                                      bit_offsets=self.bitcell_array.get_column_offsets())
+                                      bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
             self.add_mod(self.port_data[port])
         
@@ -916,7 +921,7 @@ class bank(design.design):
             offset = self.column_decoder_inst[port].lr() + vector(pitch, 0)
 
         decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
-        
+
         sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
@@ -1043,10 +1048,12 @@ class bank(design.design):
         control_signal = self.prefix + "wl_en{}".format(port)
         if port % 2:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").uc()
-            mid_pos = pin_pos + vector(0, 2 * self.m2_gap) # to route down to the top of the bus
+            control_y_offset = self.bus_pins[port][control_signal].by()
+            mid_pos = vector(pin_pos.x, control_y_offset + self.m1_pitch)
         else:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").bc()
-            mid_pos = pin_pos - vector(0, 2 * self.m2_gap) # to route down to the top of the bus
+            control_y_offset = self.bus_pins[port][control_signal].uy()
+            mid_pos = vector(pin_pos.x, control_y_offset - self.m1_pitch)
         control_x_offset = self.bus_pins[port][control_signal].cx()
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(self.m1_stack, [pin_pos, mid_pos, control_pos])

@@ -374,18 +374,18 @@ class bank(design.design):
         self.num_rbl = len(self.all_ports)
 
         try:
-            local_bitline_size = OPTS.local_bitline_size
+            local_array_size = OPTS.local_array_size
         except AttributeError:
-            local_bitline_size = 0
+            local_array_size = 0
             
-        if local_bitline_size > 0:
+        if local_array_size > 0:
             # Find the even multiple that satisfies the fanout with equal sized local arrays
             total_cols = self.num_cols + self.num_spare_cols
-            num_lb = floor(total_cols / local_bitline_size)
-            final_size = total_cols - num_lb * local_bitline_size
-            cols = [local_bitline_size] * (num_lb - 1)
+            num_lb = floor(total_cols / local_array_size)
+            final_size = total_cols - num_lb * local_array_size
+            cols = [local_array_size] * (num_lb - 1)
             # Add the odd bits to the last local array
-            cols.append(local_bitline_size + final_size)
+            cols.append(local_array_size + final_size)
             self.bitcell_array = factory.create(module_type="global_bitcell_array",
                                                 cols=cols,
                                                 rows=self.num_rows)

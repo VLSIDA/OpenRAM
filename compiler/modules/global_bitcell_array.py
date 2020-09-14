@@ -60,7 +60,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                 cols=self.column_sizes[0],
                                 rbl=self.rbl,
                                 left_rbl=[0],
-                                right_rbl=[1])
+                                right_rbl=[1] if len(self.all_ports) > 1 else [])
             self.add_mod(la)
             self.local_mods.append(la)
             return
@@ -122,10 +122,10 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Make a flat list too
         self.all_rbl_bitline_names = [x for sl in zip(*self.rbl_bitline_names) for x in sl]
 
-        self.add_pin_list(self.rbl_bitline_names[0], "INPUT")
+        self.add_pin_list(self.rbl_bitline_names[0], "INOUT")
         self.add_pin_list(self.all_bitline_names, "INOUT")
         if len(self.all_ports) > 1:
-            self.add_pin_list(self.rbl_bitline_names[1], "INPUT")
+            self.add_pin_list(self.rbl_bitline_names[1], "INOUT")
             
     def add_wordline_pins(self):
 
@@ -145,11 +145,12 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-        
-        self.add_pin_list(self.rbl_wordline_names[0], "INPUT")
+
+        for port in range(self.rbl[0]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
-        if len(self.all_ports) > 1:
-            self.add_pin_list(self.rbl_wordline_names[1], "INPUT")
+        for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """

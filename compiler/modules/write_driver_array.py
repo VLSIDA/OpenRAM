@@ -70,7 +70,7 @@ class write_driver_array(design.design):
 
         self.place_write_array()
         self.width = self.driver_insts[-1].rx()
-        self.width_regular_cols = self.driver_insts[-self.num_spare_cols].lx()
+        self.width_regular_cols = self.driver_insts[-self.num_spare_cols - 1].rx()
         self.height = self.driver.height
         self.add_layout_pins()
         self.add_boundary()
@@ -244,7 +244,7 @@ class write_driver_array(design.design):
             self.add_layout_pin(text=self.en_name + "_{0}".format(0),
                                 layer="m1",
                                 offset=en_pin.ll(),
-                                width=self.width_regular_cols - self.words_per_row * en_pin.width())
+                                width=self.width_regular_cols - en_pin.lx())
 
             # individual enables for every spare write driver
             for i in range(self.num_spare_cols):

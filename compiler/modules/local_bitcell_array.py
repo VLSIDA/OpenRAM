@@ -213,8 +213,8 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     
                 self.add_layout_pin_segment_center(text=wl_name,
                                                    layer="m3",
-                                                   start=vector(0, y_offset),
-                                                   end=vector(self.width, y_offset))
+                                                   start=vector(self.wl_insts[port].lx(), y_offset),
+                                                   end=vector(self.wl_insts[port].lx() + self.wl_array.width, y_offset))
                 
                 mid = vector(in_pin.cx(), y_offset)
                 self.add_path("m2", [in_pin.center(), mid])

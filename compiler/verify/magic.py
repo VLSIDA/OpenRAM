@@ -100,7 +100,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
         pre = "#"
     else:
         pre = ""
-    if final_verification:
+    if final_verification and OPTS.route_supplies:
         f.write(pre + "extract unique all\n".format(cell_name))
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":

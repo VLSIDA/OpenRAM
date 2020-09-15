@@ -680,7 +680,7 @@ class bank(design.design):
         # 2 pitches on the right for vias/jogs to access the inputs
         control_bus_offset = vector(-self.m3_pitch * self.num_control_lines[0] - 2 * self.m3_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
-        control_bus_length = self.port_data[0].height
+        control_bus_length = self.port_data_inst[0].uy() - self.min_y_offset
         self.bus_pins[0] = self.create_bus(layer="m2",
                                            offset=control_bus_offset,
                                            names=self.control_signals[0],
@@ -692,7 +692,7 @@ class bank(design.design):
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
-            control_bus_length = self.port_data[1].height
+            control_bus_length = self.max_y_offset - self.port_data_inst[1].by()
             control_bus_offset = vector(self.bitcell_array_right + 2.5 * self.m3_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array

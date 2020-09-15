@@ -1,0 +1,351 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Setting up paths...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/s8config.py
+[globals/read_config]: Output saved in /home/jesse/openram/compiler/temp/
+[globals/import_tech]: Importing technology: sky130
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Finding DRC tool...
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Finding LVS tool...
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Finding PEX tool...
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[globals/get_tool]: Finding GDS tool...
+[globals/get_tool]: Using GDS: /usr/local/bin/magic
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Analytical model enabled.
+[globals/setup_bitcell]: Using bitcell: bitcell_1rw_1r
+|==============================================================================|
+|=========                       OpenRAM v1.1.5                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 06/25/2020 06:27:52
+Technology: sky130
+Total size: 8192 bits
+Word size: 32
+Words: 256
+Banks: 1
+Write size: 8
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+[bitcell_1rw_1r/__init__]: Create bitcell with 1RW and 1R Port
+[sram_config/recompute_sizes]: Recomputing with words per row: 2
+[sram_config/recompute_sizes]: Rows: 128 Cols: 64
+[sram_config/recompute_sizes]: Row addr size: 7 Col addr size: 1 Bank addr size: 8
+Words per row: 2
+Output files are: 
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.sp
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.v
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.lib
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.py
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.html
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.log
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.lef
+/home/jesse/openram/compiler/temp/sram_32_256_sky130.gds
+[sram/__init__]: create sram of size 32 with 256 num of words 1 banks
+[dff_array/__init__]: Creating row_addr_dff rows=7 cols=1
+[dff_array/__init__]: Creating col_addr_dff rows=1 cols=1
+[dff_array/__init__]: Creating data_dff rows=1 cols=32
+[dff_array/__init__]: Creating wmask_dff rows=1 cols=4
+[bank/__init__]: create sram of size 32 with 256 words
+[port_data/__init__]: create data port of size 32 with 2 words per row
+[precharge/__init__]: creating precharge cell precharge
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[pgate/bin_width]: binning pmos tx, target: 0.55, found 0.55 x 1 = 0.55
+[precharge_array/__init__]: Creating precharge_array
+[precharge/__init__]: creating precharge cell precharge_0
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[sense_amp_array/__init__]: Creating sense_amp_array
+[sense_amp/__init__]: Create sense_amp
+[single_level_column_mux_array/__init__]: Creating single_level_column_mux_array
+[single_level_column_mux/__init__]: creating single column mux cell: single_level_column_mux
+[pgate/bin_width]: binning nmos tx, target: 2.88, found 3.0 x 1 = 3.0
+[write_driver_array/__init__]: Creating write_driver_array
+[write_driver/__init__]: Create write_driver
+[write_mask_and_array/__init__]: Creating write_mask_and_array
+[pand2/__init__]: Creating pand2 pand2
+[pnand2/__init__]: creating pnand2 structure pnand2 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.12, found 1.12 x 1 = 1.12
+[pdriver/__init__]: creating pdriver pdriver
+[pinv/__init__]: creating pinv structure pinv with size of 2.0
+[pgate/bin_width]: binning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pgate/bin_width]: binning pmos tx, target: 0.36, found 0.42 x 1 = 0.42
+[pinv/determine_tx_mults]: Height avail 4.6100 PMOS 2.2000 NMOS 2.2000
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 2.16, found 1.12 x 2 = 2.24
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pinv/determine_tx_mults]: pinv bin count: 2 pinv bin error: 1.5000000000000002 percent error 0.7500000000000001
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.12, found 1.12 x 1 = 1.12
+[port_data/__init__]: create data port of size 32 with 2 words per row
+[precharge_array/__init__]: Creating precharge_array_0
+[precharge/__init__]: creating precharge cell precharge_1
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[single_level_column_mux_array/__init__]: Creating single_level_column_mux_array_0
+[single_level_column_mux/__init__]: creating single column mux cell: single_level_column_mux_0
+[port_address/__init__]: create data port of cols 64 rows 128
+[and2_dec/__init__]: Creating and2_dec and2_dec
+[pinv_dec/__init__]: creating pinv_dec structure pinv_dec with size of 1
+[pinv/__init__]: creating pinv structure pinv_dec with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pgate/bin_width]: binning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pgate/bin_width]: binning pmos tx, target: 1.12, found 1.12 x 1 = 1.12
+[and3_dec/__init__]: Creating and3_dec and3_dec
+[wordline_driver_array/__init__]: Creating wordline_driver_array
+[wordline_driver/__init__]: Creating wordline_driver wordline_driver
+[pinv_dec/__init__]: creating pinv_dec structure pinv_dec_0 with size of 64
+[pinv/__init__]: creating pinv structure pinv_dec_0 with size of 64
+[pgate/bin_width]: binning nmos tx, target: 23.04, found 7.0 x 4 = 28.0
+[pgate/bin_width]: binning pmos tx, target: 69.12, found 7.0 x 10 = 70.0
+[pgate/bin_width]: binning nmos tx, target: 7.0, found 7.0 x 1 = 7.0
+[pgate/bin_width]: binning pmos tx, target: 7.0, found 7.0 x 1 = 7.0
+[replica_bitcell_array/__init__]: Creating replica_bitcell_array 128 x 64
+[bitcell_base_array/__init__]: Creating bitcell_array 128 x 64
+[replica_bitcell_1rw_1r/__init__]: Create replica bitcell 1rw+1r object
+[dummy_bitcell_1rw_1r/__init__]: Create dummy bitcell 1rw+1r object
+[col_cap_bitcell_1rw_1r/__init__]: Create col_cap bitcell 1rw+1r object
+[bitcell_base_array/__init__]: Creating dummy_array 1 x 64
+[bitcell_base_array/__init__]: Creating col_cap_array 1 x 64
+[bitcell_base_array/__init__]: Creating row_cap_array 132 x 1
+[row_cap_bitcell_1rw_1r/__init__]: Create row_cap bitcell 1rw+1r object
+[bitcell_base_array/__init__]: Creating row_cap_array_0 132 x 1
+[pinvbuf/__init__]: creating pinvbuf pinvbuf
+[pinv/__init__]: creating pinv structure pinv_0 with size of 1
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pinv/determine_tx_mults]: pinv bin count: 4 pinv bin error: 2.2600000000000002 percent error 0.5650000000000001
+[pinv/__init__]: creating pinv structure pinv_1 with size of 2
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 2.16, found 1.12 x 2 = 2.24
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pinv/determine_tx_mults]: pinv bin count: 6 pinv bin error: 3.7600000000000007 percent error 0.6266666666666668
+[pinv/__init__]: creating pinv structure pinv_2 with size of 4
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 4.32, found 1.6499999999999997 x 3 = 4.949999999999999
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 1.44, found 1.68 x 1 = 1.68
+[pinv/determine_tx_mults]: pinv bin count: 8 pinv bin error: 8.39 percent error 1.04875
+[pgate/bin_width]: binning nmos tx, target: 1.68, found 1.68 x 1 = 1.68
+[pgate/bin_width]: binning pmos tx, target: 1.6499999999999997, found 1.65 x 1 = 1.65
+[control_logic/__init__]: Creating control_logic_rw
+[dff_buf/__init__]: Creating dff_buf
+[dff_buf_array/__init__]: Creating dff_buf_array
+[dff_buf/__init__]: Creating dff_buf_0
+[pand2/__init__]: Creating pand2 pand2_0
+[pnand2/__init__]: creating pnand2 structure pnand2_0 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pdriver/__init__]: creating pdriver pdriver_0
+[pinv/__init__]: creating pinv structure pinv_3 with size of 12
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 12.959999999999999, found 2.0 x 7 = 14.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 4.32, found 1.68 x 3 = 5.04
+[pinv/determine_tx_mults]: pinv bin count: 10 pinv bin error: 25.43 percent error 2.543
+[pgate/bin_width]: binning nmos tx, target: 1.68, found 1.68 x 1 = 1.68
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pbuf/__init__]: creating pbuf with size of 64
+[pinv/__init__]: creating pinv structure pinv_4 with size of 16
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 17.28, found 2.0 x 9 = 18.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 5.76, found 2.0 x 3 = 6.0
+[pinv/determine_tx_mults]: pinv bin count: 12 pinv bin error: 47.43 percent error 3.9525
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_5 with size of 64
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 69.12, found 2.0 x 35 = 70.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 23.04, found 2.0 x 12 = 24.0
+[pinv/determine_tx_mults]: pinv bin count: 14 pinv bin error: 139.43 percent error 9.959285714285715
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pdriver/__init__]: creating pdriver pdriver_1
+[pinv/__init__]: creating pinv structure pinv_6 with size of 1
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pinv/determine_tx_mults]: pinv bin count: 16 pinv bin error: 140.19 percent error 8.761875
+[pinv/__init__]: creating pinv structure pinv_7 with size of 1
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pinv/determine_tx_mults]: pinv bin count: 18 pinv bin error: 140.95 percent error 7.830555555555555
+[pinv/__init__]: creating pinv structure pinv_8 with size of 3
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 3.2399999999999998, found 1.65 x 2 = 3.3
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 1.08, found 1.26 x 1 = 1.26
+[pinv/determine_tx_mults]: pinv bin count: 20 pinv bin error: 143.51 percent error 7.1754999999999995
+[pgate/bin_width]: binning nmos tx, target: 1.26, found 1.26 x 1 = 1.26
+[pgate/bin_width]: binning pmos tx, target: 1.65, found 1.65 x 1 = 1.65
+[pinv/__init__]: creating pinv structure pinv_9 with size of 8
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 8.64, found 2.0 x 5 = 10.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 2.88, found 1.68 x 2 = 3.36
+[pinv/determine_tx_mults]: pinv bin count: 22 pinv bin error: 154.87 percent error 7.039545454545455
+[pgate/bin_width]: binning nmos tx, target: 1.68, found 1.68 x 1 = 1.68
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_10 with size of 24
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 25.919999999999998, found 2.0 x 13 = 26.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 8.64, found 2.0 x 5 = 10.0
+[pinv/determine_tx_mults]: pinv bin count: 24 pinv bin error: 188.87 percent error 7.869583333333334
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_11 with size of 73
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 78.84, found 2.0 x 40 = 80.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 26.279999999999998, found 2.0 x 14 = 28.0
+[pinv/determine_tx_mults]: pinv bin count: 26 pinv bin error: 294.87 percent error 11.341153846153846
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pdriver/__init__]: creating pdriver pdriver_2
+[pinv/__init__]: creating pinv structure pinv_12 with size of 2
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 2.16, found 1.12 x 2 = 2.24
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pinv/determine_tx_mults]: pinv bin count: 28 pinv bin error: 296.37 percent error 10.584642857142857
+[pinv/__init__]: creating pinv structure pinv_13 with size of 5
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 5.3999999999999995, found 2.0 x 3 = 6.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 1.7999999999999998, found 2.0 x 1 = 2.0
+[pinv/determine_tx_mults]: pinv bin count: 30 pinv bin error: 302.37 percent error 10.079
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_14 with size of 14
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 15.12, found 2.0 x 8 = 16.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 5.04, found 1.68 x 3 = 5.04
+[pinv/determine_tx_mults]: pinv bin count: 32 pinv bin error: 321.41 percent error 10.0440625
+[pgate/bin_width]: binning nmos tx, target: 1.68, found 1.68 x 1 = 1.68
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_15 with size of 43
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 46.44, found 2.0 x 24 = 48.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 15.479999999999999, found 2.0 x 8 = 16.0
+[pinv/determine_tx_mults]: pinv bin count: 34 pinv bin error: 383.41 percent error 11.276764705882353
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pand3/__init__]: Creating pand3 pand3
+[pnand3/__init__]: creating pnand3 structure pnand3 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pdriver/__init__]: creating pdriver pdriver_3
+[pinv/__init__]: creating pinv structure pinv_16 with size of 40
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 43.199999999999996, found 2.0 x 22 = 44.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 14.399999999999999, found 2.0 x 8 = 16.0
+[pinv/determine_tx_mults]: pinv bin count: 36 pinv bin error: 441.41 percent error 12.26138888888889
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pand3/__init__]: Creating pand3 pand3_0
+[pdriver/__init__]: creating pdriver pdriver_4
+[pinv/__init__]: creating pinv structure pinv_17 with size of 32
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 34.56, found 2.0 x 18 = 36.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 11.52, found 2.0 x 6 = 12.0
+[pinv/determine_tx_mults]: pinv bin count: 38 pinv bin error: 487.41 percent error 12.826578947368422
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pdriver/__init__]: creating pdriver pdriver_5
+[pinv/__init__]: creating pinv structure pinv_18 with size of 7
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 7.56, found 2.0 x 4 = 8.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 2.52, found 1.26 x 2 = 2.52
+[pinv/determine_tx_mults]: pinv bin count: 40 pinv bin error: 495.93 percent error 12.39825
+[pgate/bin_width]: binning nmos tx, target: 1.26, found 1.26 x 1 = 1.26
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pinv/__init__]: creating pinv structure pinv_19 with size of 21
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 22.68, found 2.0 x 12 = 24.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 7.56, found 2.0 x 4 = 8.0
+[pinv/determine_tx_mults]: pinv bin count: 42 pinv bin error: 525.9300000000001 percent error 12.522142857142859
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pnand2/__init__]: creating pnand2 structure pnand2_1 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[delay_chain/__init__]: creating delay chain [4, 4, 4, 4, 4, 4, 4, 4, 4]
+[pinv/__init__]: creating pinv structure pinv_20 with size of 1
+[pinv/determine_tx_mults]: Height avail 4.6100 PMOS 2.2000 NMOS 2.2000
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pinv/determine_tx_mults]: pinv bin count: 44 pinv bin error: 526.69 percent error 11.970227272727273
+[control_logic/__init__]: Creating control_logic_r
+[dff_buf_array/__init__]: Creating dff_buf_array_0
+[pdriver/__init__]: creating pdriver pdriver_6
+[pinv/__init__]: creating pinv structure pinv_21 with size of 72
+[pinv/determine_tx_mults]: Height avail 6.0800 PMOS 2.9350 NMOS 2.9350
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 77.75999999999999, found 2.0 x 39 = 78.0
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 25.919999999999998, found 2.0 x 13 = 26.0
+[pinv/determine_tx_mults]: pinv bin count: 46 pinv bin error: 628.69 percent error 13.667173913043479
+[pgate/bin_width]: binning nmos tx, target: 2.0, found 2.0 x 1 = 2.0
+[pgate/bin_width]: binning pmos tx, target: 2.0, found 2.0 x 1 = 2.0
+** Submodules: 9.1 seconds
+** Placement: 0.0 seconds
+[router_tech/__init__]: Track width: 0.680
+[router_tech/__init__]: Track space: 0.300
+[router_tech/__init__]: Track wire width: 0.380
+[router_tech/__init__]: Track factor: v[1.4705882352941178,1.4705882352941178]
+[hierarchy_layout/gds_write_file]: Adding contact_27 boundary [v[0.0,0.0], v[0.37,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_27 boundary [v[0.0,0.0], v[0.37,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_8 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_8 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_15 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_15 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_10 boundary [v[-0.295,-0.255], v[0.545,0.585]]
+[hierarchy_layout/gds_write_file]: Adding contact_10 boundary [v[-0.295,-0.255], v[0.545,0.585]]
+[hierarchy_layout/gds_write_file]: Adding contact_11 boundary [v[-0.1,-0.1], v[0.43,0.43]]
+[hierarchy_layout/gds_write_file]: Adding contact_11 boundary [v[-0.1,-0.1], v[0.43,0.43]]
+[hierarchy_layout/gds_write_file]: Adding contact_12 boundary [v[-0.295,-0.215], v[0.545,0.625]]
+[hierarchy_layout/gds_write_file]: Adding contact_12 boundary [v[-0.295,-0.215], v[0.545,0.625]]
+[hierarchy_layout/gds_write_file]: Adding contact_13 boundary [v[0.0,0.0], v[0.29,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_13 boundary [v[0.0,0.0], v[0.29,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_14 boundary [v[0.0,0.0], v[0.26,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_14 boundary [v[0.0,0.0], v[0.26,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_16 boundary [v[0.0,0.0], v[0.23,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_16 boundary [v[0.0,0.0], v[0.23,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_17 boundary [v[-0.125,-0.105], v[0.375,0.435]]
+[hierarchy_layout/gds_write_file]: Adding contact_17 boundary [v[-0.125,-0.105], v[0.375,0.435]]
+[hierarchy_layout/gds_write_file]: Adding contact_21 boundary [v[-0.295,-0.215], v[0.545,0.625]]
+[hierarchy_layout/gds_write_file]: Adding contact_21 boundary [v[-0.295,-0.215], v[0.545,0.625]]
+[hierarchy_layout/gds_write_file]: Adding contact_22 boundary [v[-0.125,-0.125], v[0.375,0.535]]
+[hierarchy_layout/gds_write_file]: Adding contact_22 boundary [v[-0.125,-0.125], v[0.375,0.535]]
+[hierarchy_layout/gds_write_file]: Adding contact_7 boundary [v[0.0,0.0], v[0.32,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_7 boundary [v[0.0,0.0], v[0.32,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_18 boundary [v[-0.125,-0.125], v[0.375,0.535]]
+[hierarchy_layout/gds_write_file]: Adding contact_18 boundary [v[-0.125,-0.125], v[0.375,0.535]]
+[hierarchy_layout/gds_write_file]: Adding contact_19 boundary [v[-0.1,-0.1], v[0.43,0.43]]
+[hierarchy_layout/gds_write_file]: Adding contact_19 boundary [v[-0.1,-0.1], v[0.43,0.43]]
+[hierarchy_layout/gds_write_file]: Adding contact_20 boundary [v[0.0,0.0], v[0.33,0.23]]
+[hierarchy_layout/gds_write_file]: Adding contact_20 boundary [v[0.0,0.0], v[0.33,0.23]]
+[hierarchy_layout/gds_write_file]: Adding contact_24 boundary [v[0.0,0.0], v[0.32,0.26]]
+[hierarchy_layout/gds_write_file]: Adding contact_24 boundary [v[0.0,0.0], v[0.32,0.26]]
+[hierarchy_layout/gds_write_file]: Adding contact_25 boundary [v[0.0,0.0], v[0.32,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_25 boundary [v[0.0,0.0], v[0.32,0.32]]
+[hierarchy_layout/gds_write_file]: Adding contact_26 boundary [v[0.0,0.0], v[0.33,0.29]]
+[hierarchy_layout/gds_write_file]: Adding contact_26 boundary [v[0.0,0.0], v[0.33,0.29]]
+[hierarchy_layout/gds_write_file]: Adding contact_30 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_30 boundary [v[0.0,0.0], v[0.33,0.37]]
+[hierarchy_layout/gds_write_file]: Adding contact_31 boundary [v[0.0,0.0], v[0.38,0.33]]
+[hierarchy_layout/gds_write_file]: Adding contact_31 boundary [v[0.0,0.0], v[0.38,0.33]]
+[hierarchy_layout/gds_write_file]: Adding sram_32_256_sky130 boundary [v[-26.55,-59.19], v[356.69,401.345]]
+[hierarchy_layout/gds_write_file]: Adding sram_32_256_sky130 boundary [v[-26.55,-59.19], v[356.69,401.345]]

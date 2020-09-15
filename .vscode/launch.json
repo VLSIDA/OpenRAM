@@ -1,0 +1,59 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+
+        {
+            "name": "s8",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/openram.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-c", "-v", "-v", "/home/jesse/compiler/example_configs/s8config.py"]
+        },
+        {
+            "name": "pinv_10x",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/tests/04_pinv_10x_test.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-v", "-v", "-t", "s8"]
+        },
+        {
+            "name": "pinv_1x",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/tests/04_pinv_1x_test.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-v", "-v", "-t", "s8"]
+        },
+        {
+            "name": "scmos-pex",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/openram.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-v", "-b", "/home/jesse/compiler/example_configs/run2.py"]
+        },
+        {
+            "name": "router",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/openram.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-v", "-v", "/home/jesse/compiler/example_configs/example_config_scn4m_subm.py"]
+        },
+        {
+            "name": "decoder",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/jesse/openram/compiler/tests/05_bitcell_array_test.py",
+            "console": "integratedTerminal",
+            "args": ["-s", "ngspice", "-d", "-t", "sky130", "-v"]
+        }
+    ]
+} 

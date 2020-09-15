@@ -1,0 +1,36 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Setting up paths...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/s8config.py
+[globals/read_config]: Output saved in /home/jesse/openram/compiler/temp/
+[globals/import_tech]: Importing technology: sky130
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Finding DRC tool...
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Finding LVS tool...
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Finding PEX tool...
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[globals/get_tool]: Finding GDS tool...
+[globals/get_tool]: Using GDS: /usr/local/bin/magic
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Analytical model enabled.
+[globals/setup_bitcell]: Using bitcell: bitcell_1rw_1r
+|==============================================================================|
+|=========                       OpenRAM v1.1.5                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 06/25/2020 06:28:38
+ERROR: file globals.py: line 548: Write size needs to be between 1 bit and 8 bits/2.
+

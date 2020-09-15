@@ -1,0 +1,79 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Setting up paths...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/compiler/example_configs/s8config.py
+[globals/read_config]: Output saved in /home/jesse/openram/sram_0.77/
+[globals/import_tech]: Importing technology: sky130
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: LVS/DRC/PEX disabled.
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Finding spice simulator.
+[globals/setup_bitcell]: Using bitcell: bitcell_1rw_1r
+|==============================================================================|
+|=========                       OpenRAM v1.1.5                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 06/25/2020 16:47:03
+Technology: sky130
+Total size: 256 bits
+Word size: 16
+Words: 16
+Banks: 1
+Write size: 8
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+DRC/LVS/PEX is disabled (check_lvsdrc=True to enable).
+Performing simulation-based characterization with ngspice
+[bitcell_1rw_1r/__init__]: Create bitcell with 1RW and 1R Port
+[sram_config/recompute_sizes]: Recomputing with words per row: 1
+[sram_config/recompute_sizes]: Rows: 16 Cols: 16
+[sram_config/recompute_sizes]: Row addr size: 4 Col addr size: 0 Bank addr size: 4
+Words per row: 1
+Output files are: 
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.sp
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.v
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.lib
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.py
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.html
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.log
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.lef
+/home/jesse/openram/sram_0.77/sram_16_16_sky130_0.77.gds
+[sram/__init__]: create sram of size 16 with 16 num of words 1 banks
+[dff_array/__init__]: Creating row_addr_dff rows=4 cols=1
+[dff_array/__init__]: Creating data_dff rows=1 cols=16
+[dff_array/__init__]: Creating wmask_dff rows=1 cols=2
+[bank/__init__]: create sram of size 16 with 16 words
+[port_data/__init__]: create data port of size 16 with 1 words per row
+[precharge/__init__]: creating precharge cell precharge
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[pgate/bin_width]: binning pmos tx, target: 0.55, found 0.55 x 1 = 0.55
+[precharge_array/__init__]: Creating precharge_array
+[precharge/__init__]: creating precharge cell precharge_0
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[sense_amp_array/__init__]: Creating sense_amp_array
+[sense_amp/__init__]: Create sense_amp
+[write_driver_array/__init__]: Creating write_driver_array
+[write_driver/__init__]: Create write_driver
+[write_mask_and_array/__init__]: Creating write_mask_and_array
+[pand2/__init__]: Creating pand2 pand2
+[pnand2/__init__]: creating pnand2 structure pnand2 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning nmos tx, target: 0.74, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.12, found 1.12 x 1 = 1.12
+[pdriver/__init__]: creating pdriver pdriver
+[pinv/__init__]: creating pinv structure pinv with size of 2.0
+[pgate/bin_width]: binning nmos tx, target: 0.36, found 0.36 x 1 = 0.36

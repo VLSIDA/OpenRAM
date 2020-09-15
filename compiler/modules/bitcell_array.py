@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from bitcell_base_array import bitcell_base_array
+from s8_corner import s8_corner
 from tech import drc, spice
 from globals import OPTS
 from sram_factory import factory
@@ -45,8 +46,29 @@ class bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.cell = factory.create(module_type="bitcell")
-        self.add_mod(self.cell)
+        if OPTS.tech_name != "sky130":
+            self.cell = factory.create(module_type="bitcell")
+            self.add_mod(self.cell)
+
+        else:
+            #self.add_mod(factory.create(module_type="s8_corner", location = "ul"))
+            #self.add_mod(factory.create(module_type="s8_corner", location = "ur"))
+            #self.add_mod(factory.create(module_type="s8_corner", location = "ll"))
+            #self.add_mod(factory.create(module_type="s8_corner", location = "lr"))
+
+            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda"))
+            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda"))
+            #self.add_mod(factory.create(module_type="s8_col_end", version = "colend_p_cent"))
+            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda_p_cent"))
+            
+            self.add_mod(factory.create(module_type="s8_bitcell", version = "opt1"))
+            self.add_mod(factory.create(module_type="s8_bitcell", version = "opt1a"))
+
+            self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap"))
+            self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap_p"))
+            
+
+
 
     def create_instances(self):
         """ Create the module instances used in this design """

@@ -593,9 +593,11 @@ class VlsiLayout:
                 passFailIndex += 1
         print("Done\n\n")
 
-    def getLayoutBorder(self, lpp):
+    def getLayoutBorder(self, lpp, structure = ""):
+        if structure == "":
+            structure = self.rootStructureName
         cellSizeMicron = None
-        for boundary in self.structures[self.rootStructureName].boundaries:
+        for boundary in self.structures[structure].boundaries:
             if sameLPP((boundary.drawingLayer, boundary.purposeLayer),
                        lpp):
                 if self.debug:
@@ -607,7 +609,7 @@ class VlsiLayout:
                 cellSizeMicron = [cellSize[0]*self.units[0],
                                   cellSize[1]*self.units[0]]
         debug.check(cellSizeMicron,
-                    "Error: "+str(self.rootStructureName)+".cell_size information not found yet")
+                    "Error: "+str(structure)+".cell_size information not found yet")
 
         return cellSizeMicron
 

@@ -1,0 +1,76 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Setting up paths...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/s8config.py
+[globals/read_config]: Output saved in /home/jesse/openram/compiler/temp/
+[globals/import_tech]: Importing technology: s8
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Finding DRC tool...
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Finding LVS tool...
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Finding PEX tool...
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Finding spice simulator.
+[globals/get_tool]: Finding spice tool...
+[globals/get_tool]: Could not find hspice, trying next spice tool.
+[globals/get_tool]: Using spice: /usr/local/bin/ngspice
+[globals/setup_bitcell]: Using bitcell: bitcell
+|==============================================================================|
+|=========                       OpenRAM v1.1.4                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 04/18/2020 04:50:34
+Technology: s8
+Total size: 32 bits
+Word size: 2
+Words: 16
+Banks: 1
+Write size: None
+RW ports: 1
+R-only ports: 0
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Performing simulation-based characterization with ngspice
+[bitcell/__init__]: Create bitcell
+[sram_config/recompute_sizes]: Recomputing with words per row: 1
+[sram_config/recompute_sizes]: Rows: 16 Cols: 2
+[sram_config/recompute_sizes]: Row addr size: 4 Col addr size: 0 Bank addr size: 4
+Words per row: 1
+Output files are: 
+/home/jesse/openram/compiler/temp/sram_2_16_s8.sp
+/home/jesse/openram/compiler/temp/sram_2_16_s8.v
+/home/jesse/openram/compiler/temp/sram_2_16_s8.lib
+/home/jesse/openram/compiler/temp/sram_2_16_s8.py
+/home/jesse/openram/compiler/temp/sram_2_16_s8.html
+/home/jesse/openram/compiler/temp/sram_2_16_s8.log
+/home/jesse/openram/compiler/temp/sram_2_16_s8.lef
+/home/jesse/openram/compiler/temp/sram_2_16_s8.gds
+[sram/__init__]: create sram of size 2 with 16 num of words 1 banks
+[dff_array/__init__]: Creating row_addr_dff rows=4 cols=1
+[dff_array/__init__]: Creating data_dff rows=1 cols=2
+[bank/__init__]: create sram of size 2 with 16 words
+[port_data/__init__]: create data port of size 2 with 1 words per row
+[precharge/__init__]: creating precharge cell precharge_0
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[precharge_array/__init__]: Creating precharge_array_0
+[precharge/__init__]: creating precharge cell precharge_1
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[sense_amp_array/__init__]: Creating sense_amp_array_0
+[sense_amp/__init__]: Create sense_amp
+[write_driver_array/__init__]: Creating write_driver_array_0
+[write_driver/__init__]: Create write_driver
+ERROR: file hierarchy_layout.py: line 1092: Cyclic VCG in channel router.
+

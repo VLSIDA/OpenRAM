@@ -73,7 +73,7 @@ def auto_measure_libcell(pin_list, name, units, lpp):
     return cell
 
 
-def get_gds_size(name, gds_filename, units, lpp):
+def get_gds_size(name, gds_filename, units, lpp, structure = ""):
     """
     Open a GDS file and return the size from either the
     bounding box or a border layer.
@@ -83,7 +83,7 @@ def get_gds_size(name, gds_filename, units, lpp):
     reader = gdsMill.Gds2reader(cell_vlsi)
     reader.loadFromFile(gds_filename)
 
-    measure_result = cell_vlsi.getLayoutBorder(lpp)
+    measure_result = cell_vlsi.getLayoutBorder(lpp, structure)
     if not measure_result:
         debug.info(2, "Layout border failed. Trying to measure size for {}".format(name))
         measure_result = cell_vlsi.measureSize(name)
@@ -91,14 +91,14 @@ def get_gds_size(name, gds_filename, units, lpp):
     return measure_result
 
 
-def get_libcell_size(name, units, lpp):
+def get_libcell_size(name, units, lpp, structure = ""):
     """
     Open a GDS file and return the library cell size from either the
     bounding box or a border layer.
     """
 
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
-    return(get_gds_size(name, cell_gds, units, lpp))
+    return(get_gds_size(name, cell_gds, units, lpp, structure))
 
 
 

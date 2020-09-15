@@ -1,0 +1,4 @@
+BSIM3 Model (Supports: v3.2, v3.2.2, v3.2.3, v3.2.4)
+Parameter Checking.
+Model = npd.0
+W = 2.1e-07, L = 1.5e-07, M = 1

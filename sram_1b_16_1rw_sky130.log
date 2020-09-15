@@ -1,0 +1,15 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/tests/configs/config.py
+[globals/read_config]: Output saved in /home/jesse/openram/./
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Analytical model enabled.
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[globals/get_tool]: Using GDS: /usr/local/bin/magic
+[bitcell_base_array/__init__]: Creating bitcell_array 8 x 8

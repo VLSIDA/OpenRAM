@@ -9,6 +9,7 @@ import debug
 import design
 from tech import cell_properties
 from sram_factory import factory
+from globals import OPTS
 
 
 class bitcell_base_array(design.design):
@@ -25,8 +26,14 @@ class bitcell_base_array(design.design):
         self.column_offset = column_offset
 
         # Bitcell for port names only
-        self.cell = factory.create(module_type="bitcell")
-        
+        if OPTS.tech_name != "sky130":
+            self.cell = factory.create(module_type="bitcell")
+        else:
+            self.cell = factory.create(module_type="s8_bitcell", version="opt1")
+            self.cell2 = factory.create(module_type="s8_bitcell", version="opt1a")
+            self.strap = factory.create(module_type="s8_internal", version="wlstrap")
+            self.strap2 = factory.create(module_type="s8_internal", version="wlstrap_p")
+
         self.create_all_bitline_names()
         self.create_all_wordline_names()
 
@@ -49,7 +56,11 @@ class bitcell_base_array(design.design):
         self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.row_size):
             for port in self.all_ports:
-                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                if not cell_properties.bitcell.split_wl:
+                    self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                else:
+                    self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
+                    self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
         
     def get_bitline_names(self, port=None):
@@ -65,13 +76,20 @@ class bitcell_base_array(design.design):
             return self.wordline_names[port]
         
     def add_pins(self):
-        for bl_name in self.get_bitline_names():
-            self.add_pin(bl_name, "INOUT")
-        for wl_name in self.get_wordline_names():
-            self.add_pin(wl_name, "INPUT")
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
-
+        if OPTS.tech_name != "sky130":
+            for bl_name in self.get_bitline_names():
+                self.add_pin(bl_name, "INOUT")
+            for wl_name in self.get_wordline_names():
+                self.add_pin(wl_name, "INPUT")
+            self.add_pin("vdd", "POWER")
+            self.add_pin("gnd", "GROUND")
+        else:
+            for bl_name in self.get_bitline_names():
+                self.add_pin(bl_name, "INOUT")
+            for wl_name in self.get_wordline_names():
+                self.add_pin(wl_name, "INPUT")
+            self.add_pin("vpwr", "POWER")
+            self.add_pin("vgnd", "GROUND")
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
@@ -86,40 +104,78 @@ class bitcell_base_array(design.design):
 
     def add_layout_pins(self):
         """ Add the layout pins """
-
-        bitline_names = self.cell.get_all_bitline_names()
-        for col in range(self.column_size):
-            for port in self.all_ports:
-                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
-                self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
-                                    layer=bl_pin.layer,
-                                    offset=bl_pin.ll().scale(1, 0),
-                                    width=bl_pin.width(),
-                                    height=self.height)
-                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
-                self.add_layout_pin(text="br_{0}_{1}".format(port, col),
-                                    layer=br_pin.layer,
-                                    offset=br_pin.ll().scale(1, 0),
-                                    width=br_pin.width(),
-                                    height=self.height)
-
-        wl_names = self.cell.get_all_wl_names()
-        for row in range(self.row_size):
-            for port in self.all_ports:
-                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
-                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
-                                    layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=wl_pin.height())
-
-        # Copy a vdd/gnd layout pin from every cell
-        for row in range(self.row_size):
+        if OPTS.tech_name != "sky130":
+            bitline_names = self.cell.get_all_bitline_names()
             for col in range(self.column_size):
-                inst = self.cell_inst[row, col]
-                for pin_name in ["vdd", "gnd"]:
-                    self.copy_layout_pin(inst, pin_name)
+                for port in self.all_ports:
+                    bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                    self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
+                                        layer=bl_pin.layer,
+                                        offset=bl_pin.ll().scale(1, 0),
+                                        width=bl_pin.width(),
+                                        height=self.height)
+                    br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                    self.add_layout_pin(text="br_{0}_{1}".format(port, col),
+                                        layer=br_pin.layer,
+                                        offset=br_pin.ll().scale(1, 0),
+                                        width=br_pin.width(),
+                                        height=self.height)
 
+            wl_names = self.cell.get_all_wl_names()
+            for row in range(self.row_size):
+                for port in self.all_ports:
+                    wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                    self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                                        layer=wl_pin.layer,
+                                        offset=wl_pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=wl_pin.height())
+
+            # Copy a vdd/gnd layout pin from every cell
+            for row in range(self.row_size):
+                for col in range(self.column_size):
+                    inst = self.cell_inst[row, col]
+                    for pin_name in ["vdd", "gnd"]:
+                        self.copy_layout_pin(inst, pin_name)
+        else:
+            bitline_names = self.cell.get_all_bitline_names()
+            for col in range(self.column_size):
+                for port in self.all_ports:
+                    bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                    self.add_layout_pin(text="bl0_{0}_{1}".format(port, col),
+                                        layer=bl_pin.layer,
+                                        offset=bl_pin.ll().scale(1, 0),
+                                        width=bl_pin.width(),
+                                        height=self.height)
+                    br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                    self.add_layout_pin(text="bl1_{0}_{1}".format(port, col),
+                                        layer=br_pin.layer,
+                                        offset=br_pin.ll().scale(1, 0),
+                                        width=br_pin.width(),
+                                        height=self.height)
+
+            wl_names = self.cell.get_all_wl_names()
+            for row in range(self.row_size):
+                for port in self.all_ports:
+                    wl0_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                    self.add_layout_pin(text="wl0_{0}_{1}".format(port, row),
+                                        layer=wl0_pin.layer,
+                                        offset=wl0_pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=wl0_pin.height())
+                    wl1_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                    self.add_layout_pin(text="wl1_{0}_{1}".format(port, row),
+                                        layer=wl1_pin.layer,
+                                        offset=wl1_pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=wl1_pin.height())
+            # Copy a vdd/gnd layout pin from every cell
+            for row in range(self.row_size):
+                for col in range(self.column_size):
+                    inst = self.cell_inst[row, col]
+                    for pin_name in ["vpwr", "vgnd"]:
+
+                        self.copy_layout_pin(inst, pin_name)
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
         dir_y = False
@@ -140,27 +196,66 @@ class bitcell_base_array(design.design):
 
     def place_array(self, name_template, row_offset=0):
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size * self.cell.height
-        self.width = self.column_size * self.cell.width
+        if OPTS.tech_name != "sky130":
+            self.height = self.row_size * self.cell.height
+            self.width = self.column_size * self.cell.width
 
-        xoffset = 0.0
-        for col in range(self.column_size):
+            xoffset = 0.0
+            for col in range(self.column_size):
+                yoffset = 0.0
+                tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
+
+                for row in range(self.row_size):
+                    tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
+
+                    if dir_x and dir_y:
+                        dir_key = "XY"
+                    elif dir_x:
+                        dir_key = "MX"
+                    elif dir_y:
+                        dir_key = "MY"
+                    else:
+                        dir_key = ""
+
+                    self.cell_inst[row, col].place(offset=[tempx, tempy],
+                                                mirror=dir_key)
+                    yoffset += self.cell.height
+                xoffset += self.cell.width
+        else:
+            array_layout = []
+            for y in range(0,self.row_size):
+
+                row_layout = []
+                alternate_bitcell = 1
+                alternate_strap = 1
+                for x in range(0,self.column_size):
+                    if alternate_bitcell == 1:
+                        row_layout.append(self.cell)
+                        alternate_bitcell = 0
+                    else:
+                        row_layout.append(self.cell2)
+                        alternate_bitcell = 1
+                    if x != self.column_size:
+                        if alternate_strap:
+                            row_layout.append(self.strap2)
+                            alternate_strap = 0
+                        else:
+                            
+                            row_layout.append(self.strap)
+                            alternate_strap = 1
+                array_layout.append(row_layout)
+
+            self.height = self.row_size * self.cell.height + (self.row_size - 1) * self.strap.height
+            self.width = self.column_size * self.cell.width + (self.column_size-1) * self.strap.width
+            
+
             yoffset = 0.0
-            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
 
-            for row in range(self.row_size):
-                tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
-
-                if dir_x and dir_y:
-                    dir_key = "XY"
-                elif dir_x:
-                    dir_key = "MX"
-                elif dir_y:
-                    dir_key = "MY"
-                else:
-                    dir_key = ""
-
-                self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                               mirror=dir_key)
+            for row in range(0, len(array_layout)):
+                xoffset = 0.0               
+                for col in range(0, len(array_layout[row])):
+                    inst = self.add_inst(name = "row_{}, col_{}".format(row,col), mod=array_layout[row][col])
+                    inst.place(offset=[xoffset, yoffset])
+                    xoffset += inst.width
                 yoffset += self.cell.height
-            xoffset += self.cell.width
+                

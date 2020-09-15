@@ -88,7 +88,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         ^ dummy columns  ^
           1 x (rows + 4)
         """
-
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             column_offset=1 + self.add_left_rbl,
@@ -109,6 +108,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                 replica_bit = self.left_rbl + self.row_size + 1 + bit
             # If we have an odd numer on the bottom
             column_offset = self.left_rbl + 1
+
             self.replica_columns[bit] = factory.create(module_type="replica_column",
                                                        rows=self.row_size,
                                                        rbl=self.rbl,

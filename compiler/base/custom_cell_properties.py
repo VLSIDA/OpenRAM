@@ -31,15 +31,22 @@ class _mirror_axis:
         self.y = y
 
 class _bitcell:
-    def __init__(self, mirror, split_wl, cell_6t, cell_1rw1r, cell_1w1r):
+    def __init__(self, mirror, split_wl, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
         self.split_wl = split_wl
+        self._s8_6t = cell_s8_6t
         self._6t = cell_6t
         self._1rw1r = cell_1rw1r
         self._1w1r = cell_1w1r
 
     def _default():
         axis = _mirror_axis(True, False)
+
+        cell_s8_6t = _cell({'bl' : 'bl0',
+                            'br' : 'bl1',
+                            'wl0': 'wl0',
+                            'wl1': 'wl1'})
+
         cell_6t = _cell({'bl' : 'bl',
                          'br' : 'br',
                          'wl' : 'wl'})
@@ -50,17 +57,24 @@ class _bitcell:
                        'br1' : 'br1',
                        'wl0' : 'wl0',
                        'wl1' : 'wl1'})
+
         cell_1w1r =  _cell({'bl0' : 'bl0',
                        'br0' : 'br0',
                        'bl1' : 'bl1',
                        'br1' : 'br1',
                        'wl0' : 'wl0',
                        'wl1' : 'wl1'})
-        return _bitcell(cell_6t=cell_6t,
+
+        return _bitcell(cell_s8_6t=cell_s8_6t,
+                        cell_6t=cell_6t,
                         cell_1rw1r=cell_1rw1r,
                         cell_1w1r=cell_1w1r,
                         split_wl = False,
                         mirror=axis)
+
+    @property
+    def cell_s8_6t(self):
+        return self._s8_6t
 
     @property
     def cell_6t(self):

@@ -1,0 +1,241 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/example_config_scn4m_subm.py
+[globals/read_config]: Output saved in /home/jesse/openram/compiler/temp/
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[globals/setup_bitcell]: Using bitcell: bitcell
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Finding spice simulator.
+[globals/get_tool]: Could not find hspice, trying next spice tool.
+[globals/get_tool]: Using spice: /usr/local/bin/ngspice
+|==============================================================================|
+|=========                       OpenRAM v1.1.2                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 04/23/2020 00:06:42
+Technology: scn4m_subm
+Total size: 32 bits
+Word size: 2
+Words: 16
+Banks: 1
+Write size: None
+RW ports: 1
+R-only ports: 0
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Performing simulation-based characterization with ngspice
+[sram_config/recompute_sizes]: Recomputing with words per row: 1
+[sram_config/recompute_sizes]: Rows: 16 Cols: 2
+[sram_config/recompute_sizes]: Row addr size: 4 Col addr size: 0 Bank addr size: 4
+Words per row: 1
+Output files are: 
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.sp
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.v
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.lib
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.py
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.html
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.log
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.lef
+/home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.gds
+[dff_array/__init__]: Creating row_addr_dff rows=4 cols=1
+[dff_array/__init__]: Creating data_dff rows=1 cols=2
+[precharge_array/__init__]: Creating precharge_array_0
+[sense_amp_array/__init__]: Creating sense_amp_array_0
+[write_driver_array/__init__]: Creating write_driver_array_0
+[wordline_driver/__init__]: Creating wordline_driver_0
+[pdriver/__init__]: creating pdriver pdriver_0
+[replica_bitcell_array/__init__]: Creating replica_bitcell_array_0 16 x 2
+[bitcell_array/__init__]: Creating bitcell_array_0 16 x 2
+[dummy_array/__init__]: Creating dummy_array_0 1 x 2
+[dummy_array/__init__]: Creating dummy_array_1 19 x 1
+[control_logic/__init__]: Creating control_logic_rw
+[dff_buf/__init__]: Creating dff_buf
+[dff_buf_array/__init__]: Creating dff_buf_array_0
+[dff_buf/__init__]: Creating dff_buf_0
+[pand2/__init__]: Creating pnand2 pand2_0
+[pdriver/__init__]: creating pdriver pdriver_1
+[pbuf/__init__]: creating pbuf_0 with size of 2
+[pdriver/__init__]: creating pdriver pdriver_2
+[pdriver/__init__]: creating pdriver pdriver_3
+[pand3/__init__]: Creating pand3 pand3_0
+[pand3/__init__]: Creating pand3 pand3_1
+[pdriver/__init__]: creating pdriver pdriver_4
+[delay_chain/__init__]: creating delay chain [4, 4, 4, 4, 4, 4, 4, 4, 4]
+** Submodules: 0.4 seconds
+** Placement: 0.0 seconds
+[router_tech/__init__]: Track width: 2.400
+[router_tech/__init__]: Track space: 1.200
+[router_tech/__init__]: Track wire width: 1.200
+[supply_grid_router/route]: Running supply router on vdd and gnd...
+[supply_grid_router/create_routing_grid]: Size: 227.0 x 371.80000000000007
+**** Retrieving pins: 0.0 seconds
+**** Analyzing pins: 0.7 seconds
+[router/find_blockages]: Finding blockages.
+**** Finding blockages: 0.1 seconds
+[router/convert_blockages]: Converting blockages.
+**** Converting blockages: 0.0 seconds
+[router/convert_pins]: Converting pins for vdd.
+[router/convert_pins]: Converting pins for gnd.
+**** Converting pins: 0.5 seconds
+[router/separate_adjacent_pin]: Comparing vdd and gnd adjacency
+[router/separate_adjacent_pin]: Removed 0 adjacent grids.
+**** Separating adjacent pins: 0.1 seconds
+[router/enclose_pins]: Enclosing pins for vdd
+[router/enclose_pins]: Enclosing pins for gnd
+**** Enclosing pins: 0.2 seconds
+*** Finding pins and blockages: 1.4 seconds
+[supply_grid_router/route_supply_rails]: Routing supply rail gnd.
+[supply_grid_router/route_supply_rails]: Routing supply rail vdd.
+*** Routing supply rails: 1.1 seconds
+[supply_grid_router/route_simple_overlaps]: Routing simple overlap pins for vdd
+[supply_grid_router/route_simple_overlaps]: Routed 96 simple overlap pins
+[supply_grid_router/route_simple_overlaps]: Routing simple overlap pins for gnd
+[supply_grid_router/route_simple_overlaps]: Routed 172 simple overlap pins
+*** Simple overlap routing: 0.0 seconds
+[supply_grid_router/route_pins_to_rails]: Maze routing vdd with 11 pin components to connect.
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[7, 72, 0]], [v3d[7, 72, 1]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[7, 54, 0]], [v3d[7, 54, 1]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[14, 63, 0]], [v3d[14, 64, 0]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[14, 55, 0]], [v3d[14, 56, 0]]]
+[router/run_router]: Found path: cost=1 
+[router/run_router]: [[v3d[14, 80, 0]], [v3d[13, 80, 0]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[14, 71, 0]], [v3d[14, 70, 0]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[41, 123, 0]], [v3d[41, 123, 1]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[45, 123, 0]], [v3d[45, 123, 1]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[47, 123, 0]], [v3d[47, 123, 1]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[51, 123, 0]], [v3d[51, 123, 1]]]
+[router/run_router]: Found path: cost=2 
+[router/run_router]: [[v3d[53, 123, 0]], [v3d[53, 123, 1]]]
+[supply_grid_router/route_pins_to_rails]: Maze routing gnd with 5 pin components to connect.
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[-6, 124, 0]], [v3d[-6, 123, 0]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[6, 58, 0]], [v3d[6, 57, 0]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[14, 68, 0]], [v3d[14, 69, 0]]]
+[router/run_router]: Found path: cost=4 
+[router/run_router]: [[v3d[14, 58, 0]], [v3d[14, 57, 0]]]
+[router/run_router]: Found path: cost=1 
+[router/run_router]: [[v3d[14, 85, 0]], [v3d[13, 85, 0]]]
+*** Maze routing supplies: 2.9 seconds
+** Routing: 7.6 seconds
+[verify.magic/run_drc]: DRC Errors sram_2_16_scn4m_subm	0
+[verify.magic/run_lvs]: sram_2_16_scn4m_subm	LVS matches
+** Verification: 6.6 seconds
+** SRAM creation: 14.7 seconds
+LEF: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.lef
+** LEF: 0.6 seconds
+GDS: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.gds
+** GDS: 0.2 seconds
+SP: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.sp
+** Spice writing: 0.0 seconds
+** Extraction: 5.6 seconds
+LIB: Characterizing... 
+[characterizer.lib/prepare_tables]: Loads: [ 2.45605  9.8242  78.5936 ]
+[characterizer.lib/prepare_tables]: Slews: [0.0125 0.05   0.4   ]
+[characterizer.lib/characterize_corners]: Corner: ('TT', 5.0, 25)
+[characterizer.lib/characterize_corners]: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm_TT_5p0V_25C.lib
+[characterizer.delay/find_feasible_period_one_port]: Trying feasible period: 10.0ns on Port 0
+[characterizer.delay/find_feasible_period]: Found feasible_period: 10.0ns
+[characterizer.delay/find_min_period_one_port]: MinPeriod Search Port 0: 5.0ns (ub: 10.0 lb: 0.0)
+[characterizer.delay/check_bit_measures]: Wrong value detected on probe bit during read/write cycle. Check writes and control logic for bugs.
+ measure=v_qbar_a1111_b1_WRITE_ZERO, op=WRITE_ZERO, bit_storage=INVERTING, V(bit)=0.6127083
+[characterizer.delay/check_read_debug_measures]: Debug measurement failed. Value 4.987059V was read on read 0 cycle.
+[characterizer.delay/check_bitline_meas]: min_dicharge=False, min_diff=False
+[characterizer.delay/find_min_period_one_port]: MinPeriod Search Port 0: 7.5ns (ub: 10.0 lb: 5.0)
+[characterizer.delay/find_min_period_one_port]: MinPeriod Search Port 0: 8.75ns (ub: 10.0 lb: 7.5)
+[characterizer.delay/find_min_period_one_port]: MinPeriod Search Port 0: 9.375ns (ub: 10.0 lb: 8.75)
+[characterizer.delay/find_min_period_one_port]: MinPeriod Search Port 0: 9.0625ns (ub: 9.375 lb: 8.75)
+[characterizer.delay/analyze]: Min Period Found: 9.0625ns
+[characterizer.delay/run_power_simulation]: Performing leakage power simulations.
+[characterizer.delay/run_power_simulation]: Leakage power of full array is 0.4069451 mW
+[characterizer.delay/run_power_simulation]: Leakage power of trimmed array is 0.4069451 mW
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.0125 load=2.45605
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.0125 load=9.8242
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.0125 load=78.5936
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.05 load=2.45605
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.05 load=9.8242
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.05 load=78.5936
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.4 load=2.45605
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.4 load=9.8242
+[characterizer.delay/simulate_loads_and_slews]: Simulation Passed: Port All slew=0.4 load=78.5936
+[characterizer.setup_hold/analyze]: Clock slew: 0.0125 Data slew: 0.0125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2001953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.0125 Data slew: 0.05
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.1879883
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.0125 Data slew: 0.4
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2368164
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.24902339999999998
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.2148437
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.08056640999999999
+[characterizer.setup_hold/analyze]: Clock slew: 0.05 Data slew: 0.0125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2001953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.05 Data slew: 0.05
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.1879883
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.05 Data slew: 0.4
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2368164
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.24902339999999998
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.2148437
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.08056640999999999
+[characterizer.setup_hold/analyze]: Clock slew: 0.4 Data slew: 0.0125
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2001953
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.4 Data slew: 0.05
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.1879883
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.1757812
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.11718749999999999
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.09277344
+[characterizer.setup_hold/analyze]: Clock slew: 0.4 Data slew: 0.4
+[characterizer.setup_hold/analyze]:   Setup Time for low_to_high transition: 0.2368164
+[characterizer.setup_hold/analyze]:   Setup Time for high_to_low transition: 0.24902339999999998
+[characterizer.setup_hold/analyze]:   Hold Time for low_to_high transition: -0.2148437
+[characterizer.setup_hold/analyze]:   Hold Time for high_to_low transition: -0.08056640999999999
+** Characterization: 1028.4 seconds
+Config: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.py
+** Config: 0.0 seconds
+Datasheet: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.html
+** Datasheet: 0.0 seconds
+Verilog: Writing to /home/jesse/openram/compiler/temp/sram_2_16_scn4m_subm.v
+** Verilog: 0.0 seconds
+[globals/cleanup_paths]: Preserving temp directory: /home/jesse/output/
+[verify.magic/print_drc_stats]: DRC runs: 1
+[verify.magic/print_lvs_stats]: LVS runs: 1
+[verify.magic/print_pex_stats]: PEX runs: 1
+** End: 1049.5 seconds

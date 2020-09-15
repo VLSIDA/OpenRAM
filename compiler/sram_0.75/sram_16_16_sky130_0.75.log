@@ -1,0 +1,108 @@
+[globals/init_openram]: Initializing OpenRAM...
+[globals/setup_paths]: Setting up paths...
+[globals/setup_paths]: Temporary files saved in /home/jesse/output/
+[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/s8config.py
+[globals/read_config]: Output saved in /home/jesse/openram/compiler/sram_0.75/
+[globals/import_tech]: Importing technology: sky130
+[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
+[globals/init_paths]: Creating temp directory: /home/jesse/output/
+[verify/<module>]: Initializing verify...
+[verify/<module>]: Finding DRC/LVS/PEX tools.
+[globals/get_tool]: Finding DRC tool...
+[globals/get_tool]: Using DRC: /usr/local/bin/magic
+[globals/get_tool]: Finding LVS tool...
+[globals/get_tool]: Using LVS: /usr/local/bin/netgen
+[globals/get_tool]: Finding PEX tool...
+[globals/get_tool]: Using PEX: /usr/local/bin/magic
+[globals/get_tool]: Finding GDS tool...
+[globals/get_tool]: Using GDS: /usr/local/bin/magic
+[characterizer/<module>]: Initializing characterizer...
+[characterizer/<module>]: Analytical model enabled.
+[globals/setup_bitcell]: Using bitcell: bitcell_1rw_1r
+|==============================================================================|
+|=========                       OpenRAM v1.1.5                       =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========               Temp dir: /home/jesse/output/                =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 06/25/2020 07:50:23
+Technology: sky130
+Total size: 256 bits
+Word size: 16
+Words: 16
+Banks: 1
+Write size: 8
+RW ports: 1
+R-only ports: 1
+W-only ports: 0
+DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
+[bitcell_1rw_1r/__init__]: Create bitcell with 1RW and 1R Port
+[sram_config/recompute_sizes]: Recomputing with words per row: 1
+[sram_config/recompute_sizes]: Rows: 16 Cols: 16
+[sram_config/recompute_sizes]: Row addr size: 4 Col addr size: 0 Bank addr size: 4
+Words per row: 1
+Output files are: 
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.sp
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.v
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.lib
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.py
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.html
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.log
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.lef
+/home/jesse/openram/compiler/sram_0.75/sram_16_16_sky130_0.75.gds
+[sram/__init__]: create sram of size 16 with 16 num of words 1 banks
+[dff_array/__init__]: Creating row_addr_dff rows=4 cols=1
+[dff_array/__init__]: Creating data_dff rows=1 cols=16
+[dff_array/__init__]: Creating wmask_dff rows=1 cols=2
+[bank/__init__]: create sram of size 16 with 16 words
+[port_data/__init__]: create data port of size 16 with 1 words per row
+[precharge/__init__]: creating precharge cell precharge
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[precharge_array/__init__]: Creating precharge_array
+[precharge/__init__]: creating precharge cell precharge_0
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[sense_amp_array/__init__]: Creating sense_amp_array
+[sense_amp/__init__]: Create sense_amp
+[write_driver_array/__init__]: Creating write_driver_array
+[write_driver/__init__]: Create write_driver
+[write_mask_and_array/__init__]: Creating write_mask_and_array
+[pand2/__init__]: Creating pand2 pand2
+[pnand2/__init__]: creating pnand2 structure pnand2 with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[pdriver/__init__]: creating pdriver pdriver
+[pinv/__init__]: creating pinv structure pinv with size of 2.0
+[pinv/determine_tx_mults]: Height avail 4.6100 PMOS 2.2000 NMOS 2.2000
+[pinv/determine_tx_mults]: prebinning pmos tx, target: 2.16, found 1.12 x 2 = 2.24
+[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
+[pinv/determine_tx_mults]: pinv bin count: 2 pinv bin error: 1.5000000000000002 percent error 0.7500000000000001
+[port_data/__init__]: create data port of size 16 with 1 words per row
+[precharge_array/__init__]: Creating precharge_array_0
+[precharge/__init__]: creating precharge cell precharge_1
+[pgate/bin_width]: binning pmos tx, target: 0.44999999999999996, found 0.55 x 1 = 0.55
+[port_address/__init__]: create data port of cols 16 rows 16
+[and2_dec/__init__]: Creating and2_dec and2_dec
+[pinv_dec/__init__]: creating pinv_dec structure pinv_dec with size of 1
+[pinv/__init__]: creating pinv structure pinv_dec with size of 1
+[pgate/bin_width]: binning nmos tx, target: 0.36, found 0.36 x 1 = 0.36
+[pgate/bin_width]: binning pmos tx, target: 1.08, found 1.12 x 1 = 1.12
+[and3_dec/__init__]: Creating and3_dec and3_dec
+[wordline_driver_array/__init__]: Creating wordline_driver_array
+[wordline_driver/__init__]: Creating wordline_driver wordline_driver
+[pinv_dec/__init__]: creating pinv_dec structure pinv_dec_0 with size of 16
+[pinv/__init__]: creating pinv structure pinv_dec_0 with size of 16
+[pgate/bin_width]: binning nmos tx, target: 5.76, found 7.0 x 1 = 7.0
+[pgate/bin_width]: binning pmos tx, target: 17.28, found 7.0 x 3 = 21.0
+ERROR: file hierarchy_layout.py: line 278: Should use a pin iterator since more than one pin S
+
+[hierarchy_layout/gds_write_file]: Adding contact_10 boundary [v[-0.295,-0.255], v[0.545,0.585]]
+[hierarchy_layout/gds_write_file]: Adding contact_10 boundary [v[-0.295,-0.255], v[0.545,0.585]]
+ERROR: file hierarchy_layout.py: line 278: No pin found with name S on pmos_m3_w7_000_sli_dli_da_p. Saved as missing_pin.gds.
+

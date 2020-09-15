@@ -861,11 +861,13 @@ class bank(design.design):
             bitcell_wl_pos = bitcell_wl_pin.lc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
-            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
+            # Via is non-preferred direction because mid1->mid2 is non-preferred direction
             self.add_via_stack_center(from_layer=driver_wl_pin.layer,
                                       to_layer=bitcell_wl_pin.layer,
-                                      offset=bitcell_wl_pos,
-                                      directions=("H", "H"))
+                                      offset=mid2,
+                                      directions="nonpref")
+            self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
@@ -879,11 +881,11 @@ class bank(design.design):
             bitcell_wl_pos = bitcell_wl_pin.rc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].lx() + 0.5 * self.bitcell_array_inst.rx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
-            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
             self.add_via_stack_center(from_layer=driver_wl_pin.layer,
                                       to_layer=bitcell_wl_pin.layer,
-                                      offset=bitcell_wl_pos,
-                                      directions=("H", "H"))
+                                      offset=mid2)
+            self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """

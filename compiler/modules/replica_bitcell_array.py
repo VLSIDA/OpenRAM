@@ -455,7 +455,6 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                 for pin in pin_list:
                     self.add_power_pin(name=pin_name,
                                        loc=pin.center(),
-                                       directions=("V", "V"),
                                        start_layer=pin.layer)
 
             for inst in self.replica_col_insts:

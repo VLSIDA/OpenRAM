@@ -222,39 +222,17 @@ class bitcell_base_array(design.design):
                     yoffset += self.cell.height
                 xoffset += self.cell.width
         else:
-            array_layout = []
-            for y in range(0,self.row_size):
 
-                row_layout = []
-                alternate_bitcell = 1
-                alternate_strap = 1
-                for x in range(0,self.column_size):
-                    if alternate_bitcell == 1:
-                        row_layout.append(self.cell)
-                        alternate_bitcell = 0
-                    else:
-                        row_layout.append(self.cell2)
-                        alternate_bitcell = 1
-                    if x != self.column_size:
-                        if alternate_strap:
-                            row_layout.append(self.strap2)
-                            alternate_strap = 0
-                        else:
-                            
-                            row_layout.append(self.strap)
-                            alternate_strap = 1
-                array_layout.append(row_layout)
-
-            self.height = self.row_size * self.cell.height + (self.row_size - 1) * self.strap.height
+            self.height = self.row_size * self.cell.height 
             self.width = self.column_size * self.cell.width + (self.column_size-1) * self.strap.width
             
 
             yoffset = 0.0
 
-            for row in range(0, len(array_layout)):
+            for row in range(0, len(self.array_layout)):
                 xoffset = 0.0               
-                for col in range(0, len(array_layout[row])):
-                    inst = self.add_inst(name = "row_{}, col_{}".format(row,col), mod=array_layout[row][col])
+                for col in range(0, len(self.array_layout[row])):
+                    inst = self.insts[col + row*len(self.array_layout[row])]
                     inst.place(offset=[xoffset, yoffset])
                     xoffset += inst.width
                 yoffset += self.cell.height

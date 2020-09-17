@@ -54,6 +54,8 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         """ Add the modules used in this design """
         self.local_mods = []
 
+        # Special case of a single local array
+        # so it should contain the left and possibly right RBL
         if len(self.column_sizes) == 1:
             la = factory.create(module_type="local_bitcell_array",
                                 rows=self.row_size,
@@ -66,19 +68,21 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             return
 
         for i, cols in enumerate(self.column_sizes):
-            # Always add the left RBLs to the first subarray and the right RBLs to the last subarray
+            # Always add the left RBLs to the first subarray
             if i == 0:
                 la = factory.create(module_type="local_bitcell_array",
                                     rows=self.row_size,
                                     cols=cols,
                                     rbl=self.rbl,
                                     left_rbl=[0])
+            # Add the right RBL to the last subarray
             elif i == len(self.column_sizes) - 1 and len(self.all_ports) > 1:
                 la = factory.create(module_type="local_bitcell_array",
                                     rows=self.row_size,
                                     cols=cols,
                                     rbl=self.rbl,
                                     right_rbl=[1])
+            # Middle subarrays do not have any RBLs
             else:
                 la = factory.create(module_type="local_bitcell_array",
                                     rows=self.row_size,

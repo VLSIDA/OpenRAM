@@ -55,9 +55,9 @@ class hierarchical_decoder(design.design):
         self.route_decoder_bus()
         self.route_vdd_gnd()
         
-        self.offset_all_coordinates()
+        self.offset_x_coordinates()
         
-        self.width = self.and_inst[0].rx() + self.m1_space
+        self.width = self.and_inst[0].rx() + 0.5 * self.m1_width
         
         self.add_boundary()
         self.DRC_LVS()

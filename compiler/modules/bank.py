@@ -223,10 +223,10 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array above the predecoders and control logic
-        x_offset = self.m2_gap + self.port_address.width
+        x_offset = self.m2_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
-        self.predecoder_height = self.port_address.predecoder_height + self.port_address_offsets[port].y
+        self.predecoder_height = self.port_address[port].predecoder_height + self.port_address_offsets[port].y
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver
@@ -234,7 +234,7 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
-        x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
+        x_offset = self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = 1.25 * self.dff.height + self.column_decoder.height
@@ -267,7 +267,7 @@ class bank(design.design):
             
         # LOWER RIGHT QUADRANT
         # To the right of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
+        x_offset = self.bitcell_array_right + self.port_address[port].width + self.m2_gap
         self.port_address_offsets[port] = vector(x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -278,7 +278,7 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
-        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width
+        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.bitcell_array_top + 1.25 * self.dff.height + self.column_decoder.height
@@ -366,10 +366,13 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
 
-        self.port_address = factory.create(module_type="port_address",
-                                           cols=self.num_cols + self.num_spare_cols,
-                                           rows=self.num_rows)
-        self.add_mod(self.port_address)
+        self.port_address = []
+        for port in self.all_ports:
+            self.port_address.append(factory.create(module_type="port_address",
+                                                    cols=self.num_cols + self.num_spare_cols,
+                                                    rows=self.num_rows,
+                                                    port=port))
+        self.add_mod(self.port_address[port])
 
         self.num_rbl = len(self.all_ports)
 
@@ -420,13 +423,10 @@ class bank(design.design):
         # gnd
         temp = self.bitcell_array.get_inouts()
 
-        wordline_names = self.bitcell_array.get_inputs()
-        
-        # Rename the RBL WL to the enable name
-        for port in self.all_ports:
-            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
-            wordline_names = [x.replace(rbl_wl_name, "wl_en{0}".format(port)) for x in wordline_names]
-        temp.extend(wordline_names)
+        temp.append("rbl_wl0")
+        temp.extend(self.bitcell_array.get_wordline_names())
+        if len(self.all_ports) > 1:
+            temp.append("rbl_wl1")
         
         temp.append("vdd")
         temp.append("gnd")
@@ -486,13 +486,15 @@ class bank(design.design):
         self.port_address_inst = [None] * len(self.all_ports)
         for port in self.all_ports:
             self.port_address_inst[port] = self.add_inst(name="port_address{}".format(port),
-                                                         mod=self.port_address)
+                                                         mod=self.port_address[port])
 
             temp = []
             for bit in range(self.row_addr_size):
                 temp.append("addr{0}_{1}".format(port, bit + self.col_addr_size))
             temp.append("wl_en{}".format(port))
-            temp.extend(self.bitcell_array.get_wordline_names(port))
+            wordline_names = self.bitcell_array.get_wordline_names(port)
+            temp.extend(wordline_names)
+            temp.append("rbl_wl{}".format(port))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
             
@@ -852,8 +854,9 @@ class bank(design.design):
     def route_port_address_left(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
-        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
+        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
             driver_wl_pos = driver_wl_pin.rc()
@@ -1021,10 +1024,6 @@ class bank(design.design):
         connection.append((self.prefix + "p_en_bar{}".format(port),
                            self.port_data_inst[port].get_pin("p_en_bar")))
 
-        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
-        connection.append((self.prefix + "wl_en{}".format(port),
-                           self.bitcell_array_inst.get_pin(rbl_wl_name[port])))
-
         if port in self.write_ports:
             connection.append((self.prefix + "w_en{}".format(port),
                                self.port_data_inst[port].get_pin("w_en")))
@@ -1045,7 +1044,7 @@ class bank(design.design):
             self.add_via_stack_center(from_layer=pin.layer,
                                       to_layer="m2",
                                       offset=control_pos)
-
+    
         # clk to wordline_driver
         control_signal = self.prefix + "wl_en{}".format(port)
         if port % 2:

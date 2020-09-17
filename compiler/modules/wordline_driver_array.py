@@ -44,7 +44,7 @@ class wordline_driver_array(design.design):
         self.place_drivers()
         self.route_layout()
         self.route_vdd_gnd()
-        self.offset_all_coordinates()
+        self.offset_x_coordinates()
         self.add_boundary()
         self.DRC_LVS()
         
@@ -60,8 +60,10 @@ class wordline_driver_array(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
+            
         self.wl_driver = factory.create(module_type="wordline_driver",
-                                        size=self.cols)
+                                        cols=self.cols)
+            
         self.add_mod(self.wl_driver)
         
     def route_vdd_gnd(self):

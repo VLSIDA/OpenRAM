@@ -211,7 +211,7 @@ class stimuli():
                                                                                 t_final))
             self.sf.write(".meas tran {0}_leakage avg {1} from={2}n to={3}n\n".format(meas_name,
                                                                                 power_exp,
-                                                                                t_final-0.02*(t_final-t_initial),
+                                                                                t_final-0.05*(t_final-t_initial),
                                                                                 t_final))
             self.sf.write(".meas tran {0} param='{0}_total - {0}_leakage'\n\n".format(meas_name))
 

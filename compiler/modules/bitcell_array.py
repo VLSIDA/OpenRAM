@@ -82,23 +82,24 @@ class bitcell_array(bitcell_base_array):
                     self.connect_inst(self.get_bitcell_pins(row, col))
         else:
             self.array_layout = []
+            alternate_bitcell = 0
             for row in range(0,self.row_size):
 
                 row_layout = []
-                alternate_bitcell = 1
+                
                 alternate_strap = 1
                 for col in range(0,self.column_size):
                     if alternate_bitcell == 1:
                         row_layout.append(self.cell)
                         self.cell_inst[row, col]=self.add_inst(name="row_{}, col_{}_bitcell".format(row,col),
                                                         mod=self.cell)
-                        alternate_bitcell = 0
+                        
                         
                     else:
                         row_layout.append(self.cell2)
                         self.cell_inst[row, col]=self.add_inst(name="row_{}, col_{}_bitcell".format(row,col),
                                 mod=self.cell2)
-                        alternate_bitcell = 1
+                        
                     self.connect_inst(self.get_bitcell_pins(row, col))
                     if col != self.column_size-1:
                         if alternate_strap:
@@ -113,6 +114,10 @@ class bitcell_array(bitcell_base_array):
                                 mod=self.strap)
                             alternate_strap = 1
                         self.connect_inst([])
+                if alternate_bitcell == 0:
+                    alternate_bitcell = 1
+                else:
+                    alternate_bitcell = 0
                 self.array_layout.append(row_layout)
 
     def analytical_power(self, corner, load):

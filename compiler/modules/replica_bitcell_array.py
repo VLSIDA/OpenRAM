@@ -45,11 +45,12 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         debug.check(sum(rbl) <= len(self.all_ports),
                     "Invalid number of RBLs for port configuration.")
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
-        # Two dummy rows plus replica even if we don't add the column
-        self.extra_rows = 2 + sum(rbl)
-        # Two dummy cols plus replica if we add the column
-        self.extra_cols = 2 + self.add_left_rbl + self.add_right_rbl
+            # Two dummy rows plus replica even if we don't add the column
+            self.extra_rows = 2 + sum(rbl)
+            # Two dummy cols plus replica if we add the column
+            self.extra_cols = 2 + self.add_left_rbl + self.add_right_rbl
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -115,31 +116,30 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                                        column_offset=column_offset,
                                                        replica_bit=replica_bit)
             self.add_mod(self.replica_columns[bit])
-
-        # Dummy row
-        self.dummy_row = factory.create(module_type="dummy_array",
-                                        cols=self.column_size,
-                                        rows=1,
-                                        # dummy column + left replica column
-                                        column_offset=1 + self.add_left_rbl,
-                                        mirror=0)
-        self.add_mod(self.dummy_row)
-
-        # If there are bitcell end caps, replace the dummy cells on the edge of the bitcell array with end caps.
+                # If there are bitcell end caps, replace the dummy cells on the edge of the bitcell array with end caps.
         try:
             end_caps_enabled = cell_properties.bitcell.end_caps
         except AttributeError:
             end_caps_enabled = False
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            # Dummy row
+            self.dummy_row = factory.create(module_type="dummy_array",
+                                            cols=self.column_size,
+                                            rows=1,
+                                            # dummy column + left replica column
+                                            column_offset=1 + self.add_left_rbl,
+                                            mirror=0)
+            self.add_mod(self.dummy_row)
 
-        # Dummy Row or Col Cap, depending on bitcell array properties
-        col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
-        self.col_cap = factory.create(module_type=col_cap_module_type,
-                                       cols=self.column_size,
-                                       rows=1,
-                                       # dummy column + left replica column(s)
-                                       column_offset=1 + self.add_left_rbl,
-                                       mirror=0)
-        self.add_mod(self.col_cap)
+            # Dummy Row or Col Cap, depending on bitcell array properties
+            col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
+            self.col_cap = factory.create(module_type=col_cap_module_type,
+                                        cols=self.column_size,
+                                        rows=1,
+                                        # dummy column + left replica column(s)
+                                        column_offset=1 + self.add_left_rbl,
+                                        mirror=0)
+            self.add_mod(self.col_cap)
 
         # Dummy Col or Row Cap, depending on bitcell array properties
         row_cap_module_type = ("row_cap_array" if end_caps_enabled else "dummy_array")

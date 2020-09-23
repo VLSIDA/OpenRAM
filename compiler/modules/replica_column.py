@@ -50,8 +50,6 @@ class replica_column(design.design):
         self.create_instances()
 
     def create_layout(self):
-        self.height = self.total_size * self.cell.height
-        self.width = self.cell.width
 
         self.place_instances()
         self.add_layout_pins()
@@ -99,6 +97,7 @@ class replica_column(design.design):
         else:
             self.replica_cell = factory.create(module_type="s8_bitcell", version = "opt1")
             self.add_mod(self.replica_cell)
+            self.cell = self.replica_cell
             self.replica_cell2 = factory.create(module_type="s8_bitcell", version = "opt1a")
             self.add_mod(self.replica_cell2)
 
@@ -167,82 +166,121 @@ class replica_column(design.design):
             custom_replica_column_arrangement(self)
 
     def place_instances(self):
-        from tech import cell_properties
-        # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
-        # so that we will start with mirroring rather than not mirroring
-        rbl_offset = (self.left_rbl + 1) %2
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
-        # if our bitcells are mirrored on the y axis, check if we are in global
-        # column that needs to be flipped.
-        dir_y = False
-        xoffset = 0
-        if cell_properties.bitcell.mirror.y and self.column_offset % 2:
-            dir_y = True
-            xoffset = self.replica_cell.width
+            # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
+            # so that we will start with mirroring rather than not mirroring
+            rbl_offset = (self.left_rbl + 1) %2
 
-        for row in range(self.total_size):
-            # name = "bit_r{0}_{1}".format(row, "rbl")
-            dir_x = cell_properties.bitcell.mirror.x and (row + rbl_offset) % 2
+            # if our bitcells are mirrored on the y axis, check if we are in global
+            # column that needs to be flipped.
+            dir_y = False
+            xoffset = 0
+            if cell_properties.bitcell.mirror.y and self.column_offset % 2:
+                dir_y = True
+                xoffset = self.replica_cell.width
 
-            offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
+            for row in range(self.total_size):
+                # name = "bit_r{0}_{1}".format(row, "rbl")
+                dir_x = cell_properties.bitcell.mirror.x and (row + rbl_offset) % 2
 
-            if dir_x and dir_y:
-                dir_key = "XY"
-            elif dir_x:
-                dir_key = "MX"
-            elif dir_y:
-                dir_key = "MY"
-            else:
-                dir_key = ""
+                offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
 
-            self.cell_inst[row].place(offset=offset,
-                                      mirror=dir_key)
+                if dir_x and dir_y:
+                    dir_key = "XY"
+                elif dir_x:
+                    dir_key = "MX"
+                elif dir_y:
+                    dir_key = "MY"
+                else:
+                    dir_key = ""
+
+                self.cell_inst[row].place(offset=offset,
+                                        mirror=dir_key)
+        else:
+            from tech import custom_replica_cell_placement
+            custom_replica_cell_placement(self)
 
     def add_layout_pins(self):
         """ Add the layout pins """
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[0].get_pin(self.cell.get_bl_name(port))
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
+                bl_pin = self.cell_inst[0].get_pin(self.cell.get_br_name(port))
+                self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
 
-        for port in self.all_ports:
-            bl_pin = self.cell_inst[0].get_pin(self.cell.get_bl_name(port))
-            self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
-                                layer=bl_pin.layer,
-                                offset=bl_pin.ll().scale(1, 0),
-                                width=bl_pin.width(),
-                                height=self.height)
-            bl_pin = self.cell_inst[0].get_pin(self.cell.get_br_name(port))
-            self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
-                                layer=bl_pin.layer,
-                                offset=bl_pin.ll().scale(1, 0),
-                                width=bl_pin.width(),
-                                height=self.height)
+            try:
+                end_caps_enabled = cell_properties.bitcell.end_caps
+            except AttributeError:
+                end_caps_enabled = False
 
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
+            if end_caps_enabled:
+                row_range_max = self.total_size - 1
+                row_range_min = 1
+            else:
+                row_range_max = self.total_size
+                row_range_min = 0
 
-        if end_caps_enabled:
+            for port in self.all_ports:
+                for row in range(row_range_min, row_range_max):
+                    wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
+                    self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                                        layer=wl_pin.layer,
+                                        offset=wl_pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=wl_pin.height())
+
+            # Supplies are only connected in the ends
+            for (index, inst) in self.cell_inst.items():
+                for pin_name in ["vdd", "gnd"]:
+                    if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+                        self.copy_power_pins(inst, pin_name)
+                    else:
+                        self.copy_layout_pin(inst, pin_name)
+        else:
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[2].get_pin(self.cell.get_bl_name(port))
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
+                bl_pin = self.cell_inst[2].get_pin(self.cell.get_br_name(port))
+                self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
+
+
             row_range_max = self.total_size - 1
             row_range_min = 1
-        else:
-            row_range_max = self.total_size
-            row_range_min = 0
 
-        for port in self.all_ports:
-            for row in range(row_range_min, row_range_max):
-                wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
-                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
-                                    layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=wl_pin.height())
+            for port in self.all_ports:
+                for row in range(row_range_min, row_range_max):
+                    wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
+                    self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                                        layer=wl_pin.layer,
+                                        offset=wl_pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=wl_pin.height())
 
-        # Supplies are only connected in the ends
-        for (index, inst) in self.cell_inst.items():
-            for pin_name in ["vdd", "gnd"]:
-                if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
-                    self.copy_power_pins(inst, pin_name)
-                else:
-                    self.copy_layout_pin(inst, pin_name)
+            # # Supplies are only connected in the ends
+            # for (index, inst) in self.cell_inst.items():
+            #     for pin_name in ["vdd", "gnd"]:
+            #         if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+            #             self.copy_power_pins(inst, pin_name)
+            #         else:
+            #             self.copy_layout_pin(inst, pin_name)
 
     def get_bitline_names(self, port=None):
         if port == None:

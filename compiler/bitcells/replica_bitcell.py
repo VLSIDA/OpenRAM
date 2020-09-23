@@ -20,7 +20,7 @@ class s8_replica_bitcell(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    if cell_properties.bitcell.split_wl:
+    if cell_properties.compare_ports(cell_properties.bitcell.split_wl):
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
     else:

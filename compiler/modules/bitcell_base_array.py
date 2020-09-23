@@ -26,7 +26,7 @@ class bitcell_base_array(design.design):
         self.column_offset = column_offset
 
         # Bitcell for port names only
-        if OPTS.tech_name != "sky130":
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
             self.cell = factory.create(module_type="bitcell")
         else:
             self.cell = factory.create(module_type="s8_bitcell", version="opt1")
@@ -56,7 +56,7 @@ class bitcell_base_array(design.design):
         self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.row_size):
             for port in self.all_ports:
-                if not cell_properties.bitcell.split_wl:
+                if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
                     self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
                 else:
                     self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
@@ -76,7 +76,7 @@ class bitcell_base_array(design.design):
             return self.wordline_names[port]
         
     def add_pins(self):
-        if OPTS.tech_name != "sky130":
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
             for bl_name in self.get_bitline_names():
                 self.add_pin(bl_name, "INOUT")
             for wl_name in self.get_wordline_names():
@@ -104,7 +104,7 @@ class bitcell_base_array(design.design):
 
     def add_layout_pins(self):
         """ Add the layout pins """
-        if OPTS.tech_name != "sky130":
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
             bitline_names = self.cell.get_all_bitline_names()
             for col in range(self.column_size):
                 for port in self.all_ports:
@@ -196,7 +196,7 @@ class bitcell_base_array(design.design):
 
     def place_array(self, name_template, row_offset=0):
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        if not cell_properties.use_custom_bitcell_array(cell_properties.bitcell_array.use_custom_cell_arrangement):
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
             self.height = self.row_size * self.cell.height
             self.width = self.column_size * self.cell.width
 

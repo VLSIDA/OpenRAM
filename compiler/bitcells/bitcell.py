@@ -23,7 +23,7 @@ class bitcell(bitcell_base.bitcell_base):
     # If we have a split WL bitcell, if not be backwards
     # compatible in the tech file
 
-    if props.bitcell.split_wl:
+    if props.compare_ports(props.bitcell.split_wl):
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     else:
@@ -55,7 +55,7 @@ class bitcell(bitcell_base.bitcell_base):
               
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        if props.bitcell.split_wl:
+        if props.compare_ports(props.bitcell.split_wl):
             row_pins = ["wl0", "wl1"]
         else:
             row_pins = [props.bitcell.cell_6t.pin.wl]
@@ -87,7 +87,7 @@ class bitcell(bitcell_base.bitcell_base):
 
     def get_wl_name(self, port=0):
         """Get wl name"""
-        if props.bitcell.split_wl:
+        if props.compare_ports(props.bitcell.split_wl):
             return "wl{}".format(port)
         else:
             debug.check(port == 0, "One port for bitcell only.")

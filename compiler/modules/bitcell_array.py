@@ -47,7 +47,7 @@ class bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        if not props.use_custom_bitcell_array(props.bitcell_array.use_custom_cell_arrangement):
+        if not props.compare_ports(props.bitcell_array.use_custom_cell_arrangement):
             self.cell = factory.create(module_type="bitcell")
             self.add_mod(self.cell)
 
@@ -74,7 +74,7 @@ class bitcell_array(bitcell_base_array):
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
-        if not props.use_custom_bitcell_array(props.bitcell_array.use_custom_cell_arrangement):
+        if not props.compare_ports(props.bitcell_array.use_custom_cell_arrangement):
             for col in range(self.column_size):
                 for row in range(self.row_size):
                     name = "bit_r{0}_c{1}".format(row, col)

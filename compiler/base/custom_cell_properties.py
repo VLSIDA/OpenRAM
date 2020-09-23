@@ -175,7 +175,7 @@ class cell_properties():
     def bitcell_array(self):
         return self._bitcell_array
 
-    def use_custom_bitcell_array(self, port_list):
+    def compare_ports(self, port_list):
         use_custom_arrangement = False
         for ports in port_list:
             if ports == "{}R_{}W_{}RW".format(OPTS.num_r_ports, OPTS.num_w_ports, OPTS.num_rw_ports):

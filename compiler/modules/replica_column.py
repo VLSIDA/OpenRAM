@@ -119,15 +119,6 @@ class replica_column(design.design):
             self.colenda_p_cent = factory.create(module_type="s8_col_end", version = "colenda_p_cent")
             self.add_mod(self.colenda_p_cent)
 
-            self.corner_ul = factory.create(module_type="s8_corner", location = "ul")
-            self.add_mod(self.corner_ul)
-            self.corner_ur =factory.create(module_type="s8_corner", location = "ur")
-            self.add_mod(self.corner_ur)
-            self.corner_ll = factory.create(module_type="s8_corner", location = "ll")
-            self.add_mod(self.corner_ll)
-            self.corner_lr = factory.create(module_type="s8_corner", location = "lr")
-            self.add_mod(self.corner_lr)
-
 
     def create_instances(self):
         self.cell_inst = {}

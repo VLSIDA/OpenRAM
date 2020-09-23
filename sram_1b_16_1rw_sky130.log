@@ -15,7 +15,3 @@
 [bitcell_base_array/__init__]: Creating replica_bitcell_array 4 x 4
 [replica_bitcell_array/__init__]: Creating replica_bitcell_array 4 x 4
 [bitcell_base_array/__init__]: Creating bitcell_array 4 x 4
-ERROR: file s8_bitcell.py: line 91: One port for bitcell only.
-
-ERROR: file s8_bitcell.py: line 91: One port for bitcell only.
-

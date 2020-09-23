@@ -196,7 +196,7 @@ class bitcell_base_array(design.design):
 
     def place_array(self, name_template, row_offset=0):
         # We increase it by a well enclosure so the precharges don't overlap our wells
-        if OPTS.tech_name != "sky130":
+        if not cell_properties.use_custom_bitcell_array(cell_properties.bitcell_array.use_custom_cell_arrangement):
             self.height = self.row_size * self.cell.height
             self.width = self.column_size * self.cell.width
 
@@ -222,18 +222,5 @@ class bitcell_base_array(design.design):
                     yoffset += self.cell.height
                 xoffset += self.cell.width
         else:
-
-            self.height = self.row_size * self.cell.height 
-            self.width = self.column_size * self.cell.width + (self.column_size-1) * self.strap.width
-            
-
-            yoffset = 0.0
-
-            for row in range(0, len(self.array_layout)):
-                xoffset = 0.0               
-                for col in range(0, len(self.array_layout[row])):
-                    inst = self.insts[col + row*len(self.array_layout[row])]
-                    inst.place(offset=[xoffset, yoffset])
-                    xoffset += inst.width
-                yoffset += self.cell.height
-                
+            from tech import custom_cell_placement
+            custom_cell_placement(self)

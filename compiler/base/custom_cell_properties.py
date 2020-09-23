@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from globals import OPTS
 
 class _pins:
     def __init__(self, pin_dict):
@@ -107,6 +108,10 @@ class _dff_buff_array:
         self.use_custom_ports = use_custom_ports
         self.add_body_contacts = add_body_contacts
 
+class _bitcell_array:
+    def __init__(self, use_custom_cell_arrangement):
+        self.use_custom_cell_arrangement = use_custom_cell_arrangement
+
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -134,10 +139,13 @@ class cell_properties():
                                     'bl' : 'bl',
                                     'br' : 'br',
                                     'en' : 'en'})
+
         self._sense_amp = _cell({'bl'   : 'bl',
                                  'br'   : 'br',
                                  'dout' : 'dout',
                                  'en'   : 'en'})
+
+        self._bitcell_array = _bitcell_array(use_custom_cell_arrangement = [])
 
     @property
     def bitcell(self):
@@ -162,3 +170,15 @@ class cell_properties():
     @property
     def sense_amp(self):
         return self._sense_amp
+    
+    @property
+    def bitcell_array(self):
+        return self._bitcell_array
+
+    def use_custom_bitcell_array(self, port_list):
+        use_custom_arrangement = False
+        for ports in port_list:
+            if ports == "{}R_{}W_{}RW".format(OPTS.num_r_ports, OPTS.num_w_ports, OPTS.num_rw_ports):
+                use_custom_arrangement = True
+                break
+        return use_custom_arrangement

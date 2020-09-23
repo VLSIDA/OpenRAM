@@ -8,6 +8,7 @@
 from bitcell_base_array import bitcell_base_array
 from s8_corner import s8_corner
 from tech import drc, spice
+from tech import cell_properties as props
 from globals import OPTS
 from sram_factory import factory
 
@@ -46,7 +47,7 @@ class bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        if OPTS.tech_name != "sky130":
+        if not props.use_custom_bitcell_array(props.bitcell_array.use_custom_cell_arrangement):
             self.cell = factory.create(module_type="bitcell")
             self.add_mod(self.cell)
 
@@ -73,7 +74,7 @@ class bitcell_array(bitcell_base_array):
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
-        if OPTS.tech_name != "sky130":
+        if not props.use_custom_bitcell_array(props.bitcell_array.use_custom_cell_arrangement):
             for col in range(self.column_size):
                 for row in range(self.row_size):
                     name = "bit_r{0}_c{1}".format(row, col)
@@ -81,44 +82,8 @@ class bitcell_array(bitcell_base_array):
                                                         mod=self.cell)
                     self.connect_inst(self.get_bitcell_pins(row, col))
         else:
-            self.array_layout = []
-            alternate_bitcell = 0
-            for row in range(0,self.row_size):
-
-                row_layout = []
-                
-                alternate_strap = 1
-                for col in range(0,self.column_size):
-                    if alternate_bitcell == 1:
-                        row_layout.append(self.cell)
-                        self.cell_inst[row, col]=self.add_inst(name="row_{}, col_{}_bitcell".format(row,col),
-                                                        mod=self.cell)
-                        
-                        
-                    else:
-                        row_layout.append(self.cell2)
-                        self.cell_inst[row, col]=self.add_inst(name="row_{}, col_{}_bitcell".format(row,col),
-                                mod=self.cell2)
-                        
-                    self.connect_inst(self.get_bitcell_pins(row, col))
-                    if col != self.column_size-1:
-                        if alternate_strap:
-                            row_layout.append(self.strap2)
-                            self.add_inst(name="row_{}, col_{}_wlstrap".format(row,col),
-                                mod=self.strap2)
-                            alternate_strap = 0
-                        else:
-                            
-                            row_layout.append(self.strap)
-                            self.add_inst(name="row_{}, col_{}_wlstrap".format(row,col),
-                                mod=self.strap)
-                            alternate_strap = 1
-                        self.connect_inst([])
-                if alternate_bitcell == 0:
-                    alternate_bitcell = 1
-                else:
-                    alternate_bitcell = 0
-                self.array_layout.append(row_layout)
+            from tech import custom_cell_arrangement
+            custom_cell_arrangement(self) 
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

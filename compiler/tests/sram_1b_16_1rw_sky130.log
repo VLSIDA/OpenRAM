@@ -1,4 +1,9 @@
-WARNING: file magic.py: line 210: DRC Errors bitcell_array	9424
-
-ERROR: file magic.py: line 285: bitcell_array	LVS mismatch (results in /home/jesse/output/bitcell_array.lvs.report)
+ERROR: file hierarchy_spice.py: line 176: Connection mismatch:
+Inst (4) -> Mod (6)
+bl_0_0 -> bl0
+br_0_0 -> bl1
+vdd -> wl0
+gnd -> wl1
+ -> vpwr
+ -> vgnd
 

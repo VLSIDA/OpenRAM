@@ -57,7 +57,6 @@ class replica_column(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-
         self.bitline_names = [[] for port in self.all_ports]
         col = 0
         for port in self.all_ports:
@@ -66,17 +65,29 @@ class replica_column(design.design):
         self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
 
-        self.wordline_names = [[] for port in self.all_ports]
-        for row in range(self.total_size):
-            for port in self.all_ports:
-                if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
-                    self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-                else:
-                    self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
-                    self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
-        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-        self.add_pin_list(self.all_wordline_names, "INPUT")
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            self.wordline_names = [[] for port in self.all_ports]
+            for row in range(self.total_size):
+                for port in self.all_ports:
+                    if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
+                        self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                    else:
+                        self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
+                        self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
+            self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+            self.add_pin_list(self.all_wordline_names, "INPUT")
+        else:
+            self.wordline_names = [[] for port in self.all_ports]
+            for row in range(self.rows):
+                for port in self.all_ports:
+                    if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
+                        self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                    else:
+                        self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
+                        self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
 
+            self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+            self.add_pin_list(self.all_wordline_names, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 

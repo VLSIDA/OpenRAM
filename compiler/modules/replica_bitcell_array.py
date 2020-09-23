@@ -294,7 +294,10 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         supplies = ["vdd", "gnd"]
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type="bitcell")
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            self.cell = factory.create(module_type="bitcell")
+        else:
+            self.cell = factory.create(module_type="s8_bitcell", version = "opt1")
 
         # Main array
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",

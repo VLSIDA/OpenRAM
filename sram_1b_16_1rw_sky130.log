@@ -15,3 +15,12 @@
 [bitcell_base_array/__init__]: Creating replica_bitcell_array 4 x 4
 [replica_bitcell_array/__init__]: Creating replica_bitcell_array 4 x 4
 [bitcell_base_array/__init__]: Creating bitcell_array 4 x 4
+ERROR: file hierarchy_spice.py: line 176: Connection mismatch:
+Inst (4) -> Mod (6)
+bl_0_0 -> bl0
+br_0_0 -> bl1
+vdd -> wl0
+gnd -> wl1
+ -> vpwr
+ -> vgnd
+

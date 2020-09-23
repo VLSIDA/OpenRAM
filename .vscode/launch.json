@@ -53,7 +53,7 @@
             "request": "launch",
             "program": "/home/jesse/openram/compiler/tests/14_replica_bitcell_array_test.py",
             "console": "integratedTerminal",
-            "args": ["-s", "ngspice", "-d", "-v"]
+            "args": ["-s", "ngspice", "-d", "-t", "sky130", "-v"]
         }
     ]
 } 

@@ -71,7 +71,11 @@ class replica_column(design.design):
         self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.total_size):
             for port in self.all_ports:
-                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
+                    self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
+                else:
+                    self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
+                    self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
         self.add_pin_list(self.all_wordline_names, "INPUT")
 
@@ -79,51 +83,88 @@ class replica_column(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.replica_cell = factory.create(module_type="replica_{}".format(OPTS.bitcell))
-        self.add_mod(self.replica_cell)
-        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
-        self.add_mod(self.dummy_cell)
-        try:
-            edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")
-        except AttributeError:
-            edge_module_type = "dummy"
-        self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
-        self.add_mod(self.edge_cell)
-        # Used for pin names only
-        self.cell = factory.create(module_type="bitcell")
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            self.replica_cell = factory.create(module_type="replica_{}".format(OPTS.bitcell))
+            self.add_mod(self.replica_cell)
+            self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
+            self.add_mod(self.dummy_cell)
+            try:
+                edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")
+            except AttributeError:
+                edge_module_type = "dummy"
+            self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
+            self.add_mod(self.edge_cell)
+            # Used for pin names only
+            self.cell = factory.create(module_type="bitcell")
+        else:
+            self.replica_cell = factory.create(module_type="s8_bitcell", version = "opt1")
+            self.add_mod(self.replica_cell)
+            self.replica_cell2 = factory.create(module_type="s8_bitcell", version = "opt1a")
+            self.add_mod(self.replica_cell2)
+
+            self.dummy_cell = factory.create(module_type="s8_bitcell", version = "opt1")
+            self.dummy_cell2 = factory.create(module_type="s8_bitcell", version = "opt1")
+
+            self.strap1 = factory.create(module_type="s8_internal", version = "wlstrap")
+            self.add_mod(self.strap1)
+            self.strap2 = factory.create(module_type="s8_internal", version = "wlstrap_p")
+            self.add_mod(self.strap2)
+
+            self.colend = factory.create(module_type="s8_col_end", version = "colenda")
+            self.edge_cell = self.colend
+            self.add_mod(self.colend)
+            self.colenda = factory.create(module_type="s8_col_end", version = "colenda")
+            self.add_mod(self.colenda)
+            self.colend_p_cent = factory.create(module_type="s8_col_end", version = "colend_p_cent")
+            self.add_mod(self.colend_p_cent)
+            self.colenda_p_cent = factory.create(module_type="s8_col_end", version = "colenda_p_cent")
+            self.add_mod(self.colenda_p_cent)
+
+            self.corner_ul = factory.create(module_type="s8_corner", location = "ul")
+            self.add_mod(self.corner_ul)
+            self.corner_ur =factory.create(module_type="s8_corner", location = "ur")
+            self.add_mod(self.corner_ur)
+            self.corner_ll = factory.create(module_type="s8_corner", location = "ll")
+            self.add_mod(self.corner_ll)
+            self.corner_lr = factory.create(module_type="s8_corner", location = "lr")
+            self.add_mod(self.corner_lr)
+
 
     def create_instances(self):
-
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
-
         self.cell_inst = {}
-        for row in range(self.total_size):
-            name="rbc_{0}".format(row)
-            # Top/bottom cell are always dummy cells.
-            # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
-            # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
-            if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-            elif row==self.replica_bit:
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-            elif (row == 0 or row == self.total_size - 1):
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.edge_cell)
-                if end_caps_enabled:
-                    self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
-                else:
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            try:
+                end_caps_enabled = cell_properties.bitcell.end_caps
+            except AttributeError:
+                end_caps_enabled = False
+            
+            for row in range(self.total_size):
+                name="rbc_{0}".format(row)
+                # Top/bottom cell are always dummy cells.
+                # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
+                # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
+                if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
+                    self.cell_inst[row]=self.add_inst(name=name,
+                                                    mod=self.replica_cell)
                     self.connect_inst(self.get_bitcell_pins(row, 0))
-            else:
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
+                elif row==self.replica_bit:
+                    self.cell_inst[row]=self.add_inst(name=name,
+                                                    mod=self.replica_cell)
+                    self.connect_inst(self.get_bitcell_pins(row, 0))
+                elif (row == 0 or row == self.total_size - 1):
+                    self.cell_inst[row]=self.add_inst(name=name,
+                                                    mod=self.edge_cell)
+                    if end_caps_enabled:
+                        self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
+                    else:
+                        self.connect_inst(self.get_bitcell_pins(row, 0))
+                else:
+                    self.cell_inst[row]=self.add_inst(name=name,
+                                                    mod=self.dummy_cell)
+                    self.connect_inst(self.get_bitcell_pins(row, 0))
+        else:
+            from tech import custom_replica_column_arrangement
+            custom_replica_column_arrangement(self)
 
     def place_instances(self):
         from tech import cell_properties

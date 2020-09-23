@@ -52,17 +52,8 @@ class bitcell_array(bitcell_base_array):
             self.add_mod(self.cell)
 
         else:
-            #self.add_mod(factory.create(module_type="s8_corner", location = "ul"))
-            #self.add_mod(factory.create(module_type="s8_corner", location = "ur"))
-            #self.add_mod(factory.create(module_type="s8_corner", location = "ll"))
-            #self.add_mod(factory.create(module_type="s8_corner", location = "lr"))
-
-            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda"))
-            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda"))
-            #self.add_mod(factory.create(module_type="s8_col_end", version = "colend_p_cent"))
-            #self.add_mod(factory.create(module_type="s8_col_end", version = "colenda_p_cent"))
-            
-            self.add_mod(factory.create(module_type="s8_bitcell", version = "opt1"))
+            self.cell = factory.create(module_type="s8_bitcell", version = "opt1")
+            self.add_mod(self.cell)
             self.add_mod(factory.create(module_type="s8_bitcell", version = "opt1a"))
 
             self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap"))

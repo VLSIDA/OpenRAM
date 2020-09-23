@@ -51,9 +51,9 @@
             "name": "decoder",
             "type": "python",
             "request": "launch",
-            "program": "/home/jesse/openram/compiler/tests/05_bitcell_array_1rw_1r_test.py",
+            "program": "/home/jesse/openram/compiler/tests/14_replica_bitcell_array_test.py",
             "console": "integratedTerminal",
-            "args": ["-s", "ngspice", "-d", "-t", "sky130", "-v"]
+            "args": ["-s", "ngspice", "-d", "-v"]
         }
     ]
 } 

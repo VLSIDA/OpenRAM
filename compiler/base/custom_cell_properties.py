@@ -70,7 +70,7 @@ class _bitcell:
                         cell_6t=cell_6t,
                         cell_1rw1r=cell_1rw1r,
                         cell_1w1r=cell_1w1r,
-                        split_wl = False,
+                        split_wl = [],
                         mirror=axis)
 
     @property

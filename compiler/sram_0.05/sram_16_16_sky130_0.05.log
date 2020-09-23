@@ -1,18 +1,5 @@
-[globals/init_openram]: Initializing OpenRAM...
-[globals/setup_paths]: Setting up paths...
-[globals/setup_paths]: Temporary files saved in /home/jesse/output/
-[globals/read_config]: Configuration file is /home/jesse/openram/compiler/example_configs/s8config.py
-[globals/read_config]: Output saved in /home/jesse/openram/compiler/sram_0.05/
-[globals/import_tech]: Importing technology: sky130
-[globals/import_tech]: Adding technology path: /home/jesse/openram/technology
-[globals/init_paths]: Creating temp directory: /home/jesse/output/
-[characterizer/<module>]: Initializing characterizer...
-[characterizer/<module>]: Analytical model enabled.
-[verify/<module>]: Initializing verify...
-[verify/<module>]: LVS/DRC/PEX disabled.
 WARNING: file __init__.py: line 79: Did not find Magic.
 
-[globals/setup_bitcell]: Using bitcell: bitcell_1rw_1r
 |==============================================================================|
 |=========                       OpenRAM v1.1.6                       =========|
 |=========                                                            =========|
@@ -25,7 +12,7 @@ WARNING: file __init__.py: line 79: Did not find Magic.
 |=========               Temp dir: /home/jesse/output/                =========|
 |=========                See LICENSE for license info                =========|
 |==============================================================================|
-** Start: 09/22/2020 23:33:27
+** Start: 09/23/2020 00:16:38
 Technology: sky130
 Total size: 256 bits
 Word size: 16
@@ -38,10 +25,6 @@ W-only ports: 0
 DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
 DRC/LVS/PEX is disabled (check_lvsdrc=True to enable).
 Characterization is disabled (using analytical delay models) (analytical_delay=False to simulate).
-[bitcell_1rw_1r/__init__]: Create bitcell with 1RW and 1R Port
-[sram_config/recompute_sizes]: Recomputing with words per row: 1
-[sram_config/recompute_sizes]: Rows: 16 Cols: 16
-[sram_config/recompute_sizes]: Row addr size: 4 Col addr size: 0 Bank addr size: 4
 Words per row: 1
 Output files are: 
 /home/jesse/openram/compiler/sram_0.05/sram_16_16_sky130_0.05.lvs
@@ -53,58 +36,6 @@ Output files are:
 /home/jesse/openram/compiler/sram_0.05/sram_16_16_sky130_0.05.log
 /home/jesse/openram/compiler/sram_0.05/sram_16_16_sky130_0.05.lef
 /home/jesse/openram/compiler/sram_0.05/sram_16_16_sky130_0.05.gds
-[sram/__init__]: create sram of size 16 with 16 num of words 1 banks
-[dff_array/__init__]: Creating row_addr_dff rows=4 cols=1
-[dff_array/__init__]: Creating data_dff rows=1 cols=16
-[dff_array/__init__]: Creating wmask_dff rows=1 cols=2
-[bank/__init__]: create sram of size 16 with 16 words
-[port_data/__init__]: create data port of size 16 with 1 words per row
-[precharge/__init__]: creating precharge cell precharge
-[pgate/best_bin]: binning pmos tx, target: 0.55, found 1 x 0.55 = 0.55
-[precharge_array/__init__]: Creating precharge_array
-[precharge/__init__]: creating precharge cell precharge_0
-[sense_amp_array/__init__]: Creating sense_amp_array
-[sense_amp/__init__]: Create sense_amp
-[write_driver_array/__init__]: Creating write_driver_array
-[write_driver/__init__]: Create write_driver
-[write_mask_and_array/__init__]: Creating write_mask_and_array
-[pand2/__init__]: Creating pand2 pand2
-[pnand2/__init__]: creating pnand2 structure pnand2 with size of 1
-[pgate/best_bin]: binning nmos tx, target: 0.74, found 1 x 0.74 = 0.74
-[pgate/best_bin]: binning nmos tx, target: 0.74, found 1 x 0.74 = 0.74
-[pgate/best_bin]: binning pmos tx, target: 1.12, found 1 x 1.12 = 1.12
-[pdriver/__init__]: creating pdriver pdriver
-[pinv/__init__]: creating pinv structure pinv with size of 2.0
-[pgate/best_bin]: binning nmos tx, target: 0.36, found 1 x 0.36 = 0.36
-[pgate/best_bin]: binning pmos tx, target: 0.36, found 1 x 0.42 = 0.42
-[pinv/determine_tx_mults]: Height avail 4.6100 PMOS 2.2000 NMOS 2.2000
-[pinv/determine_tx_mults]: prebinning pmos tx, target: 2.16, found 2.0 x 2 = 4.0
-[pinv/determine_tx_mults]: prebinning nmos tx, target: 0.72, found 0.74 x 1 = 0.74
-[pinv/determine_tx_mults]: pinv bin count: 2 pinv bin error: 0.8796296296296295 percent error 0.43981481481481477
-[pgate/best_bin]: binning nmos tx, target: 0.74, found 1 x 0.74 = 0.74
-[pgate/best_bin]: binning pmos tx, target: 2.0, found 1 x 2.0 = 2.0
-[port_data/__init__]: create data port of size 16 with 1 words per row
-[precharge_array/__init__]: Creating precharge_array_0
-[precharge/__init__]: creating precharge cell precharge_1
-[port_address/__init__]: create data port of cols 16 rows 16
-[and2_dec/__init__]: Creating and2_dec and2_dec
-[pinv_dec/__init__]: creating pinv_dec structure pinv_dec with size of 1
-[pinv/__init__]: creating pinv structure pinv_dec with size of 1
-[pgate/best_bin]: binning nmos tx, target: 0.36, found 1 x 0.36 = 0.36
-[pgate/best_bin]: binning pmos tx, target: 1.12, found 1 x 1.12 = 1.12
-[and3_dec/__init__]: Creating and3_dec and3_dec
-[wordline_driver_array/__init__]: Creating wordline_driver_array
-[wordline_driver/__init__]: Creating wordline_driver wordline_driver
-[pinv_dec/__init__]: creating pinv_dec structure pinv_dec_0 with size of 16
-[pinv/__init__]: creating pinv structure pinv_dec_0 with size of 16
-[pgate/best_bin]: binning nmos tx, target: 7.0, found 1 x 7.0 = 7.0
-[pgate/best_bin]: binning pmos tx, target: 7.0, found 1 x 7.0 = 7.0
-[bitcell_base_array/__init__]: Creating replica_bitcell_array 16 x 16
-[replica_bitcell_array/__init__]: Creating replica_bitcell_array 16 x 16
-[bitcell_base_array/__init__]: Creating bitcell_array 16 x 16
-[replica_bitcell_1rw_1r/__init__]: Create replica bitcell 1rw+1r object
-[dummy_bitcell_1rw_1r/__init__]: Create dummy bitcell 1rw+1r object
-[col_cap_bitcell_1rw_1r/__init__]: Create col_cap bitcell 1rw+1r object
 ERROR: file hierarchy_spice.py: line 176: Connection mismatch:
 Inst (6) -> Mod (5)
 bl_0_0 -> bl0

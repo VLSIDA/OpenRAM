@@ -13,7 +13,7 @@ from tech import cell_properties as props
 
 from globals import OPTS
 
-class s8_replica_bitcell(design.design):
+class replica_bitcell(design.design):
     """
     A single bit cell (6T, 8T, etc.)
     This module implements the single memory cell used in the design. It

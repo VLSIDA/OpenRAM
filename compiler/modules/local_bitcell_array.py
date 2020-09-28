@@ -207,9 +207,9 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                 
                 y_offset = in_pin.cy()
                 if port == 0:
-                    y_offset -= 1.5 * self.m3_pitch
+                    y_offset -= 2 * self.m3_pitch
                 else:
-                    y_offset += 1.5 * self.m3_pitch
+                    y_offset += 2 * self.m3_pitch
                     
                 self.add_layout_pin_segment_center(text=wl_name,
                                                    layer="m3",

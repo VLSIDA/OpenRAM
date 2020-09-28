@@ -18,7 +18,7 @@ class wordline_driver(design.design):
     This is an AND (or NAND) with configurable drive strength to drive the wordlines.
     It is matched to the bitcell height.
     """
-    def __init__(self, name, cols=1, height=None):
+    def __init__(self, name, cols, height=None):
         debug.info(1, "Creating wordline_driver {}".format(name))
         self.add_comment("cols: {}".format(cols))
         super().__init__(name)

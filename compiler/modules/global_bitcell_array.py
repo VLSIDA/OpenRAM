@@ -267,3 +267,4 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         for inst in self.local_insts:
             offsets.extend(inst.lx() + x for x in inst.mod.get_column_offsets())
         return offsets
+    

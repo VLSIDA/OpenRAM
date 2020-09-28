@@ -372,9 +372,7 @@ class bank(design.design):
                                                     cols=self.num_cols + self.num_spare_cols,
                                                     rows=self.num_rows,
                                                     port=port))
-        self.add_mod(self.port_address[port])
-
-        self.num_rbl = len(self.all_ports)
+            self.add_mod(self.port_address[port])
 
         try:
             local_array_size = OPTS.local_array_size
@@ -875,8 +873,9 @@ class bank(design.design):
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
-        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
+        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
             driver_wl_pos = driver_wl_pin.lc()

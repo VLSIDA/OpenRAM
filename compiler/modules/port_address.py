@@ -40,7 +40,7 @@ class port_address(design.design):
         self.add_modules()
         self.create_row_decoder()
         self.create_wordline_driver()
-        self.create_rbl_driver()        
+        self.create_rbl_driver()
         
     def create_layout(self):
         if "li" in layer:
@@ -79,7 +79,8 @@ class port_address(design.design):
             self.copy_power_pins(inst, "vdd")
             self.copy_power_pins(inst, "gnd")
 
-        self.copy_power_pins(self.rbl_driver_inst, "vdd")
+        rbl_vdd_pin = self.rbl_driver_inst.get_pin("vdd")
+        self.add_power_pin("vdd", rbl_vdd_pin.lc())
 
     def route_pins(self):
         for row in range(self.addr_size):
@@ -111,17 +112,19 @@ class port_address(design.design):
 
         # Route the RBL from the enable input
         en_pin = self.wordline_driver_array_inst.get_pin("en")
+        en_pos = en_pin.center()
         rbl_in_pin = self.rbl_driver_inst.get_pin("A")
         rbl_in_pos = rbl_in_pin.center()
+        
         mid_pos = vector(en_pin.cx(), rbl_in_pin.cy())
-        self.add_path(rbl_in_pin.layer, [rbl_in_pos, mid_pos])
         self.add_via_stack_center(from_layer=rbl_in_pin.layer,
                                   to_layer=en_pin.layer,
-                                  offset=mid_pos)
+                                  offset=rbl_in_pos)
+        self.add_path(en_pin.layer, [rbl_in_pos, mid_pos, en_pos])
         self.add_layout_pin_segment_center(text="wl_en",
                                            layer=en_pin.layer,
                                            start=mid_pos,
-                                           end=en_pin.center())
+                                           end=en_pos)
         
     def add_modules(self):
 

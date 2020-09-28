@@ -8,6 +8,7 @@
 import collections
 import debug
 import random
+import math
 from .stimuli import *
 from .charutils import *
 from globals import OPTS
@@ -31,7 +32,7 @@ class functional(simulation):
             random.seed(12345)
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
 

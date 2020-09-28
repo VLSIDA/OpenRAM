@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import debug
+import math
 
 class verilog:
     """ 
@@ -53,7 +54,7 @@ class verilog:
         self.vf.write("\n  );\n\n")
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size/self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
             self.vf.write("  parameter NUM_WMASKS = {0} ;\n".format(self.num_wmasks))
         self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size))
         self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
@@ -189,9 +190,13 @@ class verilog:
                 self.vf.write("    if (!csb{0}_reg)\n".format(port))
 
         if self.write_size:
+            remainder_bits = self.word_size % self.write_size
             for mask in range(0,self.num_wmasks):
                 lower = mask * self.write_size
-                upper = lower + self.write_size-1
+                if (remainder_bits and mask == self.num_wmasks - 1):
+                    upper = lower + remainder_bits - 1
+                else:
+                    upper = lower + self.write_size - 1
                 self.vf.write("        if (wmask{0}_reg[{1}])\n".format(port,mask))
                 self.vf.write("                mem[addr{0}_reg][{1}:{2}] = din{0}_reg[{1}:{2}];\n".format(port,upper,lower))
             self.vf.write("    end\n")

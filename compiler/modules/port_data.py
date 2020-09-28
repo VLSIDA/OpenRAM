@@ -6,6 +6,7 @@
 from tech import drc
 import debug
 import design
+import math
 from sram_factory import factory
 from collections import namedtuple
 from vector import vector
@@ -23,7 +24,7 @@ class port_data(design.design):
         sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
 

@@ -27,11 +27,11 @@ class port_address_1rw_1r_test(openram_test):
         globals.setup_bitcell()
         
         debug.info(1, "Port address 16 rows")
-        a = factory.create("port_address", cols=16, rows=16)
+        a = factory.create("port_address", cols=16, rows=16, port=0)
         self.local_check(a)
 
         debug.info(1, "Port address 256 rows")
-        a = factory.create("port_address", cols=256, rows=256)
+        a = factory.create("port_address", cols=256, rows=256, port=1)
         self.local_check(a)
         
         globals.end_openram()

@@ -25,7 +25,7 @@ class wordline_driver_test(openram_test):
 
         # check wordline driver for single port
         debug.info(2, "Checking driver")
-        tx = factory.create(module_type="wordline_driver")
+        tx = factory.create(module_type="wordline_driver", cols=8)
         self.local_check(tx)
 
         globals.end_openram()

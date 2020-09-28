@@ -30,6 +30,9 @@ class options(optparse.Values):
     num_r_ports = 0
     num_w_ports = 0
 
+    # By default, use local arrays with a max fanout of 16
+    #local_array_size = 16
+    
     # Write mask size, default will be overwritten with word_size if not user specified
     write_size = None
 
@@ -139,6 +142,7 @@ class options(optparse.Values):
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
+    buf_dec = "pbuf"
     column_mux_array = "single_level_column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"

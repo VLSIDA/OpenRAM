@@ -116,15 +116,13 @@ class port_address(design.design):
         rbl_in_pin = self.rbl_driver_inst.get_pin("A")
         rbl_in_pos = rbl_in_pin.center()
         
-        mid_pos = vector(en_pin.cx(), rbl_in_pin.cy())
         self.add_via_stack_center(from_layer=rbl_in_pin.layer,
                                   to_layer=en_pin.layer,
                                   offset=rbl_in_pos)
-        self.add_path(en_pin.layer, [rbl_in_pos, mid_pos, en_pos])
-        self.add_layout_pin_segment_center(text="wl_en",
-                                           layer=en_pin.layer,
-                                           start=mid_pos,
-                                           end=en_pos)
+        self.add_zjog(en_pin.layer, rbl_in_pos, en_pos)
+        self.add_layout_pin_rect_center(text="wl_en",
+                                        layer=en_pin.layer,
+                                        offset=rbl_in_pos)
         
     def add_modules(self):
 
@@ -139,11 +137,11 @@ class port_address(design.design):
 
         try:
             local_array_size = OPTS.local_array_size
-            driver_size = int(self.num_cols / local_array_size)
+            driver_size = max(int(self.num_cols / local_array_size), 1)
         except AttributeError:
             local_array_size = 0
             # Defautl to FO4
-            driver_size = int(self.num_cols / 4)
+            driver_size = max(int(self.num_cols / 4), 1)
 
         # The polarity must be switched if we have a hierarchical wordline
         # to compensate for the local array inverters

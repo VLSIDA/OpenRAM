@@ -845,11 +845,11 @@ class bank(design.design):
         self.route_port_address_in(port)
         
         if port % 2:
-            self.route_port_address_right(port)
+            self.route_port_address_out(port, "right")
         else:
-            self.route_port_address_left(port)
+            self.route_port_address_out(port, "left")
             
-    def route_port_address_left(self, port):
+    def route_port_address_out(self, port, side="left"):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
         driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
@@ -857,18 +857,32 @@ class bank(design.design):
         for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
-            driver_wl_pos = driver_wl_pin.rc()
+            if side == "left":
+                driver_wl_pos = driver_wl_pin.rc()
+            else:
+                driver_wl_pos = driver_wl_pin.lc()
             bitcell_wl_pin = self.bitcell_array_inst.get_pin(array_name)
-            bitcell_wl_pos = bitcell_wl_pin.lc()
-            mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
-            mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
-            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
-            # Via is non-preferred direction because mid1->mid2 is non-preferred direction
-            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
-                                      to_layer=bitcell_wl_pin.layer,
-                                      offset=mid2,
-                                      directions="nonpref")
-            self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+            
+            if side == "left":
+                bitcell_wl_pos = bitcell_wl_pin.lc()
+                port_address_pos = self.port_address_inst[port].rx()
+                bitcell_array_pos = self.bitcell_array_inst.lx()
+            else:
+                bitcell_wl_pos = bitcell_wl_pin.rc()
+                port_address_pos = self.port_address_inst[port].lx()
+                bitcell_array_pos = self.bitcell_array_inst.rx()
+                
+            mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * port_address_pos + 0.5 * bitcell_array_pos, 0)
+            mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
+            if driver_wl_pin.layer != bitcell_wl_pin.layer:
+                self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
+                self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                          to_layer=bitcell_wl_pin.layer,
+                                          offset=mid2)
+                self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+            else:
+                self.add_path(bitcell_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+                
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
@@ -888,6 +902,7 @@ class bank(design.design):
                                       to_layer=bitcell_wl_pin.layer,
                                       offset=mid2)
             self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+            
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """

@@ -305,14 +305,21 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def create_layout(self):
 
+        # We will need unused wordlines grounded, so we need to know their layer
+        pin = self.cell.get_pin(self.cell.get_all_wl_names()[0])
+        pin_layer = pin.layer
+        self.unused_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
+        self.unused_offset = vector(self.unused_pitch, 0)
+
+        # Add extra width on the left and right for the unused WLs
         self.height = (self.row_size + self.extra_rows) * self.dummy_row.height
-        self.width = (self.column_size + self.extra_cols) * self.cell.width
+        self.width = (self.column_size + self.extra_cols) * self.cell.width + 2 * self.unused_pitch
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
 
-        # Everything is computed with the main array at (0, 0) to start
-        self.bitcell_array_inst.place(offset=[0, 0])
+        # Everything is computed with the main array at (self.unused_pitch, 0) to start
+        self.bitcell_array_inst.place(offset=self.unused_offset)
 
         self.add_replica_columns()
         
@@ -356,7 +363,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Grow from left to right, toward the array
         for bit, port in enumerate(self.left_rbl):
-            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1)
+            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1) + self.unused_offset
             self.replica_col_insts[port].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit, port in enumerate(self.right_rbl):
@@ -367,11 +374,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array
         # These grow up, toward the array
         for bit in range(self.rbl[0]):
-            self.dummy_row_replica_insts[bit].place(offset=self.bitcell_offset.scale(0, -self.rbl[0] + bit + (-self.rbl[0] + bit) % 2),
+            dummy_offset = self.bitcell_offset.scale(0, -self.rbl[0] + bit + (-self.rbl[0] + bit) % 2) + self.unused_offset
+            self.dummy_row_replica_insts[bit].place(offset=dummy_offset,
                                                     mirror="MX" if (-self.rbl[0] + bit) % 2 else "R0")
         # These grow up, away from the array
         for bit in range(self.rbl[1]):
-            self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul(),
+            dummy_offset = self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul()
+            self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=dummy_offset,
                                                                   mirror="MX" if bit % 2 else "R0")
         
     def add_end_caps(self):
@@ -386,12 +395,12 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # FIXME: These depend on the array size itself
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.rbl[0] + 1) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy)
+        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy) + self.unused_offset
         self.dummy_row_insts[0].place(offset=dummy_row_offset,
                                           mirror="MX" if flip_dummy else "R0")
         # Far left dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1)
+        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1) + self.unused_offset
         self.dummy_col_insts[0].place(offset=dummy_col_offset)
         # Far right dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
@@ -495,13 +504,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def ground_pin(self, inst, name):
         pin = inst.get_pin(name)
         pin_layer = pin.layer
-        layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
+        
         left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
         right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
 
         # Place the pins a track outside of the array
-        left_loc = left_pin_loc - vector(layer_pitch, 0)
-        right_loc = right_pin_loc + vector(layer_pitch, 0)
+        left_loc = left_pin_loc - vector(self.unused_pitch, 0)
+        right_loc = right_pin_loc + vector(self.unused_pitch, 0)
         self.add_power_pin("gnd", left_loc, directions=("H", "H"))
         self.add_power_pin("gnd", right_loc, directions=("H", "H"))
 

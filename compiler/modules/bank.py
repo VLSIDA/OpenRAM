@@ -27,7 +27,7 @@ class bank(design.design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
         

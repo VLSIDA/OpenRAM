@@ -7,7 +7,7 @@
 #
 import datetime
 import debug
-from math import log
+from math import log, ceil
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
@@ -36,7 +36,7 @@ class sram_base(design, verilog, lef):
         self.bank_insts = []
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
 

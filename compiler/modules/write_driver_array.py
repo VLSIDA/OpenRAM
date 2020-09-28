@@ -7,6 +7,7 @@
 #
 import design
 import debug
+import math
 from tech import drc
 from sram_factory import factory
 from vector import vector
@@ -39,7 +40,7 @@ class write_driver_array(design.design):
             self.num_spare_cols = num_spare_cols
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
 
         self.create_netlist()
         if not OPTS.netlist_only:

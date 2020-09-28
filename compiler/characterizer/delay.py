@@ -47,7 +47,7 @@ class delay(simulation):
         self.targ_write_ports = []
         self.period = 0
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
         self.set_load_slew(0,0)

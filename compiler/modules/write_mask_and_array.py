@@ -7,6 +7,7 @@
 #
 import design
 import debug
+import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
@@ -31,7 +32,7 @@ class write_mask_and_array(design.design):
         self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
-        self.num_wmasks = int(word_size / write_size)
+        self.num_wmasks = int(math.ceil(word_size / write_size))
 
         self.create_netlist()
         if not OPTS.netlist_only:

@@ -39,7 +39,7 @@ class simulation():
         self.write_ports = self.sram.write_ports
         self.words_per_row = self.sram.words_per_row
         if self.write_size:
-            self.num_wmasks = int(self.word_size/self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size/self.write_size))
         else:
             self.num_wmasks = 0
 

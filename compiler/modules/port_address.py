@@ -112,15 +112,20 @@ class port_address(design.design):
 
         # Route the RBL from the enable input
         en_pin = self.wordline_driver_array_inst.get_pin("en")
-        en_pos = en_pin.center()
+        if self.port == 0:
+            en_pos = en_pin.bc()
+        else:
+            en_pos = en_pin.uc()
         rbl_in_pin = self.rbl_driver_inst.get_pin("A")
         rbl_in_pos = rbl_in_pin.center()
 
-        mid_pos = vector(en_pos.x, rbl_in_pos.y)
         self.add_via_stack_center(from_layer=rbl_in_pin.layer,
                                   to_layer=en_pin.layer,
                                   offset=rbl_in_pos)
-        self.add_path(en_pin.layer, [rbl_in_pos, mid_pos, en_pos])
+        self.add_zjog(layer=en_pin.layer,
+                      start=rbl_in_pos,
+                      end=en_pos,
+                      first_direction="V")
         self.add_layout_pin_rect_center(text="wl_en",
                                         layer=en_pin.layer,
                                         offset=rbl_in_pos)

@@ -267,4 +267,36 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         for inst in self.local_insts:
             offsets.extend(inst.lx() + x for x in inst.mod.get_column_offsets())
         return offsets
+
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """ 
+        Excludes bits in column from being added to graph except target 
+        """
+        # This must find which local array includes the specified column
+        # Find the summation of columns that is large and take the one before
+        for i, col in enumerate(self.col_offsets):
+            if col > targ_col:
+                break
+
+        # We must also translate the global array column number to the local array column number
+        self.local_mods[i - 1].graph_exclude_bits(targ_row, targ_col - self.col_offsets[i - 1])
     
+    def graph_exclude_replica_col_bits(self):
+        """
+        Exclude all but replica in every local array.
+        """
+
+        for mod in self.local_mods:
+            mod.graph_exclude_replica_col_bits()
+
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        
+        # This must find which local array includes the specified column
+        # Find the summation of columns that is large and take the one before
+        for i, local_col in enumerate(self.col_offsets):
+            if local_col > col:
+                break
+            
+        return self.local_mods[i - 1].get_cell_name(inst_name + '.x' + self.local_insts[i - 1].name, row, col)
+            

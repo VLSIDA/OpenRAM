@@ -263,3 +263,20 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         offsets = [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
         return offsets
     
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """
+        Excludes bits in column from being added to graph except target
+        """
+        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+        
+    def graph_exclude_replica_col_bits(self):
+        """
+        Exclude all but replica in the local array.
+        """
+
+        self.bitcell_array.graph_exclude_replica_col_bits()
+
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        return self.bitcell_array.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name, row, col)
+        

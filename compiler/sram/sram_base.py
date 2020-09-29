@@ -87,8 +87,8 @@ class sram_base(design, verilog, lef):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
         
-        self.add_pin("vdd","POWER")
-        self.add_pin("gnd","GROUND")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_global_pex_labels(self):
         """
@@ -118,8 +118,19 @@ class sram_base(design, verilog, lef):
                 Q = [bank_offset[cell][0] + Q_offset[cell][0], bank_offset[cell][1] + Q_offset[cell][1]]
                 Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0], bank_offset[cell][1] + Q_bar_offset[cell][1]]
                 OPTS.words_per_row = self.words_per_row
-                self.add_layout_pin_rect_center("bitcell_Q_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))) , storage_layer_name, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))), storage_layer_name, Q_bar)
+                row = int(cell % (OPTS.num_words / self.words_per_row))
+                col = int(cell / (OPTS.num_words))
+                self.add_layout_pin_rect_center("bitcell_Q_b{}_r{}_c{}".format(bank_num,
+                                                                               row,
+                                                                               col,
+                                                                               storage_layer_name,
+                                                                               Q))
+                
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{}_r{}_c{}".format(bank_num,
+                                                                                   row,
+                                                                                   col,
+                                                                                   storage_layer_name,
+                                                                                   Q_bar))
 
             for cell in range(len(bl_offsets)):
                 col = bl_meta[cell][0][2]
@@ -131,27 +142,23 @@ class sram_base(design, verilog, lef):
                 col = br_meta[cell][0][2]
                 for bitline in range(len(br_offsets[cell])):
                     bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
-                    br.append([bitline_location, br_meta[cell][bitline][3], col])           
+                    br.append([bitline_location, br_meta[cell][bitline][3], col])
 
             for i in range(len(bl)):
-                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])               
+                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])
 
             for i in range(len(br)):
-                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                           
+                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])
 
         # add pex labels for control logic
-        for i in range  (len(self.control_logic_insts)):
+        for i in range(len(self.control_logic_insts)):
             instance = self.control_logic_insts[i]
             control_logic_offset = instance.offset
             for output in instance.mod.output_list:
                 pin = instance.mod.get_pin(output)
-                pin.transform([0,0], instance.mirror, instance.rotate)
+                pin.transform([0, 0], instance.mirror, instance.rotate)
                 offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
-                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), storage_layer_name, offset)
-
-             
-            
-
+                self.add_layout_pin_rect_center("{0}{1}".format(pin.name, i), storage_layer_name, offset)
 
     def create_netlist(self):
         """ Netlist creation """

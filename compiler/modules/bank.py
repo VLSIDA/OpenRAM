@@ -8,8 +8,8 @@
 import debug
 import design
 from sram_factory import factory
-from math import log, ceil, floor
-from tech import drc, layer
+from math import log, ceil, floor, sqrt
+from tech import drc
 from vector import vector
 from globals import OPTS
 
@@ -377,7 +377,8 @@ class bank(design.design):
         try:
             local_array_size = OPTS.local_array_size
         except AttributeError:
-            local_array_size = 0
+            #local_array_size = ceil(sqrt(self.num_cols + self.num_spare_cols))
+            local_array_size = ceil(sqrt(self.num_cols + self.num_spare_cols))
             
         if local_array_size > 0:
             # Find the even multiple that satisfies the fanout with equal sized local arrays

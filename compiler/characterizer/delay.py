@@ -891,7 +891,6 @@ class delay(simulation):
             target_period = 0.5 * (ub_period + lb_period)
             # key=input("press return to continue")
 
-        
     def try_period(self, feasible_delays):
         """ 
         This tries to simulate a period and checks if the result
@@ -914,19 +913,19 @@ class delay(simulation):
                 if self.sram.col_addr_size>0 and "slew" in dname:
                     continue
 
-                if not relative_compare(results[port][dname],feasible_delays[port][dname],error_tolerance=0.05):
-                    debug.info(2,"Delay too big {0} vs {1}".format(results[port][dname],feasible_delays[port][dname]))
+                if not relative_compare(results[port][dname], feasible_delays[port][dname], error_tolerance=0.05):
+                    debug.info(2, "Delay too big {0} vs {1}".format(results[port][dname], feasible_delays[port][dname]))
                     return False
 
             # key=raw_input("press return to continue")
             
             delay_str = ', '.join("{0}={1}ns".format(mname, results[port][mname]) for mname in self.delay_meas_names)
-            debug.info(2,"Successful period {0}, Port {2}, {1}".format(self.period,
-                                                                       delay_str,
-                                                                       port))
+            debug.info(2, "Successful period {0}, Port {2}, {1}".format(self.period,
+                                                                        delay_str,
+                                                                        port))
         return True
     
-    def set_probe(self,probe_address, probe_data):
+    def set_probe(self, probe_address, probe_data):
         """ 
         Probe address and data can be set separately to utilize other
         functions in this characterizer besides analyze.
@@ -942,16 +941,16 @@ class delay(simulation):
         """Calculates bitline column number of data bit under test using bit position and mux size"""
         
         if self.sram.col_addr_size>0:
-            col_address = int(probe_address[0:self.sram.col_addr_size],2)
+            col_address = int(probe_address[0:self.sram.col_addr_size], 2)
         else:
             col_address = 0
-        bl_column = int(self.sram.words_per_row*probe_data + col_address)
-        return bl_column 
+        bl_column = int(self.sram.words_per_row * probe_data + col_address)
+        return bl_column
 
     def get_address_row_number(self, probe_address):
         """Calculates wordline row number of data bit under test using address and column mux size"""
 
-        return int(probe_address[self.sram.col_addr_size:],2)
+        return int(probe_address[self.sram.col_addr_size:], 2)
 
     def prepare_netlist(self):
         """ Prepare a trimmed netlist and regular netlist. """
@@ -965,7 +964,7 @@ class delay(simulation):
                                           self.num_cols,
                                           self.word_size,
                                           self.num_spare_rows)
-            self.trimsp.trim(self.probe_address,self.probe_data)
+            self.trimsp.trim(self.probe_address, self.probe_data)
         else:
             # The non-reduced netlist file when it is disabled
             self.trim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
@@ -1000,9 +999,9 @@ class delay(simulation):
         feasible_delays = self.find_feasible_period()
         
         # 2) Finds the minimum period without degrading the delays by X%
-        self.set_load_slew(max(loads),max(slews))
+        self.set_load_slew(max(loads), max(slews))
         min_period = self.find_min_period(feasible_delays)
-        debug.check(type(min_period)==float,"Couldn't find minimum period.")
+        debug.check(type(min_period)==float, "Couldn't find minimum period.")
         debug.info(1, "Min Period Found: {0}ns".format(min_period))
         char_sram_data["min_period"] = round_time(min_period)
 
@@ -1036,14 +1035,14 @@ class delay(simulation):
         self.targ_write_ports = self.write_ports
         for slew in slews:
             for load in loads:
-                self.set_load_slew(load,slew)
+                self.set_load_slew(load, slew)
                 # Find the delay, dynamic power, and leakage power of the trimmed array.
                 (success, delay_results) = self.run_delay_simulation()
-                debug.check(success,"Couldn't run a simulation. slew={0} load={1}\n".format(self.slew,self.load))
-                debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew,self.load))
+                debug.check(success, "Couldn't run a simulation. slew={0} load={1}\n".format(self.slew, self.load))
+                debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew, self.load))
                 # The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
                 for port in self.all_ports:
-                    for mname,value in delay_results[port].items():
+                    for mname, value in delay_results[port].items():
                         if "power" in mname:
                             # Subtract partial array leakage and add full array leakage for the power measures
                             measure_data[port][mname].append(value + leakage_offset)
@@ -1064,8 +1063,8 @@ class delay(simulation):
             elif c=="1":
                 inverse_address += "0"
             else:
-                debug.error("Non-binary address string",1)
-        return inverse_address+column_addr
+                debug.error("Non-binary address string", 1)
+        return inverse_address + column_addr
 
     def gen_test_cycles_one_port(self, read_port, write_port):
         """Sets a list of key time-points [ns] of the waveform (each rising edge)
@@ -1075,10 +1074,10 @@ class delay(simulation):
         inverse_address = self.calculate_inverse_address()
 
         # For now, ignore data patterns and write ones or zeros
-        data_ones = "1"*self.word_size
-        data_zeros = "0"*self.word_size
-        wmask_ones = "1"*self.num_wmasks
-        wmask_zeroes = "0"*self.num_wmasks
+        data_ones = "1" * self.word_size
+        data_zeros = "0" * self.word_size
+        wmask_ones = "1" * self.num_wmasks
+        wmask_zeroes = "0" * self.num_wmasks
         
         if self.t_current == 0:
             self.add_noop_all_ports("Idle cycle (no positive clock edge)")
@@ -1094,10 +1093,10 @@ class delay(simulation):
                        data_zeros,
                        wmask_ones,
                        write_port)
-        self.measure_cycles[write_port][sram_op.WRITE_ZERO] = len(self.cycle_times)-1
+        self.measure_cycles[write_port][sram_op.WRITE_ZERO] = len(self.cycle_times) - 1
         
         self.add_noop_clock_one_port(write_port)
-        self.measure_cycles[write_port]["disabled_write0"] = len(self.cycle_times)-1
+        self.measure_cycles[write_port]["disabled_write0"] = len(self.cycle_times) - 1
 
         # This also ensures we will have a H->L transition on the next read
         self.add_read("R data 1 address {} to set dout caps".format(inverse_address),
@@ -1107,11 +1106,10 @@ class delay(simulation):
         self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
                       self.probe_address,
                       read_port)
-        self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times)-1              
+        self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times) - 1
         
         self.add_noop_clock_one_port(read_port)
         self.measure_cycles[read_port]["disabled_read0"] = len(self.cycle_times) - 1
-
 
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)")
 
@@ -1120,10 +1118,10 @@ class delay(simulation):
                        data_ones,
                        wmask_ones,
                        write_port)
-        self.measure_cycles[write_port][sram_op.WRITE_ONE] = len(self.cycle_times)-1
+        self.measure_cycles[write_port][sram_op.WRITE_ONE] = len(self.cycle_times) - 1
 
         self.add_noop_clock_one_port(write_port)
-        self.measure_cycles[write_port]["disabled_write1"] = len(self.cycle_times)-1
+        self.measure_cycles[write_port]["disabled_write1"] = len(self.cycle_times) - 1
 
         self.add_write("W data 0 address {} to clear din caps".format(inverse_address),
                        inverse_address,
@@ -1143,11 +1141,11 @@ class delay(simulation):
         self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
                       self.probe_address,
                       read_port)
-        self.measure_cycles[read_port][sram_op.READ_ONE] = len(self.cycle_times)-1                
+        self.measure_cycles[read_port][sram_op.READ_ONE] = len(self.cycle_times) - 1
         
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle))")
                       
-    def get_available_port(self,get_read_port):
+    def get_available_port(self, get_read_port):
         
         """Returns the first accessible read or write port. """   
         if get_read_port and len(self.read_ports) > 0:
@@ -1169,12 +1167,12 @@ class delay(simulation):
         
         # Using this requires setting at least one port to target for simulation.
         if len(self.targ_write_ports) == 0 or len(self.targ_read_ports) == 0:
-            debug.error("Write and read port must be specified for characterization.",1)
+            debug.error("Write and read port must be specified for characterization.", 1)
         self.set_stimulus_variables()
      
         # Get any available read/write port in case only a single write or read ports is being characterized.
-        cur_read_port = self.get_available_port(get_read_port=True)   
-        cur_write_port = self.get_available_port(get_read_port=False)          
+        cur_read_port = self.get_available_port(get_read_port=True)
+        cur_write_port = self.get_available_port(get_read_port=False)
         debug.check(cur_read_port != None, "Characterizer requires at least 1 read port")
         debug.check(cur_write_port != None, "Characterizer requires at least 1 write port")
         
@@ -1203,7 +1201,7 @@ class delay(simulation):
         delay = delays[0]
         for i in range(1, len(delays)):
             delay+=delays[i]
-        return delay 
+        return delay
         
     def analytical_delay(self, slews, loads):
         """ 

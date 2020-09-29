@@ -121,4 +121,15 @@ class timing_graph():
     def __str__(self):
         """ override print function output """
 
-        return "Nodes: {}\nEdges:{} ".format(list(self.graph), self.graph)
+        str = ""
+        for n in self.graph:
+            str += n + "\n"
+            for d in self.graph[n]:
+                str += "\t\t-> " + d + "\n"
+        return str
+
+    def __repr__(self):
+        """ override print function output """
+
+        return str(self)
+    

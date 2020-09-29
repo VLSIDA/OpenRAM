@@ -42,6 +42,8 @@ class functional(simulation):
         self.set_stimulus_variables()
 
         # For the debug signal names
+        self.wordline_row = 0
+        self.bitline_column = 0
         self.create_signal_names()
         self.add_graph_exclusions()
         self.create_graph()

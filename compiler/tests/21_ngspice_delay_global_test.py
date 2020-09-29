@@ -15,6 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class timing_sram_test(openram_test):
 
     def runTest(self):
@@ -30,14 +31,18 @@ class timing_sram_test(openram_test):
         reload(characterizer)
         from characterizer import delay
         from sram_config import sram_config
-        OPTS.local_array_size = 8
-        OPTS.route_supplies = False
-        c = sram_config(word_size=8,
-                        num_words=32,
+        OPTS.local_array_size = 2
+        c = sram_config(word_size=4,
+                        num_words=16,
                         num_banks=1)
-
-        c.words_per_row=2
+        c.words_per_row=1
         c.recompute_sizes()
+        # c = sram_config(word_size=8,
+        #                 num_words=32,
+        #                 num_banks=1)
+
+        # c.words_per_row=2
+        # c.recompute_sizes()
         debug.info(1, "Testing timing for global hierarchical array")
         s = factory.create(module_type="sram", sram_config=c)
 

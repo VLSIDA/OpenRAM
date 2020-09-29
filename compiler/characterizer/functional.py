@@ -21,7 +21,7 @@ class functional(simulation):
        for successful SRAM operation.
     """
 
-    def __init__(self, sram, spfile, corner):
+    def __init__(self, sram, spfile, corner, cycles=15):
         super().__init__(sram, spfile, corner)
         
         # Seed the characterizer with a constant seed for unit tests
@@ -52,7 +52,7 @@ class functional(simulation):
         debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
         
         # Number of checks can be changed
-        self.num_cycles = 15
+        self.num_cycles = cycles
         # This is to have ordered keys for random selection
         self.stored_words = collections.OrderedDict()
         self.read_check = []

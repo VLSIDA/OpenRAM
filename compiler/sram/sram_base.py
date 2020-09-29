@@ -630,4 +630,15 @@ class sram_base(design, verilog, lef):
 
     def lvs_write(self, sp_name):
         self.sp_write(sp_name, lvs_netlist=True)
+
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """
+        Excludes bits in column from being added to graph except target
+        """
+        self.bank.graph_exclude_bits(targ_row, targ_col)
         
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        self.bank.clear_exclude_bits()

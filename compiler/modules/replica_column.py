@@ -200,8 +200,10 @@ class replica_column(bitcell_base_array):
             return self.bitline_names[port]
 
     def get_bitcell_pins(self, row, col):
-        """ Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array """
+        """ 
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array 
+        """
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
@@ -212,8 +214,10 @@ class replica_column(bitcell_base_array):
         return bitcell_pins
 
     def get_bitcell_pins_col_cap(self, row, col):
-        """ Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array """
+        """ 
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array
+        """
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
@@ -223,7 +227,9 @@ class replica_column(bitcell_base_array):
         return bitcell_pins
 
     def exclude_all_but_replica(self):
-        """Excludes all bits except the replica cell (self.replica_bit)."""
+        """
+        Excludes all bits except the replica cell (self.replica_bit).
+        """
 
         for row, cell in self.cell_inst.items():
             if row != self.replica_bit:

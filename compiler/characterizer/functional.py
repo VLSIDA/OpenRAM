@@ -13,9 +13,6 @@ from .stimuli import *
 from .charutils import *
 from globals import OPTS
 from .simulation import simulation
-# from .delay import delay
-import graph_util
-from sram_factory import factory
 
 
 class functional(simulation):
@@ -39,7 +36,7 @@ class functional(simulation):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
-        self.probe_address, self.probe_data = '0'*self.addr_size,0
+        self.probe_address, self.probe_data = '0' * self.addr_size, 0
         self.set_corner(corner)
         self.set_spice_constants()
         self.set_stimulus_variables()
@@ -49,7 +46,7 @@ class functional(simulation):
         self.add_graph_exclusions()
         self.create_graph()
         self.set_internal_spice_names()
-        self.q_name, self.qbar_name = self.get_bit_name()	
+        self.q_name, self.qbar_name = self.get_bit_name()
         debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
         
         # Number of checks can be changed
@@ -60,7 +57,7 @@ class functional(simulation):
         self.read_results = []
 
     def run(self, feasible_period=None):
-        if feasible_period: #period defaults to tech.py feasible period otherwise.
+        if feasible_period: # period defaults to tech.py feasible period otherwise.
             self.period = feasible_period
         # Generate a random sequence of reads and writes
         self.create_random_memory_sequence()
@@ -249,11 +246,12 @@ class functional(simulation):
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
-                error = "FAILED: {0} value {1} does not match written value {2} read during cycle {3} at time {4}n".format(self.read_results[i][1],
-                                                                                                                           self.read_results[i][0],
-                                                                                                                           self.read_check[i][0],
-                                                                                                                           int((self.read_results[i][2]-self.period)/self.period),
-                                                                                                                           self.read_results[i][2])
+                str = "FAILED: {0} value {1} does not match written value {2} read during cycle {3} at time {4}n"
+                error = str.format(self.read_results[i][1],
+                                   self.read_results[i][0],
+                                   self.read_check[i][0],
+                                   int((self.read_results[i][2] - self.period) / self.period),
+                                   self.read_results[i][2])
                 return(0, error)
         return(1, "SUCCESS")
 
@@ -423,19 +421,6 @@ class functional(simulation):
         
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
-        
-    # FIXME: refactor to share with delay.py
-    def create_graph(self):
-        """Creates timing graph to generate the timing paths for the SRAM output."""
-        
-        self.sram.bank.bitcell_array.init_graph_params() # Removes previous bit exclusions
-        # Does wordline=0 and column=0 just for debug names
-        self.sram.bank.bitcell_array.graph_exclude_bits(0, 0)
-        
-        # Generate new graph every analysis as edges might change depending on test bit
-        self.graph = graph_util.timing_graph()
-        self.sram_spc_name = "X{}".format(self.sram.name)
-        self.sram.build_graph(self.graph, self.sram_spc_name, self.pins)
  
     #FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
@@ -449,31 +434,4 @@ class functional(simulation):
 
         return (q_name, qbar_name)
 
-    def get_bl_name_search_exclusions(self):
-        """Gets the mods as a set which should be excluded while searching for name."""
-        
-        # Exclude the RBL as it contains bitcells which are not in the main bitcell array
-        # so it makes the search awkward
-        return set(factory.get_mods(OPTS.replica_bitline))
-        
-    def get_alias_in_path(self, paths, int_net, mod, exclusion_set=None):
-        """
-        Finds a single alias for the int_net in given paths.
-        More or less hits cause an error
-        """
-        
-        net_found = False
-        for path in paths:
-            aliases = self.sram.find_aliases(self.sram_spc_name, self.pins, path, int_net, mod, exclusion_set)
-            if net_found and len(aliases) >= 1:
-                debug.error('Found multiple paths with {} net.'.format(int_net), 1)
-            elif len(aliases) > 1:
-                debug.error('Found multiple {} nets in single path.'.format(int_net), 1)
-            elif not net_found and len(aliases) == 1:
-                path_net_name = aliases[0]
-                net_found = True
-        if not net_found:
-            debug.error("Could not find {} net in timing paths.".format(int_net), 1)
-                
-        return path_net_name
     

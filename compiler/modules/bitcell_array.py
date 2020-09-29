@@ -105,7 +105,9 @@ class bitcell_array(bitcell_base_array):
         return bl_wire
 
     def graph_exclude_bits(self, targ_row, targ_col):
-        """Excludes bits in column from being added to graph except target"""
+        """
+        Excludes bits in column from being added to graph except target
+        """
         # Function is not robust with column mux configurations
         for row in range(self.row_size):
             for col in range(self.column_size):

@@ -297,6 +297,15 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         for i, local_col in enumerate(self.col_offsets):
             if local_col > col:
                 break
+        else:
+            # In this case, we it should be in the last bitcell array
+            i = len(self.col_offsets)
             
         return self.local_mods[i - 1].get_cell_name(inst_name + '.x' + self.local_insts[i - 1].name, row, col)
             
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        for mod in self.local_mods:
+            mod.clear_exclude_bits()

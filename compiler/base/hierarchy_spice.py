@@ -500,8 +500,9 @@ class spice():
         return power_data(dynamic, leakage)
 
     def find_aliases(self, inst_name, port_nets, path_nets, alias, alias_mod, exclusion_set=None):
-        """Given a list of nets, will compare the internal alias of a mod to determine
-           if the nets have a connection to this mod's net (but not inst).
+        """
+        Given a list of nets, will compare the internal alias of a mod to determine
+        if the nets have a connection to this mod's net (but not inst).
         """
         if not exclusion_set:
             exclusion_set = set()
@@ -520,7 +521,9 @@ class spice():
         return aliases
             
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
-        """Checks if the alias_net in input mod is the same as the input net for this mod (self)."""
+        """
+        Checks if the alias_net in input mod is the same as the input net for this mod (self).
+        """
         if self in exclusion_set:
             return False
         # Check ports of this mod
@@ -540,7 +543,9 @@ class spice():
         return False
      
     def is_net_alias_name_check(self, parent_net, child_net, alias_net, mod):
-        """Utility function for checking single net alias."""
+        """
+        Utility function for checking single net alias.
+        """
         return self == mod and \
                child_net.lower() == alias_net.lower() and \
                parent_net.lower() == alias_net.lower()

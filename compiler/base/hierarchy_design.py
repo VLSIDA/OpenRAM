@@ -12,6 +12,7 @@ import os
 from globals import OPTS
 import tech
 
+
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     """
     Design Class for all modules to inherit the base features.
@@ -137,12 +138,16 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                 os.remove(tempgds)
             
     def init_graph_params(self):
-        """Initializes parameters relevant to the graph creation"""
+        """ 
+        Initializes parameters relevant to the graph creation
+        """
         # Only initializes a set for checking instances which should not be added
         self.graph_inst_exclude = set()
     
     def build_graph(self, graph, inst_name, port_nets):
-        """Recursively create graph from instances in module."""
+        """
+        Recursively create graph from instances in module.
+        """
         
         # Translate port names to external nets
         if len(port_nets) != len(self.pins):
@@ -159,7 +164,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             subinst.mod.build_graph(graph, subinst_name, subinst_ports)
     
     def build_names(self, name_dict, inst_name, port_nets):
-        """Collects all the nets and the parent inst of that net."""
+        """
+        Collects all the nets and the parent inst of that net.
+        """
         # Translate port names to external nets
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,
@@ -178,7 +185,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             subinst.mod.build_names(name_dict, subinst_name, subinst_ports)
 
     def translate_nets(self, subinst_ports, port_dict, inst_name):
-        """Converts connection names to their spice hierarchy equivalent"""
+        """
+        Converts connection names to their spice hierarchy equivalent
+        """
         converted_conns = []
         for conn in subinst_ports:
             if conn in port_dict:
@@ -188,8 +197,10 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         return converted_conns
             
     def add_graph_edges(self, graph, port_nets):
-        """For every input, adds an edge to every output.
-           Only intended to be used for gates and other simple modules."""
+        """
+        For every input, adds an edge to every output.
+        Only intended to be used for gates and other simple modules.
+        """
         # The final pin names will depend on the spice hierarchy, so
         # they are passed as an input.
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}

@@ -1076,14 +1076,30 @@ class bank(design.design):
                             offset=control_pos)
 
     def graph_exclude_precharge(self):
-        """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
+        """
+        Precharge adds a loop between bitlines, can be excluded to reduce complexity
+        """
         for port in self.read_ports:
             if self.port_data[port]:
                 self.port_data[port].graph_exclude_precharge()
                 
     def get_cell_name(self, inst_name, row, col):
-        """Gets the spice name of the target bitcell."""
+        """
+        Gets the spice name of the target bitcell.
+        """
         return self.bitcell_array_inst.mod.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name,
                                                          row,
                                                          col)
 
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """
+        Excludes bits in column from being added to graph except target
+        """
+        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        self.bitcell_array.clear_exclude_bits()
+        

@@ -1,13 +1,7 @@
-import os, copy
+import copy
 from collections import defaultdict
-
-import gdsMill
-import tech
-import math
-import globals
 import debug
-from vector import vector
-from pin_layout import pin_layout
+
     
 class timing_graph():
     """
@@ -33,7 +27,7 @@ class timing_graph():
         """Add node to graph with no edges"""
         
         node = node.lower()
-        if not node in self.graph:
+        if node not in self.graph:
             self.graph[node] = set()
             
     def remove_edges(self, node):
@@ -119,7 +113,7 @@ class timing_graph():
             if i == len(path) - 2:
                 cout += load
             
-            delays.append(path_edge_mod.analytical_delay(corner, slew, cout))
+            delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
             cur_slew = delays[-1].slew
             
         return delays

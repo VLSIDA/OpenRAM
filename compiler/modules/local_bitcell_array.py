@@ -263,7 +263,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         offsets = [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
         return offsets
     
-    def graph_exclude_bits(self, targ_row, targ_col):
+    def graph_exclude_bits(self, targ_row=None, targ_col=None):
         """
         Excludes bits in column from being added to graph except target
         """

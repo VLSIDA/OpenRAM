@@ -412,7 +412,7 @@ class bank(design.design):
         
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
-        self.bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
+        self.bitcell_array_inst=self.add_inst(name="bitcell_array",
                                               mod=self.bitcell_array)
         # Arrays are always:
         # word lines (bottom to top)

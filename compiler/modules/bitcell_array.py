@@ -104,7 +104,7 @@ class bitcell_array(bitcell_base_array):
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c
         return bl_wire
 
-    def graph_exclude_bits(self, targ_row, targ_col):
+    def graph_exclude_bits(self, targ_row=None, targ_col=None):
         """
         Excludes bits in column from being added to graph except target
         """

@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -37,7 +37,7 @@ class psram_1bank_nomux_func_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional, delay
+        from characterizer import functional
         from sram_config import sram_config
         c = sram_config(word_size=2,
                         num_words=32,
@@ -53,13 +53,13 @@ class psram_1bank_nomux_func_test(openram_test):
                                                                                c.words_per_row,
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"        
+        tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         (fail, error) = f.run()
-        self.assertTrue(fail,error)
+        self.assertTrue(fail, error)
         
         globals.end_openram()
         

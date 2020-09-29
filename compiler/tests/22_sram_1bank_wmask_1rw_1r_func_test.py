@@ -35,7 +35,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional, delay
+        from characterizer import functional
         from sram_config import sram_config
         c = sram_config(word_size=8,
                         num_words=16,

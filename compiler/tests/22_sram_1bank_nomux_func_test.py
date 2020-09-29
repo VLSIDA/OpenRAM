@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 #@unittest.skip("SKIPPING 22_sram_func_test")
 class sram_1bank_nomux_func_test(openram_test):
@@ -47,7 +48,7 @@ class sram_1bank_nomux_func_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         (fail, error) = f.run()
-        self.assertTrue(fail,error)
+        self.assertTrue(fail, error)
         
         globals.end_openram()
         

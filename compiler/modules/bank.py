@@ -374,15 +374,15 @@ class bank(design.design):
                                                     port=port))
             self.add_mod(self.port_address[port])
 
+        total_cols = self.num_cols + self.num_spare_cols
+        
         try:
             local_array_size = OPTS.local_array_size
         except AttributeError:
-            #local_array_size = ceil(sqrt(self.num_cols + self.num_spare_cols))
-            local_array_size = ceil(sqrt(self.num_cols + self.num_spare_cols))
+            local_array_size = 0
             
         if local_array_size > 0:
             # Find the even multiple that satisfies the fanout with equal sized local arrays
-            total_cols = self.num_cols + self.num_spare_cols
             num_lb = floor(total_cols / local_array_size)
             final_size = total_cols - num_lb * local_array_size
             cols = [local_array_size] * (num_lb - 1)
@@ -393,7 +393,7 @@ class bank(design.design):
                                                 rows=self.num_rows)
         else:
             self.bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                                cols=self.num_cols + self.num_spare_cols,
+                                                cols=total_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
 

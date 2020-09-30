@@ -28,8 +28,9 @@ class riscv_phys_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        OPTS.route_supplies=False
-        OPTS.perimeter_pins=False
+        OPTS.route_supplies = False
+        OPTS.perimeter_pins = False
+        OPTS.local_array_size = 16
         
         c = sram_config(word_size=32,
                         write_size=8,

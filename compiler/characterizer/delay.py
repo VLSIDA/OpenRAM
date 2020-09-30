@@ -134,17 +134,17 @@ class delay(simulation):
         
         self.bitline_volt_meas = []
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ZERO", 
-                                                        self.bl_name))
+                                                         self.bl_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ZERO", 
-                                                        self.br_name))
+                                                         self.br_name))
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ZERO
         
         self.bitline_volt_meas.append(voltage_at_measure("v_bl_READ_ONE", 
-                                                        self.bl_name)) 
+                                                         self.bl_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         self.bitline_volt_meas.append(voltage_at_measure("v_br_READ_ONE", 
-                                                        self.br_name)) 
+                                                         self.br_name)) 
         self.bitline_volt_meas[-1].meta_str = sram_op.READ_ONE
         return self.bitline_volt_meas
         

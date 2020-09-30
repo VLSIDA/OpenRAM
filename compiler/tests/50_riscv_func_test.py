@@ -8,35 +8,33 @@
 #
 import unittest
 from testutils import *
-import sys, os
+import sys,os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-
-# @unittest.skip("SKIPPING 50_riscv_func_test")
+#@unittest.skip("SKIPPING 50_riscv_func_test")
 class riscv_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
-        OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 0
-        OPTS.num_r_ports = 1
-        globals.setup_bitcell()
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
         OPTS.local_array_size = 16
+        OPTS.num_rw_ports = 1
+        OPTS.num_w_ports = 0
+        OPTS.num_r_ports = 1
+        globals.setup_bitcell()
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional
+        from characterizer import functional, delay
         from sram_config import sram_config
         c = sram_config(word_size=32,
                         write_size=8,
@@ -56,7 +54,7 @@ class riscv_func_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         (fail, error) = f.run()
-        self.assertTrue(fail, error)
+        self.assertTrue(fail,error)
         
         globals.end_openram()
         

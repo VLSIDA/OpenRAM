@@ -215,25 +215,27 @@ class write_driver_array(design.design):
                                        start_layer=pin.layer)
         if self.write_size:
             for bit in range(self.num_wmasks):
-                first_inst = self.driver_insts[bit * self.write_size]
-                first_en_pin = first_inst.get_pin(first_inst.mod.en_name)
+                inst = self.driver_insts[bit * self.write_size]
+                en_pin = inst.get_pin(inst.mod.en_name)
+                # Determine width of wmask modified en_pin with/without col mux
+                wmask_en_len = self.words_per_row * (self.write_size * self.driver_spacing)
+                if (self.words_per_row == 1):
+                    en_gap = self.driver_spacing - en_pin.width()
+                else:
+                    en_gap = self.driver_spacing
 
-                last_inst = self.driver_insts[(bit + 1) * self.write_size - 1]
-                last_en_pin = last_inst.get_pin(last_inst.mod.en_name)
-                
-                wmask_en_len = last_en_pin.rx() - first_en_pin.lx()
                 self.add_layout_pin(text=self.en_name + "_{0}".format(bit),
-                                    layer=first_en_pin.layer,
-                                    offset=first_en_pin.ll(),
-                                    width=wmask_en_len,
-                                    height=first_en_pin.height())
+                                    layer=en_pin.layer,
+                                    offset=en_pin.ll(),
+                                    width=wmask_en_len - en_gap,
+                                    height=en_pin.height())
             
             for i in range(self.num_spare_cols):
                 inst = self.driver_insts[self.word_size + i]
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
                                     layer="m1",
-                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"), 0))
+                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
          
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers

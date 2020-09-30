@@ -58,9 +58,6 @@ class bitcell_array(bitcell_base_array):
 
             self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap"))
             self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap_p"))
-            
-
-
 
     def create_instances(self):
         """ Create the module instances used in this design """

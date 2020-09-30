@@ -27,7 +27,7 @@ class s8_corner(design.design):
         elif location == "ll":
             self.name = "s8sram16x16_cornera"
         elif location == "lr":
-            self.name = "s8sram16x16_cornerb"
+            self.name = "s8sram16x16_cornera"
         else:
             debug.error("Invalid s8_corner location", -1)
         design.design.__init__(self, name=self.name)

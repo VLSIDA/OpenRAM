@@ -21,8 +21,8 @@ class s8_col_end(design.design):
         type_list = []
 
         if version == "colend":
-            self.name = "s8sram16x16_colend"
-            structure = "s8sram16x16_colend\x00"
+            self.name = "s8sram16x16_colenda"
+            structure = "s8sram16x16_colenda\x00"
         elif version == "colend_p_cent":
             self.name = "s8sram16x16_colend_p_cent"
             structure = "s8sram16x16_colend_p_cent\x00"

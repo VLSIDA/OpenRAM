@@ -28,7 +28,10 @@ class replica_column(design.design):
         self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
-        self.total_size = self.left_rbl + rows + self.right_rbl + 2
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+            self.total_size = self.left_rbl + rows + self.right_rbl + 2
+        else:
+            self.total_size = self.left_rbl + rows + self.right_rbl + 2
         self.column_offset = column_offset
 
         debug.check(replica_bit != 0 and replica_bit != rows,
@@ -78,13 +81,14 @@ class replica_column(design.design):
             self.add_pin_list(self.all_wordline_names, "INPUT")
         else:
             self.wordline_names = [[] for port in self.all_ports]
-            for row in range(self.rows):
+            for row in range(self.total_size):
                 for port in self.all_ports:
                     if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
                         self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
                     else:
-                        self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
-                        self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
+                        if (row > 0 and row < self.total_size-1):
+                            self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
+                            self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
 
             self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
             self.add_pin_list(self.all_wordline_names, "INPUT")
@@ -276,13 +280,13 @@ class replica_column(design.design):
                                         width=self.width,
                                         height=wl_pin.height())
 
-            # # Supplies are only connected in the ends
-            # for (index, inst) in self.cell_inst.items():
-            #     for pin_name in ["vdd", "gnd"]:
-            #         if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
-            #             self.copy_power_pins(inst, pin_name)
-            #         else:
-            #             self.copy_layout_pin(inst, pin_name)
+            # Supplies are only connected in the ends
+            for (index, inst) in self.cell_inst.items():
+                for pin_name in ["vpwr", "vgnd"]:
+                    if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
+                        self.copy_power_pins(inst, pin_name)
+                    else:
+                        self.copy_layout_pin(inst, pin_name)
 
     def get_bitline_names(self, port=None):
         if port == None:

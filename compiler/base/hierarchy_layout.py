@@ -1035,7 +1035,7 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
-        self.add_inst("vc", cr)
+        self.add_inst(cr.name, cr)
         self.connect_inst([])
 
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
@@ -1044,7 +1044,7 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
-        self.add_inst("hc", cr)
+        self.add_inst(cr.name, cr)
         self.connect_inst([])
         
     def add_boundary(self, ll=vector(0, 0), ur=None):

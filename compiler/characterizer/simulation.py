@@ -51,23 +51,21 @@ class simulation():
         self.load = tech.spice["dff_in_cap"] * 4
 
         self.v_high = self.vdd_voltage - tech.spice["nom_threshold"]
-        self.v_low = tech.spice["nom_threshold"]        
+        self.v_low = tech.spice["nom_threshold"]
         self.gnd_voltage = 0
         
     def create_signal_names(self):
         self.addr_name = "a"
         self.din_name = "din"
         self.dout_name = "dout"
-        self.pins = self.gen_pin_names(port_signal_names=(self.addr_name,self.din_name,self.dout_name),
-                                       port_info=(len(self.all_ports),self.write_ports,self.read_ports),
+        self.pins = self.gen_pin_names(port_signal_names=(self.addr_name, self.din_name, self.dout_name),
+                                       port_info=(len(self.all_ports), self.write_ports, self.read_ports),
                                        abits=self.addr_size,
                                        dbits=self.word_size + self.num_spare_cols)
         debug.check(len(self.sram.pins) == len(self.pins),
                     "Number of pins generated for characterization \
                     do not match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(self.sram.pins,
-                                                                                    self.pins))
-        #This is TODO once multiport control has been finalized.
-        #self.control_name = "CSB"    
+                                                                                        self.pins))
         
     def set_stimulus_variables(self):
         # Clock signals
@@ -96,7 +94,7 @@ class simulation():
 
     def add_control_one_port(self, port, op):
         """Appends control signals for operation to a given port"""
-        #Determine values to write to port
+        # Determine values to write to port
         web_val = 1
         csb_val = 1
         if op == "read":
@@ -406,7 +404,9 @@ class simulation():
         return pin_names
         
     def add_graph_exclusions(self):
-        """Exclude portions of SRAM from timing graph which are not relevant"""
+        """
+        Exclude portions of SRAM from timing graph which are not relevant
+        """
         
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
@@ -417,7 +417,9 @@ class simulation():
         self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
         
     def set_internal_spice_names(self):
-        """Sets important names for characterization such as Sense amp enable and internal bit nets."""
+        """
+        Sets important names for characterization such as Sense amp enable and internal bit nets.
+        """
         
         port = self.read_ports[0]
         if not OPTS.use_pex:
@@ -458,11 +460,10 @@ class simulation():
             
             self.sen_name = self.get_sen_name(self.graph.all_paths)
             debug.info(2, "s_en name = {}".format(self.sen_name))
-
             
             self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size - 1)
             self.br_name = "br{0}_{1}".format(port, OPTS.word_size - 1)
-            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))    
+            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
         
     def get_sen_name(self, paths, assumed_port=None):
         """
@@ -481,7 +482,9 @@ class simulation():
         return sen_name
         
     def create_graph(self):
-        """Creates timing graph to generate the timing paths for the SRAM output."""
+        """
+        Creates timing graph to generate the timing paths for the SRAM output.
+        """
         
         self.sram.clear_exclude_bits() # Removes previous bit exclusions
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
@@ -492,7 +495,9 @@ class simulation():
         self.sram.build_graph(self.graph, self.sram_instance_name, self.pins)
 
     def get_bl_name_search_exclusions(self):
-        """Gets the mods as a set which should be excluded while searching for name."""
+        """
+        Gets the mods as a set which should be excluded while searching for name.
+        """
         
         # Exclude the RBL as it contains bitcells which are not in the main bitcell array
         # so it makes the search awkward
@@ -519,7 +524,9 @@ class simulation():
         return path_net_name
 
     def get_bl_name(self, paths, port):
-        """Gets the signal name associated with the bitlines in the bank."""
+        """
+        Gets the signal name associated with the bitlines in the bank.
+        """
         
         cell_mod = factory.create(module_type=OPTS.bitcell)
         cell_bl = cell_mod.get_bl_name(port)

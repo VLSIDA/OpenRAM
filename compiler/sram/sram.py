@@ -67,7 +67,7 @@ class sram():
         """Dump config file with all options. 
            Include defaults and anything changed by input config."""
         f = open(name, "w")
-        var_dict = dict((name, getattr(OPTS, name)) for name in dir(OPTS) if not name.startswith('__') and not callable(getattr(OPTS, name))) 
+        var_dict = dict((name, getattr(OPTS, name)) for name in dir(OPTS) if not name.startswith('__') and not callable(getattr(OPTS, name)))
         for var_name, var_value in var_dict.items():
             if isinstance(var_value, str):
                 f.write(str(var_name) + " = " + "\"" + str(var_value) + "\"\n")

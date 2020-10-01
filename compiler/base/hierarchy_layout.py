@@ -211,6 +211,12 @@ class layout():
 
     def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """ Adds an instance of a mod to this module """
+        # Contacts are not really instances, so skip them
+        if "contact" not in mod.name:
+            # Check that the instance name is unique
+            for inst in self.insts:
+                debug.check(name != inst.name, "Duplicate named instance in {0}: {1}".format(self.name, name))
+            
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
         # This is commented out for runtime reasons

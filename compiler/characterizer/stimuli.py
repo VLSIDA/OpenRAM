@@ -230,7 +230,7 @@ class stimuli():
     def gen_meas_value(self, meas_name, dout, t_intital, t_final):
         measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
         self.sf.write(measure_string)
-    
+
     def write_control(self, end_time, runlvl=4):
         """ Write the control cards to run and end the simulation """
         
@@ -243,7 +243,7 @@ class stimuli():
             reltol = 0.005 # 0.5%
         else:
             reltol = 0.001 # 0.1%
-        timestep = 10 #ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
+        timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
            
         # UIC is needed for ngspice to converge
         self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep,end_time))
@@ -271,7 +271,6 @@ class stimuli():
         # end the stimulus file
         self.sf.write(".end\n\n")
 
-
     def write_include(self, circuit):
         """Writes include statements, inputs are lists of model files"""
 
@@ -291,13 +290,12 @@ class stimuli():
             else:
                 debug.error("Could not find spice model: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item))
 
-
     def write_supply(self):
         """ Writes supply voltage statements """
         gnd_node_name = "0"
         self.sf.write("V{0} {0} {1} {2}\n".format(self.vdd_name, gnd_node_name, self.voltage))
 
-        #Adding a commented out supply for simulators where gnd and 0 are not global grounds.
+        # Adding a commented out supply for simulators where gnd and 0 are not global grounds.
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
         self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
@@ -306,7 +304,7 @@ class stimuli():
         temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
         import datetime
         start_time = datetime.datetime.now()
-        debug.check(OPTS.spice_exe!="","No spice simulator has been found.")
+        debug.check(OPTS.spice_exe != "", "No spice simulator has been found.")
     
         if OPTS.spice_name == "xa":
             # Output the xa configurations here. FIXME: Move this to write it once.
@@ -314,27 +312,32 @@ class stimuli():
             xa_cfg.write("set_sim_level -level 7\n")
             xa_cfg.write("set_powernet_level 7 -node vdd\n")
             xa_cfg.close()
-            cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt 2".format(OPTS.spice_exe,
-                                                               temp_stim,
-                                                               OPTS.openram_temp)
+            cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt {3}".format(OPTS.spice_exe,
+                                                                 temp_stim,
+                                                                 OPTS.openram_temp,
+                                                                 OPTS.num_threads)
             valid_retcode=0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
-            cmd = "{0} -mt 2 -i {1} -o {2}timing".format(OPTS.spice_exe,
-                                                         temp_stim,
-                                                         OPTS.openram_temp)
+            cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
+                                                           OPTS.num_threads,
+                                                           temp_stim,
+                                                           OPTS.openram_temp)
             valid_retcode=0
         else:
             # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit
             # Measurements can't be made with a raw file set in ngspice
             # -r {2}timing.raw
+            ng_cfg = open("{}.spinit".format(OPTS.openram_temp), "w")
+            ng_cfg.write("set num_threads={}\n".format(OPTS.num_threads))
+            ng_cfg.close()
+
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                        temp_stim,
                                                        OPTS.openram_temp)
             # for some reason, ngspice-25 returns 1 when it only has acceptable warnings
             valid_retcode=1
 
-        
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
         
@@ -348,7 +351,7 @@ class stimuli():
             debug.error("Spice simulation error: " + cmd, -1)
         else:
             end_time = datetime.datetime.now()
-            delta_time = round((end_time-start_time).total_seconds(),1)
-            debug.info(2,"*** Spice: {} seconds".format(delta_time))
+            delta_time = round((end_time - start_time).total_seconds(), 1)
+            debug.info(2, "*** Spice: {} seconds".format(delta_time))
 
     

@@ -414,7 +414,7 @@ class simulation():
         self.sram.graph_exclude_addr_dff()
         self.sram.graph_exclude_data_dff()
         self.sram.graph_exclude_ctrl_dffs()
-        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()    
+        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
         
     def set_internal_spice_names(self):
         """Sets important names for characterization such as Sense amp enable and internal bit nets."""

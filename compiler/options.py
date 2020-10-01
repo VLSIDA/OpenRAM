@@ -120,7 +120,7 @@ class options(optparse.Values):
     magic_exe = None
 
     # Number of threads to use
-    num_threads = 4
+    num_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True

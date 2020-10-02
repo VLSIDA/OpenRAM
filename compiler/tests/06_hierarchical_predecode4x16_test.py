@@ -8,14 +8,15 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING hierarchical_predecode4x16_test")
+
+# @unittest.skip("SKIPPING hierarchical_predecode4x16_test")
 class hierarchical_predecode4x16_test(openram_test):
 
     def runTest(self):

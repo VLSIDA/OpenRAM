@@ -145,7 +145,7 @@ class pand4(pgate.pgate):
                                         width=pin.width(),
                                         height=pin.height())
 
-        for pin_name in ["A", "B", "C"]:
+        for pin_name in ["A", "B", "C", "D"]:
             pin = self.nand_inst.get_pin(pin_name)
             self.add_layout_pin_rect_center(text=pin_name,
                                             layer=pin.layer,

@@ -406,6 +406,10 @@ def write_script_pex_rule(gds_name, cell_name, output):
     else:
         pre = ""
     f.write(pre + "extract\n")
+    f.write(pre + "ext2sim labels on\n")
+    f.write(pre + "ext2sim\n")
+    f.write(pre + "extresist simplify off\n")
+    f.write(pre + "extresist all\n")
     f.write(pre + "ext2spice hierarchy off\n")
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice renumber off\n")
@@ -413,6 +417,7 @@ def write_script_pex_rule(gds_name, cell_name, output):
     f.write(pre + "ext2spice blackbox on\n")
     f.write(pre + "ext2spice subcircuit top on\n")
     f.write(pre + "ext2spice global off\n")
+    f.write(pre + "ext2spice extresist on\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("eof\n")

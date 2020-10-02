@@ -82,6 +82,8 @@ class openram_test(unittest.TestCase):
             output = OPTS.openram_temp + a.name + ".pex.netlist"
         tempspice = "{0}{1}.sp".format(OPTS.openram_temp, a.name)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp, a.name)
+        
+        a.gds_write(tempgds)
 
         import verify
         result=verify.run_pex(a.name, tempgds, tempspice, output=output, final_verification=False)

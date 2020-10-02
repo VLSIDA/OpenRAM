@@ -323,7 +323,7 @@ class functional(simulation):
         else:
             expected_value = self.word_size + self.num_spare_cols
         for i in range(expected_value - len(new_value)):
-            new_value =  "0" + new_value
+            new_value = "0" + new_value
             
         # print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value

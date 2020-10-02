@@ -94,7 +94,7 @@ class sram_base(design, verilog, lef):
         # add pex labels for bitcells
         for bank_num in range(len(self.bank_insts)):
             bank = self.bank_insts[bank_num]
-            pex_data = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
+            pex_data = bank.reverse_transformation_bitcell(self.bitcell.name)
 
             bank_offset = pex_data[0] # offset bank relative to sram
             Q_offset = pex_data[1] # offset of storage relative to bank
@@ -107,7 +107,7 @@ class sram_base(design, verilog, lef):
             bl = []
             br = []
 
-            storage_layer_name = self.bitcell.get_pin("Q").layer
+            storage_layer_name = "m1"
             bitline_layer_name = self.bitcell.get_pin("bl").layer
             
             for cell in range(len(bank_offset)):

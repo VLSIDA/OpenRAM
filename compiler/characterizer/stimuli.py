@@ -15,7 +15,6 @@ import tech
 import debug
 import subprocess
 import os
-import sys
 import numpy as np
 from globals import OPTS
 
@@ -40,32 +39,26 @@ class stimuli():
             debug.info(2, "Not using spice library")
         self.device_models = tech.spice["fet_models"][self.process]
     
-        self.sram_name = "Xsram"
-    
-    def inst_sram(self, pins, inst_name):
-        """ Function to instatiate an SRAM subckt. """
-
-        self.sf.write("{} ".format(self.sram_name))
-        for pin in self.sram_pins:
-            self.sf.write("{0} ".format(pin))  
-        self.sf.write("{0}\n".format(inst_name))
-        
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
-        self.sf.write("X{0} ".format(model_name))
-        for pin in pins:
-            self.sf.write("{0} ".format(pin))
-        self.sf.write("{0}\n".format(model_name))
+        
+        if OPTS.use_pex:
+            self.inst_pex_model(pins, model_name)
+        else:
+            self.sf.write("X{0} ".format(model_name))
+            for pin in pins:
+                self.sf.write("{0} ".format(pin))
+            self.sf.write("{0}\n".format(model_name))
     
-    def inst_sram_pex(self, pins, model_name):
+    def inst_pex_model(self, pins, model_name):
         self.sf.write("X{0} ".format(model_name))
         for pin in pins:
             self.sf.write("{0} ".format(pin))
         for bank in range(OPTS.num_banks):
             row = int(OPTS.num_words / OPTS.words_per_row) - 1
-            col = int(OPTS.word_size * OPTS.words_per_row) - 1 
-            self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col))
-            self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col))
+            col = int(OPTS.word_size * OPTS.words_per_row) - 1
+            self.sf.write("bitcell_Q_b{0}_r{1}_c{2} ".format(bank, row, col))
+            self.sf.write("bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank, row, col))
         #    can't add all bitcells to top level due to ngspice max port count of 1005
         #    for row in range(int(OPTS.num_words / OPTS.words_per_row)):
         #        for col in range(int(OPTS.word_size * OPTS.words_per_row)):
@@ -76,7 +69,6 @@ class stimuli():
                 for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
                     self.sf.write("bl{0}_{1} ".format(port, col))
                     self.sf.write("br{0}_{1} ".format(port, col))
-                  
 
             self.sf.write("s_en{0} ".format(bank))
         self.sf.write("{0}\n".format(model_name))
@@ -94,14 +86,13 @@ class stimuli():
                                                                         self.tx_length))
         self.sf.write(".ENDS test_inv\n")
 
-
-    def create_buffer(self, buffer_name, size=[1,3], beta=2.5):
+    def create_buffer(self, buffer_name, size=[1, 3], beta=2.5):
         """
             Generates buffer for top level signals (only for sim
             purposes). Size is pair for PMOS, NMOS width multiple. 
             """
 
-        self.sf.write(".SUBCKT test_{2} in out {0} {1}\n".format(self.vdd_name, 
+        self.sf.write(".SUBCKT test_{2} in out {0} {1}\n".format(self.vdd_name,
                                                                  self.gnd_name,
                                                                  buffer_name))
         self.sf.write("mpinv1 out_inv in {0} {0} {1} w={2}u l={3}u\n".format(self.vdd_name,
@@ -122,8 +113,6 @@ class stimuli():
                                                                               self.tx_length))
         self.sf.write(".ENDS test_{0}\n\n".format(buffer_name))
 
-
-
     def gen_pulse(self, sig_name, v1, v2, offset, period, t_rise, t_fall):
         """ 
             Generates a periodic signal with 50% duty cycle and slew rates. Period is measured
@@ -140,7 +129,6 @@ class stimuli():
                                           0.5*period-0.5*t_rise-0.5*t_fall,
                                           period))
 
-
     def gen_pwl(self, sig_name, clk_times, data_values, period, slew, setup):
         """ 
             Generate a PWL stimulus given a signal name and data values at each period.
@@ -149,18 +137,22 @@ class stimuli():
             to the initial value.
         """
         # the initial value is not a clock time
-        debug.check(len(clk_times)==len(data_values),"Clock and data value lengths don't match. {0} clock values, {1} data values for {2}".format(len(clk_times), len(data_values), sig_name))
+        str = "Clock and data value lengths don't match. {0} clock values, {1} data values for {2}"
+        debug.check(len(clk_times)==len(data_values),
+                    str.format(len(clk_times),
+                               len(data_values),
+                               sig_name))
     
         # shift signal times earlier for setup time
-        times = np.array(clk_times) - setup*period
+        times = np.array(clk_times) - setup * period
         values = np.array(data_values) * self.voltage
         half_slew = 0.5 * slew
         self.sf.write("* (time, data): {}\n".format(list(zip(clk_times, data_values))))
         self.sf.write("V{0} {0} 0 PWL (0n {1}v ".format(sig_name, values[0]))
-        for i in range(1,len(times)):
-            self.sf.write("{0}n {1}v {2}n {3}v ".format(times[i]-half_slew,
-                                                        values[i-1],
-                                                        times[i]+half_slew,
+        for i in range(1, len(times)):
+            self.sf.write("{0}n {1}v {2}n {3}v ".format(times[i] - half_slew,
+                                                        values[i - 1],
+                                                        times[i] + half_slew,
                                                         values[i]))
         self.sf.write(")\n")
 
@@ -169,9 +161,9 @@ class stimuli():
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
 
     def get_inverse_voltage(self, value):
-        if value > 0.5*self.voltage:
+        if value > 0.5 * self.voltage:
             return 0
-        elif value <= 0.5*self.voltage:
+        elif value <= 0.5 * self.voltage:
             return self.voltage
         else:
             debug.error("Invalid value to get an inverse of: {0}".format(value))
@@ -184,7 +176,6 @@ class stimuli():
         else:
             debug.error("Invalid value to get an inverse of: {0}".format(value))
         
-
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={4}n TARG v({5}) VAL={6} {7}=1 TD={8}n\n\n"
@@ -246,7 +237,7 @@ class stimuli():
         timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
            
         # UIC is needed for ngspice to converge
-        self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep,end_time))
+        self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
         self.sf.write(".TEMP {}\n".format(self.temperature))
         if OPTS.spice_name == "ngspice":
             # ngspice sometimes has convergence problems if not using gear method
@@ -260,7 +251,7 @@ class stimuli():
         # create plots for all signals
         self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
         if OPTS.debug_level>0:
-            if OPTS.spice_name in ["hspice","xa"]:
+            if OPTS.spice_name in ["hspice", "xa"]:
                 self.sf.write(".probe V(*)\n")
             else:
                 self.sf.write(".plot V(*)\n")

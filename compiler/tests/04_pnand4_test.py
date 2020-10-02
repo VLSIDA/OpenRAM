@@ -12,26 +12,29 @@ import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
+from sram_factory import factory
 import debug
 
 
-class pand2_test(openram_test):
+class pnand4_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        global verify
-        import verify
 
-        import pand2
+        debug.info(2, "Checking 4-input nand gate")
+        tx = factory.create(module_type="pnand4", size=1)
+        self.local_check(tx)
 
-        debug.info(2, "Testing pand2 gate 4x")
-        a = pand2.pand2(name="pand2x4", size=4)
-        self.local_check(a)
+        # debug.info(2, "Checking 3-input nand gate")
+        # tx = factory.create(module_type="pnand3", size=1, add_wells=False)
+        # # Only DRC because well contacts will fail LVS
+        # self.local_drc_check(tx)
 
         globals.end_openram()
+        
 
-# instantiate a copdsay of the class to actually run the test
+# run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]

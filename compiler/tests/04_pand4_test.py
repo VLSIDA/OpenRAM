@@ -15,7 +15,7 @@ from globals import OPTS
 import debug
 
 
-class pand2_test(openram_test):
+class pand4_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -23,10 +23,10 @@ class pand2_test(openram_test):
         global verify
         import verify
 
-        import pand2
+        import pand4
 
-        debug.info(2, "Testing pand2 gate 4x")
-        a = pand2.pand2(name="pand2x4", size=4)
+        debug.info(2, "Testing pand4 gate 4x")
+        a = pand4.pand4(name="pand4x4", size=4)
         self.local_check(a)
 
         globals.end_openram()

@@ -15,16 +15,16 @@ from globals import OPTS
 import contact
 
 
-class pnand3(pgate.pgate):
+class pnand4(pgate.pgate):
     """
-    This module generates gds of a parametrically sized 2-input nand.
-    This model use ptx to generate a 2-input nand within a cetrain height.
+    This module generates gds of a parametrically sized 4-input nand.
+    This model use ptx to generate a 4-input nand within a cetrain height.
     """
     def __init__(self, name, size=1, height=None, add_wells=True):
         """ Creates a cell for a simple 3 input nand """
 
         debug.info(2,
-                   "creating pnand3 structure {0} with size of {1}".format(name,
+                   "creating pnand4 structure {0} with size of {1}".format(name,
                                                                            size))
         self.add_comment("size: {}".format(size))
 
@@ -38,7 +38,7 @@ class pnand3(pgate.pgate):
 
         # FIXME: Allow these to be sized
         debug.check(size == 1,
-                    "Size 1 pnand3 is only supported now.")
+                    "Size 1 pnand4 is only supported now.")
         self.tx_mults = 1
 
         if OPTS.tech_name == "sky130":
@@ -50,8 +50,8 @@ class pnand3(pgate.pgate):
         
     def add_pins(self):
         """ Adds pins for spice netlist """
-        pin_list = ["A", "B", "C", "Z", "vdd", "gnd"]
-        dir_list = ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+        pin_list = ["A", "B", "C", "D", "Z", "vdd", "gnd"]
+        dir_list = ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         self.add_pin_list(pin_list, dir_list)
 
     def create_netlist(self):
@@ -133,36 +133,45 @@ class pnand3(pgate.pgate):
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
+        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
 
     def create_ptx(self):
         """
         Create the PMOS and NMOS in the netlist.
         """
 
-        self.pmos1_inst = self.add_inst(name="pnand3_pmos1",
+        self.pmos1_inst = self.add_inst(name="pnand4_pmos1",
                                         mod=self.pmos_left)
         self.connect_inst(["vdd", "A", "Z", "vdd"])
 
-        self.pmos2_inst = self.add_inst(name="pnand3_pmos2",
+        self.pmos2_inst = self.add_inst(name="pnand4_pmos2",
                                         mod=self.pmos_center)
         self.connect_inst(["Z", "B", "vdd", "vdd"])
 
-        self.pmos3_inst = self.add_inst(name="pnand3_pmos3",
-                                        mod=self.pmos_right)
+        self.pmos3_inst = self.add_inst(name="pnand4_pmos3",
+                                        mod=self.pmos_center)
         self.connect_inst(["Z", "C", "vdd", "vdd"])
+
+        self.pmos4_inst = self.add_inst(name="pnand4_pmos4",
+                                        mod=self.pmos_right)
+        self.connect_inst(["Z", "D", "vdd", "vdd"])
         
-        self.nmos1_inst = self.add_inst(name="pnand3_nmos1",
+        self.nmos1_inst = self.add_inst(name="pnand4_nmos1",
                                         mod=self.nmos_left)
-        self.connect_inst(["Z", "C", "net1", "gnd"])
+        self.connect_inst(["Z", "D", "net1", "gnd"])
 
-        self.nmos2_inst = self.add_inst(name="pnand3_nmos2",
+        self.nmos2_inst = self.add_inst(name="pnand4_nmos2",
                                         mod=self.nmos_center)
-        self.connect_inst(["net1", "B", "net2", "gnd"])
+        self.connect_inst(["net1", "C", "net2", "gnd"])
         
-        self.nmos3_inst = self.add_inst(name="pnand3_nmos3",
-                                        mod=self.nmos_right)
-        self.connect_inst(["net2", "A", "gnd", "gnd"])
+        self.nmos3_inst = self.add_inst(name="pnand4_nmos3",
+                                        mod=self.nmos_center)
+        self.connect_inst(["net2", "B", "net3", "gnd"])
 
+        self.nmos4_inst = self.add_inst(name="pnand4_nmos4",
+                                        mod=self.nmos_right)
+        self.connect_inst(["net3", "A", "gnd", "gnd"])
+        
     def place_ptx(self):
         """
         Place the PMOS and NMOS in the layout at the upper-most
@@ -176,9 +185,12 @@ class pnand3(pgate.pgate):
         pmos2_pos = pmos1_pos + self.ptx_offset
         self.pmos2_inst.place(pmos2_pos)
 
-        self.pmos3_pos = pmos2_pos + self.ptx_offset
-        self.pmos3_inst.place(self.pmos3_pos)
+        pmos3_pos = pmos2_pos + self.ptx_offset
+        self.pmos3_inst.place(pmos3_pos)
         
+        self.pmos4_pos = pmos3_pos + self.ptx_offset
+        self.pmos4_inst.place(self.pmos4_pos)
+
         nmos1_pos = vector(self.pmos_left.active_offset.x,
                            self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
@@ -186,16 +198,19 @@ class pnand3(pgate.pgate):
         nmos2_pos = nmos1_pos + self.ptx_offset
         self.nmos2_inst.place(nmos2_pos)
         
-        self.nmos3_pos = nmos2_pos + self.ptx_offset
-        self.nmos3_inst.place(self.nmos3_pos)
+        nmos3_pos = nmos2_pos + self.ptx_offset
+        self.nmos3_inst.place(nmos3_pos)
 
+        self.nmos4_pos = nmos3_pos + self.ptx_offset
+        self.nmos4_inst.place(self.nmos4_pos)
+        
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
         self.add_nwell_contact(self.pmos_right,
-                               self.pmos3_pos + vector(self.m1_pitch, 0))
+                               self.pmos4_pos + vector(self.m1_pitch, 0))
         self.add_pwell_contact(self.nmos_right,
-                               self.nmos3_pos + vector(self.m1_pitch, 0))
+                               self.nmos4_pos + vector(self.m1_pitch, 0))
 
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
@@ -206,11 +221,12 @@ class pnand3(pgate.pgate):
 
         self.connect_pin_to_rail(self.pmos2_inst, "D", "vdd")
 
+        self.connect_pin_to_rail(self.pmos4_inst, "D", "vdd")
+        
     def route_inputs(self):
         """ Route the A and B and C inputs """
 
         # We can use this pitch because the contacts and overlap won't be adjacent
-        non_contact_pitch = 0.5 * self.m1_width + self.m1_space + 0.5 * contact.poly_contact.second_layer_height
         pmos_drain_bottom = self.pmos1_inst.get_pin("D").by()
         self.output_yoffset = pmos_drain_bottom - 0.5 * self.route_layer_width - self.route_layer_space
 
@@ -246,6 +262,13 @@ class pnand3(pgate.pgate):
                                      "C",
                                      position="right")
 
+        self.inputD_yoffset = self.inputC_yoffset + self.m3_pitch
+        cpin = self.route_input_gate(self.pmos4_inst,
+                                     self.nmos4_inst,
+                                     self.inputD_yoffset,
+                                     "D",
+                                     position="right")
+        
         if OPTS.tech_name == "sky130":
             self.add_enclosure([apin, bpin, cpin], "npc", drc("npc_enclose_poly"))
         
@@ -257,9 +280,9 @@ class pnand3(pgate.pgate):
         # PMOS3 drain
         pmos3_pin = self.pmos3_inst.get_pin("D")
         # NMOS3 drain
-        nmos3_pin = self.nmos3_inst.get_pin("D")
+        nmos4_pin = self.nmos4_inst.get_pin("D")
 
-        out_offset = vector(nmos3_pin.cx() + self.route_layer_pitch,
+        out_offset = vector(nmos4_pin.cx() + self.route_layer_pitch,
                             self.output_yoffset)
 
         # Go up to metal2 for ease on all output pins
@@ -283,22 +306,22 @@ class pnand3(pgate.pgate):
 
         top_left_pin_offset = pmos1_pin.center()
         top_right_pin_offset = pmos3_pin.center()
-        bottom_pin_offset = nmos3_pin.center()
+        bottom_pin_offset = nmos4_pin.center()
         
         # PMOS1 to output
         self.add_path(self.route_layer, [top_left_pin_offset,
-                                           vector(top_left_pin_offset.x, out_offset.y),
-                                           out_offset])
-        # PMOS3 to output
+                                         vector(top_left_pin_offset.x, out_offset.y),
+                                         out_offset])
+        # PMOS4 to output
         self.add_path(self.route_layer, [top_right_pin_offset,
-                                           vector(top_right_pin_offset.x, out_offset.y),
-                                           out_offset])
-        # NMOS3 to output
+                                         vector(top_right_pin_offset.x, out_offset.y),
+                                         out_offset])
+        # NMOS4 to output
         mid2_offset = vector(out_offset.x, bottom_pin_offset.y)
         self.add_path(self.route_layer,
                       [bottom_pin_offset, mid2_offset],
-                      width=nmos3_pin.height())
-        mid3_offset = vector(out_offset.x, nmos3_pin.by())
+                      width=nmos4_pin.height())
+        mid3_offset = vector(out_offset.x, nmos4_pin.by())
         self.add_path(self.route_layer, [mid3_offset, out_offset])
         
         self.add_layout_pin_rect_center(text="Z",
@@ -310,7 +333,7 @@ class pnand3(pgate.pgate):
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
-        power_leak = spice["nand3_leakage"]
+        power_leak = spice["nand4_leakage"]
         
         total_power = self.return_power(power_dyn, power_leak)
         return total_power

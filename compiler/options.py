@@ -9,6 +9,7 @@ import optparse
 import getpass
 import os
 
+
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All

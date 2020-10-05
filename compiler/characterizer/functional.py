@@ -229,17 +229,25 @@ class functional(simulation):
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
                 value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check))
-                if value > self.v_high:
-                    sp_read_value = "1" + sp_read_value
-                elif value < self.v_low:
-                    sp_read_value = "0" + sp_read_value
-                else:
-                    error ="FAILED: {0}_{1} value {2} at time {3}n does not fall within noise margins <{4} or >{5}.".format(dout_port,
-                                                                                                                            bit,
-                                                                                                                            value,
-                                                                                                                            eo_period,
-                                                                                                                            self.v_low,
-                                                                                                                            self.v_high)
+                try:
+                    value = float(value)
+                    if value > self.v_high:
+                        sp_read_value = "1" + sp_read_value
+                    elif value < self.v_low:
+                        sp_read_value = "0" + sp_read_value
+                    else:
+                        error ="FAILED: {0}_{1} value {2} at time {3}n does not fall within noise margins <{4} or >{5}.".format(dout_port,
+                                                                                                                                bit,
+                                                                                                                                value,
+                                                                                                                                eo_period,
+                                                                                                                                self.v_low,
+                                                                                                                                self.v_high)
+                except ValueError:
+                    error ="FAILED: {0}_{1} value {2} at time {3}n is not a float.".format(dout_port,
+                                                                                           bit,
+                                                                                           value,
+                                                                                           eo_period)
+                    
                     return (0, error)
                     
             self.read_results.append([sp_read_value, dout_port, eo_period, check])                    
@@ -315,7 +323,7 @@ class functional(simulation):
         else:
             expected_value = self.word_size + self.num_spare_cols
         for i in range(expected_value - len(new_value)):
-            new_value =  "0" + new_value
+            new_value = "0" + new_value
             
         # print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value
@@ -348,8 +356,8 @@ class functional(simulation):
 
         # Write important signals to stim file
         self.sf.write("\n\n* Important signals for debug\n")
-        self.sf.write("* bl: {}\n".format(self.bl_name))
-        self.sf.write("* br: {}\n".format(self.br_name))
+        self.sf.write("* bl: {}\n".format(self.bl_name.format(port)))
+        self.sf.write("* br: {}\n".format(self.br_name.format(port)))
         self.sf.write("* s_en: {}\n".format(self.sen_name))
         self.sf.write("* q: {}\n".format(self.q_name))
         self.sf.write("* qbar: {}\n".format(self.qbar_name))

@@ -124,7 +124,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.wl_insts = []
         self.driver_wordline_outputs = []
         for port in self.all_ports:
-            self.wl_insts.append(self.add_inst(name="wl_driver",
+            self.wl_insts.append(self.add_inst(name="wl_driver{}".format(port),
                                                mod=self.wl_array))
             temp = []
             temp += [self.get_rbl_wordline_names(port)[port]]

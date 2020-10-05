@@ -34,43 +34,43 @@ class ngspice_pex_pinv_test(openram_test):
 
         # generate the pinv module
         prev_purge_value = OPTS.purge_temp
-        OPTS.purge_temp =  False # force set purge to false to save the sp file
+        OPTS.purge_temp = False # force set purge to false to save the sp file
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp,tx.name)
+        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)
         tx.gds_write(tempgds)
-        tempsp = "{0}{1}.sp".format(OPTS.openram_temp,tx.name)
+        tempsp = "{0}{1}.sp".format(OPTS.openram_temp, tx.name)
         tx.sp_write(tempsp)
 
         # make sure that the library simulation is successful
-        sp_delay = self.simulate_delay(test_module = tempsp,
-                                       top_level_name = tx.name)
-        if sp_delay is "Failed":
+        sp_delay = self.simulate_delay(test_module=tempsp,
+                                       top_level_name=tx.name)
+        if sp_delay == "Failed":
             self.fail('Library Spice module did not behave as expected')
 
         # now generate its pex file
         pex_file = self.run_pex(tx)
-        OPTS.purge_temp =  prev_purge_value # restore the old purge value
+        # restore the old purge value        
+        OPTS.purge_temp = prev_purge_value
         # generate simulation for pex, make sure the simulation is successful
-        pex_delay = self.simulate_delay(test_module = pex_file,
-                                        top_level_name = tx.name)
+        pex_delay = self.simulate_delay(test_module=pex_file,
+                                        top_level_name=tx.name)
         # make sure the extracted spice simulated
-        if pex_delay is "Failed":
+        if pex_delay == "Failed":
             self.fail('Pex file did not behave as expected')
 
         # if pex data is bigger than original spice file then result is ok
         # However this may not always be true depending on the netlist provided
         # comment out for now
-        #debug.info(2,"pex_delay: {0}".format(pex_delay))
-        #debug.info(2,"sp_delay: {0}".format(sp_delay))
+        # debug.info(2,"pex_delay: {0}".format(pex_delay))
+        # debug.info(2,"sp_delay: {0}".format(sp_delay))
 
-        #assert pex_delay > sp_delay, "pex delay {0} is smaller than sp_delay {1}"\
-        #.format(pex_delay,sp_delay)
+        # assert pex_delay > sp_delay, "pex delay {0} is smaller than sp_delay {1}"\
+        # .format(pex_delay,sp_delay)
 
         globals.end_openram()
 
     def simulate_delay(self, test_module, top_level_name):
-        from characterizer import charutils
         from charutils import parse_spice_list
         # setup simulation
         sim_file = OPTS.openram_temp + "stim.sp"
@@ -86,47 +86,46 @@ class ngspice_pex_pinv_test(openram_test):
         from characterizer import measurements, stimuli
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         sim_file = open(sim_file, "w")
-        simulation = stimuli(sim_file,corner)
+        simulation = stimuli(sim_file, corner)
 
         # library files
         simulation.write_include(cir_file)
 
         # supply voltages
-        simulation.gen_constant(sig_name ="vdd",
-                               v_val = tech.spice["nom_supply_voltage"])
+        simulation.gen_constant(sig_name="vdd",
+                                v_val=tech.spice["nom_supply_voltage"])
         # The scn4m_subm and ngspice combination will have a gnd source error:
         # "Fatal error: instance vgnd is a shorted VSRC"
         # However, remove gnd power for all techa pass for this test
         # simulation.gen_constant(sig_name = "gnd",
         #                        v_val = "0v")
 
-
         run_time = tech.spice["feasible_period"] * 4
         # input voltage
         clk_period = tech.spice["feasible_period"]
-        simulation.gen_pwl(sig_name ="input",
-                          clk_times = [clk_period,clk_period],
-                          data_values = [1,0],
-                          period = clk_period,
-                          slew = 0.001*tech.spice["feasible_period"],
-                          setup = 0)
+        simulation.gen_pwl(sig_name="input",
+                           clk_times=[clk_period, clk_period],
+                           data_values=[1, 0],
+                           period=clk_period,
+                           slew=0.001 * tech.spice["feasible_period"],
+                           setup=0)
 
         # instantiation of simulated pinv
-        simulation.inst_model(pins = ["input", "output", "vdd", "gnd"],
-                             model_name = top_module_name)
+        simulation.inst_model(pins=["input", "output", "vdd", "gnd"],
+                              model_name=top_module_name)
 
         # delay measurement
-        delay_measure = measurements.delay_measure(measure_name = "pinv_delay",
-                                                   trig_name = "input",
-                                                   targ_name = "output",
-                                                   trig_dir_str = "FALL",
-                                                   targ_dir_str = "RISE",
-                                                   has_port = False)
+        delay_measure = measurements.delay_measure(measure_name="pinv_delay",
+                                                   trig_name="input",
+                                                   targ_name="output",
+                                                   trig_dir_str="FALL",
+                                                   targ_dir_str="RISE",
+                                                   has_port=False)
         trig_td = trag_td = 0.01 * run_time
-        rest_info = trig_td,trag_td,tech.spice["nom_supply_voltage"]
+        rest_info = trig_td, trag_td, tech.spice["nom_supply_voltage"]
         delay_measure.write_measure(simulation, rest_info)
 
-        simulation.write_control(end_time = run_time)
+        simulation.write_control(end_time=run_time)
         sim_file.close()
         return simulation
 

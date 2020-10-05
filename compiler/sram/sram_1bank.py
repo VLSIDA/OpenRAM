@@ -414,7 +414,7 @@ class sram_1bank(sram_base):
                                              layer_stack=self.m1_stack,
                                              parent=self)
             if add_routes:
-                self.add_inst("hc", cr)
+                self.add_inst(cr.name, cr)
                 self.connect_inst([])
             else:
                 self.col_addr_bus_size[port] = cr.height
@@ -470,7 +470,7 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst("hc", cr)
+                    self.add_inst(cr.name, cr)
                     self.connect_inst([])
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
@@ -482,7 +482,7 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst("hc", cr)
+                    self.add_inst(cr.name, cr)
                     self.connect_inst([])
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap

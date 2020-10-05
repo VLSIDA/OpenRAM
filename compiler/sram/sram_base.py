@@ -15,9 +15,6 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
-from tech import drc
-import numpy as np
-import logical_effort
 
 
 class sram_base(design, verilog, lef):
@@ -42,9 +39,6 @@ class sram_base(design, verilog, lef):
 
         if not self.num_spare_cols:
             self.num_spare_cols = 0
-
-        # For logical effort delay calculations.
-        self.all_mods_except_control_done = False
 
     def add_pins(self):
         """ Add pins for entire SRAM. """
@@ -87,18 +81,20 @@ class sram_base(design, verilog, lef):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
         
-        self.add_pin("vdd","POWER")
-        self.add_pin("gnd","GROUND")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
     def add_global_pex_labels(self):
         """
         Add pex labels at the sram level for spice analysis
         """
 
+        
+
         # add pex labels for bitcells
         for bank_num in range(len(self.bank_insts)):
             bank = self.bank_insts[bank_num]
-            pex_data = bank.reverse_transformation_bitcell(bank.mod.bitcell.name)
+            pex_data = bank.reverse_transformation_bitcell(self.bitcell.name)
 
             bank_offset = pex_data[0] # offset bank relative to sram
             Q_offset = pex_data[1] # offset of storage relative to bank
@@ -112,46 +108,61 @@ class sram_base(design, verilog, lef):
             br = []
 
             storage_layer_name = "m1"
-            bitline_layer_name = "m2"
+            bitline_layer_name = self.bitcell.get_pin("bl").layer
             
             for cell in range(len(bank_offset)):
-                Q = [bank_offset[cell][0] + Q_offset[cell][0], bank_offset[cell][1] + Q_offset[cell][1]]
-                Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0], bank_offset[cell][1] + Q_bar_offset[cell][1]]
+                Q = [bank_offset[cell][0] + Q_offset[cell][0],
+                     bank_offset[cell][1] + Q_offset[cell][1]]
+                Q_bar = [bank_offset[cell][0] + Q_bar_offset[cell][0],
+                         bank_offset[cell][1] + Q_bar_offset[cell][1]]
                 OPTS.words_per_row = self.words_per_row
-                self.add_layout_pin_rect_center("bitcell_Q_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))) , storage_layer_name, Q) 
-                self.add_layout_pin_rect_center("bitcell_Q_bar_b{}_r{}_c{}".format(bank_num, int(cell % (OPTS.num_words / self.words_per_row)), int(cell / (OPTS.num_words))), storage_layer_name, Q_bar)
+                row = int(cell % (OPTS.num_words / self.words_per_row))
+                col = int(cell / (OPTS.num_words))
+                self.add_layout_pin_rect_center("bitcell_Q_b{}_r{}_c{}".format(bank_num,
+                                                                               row,
+                                                                               col),
+                                                                               storage_layer_name,
+                                                                               Q)
+                self.add_layout_pin_rect_center("bitcell_Q_bar_b{}_r{}_c{}".format(bank_num,
+                                                                                   row,
+                                                                                   col),
+                                                                                   storage_layer_name,
+                                                                                   Q_bar)
 
             for cell in range(len(bl_offsets)):
                 col = bl_meta[cell][0][2]
                 for bitline in range(len(bl_offsets[cell])):
-                    bitline_location = [float(bank_offset[cell][0]) + bl_offsets[cell][bitline][0], float(bank_offset[cell][1]) + bl_offsets[cell][bitline][1]]
+                    bitline_location = [float(bank_offset[cell][0]) + bl_offsets[cell][bitline][0],
+                                        float(bank_offset[cell][1]) + bl_offsets[cell][bitline][1]]
                     bl.append([bitline_location, bl_meta[cell][bitline][3], col])
 
             for cell in range(len(br_offsets)):
                 col = br_meta[cell][0][2]
                 for bitline in range(len(br_offsets[cell])):
-                    bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0], float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
-                    br.append([bitline_location, br_meta[cell][bitline][3], col])           
+                    bitline_location = [float(bank_offset[cell][0]) + br_offsets[cell][bitline][0],
+                                        float(bank_offset[cell][1]) + br_offsets[cell][bitline][1]]
+                    br.append([bitline_location, br_meta[cell][bitline][3], col])
 
             for i in range(len(bl)):
-                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]), bitline_layer_name, bl[i][0])               
+                self.add_layout_pin_rect_center("bl{0}_{1}".format(bl[i][1], bl[i][2]),
+                                                bitline_layer_name, bl[i][0])
 
             for i in range(len(br)):
-                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]), bitline_layer_name, br[i][0])                           
+                self.add_layout_pin_rect_center("br{0}_{1}".format(br[i][1], br[i][2]),
+                                                bitline_layer_name, br[i][0])
 
         # add pex labels for control logic
-        for i in range  (len(self.control_logic_insts)):
+        for i in range(len(self.control_logic_insts)):
             instance = self.control_logic_insts[i]
             control_logic_offset = instance.offset
             for output in instance.mod.output_list:
                 pin = instance.mod.get_pin(output)
-                pin.transform([0,0], instance.mirror, instance.rotate)
-                offset = [control_logic_offset[0] + pin.center()[0], control_logic_offset[1] + pin.center()[1]]
-                self.add_layout_pin_rect_center("{0}{1}".format(pin.name,i), storage_layer_name, offset)
-
-             
-            
-
+                pin.transform([0, 0], instance.mirror, instance.rotate)
+                offset = [control_logic_offset[0] + pin.center()[0],
+                          control_logic_offset[1] + pin.center()[1]]
+                self.add_layout_pin_rect_center("{0}{1}".format(pin.name, i),
+                                                storage_layer_name,
+                                                offset)
 
     def create_netlist(self):
         """ Netlist creation """
@@ -369,10 +380,6 @@ class sram_base(design, verilog, lef):
             self.add_multi_bank_modules()
 
         self.bank_count = 0
-
-        # The control logic can resize itself based on the other modules.
-        # Requires all other modules added before control logic.
-        self.all_mods_except_control_done = True
 
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
@@ -619,6 +626,7 @@ class sram_base(design, verilog, lef):
         sp.write("* Column mux: {}:1\n".format(self.words_per_row))
         sp.write("**************************************************\n")
         # This causes unit test mismatch
+                                            
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))
         # sp.write(".global {0} {1}\n".format(spice["vdd_name"],

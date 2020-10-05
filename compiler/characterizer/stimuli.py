@@ -319,7 +319,7 @@ class stimuli():
             # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit
             # Measurements can't be made with a raw file set in ngspice
             # -r {2}timing.raw
-            ng_cfg = open("{}.spinit".format(OPTS.openram_temp), "w")
+            ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
             ng_cfg.write("set num_threads={}\n".format(OPTS.num_threads))
             ng_cfg.close()
 

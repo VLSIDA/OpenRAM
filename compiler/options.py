@@ -143,7 +143,7 @@ class options(optparse.Values):
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
     buf_dec = "pbuf"
-    column_mux_array = "single_level_column_mux_array"
+    column_mux_array = "column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
@@ -152,7 +152,7 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4" # Not available right now
+    nand4_dec = "pnand4"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

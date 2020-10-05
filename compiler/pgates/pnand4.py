@@ -133,7 +133,6 @@ class pnand4(pgate.pgate):
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
-        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
 
     def create_ptx(self):
         """
@@ -248,29 +247,29 @@ class pnand4(pgate.pgate):
                                      "A",
                                      position="left")
 
-        self.inputB_yoffset = self.inputA_yoffset + self.m3_pitch
+        self.inputB_yoffset = self.inputA_yoffset + self.m1_pitch
         bpin = self.route_input_gate(self.pmos2_inst,
                                      self.nmos2_inst,
                                      self.inputB_yoffset,
                                      "B",
                                      position="center")
 
-        self.inputC_yoffset = self.inputB_yoffset + self.m3_pitch
+        self.inputC_yoffset = self.inputB_yoffset + self.m1_pitch
         cpin = self.route_input_gate(self.pmos3_inst,
                                      self.nmos3_inst,
                                      self.inputC_yoffset,
                                      "C",
                                      position="right")
 
-        self.inputD_yoffset = self.inputC_yoffset + self.m3_pitch
-        cpin = self.route_input_gate(self.pmos4_inst,
+        self.inputD_yoffset = self.inputC_yoffset + self.m1_pitch
+        dpin = self.route_input_gate(self.pmos4_inst,
                                      self.nmos4_inst,
                                      self.inputD_yoffset,
                                      "D",
                                      position="right")
         
         if OPTS.tech_name == "sky130":
-            self.add_enclosure([apin, bpin, cpin], "npc", drc("npc_enclose_poly"))
+            self.add_enclosure([apin, bpin, cpin, dpin], "npc", drc("npc_enclose_poly"))
         
     def route_output(self):
         """ Route the Z output """

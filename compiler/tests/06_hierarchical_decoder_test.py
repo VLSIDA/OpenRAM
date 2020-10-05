@@ -8,18 +8,25 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class hierarchical_decoder_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
+
+        # Use the 2 port cell since it is usually bigger/easier
+        OPTS.bitcell = "bitcell_1rw_1r"
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
 
         # Checks 2x4 and 2-input NAND decoder
         debug.info(1, "Testing 16 row sample for hierarchical_decoder")
@@ -49,6 +56,11 @@ class hierarchical_decoder_test(openram_test):
         # Checks 3 x 3x8 and 3-input NAND decoder
         debug.info(1, "Testing 512 row sample for hierarchical_decoder")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=512)
+        self.local_check(a)
+
+        # Checks 3 x 4x16 and 4-input NAND decoder
+        debug.info(1, "Testing 4096 row sample for hierarchical_decoder")
+        a = factory.create(module_type="hierarchical_decoder", num_outputs=4096)
         self.local_check(a)
         
         globals.end_openram()

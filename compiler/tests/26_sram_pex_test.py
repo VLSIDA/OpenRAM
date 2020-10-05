@@ -16,6 +16,7 @@ from sram_factory import factory
 import debug
 
 
+@unittest.skip("SKIPPING 26_sram_pex_test")
 class sram_pex_test(openram_test):
 
     def runTest(self):

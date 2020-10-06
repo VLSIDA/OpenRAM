@@ -166,7 +166,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                                 cols=1,
                                                 column_offset=0,
                                                 rows=self.row_size + self.extra_rows,
-                                                mirror=(self.left_rbl + 1) % 2)
+                                                mirror=(self.rbl[0] + 1) % 2)
             self.add_mod(self.row_cap_left)
 
             self.row_cap_right = factory.create(module_type=row_cap_module_type,
@@ -177,7 +177,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                                 # + right replica column(s)
                                                 column_offset = 1 + len(self.left_rbl) + self.column_size + self.rbl[0],
                                                 rows=self.row_size + self.extra_rows,
-                                                mirror=(self.left_rbl + 1) %2)
+                                                mirror=(self.rbl[0] + 1) %2)
             self.add_mod(self.row_cap_right)
         else:
             # Dummy Row or Col Cap, depending on bitcell array properties

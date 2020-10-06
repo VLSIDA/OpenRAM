@@ -80,8 +80,11 @@ class port_address(design.design):
             self.copy_power_pins(inst, "gnd")
 
         for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
-            self.add_power_pin("vdd", rbl_vdd_pin.center())
-
+            if OPTS.tech_name == "sky130":
+                self.add_power_pin("vdd", rbl_vdd_pin.center())
+            else:
+                self.add_power_pin("vdd", rbl_vdd_pin.lc())
+                
     def route_pins(self):
         for row in range(self.addr_size):
             decoder_name = "addr_{}".format(row)

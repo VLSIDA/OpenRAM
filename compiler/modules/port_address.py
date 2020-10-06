@@ -79,8 +79,8 @@ class port_address(design.design):
             self.copy_power_pins(inst, "vdd")
             self.copy_power_pins(inst, "gnd")
 
-        rbl_vdd_pin = self.rbl_driver_inst.get_pin("vdd")
-        self.add_power_pin("vdd", rbl_vdd_pin.lc())
+        for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
+            self.add_power_pin("vdd", rbl_vdd_pin.center())
 
     def route_pins(self):
         for row in range(self.addr_size):

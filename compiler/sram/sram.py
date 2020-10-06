@@ -79,19 +79,19 @@ class sram():
         """ Save all the output files while reporting time to do it as well. """
 
         if not OPTS.netlist_only:
-            # Create a LEF physical model
-            start_time = datetime.datetime.now()
-            lefname = OPTS.output_path + self.s.name + ".lef"
-            debug.print_raw("LEF: Writing to {0}".format(lefname))
-            self.lef_write(lefname)
-            print_time("LEF", datetime.datetime.now(), start_time)
-
             # Write the layout
             start_time = datetime.datetime.now()
             gdsname = OPTS.output_path + self.s.name + ".gds"
             debug.print_raw("GDS: Writing to {0}".format(gdsname))
             self.gds_write(gdsname)
             print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            debug.print_raw("LEF: Writing to {0}".format(lefname))
+            self.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
 
         # Save the spice file
         start_time = datetime.datetime.now()

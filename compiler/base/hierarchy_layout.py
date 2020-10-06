@@ -63,6 +63,16 @@ class layout():
         self.translate_all(offset)
         return offset
 
+    def offset_x_coordinates(self):
+        """
+        This function is called after everything is placed to
+        shift the origin to the furthest left point. 
+        Y offset is unchanged.
+        """
+        offset = self.find_lowest_coords()
+        self.translate_all(offset.scale(1, 0))
+        return offset
+    
     def get_gate_offset(self, x_offset, height, inv_num):
         """
         Gets the base offset and y orientation of stacked rows of gates
@@ -201,6 +211,12 @@ class layout():
 
     def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """ Adds an instance of a mod to this module """
+        # Contacts are not really instances, so skip them
+        if "contact" not in mod.name:
+            # Check that the instance name is unique
+            for inst in self.insts:
+                debug.check(name != inst.name, "Duplicate named instance in {0}: {1}".format(self.name, name))
+            
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
         # This is commented out for runtime reasons
@@ -1019,7 +1035,7 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
-        self.add_inst("vc", cr)
+        self.add_inst(cr.name, cr)
         self.connect_inst([])
 
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
@@ -1028,7 +1044,7 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
-        self.add_inst("hc", cr)
+        self.add_inst(cr.name, cr)
         self.connect_inst([])
         
     def add_boundary(self, ll=vector(0, 0), ur=None):

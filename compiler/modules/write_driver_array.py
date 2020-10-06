@@ -7,10 +7,12 @@
 #
 import design
 import debug
+import math
 from tech import drc
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import cell_properties
 
 
 class write_driver_array(design.design):
@@ -19,7 +21,7 @@ class write_driver_array(design.design):
     Dynamically generated write driver array of all bitlines.
     """
 
-    def __init__(self, name, columns, word_size, num_spare_cols=None, write_size=None, column_offset=0):
+    def __init__(self, name, columns, word_size, offsets=None, num_spare_cols=None, write_size=None, column_offset=0):
 
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
@@ -29,6 +31,7 @@ class write_driver_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
+        self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
         if not num_spare_cols:
@@ -37,7 +40,7 @@ class write_driver_array(design.design):
             self.num_spare_cols = num_spare_cols
 
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -66,17 +69,9 @@ class write_driver_array(design.design):
 
     def create_layout(self):
 
-        if self.bitcell.width > self.driver.width:
-            self.width = (self.columns + self.num_spare_cols) * self.bitcell.width
-            self.width_regular_cols = self.columns * self.bitcell.width
-            self.single_col_width = self.bitcell.width
-        else:
-            self.width = (self.columns + self.num_spare_cols) * self.driver.width
-            self.width_regular_cols = self.columns * self.driver.width
-            self.single_col_width = self.driver.width
-        self.height = self.driver.height
-
         self.place_write_array()
+        self.width = self.driver_insts[-1].rx()
+        self.height = self.driver.height
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -107,14 +102,14 @@ class write_driver_array(design.design):
         self.bitcell = factory.create(module_type="bitcell")
 
     def create_write_array(self):
-        self.driver_insts = {}
+        self.driver_insts = []
         w = 0
         windex=0
         for i in range(0, self.columns, self.words_per_row):
             name = "write_driver{}".format(i)
             index = int(i / self.words_per_row)
-            self.driver_insts[index]=self.add_inst(name=name,
-                                                   mod=self.driver)
+            self.driver_insts.append(self.add_inst(name=name,
+                                                   mod=self.driver))
 
             if self.write_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
@@ -146,8 +141,8 @@ class write_driver_array(design.design):
             else:
                 offset = 1
             name = "write_driver{}".format(self.columns + i)
-            self.driver_insts[index]=self.add_inst(name=name,
-                                                   mod=self.driver)
+            self.driver_insts.append(self.add_inst(name=name,
+                                                   mod=self.driver))
 
             self.connect_inst([self.data_name + "_{0}".format(index),
                                self.get_bl_name() + "_{0}".format(index),
@@ -155,30 +150,31 @@ class write_driver_array(design.design):
                                self.en_name + "_{0}".format(i + offset), "vdd", "gnd"])
 
     def place_write_array(self):
-        from tech import cell_properties
         if self.bitcell.width > self.driver.width:
             self.driver_spacing = self.bitcell.width
         else:
             self.driver_spacing = self.driver.width
-        for i in range(0, self.columns, self.words_per_row):
-            index = int(i / self.words_per_row)
-            xoffset = i * self.driver_spacing
 
-            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+        if not self.offsets:
+            self.offsets = []
+            for i in range(self.columns + self.num_spare_cols):
+                self.offsets.append(i * self.driver_spacing)
+
+        for i, xoffset in enumerate(self.offsets[0:self.columns:self.words_per_row]):
+            if cell_properties.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
                 mirror = ""
 
             base = vector(xoffset, 0)
-            self.driver_insts[index].place(offset=base, mirror=mirror)
+            self.driver_insts[i].place(offset=base, mirror=mirror)
 
         # place spare write drivers (if spare columns are specified)
-        for i in range(self.num_spare_cols):
+        for i, xoffset in enumerate(self.offsets[self.columns:]):
             index = self.word_size + i
-            xoffset = (self.columns + i) * self.driver_spacing
-                
-            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+            
+            if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
@@ -243,12 +239,14 @@ class write_driver_array(design.design):
          
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
-            inst = self.driver_insts[0]
-            en_pin = inst.get_pin(inst.mod.en_name)
+            left_inst = self.driver_insts[0]
+            left_en_pin = left_inst.get_pin(inst.mod.en_name)
+            right_inst = self.driver_insts[-self.num_spare_cols - 1]
+            right_en_pin = right_inst.get_pin(inst.mod.en_name)
             self.add_layout_pin(text=self.en_name + "_{0}".format(0),
                                 layer="m1",
-                                offset=en_pin.ll(),
-                                width=self.width_regular_cols - self.words_per_row * en_pin.width())
+                                offset=left_en_pin.ll(),
+                                width=right_en_pin.rx() - left_en_pin.lx())
 
             # individual enables for every spare write driver
             for i in range(self.num_spare_cols):
@@ -256,7 +254,7 @@ class write_driver_array(design.design):
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + 1),
                                     layer="m1",
-                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
+                                    offset=en_pin.lr() + vector(-drc("minwidth_m1"), 0))
 
         else:
             inst = self.driver_insts[0]
@@ -265,7 +263,3 @@ class write_driver_array(design.design):
                                 offset=inst.get_pin(inst.mod.en_name).ll().scale(0, 1),
                                 width=self.width)
 
-    def get_w_en_cin(self):
-        """Get the relative capacitance of all the enable connections in the bank"""
-        # The enable is connected to a nand2 for every row.
-        return self.driver.get_w_en_cin() * len(self.driver_insts)

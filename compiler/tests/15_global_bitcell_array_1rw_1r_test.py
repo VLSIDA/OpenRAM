@@ -15,8 +15,8 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 05_local_bitcell_array_test")
-class local_bitcell_array_1rw_1r_test(openram_test):
+# @unittest.skip("SKIPPING 05_global_bitcell_array_test")
+class global_bitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -27,22 +27,14 @@ class local_bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1])
+        debug.info(2, "Testing 2 x 4x4 global bitcell array for cell_1rw_1r")
+        a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], right_rbl=[1])
-        self.local_check(a)
+        # debug.info(2, "Testing 4x4 local bitcell array for 6t_cell with replica column")
+        # a = factory.create(module_type="local_bitcell_array", cols=4, left_rbl=1, rows=4, ports=[0])
+        # self.local_check(a)
         
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0])
-        self.local_check(a)
-
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0], right_rbl=[1])
-        self.local_check(a)
-
         globals.end_openram()
 
 

@@ -101,7 +101,7 @@ def write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name):
         # FIXME: Remove when vdd/gnd connected
         #'lvsAbortOnSupplyError' : 0
 
-    if not final_verification:
+    if not final_verification or not OPTS.route_supplies:
         lvs_runset['cmnVConnectReport']=1
         lvs_runset['cmnVConnectNamesState']='SOME'
         lvs_runset['cmnVConnectNames']='vdd gnd'

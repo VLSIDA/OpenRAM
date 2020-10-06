@@ -16,14 +16,15 @@ from sram_factory import factory
 import debug
 
 
-#@unittest.skip("SKIPPING 22_sram_func_test")
-class sram_1bank_nomux_func_test(openram_test):
+#@unittest.skip("SKIPPING 22_sram_1bank_2mux_func_test")
+class sram_1bank_2mux_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
         
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
@@ -31,10 +32,12 @@ class sram_1bank_nomux_func_test(openram_test):
         reload(characterizer)
         from characterizer import functional
         from sram_config import sram_config
-        c = sram_config(word_size=4,
-                        num_words=16,
+        OPTS.local_array_size = 8
+        OPTS.route_supplies = False
+        c = sram_config(word_size=8,
+                        num_words=32,
                         num_banks=1)
-        c.words_per_row=1
+        c.words_per_row=2
         c.recompute_sizes()
         debug.info(1, "Functional test for sram with "
                    "{} bit words, {} words, {} words per row, {} banks".format(c.word_size,

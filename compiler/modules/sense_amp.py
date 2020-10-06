@@ -82,13 +82,6 @@ class sense_amp(design.design):
         # Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
         total_power = self.return_power()
         return total_power
-
-    def get_en_cin(self):
-        """Get the relative capacitance of sense amp enable gate cin"""
-        pmos_cin = parameter["sa_en_pmos_size"] / drc("minwidth_tx")
-        nmos_cin = parameter["sa_en_nmos_size"] / drc("minwidth_tx")
-        # sen is connected to 2 pmos isolation TX and 1 nmos per sense amp.
-        return 2 * pmos_cin + nmos_cin
     
     def get_enable_name(self):
         """Returns name used for enable net"""

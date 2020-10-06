@@ -4,14 +4,14 @@
 # All rights reserved.
 #
 import debug
-import design
+from bitcell_base_array import bitcell_base_array
 from tech import cell_properties
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
 
 
-class replica_column(design.design):
+class replica_column(bitcell_base_array):
     """
     Generate a replica bitline column for the replica array.
     Rows is the total number of rows i the main array.
@@ -21,7 +21,7 @@ class replica_column(design.design):
     """
 
     def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
-        super().__init__(name)
+        super().__init__(rows=sum(rbl) + rows + 2, cols=1, column_offset=column_offset, name=name)
 
         self.rows = rows
         self.left_rbl = rbl[0]
@@ -60,38 +60,12 @@ class replica_column(design.design):
         self.DRC_LVS()
 
     def add_pins(self):
-        self.bitline_names = [[] for port in self.all_ports]
-        col = 0
-        for port in self.all_ports:
-            self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
-            self.bitline_names[port].append("br_{0}_{1}".format(port, col))
-        self.all_bitline_names = [x for sl in self.bitline_names for x in sl]
+
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
+        self.add_pin_list(self.all_wordline_names, "INPUT")
 
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.wordline_names = [[] for port in self.all_ports]
-            for row in range(self.total_size):
-                for port in self.all_ports:
-                    if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
-                        self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-                    else:
-                        self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
-                        self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
-            self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-            self.add_pin_list(self.all_wordline_names, "INPUT")
-        else:
-            self.wordline_names = [[] for port in self.all_ports]
-            for row in range(self.total_size):
-                for port in self.all_ports:
-                    if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
-                        self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-                    else:
-                        if (row > 0 and row < self.total_size-1):
-                            self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
-                            self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
-
-            self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-            self.add_pin_list(self.all_wordline_names, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -295,8 +269,10 @@ class replica_column(design.design):
             return self.bitline_names[port]
 
     def get_bitcell_pins(self, row, col):
-        """ Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array """
+        """ 
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array 
+        """
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
@@ -307,8 +283,10 @@ class replica_column(design.design):
         return bitcell_pins
 
     def get_bitcell_pins_col_cap(self, row, col):
-        """ Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array """
+        """ 
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array
+        """
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
@@ -318,7 +296,9 @@ class replica_column(design.design):
         return bitcell_pins
 
     def exclude_all_but_replica(self):
-        """Excludes all bits except the replica cell (self.replica_bit)."""
+        """
+        Excludes all bits except the replica cell (self.replica_bit).
+        """
 
         for row, cell in self.cell_inst.items():
             if row != self.replica_bit:

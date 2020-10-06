@@ -27,7 +27,8 @@ class single_bank_1rw_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
+        OPTS.local_array_size = 2
         c = sram_config(word_size=4,
                         num_words=16)
 

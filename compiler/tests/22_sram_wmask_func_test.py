@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 #@unittest.skip("SKIPPING sram_wmask_func_test")
 class sram_wmask_func_test(openram_test):
@@ -29,7 +30,7 @@ class sram_wmask_func_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional, delay
+        from characterizer import functional
         from sram_config import sram_config
         c = sram_config(word_size=8,
                         num_words=16,

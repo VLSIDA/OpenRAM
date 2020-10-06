@@ -5,30 +5,34 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
 from vector import vector
 import debug
 
-class local_bitcell_array(design.design):
+
+class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
-    def __init__(self, rows, cols, rbl, add_rbl=None, name=""):
-        super().__init__(name=name)
-        debug.info(2, "create local array of size {} rows x {} cols words".format(rows, cols))
+    def __init__(self, rows, cols, rbl, left_rbl=[], right_rbl=[], name=""):
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
+        debug.info(2, "Creating {0} {1}x{2} rbl: {3} left_rbl: {4} right_rbl: {5}".format(name,
+                                                                                          rows,
+                                                                                          cols,
+                                                                                          rbl,
+                                                                                          left_rbl,
+                                                                                          right_rbl))
 
         self.rows = rows
         self.cols = cols
         self.rbl = rbl
-        if add_rbl == None:
-            self.add_rbl = rbl
-        else:
-            self.add_rbl = add_rbl
-
+        self.left_rbl = left_rbl
+        self.right_rbl = right_rbl
+        
         debug.check(len(self.all_ports) < 3, "Local bitcell array only supports dual port or less.")
         
         self.create_netlist()
@@ -38,7 +42,7 @@ class local_bitcell_array(design.design):
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         # self.offset_all_coordinates()
-
+        
     def create_netlist(self):
         """ Create and connect the netlist """
         self.add_modules()
@@ -66,53 +70,51 @@ class local_bitcell_array(design.design):
                                             cols=self.cols,
                                             rows=self.rows,
                                             rbl=self.rbl,
-                                            add_rbl=self.add_rbl)
+                                            left_rbl=self.left_rbl,
+                                            right_rbl=self.right_rbl)
         self.add_mod(self.bitcell_array)
 
         self.wl_array = factory.create(module_type="wordline_buffer_array",
                                        rows=self.rows + 1,
                                        cols=self.cols)
         self.add_mod(self.wl_array)
-
+    
     def add_pins(self):
-
-        # Inputs to the wordline driver (by port)
-        self.wordline_names = []
         # Outputs from the wordline driver (by port)
         self.driver_wordline_outputs = []
         # Inputs to the bitcell array (by port)
         self.array_wordline_inputs = []
 
-        for port in self.all_ports:
-            wordline_inputs = []
-            if port == 0:
-                wordline_inputs += [self.bitcell_array.get_rbl_wordline_names(0)[0]]
-            wordline_inputs += self.bitcell_array.get_wordline_names(port)
-            if port == 1:
-                wordline_inputs += [self.bitcell_array.get_rbl_wordline_names(1)[1]]
-            self.wordline_names.append(wordline_inputs)
-            self.driver_wordline_outputs.append([x + "i" for x in self.wordline_names[-1]])
-            
-        self.gnd_wl_names = []
-
-        # Connect unused RBL WL to gnd
-        array_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("rbl")])
-        dummy_rbl_names = set([x for x in self.bitcell_array.get_all_wordline_names() if x.startswith("dummy")])
-        rbl_wl_names = set([x for rbl_port_names in self.wordline_names for x in rbl_port_names if x.startswith("rbl")])
-        self.gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
+        self.wordline_names = self.bitcell_array.wordline_names
+        self.all_wordline_names = self.bitcell_array.all_wordline_names
         
-        self.all_array_wordline_inputs = [x + "i" if x not in self.gnd_wl_names else "gnd" for x in self.bitcell_array.get_all_wordline_names()]
-
         self.bitline_names = self.bitcell_array.bitline_names
-        self.all_array_bitline_names = self.bitcell_array.get_all_bitline_names()
+        self.all_bitline_names = self.bitcell_array.all_bitline_names
+
+        self.rbl_wordline_names = self.bitcell_array.rbl_wordline_names
+        self.all_rbl_wordline_names = self.bitcell_array.all_rbl_wordline_names
+        
+        self.rbl_bitline_names = self.bitcell_array.rbl_bitline_names
+        self.all_rbl_bitline_names = self.bitcell_array.all_rbl_bitline_names
+        
+        self.all_array_wordline_inputs = [x + "i" for x in self.bitcell_array.get_all_wordline_names()]
+        
         # Arrays are always:
         # bit lines (left to right)
         # word lines (bottom to top)
         # vdd
         # gnd
-        self.add_pin_list([x for x in self.all_array_bitline_names if not x.startswith("dummy")], "INOUT")
+        for port in self.left_rbl:
+            self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
+        self.add_pin_list(self.all_bitline_names, "INOUT")
+        for port in self.right_rbl:
+            self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
+        for port in range(self.rbl[0]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
         for port in self.all_ports:
             self.add_pin_list(self.wordline_names[port], "INPUT")
+        for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -120,15 +122,41 @@ class local_bitcell_array(design.design):
         """ Create the module instances used in this design """
 
         self.wl_insts = []
+        self.driver_wordline_outputs = []
         for port in self.all_ports:
-            self.wl_insts.append(self.add_inst(name="wl_driver",
+            self.wl_insts.append(self.add_inst(name="wl_driver{}".format(port),
                                                mod=self.wl_array))
-            self.connect_inst(self.wordline_names[port] + self.driver_wordline_outputs[port] + ["vdd", "gnd"])
+            temp = []
+            temp += [self.get_rbl_wordline_names(port)[port]]
+            if port == 0:
+                temp += self.get_wordline_names(port)
+            else:
+                temp += self.get_wordline_names(port)[::-1]
+            self.driver_wordline_outputs.append([x + "i" for x in temp])
+                
+            temp += self.driver_wordline_outputs[-1]
+            temp += ["vdd", "gnd"]
+            
+            self.connect_inst(temp)
 
         self.bitcell_array_inst = self.add_inst(name="array",
                                                 mod=self.bitcell_array)
+        temp = []
+        for port in self.left_rbl:
+            temp += self.get_rbl_bitline_names(port)
+        temp += self.all_bitline_names
+        for port in self.right_rbl:
+            temp += self.get_rbl_bitline_names(port)
 
-        self.connect_inst(self.all_array_bitline_names + self.all_array_wordline_inputs + ["vdd", "gnd"])
+        wl_temp = []
+        for port in range(self.rbl[0]):
+            wl_temp += [self.get_rbl_wordline_names(port)[port]]
+        wl_temp += self.get_wordline_names()
+        for port in range(self.rbl[0], sum(self.rbl)):
+            wl_temp += [self.get_rbl_wordline_names(port)[port]]
+        temp += [x + "i" for x in wl_temp]
+        temp += ["vdd", "gnd"]
+        self.connect_inst(temp)
 
     def place(self):
         """ Place the bitcelll array to the right of the wl driver. """
@@ -142,41 +170,17 @@ class local_bitcell_array(design.design):
 
         if len(self.all_ports) > 1:
             self.wl_insts[1].place(vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                                          2 * self.cell.height),
-                                   mirror="MY")
+                                          2 * self.cell.height + self.wl_array.height),
+                                   mirror="XY")
 
         self.height = self.bitcell_array.height
-        self.width = self.bitcell_array_inst.rx()
+        self.width = max(self.bitcell_array_inst.rx(), max([x.rx() for x in self.wl_insts]))
 
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-
-        for wl_name in self.gnd_wl_names:
-            pin = self.bitcell_array_inst.get_pin(wl_name)
-            pin_layer = pin.layer
-            layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
-            left_pin_loc = pin.lc()
-            right_pin_loc = pin.rc()
-
-            # Place the pins a track outside of the array
-            left_loc = left_pin_loc - vector(layer_pitch, 0)
-            right_loc = right_pin_loc + vector(layer_pitch, 0)
-            self.add_power_pin("gnd", left_loc, directions=("H", "H"))
-            self.add_power_pin("gnd", right_loc, directions=("H", "H"))
-
-            # Add a path to connect to the array
-            self.add_path(pin_layer, [left_loc, left_pin_loc])
-            self.add_path(pin_layer, [right_loc, right_pin_loc])
-        
     def add_layout_pins(self):
 
         for x in self.get_inouts():
             self.copy_layout_pin(self.bitcell_array_inst, x)
                 
-        for port in self.all_ports:
-            for (x, y) in zip(self.wordline_names[port], self.wl_array.get_inputs()):
-                self.copy_layout_pin(self.wl_insts[port], y, x)
-
         supply_insts = [*self.wl_insts, self.bitcell_array_inst]
         for pin_name in ["vdd", "gnd"]:
             for inst in supply_insts:
@@ -188,8 +192,44 @@ class local_bitcell_array(design.design):
             
     def route(self):
 
+        # Route the global wordlines
         for port in self.all_ports:
-            for (driver_name, net_name) in zip(self.wl_insts[port].mod.get_outputs(), self.driver_wordline_outputs[port]):
+            if port == 0:
+                wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)
+            else:
+                wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)[::-1]
+                
+            wordline_pins = self.wl_array.get_inputs()
+
+            for (wl_name, in_pin_name) in zip(wordline_names, wordline_pins):
+                # wl_pin = self.bitcell_array_inst.get_pin(wl_name)
+                in_pin = self.wl_insts[port].get_pin(in_pin_name)
+                
+                y_offset = in_pin.cy()
+                if port == 0:
+                    y_offset -= 2 * self.m3_pitch
+                else:
+                    y_offset += 2 * self.m3_pitch
+                    
+                self.add_layout_pin_segment_center(text=wl_name,
+                                                   layer="m3",
+                                                   start=vector(self.wl_insts[port].lx(), y_offset),
+                                                   end=vector(self.wl_insts[port].lx() + self.wl_array.width, y_offset))
+                
+                mid = vector(in_pin.cx(), y_offset)
+                self.add_path("m2", [in_pin.center(), mid])
+                
+                self.add_via_stack_center(from_layer=in_pin.layer,
+                                          to_layer="m2",
+                                          offset=in_pin.center())
+                self.add_via_center(self.m2_stack,
+                                    offset=mid)
+
+        # Route the buffers
+        for port in self.all_ports:
+            driver_outputs = self.driver_wordline_outputs[port]
+                
+            for (driver_name, net_name) in zip(self.wl_insts[port].mod.get_outputs(), driver_outputs):
                 array_name = net_name[:-1]
                 out_pin = self.wl_insts[port].get_pin(driver_name)
                 in_pin = self.bitcell_array_inst.get_pin(array_name)
@@ -203,5 +243,46 @@ class local_bitcell_array(design.design):
                     in_loc = in_pin.rc()
                 self.add_path(out_pin.layer, [out_loc, mid_loc, in_loc])
             
-        self.route_unused_wordlines()
-            
+    def get_main_array_top(self):
+        return self.bitcell_array_inst.by() + self.bitcell_array.get_main_array_top()
+
+    def get_main_array_bottom(self):
+        return self.bitcell_array_inst.by() + self.bitcell_array.get_main_array_bottom()
+
+    def get_main_array_left(self):
+        return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_left()
+
+    def get_main_array_right(self):
+        return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_right()
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        # must add the offset of the instance
+        offsets = [self.bitcell_array_inst.lx() + x for x in self.bitcell_array.get_column_offsets()]
+        return offsets
+    
+    def graph_exclude_bits(self, targ_row=None, targ_col=None):
+        """
+        Excludes bits in column from being added to graph except target
+        """
+        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+        
+    def graph_exclude_replica_col_bits(self):
+        """
+        Exclude all but replica in the local array.
+        """
+
+        self.bitcell_array.graph_exclude_replica_col_bits()
+
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        return self.bitcell_array.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name, row, col)
+
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        self.bitcell_array.clear_exclude_bits()
+    

@@ -19,7 +19,6 @@ class bitcell_base_array(design.design):
     def __init__(self, name, rows, cols, column_offset):
         super().__init__(name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
-        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.column_size = cols
         self.row_size = rows
@@ -34,14 +33,19 @@ class bitcell_base_array(design.design):
             self.strap = factory.create(module_type="s8_internal", version="wlstrap")
             self.strap2 = factory.create(module_type="s8_internal", version="wlstrap_p")
 
-        self.create_all_bitline_names()
-        self.create_all_wordline_names()
+        self.wordline_names = [[] for port in self.all_ports]
+        self.all_wordline_names = []
+        self.bitline_names = [[] for port in self.all_ports]
+        self.all_bitline_names = []
+        self.rbl_bitline_names = [[] for port in self.all_ports]
+        self.all_rbl_bitline_names = []
+        self.rbl_wordline_names = [[] for port in self.all_ports]
+        self.all_rbl_wordline_names = []
 
     def get_all_bitline_names(self, prefix=""):
         return [prefix + x for x in self.all_bitline_names]
-
+        
     def create_all_bitline_names(self):
-        self.bitline_names = [[] for port in self.all_ports]
         for col in range(self.column_size):
             for port in self.all_ports:
                 self.bitline_names[port].extend(["bl_{0}_{1}".format(port, col),
@@ -49,11 +53,10 @@ class bitcell_base_array(design.design):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
                 
-    def get_all_wordline_names(self, prefix=""):
-        return [prefix + x for x in self.all_wordline_names]
+    # def get_all_wordline_names(self, prefix=""):
+    #     return [prefix + x for x in self.all_wordline_names]
 
     def create_all_wordline_names(self):
-        self.wordline_names = [[] for port in self.all_ports]
         for row in range(self.row_size):
             for port in self.all_ports:
                 if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
@@ -62,18 +65,6 @@ class bitcell_base_array(design.design):
                     self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
                     self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-        
-    def get_bitline_names(self, port=None):
-        if port == None:
-            return self.all_bitline_names
-        else:
-            return self.bitline_names[port]
-        
-    def get_wordline_names(self, port=None):
-        if port == None:
-            return self.all_wordline_names
-        else:
-            return self.wordline_names[port]
         
     def add_pins(self):
         if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
@@ -102,6 +93,60 @@ class bitcell_base_array(design.design):
 
         return bitcell_pins
 
+    def get_rbl_wordline_names(self, port=None):
+        """ 
+        Return the WL for the given RBL port.
+        """
+        if port == None:
+            return self.all_rbl_wordline_names
+        else:
+            return self.rbl_wordline_names[port]
+
+    def get_rbl_bitline_names(self, port=None):
+        """ Return all the BL for the given RBL port """
+        if port == None:
+            return self.all_rbl_bitline_names
+        else:
+            return self.rbl_bitline_names[port]
+
+    def get_bitline_names(self, port=None):
+        """ Return the regular bitlines for the given port or all"""
+        if port == None:
+            return self.all_bitline_names
+        else:
+            return self.bitline_names[port]
+        
+    def get_all_bitline_names(self, port=None):
+        """ Return ALL the bitline names (including rbl) """
+        temp = []
+        temp.extend(self.get_rbl_bitline_names(0))
+        if port == None:
+            temp.extend(self.all_bitline_names)
+        else:
+            temp.extend(self.bitline_names[port])
+        if len(self.all_ports) > 1:
+            temp.extend(self.get_rbl_bitline_names(1))
+        return temp
+
+    def get_wordline_names(self, port=None):
+        """ Return the regular wordline names """
+        if port == None:
+            return self.all_wordline_names
+        else:
+            return self.wordline_names[port]
+    
+    def get_all_wordline_names(self, port=None):
+        """ Return all the wordline names """
+        temp = []
+        temp.extend(self.get_rbl_wordline_names(0))
+        if port == None:
+            temp.extend(self.all_wordline_names)
+        else:
+            temp.extend(self.wordline_names[port])
+        if len(self.all_ports) > 1:
+            temp.extend(self.get_rbl_wordline_names(1))
+        return temp
+        
     def add_layout_pins(self):
         """ Add the layout pins """
         if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
@@ -224,3 +269,10 @@ class bitcell_base_array(design.design):
         else:
             from tech import custom_cell_placement
             custom_cell_placement(self)
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        offsets = [self.cell_inst[0, col].lx() for col in range(self.column_size)]
+        return offsets

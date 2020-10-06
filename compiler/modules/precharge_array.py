@@ -10,7 +10,7 @@ import debug
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
-from tech import layer
+from tech import cell_properties
 
 
 class precharge_array(design.design):
@@ -19,12 +19,13 @@ class precharge_array(design.design):
     of bit line columns, height is the height of the bit-cell array.
     """
 
-    def __init__(self, name, columns, size=1, bitcell_bl="bl", bitcell_br="br", column_offset=0):
+    def __init__(self, name, columns, offsets=None, size=1, bitcell_bl="bl", bitcell_br="br", column_offset=0):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
         
         self.columns = columns
+        self.offsets = offsets
         self.size = size
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
@@ -62,10 +63,11 @@ class precharge_array(design.design):
         self.create_insts()
         
     def create_layout(self):
-        self.width = self.columns * self.pc_cell.width
+        self.place_insts()
+        
+        self.width = self.offsets[-1] + self.pc_cell.width
         self.height = self.pc_cell.height
 
-        self.place_insts()
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -112,26 +114,20 @@ class precharge_array(design.design):
 
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
-        from tech import cell_properties
-        xoffset = 0
-        for i in range(self.columns):
-            tempx = xoffset
+        
+        # Default to single spaced columns
+        if not self.offsets:
+            self.offsets = [n * self.pc_cell.width for n in range(self.columns)]
+
+        for i, xoffset in enumerate(self.offsets):
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
-                tempx = tempx + self.pc_cell.width
+                tempx = xoffset + self.pc_cell.width
             else:
                 mirror = ""
+                tempx = xoffset
 
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
-            xoffset = xoffset + self.pc_cell.width
 
-    def get_en_cin(self):
-        """
-        Get the relative capacitance of all the clk connections
-        in the precharge array
-        """
-        # Assume single port
-        precharge_en_cin = self.pc_cell.get_en_cin()
-        return precharge_en_cin * self.columns
         

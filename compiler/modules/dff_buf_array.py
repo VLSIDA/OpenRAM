@@ -227,9 +227,3 @@ class dff_buf_array(design.design):
                 # Drop a via to the M3 pin
                 self.add_via_center(layers=self.m2_stack,
                                     offset=vector(clk_pin.cx(), clk_ypos))
-                
-    def get_clk_cin(self):
-        """Return the total capacitance (in relative units) that the clock is loaded by in the dff array"""
-        dff_clk_cin = self.dff.get_clk_cin()
-        total_cin = dff_clk_cin * self.rows * self.columns
-        return total_cin

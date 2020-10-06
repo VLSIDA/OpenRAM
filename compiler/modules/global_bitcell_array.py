@@ -5,34 +5,28 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
 from vector import vector
 import debug
+from numpy import cumsum
 
 
-class global_bitcell_array(design.design):
+class global_bitcell_array(bitcell_base_array.bitcell_base_array):
     """
     Creates a global bitcell array.
     Rows is an integer number for all local arrays.
     Cols is a list of the array widths.
-    add_left_rbl and add_right_
     """
-    def __init__(self, rows, cols, ports, name=""):
+    def __init__(self, rows, cols, name=""):
         # The total of all columns will be the number of columns
-        super().__init__(name=name)
-        self.cols = cols
-        self.rows = rows
-        self.all_ports = ports
+        super().__init__(name=name, rows=rows, cols=sum(cols), column_offset=0)
+        self.column_sizes = cols
+        self.col_offsets = [0] + list(cumsum(cols)[:-1])
 
-        debug.check(len(ports)<=2, "Only support dual port or less in global bitcell array.")
+        debug.check(len(self.all_ports)<=2, "Only support dual port or less in global bitcell array.")
         self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
-        self.left_rbl = self.rbl[0]
-        self.right_rbl = self.rbl[1]
-
-        # Just used for pin names
-        self.cell = factory.create(module_type="bitcell")
         
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -48,6 +42,8 @@ class global_bitcell_array(design.design):
 
         self.place()
 
+        self.route()
+        
         self.add_layout_pins()
 
         self.add_boundary()
@@ -58,21 +54,46 @@ class global_bitcell_array(design.design):
         """ Add the modules used in this design """
         self.local_mods = []
 
-        for i, cols in enumerate(self.cols):
-            # Always add the left RBLs to the first subarray and the right RBLs to the last subarray
+        # Special case of a single local array
+        # so it should contain the left and possibly right RBL
+        if len(self.column_sizes) == 1:
+            la = factory.create(module_type="local_bitcell_array",
+                                rows=self.row_size,
+                                cols=self.column_sizes[0],
+                                rbl=self.rbl,
+                                left_rbl=[0],
+                                right_rbl=[1] if len(self.all_ports) > 1 else [])
+            self.add_mod(la)
+            self.local_mods.append(la)
+            return
+
+        for i, cols in enumerate(self.column_sizes):
+            # Always add the left RBLs to the first subarray
             if i == 0:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[self.left_rbl, 0])
-            elif i == len(self.cols) - 1:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, self.right_rbl])
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl,
+                                    left_rbl=[0])
+            # Add the right RBL to the last subarray
+            elif i == len(self.column_sizes) - 1 and len(self.all_ports) > 1:
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl,
+                                    right_rbl=[1])
+            # Middle subarrays do not have any RBLs
             else:
-                la = factory.create(module_type="local_bitcell_array", rows=self.rows, cols=cols, rbl=self.rbl, add_rbl=[0, 0])
+                la = factory.create(module_type="local_bitcell_array",
+                                    rows=self.row_size,
+                                    cols=cols,
+                                    rbl=self.rbl)
                 
             self.add_mod(la)
             self.local_mods.append(la)
 
-        
     def add_pins(self):
-        return
+
         self.add_bitline_pins()
         self.add_wordline_pins()
 
@@ -80,60 +101,96 @@ class global_bitcell_array(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
+        self.bitline_names = [[] for x in self.all_ports]
+        self.rbl_bitline_names = [[] for x in self.all_ports]
 
         for port in self.all_ports:
-            self.add_pin_list(self.replica_bitline_names[port], "INOUT")
-        self.add_pin_list(self.bitline_names, "INOUT")
+            self.rbl_bitline_names[0].append("rbl_bl_{}_0".format(port))
+        for port in self.all_ports:
+            self.rbl_bitline_names[0].append("rbl_br_{}_0".format(port))
+        
+        for col in range(self.column_size):
+            for port in self.all_ports:
+                self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
+            for port in self.all_ports:
+                self.bitline_names[port].append("br_{0}_{1}".format(port, col))
+
+        if len(self.all_ports) > 1:
+            for port in self.all_ports:
+                self.rbl_bitline_names[1].append("rbl_bl_{}_1".format(port))
+            for port in self.all_ports:
+                self.rbl_bitline_names[1].append("rbl_br_{}_1".format(port))
+                
+        # Make a flat list too
+        self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
+        # Make a flat list too
+        self.all_rbl_bitline_names = [x for sl in zip(*self.rbl_bitline_names) for x in sl]
+
+        self.add_pin_list(self.rbl_bitline_names[0], "INOUT")
+        self.add_pin_list(self.all_bitline_names, "INOUT")
+        if len(self.all_ports) > 1:
+            self.add_pin_list(self.rbl_bitline_names[1], "INOUT")
             
     def add_wordline_pins(self):
 
-        # All wordline names for all ports
-        self.wordline_names = []
-        # Wordline names for each port
-        self.wordline_names_by_port = [[] for x in self.all_ports]
-        # Replica wordlines by port
-        self.replica_wordline_names = [[] for x in self.all_ports]
+        self.rbl_wordline_names = [[] for x in self.all_ports]
+        
+        self.wordline_names = [[] for x in self.all_ports]
 
-        # Regular array wordline names
-        self.bitcell_array_wordline_names = self.bitcell_array.get_all_wordline_names()
-        
-        self.wordline_names = []
-        
-        # Left port WLs 
-        for port in range(self.left_rbl):
-            # Make names for all RBLs
-            wl_names=["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
-            # Keep track of the pin that is the RBL
-            self.replica_wordline_names[port] = wl_names
-            self.wordline_names.extend(wl_names)
+        for bit in self.all_ports:
+            for port in self.all_ports:
+                self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
             
+        self.all_rbl_wordline_names = [x for sl in zip(*self.rbl_wordline_names) for x in sl]
+        
         # Regular WLs
-        self.wordline_names.extend(self.bitcell_array_wordline_names)
-        
-        # Right port WLs
-        for port in range(self.left_rbl, self.left_rbl + self.right_rbl):
-            # Make names for all RBLs
-            wl_names=["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
-            # Keep track of the pin that is the RBL
-            self.replica_wordline_names[port] = wl_names
-            self.wordline_names.extend(wl_names)
-            
-        # Array of all port wl names
-        for port in range(self.left_rbl + self.right_rbl):
-            wl_names = ["rbl_{0}_{1}".format(x, port) for x in self.cell.get_all_wl_names()]
-            self.replica_wordline_names[port] = wl_names
+        for row in range(self.row_size):
+            for port in self.all_ports:
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 
-        self.add_pin_list(self.wordline_names, "INPUT")
+        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
 
-        
+        for port in range(self.rbl[0]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
+        self.add_pin_list(self.all_wordline_names, "INPUT")
+        for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
+            self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
+
     def create_instances(self):
         """ Create the module instances used in this design """
         self.local_insts = []
-        for i, mod in enumerate(self.local_mods):
-            name = "la_{0}".format(i)
+        for col, mod in zip(self.col_offsets, self.local_mods):
+            name = "la_{0}".format(col)
             self.local_insts.append(self.add_inst(name=name,
-                                                 mod=mod))
-            self.connect_inst(mod.pins)
+                                                  mod=mod))
+            
+            temp = []
+            if col == 0:
+                temp.extend(self.get_rbl_bitline_names(0))
+        
+            port_inouts = [x for x in mod.get_inouts() if x.startswith("bl") or x.startswith("br")]
+            for pin_name in port_inouts:
+                # Offset of the last underscore that defines the bit number
+                bit_index = pin_name.rindex('_')
+                # col is the bit offset of the local array,
+                # while col_value is the offset within this array
+                col_value = int(pin_name[bit_index + 1:])
+                # Name of signal without the bit
+                base_name = pin_name[:bit_index]
+                # Strip the bit and add the new one
+                new_name = "{0}_{1}".format(base_name, col + col_value)
+                temp.append(new_name)
+            
+            if len(self.all_ports) > 1 and mod == self.local_mods[-1]:
+                temp.extend(self.get_rbl_bitline_names(1))
+
+            for port in self.all_ports:
+                port_inputs = [x for x in mod.get_inputs() if "wl_{}".format(port) in x]
+                temp.extend(port_inputs)
+                    
+            temp.append("vdd")
+            temp.append("gnd")
+            self.connect_inst(temp)
         
     def place(self):
         offset = vector(0, 0)
@@ -144,5 +201,136 @@ class global_bitcell_array(design.design):
         self.height = self.local_mods[0].height
         self.width = self.local_insts[-1].rx()
 
-    def add_layout_pins(self):
+    def route(self):
+
         pass
+    
+    def add_layout_pins(self):
+
+        # Regular bitlines
+        for col, inst in zip(self.col_offsets, self.local_insts):
+            for port in self.all_ports:
+                port_inouts = [x for x in inst.mod.get_inouts() if x.startswith("bl_{}".format(port)) or x.startswith("br_{}".format(port))]
+                for pin_name in port_inouts:
+                    # Offset of the last underscore that defines the bit number
+                    bit_index = pin_name.rindex('_')
+                    # col is the bit offset of the local array,
+                    # while col_value is the offset within this array
+                    col_value = int(pin_name[bit_index + 1:])
+                    # Name of signal without the bit
+                    base_name = pin_name[:bit_index]
+                    # Strip the bit and add the new one
+                    new_name = "{0}_{1}".format(base_name, col + col_value)
+                    self.copy_layout_pin(inst, pin_name, new_name)
+
+        for wl_name in self.local_mods[0].get_inputs():
+            left_pin = self.local_insts[0].get_pin(wl_name)
+            right_pin = self.local_insts[-1].get_pin(wl_name)
+            self.add_layout_pin_segment_center(text=wl_name,
+                                               layer=left_pin.layer,
+                                               start=left_pin.lc(),
+                                               end=right_pin.rc())
+                    
+        # Replica bitlines
+        self.copy_layout_pin(self.local_insts[0], "rbl_bl_0_0")
+        self.copy_layout_pin(self.local_insts[0], "rbl_br_0_0")
+        
+        if len(self.all_ports) > 1:
+            self.copy_layout_pin(self.local_insts[0], "rbl_bl_1_0")
+            self.copy_layout_pin(self.local_insts[0], "rbl_br_1_0")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_0_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_bl_1_1")
+            self.copy_layout_pin(self.local_insts[-1], "rbl_br_1_1")
+
+        for inst in self.insts:
+            self.copy_power_pins(inst, "vdd")
+            self.copy_power_pins(inst, "gnd")
+
+    def get_main_array_top(self):
+        return self.local_insts[0].offset.y + self.local_mods[0].get_main_array_top()
+
+    def get_main_array_bottom(self):
+        return self.local_insts[0].offset.y + self.local_mods[0].get_main_array_bottom()
+
+    def get_main_array_left(self):
+        return self.local_insts[0].offset.x + self.local_mods[0].get_main_array_left()
+
+    def get_main_array_right(self):
+        return self.local_insts[-1].offset.x + self.local_mods[-1].get_main_array_right()
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        offsets = []
+        for inst in self.local_insts:
+            offsets.extend(inst.lx() + x for x in inst.mod.get_column_offsets())
+        return offsets
+
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """ 
+        Excludes bits in column from being added to graph except target 
+        """
+        
+        # This must find which local array includes the specified column
+        # Find the summation of columns that is large and take the one before
+        for i, col in enumerate(self.col_offsets):
+            if col > targ_col:
+                break
+        else:
+            i = len(self.local_mods)
+
+        # This is the array with the column
+        local_array = self.local_mods[i - 1]
+        # We must also translate the global array column number to the local array column number
+        local_col = targ_col - self.col_offsets[i - 1]
+
+        for mod in self.local_mods:
+            if mod == local_array:
+                mod.graph_exclude_bits(targ_row, local_col)
+            else:
+                # Otherwise, we exclude ALL of the rows/columns
+                mod.graph_exclude_bits()
+
+    def graph_exclude_replica_col_bits(self):
+        """
+        Exclude all but replica in every local array.
+        """
+
+        for mod in self.local_mods:
+            mod.graph_exclude_replica_col_bits()
+
+    def get_cell_name(self, inst_name, row, col):
+        """Gets the spice name of the target bitcell."""
+        
+        # This must find which local array includes the specified column
+        # Find the summation of columns that is large and take the one before
+        for i, local_col in enumerate(self.col_offsets):
+            if local_col > col:
+                break
+        else:
+            # In this case, we it should be in the last bitcell array
+            i = len(self.col_offsets)
+
+        # This is the local instance
+        local_inst = self.local_insts[i - 1]
+        # This is the array with the column
+        local_array = self.local_mods[i - 1]
+        # We must also translate the global array column number to the local array column number
+        local_col = col - self.col_offsets[i - 1]
+
+        return local_array.get_cell_name(inst_name + '.x' + local_inst.name, row, local_col)
+            
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        for mod in self.local_mods:
+            mod.clear_exclude_bits()
+
+    def graph_exclude_dffs(self):
+        """Exclude dffs from graph as they do not represent critical path"""
+        
+        self.graph_inst_exclude.add(self.ctrl_dff_inst)
+            

@@ -414,7 +414,7 @@ class sram_1bank(sram_base):
                                              layer_stack=self.m1_stack,
                                              parent=self)
             if add_routes:
-                self.add_inst("hc", cr)
+                self.add_inst(cr.name, cr)
                 self.connect_inst([])
             else:
                 self.col_addr_bus_size[port] = cr.height
@@ -470,7 +470,7 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst("hc", cr)
+                    self.add_inst(cr.name, cr)
                     self.connect_inst([])
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
@@ -482,7 +482,7 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst("hc", cr)
+                    self.add_inst(cr.name, cr)
                     self.connect_inst([])
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
@@ -542,7 +542,9 @@ class sram_1bank(sram_base):
                               [data_dff_clk_pos, mid_pos, clk_steiner_pos])
 
     def route_control_logic(self):
-        """ Route the control logic pins that are not inputs """
+        """
+        Route the control logic pins that are not inputs
+        """
 
         for port in self.all_ports:
             for signal in self.control_logic_outputs[port]:
@@ -567,7 +569,9 @@ class sram_1bank(sram_base):
                                       offset=dest_pin.center())
             
     def route_row_addr_dff(self):
-        """ Connect the output of the row flops to the bank pins """
+        """ 
+        Connect the output of the row flops to the bank pins
+        """
         for port in self.all_ports:
             for bit in range(self.row_addr_size):
                 flop_name = "dout_{}".format(bit)
@@ -600,7 +604,9 @@ class sram_1bank(sram_base):
                            offset=pin.center())
                            
     def graph_exclude_data_dff(self):
-        """Removes data dff and wmask dff (if applicable) from search graph. """
+        """
+        Removes data dff and wmask dff (if applicable) from search graph.
+        """
         # Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
@@ -612,7 +618,9 @@ class sram_1bank(sram_base):
                 self.graph_inst_exclude.add(inst)
     
     def graph_exclude_addr_dff(self):
-        """Removes data dff from search graph. """
+        """
+        Removes data dff from search graph.
+        """
         # Address is considered not part of the critical path, subjectively removed
         for inst in self.row_addr_dff_insts:
             self.graph_inst_exclude.add(inst)
@@ -622,31 +630,21 @@ class sram_1bank(sram_base):
                 self.graph_inst_exclude.add(inst)
 
     def graph_exclude_ctrl_dffs(self):
-        """Exclude dffs for CSB, WEB, etc from graph"""
+        """
+        Exclude dffs for CSB, WEB, etc from graph
+        """
         # Insts located in control logic, exclusion function called here
         for inst in self.control_logic_insts:
             inst.mod.graph_exclude_dffs()
-            
-    def get_sen_name(self, sram_name, port=0):
-        """Returns the s_en spice name."""
-        # Naming scheme is hardcoded using this function, should be built into the
-        # graph in someway.
-        sen_name = "s_en{}".format(port)
-        control_conns = self.get_conns(self.control_logic_insts[port])
-        # Sanity checks
-        if sen_name not in control_conns:
-            debug.error("Signal={} not contained in control logic connections={}".format(sen_name,
-                                                                                         control_conns))
-        if sen_name in self.pins:
-            debug.error("Internal signal={} contained in port list. Name defined by the parent.".format(sen_name))
-        return "X{}.{}".format(sram_name, sen_name)
         
     def get_cell_name(self, inst_name, row, col):
-        """Gets the spice name of the target bitcell."""
+        """
+        Gets the spice name of the target bitcell.
+        """
         # Sanity check in case it was forgotten
-        if inst_name.find('x') != 0:
-            inst_name = 'x'+inst_name
-        return self.bank_inst.mod.get_cell_name(inst_name+'.x'+self.bank_inst.name, row, col)
+        if inst_name.find("x") != 0:
+            inst_name = "x" + inst_name
+        return self.bank_inst.mod.get_cell_name(inst_name + ".x" + self.bank_inst.name, row, col)
     
     def get_bank_num(self, inst_name, row, col):
-        return 0;
+        return 0

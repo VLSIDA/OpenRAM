@@ -150,7 +150,3 @@ class dff_inv(design.design):
                                         offset=dout_pin.center())
         self.add_via_center(layers=self.m1_stack,
                             offset=dout_pin.center())
-    
-    def get_clk_cin(self):
-        """Return the total capacitance (in relative units) that the clock is loaded by in the dff"""
-        return self.dff.get_clk_cin()

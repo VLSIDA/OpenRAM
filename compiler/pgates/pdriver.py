@@ -169,23 +169,3 @@ class pdriver(pgate.pgate):
         """ Return the relative sizes of the buffers """
         return self.size_list
     
-    def get_stage_efforts(self, external_cout, inp_is_rise=False):
-        """ Get the stage efforts of the A -> Z path """
-        cout_list = []
-        for prev_inv, inv in zip(self.inv_list, self.inv_list[1:]):
-            cout_list.append(inv.get_cin())
-        
-        cout_list.append(external_cout)
-        
-        stage_effort_list = []
-        last_inp_is_rise = inp_is_rise
-        for inv, cout in zip(self.inv_list, cout_list):
-            stage = inv.get_stage_effort(cout, last_inp_is_rise)
-            stage_effort_list.append(stage)
-            last_inp_is_rise = stage.is_rise
-            
-        return stage_effort_list
-
-    def get_cin(self):
-        """ Returns the relative capacitance of the input """
-        return self.inv_list[0].get_cin()

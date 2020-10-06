@@ -109,12 +109,13 @@ class wordline_buffer_array(design.design):
     def place_drivers(self):
 
         for row in range(self.rows):
+            # These are flipped since we always start with an RBL on the bottom
             if (row % 2):
-                y_offset = self.wl_driver.height * (row + 1)
-                inst_mirror = "MX"
-            else:
                 y_offset = self.wl_driver.height * row
                 inst_mirror = "R0"
+            else:
+                y_offset = self.wl_driver.height * (row + 1)
+                inst_mirror = "MX"
 
             offset = [0, y_offset]
             

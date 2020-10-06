@@ -82,7 +82,11 @@ def parse_args():
                              "--dontpurge",
                              action="store_false",
                              dest="purge_temp",
-                             help="Don't purge the contents of the temp directory after a successful run")
+                             help="Don't purge the contents of the temp directory after a successful run"),
+        optparse.make_option(
+                             "--num_threads",
+                             dest="num_threads",
+                             help="Number of threads used by simulator. Default is 2")
         # -h --help is implicit.
     }
 

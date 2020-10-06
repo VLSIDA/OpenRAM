@@ -441,8 +441,8 @@ class delay(simulation):
         """Get the measurement values that can either vary port to port (time delays)"""
         
         # Return value is intended to match the power measure format:  t_initial, t_final, port
-        t_initial = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]]
-        t_final = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]+1]
+        t_initial = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]]-self.slew/2-self.period*0.05
+        t_final = self.cycle_times[self.measure_cycles[port][power_obj.meta_str]+1]-self.slew/2-self.period*0.05
     
         return (t_initial, t_final, port)
     
@@ -526,7 +526,7 @@ class delay(simulation):
         t_final = 2*self.period
         self.stim.gen_meas_power(meas_name="leakage_power",
                                  t_initial=t_initial,
-                                 t_final=t_final)
+                                 t_final=t_final, leakage=True)
         
     def find_feasible_period_one_port(self, port):
         """

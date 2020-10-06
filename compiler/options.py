@@ -107,6 +107,9 @@ class options(optparse.Values):
     spice_name = ""
     # The spice executable being used which is derived from the user PATH.
     spice_exe = ""
+
+    # Thread number for hspice and alps
+    num_threads = 2
     # Variable to select the variant of drc, lvs, pex
     drc_name = ""
     lvs_name = ""

@@ -14,7 +14,7 @@ from globals import OPTS
 from tech import cell_properties
 
 
-class single_level_column_mux_array(design.design):
+class column_mux_array(design.design):
     """
     Dynamically generated column mux array.
     Array of column mux to read the bitlines through the 6T.
@@ -89,7 +89,7 @@ class single_level_column_mux_array(design.design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        self.mux = factory.create(module_type="single_level_column_mux",
+        self.mux = factory.create(module_type="column_mux",
                                   bitcell_bl=self.bitcell_bl,
                                   bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)

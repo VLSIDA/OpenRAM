@@ -533,6 +533,9 @@ class bank(design.design):
         elif self.col_addr_size == 3:
             self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
                                                  height=self.dff.height)
+        elif self.col_addr_size == 4:
+            self.column_decoder = factory.create(module_type="hierarchical_predecode4x16",
+                                                 height=self.dff.height)
         else:
             # No error checking before?
             debug.error("Invalid column decoder?", -1)

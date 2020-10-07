@@ -290,8 +290,10 @@ class replica_column(bitcell_base_array):
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
-        bitcell_pins.append("vdd")
-        bitcell_pins.append("gnd")
+        if len(self.edge_cell.get_pins("vdd")) > 0:
+            bitcell_pins.append("vdd")
+        if len(self.edge_cell.get_pins("gnd")) > 0:
+            bitcell_pins.append("gnd")
 
         return bitcell_pins
 

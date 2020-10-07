@@ -10,14 +10,13 @@ import debug
 from tech import drc, layer
 from vector import vector
 from sram_factory import factory
-import logical_effort
 from globals import OPTS
 
 
-class single_level_column_mux(pgate.pgate):
+class column_mux(pgate.pgate):
     """
     This module implements the columnmux bitline cell used in the design.
-    Creates a single columnmux cell with the given integer size relative
+    Creates a single column mux cell with the given integer size relative
     to minimum size. Default is 8x. Per Samira and Hodges-Jackson book:
     Column-mux transistors driven by the decoder must be sized
     for optimal speed

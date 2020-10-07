@@ -37,6 +37,7 @@ class layout():
         self.height = None
         self.bounding_box = None
         self.insts = []      # Holds module/cell layout instances
+        self.inst_names = set() # Set of names to check for duplicates
         self.objs = []       # Holds all other objects (labels, geometries, etc)
         self.pin_map = {}    # Holds name->pin_layout map for all pins
         self.visited = []    # List of modules we have already visited
@@ -214,9 +215,9 @@ class layout():
         # Contacts are not really instances, so skip them
         if "contact" not in mod.name:
             # Check that the instance name is unique
-            for inst in self.insts:
-                debug.check(name != inst.name, "Duplicate named instance in {0}: {1}".format(self.name, name))
-            
+            debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.name, name))
+
+        self.inst_names.add(name)
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
         # This is commented out for runtime reasons

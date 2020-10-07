@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -16,18 +16,18 @@ from sram_factory import factory
 import debug
 
 
-class single_level_column_mux_test(openram_test):
+class pnand4_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        # check single level column mux in single port
-        debug.info(2, "Checking column mux")
-        tx = factory.create(module_type="single_level_column_mux", tx_size=8)
+        debug.info(2, "Checking 4-input nand gate")
+        tx = factory.create(module_type="pnand4", size=1)
         self.local_check(tx)
 
         globals.end_openram()
+        
 
 # run the test from the command line
 if __name__ == "__main__":

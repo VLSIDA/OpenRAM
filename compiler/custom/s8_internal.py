@@ -22,18 +22,14 @@ class s8_internal(design.design):
         
         if version == "wlstrap":
             self.name = "s8sram_wlstrap"
-            self.structure = "s8sram_wlstrap_ce\x00"
         elif version == "wlstrap_p":
             self.name = "s8sram16x16_wlstrap_p"
-            self.structure = "s8sram16x16_wlstrap_p_ce"
         elif version == "wlstrapa":
             self.name = "s8sram_wlstrapa"
-            self.structure = "s8sram_wlstrapa_ce"
         else:
             debug.error("Invalid version", -1)
         design.design.__init__(self, name=self.name)
         (self.width, self.height) = utils.get_libcell_size(self.name,
                                         GDS["unit"],
-                                        layer["mem"],
-                                        self.structure)
+                                        layer["mem"])
         pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])

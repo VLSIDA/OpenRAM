@@ -22,16 +22,12 @@ class s8_col_end(design.design):
 
         if version == "colend":
             self.name = "s8sram16x16_colend"
-            structure = "s8sram16x16_colend"
         elif version == "colend_p_cent":
             self.name = "s8sram16x16_colend_p_cent"
-            structure = "s8sram16x16_colend_p_cent\x00"
         elif version == "colenda":
             self.name = "s8sram16x16_colenda"
-            structure = "s8sram16x16_colenda\x00"
         elif version == "colenda_p_cent":
             self.name = "s8sram16x16_colenda_p_cent"
-            structure = "s8sram16x16_colenda_p_cent"
         else:
             debug.error("Invalid type for col_end", -1)
         design.design.__init__(self, name=self.name)

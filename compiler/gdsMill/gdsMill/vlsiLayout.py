@@ -597,20 +597,20 @@ class VlsiLayout:
         if structure == "":
             structure = self.rootStructureName
         cellSizeMicron = None
-        for boundary in self.structures[structure].boundaries:
-            if sameLPP((boundary.drawingLayer, boundary.purposeLayer),
-                       lpp):
-                if self.debug:
-                    debug.info(1, "Find border "+str(boundary.coordinates))
-                left_bottom = boundary.coordinates[0]
-                right_top = boundary.coordinates[2]
-                cellSize = [right_top[0]-left_bottom[0],
-                            right_top[1]-left_bottom[1]]
-                cellSizeMicron = [cellSize[0]*self.units[0],
-                                  cellSize[1]*self.units[0]]
-        debug.check(cellSizeMicron,
-                    "Error: "+str(structure)+".cell_size information not found yet")
 
+        shapes = self.getAllShapes(lpp)
+        if len(shapes) != 1:
+            debug.warning("More than one boundary found in cell: {}".format(structure))
+        debug.check(len(shapes) != 0,
+                    "Error: "+str(structure)+".cell_size information not found yet")
+        max_boundary = None
+        max_area = 0
+        for boundary in shapes:
+            new_area = boundaryArea(boundary)
+            if not max_boundary or new_area > max_area:
+                max_boundary = boundary
+                max_area = new_area
+        cellSizeMicron = [max_boundary[2], max_boundary[3]]
         return cellSizeMicron
 
     def measureSize(self, startStructure):

@@ -41,10 +41,8 @@ class s8_bitcell(bitcell_base.bitcell_base):
 
         if version == "opt1":
             self.name = "s8sram_cell_opt1"
-            self.border_structure = "s8sram_cell"
         elif version == "opt1a":
             self.name = "s8sram_cell_opt1a"
-            self.border_structure = "s8sram_cell"
             
         bitcell_base.bitcell_base.__init__(self, self.name)
         debug.info(2, "Create bitcell")

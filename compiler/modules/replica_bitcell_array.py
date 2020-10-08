@@ -440,7 +440,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
             else:
                 offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - (self.col_end_offset.y/self.cell.height)) + self.strap_offset.scale(bit, -self.rbl[0] - 1)
 
-            self.replica_col_insts[len(self.left_rbl) + bit].place(offset)
+            self.replica_col_insts[self.rbl[0] + bit].place(offset)
 
         # Replica dummy rows
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array

@@ -24,11 +24,11 @@ class s8_dummy_bitcell(bitcell_base.bitcell_base):
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
     else:
-        pin_names = [props.bitcell.cell_6t.pin.bl,
-                    props.bitcell.cell_6t.pin.br,
-                    props.bitcell.cell_6t.pin.wl,
-                    props.bitcell.cell_6t.pin.vdd,
-                    props.bitcell.cell_6t.pin.gnd]
+        pin_names = [props.bitcell.cell_s8_6t.pin.bl,
+                    props.bitcell.cell_s8_6t.pin.br,
+                    props.bitcell.cell_s8_6t.pin.wl,
+                    "vpwr",
+                    "vgnd"]
 
 
 

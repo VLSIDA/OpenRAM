@@ -98,7 +98,7 @@ class dummy_array(bitcell_base_array):
                               height=self.height)
         
         wl_names = self.cell.get_all_wl_names()
-        if not props.compare_ports(props.bitcell_array.use_custom_cell_arrangement):
+        if not props.compare_ports(props.bitcell.split_wl):
             for row in range(self.row_size):
                 for port in self.all_ports:
                     wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])

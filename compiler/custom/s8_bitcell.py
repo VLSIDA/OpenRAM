@@ -27,11 +27,11 @@ class s8_bitcell(bitcell_base.bitcell_base):
         pin_names = ["bl0", "bl1", "wl0", "wl1", "vpwr", "vgnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
     else:
-        pin_names = [props.bitcell.cell_6t.pin.bl,
-                     props.bitcell.cell_6t.pin.br,
-                     props.bitcell.cell_6t.pin.wl,
-                     props.bitcell.cell_6t.pin.vdd,
-                     props.bitcell.cell_6t.pin.gnd]
+        pin_names = [props.bitcell.cell_s8_6t.pin.bl,
+                     props.bitcell.cell_s8_6t.pin.br,
+                     props.bitcell.cell_s8_6t.pin.wl,
+                     "vpwr",
+                     "vgnd"]
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
@@ -61,15 +61,12 @@ class s8_bitcell(bitcell_base.bitcell_base):
                                         layer["mem"],
                                         "s8sram_cell\x00")
 
-
-        #debug.check(OPTS.tech_name != "sky130", "sky130 does not yet support single port cells")
-              
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         if props.compare_ports(props.bitcell.split_wl):
             row_pins = ["wl0", "wl1"]
         else:
-            row_pins = [props.bitcell.s8_sp.pin.wl]
+            row_pins = [props.bitcell.cell_s8_6t.pin.wl]
         return row_pins
 
     def get_all_bitline_names(self):

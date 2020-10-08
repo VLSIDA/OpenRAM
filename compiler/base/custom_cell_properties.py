@@ -45,8 +45,7 @@ class _bitcell:
 
         cell_s8_6t = _cell({'bl' : 'bl0',
                             'br' : 'bl1',
-                            'wl0': 'wl0',
-                            'wl1': 'wl1'})
+                            'wl': 'wl'})
 
         cell_6t = _cell({'bl' : 'bl',
                          'br' : 'br',

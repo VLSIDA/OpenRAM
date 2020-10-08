@@ -62,7 +62,11 @@ class replica_column(bitcell_base_array):
     def add_pins(self):
 
         self.create_all_bitline_names()
-        self.create_all_wordline_names()
+        #remove 2 wordlines to account for top/bot
+        if not cell_properties.bitcell.end_caps:
+            self.create_all_wordline_names()
+        else:
+            self.create_all_wordline_names(2)
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
 

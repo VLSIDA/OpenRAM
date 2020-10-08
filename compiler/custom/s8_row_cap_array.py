@@ -130,10 +130,9 @@ class s8_row_cap_array(design.design):
 
 
     def add_pins(self):
-        for row in range(self.rows):
+        for row in range(self.rows - 2):
             for port in self.all_ports:
-                self.add_pin("wl0_{}_{}".format(port, row), "OUTPUT")
-                self.add_pin("wl1_{}_{}".format(port, row), "OUTPUT")
+                self.add_pin("wl_{}_{}".format(port, row), "OUTPUT")
         self.add_pin("vpwr", "POWER")
         self.add_pin("vgnd", "GROUND")
 

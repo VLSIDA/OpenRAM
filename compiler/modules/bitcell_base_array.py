@@ -56,31 +56,29 @@ class bitcell_base_array(design.design):
     # def get_all_wordline_names(self, prefix=""):
     #     return [prefix + x for x in self.all_wordline_names]
 
-    def create_all_wordline_names(self):
-        for row in range(self.row_size):
+    def create_all_wordline_names(self, remove_wordline = 0):
+        for row in range(self.row_size - remove_wordline):
             for port in self.all_ports:
                 if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
                     self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
                 else:
                     self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
                     self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
+                    
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
-        
+
     def add_pins(self):
+        for bl_name in self.get_bitline_names():
+            self.add_pin(bl_name, "INOUT")
+        for wl_name in self.get_wordline_names():
+            self.add_pin(wl_name, "INPUT")
         if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            for bl_name in self.get_bitline_names():
-                self.add_pin(bl_name, "INOUT")
-            for wl_name in self.get_wordline_names():
-                self.add_pin(wl_name, "INPUT")
             self.add_pin("vdd", "POWER")
             self.add_pin("gnd", "GROUND")
         else:
-            for bl_name in self.get_bitline_names():
-                self.add_pin(bl_name, "INOUT")
-            for wl_name in self.get_wordline_names():
-                self.add_pin(wl_name, "INPUT")
             self.add_pin("vpwr", "POWER")
             self.add_pin("vgnd", "GROUND")
+            
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """

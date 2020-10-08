@@ -21,6 +21,7 @@ class s8_col_cap_array(design.design):
         self.column_offset = column_offset
         self.mirror = mirror
         self.no_instances = True
+        self.all_wordline_names = []
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

@@ -7,6 +7,7 @@
 #
 import design
 import debug
+import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
@@ -18,7 +19,7 @@ class write_mask_and_array(design.design):
     The write mask AND array goes between the write driver array and the sense amp array.
     """
 
-    def __init__(self, name, columns, word_size, write_size, column_offset=0):
+    def __init__(self, name, columns, word_size, write_size, offsets=None, column_offset=0):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("columns: {0}".format(columns))
@@ -28,9 +29,10 @@ class write_mask_and_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.write_size = write_size
+        self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
-        self.num_wmasks = int(word_size / write_size)
+        self.num_wmasks = int(math.ceil(word_size / write_size))
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -90,12 +92,17 @@ class write_mask_and_array(design.design):
         debug.check(self.wmask_en_len >= self.and2.width,
                     "Write mask AND is wider than the corresponding write drivers {0} vs {1}.".format(self.and2.width,
                                                                                                       self.wmask_en_len))
-
-        self.width = self.bitcell.width * self.columns
+        if not self.offsets:
+            self.offsets = []
+            for i in range(self.columns):
+                self.offsets.append(i * self.driver_spacing)
+        
+        self.width = self.offsets[-1] + self.driver_spacing
         self.height = self.and2.height
 
+        write_bits = self.columns / self.num_wmasks
         for i in range(self.num_wmasks):
-            base = vector(i * self.wmask_en_len, 0)
+            base = vector(self.offsets[int(i * write_bits)], 0)
             self.and2_insts[i].place(base)
 
     def add_layout_pins(self):
@@ -140,8 +147,3 @@ class write_mask_and_array(design.design):
             supply_pin_left = self.and2_insts[0].get_pin(supply)
             supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
             self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
-
-    def get_cin(self):
-        """Get the relative capacitance of all the input connections in the bank"""
-        # The enable is connected to an and2 for every row.
-        return self.and2.get_cin() * len(self.and2_insts)

@@ -100,7 +100,7 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
         pre = "#"
     else:
         pre = ""
-    if final_verification:
+    if final_verification and OPTS.route_supplies:
         f.write(pre + "extract unique all\n".format(cell_name))
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":
@@ -295,11 +295,8 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
 
     global num_pex_runs
     num_pex_runs += 1
-    #debug.warning("PEX using magic not implemented.")
-    #return 1
     os.chdir(OPTS.openram_temp)
 
-    from tech import drc
     if output == None:
         output = name + ".pex.netlist"
 
@@ -312,17 +309,11 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     # pex_fix did run the pex using a script while dev orignial method
     # use batch mode.
     # the dev old code using batch mode does not run and is split into functions
-    #pex_runset = write_batch_pex_rule(gds_name,name,sp_name,output)
-    pex_runset = write_script_pex_rule(gds_name,name,output)
+    pex_runset = write_script_pex_rule(gds_name, name, output)
 
     errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
     outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
 
-    # bash mode command from dev branch
-    #batch_cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.pex_exe,
-    #                                                                OPTS.openram_temp,
-    #                                                                errfile,
-    #                                                                outfile)
     script_cmd = "{0} 2> {1} 1> {2}".format(pex_runset,
                                             errfile,
                                             outfile)
@@ -334,8 +325,8 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     pex_nelist = open(output, 'r')
     s = pex_nelist.read()
     pex_nelist.close()
-    s = s.replace('pfet','p')
-    s = s.replace('nfet','n')
+    s = s.replace('pfet', 'p')
+    s = s.replace('nfet', 'n')
     f = open(output, 'w')
     f.write(s)
     f.close()
@@ -345,12 +336,13 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     results = f.readlines()
     f.close()
     out_errors = find_error(results)
-    debug.check(os.path.isfile(output),"Couldn't find PEX extracted output.")
+    debug.check(os.path.isfile(output), "Couldn't find PEX extracted output.")
 
-    correct_port(name,output,sp_name)
+    correct_port(name, output, sp_name)
     return out_errors
 
-def write_batch_pex_rule(gds_name,name,sp_name,output):
+
+def write_batch_pex_rule(gds_name, name, sp_name, output):
     """
     The dev branch old batch mode runset
     2. magic can perform extraction with the following:
@@ -394,7 +386,8 @@ def write_batch_pex_rule(gds_name,name,sp_name,output):
     f.close()
     return file
 
-def write_script_pex_rule(gds_name,cell_name,output):
+
+def write_script_pex_rule(gds_name, cell_name, output):
     global OPTS
     run_file = OPTS.openram_temp + "run_pex.sh"
     f = open(run_file, "w")
@@ -412,22 +405,28 @@ def write_script_pex_rule(gds_name,cell_name,output):
         pre = "#"
     else:
         pre = ""
-    f.write(pre+"extract\n".format(cell_name))
-    f.write(pre+"ext2spice hierarchy off\n")
-    f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice renumber off\n")
-    f.write(pre+"ext2spice scale off\n")
-    f.write(pre+"ext2spice blackbox on\n")
-    f.write(pre+"ext2spice subcircuit top on\n")
-    f.write(pre+"ext2spice global off\n")
-    f.write(pre+"ext2spice {}\n".format(cell_name))
+    f.write(pre + "extract\n")
+    f.write(pre + "ext2sim labels on\n")
+    f.write(pre + "ext2sim\n")
+    f.write(pre + "extresist simplify off\n")
+    f.write(pre + "extresist all\n")
+    f.write(pre + "ext2spice hierarchy off\n")
+    f.write(pre + "ext2spice format ngspice\n")
+    f.write(pre + "ext2spice renumber off\n")
+    f.write(pre + "ext2spice scale off\n")
+    f.write(pre + "ext2spice blackbox on\n")
+    f.write(pre + "ext2spice subcircuit top on\n")
+    f.write(pre + "ext2spice global off\n")
+    f.write(pre + "ext2spice extresist on\n")
+    f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("eof\n")
-    f.write("mv {0}.spice {1}\n".format(cell_name,output))
+    f.write("mv {0}.spice {1}\n".format(cell_name, output))
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
     return run_file
+
 
 def find_error(results):
     # Errors begin with "ERROR:"
@@ -437,6 +436,7 @@ def find_error(results):
         debug.error(e.strip("\n"))
     out_errors = len(stdouterrors)
     return out_errors
+
 
 def correct_port(name, output_file_name, ref_file_name):
     pex_file = open(output_file_name, "r")
@@ -456,9 +456,9 @@ def correct_port(name, output_file_name, ref_file_name):
         for bank in range(OPTS.num_banks):
             for bank in range(OPTS.num_banks):
                 row = int(OPTS.num_words / OPTS.words_per_row) - 1
-                col = int(OPTS.word_size * OPTS.words_per_row) - 1 
-                bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank,row,col)
-                bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank,row,col)
+                col = int(OPTS.word_size * OPTS.words_per_row) - 1
+                bitcell_list += "bitcell_Q_b{0}_r{1}_c{2} ".format(bank, row, col)
+                bitcell_list += "bitcell_Q_bar_b{0}_r{1}_c{2} ".format(bank, row, col)
             for col in range(OPTS.word_size * OPTS.words_per_row):
                 for port in range(OPTS.num_r_ports + OPTS.num_w_ports + OPTS.num_rw_ports):
                     bitcell_list += "bl{0}_{1} ".format(bank, col)
@@ -484,13 +484,18 @@ def correct_port(name, output_file_name, ref_file_name):
     # write the new pex file with info in the memory
     output_file = open(output_file_name, "w")
     output_file.write(part1)
-    output_file.write(circuit_title+'\n')
+    output_file.write(circuit_title + '\n')
     output_file.write(part2)
     output_file.close()
 
+    
 def print_drc_stats():
-    debug.info(1,"DRC runs: {0}".format(num_drc_runs))
+    debug.info(1, "DRC runs: {0}".format(num_drc_runs))
+
+    
 def print_lvs_stats():
-    debug.info(1,"LVS runs: {0}".format(num_lvs_runs))
+    debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
+
+    
 def print_pex_stats():
-    debug.info(1,"PEX runs: {0}".format(num_pex_runs))
+    debug.info(1, "PEX runs: {0}".format(num_pex_runs))

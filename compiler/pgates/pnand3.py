@@ -133,7 +133,6 @@ class pnand3(pgate.pgate):
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
-        extra_contact_space = max(-nmos.get_pin("D").by(), 0)
 
     def create_ptx(self):
         """

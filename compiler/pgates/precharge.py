@@ -300,11 +300,4 @@ class precharge(design.design):
         self.add_path(self.bitline_layer,
                       [left_pos, right_pos],
                       width=pmos_pin.height())
-        
-    def get_en_cin(self):
-        """Get the relative capacitance of the enable in the precharge cell"""
-        # The enable connect to three pmos gates
-        # They all use the same size pmos.
-        pmos_cin = self.pmos.get_cin()
-        return 3 * pmos_cin
-        
+                      

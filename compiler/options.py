@@ -9,6 +9,7 @@ import optparse
 import getpass
 import os
 
+
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
@@ -30,6 +31,9 @@ class options(optparse.Values):
     num_r_ports = 0
     num_w_ports = 0
 
+    # By default, use local arrays with a max fanout of 16
+    #local_array_size = 16
+    
     # Write mask size, default will be overwritten with word_size if not user specified
     write_size = None
 
@@ -93,6 +97,8 @@ class options(optparse.Values):
     trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
+    # Output config with all options
+    output_extended_config = False
 
 
     ###################
@@ -113,6 +119,9 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
+
+    # Number of threads to use
+    num_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True
@@ -137,7 +146,8 @@ class options(optparse.Values):
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
-    column_mux_array = "single_level_column_mux_array"
+    buf_dec = "pbuf"
+    column_mux_array = "column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
@@ -146,7 +156,7 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4" # Not available right now
+    nand4_dec = "pnand4"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

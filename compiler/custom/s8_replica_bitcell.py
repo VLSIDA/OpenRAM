@@ -33,14 +33,26 @@ class replica_bitcell(design.design):
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
     
     if not OPTS.netlist_only:
-        (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
-        pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
+            (self.width, self.height) = utils.get_libcell_size(self.name,
+                                        GDS["unit"],
+                                        layer["mem"],
+                                        "s8sram_cell\x00")
+        self.pin_map = utils.get_libcell_pins(self.pin_names, self.name, GDS["unit"])
     else:
         (width,height) = (0,0)
         pin_map = []
 
-    def __init__(self, name=""):
+    def __init__(self, version, name=""):
         # Ignore the name argument
+
+        if version == "opt1":
+            self.name = "s8sram_cell_opt1"
+            self.border_structure = "s8sram_cell"
+        elif version == "opt1a":
+            self.name = "s8sram_cell_opt1a"
+            self.border_structure = "s8sram_cell"
+
+        self.pin_map = utils.get_libcell_pins(self.pin_names, self.name, GDS["unit"])
         design.design.__init__(self, "replica_cell_6t")
         debug.info(2, "Create replica bitcell object")
 

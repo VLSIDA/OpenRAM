@@ -18,9 +18,9 @@ class wordline_driver(design.design):
     This is an AND (or NAND) with configurable drive strength to drive the wordlines.
     It is matched to the bitcell height.
     """
-    def __init__(self, name, size=1, height=None):
+    def __init__(self, name, cols, height=None):
         debug.info(1, "Creating wordline_driver {}".format(name))
-        self.add_comment("size: {}".format(size))
+        self.add_comment("cols: {}".format(cols))
         super().__init__(name)
 
         if height is None:
@@ -28,7 +28,7 @@ class wordline_driver(design.design):
             self.height = b.height
         else:
             self.height = height
-        self.size = size
+        self.cols = cols
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -42,10 +42,25 @@ class wordline_driver(design.design):
     def create_modules(self):
         self.nand = factory.create(module_type="nand2_dec",
                                    height=self.height)
-            
-        self.driver = factory.create(module_type="inv_dec",
-                                     size=self.size,
-                                     height=self.nand.height)
+
+        try:
+            local_array_size = OPTS.local_array_size
+            driver_size = max(int(self.cols / local_array_size), 1)
+        except AttributeError:
+            local_array_size = 0
+            # Defautl to FO4
+            driver_size = max(int(self.cols / 4), 1)
+
+        # The polarity must be switched if we have a hierarchical wordline
+        # to compensate for the local array inverters
+        if local_array_size > 0:
+            self.driver = factory.create(module_type="buf_dec",
+                                         size=driver_size,
+                                         height=self.nand.height)
+        else:
+            self.driver = factory.create(module_type="inv_dec",
+                                         size=driver_size,
+                                         height=self.nand.height)
             
         self.add_mod(self.nand)
         self.add_mod(self.driver)

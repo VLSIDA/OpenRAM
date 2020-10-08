@@ -8,14 +8,15 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-@unittest.skip("SKIPPING 50_riscv_phys_test")
+
+#@unittest.skip("SKIPPING 50_riscv_phys_test")
 class riscv_phys_test(openram_test):
 
     def runTest(self):
@@ -26,10 +27,11 @@ class riscv_phys_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
+        OPTS.local_array_size = 16
         globals.setup_bitcell()
-        OPTS.route_supplies=False
-        OPTS.perimeter_pins=False
-        
+        OPTS.route_supplies = False
+        OPTS.perimeter_pins = False
+         
         c = sram_config(word_size=32,
                         write_size=8,
                         num_words=256,

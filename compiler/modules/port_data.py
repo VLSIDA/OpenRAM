@@ -6,6 +6,7 @@
 from tech import drc
 import debug
 import design
+import math
 from sram_factory import factory
 from collections import namedtuple
 from vector import vector
@@ -18,18 +19,26 @@ class port_data(design.design):
     Port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, name=""):
+    def __init__(self, sram_config, port, bit_offsets=None, name=""):
 
         sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
 
         if self.num_spare_cols is None:
             self.num_spare_cols = 0
 
+        if not bit_offsets:
+            bitcell = factory.create(module_type="bitcell")
+            self.bit_offsets = []
+            for i in range(self.num_cols + self.num_spare_cols):
+                self.bit_offsets.append(i * bitcell.width)
+        else:
+            self.bit_offsets = bit_offsets
+            
         if name == "":
             name = "port_data_{0}".format(self.port)
         super().__init__(name)
@@ -179,8 +188,19 @@ class port_data(design.design):
         # Precharge will be shifted left if needed
         # Column offset is set to port so extra column can be on left or right
         # and mirroring happens correctly
+        
+        # Used for names/dimensions only
+        self.cell = factory.create(module_type="bitcell")
+
+        if self.port == 0:
+            # Append an offset on the left
+            precharge_bit_offsets = [self.bit_offsets[0] - self.cell.width] + self.bit_offsets
+        else:
+            # Append an offset on the right
+            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + self.cell.width]
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + self.num_spare_cols + 1,
+                                              offsets=precharge_bit_offsets,
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port],
                                               column_offset=self.port - 1)
@@ -190,6 +210,7 @@ class port_data(design.design):
             # RBLs don't get a sense amp
             self.sense_amp_array = factory.create(module_type="sense_amp_array",
                                                   word_size=self.word_size,
+                                                  offsets=self.bit_offsets,
                                                   words_per_row=self.words_per_row,
                                                   num_spare_cols=self.num_spare_cols)
             self.add_mod(self.sense_amp_array)
@@ -201,6 +222,7 @@ class port_data(design.design):
             self.column_mux_array = factory.create(module_type="column_mux_array",
                                                    columns=self.num_cols,
                                                    word_size=self.word_size,
+                                                   offsets=self.bit_offsets,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
             self.add_mod(self.column_mux_array)
@@ -212,6 +234,7 @@ class port_data(design.design):
             self.write_driver_array = factory.create(module_type="write_driver_array",
                                                      columns=self.num_cols,
                                                      word_size=self.word_size,
+                                                     offsets=self.bit_offsets,
                                                      write_size=self.write_size,
                                                      num_spare_cols=self.num_spare_cols)
             self.add_mod(self.write_driver_array)
@@ -219,6 +242,7 @@ class port_data(design.design):
                 # RBLs don't get a write mask
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
+                                                           offsets=self.bit_offsets,
                                                            word_size=self.word_size,
                                                            write_size=self.write_size)
                 self.add_mod(self.write_mask_and_array)
@@ -411,21 +435,15 @@ class port_data(design.design):
         vertical_port_order.append(self.write_driver_array_inst)
         vertical_port_order.append(self.write_mask_and_array_inst)
 
-        # Add one column for the the RBL
-        if self.port==0:
-            x_offset = self.bitcell.width
-        else:
-            x_offset = 0
-
         vertical_port_offsets = 5 * [None]
-        self.width = x_offset
+        self.width = 0
         self.height = 0
         for i, p in enumerate(vertical_port_order):
             if p == None:
                 continue
             self.height += (p.height + self.m2_gap)
             self.width = max(self.width, p.width)
-            vertical_port_offsets[i] = vector(x_offset, self.height)
+            vertical_port_offsets[i] = vector(0, self.height)
 
         # Reversed order
         self.write_mask_and_offset = vertical_port_offsets[4]
@@ -433,9 +451,6 @@ class port_data(design.design):
         self.sense_amp_offset = vertical_port_offsets[2]
         self.column_mux_offset = vertical_port_offsets[1]
         self.precharge_offset = vertical_port_offsets[0]
-        # Shift the precharge left if port 0
-        if self.precharge_offset and self.port == 0:
-            self.precharge_offset -= vector(x_offset, 0)
 
     def place_instances(self):
         """ Place the instances. """

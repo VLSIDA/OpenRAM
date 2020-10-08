@@ -22,7 +22,7 @@ class s8_col_end(design.design):
 
         if version == "colend":
             self.name = "s8sram16x16_colend"
-            structure = "s8sram16x16_colend\x00"
+            structure = "s8sram16x16_colend"
         elif version == "colend_p_cent":
             self.name = "s8sram16x16_colend_p_cent"
             structure = "s8sram16x16_colend_p_cent\x00"

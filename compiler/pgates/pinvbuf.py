@@ -184,36 +184,3 @@ class pinvbuf(pgate.pgate):
         self.add_layout_pin_rect_center(text="A",
                                         layer=a_pin.layer,
                                         offset=a_pin.center())
-             
-    def determine_clk_buf_stage_efforts(self, external_cout, inp_is_rise=False):
-        """Get the stage efforts of the clk -> clk_buf path"""
-        stage_effort_list = []
-        stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
-        stage1 = self.inv.get_stage_effort(stage1_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        last_stage_is_rise = stage1.is_rise
-        
-        stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage2)
-        
-        return stage_effort_list
-        
-    def determine_clk_buf_bar_stage_efforts(self, external_cout, inp_is_rise=False):
-        """Get the stage efforts of the clk -> clk_buf path"""
-        
-        # After (almost) every stage, the direction of the signal inverts.
-        stage_effort_list = []
-        stage1_cout = self.inv1.get_cin() + self.inv2.get_cin()
-        stage1 = self.inv.get_stage_effort(stage1_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        last_stage_is_rise = stage_effort_list[-1].is_rise
-        
-        stage2_cout = self.inv2.get_cin()
-        stage2 = self.inv1.get_stage_effort(stage2_cout, last_stage_is_rise)
-        stage_effort_list.append(stage2)
-        last_stage_is_rise = stage_effort_list[-1].is_rise
-        
-        stage3 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage3)
-        
-        return stage_effort_list

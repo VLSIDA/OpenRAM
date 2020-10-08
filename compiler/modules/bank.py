@@ -8,7 +8,7 @@
 import debug
 import design
 from sram_factory import factory
-from math import log, ceil
+from math import log, ceil, floor
 from tech import drc, layer
 from vector import vector
 from globals import OPTS
@@ -27,7 +27,7 @@ class bank(design.design):
         self.sram_config = sram_config
         sram_config.set_local_config(self)
         if self.write_size:
-            self.num_wmasks = int(self.word_size / self.write_size)
+            self.num_wmasks = int(ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
         
@@ -186,16 +186,26 @@ class bank(design.design):
         self.bitcell_array_right = self.bitcell_array.width
         
         # These are the offsets of the main array (excluding dummy and replica rows/cols)
-        self.main_bitcell_array_top = self.bitcell_array.bitcell_array_inst.uy()
+        self.main_bitcell_array_top = self.bitcell_array.get_main_array_top()
         # Just past the dummy column
-        self.main_bitcell_array_left = self.bitcell_array.bitcell_array_inst.lx()
+        self.main_bitcell_array_left = self.bitcell_array.get_main_array_left()
+        # Just past the dummy column
+        self.main_bitcell_array_right = self.bitcell_array.get_main_array_right()
         # Just past the dummy row and replica row
-        self.main_bitcell_array_bottom = self.bitcell_array.bitcell_array_inst.by()
-        
+        self.main_bitcell_array_bottom = self.bitcell_array.get_main_array_bottom()
+
         self.compute_instance_port0_offsets()
         if len(self.all_ports)==2:
             self.compute_instance_port1_offsets()
-        
+
+    def get_column_offsets(self):
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        # Assumes bitcell_array is at 0,0
+        offsets = self.bitcell_array.get_column_offsets()
+        return offsets
+
     def compute_instance_port0_offsets(self):
         """
         Compute the instance offsets for port0 on the left/bottom of the bank.
@@ -209,14 +219,14 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # Below the bitcell array
-        self.port_data_offsets[port] = vector(self.main_bitcell_array_left - self.bitcell_array.cell.width, 0)
+        self.port_data_offsets[port] = vector(0, 0)
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array above the predecoders and control logic
-        x_offset = self.m2_gap + self.port_address.width
+        x_offset = self.m2_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
-        self.predecoder_height = self.port_address.predecoder_height + self.port_address_offsets[port].y
+        self.predecoder_height = self.port_address[port].predecoder_height + self.port_address_offsets[port].y
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver
@@ -224,7 +234,7 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
-        x_offset = self.central_bus_width[port] + self.port_address.wordline_driver.width
+        x_offset = self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = 1.25 * self.dff.height + self.column_decoder.height
@@ -253,11 +263,11 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # Above the bitcell array
-        self.port_data_offsets[port] = vector(self.main_bitcell_array_left, self.bitcell_array_top)
+        self.port_data_offsets[port] = vector(0, self.bitcell_array_top)
             
         # LOWER RIGHT QUADRANT
         # To the right of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address.width + self.m2_gap
+        x_offset = self.bitcell_array_right + self.port_address[port].width + self.m2_gap
         self.port_address_offsets[port] = vector(x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -268,7 +278,7 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
-        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address.wordline_driver.width
+        x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
             y_offset = self.bitcell_array_top + 1.25 * self.dff.height + self.column_decoder.height
@@ -355,56 +365,66 @@ class bank(design.design):
 
     def add_modules(self):
         """ Add all the modules using the class loader """
-        
+
+        self.port_address = []
+        for port in self.all_ports:
+            self.port_address.append(factory.create(module_type="port_address",
+                                                    cols=self.num_cols + self.num_spare_cols,
+                                                    rows=self.num_rows,
+                                                    port=port))
+            self.add_mod(self.port_address[port])
+
+        try:
+            local_array_size = OPTS.local_array_size
+        except AttributeError:
+            local_array_size = 0
+            
+        if local_array_size > 0:
+            # Find the even multiple that satisfies the fanout with equal sized local arrays
+            total_cols = self.num_cols + self.num_spare_cols
+            num_lb = floor(total_cols / local_array_size)
+            final_size = total_cols - num_lb * local_array_size
+            cols = [local_array_size] * (num_lb - 1)
+            # Add the odd bits to the last local array
+            cols.append(local_array_size + final_size)
+            self.bitcell_array = factory.create(module_type="global_bitcell_array",
+                                                cols=cols,
+                                                rows=self.num_rows)
+        else:
+            self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+                                                cols=self.num_cols + self.num_spare_cols,
+                                                rows=self.num_rows)
+        self.add_mod(self.bitcell_array)
+
         self.port_data = []
+        self.bit_offsets = self.get_column_offsets()
         for port in self.all_ports:
             temp_pre = factory.create(module_type="port_data",
                                       sram_config=self.sram_config,
-                                      port=port)
+                                      port=port,
+                                      bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
             self.add_mod(self.port_data[port])
-
-        self.port_address = factory.create(module_type="port_address",
-                                           cols=self.num_cols + self.num_spare_cols,
-                                           rows=self.num_rows)
-        self.add_mod(self.port_address)
-
-        self.num_rbl = len(self.all_ports)
-                
-        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                            cols=self.num_cols + self.num_spare_cols,
-                                            rows=self.num_rows,
-                                            rbl=[1, 1 if len(self.all_ports)>1 else 0])
-
-        self.add_mod(self.bitcell_array)
-
+        
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
             self.add_mod(self.bank_select)
         
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
-        self.bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
+        self.bitcell_array_inst=self.add_inst(name="bitcell_array",
                                               mod=self.bitcell_array)
         # Arrays are always:
         # word lines (bottom to top)
         # bit lines (left to right)
         # vdd
         # gnd
+        temp = self.bitcell_array.get_inouts()
 
-        temp = self.bitcell_array.get_all_bitline_names()
-
-        wordline_names = self.bitcell_array.get_all_wordline_names()
-        
-        # Rename the RBL WL to the enable name
-        for port in self.all_ports:
-            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
-            wordline_names = [x.replace(rbl_wl_name[port], "wl_en{0}".format(port)) for x in wordline_names]
-        # Connect the other RBL WL to gnd
-        wordline_names = ["gnd" if x.startswith("rbl_wl") else x for x in wordline_names]
-        # Connect the dummy WL to gnd
-        wordline_names = ["gnd" if x.startswith("dummy") else x for x in wordline_names]
-        temp.extend(wordline_names)
+        temp.append("rbl_wl0")
+        temp.extend(self.bitcell_array.get_wordline_names())
+        if len(self.all_ports) > 1:
+            temp.append("rbl_wl1")
         
         temp.append("vdd")
         temp.append("gnd")
@@ -464,13 +484,15 @@ class bank(design.design):
         self.port_address_inst = [None] * len(self.all_ports)
         for port in self.all_ports:
             self.port_address_inst[port] = self.add_inst(name="port_address{}".format(port),
-                                                         mod=self.port_address)
+                                                         mod=self.port_address[port])
 
             temp = []
             for bit in range(self.row_addr_size):
                 temp.append("addr{0}_{1}".format(port, bit + self.col_addr_size))
             temp.append("wl_en{}".format(port))
-            temp.extend(self.bitcell_array.get_wordline_names(port))
+            wordline_names = self.bitcell_array.get_wordline_names(port)
+            temp.extend(wordline_names)
+            temp.append("rbl_wl{}".format(port))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
             
@@ -510,6 +532,9 @@ class bank(design.design):
 
         elif self.col_addr_size == 3:
             self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
+                                                 height=self.dff.height)
+        elif self.col_addr_size == 4:
+            self.column_decoder = factory.create(module_type="hierarchical_predecode4x16",
                                                  height=self.dff.height)
         else:
             # No error checking before?
@@ -658,7 +683,7 @@ class bank(design.design):
         # 2 pitches on the right for vias/jogs to access the inputs
         control_bus_offset = vector(-self.m3_pitch * self.num_control_lines[0] - 2 * self.m3_pitch, self.min_y_offset)
         # The control bus is routed up to two pitches below the bitcell array
-        control_bus_length = self.main_bitcell_array_bottom - self.min_y_offset - 2 * self.m1_pitch
+        control_bus_length = self.port_data_inst[0].uy() - self.min_y_offset
         self.bus_pins[0] = self.create_bus(layer="m2",
                                            offset=control_bus_offset,
                                            names=self.control_signals[0],
@@ -670,7 +695,7 @@ class bank(design.design):
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
-            control_bus_length = self.max_y_offset - self.main_bitcell_array_top - 2 * self.m1_pitch
+            control_bus_length = self.max_y_offset - self.port_data_inst[1].by()
             control_bus_offset = vector(self.bitcell_array_right + 2.5 * self.m3_pitch,
                                         self.max_y_offset - control_bus_length)
             # The bus for the right port is reversed so that the rbl_wl is closest to the array
@@ -690,7 +715,6 @@ class bank(design.design):
         inst1 = self.bitcell_array_inst
         inst1_bl_name = [x for x in self.bitcell_array.get_bitline_names(port) if "bl" in x]
         inst1_br_name = [x for x in self.bitcell_array.get_bitline_names(port) if "br" in x]
-
         inst2_bl_name = []
         inst2_br_name = []
         for col in range(self.num_cols):
@@ -709,8 +733,7 @@ class bank(design.design):
         
 
         # Connect the replica bitlines
-        rbl_bl_names = self.bitcell_array.get_rbl_bitline_names(port)[2 * port: 2 * port + 2]
-        for (array_name, data_name) in zip(rbl_bl_names, ["rbl_bl", "rbl_br"]):
+        for (array_name, data_name) in zip(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)], ["rbl_bl", "rbl_br"]):
             self.connect_bitline(inst1, inst2, array_name, data_name)
         
     def route_port_data_out(self, port):
@@ -825,33 +848,51 @@ class bank(design.design):
         self.route_port_address_in(port)
         
         if port % 2:
-            self.route_port_address_right(port)
+            self.route_port_address_out(port, "right")
         else:
-            self.route_port_address_left(port)
+            self.route_port_address_out(port, "left")
             
-    def route_port_address_left(self, port):
+    def route_port_address_out(self, port, side="left"):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
-        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
+        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
-            driver_wl_pos = driver_wl_pin.rc()
+            if side == "left":
+                driver_wl_pos = driver_wl_pin.rc()
+            else:
+                driver_wl_pos = driver_wl_pin.lc()
             bitcell_wl_pin = self.bitcell_array_inst.get_pin(array_name)
-            bitcell_wl_pos = bitcell_wl_pin.lc()
-            mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].rx() + 0.5 * self.bitcell_array_inst.lx(), 0)
-            mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0.5, 1)
-            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
-            self.add_via_stack_center(from_layer=driver_wl_pin.layer,
-                                      to_layer=bitcell_wl_pin.layer,
-                                      offset=bitcell_wl_pos,
-                                      directions=("H", "H"))
+            
+            if side == "left":
+                bitcell_wl_pos = bitcell_wl_pin.lc()
+                port_address_pos = self.port_address_inst[port].rx()
+                bitcell_array_pos = self.bitcell_array_inst.lx()
+            else:
+                bitcell_wl_pos = bitcell_wl_pin.rc()
+                port_address_pos = self.port_address_inst[port].lx()
+                bitcell_array_pos = self.bitcell_array_inst.rx()
+                
+            mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * port_address_pos + 0.5 * bitcell_array_pos, 0)
+            mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
+            if driver_wl_pin.layer != bitcell_wl_pin.layer:
+                self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
+                self.add_via_stack_center(from_layer=driver_wl_pin.layer,
+                                          to_layer=bitcell_wl_pin.layer,
+                                          offset=mid2)
+                self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+            else:
+                self.add_path(bitcell_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+                
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
-        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port)):
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
+        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
             driver_wl_pos = driver_wl_pin.lc()
@@ -859,11 +900,12 @@ class bank(design.design):
             bitcell_wl_pos = bitcell_wl_pin.rc()
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * self.port_address_inst[port].lx() + 0.5 * self.bitcell_array_inst.rx(), 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
-            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
+            self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
             self.add_via_stack_center(from_layer=driver_wl_pin.layer,
                                       to_layer=bitcell_wl_pin.layer,
-                                      offset=bitcell_wl_pos,
-                                      directions=("H", "H"))
+                                      offset=mid2)
+            self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+            
 
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """
@@ -901,7 +943,7 @@ class bank(design.design):
             offset = self.column_decoder_inst[port].lr() + vector(pitch, 0)
 
         decode_pins = [self.column_decoder_inst[port].get_pin(x) for x in decode_names]
-        
+
         sel_names = ["sel_{}".format(x) for x in range(self.num_col_addr_lines)]
         column_mux_pins = [self.port_data_inst[port].get_pin(x) for x in sel_names]
         
@@ -961,16 +1003,15 @@ class bank(design.design):
     def route_unused_wordlines(self):
         """ Connect the unused RBL and dummy wordlines to gnd """
         gnd_wl_names = []
-
+        return
         # Connect unused RBL WL to gnd
         # All RBL WL names
         array_rbl_names = set(self.bitcell_array.get_rbl_wordline_names())
-        dummy_rbl_names = set(self.bitcell_array.get_dummy_wordline_names())
         # List of used RBL WL names
         rbl_wl_names = set()
         for port in self.all_ports:
             rbl_wl_names.add(self.bitcell_array.get_rbl_wordline_names(port)[port])
-        gnd_wl_names = list((array_rbl_names - rbl_wl_names) | dummy_rbl_names)
+        gnd_wl_names = list((array_rbl_names - rbl_wl_names))
 
         for wl_name in gnd_wl_names:
             pin = self.bitcell_array_inst.get_pin(wl_name)
@@ -1000,10 +1041,6 @@ class bank(design.design):
         connection.append((self.prefix + "p_en_bar{}".format(port),
                            self.port_data_inst[port].get_pin("p_en_bar")))
 
-        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)
-        connection.append((self.prefix + "wl_en{}".format(port),
-                           self.bitcell_array_inst.get_pin(rbl_wl_name[port])))
-
         if port in self.write_ports:
             connection.append((self.prefix + "w_en{}".format(port),
                                self.port_data_inst[port].get_pin("w_en")))
@@ -1024,66 +1061,48 @@ class bank(design.design):
             self.add_via_stack_center(from_layer=pin.layer,
                                       to_layer="m2",
                                       offset=control_pos)
-
+    
         # clk to wordline_driver
         control_signal = self.prefix + "wl_en{}".format(port)
         if port % 2:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").uc()
-            mid_pos = pin_pos + vector(0, 2 * self.m2_gap) # to route down to the top of the bus
+            control_y_offset = self.bus_pins[port][control_signal].by()
+            mid_pos = vector(pin_pos.x, control_y_offset + self.m1_pitch)
         else:
             pin_pos = self.port_address_inst[port].get_pin("wl_en").bc()
-            mid_pos = pin_pos - vector(0, 2 * self.m2_gap) # to route down to the top of the bus
+            control_y_offset = self.bus_pins[port][control_signal].uy()
+            mid_pos = vector(pin_pos.x, control_y_offset - self.m1_pitch)
         control_x_offset = self.bus_pins[port][control_signal].cx()
         control_pos = vector(control_x_offset, mid_pos.y)
         self.add_wire(self.m1_stack, [pin_pos, mid_pos, control_pos])
         self.add_via_center(layers=self.m1_stack,
                             offset=control_pos)
 
-    def determine_wordline_stage_efforts(self, external_cout, inp_is_rise=True):
-        """Get the all the stage efforts for each stage in the path within the bank clk_buf to a wordline"""
-        # Decoder is assumed to have settled before the negative edge of the clock.
-        # Delay model relies on this assumption
-        stage_effort_list = []
-        wordline_cout = self.bitcell_array.get_wordline_cin() + external_cout
-        stage_effort_list += self.port_address.wordline_driver.determine_wordline_stage_efforts(wordline_cout,
-                                                                                                inp_is_rise)
-        
-        return stage_effort_list
-
-    def get_wl_en_cin(self):
-        """Get the relative capacitance of all the clk connections in the bank"""
-        # wl_en only used in the wordline driver.
-        return self.port_address.wordline_driver.get_wl_en_cin()
-
-    def get_w_en_cin(self):
-        """Get the relative capacitance of all the clk connections in the bank"""
-        # wl_en only used in the wordline driver.
-        port = self.write_ports[0]
-        return self.port_data[port].write_driver.get_w_en_cin()
-    
-    def get_clk_bar_cin(self):
-        """Get the relative capacitance of all the clk_bar connections in the bank"""
-        # Current bank only uses clock bar (clk_buf_bar) as an enable for the precharge array.
-        
-        # Precharges are the all the same in Mulitport, one is picked
-        port = self.read_ports[0]
-        return self.port_data[port].precharge_array.get_en_cin()
-
-    def get_sen_cin(self):
-        """Get the relative capacitance of all the sense amp enable connections in the bank"""
-        # Current bank only uses sen as an enable for the sense amps.
-        port = self.read_ports[0]
-        return self.port_data[port].sense_amp_array.get_en_cin()
-        
     def graph_exclude_precharge(self):
-        """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
+        """
+        Precharge adds a loop between bitlines, can be excluded to reduce complexity
+        """
         for port in self.read_ports:
             if self.port_data[port]:
                 self.port_data[port].graph_exclude_precharge()
                 
     def get_cell_name(self, inst_name, row, col):
-        """Gets the spice name of the target bitcell."""
+        """
+        Gets the spice name of the target bitcell.
+        """
         return self.bitcell_array_inst.mod.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name,
                                                          row,
                                                          col)
 
+    def graph_exclude_bits(self, targ_row, targ_col):
+        """
+        Excludes bits in column from being added to graph except target
+        """
+        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+
+    def clear_exclude_bits(self):
+        """ 
+        Clears the bit exclusions
+        """
+        self.bitcell_array.clear_exclude_bits()
+        

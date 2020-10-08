@@ -45,7 +45,7 @@ class hierarchical_predecode(design.design):
     def add_modules(self):
         """ Add the INV and AND gate modules """
 
-        debug.check(self.number_of_inputs < 4,
+        debug.check(self.number_of_inputs <= 4,
                     "Invalid number of predecode inputs: {}".format(self.number_of_inputs))
             
         if self.column_decoder:
@@ -204,6 +204,7 @@ class hierarchical_predecode(design.design):
                 pin = top_and_gate.get_pin("D")
             else:
                 debug.error("Too many inputs for predecoder.", -1)
+                
             y_offset = pin.cy()
             in_pin = "in_{}".format(num)
             a_pin = "A_{}".format(num)
@@ -288,10 +289,14 @@ class hierarchical_predecode(design.design):
 
             if self.number_of_inputs == 2:
                 gate_lst = ["A", "B"]
-            else:
+            elif self.number_of_inputs == 3:
                 gate_lst = ["A", "B", "C"]
+            elif self.number_of_inputs == 4:
+                gate_lst = ["A", "B", "C", "D"]
+            else:
+                debug.error("Invalid number of nand inputs for decode", -1)
 
-            # this will connect pins A,B or A,B,C
+            # this will connect pins A,B or A,B,C or A,B,C,D
             for rail_pin, gate_pin in zip(index_lst, gate_lst):
                 pin = self.and_inst[k].get_pin(gate_pin)
                 pin_pos = pin.center()

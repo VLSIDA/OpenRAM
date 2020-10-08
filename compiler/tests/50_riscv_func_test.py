@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 @unittest.skip("SKIPPING 50_riscv_func_test")
 class riscv_func_test(openram_test):
@@ -24,6 +25,7 @@ class riscv_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
+        OPTS.local_array_size = 16
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
@@ -33,7 +35,7 @@ class riscv_func_test(openram_test):
         from importlib import reload
         import characterizer
         reload(characterizer)
-        from characterizer import functional, delay
+        from characterizer import functional
         from sram_config import sram_config
         c = sram_config(word_size=32,
                         write_size=8,
@@ -53,7 +55,7 @@ class riscv_func_test(openram_test):
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         (fail, error) = f.run()
-        self.assertTrue(fail,error)
+        self.assertTrue(fail, error)
         
         globals.end_openram()
         

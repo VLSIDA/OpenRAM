@@ -26,6 +26,9 @@ class s8_internal(design.design):
         elif version == "wlstrap_p":
             self.name = "s8sram16x16_wlstrap_p"
             self.structure = "s8sram16x16_wlstrap_p_ce"
+        elif version == "wlstrapa":
+            self.name = "s8sram_wlstrapa"
+            self.structure = "s8sram_wlstrapa_ce"
         else:
             debug.error("Invalid version", -1)
         design.design.__init__(self, name=self.name)

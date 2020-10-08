@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import debug
 from bitcell_base_array import bitcell_base_array
 from s8_corner import s8_corner
 from tech import drc, spice
@@ -20,11 +21,17 @@ class bitcell_array(bitcell_base_array):
     """
     def __init__(self, rows, cols, column_offset=0, name=""):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+        debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
+        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
+        # This will create a default set of bitline/wordline names
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
+        
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
+        
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         # self.offset_all_coordinates()
@@ -58,9 +65,6 @@ class bitcell_array(bitcell_base_array):
 
             self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap"))
             self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap_p"))
-            
-
-
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -115,15 +119,10 @@ class bitcell_array(bitcell_base_array):
         bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c
         return bl_wire
 
-    def get_wordline_cin(self):
-        """Get the relative input capacitance from the wordline connections in all the bitcell"""
-        # A single wordline is connected to all the bitcells in a single row meaning the capacitance depends on the # of columns
-        bitcell_wl_cin = self.cell.get_wl_cin()
-        total_cin = bitcell_wl_cin * self.column_size
-        return total_cin
-
-    def graph_exclude_bits(self, targ_row, targ_col):
-        """Excludes bits in column from being added to graph except target"""
+    def graph_exclude_bits(self, targ_row=None, targ_col=None):
+        """
+        Excludes bits in column from being added to graph except target
+        """
         # Function is not robust with column mux configurations
         for row in range(self.row_size):
             for col in range(self.column_size):

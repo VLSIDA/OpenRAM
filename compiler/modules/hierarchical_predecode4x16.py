@@ -32,14 +32,14 @@ class hierarchical_predecode4x16(hierarchical_predecode):
                      ["in_0",    "inbar_1", "in_2",    "inbar_3", "out_5", "vdd", "gnd"],
                      ["inbar_0", "in_1",    "in_2",    "inbar_3", "out_6", "vdd", "gnd"],
                      ["in_0",    "in_1",    "in_2",    "inbar_3", "out_7", "vdd", "gnd"],
-                     ["inbar_0", "inbar_1", "inbar_2", "in_3", "out_0", "vdd", "gnd"],
-                     ["in_0",    "inbar_1", "inbar_2", "in_3", "out_1", "vdd", "gnd"],            
-                     ["inbar_0", "in_1",    "inbar_2", "in_3", "out_2", "vdd", "gnd"],
-                     ["in_0",    "in_1",    "inbar_2", "in_3", "out_3", "vdd", "gnd"],            
-                     ["inbar_0", "inbar_1", "in_2",    "in_3", "out_4", "vdd", "gnd"],
-                     ["in_0",    "inbar_1", "in_2",    "in_3", "out_5", "vdd", "gnd"],
-                     ["inbar_0", "in_1",    "in_2",    "in_3", "out_6", "vdd", "gnd"],
-                     ["in_0",    "in_1",    "in_2",    "in_3", "out_7", "vdd", "gnd"]        ]
+                     ["inbar_0", "inbar_1", "inbar_2", "in_3", "out_8", "vdd", "gnd"],
+                     ["in_0",    "inbar_1", "inbar_2", "in_3", "out_9", "vdd", "gnd"],            
+                     ["inbar_0", "in_1",    "inbar_2", "in_3", "out_10", "vdd", "gnd"],
+                     ["in_0",    "in_1",    "inbar_2", "in_3", "out_11", "vdd", "gnd"],            
+                     ["inbar_0", "inbar_1", "in_2",    "in_3", "out_12", "vdd", "gnd"],
+                     ["in_0",    "inbar_1", "in_2",    "in_3", "out_13", "vdd", "gnd"],
+                     ["inbar_0", "in_1",    "in_2",    "in_3", "out_14", "vdd", "gnd"],
+                     ["in_0",    "in_1",    "in_2",    "in_3", "out_15", "vdd", "gnd"]        ]
 
         self.create_and_array(connections)
 

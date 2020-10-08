@@ -1,4 +1,4 @@
-WARNING: file magic.py: line 210: DRC Errors replica_bitcell_array	985
+WARNING: file magic.py: line 210: DRC Errors replica_bitcell_array	1010
 
 ERROR: file magic.py: line 285: replica_bitcell_array	LVS mismatch (results in /home/jesse/output/replica_bitcell_array.lvs.report)
 

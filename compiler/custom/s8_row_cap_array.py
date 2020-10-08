@@ -73,24 +73,24 @@ class s8_row_cap_array(design.design):
                 if alternate_bitcell == 0:
                     row_layout.append(self.rowend1)
                     self.cell_inst[row]=self.add_inst(name=name, mod=self.rowend1)
-                    #self.connect_inst(self.get_bitcell_pins(row, 0))
+                    self.connect_inst(["wl_0_{}".format(row-1), "vpwr"])
                     alternate_bitcell = 1
 
                 else:
                     row_layout.append(self.rowend2)
                     self.cell_inst[row]=self.add_inst(name=name,mod=self.rowend2)
-                    #self.connect_inst(self.get_bitcell_pins(row, 0))
+                    self.connect_inst(["wl_0_{}".format(row-1), "vpwr"])
                     alternate_bitcell = 0
 
             elif (row == 0):
                 row_layout.append(self.bottom_corner)
                 self.cell_inst[row]=self.add_inst(name=name, mod=self.bottom_corner)
-                #self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
+                self.connect_inst([])
 
             elif (row == self.rows - 1):
                 row_layout.append(self.top_corner)
                 self.cell_inst[row]=self.add_inst(name=name, mod=self.top_corner)
-                #self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
+                self.connect_inst([])
 
 
             self.array_layout.append(row_layout)
@@ -118,9 +118,9 @@ class s8_row_cap_array(design.design):
             if inst.width > self.width:
                 self.width = inst.width
         yoffset = 0.0
-
         for row in range(0, len(self.array_layout)):
-            xoffset = 0.0               
+            xoffset = 0.0
+
             for col in range(0, len(self.array_layout[row])):
                 inst = self.insts[col + row*len(self.array_layout[row])]
                 inst.place(offset=[xoffset, yoffset])
@@ -138,25 +138,25 @@ class s8_row_cap_array(design.design):
 
     def add_layout_pins(self):
         """ Add the layout pins """
-        return
-        row_list = self.cell.get_all_wl_names()
+        if self.column_offset == 0:
+            row_list = self.cell.get_all_wl_names()
 
-        for row in range(1, self.row_size - 1):
-            for cell_row in row_list:
-                wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row + "_{0}".format(row),
-                                    layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=wl_pin.height())
+            for row in range(1, self.rows-1):
+                if row > 0 and row < self.rows:
+                    for cell_row in row_list:
+                        wl_pin = self.cell_inst[row].get_pin(cell_row)
+                        self.add_layout_pin(text=cell_row + "_0_{0}".format(row),
+                                            layer=wl_pin.layer,
+                                            offset=wl_pin.ll().scale(0, 1),
+                                            width=self.width,
+                                            height=wl_pin.height())
 
-        # Add vdd/gnd via stacks
-        for row in range(1, self.row_size - 1):
-            for col in range(self.column_size):
-                inst = self.cell_inst[row, col]
-                for pin_name in ["vdd", "gnd"]:
+            # Add vdd/gnd via stacks
+            for row in range(1, self.rows):
+                inst = self.cell_inst[row]
+                for pin_name in ["vpwr", "vgnd"]:
                     for pin in inst.get_pins(pin_name):
                         self.add_power_pin(name=pin.name,
-                                           loc=pin.center(),
-                                           start_layer=pin.layer)
+                                            loc=pin.center(),
+                                            start_layer=pin.layer)
 

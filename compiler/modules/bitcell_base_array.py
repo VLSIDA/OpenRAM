@@ -64,7 +64,7 @@ class bitcell_base_array(design.design):
                 else:
                     self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
                     self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
-                    
+
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
 
     def add_pins(self):
@@ -147,32 +147,33 @@ class bitcell_base_array(design.design):
         
     def add_layout_pins(self):
         """ Add the layout pins """
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            bitline_names = self.cell.get_all_bitline_names()
-            for col in range(self.column_size):
-                for port in self.all_ports:
-                    bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
-                    self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
-                                        layer=bl_pin.layer,
-                                        offset=bl_pin.ll().scale(1, 0),
-                                        width=bl_pin.width(),
-                                        height=self.height)
-                    br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
-                    self.add_layout_pin(text="br_{0}_{1}".format(port, col),
-                                        layer=br_pin.layer,
-                                        offset=br_pin.ll().scale(1, 0),
-                                        width=br_pin.width(),
-                                        height=self.height)
+        bitline_names = self.cell.get_all_bitline_names()
+        for col in range(self.column_size):
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
+                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                self.add_layout_pin(text="br_{0}_{1}".format(port, col),
+                                    layer=br_pin.layer,
+                                    offset=br_pin.ll().scale(1, 0),
+                                    width=br_pin.width(),
+                                    height=self.height)
 
-            wl_names = self.cell.get_all_wl_names()
-            for row in range(self.row_size):
-                for port in self.all_ports:
-                    wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
-                    self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
-                                        layer=wl_pin.layer,
-                                        offset=wl_pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=wl_pin.height())
+        wl_names = self.cell.get_all_wl_names()
+        for row in range(self.row_size):
+            for port in self.all_ports:
+                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                                    layer=wl_pin.layer,
+                                    offset=wl_pin.ll().scale(0, 1),
+                                    width=self.width,
+                                    height=wl_pin.height())
+                                    
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
             # Copy a vdd/gnd layout pin from every cell
             for row in range(self.row_size):
@@ -181,37 +182,8 @@ class bitcell_base_array(design.design):
                     for pin_name in ["vdd", "gnd"]:
                         self.copy_layout_pin(inst, pin_name)
         else:
-            bitline_names = self.cell.get_all_bitline_names()
-            for col in range(self.column_size):
-                for port in self.all_ports:
-                    bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
-                    self.add_layout_pin(text="bl0_{0}_{1}".format(port, col),
-                                        layer=bl_pin.layer,
-                                        offset=bl_pin.ll().scale(1, 0),
-                                        width=bl_pin.width(),
-                                        height=self.height)
-                    br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
-                    self.add_layout_pin(text="bl1_{0}_{1}".format(port, col),
-                                        layer=br_pin.layer,
-                                        offset=br_pin.ll().scale(1, 0),
-                                        width=br_pin.width(),
-                                        height=self.height)
 
-            wl_names = self.cell.get_all_wl_names()
-            for row in range(self.row_size):
-                for port in self.all_ports:
-                    wl0_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
-                    self.add_layout_pin(text="wl0_{0}_{1}".format(port, row),
-                                        layer=wl0_pin.layer,
-                                        offset=wl0_pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=wl0_pin.height())
-                    wl1_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
-                    self.add_layout_pin(text="wl1_{0}_{1}".format(port, row),
-                                        layer=wl1_pin.layer,
-                                        offset=wl1_pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=wl1_pin.height())
+
             # Copy a vdd/gnd layout pin from every cell
             for row in range(self.row_size):
                 for col in range(self.column_size):

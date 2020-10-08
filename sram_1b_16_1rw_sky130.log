@@ -17,3 +17,4 @@
 [bitcell_base_array/__init__]: Creating bitcell_array 4 x 4
 [bitcell_array/__init__]: Creating bitcell_array 4 x 4
 [bitcell_base_array/__init__]: Creating replica_column 7 x 1
+[bitcell_base_array/__init__]: Creating dummy_array 1 x 4

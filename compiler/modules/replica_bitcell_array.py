@@ -502,26 +502,18 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
     def add_layout_pins(self):
         """ Add the layout pins """
         
-        # All wordlines
-        # Main array wl and bl/br
-        for pin_name in self.all_wordline_names:
-            pin_list = self.bitcell_array_inst.get_pins(pin_name)
-            for pin in pin_list:
-                self.add_layout_pin(text=pin_name,
-                                    layer=pin.layer,
-                                    offset=pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=pin.height())
-                
-        for pin_name in self.all_bitline_names:
-            pin_list = self.bitcell_array_inst.get_pins(pin_name)
-            for pin in pin_list:
-                self.add_layout_pin(text=pin_name,
-                                    layer=pin.layer,
-                                    offset=pin.ll().scale(1, 0),
-                                    width=pin.width(),
-                                    height=self.height)
+        #All wordlines
+        #Main array wl and bl/br
+        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
+            for pin_name in self.all_wordline_names:
+                pin_list = self.bitcell_array_inst.get_pins(pin_name)
+                for pin in pin_list:
+                    self.add_layout_pin(text=pin_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=pin.height())
         # Replica wordlines (go by the row instead of replica column because we may have to add a pin
         # even though the column is in another local bitcell array)
         for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
@@ -534,6 +526,36 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     offset=pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=pin.height())
+        else:
+            for pin_name in self.all_wordline_names:
+                pin_list = self.dummy_col_insts[0].get_pins(pin_name)
+                for pin in pin_list:
+                    self.add_layout_pin(text=pin_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=pin.height())
+            # Replica wordlines (go by the row instead of replica column because we may have to add a pin
+            # even though the column is in another local bitcell array)
+            for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
+                for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
+                    if wl_name in self.gnd_wordline_names:
+                        continue
+                    pin = inst.get_pin(pin_name)
+                    self.add_layout_pin(text=wl_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=pin.height())
+                                        
+        for pin_name in self.all_bitline_names:
+            pin_list = self.bitcell_array_inst.get_pins(pin_name)
+            for pin in pin_list:
+                self.add_layout_pin(text=pin_name,
+                                    layer=pin.layer,
+                                    offset=pin.ll().scale(1, 0),
+                                    width=pin.width(),
+                                    height=self.height)
 
         # Replica bitlines
         if len(self.rbls) > 0:

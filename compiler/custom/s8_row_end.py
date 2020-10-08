@@ -17,8 +17,8 @@ class s8_row_end(design.design):
 
     def __init__(self, version, name=""):
         super().__init__(name)
-        pin_names = []
-        type_list = []
+        pin_names = ["wl", "vpwr"]
+        type_list = ["OUTPUT", "POWER"]
 
         if version == "rowend":
             self.name = "s8sram16x16_rowend"
@@ -31,4 +31,8 @@ class s8_row_end(design.design):
                                         GDS["unit"],
                                         layer["mem"],
                                         "s8sram16x16_rowend_ce\x00")
-        pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])
+        self.pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])
+
+
+        self.add_pin("wl", "OUTPUT")
+        self.add_pin("vpwr", "POWER")

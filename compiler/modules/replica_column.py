@@ -67,7 +67,7 @@ class replica_column(bitcell_base_array):
         try:
             if cell_properties.bitcell.end_caps:
                 # remove 2 wordlines to account for top/bot
-                self.create_all_wordline_names(num_remove_wordlines=2)
+                self.create_all_wordline_names(remove_num_wordlines=2)
             else:
                 self.create_all_wordline_names()
         except AttributeError:

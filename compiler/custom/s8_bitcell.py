@@ -56,8 +56,7 @@ class s8_bitcell(bitcell_base.bitcell_base):
         
         (self.width, self.height) = utils.get_libcell_size(self.name,
                                         GDS["unit"],
-                                        layer["mem"],
-                                        "s8sram_cell\x00")
+                                        layer["mem"])
 
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """

@@ -10,7 +10,7 @@ import utils
 from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
-from globals import OPTS
+
 
 class s8_bitcell(bitcell_base.bitcell_base):
     """
@@ -38,7 +38,6 @@ class s8_bitcell(bitcell_base.bitcell_base):
     def __init__(self, version, name=""):
         # Ignore the name argument
 
-
         if version == "opt1":
             self.name = "s8sram_cell_opt1"
         elif version == "opt1a":
@@ -49,14 +48,12 @@ class s8_bitcell(bitcell_base.bitcell_base):
 
         self.pin_map = utils.get_libcell_pins(self.pin_names, self.name, GDS["unit"])
 
-
-
         self.add_pin_types(self.type_list)
-        self.nets_match = self.do_nets_exist(self.storage_nets)       
+        self.nets_match = self.do_nets_exist(self.storage_nets)
         
         (self.width, self.height) = utils.get_libcell_size(self.name,
-                                        GDS["unit"],
-                                        layer["mem"])
+                                                           GDS["unit"],
+                                                           layer["mem"])
 
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """

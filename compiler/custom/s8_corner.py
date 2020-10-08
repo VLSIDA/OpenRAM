@@ -9,16 +9,13 @@
 import debug
 import design
 import utils
-from globals import OPTS
-from tech import parameter, drc, layer, GDS
+from tech import layer, GDS
+
 
 class s8_corner(design.design):
 
-
     def __init__(self, location, name=""):
         super().__init__(name)
-        pin_names = []
-        type_list = []
         
         if location == "ul":
             self.name = "s8sram16x16_corner"
@@ -32,6 +29,6 @@ class s8_corner(design.design):
             debug.error("Invalid s8_corner location", -1)
         design.design.__init__(self, name=self.name)
         (self.width, self.height) = utils.get_libcell_size(self.name,
-                                        GDS["unit"],
-                                        layer["mem"])
-        pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])
+                                                           GDS["unit"],
+                                                           layer["mem"])
+        # pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])

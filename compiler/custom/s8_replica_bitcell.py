@@ -8,10 +8,10 @@
 import design
 import debug
 import utils
-from tech import GDS,layer,drc,parameter,cell_properties
+from tech import GDS, layer, drc, parameter, cell_properties
 from tech import cell_properties as props
-
 from globals import OPTS
+
 
 class replica_bitcell(design.design):
     """
@@ -22,7 +22,7 @@ class replica_bitcell(design.design):
 
     if props.compare_ports(props.bitcell.split_wl):
         pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"]
     else:
         pin_names = [props.bitcell.cell_6t.pin.bl,
                      props.bitcell.cell_6t.pin.br,
@@ -30,18 +30,8 @@ class replica_bitcell(design.design):
                      props.bitcell.cell_6t.pin.vdd,
                      props.bitcell.cell_6t.pin.gnd]
 
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
+        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     
-    if not OPTS.netlist_only:
-            (self.width, self.height) = utils.get_libcell_size(self.name,
-                                        GDS["unit"],
-                                        layer["mem"],
-                                        "s8sram_cell\x00")
-        self.pin_map = utils.get_libcell_pins(self.pin_names, self.name, GDS["unit"])
-    else:
-        (width,height) = (0,0)
-        pin_map = []
-
     def __init__(self, version, name=""):
         # Ignore the name argument
 
@@ -56,10 +46,13 @@ class replica_bitcell(design.design):
         design.design.__init__(self, "replica_cell_6t")
         debug.info(2, "Create replica bitcell object")
 
-        self.width = replica_bitcell.width
-        self.height = replica_bitcell.height
-        self.pin_map = replica_bitcell.pin_map
+        self.pin_map = utils.get_libcell_pins(self.pin_names, self.name, GDS["unit"])
+
         self.add_pin_types(self.type_list)
+        
+        (self.width, self.height) = utils.get_libcell_size(self.name,
+                                                           GDS["unit"],
+                                                           layer["mem"])
         
     def get_stage_effort(self, load):
         parasitic_delay = 1

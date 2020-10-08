@@ -9,16 +9,13 @@
 import debug
 import design
 import utils
-from globals import OPTS
-from tech import parameter, drc, layer, GDS
+from tech import layer, GDS
+
 
 class s8_internal(design.design):
 
-
     def __init__(self, version, name=""):
         super().__init__(name)
-        pin_names = []
-        type_list = []
         
         if version == "wlstrap":
             self.name = "s8sram_wlstrap"
@@ -30,6 +27,6 @@ class s8_internal(design.design):
             debug.error("Invalid version", -1)
         design.design.__init__(self, name=self.name)
         (self.width, self.height) = utils.get_libcell_size(self.name,
-                                        GDS["unit"],
-                                        layer["mem"])
-        pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])
+                                                           GDS["unit"],
+                                                           layer["mem"])
+        # pin_map = utils.get_libcell_pins(pin_names, self.name, GDS["unit"])

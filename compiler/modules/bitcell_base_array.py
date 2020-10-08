@@ -56,8 +56,8 @@ class bitcell_base_array(design.design):
     # def get_all_wordline_names(self, prefix=""):
     #     return [prefix + x for x in self.all_wordline_names]
 
-    def create_all_wordline_names(self, remove_wordline = 0):
-        for row in range(self.row_size - remove_wordline):
+    def create_all_wordline_names(self, num_remove_wordline=0):
+        for row in range(self.row_size - num_remove_wordline):
             for port in self.all_ports:
                 if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
                     self.wordline_names[port].append("wl_{0}_{1}".format(port, row))

@@ -53,6 +53,8 @@ class replica_column(bitcell_base_array):
         self.create_instances()
 
     def create_layout(self):
+        self.height = self.total_size * self.cell.height
+        self.width = self.cell.width
 
         self.place_instances()
         self.add_layout_pins()
@@ -62,11 +64,15 @@ class replica_column(bitcell_base_array):
     def add_pins(self):
 
         self.create_all_bitline_names()
-        #remove 2 wordlines to account for top/bot
-        if not cell_properties.bitcell.end_caps:
+        try:
+            if cell_properties.bitcell.end_caps:
+                # remove 2 wordlines to account for top/bot
+                self.create_all_wordline_names(num_remove_wordlines=2)
+            else:
+                self.create_all_wordline_names()
+        except AttributeError:
             self.create_all_wordline_names()
-        else:
-            self.create_all_wordline_names(2)
+
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
 
@@ -111,7 +117,6 @@ class replica_column(bitcell_base_array):
             self.add_mod(self.colend_p_cent)
             self.colenda_p_cent = factory.create(module_type="s8_col_end", version = "colenda_p_cent")
             self.add_mod(self.colenda_p_cent)
-
 
     def create_instances(self):
         self.cell_inst = {}
@@ -309,3 +314,5 @@ class replica_column(bitcell_base_array):
         for row, cell in self.cell_inst.items():
             if row != self.replica_bit:
                 self.graph_inst_exclude.add(cell)
+
+                

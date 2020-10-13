@@ -5,7 +5,6 @@
 #
 from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
-from tech import GDS,layer,drc,parameter,cell_properties
 from tech import cell_properties as props
 from globals import OPTS
 
@@ -14,13 +13,9 @@ class dummy_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
+    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
-
-        # This will create a default set of bitline/wordline names
-        self.create_all_bitline_names()
-        self.create_all_wordline_names()
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -28,6 +23,10 @@ class dummy_array(bitcell_base_array):
         
     def create_netlist(self):
         """ Create and connect the netlist """
+        # This will create a default set of bitline/wordline names
+        self.create_all_bitline_names()
+        self.create_all_wordline_names()
+        
         self.add_modules()
         self.add_pins()
         self.create_instances()
@@ -56,7 +55,7 @@ class dummy_array(bitcell_base_array):
             for row in range(self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
-                                                    mod=self.dummy_cell)
+                                                       mod=self.dummy_cell)
                 self.connect_inst(self.get_bitcell_pins(row, col))
 
     def add_pins(self):

@@ -5,14 +5,14 @@
 #
 
 import debug
-import bitcell_base_array
+from bitcell_base_array import bitcell_base_array
 from tech import drc, spice, cell_properties
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
+class replica_bitcell_array(bitcell_base_array):
     """
     Creates a bitcell arrow of cols x rows and then adds the replica
     and dummy columns and rows.  Replica columns are on the left and
@@ -150,13 +150,23 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # Dummy Row or Col Cap, depending on bitcell array properties
         col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
-        self.col_cap = factory.create(module_type=col_cap_module_type,
-                                        cols=self.column_size,
-                                        rows=1,
-                                        # dummy column + left replica column
-                                        column_offset=1 + len(self.left_rbl),
-                                        mirror=0)
-        self.add_mod(self.col_cap)
+        self.col_cap_top = factory.create(module_type=col_cap_module_type,
+                                          cols=self.column_size,
+                                          rows=1,
+                                          # dummy column + left replica column(s)
+                                          column_offset=1 + len(self.left_rbl),
+                                          mirror=0,
+                                          location="top")
+        self.add_mod(self.col_cap_top)
+
+        self.col_cap_bottom = factory.create(module_type=col_cap_module_type,
+                                             cols=self.column_size,
+                                             rows=1,
+                                             # dummy column + left replica column(s)
+                                             column_offset=1 + len(self.left_rbl),
+                                             mirror=0,
+                                             location="bottom")
+        self.add_mod(self.col_cap_bottom)
 
         # Dummy Col or Row Cap, depending on bitcell array properties
         row_cap_module_type = ("row_cap_array" if end_caps_enabled else "dummy_array")
@@ -238,13 +248,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
         for bit in range(self.rbl[0]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
@@ -285,11 +295,11 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
-                                                    mod=self.col_cap))
-        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
+                                                  mod=self.col_cap_bottom))
+        self.connect_inst(["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
-                                                    mod=self.col_cap))
-        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
+                                                  mod=self.col_cap_top))
+        self.connect_inst(["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
@@ -491,7 +501,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         # replica column should only have a vdd/gnd in the dummy cell on top/bottom
         supply_insts = self.dummy_col_insts + self.dummy_row_insts
         
-        for pin_name in  self.supplies:
+        for pin_name in self.supplies:
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
                 for pin in pin_list:
@@ -524,7 +534,7 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         """ Connect the unused RBL and dummy wordlines to gnd """
         # This grounds all the dummy row word lines
         for inst in self.dummy_row_insts:
-            for wl_name in self.col_cap.get_wordline_names():
+            for wl_name in self.col_cap_top.get_wordline_names():
                 self.ground_pin(inst, wl_name)
 
         # Ground the unused replica wordlines

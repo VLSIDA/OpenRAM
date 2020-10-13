@@ -48,9 +48,6 @@ class bitcell_base_array(design.design):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
                 
-    # def get_all_wordline_names(self, prefix=""):
-    #     return [prefix + x for x in self.all_wordline_names]
-
     def create_all_wordline_names(self, remove_num_wordlines=0):
         for row in range(self.row_size - remove_num_wordlines):
             for port in self.all_ports:
@@ -67,8 +64,10 @@ class bitcell_base_array(design.design):
         self.add_pin(self.supplies[1], "GROUND")
 
     def get_bitcell_pins(self, row, col):
-        """ Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array """
+        """
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array 
+        """
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])

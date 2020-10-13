@@ -8,7 +8,6 @@
 import debug
 from bitcell_base_array import bitcell_base_array
 from tech import drc, spice
-from tech import cell_properties as props
 from globals import OPTS
 from sram_factory import factory
 

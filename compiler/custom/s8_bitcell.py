@@ -35,7 +35,7 @@ class s8_bitcell(bitcell_base.bitcell_base):
         type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
-    def __init__(self, version, name=""):
+    def __init__(self, version="opt1", name=""):
         # Ignore the name argument
 
         if version == "opt1":

@@ -147,78 +147,37 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
                                             column_offset=1 + len(self.left_rbl),
                                             mirror=0)
         self.add_mod(self.dummy_row)
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
-            # Dummy Row or Col Cap, depending on bitcell array properties
-            col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
-            self.col_cap = factory.create(module_type=col_cap_module_type,
-                                          cols=self.column_size,
-                                          rows=1,
-                                          # dummy column + left replica column
-                                          column_offset=1 + len(self.left_rbl),
-                                          mirror=0)
-            self.add_mod(self.col_cap)
-
-            # Dummy Col or Row Cap, depending on bitcell array properties
-            row_cap_module_type = ("row_cap_array" if end_caps_enabled else "dummy_array")
-
-            self.row_cap_left = factory.create(module_type=row_cap_module_type,
-                                                cols=1,
-                                                column_offset=0,
-                                                rows=self.row_size + self.extra_rows,
-                                                mirror=(self.rbl[0] + 1) % 2)
-            self.add_mod(self.row_cap_left)
-
-            self.row_cap_right = factory.create(module_type=row_cap_module_type,
-                                                cols=1,
-                                                #   dummy column
-                                                # + left replica column(s)
-                                                # + bitcell columns
-                                                # + right replica column(s)
-                                                column_offset = 1 + len(self.left_rbl) + self.column_size + self.rbl[0],
-                                                rows=self.row_size + self.extra_rows,
-                                                mirror=(self.rbl[0] + 1) %2)
-            self.add_mod(self.row_cap_right)
-        else:
-            # Dummy Row or Col Cap, depending on bitcell array properties
-            col_cap_module_type = ("s8_col_cap_array" if end_caps_enabled else "dummy_array")
-            self.col_cap_top = factory.create(module_type=col_cap_module_type,
+        # Dummy Row or Col Cap, depending on bitcell array properties
+        col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
+        self.col_cap = factory.create(module_type=col_cap_module_type,
                                         cols=self.column_size,
                                         rows=1,
-                                        # dummy column + left replica column(s)
+                                        # dummy column + left replica column
                                         column_offset=1 + len(self.left_rbl),
-                                        mirror=0,
-                                        location="top")
-            self.add_mod(self.col_cap_top)
+                                        mirror=0)
+        self.add_mod(self.col_cap)
 
-            self.col_cap_bottom = factory.create(module_type=col_cap_module_type,
-                                                 cols=self.column_size,
-                                                 rows=1,
-                                                 # dummy column + left replica column(s)
-                                                 column_offset=1 + len(self.left_rbl),
-                                                 mirror=0,
-                                                 location="bottom")
-            self.add_mod(self.col_cap_bottom)
-            # Dummy Col or Row Cap, depending on bitcell array properties
-            row_cap_module_type = ("s8_row_cap_array" if end_caps_enabled else "dummy_array")
+        # Dummy Col or Row Cap, depending on bitcell array properties
+        row_cap_module_type = ("row_cap_array" if end_caps_enabled else "dummy_array")
 
-            self.row_cap_left = factory.create(module_type=row_cap_module_type,
-                                                cols=1,
-                                                column_offset=0,
-                                                rows=self.row_size + self.extra_rows,
-                                                mirror=0)
-            self.add_mod(self.row_cap_left)
+        self.row_cap_left = factory.create(module_type=row_cap_module_type,
+                                            cols=1,
+                                            column_offset=0,
+                                            rows=self.row_size + self.extra_rows,
+                                            mirror=(self.rbl[0] + 1) % 2)
+        self.add_mod(self.row_cap_left)
 
-            self.row_cap_right = factory.create(module_type=row_cap_module_type,
-                                                cols=1,
-                                                #   dummy column
-                                                # + left replica column(s)
-                                                # + bitcell columns
-                                                # + right replica column(s)
-                                                column_offset = 1 + len(self.left_rbl) + self.column_size + self.rbl[0],
-                                                rows=self.row_size + self.extra_rows,
-                                                mirror=0)
-            self.add_mod(self.row_cap_right)
+        self.row_cap_right = factory.create(module_type=row_cap_module_type,
+                                            cols=1,
+                                            #   dummy column
+                                            # + left replica column(s)
+                                            # + bitcell columns
+                                            # + right replica column(s)
+                                            column_offset = 1 + len(self.left_rbl) + self.column_size + self.rbl[0],
+                                            rows=self.row_size + self.extra_rows,
+                                            mirror=(self.rbl[0] + 1) %2)
+        self.add_mod(self.row_cap_right)
 
     def add_pins(self):
 
@@ -279,15 +238,13 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
         for bit in range(self.rbl[0]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap.get_wordline_names()))
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
@@ -297,56 +254,51 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def create_instances(self):
         """ Create the module instances used in this design """
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+        self.supplies = ["vdd", "gnd"]
 
-            self.supplies = ["vdd", "gnd"]
+        # Used for names/dimensions only
+        self.cell = factory.create(module_type="bitcell")
 
-            # Used for names/dimensions only
-            self.cell = factory.create(module_type="bitcell")
+        # Main array
+        self.bitcell_array_inst=self.add_inst(name="bitcell_array",
+                                                mod=self.bitcell_array)
+        self.connect_inst(self.all_bitline_names + self.all_wordline_names + self.supplies)
 
-            # Main array
-            self.bitcell_array_inst=self.add_inst(name="bitcell_array",
-                                                    mod=self.bitcell_array)
-            self.connect_inst(self.all_bitline_names + self.all_wordline_names + self.supplies)
+        # Replica columns
+        self.replica_col_insts = []
+        for port in self.all_ports:
+            if port in self.rbls:
+                self.replica_col_insts.append(self.add_inst(name="replica_col_{}".format(port),
+                                                            mod=self.replica_columns[port]))
+                self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + self.supplies)
+            else:
+                self.replica_col_insts.append(None)
+                
+        # Dummy rows under the bitcell array (connected with with the replica cell wl)
+        self.dummy_row_replica_insts = []
+        # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
+        for port in self.all_ports:
+            self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
+                                                                mod=self.dummy_row))
+            self.connect_inst([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
 
-            # Replica columns
-            self.replica_col_insts = []
-            for port in self.all_ports:
-                if port in self.rbls:
-                    self.replica_col_insts.append(self.add_inst(name="replica_col_{}".format(port),
-                                                                mod=self.replica_columns[port]))
-                    self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + self.supplies)
-                else:
-                    self.replica_col_insts.append(None)
-                    
-            # Dummy rows under the bitcell array (connected with with the replica cell wl)
-            self.dummy_row_replica_insts = []
-            # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
-            for port in self.all_ports:
-                self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
-                                                                    mod=self.dummy_row))
-                self.connect_inst([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
+        # Top/bottom dummy rows or col caps
+        self.dummy_row_insts = []
+        self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
+                                                    mod=self.col_cap))
+        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
+        self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
+                                                    mod=self.col_cap))
+        self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
 
-            # Top/bottom dummy rows or col caps
-            self.dummy_row_insts = []
-            self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
-                                                      mod=self.col_cap))
-            self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
-            self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
-                                                      mod=self.col_cap))
-            self.connect_inst(["gnd"] * len(self.col_cap.get_wordline_names()) + self.supplies)
-
-            # Left/right Dummy columns
-            self.dummy_col_insts = []
-            self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
-                                                      mod=self.row_cap_left))
-            self.connect_inst(self.replica_array_wordline_names + self.supplies)
-            self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
-                                                      mod=self.row_cap_right))
-            self.connect_inst(self.replica_array_wordline_names + self.supplies)
-        else:
-            from tech import custom_replica_bitcell_array_arrangement
-            custom_replica_bitcell_array_arrangement(self)
+        # Left/right Dummy columns
+        self.dummy_col_insts = []
+        self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
+                                                    mod=self.row_cap_left))
+        self.connect_inst(self.replica_array_wordline_names + self.supplies)
+        self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
+                                                    mod=self.row_cap_right))
+        self.connect_inst(self.replica_array_wordline_names + self.supplies)
 
     def create_layout(self):
 
@@ -357,26 +309,15 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.unused_offset = vector(self.unused_pitch, 0)
 
         # Add extra width on the left and right for the unused WLs
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.height = (self.row_size + self.extra_rows) * self.dummy_row.height
-            self.width = (self.column_size + self.extra_cols) * self.cell.width + 2 * self.unused_pitch
-        else:
-            self.width = self.row_cap_left.width + self.row_cap_right.width + self.col_cap_top.width
-            for rbl in range(self.rbl[0] + self.rbl[1]):
-                self.width += self.replica_col_insts[rbl].width
-            self.height = self.row_cap_left.height
+        self.height = (self.row_size + self.extra_rows) * self.dummy_row.height
+        self.width = (self.column_size + self.extra_cols) * self.cell.width + 2 * self.unused_pitch
 
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.strap_offset = vector(0, 0)
-            self.col_end_offset = vector(self.cell.width, self.cell.height)
-            self.row_end_offset = vector(self.cell.width, self.cell.height)
-        else:
-            self.strap_offset = vector(self.replica_col_insts[0].mod.strap1.width, self.replica_col_insts[0].mod.strap1.height)
-            self.col_end_offset = vector(self.dummy_row_insts[0].mod.colend1.width, self.dummy_row_insts[0].mod.colend1.height)
-            self.row_end_offset = vector(self.dummy_col_insts[0].mod.rowend1.width, self.dummy_col_insts[0].mod.rowend1.height)
+        self.strap_offset = vector(0, 0)
+        self.col_end_offset = vector(self.cell.width, self.cell.height)
+        self.row_end_offset = vector(self.cell.width, self.cell.height)
 
         # Everything is computed with the main array at (self.unused_pitch, 0) to start
         self.bitcell_array_inst.place(offset=self.unused_offset)
@@ -503,50 +444,28 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
         
         #All wordlines
         #Main array wl and bl/br
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
 
-            for pin_name in self.all_wordline_names:
-                pin_list = self.bitcell_array_inst.get_pins(pin_name)
-                for pin in pin_list:
-                    self.add_layout_pin(text=pin_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=pin.height())
-            # Replica wordlines (go by the row instead of replica column because we may have to add a pin
-            # even though the column is in another local bitcell array)
-            for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-                for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                    if wl_name in self.gnd_wordline_names:
-                        continue
-                    pin = inst.get_pin(pin_name)
-                    self.add_layout_pin(text=wl_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=pin.height())
-        else:
-            for pin_name in self.all_wordline_names:
-                pin_list = self.dummy_col_insts[0].get_pins(pin_name)
-                for pin in pin_list:
-                    self.add_layout_pin(text=pin_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=pin.height())
-            # Replica wordlines (go by the row instead of replica column because we may have to add a pin
-            # even though the column is in another local bitcell array)
-            for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-                for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                    if wl_name in self.gnd_wordline_names:
-                        continue
-                    pin = inst.get_pin(pin_name)
-                    self.add_layout_pin(text=wl_name,
-                                        layer=pin.layer,
-                                        offset=pin.ll().scale(0, 1),
-                                        width=self.width,
-                                        height=pin.height())
-                                        
+        for pin_name in self.all_wordline_names:
+            pin_list = self.bitcell_array_inst.get_pins(pin_name)
+            for pin in pin_list:
+                self.add_layout_pin(text=pin_name,
+                                    layer=pin.layer,
+                                    offset=pin.ll().scale(0, 1),
+                                    width=self.width,
+                                    height=pin.height())
+        # Replica wordlines (go by the row instead of replica column because we may have to add a pin
+        # even though the column is in another local bitcell array)
+        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
+            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
+                if wl_name in self.gnd_wordline_names:
+                    continue
+                pin = inst.get_pin(pin_name)
+                self.add_layout_pin(text=wl_name,
+                                    layer=pin.layer,
+                                    offset=pin.ll().scale(0, 1),
+                                    width=self.width,
+                                    height=pin.height())
+
         for pin_name in self.all_bitline_names:
             pin_list = self.bitcell_array_inst.get_pins(pin_name)
             for pin in pin_list:
@@ -603,17 +522,16 @@ class replica_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def route_unused_wordlines(self):
         """ Connect the unused RBL and dummy wordlines to gnd """
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            # This grounds all the dummy row word lines
-            for inst in self.dummy_row_insts:
-                for wl_name in self.col_cap.get_wordline_names():
-                    self.ground_pin(inst, wl_name)
+        # This grounds all the dummy row word lines
+        for inst in self.dummy_row_insts:
+            for wl_name in self.col_cap.get_wordline_names():
+                self.ground_pin(inst, wl_name)
 
-            # Ground the unused replica wordlines
-            for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-                for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                    if wl_name in self.gnd_wordline_names:
-                        self.ground_pin(inst, pin_name)
+        # Ground the unused replica wordlines
+        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
+            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
+                if wl_name in self.gnd_wordline_names:
+                    self.ground_pin(inst, pin_name)
 
     def ground_pin(self, inst, name):
         pin = inst.get_pin(name)

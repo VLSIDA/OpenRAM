@@ -9,7 +9,6 @@ import debug
 import design
 from tech import cell_properties
 from sram_factory import factory
-from globals import OPTS
 
 
 class bitcell_base_array(design.design):
@@ -27,7 +26,6 @@ class bitcell_base_array(design.design):
         # Bitcell for port names only
         self.cell = factory.create(module_type="bitcell")
 
-
         self.wordline_names = [[] for port in self.all_ports]
         self.all_wordline_names = []
         self.bitline_names = [[] for port in self.all_ports]
@@ -37,9 +35,11 @@ class bitcell_base_array(design.design):
         self.rbl_wordline_names = [[] for port in self.all_ports]
         self.all_rbl_wordline_names = []
 
-    def get_all_bitline_names(self, prefix=""):
-        return [prefix + x for x in self.all_bitline_names]
-        
+        # The supply pin namesn
+        self.bitcell_supplies = ["vdd", "gnd"]
+        # If the technology needs renaming of the supplies
+        self.supplies = self.bitcell_supplies
+
     def create_all_bitline_names(self):
         for col in range(self.column_size):
             for port in self.all_ports:
@@ -54,11 +54,7 @@ class bitcell_base_array(design.design):
     def create_all_wordline_names(self, remove_num_wordlines=0):
         for row in range(self.row_size - remove_num_wordlines):
             for port in self.all_ports:
-                if not cell_properties.compare_ports(cell_properties.bitcell.split_wl):
-                    self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-                else:
-                    self.wordline_names[port].append("wl0_{0}_{1}".format(port, row))
-                    self.wordline_names[port].append("wl1_{0}_{1}".format(port, row))
+                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 
         self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
 
@@ -67,10 +63,9 @@ class bitcell_base_array(design.design):
             self.add_pin(bl_name, "INOUT")
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
+        self.add_pin(self.supplies[0], "POWER")
+        self.add_pin(self.supplies[1], "GROUND")
 
-            
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array """
@@ -78,8 +73,8 @@ class bitcell_base_array(design.design):
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
         bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
-        bitcell_pins.append("vdd")
-        bitcell_pins.append("gnd")
+        bitcell_pins.append(self.bitcell_supplies[0])
+        bitcell_pins.append(self.bitcell_supplies[1])
 
         return bitcell_pins
 
@@ -169,8 +164,8 @@ class bitcell_base_array(design.design):
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
-                for pin_name in ["vdd", "gnd"]:
-                    self.copy_layout_pin(inst, pin_name)
+                for (pin_name, new_name) in zip(self.bitcell_supplies, self.supplies):
+                    self.copy_layout_pin(inst, pin_name, new_name)
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
@@ -191,7 +186,7 @@ class bitcell_base_array(design.design):
         return (tempy, dir_x)
 
     def place_array(self, name_template, row_offset=0):
-    # We increase it by a well enclosure so the precharges don't overlap our wells
+        # We increase it by a well enclosure so the precharges don't overlap our wells
         self.height = self.row_size * self.cell.height
         self.width = self.column_size * self.cell.width
 
@@ -213,7 +208,7 @@ class bitcell_base_array(design.design):
                     dir_key = ""
 
                 self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                            mirror=dir_key)
+                                               mirror=dir_key)
                 yoffset += self.cell.height
             xoffset += self.cell.width
 

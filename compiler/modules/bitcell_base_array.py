@@ -25,13 +25,8 @@ class bitcell_base_array(design.design):
         self.column_offset = column_offset
 
         # Bitcell for port names only
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.cell = factory.create(module_type="bitcell")
-        else:
-            self.cell = factory.create(module_type="s8_bitcell", version="opt1")
-            self.cell2 = factory.create(module_type="s8_bitcell", version="opt1a")
-            self.strap = factory.create(module_type="s8_internal", version="wlstrap")
-            self.strap2 = factory.create(module_type="s8_internal", version="wlstrap_p")
+        self.cell = factory.create(module_type="bitcell")
+
 
         self.wordline_names = [[] for port in self.all_ports]
         self.all_wordline_names = []
@@ -72,12 +67,9 @@ class bitcell_base_array(design.design):
             self.add_pin(bl_name, "INOUT")
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.add_pin("vdd", "POWER")
-            self.add_pin("gnd", "GROUND")
-        else:
-            self.add_pin("vpwr", "POWER")
-            self.add_pin("vgnd", "GROUND")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
+
             
     def get_bitcell_pins(self, row, col):
         """ Creates a list of connections in the bitcell,
@@ -173,24 +165,13 @@ class bitcell_base_array(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
                                     
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
+        # Copy a vdd/gnd layout pin from every cell
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                inst = self.cell_inst[row, col]
+                for pin_name in ["vdd", "gnd"]:
+                    self.copy_layout_pin(inst, pin_name)
 
-            # Copy a vdd/gnd layout pin from every cell
-            for row in range(self.row_size):
-                for col in range(self.column_size):
-                    inst = self.cell_inst[row, col]
-                    for pin_name in ["vdd", "gnd"]:
-                        self.copy_layout_pin(inst, pin_name)
-        else:
-
-
-            # Copy a vdd/gnd layout pin from every cell
-            for row in range(self.row_size):
-                for col in range(self.column_size):
-                    inst = self.cell_inst[row, col]
-                    for pin_name in ["vpwr", "vgnd"]:
-
-                        self.copy_layout_pin(inst, pin_name)
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
         dir_y = False
@@ -210,35 +191,31 @@ class bitcell_base_array(design.design):
         return (tempy, dir_x)
 
     def place_array(self, name_template, row_offset=0):
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        if not cell_properties.compare_ports(cell_properties.bitcell_array.use_custom_cell_arrangement):
-            self.height = self.row_size * self.cell.height
-            self.width = self.column_size * self.cell.width
+    # We increase it by a well enclosure so the precharges don't overlap our wells
+        self.height = self.row_size * self.cell.height
+        self.width = self.column_size * self.cell.width
 
-            xoffset = 0.0
-            for col in range(self.column_size):
-                yoffset = 0.0
-                tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
+        xoffset = 0.0
+        for col in range(self.column_size):
+            yoffset = 0.0
+            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
 
-                for row in range(self.row_size):
-                    tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
+            for row in range(self.row_size):
+                tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
 
-                    if dir_x and dir_y:
-                        dir_key = "XY"
-                    elif dir_x:
-                        dir_key = "MX"
-                    elif dir_y:
-                        dir_key = "MY"
-                    else:
-                        dir_key = ""
+                if dir_x and dir_y:
+                    dir_key = "XY"
+                elif dir_x:
+                    dir_key = "MX"
+                elif dir_y:
+                    dir_key = "MY"
+                else:
+                    dir_key = ""
 
-                    self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                                mirror=dir_key)
-                    yoffset += self.cell.height
-                xoffset += self.cell.width
-        else:
-            from tech import custom_cell_placement
-            custom_cell_placement(self)
+                self.cell_inst[row, col].place(offset=[tempx, tempy],
+                                            mirror=dir_key)
+                yoffset += self.cell.height
+            xoffset += self.cell.width
 
     def get_column_offsets(self):
         """

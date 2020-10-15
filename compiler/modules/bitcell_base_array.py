@@ -48,8 +48,11 @@ class bitcell_base_array(design.design):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
                 
-    def create_all_wordline_names(self, remove_num_wordlines=0):
-        for row in range(self.row_size - remove_num_wordlines):
+    def create_all_wordline_names(self, row_size=None):
+        if row_size == None:
+            row_size = self.row_size
+            
+        for row in range(row_size):
             for port in self.all_ports:
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 

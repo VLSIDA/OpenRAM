@@ -30,8 +30,8 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
                  props.bitcell.cell_1rw1r.pin.vdd,
                  props.bitcell.cell_1rw1r.pin.gnd]
 
-    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", 
-                 "INPUT", "INPUT", "POWER", "GROUND"] 
+    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
+                 "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
     (width, height) = utils.get_libcell_size("cell_1rw_1r",
                                              GDS["unit"],

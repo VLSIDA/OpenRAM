@@ -28,8 +28,13 @@ class replica_column(bitcell_base_array):
         self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
-        self.total_size = self.left_rbl + rows + self.right_rbl + 2
-
+        self.total_size = self.left_rbl + rows + self.right_rbl
+        try:
+            if not cell_properties.bitcell.end_caps:
+                self.total_size += 2
+        except AttributeError:
+            self.total_size += 2
+            
         self.column_offset = column_offset
 
         debug.check(replica_bit != 0 and replica_bit != rows,
@@ -62,14 +67,7 @@ class replica_column(bitcell_base_array):
     def add_pins(self):
 
         self.create_all_bitline_names()
-        try:
-            if cell_properties.bitcell.end_caps:
-                # remove 2 wordlines to account for top/bot
-                self.create_all_wordline_names(remove_num_wordlines=2)
-            else:
-                self.create_all_wordline_names()
-        except AttributeError:
-            self.create_all_wordline_names()
+        self.create_all_wordline_names(self.total_size)
 
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
@@ -91,7 +89,6 @@ class replica_column(bitcell_base_array):
         # Used for pin names only
         self.cell = factory.create(module_type="bitcell")
 
-
     def create_instances(self):
         self.cell_inst = {}
         try:
@@ -106,22 +103,22 @@ class replica_column(bitcell_base_array):
             # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
             if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
-                                                mod=self.replica_cell)
+                                                  mod=self.replica_cell)
                 self.connect_inst(self.get_bitcell_pins(row, 0))
             elif row==self.replica_bit:
                 self.cell_inst[row]=self.add_inst(name=name,
-                                                mod=self.replica_cell)
+                                                  mod=self.replica_cell)
                 self.connect_inst(self.get_bitcell_pins(row, 0))
             elif (row == 0 or row == self.total_size - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
-                                                mod=self.edge_cell)
+                                                  mod=self.edge_cell)
                 if end_caps_enabled:
                     self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
                 else:
                     self.connect_inst(self.get_bitcell_pins(row, 0))
             else:
                 self.cell_inst[row]=self.add_inst(name=name,
-                                                mod=self.dummy_cell)
+                                                  mod=self.dummy_cell)
                 self.connect_inst(self.get_bitcell_pins(row, 0))
 
     def place_instances(self):
@@ -153,8 +150,7 @@ class replica_column(bitcell_base_array):
                 dir_key = ""
 
             self.cell_inst[row].place(offset=offset,
-                                    mirror=dir_key)
-
+                                      mirror=dir_key)
 
     def add_layout_pins(self):
         """ Add the layout pins """

@@ -23,6 +23,10 @@ class row_cap_array(bitcell_base_array):
 
     def create_netlist(self):
         """ Create and connect the netlist """
+        # This will create a default set of bitline/wordline names
+        self.create_all_wordline_names()
+        self.create_all_bitline_names()
+
         self.add_modules()
         self.add_pins()
         self.create_instances()

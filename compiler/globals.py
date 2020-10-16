@@ -474,17 +474,11 @@ def set_default_corner():
 
     # Load scales are fanout multiples of the DFF input cap
     if (OPTS.load_scales == ""):
-        if OPTS.nominal_corner_only:
-            OPTS.load_scales = [4]
-        else:
-            OPTS.load_scales = [0.25, 1, 4]
+        OPTS.load_scales = [0.25, 1, 4]
 
     # Load scales are fanout multiples of the default spice input slew
     if (OPTS.slew_scales == ""):
-        if OPTS.nominal_corner_only:
-            OPTS.slew_scales = [1]
-        else:
-            OPTS.slew_scales = [0.25, 1, 4]
+        OPTS.slew_scales = [0.25, 1, 8]
             
     
 def import_tech():

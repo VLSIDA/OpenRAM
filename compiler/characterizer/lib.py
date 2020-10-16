@@ -44,20 +44,15 @@ class lib:
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
-        #self.load_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
-        self.load_scales = np.array([0.25, 1, 4])
-        #self.load_scales = np.array([0.25, 1])
+        self.load_scales = np.array(OPTS.load_scales)
         self.load = tech.spice["dff_in_cap"]
-        self.loads = self.load_scales*self.load
-        debug.info(1,"Loads: {0}".format(self.loads))
+        self.loads = self.load_scales * self.load
+        debug.info(1, "Loads: {0}".format(self.loads))
         
-        #self.slew_scales = np.array([0.1, 0.25, 0.5, 1, 2, 4, 8])
-        self.slew_scales = np.array([0.25, 1, 8])        
-        #self.slew_scales = np.array([0.25, 1])
-        self.slew = tech.spice["rise_time"]        
-        self.slews = self.slew_scales*self.slew
-        debug.info(1,"Slews: {0}".format(self.slews))
-
+        self.slew_scales = np.array(OPTS.slew_scales)
+        self.slew = tech.spice["rise_time"]
+        self.slews = self.slew_scales * self.slew
+        debug.info(1, "Slews: {0}".format(self.slews))
         
     def create_corners(self):
         """ Create corners for characterization. """

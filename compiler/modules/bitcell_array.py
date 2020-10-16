@@ -7,9 +7,7 @@
 #
 import debug
 from bitcell_base_array import bitcell_base_array
-from s8_corner import s8_corner
 from tech import drc, spice
-from tech import cell_properties as props
 from globals import OPTS
 from sram_factory import factory
 
@@ -54,31 +52,18 @@ class bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        if not props.compare_ports(props.bitcell_array.use_custom_cell_arrangement):
-            self.cell = factory.create(module_type="bitcell")
-            self.add_mod(self.cell)
-
-        else:
-            self.cell = factory.create(module_type="s8_bitcell", version = "opt1")
-            self.add_mod(self.cell)
-            self.add_mod(factory.create(module_type="s8_bitcell", version = "opt1a"))
-
-            self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap"))
-            self.add_mod(factory.create(module_type="s8_internal", version = "wlstrap_p"))
+        self.cell = factory.create(module_type="bitcell")
+        self.add_mod(self.cell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
-        if not props.compare_ports(props.bitcell_array.use_custom_cell_arrangement):
-            for col in range(self.column_size):
-                for row in range(self.row_size):
-                    name = "bit_r{0}_c{1}".format(row, col)
-                    self.cell_inst[row, col]=self.add_inst(name=name,
-                                                        mod=self.cell)
-                    self.connect_inst(self.get_bitcell_pins(row, col))
-        else:
-            from tech import custom_cell_arrangement
-            custom_cell_arrangement(self) 
+        for col in range(self.column_size):
+            for row in range(self.row_size):
+                name = "bit_r{0}_c{1}".format(row, col)
+                self.cell_inst[row, col]=self.add_inst(name=name,
+                                                    mod=self.cell)
+                self.connect_inst(self.get_bitcell_pins(row, col))
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

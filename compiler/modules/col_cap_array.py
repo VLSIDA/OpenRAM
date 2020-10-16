@@ -13,9 +13,10 @@ class col_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
+    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
+        self.location = location
 
         self.no_instances = True
         self.create_netlist()
@@ -24,6 +25,10 @@ class col_cap_array(bitcell_base_array):
 
     def create_netlist(self):
         """ Create and connect the netlist """
+        # This will create a default set of bitline/wordline names
+        self.create_all_wordline_names()
+        self.create_all_bitline_names()
+        
         self.add_modules()
         self.add_pins()
         self.create_instances()
@@ -58,12 +63,18 @@ class col_cap_array(bitcell_base_array):
         indexed by column and row, for instance use in bitcell_array
         """
 
-        pin_name = cell_properties.bitcell.cell_1rw1r.pin
-        bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
-                        "{0}_{1}".format(pin_name.br0, col),
-                        "{0}_{1}".format(pin_name.bl1, col),
-                        "{0}_{1}".format(pin_name.br1, col),
-                        "vdd"]
+        if len(self.ports) == 1:
+            pin_name = cell_properties.bitcell.cell_6t.pin
+            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
+                            "{0}_{1}".format(pin_name.br0, col),
+                            "vdd"]
+        else:
+            pin_name = cell_properties.bitcell.cell_1rw1r.pin
+            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
+                            "{0}_{1}".format(pin_name.br0, col),
+                            "{0}_{1}".format(pin_name.bl1, col),
+                            "{0}_{1}".format(pin_name.br1, col),
+                            "vdd"]
 
         return bitcell_pins
 

@@ -42,6 +42,8 @@ class options(optparse.Values):
     supply_voltages = ""
     temperatures = ""
     process_corners = ""
+    load_scales = ""
+    slew_scales = ""
 
     # Size parameters must be specified by user in config file.
     # num_words = 0

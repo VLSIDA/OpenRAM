@@ -60,6 +60,9 @@ class dummy_array(bitcell_base_array):
 
     def add_pins(self):
         # bitline pins are not added because they are floating
+        for bl_name in self.get_bitline_names():
+            self.add_pin(bl_name, "INOUT")
+        # bitline pins are not added because they are floating
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
         self.add_pin("vdd", "POWER")

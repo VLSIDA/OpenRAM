@@ -304,7 +304,7 @@ class replica_bitcell_array(bitcell_base_array):
         for port in self.all_ports:
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
                                                                 mod=self.dummy_row))
-            self.connect_inst([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
+            self.connect_inst(self.all_bitline_names + [x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []

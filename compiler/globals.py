@@ -459,17 +459,27 @@ def set_default_corner():
             OPTS.process_corners = ["TT"]
         else:
             OPTS.process_corners = tech.spice["fet_models"].keys()
+            
     if (OPTS.supply_voltages == ""):
         if OPTS.nominal_corner_only:
             OPTS.supply_voltages = [tech.spice["supply_voltages"][1]]
         else:
             OPTS.supply_voltages = tech.spice["supply_voltages"]
+            
     if (OPTS.temperatures == ""):
         if OPTS.nominal_corner_only:
             OPTS.temperatures = [tech.spice["temperatures"][1]]
         else:
             OPTS.temperatures = tech.spice["temperatures"]
-    
+
+    # Load scales are fanout multiples of the DFF input cap
+    if (OPTS.load_scales == ""):
+        OPTS.load_scales = [0.25, 1, 4]
+
+    # Load scales are fanout multiples of the default spice input slew
+    if (OPTS.slew_scales == ""):
+        OPTS.slew_scales = [0.25, 1, 8]
+            
     
 def import_tech():
     """ Dynamically adds the tech directory to the path and imports it. """

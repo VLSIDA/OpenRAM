@@ -43,8 +43,8 @@ class _bitcell:
     def _default():
         axis = _mirror_axis(True, False)
 
-        cell_s8_6t = _cell({'bl' : 'bl0',
-                            'br' : 'bl1',
+        cell_s8_6t = _cell({'bl' : 'bl',
+                            'br' : 'br',
                             'wl': 'wl'})
 
         cell_6t = _cell({'bl' : 'bl',

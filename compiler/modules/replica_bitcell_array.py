@@ -59,9 +59,19 @@ class replica_bitcell_array(bitcell_base_array):
                     "Invalid number of RBLs for port configuration.")
 
         # Two dummy rows plus replica even if we don't add the column
-        self.extra_rows = 2 + sum(self.rbl)
+        self.extra_rows = sum(self.rbl)
         # Two dummy cols plus replica if we add the column
-        self.extra_cols = 2 + len(self.left_rbl) + len(self.right_rbl)
+        self.extra_cols = len(self.left_rbl) + len(self.right_rbl)
+
+
+        try:
+            end_caps_enabled = cell_properties.bitcell.end_caps
+        except AttributeError:
+            end_caps_enabled = False
+        # If we aren't using row/col caps, then we need to use the bitcell
+        if not end_caps_enabled:
+            self.extra_rows += 2
+            self.extra_cols += 2
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -184,7 +194,7 @@ class replica_bitcell_array(bitcell_base_array):
                                             # + left replica column(s)
                                             # + bitcell columns
                                             # + right replica column(s)
-                                            column_offset = 1 + len(self.left_rbl) + self.column_size + self.rbl[0],
+                                            column_offset=1 + len(self.left_rbl) + self.column_size + self.rbl[0],
                                             rows=self.row_size + self.extra_rows,
                                             mirror=(self.rbl[0] + 1) %2)
         self.add_mod(self.row_cap_right)
@@ -230,6 +240,11 @@ class replica_bitcell_array(bitcell_base_array):
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
         
     def add_wordline_pins(self):
+        try:
+            end_caps_enabled = cell_properties.bitcell.end_caps
+        except AttributeError:
+            end_caps_enabled = False
+        
 
         # Wordlines to ground
         self.gnd_wordline_names = []
@@ -245,7 +260,6 @@ class replica_bitcell_array(bitcell_base_array):
         self.wordline_names = self.bitcell_array.wordline_names
         self.all_wordline_names = self.bitcell_array.all_wordline_names
  
-
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
         self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
@@ -290,25 +304,25 @@ class replica_bitcell_array(bitcell_base_array):
         for port in self.all_ports:
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
                                                                 mod=self.dummy_row))
-            self.connect_inst([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
+            self.connect_inst(self.all_bitline_names + [x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                   mod=self.col_cap_bottom))
-        self.connect_inst(["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
-        self.connect_inst(["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
                                                     mod=self.row_cap_left))
-        self.connect_inst(self.replica_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
                                                     mod=self.row_cap_right))
-        self.connect_inst(self.replica_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
 
     def create_layout(self):
 

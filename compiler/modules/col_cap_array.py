@@ -26,7 +26,13 @@ class col_cap_array(bitcell_base_array):
     def create_netlist(self):
         """ Create and connect the netlist """
         # This will create a default set of bitline/wordline names
-        self.create_all_wordline_names()
+        try:
+            end_caps_enabled = cell_properties.bitcell.end_caps
+        except AttributeError:
+            end_caps_enabled = False
+
+        if not end_caps_enabled:
+            self.create_all_wordline_names()
         self.create_all_bitline_names()
         
         self.add_modules()
@@ -63,7 +69,7 @@ class col_cap_array(bitcell_base_array):
         indexed by column and row, for instance use in bitcell_array
         """
 
-        if len(self.ports) == 1:
+        if len(self.all_ports) == 1:
             pin_name = cell_properties.bitcell.cell_6t.pin
             bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
                             "{0}_{1}".format(pin_name.br0, col),

@@ -60,6 +60,9 @@ class dummy_array(bitcell_base_array):
 
     def add_pins(self):
         # bitline pins are not added because they are floating
+        for bl_name in self.get_bitline_names():
+            self.add_pin(bl_name, "INOUT")
+        # bitline pins are not added because they are floating
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
         self.add_pin("vdd", "POWER")
@@ -85,25 +88,15 @@ class dummy_array(bitcell_base_array):
                               height=self.height)
         
         wl_names = self.cell.get_all_wl_names()
-        if not props.compare_ports(props.bitcell.split_wl):
-            for row in range(self.row_size):
-                for port in self.all_ports:
-                    wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+        for row in range(self.row_size):
+            for port in self.all_ports:
+                wl_pins = self.cell_inst[row, 0].get_pins(wl_names[port])
+                for wl_pin in wl_pins:
                     self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                         layer=wl_pin.layer,
                                         offset=wl_pin.ll().scale(0, 1),
                                         width=self.width,
                                         height=wl_pin.height())
-        else:
-            for row in range(self.row_size):
-                for port in self.all_ports:
-                    for wl in range(len(wl_names)):
-                        wl_pin = self.cell_inst[row, 0].get_pin("wl{}".format(wl))
-                        self.add_layout_pin(text="wl{0}_{1}_{2}".format(wl, port, row),
-                                            layer=wl_pin.layer,
-                                            offset=wl_pin.ll().scale(0, 1),
-                                            width=self.width,
-                                            height=wl_pin.height())
 
         # Copy a vdd/gnd layout pin from every cell
         for row in range(self.row_size):
@@ -112,7 +105,6 @@ class dummy_array(bitcell_base_array):
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
         
-
     def input_load(self):
         # FIXME: This appears to be old code from previous characterization. Needs to be updated.
         wl_wire = self.gen_wl_wire()

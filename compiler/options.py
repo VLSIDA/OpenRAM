@@ -9,7 +9,6 @@ import optparse
 import getpass
 import os
 
-
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
@@ -100,7 +99,7 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options
-    output_extended_config = False
+    output_extended_config = True
 
 
     ###################
@@ -121,9 +120,6 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
-
-    # Number of threads to use
-    num_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True
@@ -149,7 +145,7 @@ class options(optparse.Values):
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
     buf_dec = "pbuf"
-    column_mux_array = "column_mux_array"
+    column_mux_array = "single_level_column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
@@ -158,7 +154,7 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

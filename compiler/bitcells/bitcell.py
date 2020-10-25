@@ -22,17 +22,12 @@ class bitcell(bitcell_base.bitcell_base):
 
     # If we have a split WL bitcell, if not be backwards
     # compatible in the tech file
-
-    if props.compare_ports(props.bitcell.split_wl):
-        pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
-    else:
-        pin_names = [props.bitcell.cell_6t.pin.bl,
-                     props.bitcell.cell_6t.pin.br,
-                     props.bitcell.cell_6t.pin.wl,
-                     props.bitcell.cell_6t.pin.vdd,
-                     props.bitcell.cell_6t.pin.gnd]
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+    pin_names = [props.bitcell.cell_6t.pin.bl,
+                 props.bitcell.cell_6t.pin.br,
+                 props.bitcell.cell_6t.pin.wl,
+                 props.bitcell.cell_6t.pin.vdd,
+                 props.bitcell.cell_6t.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
     (width, height) = utils.get_libcell_size("cell_6t",
@@ -55,10 +50,7 @@ class bitcell(bitcell_base.bitcell_base):
               
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        if props.compare_ports(props.bitcell.split_wl):
-            row_pins = ["wl0", "wl1"]
-        else:
-            row_pins = [props.bitcell.cell_6t.pin.wl]
+        row_pins = [props.bitcell.cell_6t.pin.wl]
         return row_pins
 
     def get_all_bitline_names(self):
@@ -87,11 +79,8 @@ class bitcell(bitcell_base.bitcell_base):
 
     def get_wl_name(self, port=0):
         """Get wl name"""
-        if props.compare_ports(props.bitcell.split_wl):
-            return "wl{}".format(port)
-        else:
-            debug.check(port == 0, "One port for bitcell only.")
-            return props.bitcell.cell_6t.pin.wl
+        debug.check(port == 0, "One port for bitcell only.")
+        return props.bitcell.cell_6t.pin.wl
 
     def build_graph(self, graph, inst_name, port_nets):
         """

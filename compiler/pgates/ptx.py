@@ -132,7 +132,7 @@ class ptx(design.design):
         if OPTS.tech_name == "sky130":
             # sky130 simulation cannot use the mult parameter in simulation
             (self.tx_width, self.mults) = pgate.best_bin(self.tx_type, self.tx_width)
-            main_str = "M{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+            main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                     self.mults,
                                                                     self.tx_width,
                                                                     drc("minwidth_poly"))
@@ -152,15 +152,20 @@ class ptx(design.design):
 
         if OPTS.tech_name == "sky130" and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
             # sky130 requires mult parameter too
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
-                                                                              self.mults,
-                                                                              self.tx_width,
-                                                                              drc("minwidth_poly"))
+            # self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
+            #                                                                        self.mults,
+            #                                                                        self.tx_width,
+            #                                                                        drc("minwidth_poly"))
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format("nshort" if self.tx_type == "nmos" else "pshort",
+                                                                                   self.mults,
+                                                                                   self.tx_width,
+                                                                                   drc("minwidth_poly"))
         else:
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
-                                                                        self.mults,
-                                                                        self.tx_width,
-                                                                        drc("minwidth_poly"))
+                                                                             self.mults,
+                                                                             self.tx_width,
+                                                                             drc("minwidth_poly"))
+            
     def setup_layout_constants(self):
         """
         Pre-compute some handy layout parameters.

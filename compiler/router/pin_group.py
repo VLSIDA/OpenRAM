@@ -552,7 +552,7 @@ class pin_group:
         Add the enclosure shape to the given cell.
         """
         for enclosure in self.enclosures:
-            debug.info(2, "Adding enclosure {0} {1}".format(self.name,
+            debug.info(4, "Adding enclosure {0} {1}".format(self.name,
                                                             enclosure))
             cell.add_rect(layer=enclosure.layer,
                           offset=enclosure.ll(),
@@ -612,7 +612,7 @@ class pin_group:
         blockage_set = set()
 
         for pin in self.pins:
-            debug.info(2, "  Converting {0}".format(pin))
+            debug.info(4, "  Converting {0}".format(pin))
             # Determine which tracks the pin overlaps
             (sufficient, insufficient) = self.router.convert_pin_to_tracks(self.name,
                                                                            pin)
@@ -628,15 +628,15 @@ class pin_group:
         # Remember, this excludes the pin blockages already
         shared_set = pin_set & self.router.blocked_grids
         if len(shared_set) > 0:
-            debug.info(2, "Removing pins {}".format(shared_set))
+            debug.info(4, "Removing pins {}".format(shared_set))
         pin_set.difference_update(shared_set)
         shared_set = partial_set & self.router.blocked_grids
         if len(shared_set) > 0:
-            debug.info(2, "Removing pins {}".format(shared_set))
+            debug.info(4, "Removing pins {}".format(shared_set))
         partial_set.difference_update(shared_set)
         shared_set = blockage_set & self.router.blocked_grids
         if len(shared_set) > 0:
-            debug.info(2, "Removing blocks {}".format(shared_set))
+            debug.info(4, "Removing blocks {}".format(shared_set))
         blockage_set.difference_update(shared_set)
 
         # At least one of the groups must have some valid tracks
@@ -666,5 +666,5 @@ class pin_group:
         # Remember the secondary grids for removing adjacent pins
         self.secondary_grids = partial_set
 
-        debug.info(2, "     pins   {}".format(self.grids))
-        debug.info(2, "     secondary {}".format(self.secondary_grids))
+        debug.info(4, "     pins   {}".format(self.grids))
+        debug.info(4, "     secondary {}".format(self.secondary_grids))

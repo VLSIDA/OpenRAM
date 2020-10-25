@@ -20,17 +20,12 @@ class replica_bitcell(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    if cell_properties.compare_ports(cell_properties.bitcell.split_wl):
-        pin_names = ["bl", "br", "wl0", "wl1", "vdd", "gnd"]
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT" , "POWER", "GROUND"] 
-    else:
-        pin_names = [props.bitcell.cell_6t.pin.bl,
-                     props.bitcell.cell_6t.pin.br,
-                     props.bitcell.cell_6t.pin.wl,
-                     props.bitcell.cell_6t.pin.vdd,
-                     props.bitcell.cell_6t.pin.gnd]
-
-        type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"] 
+    pin_names = [props.bitcell.cell_6t.pin.bl,
+                 props.bitcell.cell_6t.pin.br,
+                 props.bitcell.cell_6t.pin.wl,
+                 props.bitcell.cell_6t.pin.vdd,
+                 props.bitcell.cell_6t.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     
     if not OPTS.netlist_only:
         (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])

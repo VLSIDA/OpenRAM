@@ -33,12 +33,22 @@ class stimuli():
         self.sf = stim_file
         
         (self.process, self.voltage, self.temperature) = corner
+        found = False
+        self.device_libraries = []
+        self.device_models = []
         try:
-            self.device_libraries = tech.spice["fet_libraries"][self.process]
-        except:
-            debug.info(2, "Not using spice library")
-        self.device_models = tech.spice["fet_models"][self.process]
-    
+            self.device_libraries += tech.spice["fet_libraries"][self.process]
+            found = True
+        except KeyError:
+            pass
+        try:
+            self.device_models += tech.spice["fet_models"][self.process]
+            found = True
+        except KeyError:
+            pass
+        if not found:
+            debug.error("Must define either fet_libraries or fet_models.", -1)
+                
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
         
@@ -265,16 +275,15 @@ class stimuli():
     def write_include(self, circuit):
         """Writes include statements, inputs are lists of model files"""
 
-        includes = self.device_models + [circuit]
         self.sf.write("* {} process corner\n".format(self.process))
-        if OPTS.tech_name == "sky130":
-            libraries = self.device_libraries
-            for item in list(libraries):
-                if os.path.isfile(item[0]):
-                    self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
-                else:
-                    debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
-
+        for item in self.device_libraries:
+            if os.path.isfile(item[0]):
+                self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
+            else:
+                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
+                
+        includes = self.device_models + [circuit]
+        
         for item in list(includes):
             if os.path.isfile(item):
                 self.sf.write(".include \"{0}\"\n".format(item))

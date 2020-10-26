@@ -163,7 +163,7 @@ class control_logic(design.design):
                                         fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ])
         self.add_mod(self.delay_chain)
 
-        self.supply_layer = self.inv.get_pin("vdd").layer
+        self.supply_layer = dff.get_pin("vdd").layer
           
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""

@@ -7,13 +7,15 @@
 #
 from globals import OPTS
 
+
 class _pins:
     def __init__(self, pin_dict):
         # make the pins elements of the class to allow "." access.
         # For example: props.bitcell.cell_6t.pin.bl = "foobar"
-        for k,v in pin_dict.items():
+        for k, v in pin_dict.items():
             self.__dict__[k] = v
 
+            
 class _cell:
     def __init__(self, pin_dict):
         pin_dict.update(self._default_power_pins())
@@ -24,13 +26,16 @@ class _cell:
         return self._pins
 
     def _default_power_pins(self):
-        return { 'vdd' : 'vdd', 'gnd' : 'gnd' }
+        return {'vdd': 'vdd',
+                'gnd': 'gnd'}
 
+    
 class _mirror_axis:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
+        
 class _bitcell:
     def __init__(self, mirror, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
@@ -42,27 +47,27 @@ class _bitcell:
     def _default():
         axis = _mirror_axis(True, False)
 
-        cell_s8_6t = _cell({'bl' : 'bl',
-                            'br' : 'br',
+        cell_s8_6t = _cell({'bl': 'bl',
+                            'br': 'br',
                             'wl': 'wl'})
 
-        cell_6t = _cell({'bl' : 'bl',
-                         'br' : 'br',
-                         'wl' : 'wl'})
+        cell_6t = _cell({'bl': 'bl',
+                         'br': 'br',
+                         'wl': 'wl'})
 
-        cell_1rw1r = _cell({'bl0' : 'bl0',
-                       'br0' : 'br0',
-                       'bl1' : 'bl1',
-                       'br1' : 'br1',
-                       'wl0' : 'wl0',
-                       'wl1' : 'wl1'})
+        cell_1rw1r = _cell({'bl0': 'bl0',
+                            'br0': 'br0',
+                            'bl1': 'bl1',
+                            'br1': 'br1',
+                            'wl0': 'wl0',
+                            'wl1': 'wl1'})
 
-        cell_1w1r =  _cell({'bl0' : 'bl0',
-                       'br0' : 'br0',
-                       'bl1' : 'bl1',
-                       'br1' : 'br1',
-                       'wl0' : 'wl0',
-                       'wl1' : 'wl1'})
+        cell_1w1r = _cell({'bl0': 'bl0',
+                           'br0': 'br0',
+                           'bl1': 'bl1',
+                           'br1': 'br1',
+                           'wl0': 'wl0',
+                           'wl1': 'wl1'})
 
         return _bitcell(cell_s8_6t=cell_s8_6t,
                         cell_6t=cell_6t,
@@ -94,21 +99,25 @@ class _dff:
         self.custom_type_list = custom_type_list
         self.clk_pin = clk_pin
 
+        
 class _dff_buff:
     def __init__(self, use_custom_ports, custom_buff_ports, add_body_contacts):
         self.use_custom_ports = use_custom_ports
         self.buf_ports = custom_buff_ports
         self.add_body_contacts = add_body_contacts
 
+        
 class _dff_buff_array:
     def __init__(self, use_custom_ports, add_body_contacts):
         self.use_custom_ports = use_custom_ports
         self.add_body_contacts = add_body_contacts
 
+        
 class _bitcell_array:
     def __init__(self, use_custom_cell_arrangement):
         self.use_custom_cell_arrangement = use_custom_cell_arrangement
 
+        
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -120,29 +129,29 @@ class cell_properties():
 
         self._bitcell = _bitcell._default()
                                  
-        self._dff = _dff(use_custom_ports = False,
-                         custom_port_list = ["D", "Q", "clk", "vdd", "gnd"],
-                         custom_type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
-                         clk_pin= "clk")
+        self._dff = _dff(use_custom_ports=False,
+                         custom_port_list=["D", "Q", "clk", "vdd", "gnd"],
+                         custom_type_list=["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
+                         clk_pin="clk")
         
-        self._dff_buff = _dff_buff(use_custom_ports = False,
-                                   custom_buff_ports = ["D", "qint", "clk", "vdd", "gnd"],
-                                   add_body_contacts = False)
+        self._dff_buff = _dff_buff(use_custom_ports=False,
+                                   custom_buff_ports=["D", "qint", "clk", "vdd", "gnd"],
+                                   add_body_contacts=False)
 
-        self._dff_buff_array = _dff_buff_array(use_custom_ports = False,
-                                               add_body_contacts = False)
+        self._dff_buff_array = _dff_buff_array(use_custom_ports=False,
+                                               add_body_contacts=False)
 
         self._write_driver = _cell({'din': 'din',
-                                    'bl' : 'bl',
-                                    'br' : 'br',
-                                    'en' : 'en'})
+                                    'bl': 'bl',
+                                    'br': 'br',
+                                    'en': 'en'})
 
-        self._sense_amp = _cell({'bl'   : 'bl',
-                                 'br'   : 'br',
-                                 'dout' : 'dout',
-                                 'en'   : 'en'})
+        self._sense_amp = _cell({'bl': 'bl',
+                                 'br': 'br',
+                                 'dout': 'dout',
+                                 'en': 'en'})
 
-        self._bitcell_array = _bitcell_array(use_custom_cell_arrangement = [])
+        self._bitcell_array = _bitcell_array(use_custom_cell_arrangement=[])
 
     @property
     def bitcell(self):

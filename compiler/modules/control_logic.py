@@ -119,7 +119,7 @@ class control_logic(design.design):
 
         # We will use the maximum since this same value is used to size the wl_en
         # and the p_en_bar drivers
-        max_fanout = max(self.num_rows, self.num_cols)
+        # max_fanout = max(self.num_rows, self.num_cols)
         
         # wl_en drives every row in the bank
         self.wl_en_driver = factory.create(module_type="pdriver",
@@ -162,6 +162,8 @@ class control_logic(design.design):
         self.delay_chain=factory.create(module_type="delay_chain",
                                         fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ])
         self.add_mod(self.delay_chain)
+
+        self.supply_layer = self.inv.get_pin("vdd").layer
           
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
@@ -721,27 +723,23 @@ class control_logic(design.design):
     def route_supply(self):
         """ Add vdd and gnd to the instance cells """
 
-        if OPTS.tech_name == "sky130":
-            supply_layer = "li"
-        else:
-            supply_layer = "m1"
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
-                if pin.layer == supply_layer:
+                if pin.layer == self.supply_layer:
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     self.add_power_pin("vdd", pin_loc, start_layer=pin.layer)
-                    self.add_path(supply_layer, [row_loc, pin_loc])
+                    self.add_path(self.supply_layer, [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
             for pin in pins:
-                if pin.layer == supply_layer:
+                if pin.layer == self.supply_layer:
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     self.add_power_pin("gnd", pin_loc, start_layer=pin.layer)
-                    self.add_path(supply_layer, [row_loc, pin_loc])
+                    self.add_path(self.supply_layer, [row_loc, pin_loc])
             
         self.copy_layout_pin(self.delay_inst, "gnd")
         self.copy_layout_pin(self.delay_inst, "vdd")

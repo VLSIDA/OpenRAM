@@ -23,6 +23,8 @@ class design(hierarchy_design):
     def __init__(self, name):
         super().__init__(name)
 
+        self.setup_multiport_constants()
+        
     def check_pins(self):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
@@ -225,8 +227,7 @@ class design(hierarchy_design):
         return round_to_grid(pitch)
 
 
-    @classmethod
-    def setup_multiport_constants(design):
+    def setup_multiport_constants(self):
         """ 
         These are contants and lists that aid multiport design.
         Ports are always in the order RW, W, R.
@@ -238,32 +239,32 @@ class design(hierarchy_design):
         total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
 
         # These are the read/write port indices.
-        design.readwrite_ports = []
+        self.readwrite_ports = []
         # These are the read/write and write-only port indices
-        design.write_ports = []
+        self.write_ports = []
         # These are the write-only port indices.
-        design.writeonly_ports = []
+        self.writeonly_ports = []
         # These are the read/write and read-only port indices
-        design.read_ports = []
+        self.read_ports = []
         # These are the read-only port indices.
-        design.readonly_ports = []
+        self.readonly_ports = []
         # These are all the ports
-        design.all_ports = list(range(total_ports))
+        self.all_ports = list(range(total_ports))
 
         # The order is always fixed as RW, W, R
         port_number = 0
         for port in range(OPTS.num_rw_ports):
-            design.readwrite_ports.append(port_number)
-            design.write_ports.append(port_number)
-            design.read_ports.append(port_number)
+            self.readwrite_ports.append(port_number)
+            self.write_ports.append(port_number)
+            self.read_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            design.write_ports.append(port_number)
-            design.writeonly_ports.append(port_number)
+            self.write_ports.append(port_number)
+            self.writeonly_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            design.read_ports.append(port_number)
-            design.readonly_ports.append(port_number)
+            self.read_ports.append(port_number)
+            self.readonly_ports.append(port_number)
             port_number += 1
         
     def analytical_power(self, corner, load):
@@ -275,5 +276,4 @@ class design(hierarchy_design):
     
 design.setup_drc_constants()
 design.setup_layer_constants()
-design.setup_multiport_constants()
     

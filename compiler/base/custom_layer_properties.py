@@ -5,9 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from design import design
 
-
+    
 class _bank:
     def __init__(self, stack, pitch):
         # bank
@@ -17,25 +16,36 @@ class _bank:
         self.stack = stack
         self.pitch = pitch
     
-
+                                                           
 class _hierarchical_decoder:
     def __init__(self,
                  bus_layer,
                  bus_directions,
-                 bus_pitch,
-                 bus_space,
                  input_layer,
                  output_layer,
-                 output_layer_pitch,
                  vertical_supply):
         # hierarchical_decoder
         # bus_layer, bus_directions, bus_pitch, bus_space, input_layer, output_layer, output_layer_pitch
         # m2, pref, m2_pitch, m2_space, m1, m3, m3_pitch
         # m1, nonpref, m1_pitch, m2_space, m2, li, li_pitch (sky130)
-        # 
+        #
         # vertical vdd/gnd
-        # special jog
+        # special jogging
+        self.bus_layer = bus_layer
+        self.bus_directions = bus_directions
+        self.input_layer = input_layer
+        self.output_layer = output_layer
+        self.vertical_supply = vertical_supply
 
+
+class _hierarchical_predecode:
+    def __init__(self,
+                 bus_layer,
+                 bus_directions,
+                 bus_space_factor,
+                 input_layer,
+                 output_layer,
+                 vertical_supply):
         # hierarchical_predecode
         # bus_layer, bus_directions, bus_pitch, bus_space, input_layer, output_layer, output_layer_pitch
         # m2, pref, m2_pitch, m2_space, m1, m1, m1_pitch
@@ -44,9 +54,8 @@ class _hierarchical_decoder:
         # vertical vdd/gnd
         # special jogging
         self.bus_layer = bus_layer
-        self.bus_directinos = bus_directions
-        self.bus_pitch = bus_pitch
-        self.bus_sapce = bus_space
+        self.bus_directions = bus_directions
+        self.bus_space_factor = bus_space_factor
         self.input_layer = input_layer
         self.output_layer = output_layer
         self.vertical_supply = vertical_supply
@@ -76,6 +85,7 @@ class _port_address:
         
 class _port_data:
     def __init__(self,
+                 channel_route_bitlines,
                  enable_layer):
         # port_data
         # connect bitlines instead of chanel route
@@ -89,6 +99,7 @@ class _port_data:
         # en_bar_layer
         # m1
         # m3 (sky130)
+        self.channel_route_bitlines = channel_route_bitlines
         self.enable_layer = enable_layer
 
 
@@ -98,7 +109,7 @@ class _replica_column:
         # replica_column
         # even row check (sky130)
         self.even_rows = even_rows
-        
+
         
 class _wordline_buffer_array:
     def __init__(self,
@@ -122,10 +133,37 @@ class layer_properties():
     can be overriden in the tech.py file.
     """
     def __init__(self):
-        self.names = {}
+        
+        self._bank = _bank(stack="m1_stack",
+                           pitch="m2_pitch")
 
-        self._bank = _bank(stack=design.m1_stack,
-                           pitch=design.m2_pitch)
+        self._hierarchical_decoder = _hierarchical_decoder(bus_layer="m2",
+                                                           bus_directions="pref",
+                                                           input_layer="m1",
+                                                           output_layer="m3",
+                                                           vertical_supply=False)
+                                                        
+        self._hierarchical_predecode = _hierarchical_predecode(bus_layer="m2",
+                                                               bus_directions="pref",
+                                                               bus_space_factor=1,
+                                                               input_layer="m1",
+                                                               output_layer="m1",
+                                                               vertical_supply=False)
+
+        self._column_mux_array = _column_mux_array(select_layer="m1",
+                                                   select_pitch="m2_pitch",
+                                                   bitline_layer="m2")
+
+        self._port_address = _port_address(supply_offset=False)
+
+        self._port_data = _port_data(channel_route_bitlines=False,
+                                     enable_layer="m1")
+
+        self._replica_column = _replica_column(even_rows=False)
+        
+        self._wordline_buffer_array = _wordline_buffer_array(vertical_supply=False)
+        
+        self._wordline_driver_array = _wordline_driver_array(vertical_supply=False)
 
     @property
     def bank(self):
@@ -137,8 +175,12 @@ class layer_properties():
 
     @property
     def hierarchical_decoder(self):
-        return self._hierarcical_decoder
+        return self._hierarchical_decoder
 
+    @property
+    def hierarchical_predecode(self):
+        return self._hierarchical_predecode
+    
     @property
     def port_address(self):
         return self._port_address

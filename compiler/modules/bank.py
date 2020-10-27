@@ -9,9 +9,10 @@ import debug
 import design
 from sram_factory import factory
 from math import log, ceil, floor
-from tech import drc, layer
+from tech import drc
 from vector import vector
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class bank(design.design):
@@ -906,18 +907,13 @@ class bank(design.design):
                                       offset=mid2)
             self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
             
-
     def route_column_address_lines(self, port):
         """ Connecting the select lines of column mux to the address bus """
         if not self.col_addr_size>0:
             return
 
-        if OPTS.tech_name == "sky130":
-            stack = self.m2_stack
-            pitch = self.m3_pitch
-        else:
-            stack = self.m1_stack
-            pitch = self.m2_pitch
+        stack = layer_props.bank.stack
+        pitch = layer_props.bank.pitch
         
         if self.col_addr_size == 1:
             

@@ -10,7 +10,7 @@ import utils
 from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
-from globals import OPTS
+
 
 class bitcell(bitcell_base.bitcell_base):
     """

@@ -8,6 +8,7 @@
 from hierarchy_design import hierarchy_design
 from utils import round_to_grid
 import contact
+from tech import preferred_directions
 from globals import OPTS
 import re
 
@@ -18,21 +19,108 @@ class design(hierarchy_design):
     some DRC/layer constants and analytical models for other modules to reuse.
 
     """
-
+        
     def __init__(self, name):
         super().__init__(name)
-        
-        self.setup_drc_constants()
-        self.setup_layer_constants()
-        self.setup_multiport_constants()
 
     def check_pins(self):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
             for pin in pins:
                 print(pin_name, pin)
+
+    @classmethod
+    def setup_drc_constants(design):
+        """
+        These are some DRC constants used in many places
+        in the compiler.
+        """
+        # Make some local rules for convenience
+        from tech import drc
+        for rule in drc.keys():
+            # Single layer width rules
+            match = re.search(r"minwidth_(.*)", rule)
+            if match:
+                if match.group(1) == "active_contact":
+                    setattr(design, "contact_width", drc(match.group(0)))
+                else:
+                    setattr(design, match.group(1) + "_width", drc(match.group(0)))
+
+            # Single layer area rules
+            match = re.search(r"minarea_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
+                    
+            # Single layer spacing rules
+            match = re.search(r"(.*)_to_(.*)", rule)
+            if match and match.group(1) == match.group(2):
+                setattr(design, match.group(1) + "_space", drc(match.group(0)))
+            elif match and match.group(1) != match.group(2):
+                if match.group(2) == "poly_active":
+                    setattr(design, match.group(1) + "_to_contact",
+                            drc(match.group(0)))
+                else:
+                    setattr(design, match.group(0), drc(match.group(0)))
+                
+            match = re.search(r"(.*)_enclose_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_extend_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
+
+        # Create the maximum well extend active that gets used
+        # by cells to extend the wells for interaction with other cells
+        from tech import layer
+        design.well_extend_active = 0
+        if "nwell" in layer:
+            design.well_extend_active = max(design.well_extend_active, design.nwell_extend_active)
+        if "pwell" in layer:
+            design.well_extend_active = max(design.well_extend_active, design.pwell_extend_active)
+
+        # The active offset is due to the well extension
+        if "pwell" in layer:
+            design.pwell_enclose_active = drc("pwell_enclose_active")
+        else:
+            design.pwell_enclose_active = 0
+        if "nwell" in layer:
+            design.nwell_enclose_active = drc("nwell_enclose_active")
+        else:
+            design.nwell_enclose_active = 0
+        # Use the max of either so that the poly gates will align properly
+        design.well_enclose_active = max(design.pwell_enclose_active,
+                                       design.nwell_enclose_active,
+                                       design.active_space)
             
-    def setup_layer_constants(self):
+        # These are for debugging previous manual rules
+        if False:
+            print("poly_width", design.poly_width)
+            print("poly_space", design.poly_space)
+            print("m1_width", design.m1_width)
+            print("m1_space", design.m1_space)
+            print("m2_width", design.m2_width)
+            print("m2_space", design.m2_space)
+            print("m3_width", design.m3_width)
+            print("m3_space", design.m3_space)
+            print("m4_width", design.m4_width)
+            print("m4_space", design.m4_space)
+            print("active_width", design.active_width)
+            print("active_space", design.active_space)
+            print("contact_width", design.contact_width)
+            print("poly_to_active", design.poly_to_active)
+            print("poly_extend_active", design.poly_extend_active)
+            print("poly_to_contact", design.poly_to_contact)
+            print("active_contact_to_gate", design.active_contact_to_gate)
+            print("poly_contact_to_gate", design.poly_contact_to_gate)
+            print("well_enclose_active", design.well_enclose_active)
+            print("implant_enclose_active", design.implant_enclose_active)
+            print("implant_space", design.implant_space)
+            import sys
+            sys.exit(1)
+
+    @classmethod
+    def setup_layer_constants(design):
         """
         These are some layer constants used
         in many places in the compiler.
@@ -46,7 +134,7 @@ class design(hierarchy_design):
             # Set the stack as a local helper
             try:
                 layer_stack = getattr(tech, key)
-                setattr(self, key, layer_stack)
+                setattr(design, key, layer_stack)
             except AttributeError:
                 pass
 
@@ -55,14 +143,14 @@ class design(hierarchy_design):
                 continue
             
             # Add the pitch
-            setattr(self,
+            setattr(design,
                     "{}_pitch".format(layer),
-                    self.compute_pitch(layer, True))
+                    design.compute_pitch(layer, True))
             
             # Add the non-preferrd pitch (which has vias in the "wrong" way)
-            setattr(self,
+            setattr(design,
                     "{}_nonpref_pitch".format(layer),
-                    self.compute_pitch(layer, False))
+                    design.compute_pitch(layer, False))
                 
         if False:
             from tech import preferred_directions
@@ -73,17 +161,18 @@ class design(hierarchy_design):
                     continue
                 try:
                     print("{0} width {1} space {2}".format(name,
-                                                           getattr(self, "{}_width".format(name)),
-                                                           getattr(self, "{}_space".format(name))))
+                                                           getattr(design, "{}_width".format(name)),
+                                                           getattr(design, "{}_space".format(name))))
 
-                    print("pitch {0} nonpref {1}".format(getattr(self, "{}_pitch".format(name)),
-                                                         getattr(self, "{}_nonpref_pitch".format(name))))
+                    print("pitch {0} nonpref {1}".format(getattr(design, "{}_pitch".format(name)),
+                                                         getattr(design, "{}_nonpref_pitch".format(name))))
                 except AttributeError:
                     pass
             import sys
             sys.exit(1)
 
-    def compute_pitch(self, layer, preferred=True):
+    @staticmethod            
+    def compute_pitch(layer, preferred=True):
         
         """
         This is the preferred direction pitch
@@ -95,13 +184,18 @@ class design(hierarchy_design):
         for stack in layer_stacks:
             # Compute the pitch with both vias above and below (if they exist)
             if stack[0] == layer:
-                pitches.append(self.compute_layer_pitch(stack, preferred))
+                pitches.append(design.compute_layer_pitch(stack, preferred))
             if stack[2] == layer:
-                pitches.append(self.compute_layer_pitch(stack[::-1], True))
+                pitches.append(design.compute_layer_pitch(stack[::-1], True))
 
         return max(pitches)
 
-    def compute_layer_pitch(self, layer_stack, preferred):
+    @staticmethod
+    def get_preferred_direction(layer):
+        return preferred_directions[layer]
+    
+    @staticmethod
+    def compute_layer_pitch(layer_stack, preferred):
 
         (layer1, via, layer2) = layer_stack
         try:
@@ -113,113 +207,26 @@ class design(hierarchy_design):
             contact1 = getattr(contact, layer2 + "_via")
 
         if preferred:
-            if self.get_preferred_direction(layer1) == "V":
+            if preferred_directions[layer1] == "V":
                 contact_width = contact1.first_layer_width
             else:
                 contact_width = contact1.first_layer_height
         else:
-            if self.get_preferred_direction(layer1) == "V":
+            if preferred_directions[layer1] == "V":
                 contact_width = contact1.first_layer_height
             else:
                 contact_width = contact1.first_layer_width
-        layer_space = getattr(self, layer1 + "_space")
+        layer_space = getattr(design, layer1 + "_space")
 
         #print(layer_stack)
         #print(contact1)
         pitch = contact_width + layer_space
 
         return round_to_grid(pitch)
-    
-    def setup_drc_constants(self):
-        """
-        These are some DRC constants used in many places
-        in the compiler.
-        """
-        # Make some local rules for convenience
-        from tech import drc
-        for rule in drc.keys():
-            # Single layer width rules
-            match = re.search(r"minwidth_(.*)", rule)
-            if match:
-                if match.group(1) == "active_contact":
-                    setattr(self, "contact_width", drc(match.group(0)))
-                else:
-                    setattr(self, match.group(1) + "_width", drc(match.group(0)))
 
-            # Single layer area rules
-            match = re.search(r"minarea_(.*)", rule)
-            if match:
-                setattr(self, match.group(0), drc(match.group(0)))
-                    
-            # Single layer spacing rules
-            match = re.search(r"(.*)_to_(.*)", rule)
-            if match and match.group(1) == match.group(2):
-                setattr(self, match.group(1) + "_space", drc(match.group(0)))
-            elif match and match.group(1) != match.group(2):
-                if match.group(2) == "poly_active":
-                    setattr(self, match.group(1) + "_to_contact",
-                            drc(match.group(0)))
-                else:
-                    setattr(self, match.group(0), drc(match.group(0)))
-                
-            match = re.search(r"(.*)_enclose_(.*)", rule)
-            if match:
-                setattr(self, match.group(0), drc(match.group(0)))
 
-            match = re.search(r"(.*)_extend_(.*)", rule)
-            if match:
-                setattr(self, match.group(0), drc(match.group(0)))
-
-        # Create the maximum well extend active that gets used
-        # by cells to extend the wells for interaction with other cells
-        from tech import layer
-        self.well_extend_active = 0
-        if "nwell" in layer:
-            self.well_extend_active = max(self.well_extend_active, self.nwell_extend_active)
-        if "pwell" in layer:
-            self.well_extend_active = max(self.well_extend_active, self.pwell_extend_active)
-
-        # The active offset is due to the well extension
-        if "pwell" in layer:
-            self.pwell_enclose_active = drc("pwell_enclose_active")
-        else:
-            self.pwell_enclose_active = 0
-        if "nwell" in layer:
-            self.nwell_enclose_active = drc("nwell_enclose_active")
-        else:
-            self.nwell_enclose_active = 0
-        # Use the max of either so that the poly gates will align properly
-        self.well_enclose_active = max(self.pwell_enclose_active,
-                                       self.nwell_enclose_active,
-                                       self.active_space)
-            
-        # These are for debugging previous manual rules
-        if False:
-            print("poly_width", self.poly_width)
-            print("poly_space", self.poly_space)
-            print("m1_width", self.m1_width)
-            print("m1_space", self.m1_space)
-            print("m2_width", self.m2_width)
-            print("m2_space", self.m2_space)
-            print("m3_width", self.m3_width)
-            print("m3_space", self.m3_space)
-            print("m4_width", self.m4_width)
-            print("m4_space", self.m4_space)
-            print("active_width", self.active_width)
-            print("active_space", self.active_space)
-            print("contact_width", self.contact_width)
-            print("poly_to_active", self.poly_to_active)
-            print("poly_extend_active", self.poly_extend_active)
-            print("poly_to_contact", self.poly_to_contact)
-            print("active_contact_to_gate", self.active_contact_to_gate)
-            print("poly_contact_to_gate", self.poly_contact_to_gate)
-            print("well_enclose_active", self.well_enclose_active)
-            print("implant_enclose_active", self.implant_enclose_active)
-            print("implant_space", self.implant_space)
-            import sys
-            sys.exit(1)
-        
-    def setup_multiport_constants(self):
+    @classmethod
+    def setup_multiport_constants(design):
         """ 
         These are contants and lists that aid multiport design.
         Ports are always in the order RW, W, R.
@@ -231,32 +238,32 @@ class design(hierarchy_design):
         total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
 
         # These are the read/write port indices.
-        self.readwrite_ports = []
+        design.readwrite_ports = []
         # These are the read/write and write-only port indices
-        self.write_ports = []
+        design.write_ports = []
         # These are the write-only port indices.
-        self.writeonly_ports = []
+        design.writeonly_ports = []
         # These are the read/write and read-only port indices
-        self.read_ports = []
+        design.read_ports = []
         # These are the read-only port indices.
-        self.readonly_ports = []
+        design.readonly_ports = []
         # These are all the ports
-        self.all_ports = list(range(total_ports))
+        design.all_ports = list(range(total_ports))
 
         # The order is always fixed as RW, W, R
         port_number = 0
         for port in range(OPTS.num_rw_ports):
-            self.readwrite_ports.append(port_number)
-            self.write_ports.append(port_number)
-            self.read_ports.append(port_number)
+            design.readwrite_ports.append(port_number)
+            design.write_ports.append(port_number)
+            design.read_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_w_ports):
-            self.write_ports.append(port_number)
-            self.writeonly_ports.append(port_number)
+            design.write_ports.append(port_number)
+            design.writeonly_ports.append(port_number)
             port_number += 1
         for port in range(OPTS.num_r_ports):
-            self.read_ports.append(port_number)
-            self.readonly_ports.append(port_number)
+            design.read_ports.append(port_number)
+            design.readonly_ports.append(port_number)
             port_number += 1
         
     def analytical_power(self, corner, load):
@@ -265,4 +272,8 @@ class design(hierarchy_design):
         for inst in self.insts:
             total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
+    
+design.setup_drc_constants()
+design.setup_layer_constants()
+design.setup_multiport_constants()
     

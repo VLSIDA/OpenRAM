@@ -13,7 +13,6 @@ from tech import drc, GDS
 from tech import layer as techlayer
 from tech import layer_indices
 from tech import layer_stacks
-from tech import preferred_directions
 import os
 from globals import OPTS
 from vector import vector
@@ -536,10 +535,6 @@ class layout():
                   layer_stack=layers,
                   position_list=coordinates,
                   widen_short_wires=widen_short_wires)
-
-    def get_preferred_direction(self, layer):
-        """ Return the preferred routing directions """
-        return preferred_directions[layer]
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """

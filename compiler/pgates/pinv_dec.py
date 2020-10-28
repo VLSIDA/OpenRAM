@@ -12,6 +12,7 @@ from tech import drc, parameter, layer
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+from tech import cell_properties as cell_props
 
 
 class pinv_dec(pinv.pinv):
@@ -50,7 +51,7 @@ class pinv_dec(pinv.pinv):
         self.tx_mults = 1
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        if OPTS.tech_name == "sky130":
+        if self.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
         
@@ -140,10 +141,10 @@ class pinv_dec(pinv.pinv):
         nmos_drain_pos = self.nmos_inst.get_pin("D").center()
         self.output_pos = vector(0.5 * (pmos_drain_pos.x + nmos_drain_pos.x), nmos_drain_pos.y)
 
-        if OPTS.tech_name == "sky130":
-            self.add_implants()
+        if cell_props.pgate.add_implants:
+            self.extend_implants()
             
-    def add_implants(self):
+    def extend_implants(self):
         """
         Add top-to-bottom implants for adjacency issues in s8.
         """

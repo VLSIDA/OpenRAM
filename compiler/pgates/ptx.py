@@ -14,6 +14,7 @@ import contact
 import logical_effort
 from globals import OPTS
 from pgate import pgate
+from tech import cell_properties as cell_props
 
 
 class ptx(design.design):
@@ -129,9 +130,8 @@ class ptx(design.design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
-        if OPTS.tech_name == "sky130":
-            # sky130 simulation cannot use the mult parameter in simulation
-            (self.tx_width, self.mults) = pgate.best_bin(self.tx_type, self.tx_width)
+        if cell_props.ptx.model_is_subckt:
+            # sky130
             main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                     self.mults,
                                                                     self.tx_width,
@@ -150,12 +150,13 @@ class ptx(design.design):
         self.spice_device = main_str + area_str
         self.spice.append("\n* spice ptx " + self.spice_device)
 
-        if OPTS.tech_name == "sky130" and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
+        if cell_props.ptx.model_is_subckt and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
             # sky130 requires mult parameter too
             # self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
             #                                                                        self.mults,
             #                                                                        self.tx_width,
             #                                                                        drc("minwidth_poly"))
+            # TEMP FIX: Use old device names if using Calibre.
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format("nshort" if self.tx_type == "nmos" else "pshort",
                                                                                    self.mults,
                                                                                    self.tx_width,

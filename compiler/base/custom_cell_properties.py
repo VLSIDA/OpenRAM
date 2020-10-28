@@ -36,6 +36,17 @@ class _mirror_axis:
         self.y = y
 
         
+class _ptx:
+    def __init__(self, model_is_subckt, bin_spice_models):
+        self.model_is_subckt = model_is_subckt
+        self.bin_spice_models = bin_spice_models
+
+        
+class _pgate:
+    def __init__(self, add_implants):
+        self.add_implants = add_implants
+
+        
 class _bitcell:
     def __init__(self, mirror, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
@@ -128,7 +139,12 @@ class cell_properties():
         self.names = {}
 
         self._bitcell = _bitcell._default()
-                                 
+
+        self._ptx = _ptx(model_is_subckt=False,
+                         bin_spice_models=False)
+        
+        self._pgate = _pgate(add_implants=False)
+        
         self._dff = _dff(use_custom_ports=False,
                          custom_port_list=["D", "Q", "clk", "vdd", "gnd"],
                          custom_type_list=["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
@@ -156,6 +172,14 @@ class cell_properties():
     @property
     def bitcell(self):
         return self._bitcell
+
+    @property
+    def ptx(self):
+        return self._ptx
+    
+    @property
+    def pgate(self):
+        return self._pgate
 
     @property
     def dff(self):

@@ -71,7 +71,7 @@ class wordline_buffer_array(design.design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-        if layer_props.wordline_buffer_array.vertical_supply:
+        if layer_props.wordline_driver.vertical_supply:
             for name in ["vdd", "gnd"]:
                 supply_pins = self.wld_inst[0].get_pins(name)
                 for pin in supply_pins:

@@ -11,6 +11,7 @@ import design
 from sram_factory import factory
 from globals import OPTS
 from tech import layer
+from tech import layer_properties as layer_props
 
 
 class wordline_driver(design.design):
@@ -104,7 +105,7 @@ class wordline_driver(design.design):
         
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top, (middle), and bottom. """
-        if OPTS.tech_name == "sky130":
+        if layer_props.wordline_driver.vertical_supply:
             for name in ["vdd", "gnd"]:
                 for inst in [self.nand_inst, self.driver_inst]:
                     self.copy_layout_pin(inst, name)

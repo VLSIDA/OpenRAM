@@ -11,8 +11,8 @@ from tech import drc, parameter, spice
 from vector import vector
 import logical_effort
 from sram_factory import factory
-from globals import OPTS
 import contact
+from tech import cell_properties as cell_props
 
 
 class pnand4(pgate.pgate):
@@ -41,7 +41,7 @@ class pnand4(pgate.pgate):
                     "Size 1 pnand4 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
 
@@ -268,7 +268,7 @@ class pnand4(pgate.pgate):
                                      "D",
                                      position="right")
         
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.add_enclosure([apin, bpin, cpin, dpin], "npc", drc("npc_enclose_poly"))
         
     def route_output(self):

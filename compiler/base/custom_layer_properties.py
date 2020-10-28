@@ -111,21 +111,17 @@ class _replica_column:
         self.even_rows = even_rows
 
         
-class _wordline_buffer_array:
+class _wordline_driver:
     def __init__(self,
                  vertical_supply):
         # wordline_buffer_array
         # vertical vdd/gnd (sky130)
-        self.vertical_supply = vertical_supply
-
-
-class _wordline_driver_array:
-    def __init__(self,
-                 vertical_supply):
         # wordline_driver_array
         # vertical vdd/gnd (sky130)
+        # wordline_driver
+        # vertical vdd/gnd (sky130)
         self.vertical_supply = vertical_supply
-        
+
         
 class layer_properties():
     """
@@ -161,9 +157,7 @@ class layer_properties():
 
         self._replica_column = _replica_column(even_rows=False)
         
-        self._wordline_buffer_array = _wordline_buffer_array(vertical_supply=False)
-        
-        self._wordline_driver_array = _wordline_driver_array(vertical_supply=False)
+        self._wordline_driver = _wordline_driver(vertical_supply=False)
 
     @property
     def bank(self):
@@ -194,10 +188,6 @@ class layer_properties():
         return self._replica_column
 
     @property
-    def wordline_buffer_array(self):
-        return self._wordline_buffer_array
-
-    @property
-    def wordline_driver_array(self):
-        return self._wordline_driver_array
+    def wordline_driver(self):
+        return self._wordline_driver
     

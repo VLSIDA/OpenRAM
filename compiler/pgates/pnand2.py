@@ -8,11 +8,11 @@
 import pgate
 import debug
 from tech import drc, parameter, spice
-from globals import OPTS
 from vector import vector
 import logical_effort
 from sram_factory import factory
 import contact
+from tech import cell_properties as cell_props
 
 
 class pnand2(pgate.pgate):
@@ -38,7 +38,7 @@ class pnand2(pgate.pgate):
         debug.check(size == 1, "Size 1 pnand2 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
             
@@ -212,9 +212,8 @@ class pnand2(pgate.pgate):
                                      "B",
                                      position="center")
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.add_enclosure([apin, bpin], "npc", drc("npc_enclose_poly"))
-        
 
     def route_output(self):
         """ Route the Z output """

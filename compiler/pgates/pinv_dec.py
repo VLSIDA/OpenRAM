@@ -51,7 +51,7 @@ class pinv_dec(pinv.pinv):
         self.tx_mults = 1
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        if self.bin_spice_models:
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
         

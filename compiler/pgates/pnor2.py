@@ -36,7 +36,7 @@ class pnor2(pgate.pgate):
         debug.check(size==1, "Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        if self.bin_spice_models:
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
 

@@ -152,7 +152,7 @@ class layer_properties():
 
         self._port_address = _port_address(supply_offset=False)
 
-        self._port_data = _port_data(channel_route_bitlines=False,
+        self._port_data = _port_data(channel_route_bitlines=True,
                                      enable_layer="m1")
 
         self._replica_column = _replica_column(even_rows=False)

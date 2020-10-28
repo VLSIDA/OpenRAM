@@ -912,8 +912,8 @@ class bank(design.design):
         if not self.col_addr_size>0:
             return
 
-        stack = layer_props.bank.stack
-        pitch = layer_props.bank.pitch
+        stack = getattr(self, layer_props.bank.stack)
+        pitch = getattr(self, layer_props.bank.pitch)
         
         if self.col_addr_size == 1:
             

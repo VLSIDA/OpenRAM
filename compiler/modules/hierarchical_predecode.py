@@ -89,8 +89,8 @@ class hierarchical_predecode(design.design):
         self.bus_directions = layer_props.hierarchical_predecode.bus_directions
         self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
         self.bus_space = layer_props.hierarchical_predecode.bus_space_factor * getattr(self, self.bus_layer + "_space")
-        self.input_layer = layer_props.hierarchical_decoder.input_layer
-        self.output_layer = layer_props.hierarchical_decoder.output_layer
+        self.input_layer = layer_props.hierarchical_predecode.input_layer
+        self.output_layer = layer_props.hierarchical_predecode.output_layer
         self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")
         
         self.height = self.number_of_outputs * self.and_mod.height

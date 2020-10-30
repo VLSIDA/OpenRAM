@@ -13,8 +13,8 @@ from bisect import bisect_left
 from tech import layer, drc
 from vector import vector
 from globals import OPTS
-
-if(OPTS.tech_name == "sky130"):
+from tech import cell_properties as cell_props
+if cell_props.ptx.bin_spice_models:
     from tech import nmos_bins, pmos_bins
 
     
@@ -192,7 +192,7 @@ class pgate(design.design):
                               width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):

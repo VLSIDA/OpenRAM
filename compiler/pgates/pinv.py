@@ -17,6 +17,7 @@ from utils import round_to_grid
 import logical_effort
 from sram_factory import factory
 from errors import drc_error
+from tech import cell_properties as cell_props
 
 
 class pinv(pgate.pgate):
@@ -87,7 +88,7 @@ class pinv(pgate.pgate):
             self.tx_mults = 1
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
-            if OPTS.tech_name == "sky130":
+            if cell_props.ptx.bin_spice_models:
                 (self.nmos_width, self.tx_mults) = pgate.pgate.best_bin("nmos", self.nmos_width)
                 (self.pmos_width, self.tx_mults) = pgate.pgate.best_bin("pmos", self.pmos_width)
             return
@@ -132,7 +133,7 @@ class pinv(pgate.pgate):
 
         # Determine the number of mults for each to fit width
         # into available space
-        if OPTS.tech_name != "sky130":
+        if not cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
             nmos_required_mults = max(int(ceil(self.nmos_width / nmos_height_available)), 1)

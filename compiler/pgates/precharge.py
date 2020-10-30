@@ -13,6 +13,7 @@ from tech import parameter, drc
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+from tech import cell_properties as cell_props
 
 
 class precharge(design.design):
@@ -79,7 +80,7 @@ class precharge(design.design):
         """
         Initializes the upper and lower pmos
         """
-        if(OPTS.tech_name == "sky130"):
+        if cell_props.ptx.bin_spice_models:
             self.ptx_width = pgate.nearest_bin("pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,

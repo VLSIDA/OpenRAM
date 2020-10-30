@@ -11,6 +11,7 @@ import math
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class hierarchical_predecode(design.design):
@@ -83,24 +84,15 @@ class hierarchical_predecode(design.design):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "sky130":
-            self.bus_layer = "m1"
-            self.bus_directions = "nonpref"
-            self.bus_pitch = self.m1_pitch
-            self.bus_space = 1.5 * self.m1_space
-            self.input_layer = "m2"
-            self.output_layer = "li"
-            self.output_layer_pitch = self.li_pitch
-        else:
-            self.bus_layer = "m2"
-            self.bus_directions = "pref"
-            self.bus_pitch = self.m2_pitch
-            self.bus_space = self.m2_space
-            # This requires a special jog to ensure to conflicts with the output layers
-            self.input_layer = "m1"
-            self.output_layer = "m1"
-            self.output_layer_pitch = self.m1_pitch
-            
+
+        self.bus_layer = layer_props.hierarchical_predecode.bus_layer
+        self.bus_directions = layer_props.hierarchical_predecode.bus_directions
+        self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
+        self.bus_space = layer_props.hierarchical_predecode.bus_space_factor * getattr(self, self.bus_layer + "_space")
+        self.input_layer = layer_props.hierarchical_predecode.input_layer
+        self.output_layer = layer_props.hierarchical_predecode.output_layer
+        self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")
+        
         self.height = self.number_of_outputs * self.and_mod.height
 
         # x offset for input inverters
@@ -276,9 +268,9 @@ class hierarchical_predecode(design.design):
                                             height=via.mod.second_layer_height,
                                             width=via.mod.second_layer_width)
             
-            if OPTS.tech_name == "sky130":
-                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height/2))
-                self.add_path(self.bus_layer, [rail_pos, below_rail], width = self.li_width + self.m1_enclose_mcon * 2)
+            if layer_props.hierarchical_predecode.vertical_supply:
+                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height / 2))
+                self.add_path(self.bus_layer, [rail_pos, below_rail], width=self.li_width + self.m1_enclose_mcon * 2)
             
     def route_and_to_rails(self):
         # This 2D array defines the connection mapping
@@ -319,8 +311,8 @@ class hierarchical_predecode(design.design):
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
-        # In sky130, we use hand-made decoder cells with vertical power
-        if OPTS.tech_name == "sky130" and not self.column_decoder:
+        # We may ahve vertical power supply rails
+        if layer_props.hierarchical_predecode.vertical_supply and not self.column_decoder:
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
                 for i in [self.inv_inst, self.and_inst]:

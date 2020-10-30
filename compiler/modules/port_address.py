@@ -10,6 +10,7 @@ from sram_factory import factory
 from vector import vector
 from tech import layer
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class port_address(design.design):
@@ -80,7 +81,7 @@ class port_address(design.design):
             self.copy_power_pins(inst, "gnd")
 
         for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
-            if OPTS.tech_name == "sky130":
+            if layer_props.port_address.supply_offset:
                 self.add_power_pin("vdd", rbl_vdd_pin.center())
             else:
                 self.add_power_pin("vdd", rbl_vdd_pin.lc())

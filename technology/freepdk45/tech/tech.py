@@ -9,6 +9,7 @@ import os
 from design_rules import *
 from module_type import *
 from custom_cell_properties import cell_properties
+from custom_layer_properties import layer_properties
 
 """
 File containing the process technology parameters for FreePDK 45nm.
@@ -33,6 +34,11 @@ cell_properties = cell_properties()
 cell_properties.bitcell.mirror.x = True
 cell_properties.bitcell.mirror.y = False
 cell_properties.bitcell_power_pin_directions = ("V", "V")
+
+###################################################
+# Custom cell properties
+###################################################
+layer_properties = layer_properties()
 
 ###################################################
 # GDS file info

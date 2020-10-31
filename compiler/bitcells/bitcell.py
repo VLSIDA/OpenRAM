@@ -20,29 +20,35 @@ class bitcell(bitcell_base.bitcell_base):
     library.
     """
 
+    name = "cell_6t"
+    pin_names = [
+        props.bitcell.cell_6t.pin.bl,
+        props.bitcell.cell_6t.pin.br,
+        props.bitcell.cell_6t.pin.wl,
+        props.bitcell.cell_6t.pin.vdd,
+        props.bitcell.cell_6t.pin.gnd,
+    ]
+
+
     # If we have a split WL bitcell, if not be backwards
     # compatible in the tech file
-    pin_names = [props.bitcell.cell_6t.pin.bl,
-                 props.bitcell.cell_6t.pin.br,
-                 props.bitcell.cell_6t.pin.wl,
-                 props.bitcell.cell_6t.pin.vdd,
-                 props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
-    (width, height) = utils.get_libcell_size("cell_6t",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
-
     def __init__(self, name=""):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, "cell_6t")
+        bitcell_base.bitcell_base.__init__(self, name)
         debug.info(2, "Create bitcell")
 
-        self.width = bitcell.width
-        self.height = bitcell.height
-        self.pin_map = bitcell.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer["boundary"])
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 

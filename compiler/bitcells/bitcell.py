@@ -36,6 +36,9 @@ class bitcell(bitcell_base.bitcell_base):
     storage_nets = ['Q', 'Q_bar']
 
     def __init__(self, name=""):
+        if not name:
+            name = self.name
+
         bitcell_base.bitcell_base.__init__(self, name)
         debug.info(2, "Create bitcell")
 

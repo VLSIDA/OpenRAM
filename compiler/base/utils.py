@@ -4,10 +4,12 @@
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
-#
+
+import os
+import math
+
 import gdsMill
 import tech
-import math
 import globals
 import debug
 from vector import vector
@@ -57,10 +59,11 @@ def auto_measure_libcell(pin_list, name, units, lpp):
     Return these as a set of properties including the cell width/height too.
     """
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
-    cell_vlsi = gdsMill.VlsiLayout(units=units)
-    reader = gdsMill.Gds2reader(cell_vlsi)
-    reader.loadFromFile(cell_gds)
 
+    cell_vlsi = _get_gds_reader(units, cell_gds)
+
+    # FIXME: This duplicates a lot of functionality of get_gds_size and
+    # get_gds_pins, it should probably just call those functions?
     cell = {}
     measure_result = cell_vlsi.getLayoutBorder(lpp[0])
     if measure_result:
@@ -73,22 +76,45 @@ def auto_measure_libcell(pin_list, name, units, lpp):
     return cell
 
 
+_GDS_READER_CACHE = {}
+
+def _get_gds_reader(units, gds_filename):
+    gds_absname = os.path.realpath(gds_filename)
+    k = (units, gds_absname)
+    try:
+        return _GDS_READER_CACHE[k]
+    except KeyError:
+        debug.info(4, "Creating VLSI layout from {}".format(gds_absname))
+        cell_vlsi = gdsMill.VlsiLayout(units=units)
+        reader = gdsMill.Gds2reader(cell_vlsi)
+        reader.loadFromFile(gds_absname)
+
+        _GDS_READER_CACHE[k] = cell_vlsi
+        return cell_vlsi
+
+
+_GDS_SIZE_CACHE = {}
+
 def get_gds_size(name, gds_filename, units, lpp):
     """
     Open a GDS file and return the size from either the
     bounding box or a border layer.
     """
-    debug.info(4, "Creating VLSI layout for {}".format(name))
-    cell_vlsi = gdsMill.VlsiLayout(units=units)
-    reader = gdsMill.Gds2reader(cell_vlsi)
-    reader.loadFromFile(gds_filename)
+    k = (name, os.path.realpath(gds_filename), units, lpp)
+    try:
+        return _GDS_SIZE_CACHE[k]
+    except KeyError:
+        cell_vlsi = _get_gds_reader(units, gds_filename)
 
-    measure_result = cell_vlsi.getLayoutBorder(lpp)
-    if not measure_result:
-        debug.info(2, "Layout border failed. Trying to measure size for {}".format(name))
-        measure_result = cell_vlsi.measureSize(name)
-    # returns width,height
-    return measure_result
+        measure_result = cell_vlsi.getLayoutBorder(lpp)
+        if not measure_result:
+            debug.info(2, "Layout border failed. Trying to measure size for {}".format(name))
+            measure_result = cell_vlsi.measureSize(name)
+
+        _GDS_SIZE_CACHE[k] = measure_result
+
+        # returns width,height
+        return measure_result
 
 
 def get_libcell_size(name, units, lpp):
@@ -101,27 +127,33 @@ def get_libcell_size(name, units, lpp):
     return(get_gds_size(name, cell_gds, units, lpp))
 
 
+_GDS_PINS_CACHE = {}
+
 def get_gds_pins(pin_names, name, gds_filename, units):
     """
     Open a GDS file and find the pins in pin_names as text on a given layer.
     Return these as a rectangle layer pair for each pin.
     """
-    cell_vlsi = gdsMill.VlsiLayout(units=units)
-    reader = gdsMill.Gds2reader(cell_vlsi)
-    reader.loadFromFile(gds_filename)
+    k = (tuple(pin_names), name, os.path.realpath(gds_filename), units)
+    try:
+        return dict(_GDS_PINS_CACHE[k])
+    except KeyError:
+        cell_vlsi = _get_gds_reader(units, gds_filename)
 
-    cell = {}
-    for pin_name in pin_names:
-        cell[str(pin_name)] = []
-        pin_list = cell_vlsi.getPinShape(str(pin_name))
-        for pin_shape in pin_list:
-            (lpp, boundary) = pin_shape
-            rect = [vector(boundary[0], boundary[1]),
-                    vector(boundary[2], boundary[3])]
-            # this is a list because other cells/designs
-            # may have must-connect pins
-            cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
-    return cell
+        cell = {}
+        for pin_name in pin_names:
+            cell[str(pin_name)] = []
+            pin_list = cell_vlsi.getPinShape(str(pin_name))
+            for pin_shape in pin_list:
+                (lpp, boundary) = pin_shape
+                rect = [vector(boundary[0], boundary[1]),
+                        vector(boundary[2], boundary[3])]
+                # this is a list because other cells/designs
+                # may have must-connect pins
+                cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
+
+        _GDS_PINS_CACHE[k] = cell
+        return dict(cell)
 
 
 def get_libcell_pins(pin_list, name, units):
@@ -132,7 +164,3 @@ def get_libcell_pins(pin_list, name, units):
 
     cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
     return(get_gds_pins(pin_list, name, cell_gds, units))
-
-
-
-

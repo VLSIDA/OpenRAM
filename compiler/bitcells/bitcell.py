@@ -35,6 +35,8 @@ class bitcell(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
+    cell_size_layer = "boundary"
+
     def __init__(self, name=""):
         if not name:
             name = self.name
@@ -44,7 +46,7 @@ class bitcell(bitcell_base.bitcell_base):
 
         (width, height) = utils.get_libcell_size(name,
                                                  GDS["unit"],
-                                                 layer["boundary"])
+                                                 layer[self.cell_size_layer])
         pin_map = utils.get_libcell_pins(self.pin_names,
                                          name,
                                          GDS["unit"])

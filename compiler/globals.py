@@ -514,7 +514,9 @@ def import_tech():
     sys.path.append(tech_path)
     try:
         import tech
-    except ImportError:
+    except ImportError as e:
+        import traceback
+        traceback.print_exc()
         debug.error("Could not load tech module.", -1)
 
     # Add custom modules of the technology to the path, if they exist

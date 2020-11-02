@@ -19,7 +19,7 @@ import re
 import copy
 import importlib
 
-VERSION = "1.1.7"
+VERSION = "1.1.6"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -514,9 +514,7 @@ def import_tech():
     sys.path.append(tech_path)
     try:
         import tech
-    except ImportError as e:
-        import traceback
-        traceback.print_exc()
+    except ImportError:
         debug.error("Could not load tech module.", -1)
 
     # Add custom modules of the technology to the path, if they exist

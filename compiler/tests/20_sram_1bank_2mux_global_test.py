@@ -16,7 +16,6 @@ from sram_factory import factory
 import debug
 
 
-#@unittest.skip("SKIPPING 20_sram_1bank_4mux_test")
 class sram_1bank_2mux_global_test(openram_test):
 
     def runTest(self):

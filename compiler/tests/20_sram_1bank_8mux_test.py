@@ -8,14 +8,14 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 20_sram_1bank_8mux_test")
+
 class sram_1bank_8mux_test(openram_test):
 
     def runTest(self):

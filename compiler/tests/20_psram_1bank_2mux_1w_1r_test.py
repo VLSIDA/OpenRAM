@@ -8,14 +8,14 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 20_psram_1bank_2mux_1w_1r_test, odd supply routing error")
+
 class psram_1bank_2mux_1w_1r_test(openram_test):
 
     def runTest(self):

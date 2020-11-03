@@ -232,7 +232,14 @@ def setup_bitcell():
 
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
         OPTS.replica_bitcell_name = "replica_" + OPTS.bitcell_name
-
+    elif (OPTS.bitcell == "pbitcell"):
+        OPTS.bitcell = "pbitcell"
+        OPTS.bitcell_name = "pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.dummy_bitcell_name = "dummy_pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell_name = "replica_pbitcell"
+                
     # See if bitcell exists
     try:
         __import__(OPTS.bitcell)
@@ -241,6 +248,11 @@ def setup_bitcell():
         # or its custom replica  bitcell
         # Use the pbitcell (and give a warning if not in unit test mode)
         OPTS.bitcell = "pbitcell"
+        OPTS.bitcell_name = "pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.dummy_bitcell_name = "dummy_pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell_name = "replica_pbitcell"
         if not OPTS.is_unit_test:
             debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))

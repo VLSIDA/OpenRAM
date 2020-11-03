@@ -21,7 +21,9 @@ class pbitcell(bitcell_base.bitcell_base):
     with a variable number of read/write, write, and read ports
     """
 
-    def __init__(self, name, replica_bitcell=False, dummy_bitcell=False):
+    def __init__(self, name, cell_name=None, replica_bitcell=False, dummy_bitcell=False):
+        if not cell_name:
+            cell_name = name
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
@@ -30,7 +32,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
 
-        bitcell_base.bitcell_base.__init__(self, name, name, hard_cell=False)
+        bitcell_base.bitcell_base.__init__(self, name, cell_name, hard_cell=False)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"
         info_string = fmt_str.format(self.num_rw_ports,
                                      self.num_w_ports,

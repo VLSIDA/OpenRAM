@@ -17,13 +17,15 @@ class replica_pbitcell(design.design):
     Creates a replica bitcell using pbitcell
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cell_name=None):
+        if not cell_name:
+            cell_name = name
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
 
-        design.design.__init__(self, name, name)
+        design.design.__init__(self, name, cell_name)
         debug.info(1, "create a replica bitcell using pbitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                                       self.num_w_ports,
                                                                                                                       self.num_r_ports))

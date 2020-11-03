@@ -9,14 +9,13 @@
 import unittest
 from testutils import *
 import sys, os
-
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-# @unittest.skip("SKIPPING 20_sram_1bank_2mux_wmask_spare_cols_test")
+
 class sram_1bank_2mux_wmask_spare_cols_test(openram_test):
 
     def runTest(self):

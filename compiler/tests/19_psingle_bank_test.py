@@ -8,14 +8,14 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 19_psingle_bank_test")
+
 class psingle_bank_test(openram_test):
 
     def runTest(self):
@@ -30,7 +30,8 @@ class psingle_bank_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
-
+        globals.setup_bitcell()
+        
         c = sram_config(word_size=4,
                         num_words=16)
 

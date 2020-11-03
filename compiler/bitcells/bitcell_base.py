@@ -20,15 +20,15 @@ class bitcell_base(design.design):
     """
     cell_size_layer = "boundary"
 
-    def __init__(self, name, cell_name, hard_cell=True):
-        design.design.__init__(self, name, cell_name)
+    def __init__(self, name, hard_cell=True):
+        design.design.__init__(self, name)
 
         if hard_cell:
-            (self.width, self.height) = utils.get_libcell_size(cell_name,
+            (self.width, self.height) = utils.get_libcell_size(self.cell_name,
                                                                GDS["unit"],
                                                                layer[self.cell_size_layer])
             self.pin_map = utils.get_libcell_pins(self.pin_names,
-                                                  cell_name,
+                                                  self.cell_name,
                                                   GDS["unit"])
             self.add_pin_types(self.type_list)
 

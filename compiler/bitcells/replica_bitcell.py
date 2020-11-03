@@ -6,11 +6,8 @@
 # All rights reserved.
 #
 import debug
-import utils
 import bitcell_base
-from tech import GDS, layer
 from tech import cell_properties as props
-from globals import OPTS
 
 
 class replica_bitcell(bitcell_base.bitcell_base):
@@ -27,11 +24,8 @@ class replica_bitcell(bitcell_base.bitcell_base):
                  props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
 
-    def __init__(self, name, cell_name=None):
-        if not cell_name:
-            cell_name = OPTS.replica_bitcell_name
-        # Ignore the name argument
-        super().__init__(name, cell_name)
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create replica bitcell object")
 
     def get_stage_effort(self, load):

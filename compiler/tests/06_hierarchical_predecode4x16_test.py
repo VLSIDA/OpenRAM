@@ -16,7 +16,6 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING hierarchical_predecode4x16_test")
 class hierarchical_predecode4x16_test(openram_test):
 
     def runTest(self):

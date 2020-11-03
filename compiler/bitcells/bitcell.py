@@ -7,7 +7,6 @@
 #
 import debug
 from tech import cell_properties as props
-from globals import OPTS
 import bitcell_base
 
 
@@ -27,10 +26,8 @@ class bitcell(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
-    def __init__(self, name, cell_name=None):
-        if not cell_name:
-            cell_name = OPTS.bitcell_name
-        super().__init__(name, cell_name)
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create bitcell")
 
         self.nets_match = self.do_nets_exist(self.storage_nets)

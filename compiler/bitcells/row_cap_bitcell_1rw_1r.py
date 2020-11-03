@@ -23,7 +23,6 @@ class row_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
     type_list = ["INPUT", "INPUT", "GROUND"]
 
     def __init__(self, name="row_cap_cell_1rw_1r"):
-        # Ignore the name argument
         bitcell_base.bitcell_base.__init__(self, name)
         debug.info(2, "Create row_cap bitcell 1rw+1r object")
 

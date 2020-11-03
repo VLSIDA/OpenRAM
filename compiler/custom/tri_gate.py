@@ -28,15 +28,15 @@ class tri_gate(design.design):
         if name=="":
             name = "tri{0}".format(tri_gate.unique_id)
             tri_gate.unique_id += 1
-        design.design.__init__(self, name)
+        super().__init__(self, name)
         debug.info(2, "Create tri_gate")
 
-        (width, height) = utils.get_libcell_size(name,
+        (width, height) = utils.get_libcell_size(self.cell_name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
 
         pin_map = utils.get_libcell_pins(self.pin_names,
-                                         name,
+                                         self.cell_name,
                                          GDS["unit"])
 
         self.width = width

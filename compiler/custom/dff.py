@@ -26,14 +26,14 @@ class dff(design.design):
     cell_size_layer = "boundary"
 
     def __init__(self, name="dff"):
-        design.design.__init__(self, name)
+        super().__init__(name)
 
-        (width, height) = utils.get_libcell_size(name,
+        (width, height) = utils.get_libcell_size(self.cell_name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
 
         pin_map = utils.get_libcell_pins(self.pin_names,
-                                         name,
+                                         self.cell_name,
                                          GDS["unit"])
 
         self.width = width

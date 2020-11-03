@@ -33,7 +33,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
 
         if os.path.exists(lvs_dir):
-            self.lvs_file = lvs_dir + name + ".sp"
+            self.lvs_file = lvs_dir + cell_name + ".sp"
         else:
             self.lvs_file = self.sp_file
 

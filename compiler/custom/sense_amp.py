@@ -33,12 +33,12 @@ class sense_amp(design.design):
         super().__init__(name)
         debug.info(2, "Create sense_amp")
 
-        (width, height) = utils.get_libcell_size(name,
+        (width, height) = utils.get_libcell_size(self.cell_name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
 
         pin_map = utils.get_libcell_pins(self.pin_names,
-                                         name,
+                                         self.cell_name,
                                          GDS["unit"])
 
         self.width = width

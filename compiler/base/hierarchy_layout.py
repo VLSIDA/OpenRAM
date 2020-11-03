@@ -13,6 +13,7 @@ from tech import drc, GDS
 from tech import layer as techlayer
 from tech import layer_indices
 from tech import layer_stacks
+from tech import preferred_directions
 import os
 from globals import OPTS
 from vector import vector

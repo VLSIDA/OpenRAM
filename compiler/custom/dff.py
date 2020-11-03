@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice, parameter
+from tech import GDS, layer, spice
 from tech import cell_properties as props
 import utils
 
@@ -53,7 +53,6 @@ class dff(design.design):
 
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
-        from tech import parameter
         c_load = load
         c_para = spice["dff_out_cap"]#ff
         transition_prob = 0.5

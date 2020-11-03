@@ -7,7 +7,7 @@
 #
 import debug
 import design
-from tech import parameter, layer
+from tech import layer
 from tech import cell_properties as props
 from vector import vector
 from globals import OPTS
@@ -23,7 +23,6 @@ class dff_buf(design.design):
     unique_id = 1
 
     def __init__(self, inv1_size=2, inv2_size=4, name=""):
-
         if name=="":
             name = "dff_buf_{0}".format(dff_buf.unique_id)
             dff_buf.unique_id += 1

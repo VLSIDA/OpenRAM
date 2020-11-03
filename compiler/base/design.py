@@ -9,19 +9,25 @@ from hierarchy_design import hierarchy_design
 from utils import round_to_grid
 import contact
 from tech import preferred_directions
+from tech import cell_properties as props
 from globals import OPTS
 import re
+import debug
 
 
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
     some DRC/layer constants and analytical models for other modules to reuse.
-
     """
 
     def __init__(self, name, cell_name=None):
-        if not cell_name:
+        # This allows us to use different GDS/spice circuits for hard cells instead of the default ones
+        # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
+        # depending on the number of ports.
+        if name in props.names:
+            cell_name = props.names[name]
+        elif not cell_name:
             cell_name = name
         super().__init__(name, cell_name)
 

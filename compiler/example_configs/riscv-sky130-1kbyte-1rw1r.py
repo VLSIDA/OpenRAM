@@ -11,7 +11,7 @@ num_w_ports = 0
 tech_name = "sky130"
 nominal_corner_only = True
 
-route_supplies = True
+route_supplies = False
 check_lvsdrc = True
 perimeter_pins = False
 #netlist_only = True

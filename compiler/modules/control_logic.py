@@ -85,8 +85,8 @@ class control_logic(design.design):
     def add_modules(self):
         """ Add all the required modules """
         
-        dff = factory.create(module_type="dff_buf")
-        dff_height = dff.height
+        self.dff = factory.create(module_type="dff_buf")
+        dff_height = self.dff.height
         
         self.ctrl_dff_array = factory.create(module_type="dff_buf_array",
                                              rows=self.num_control_signals,
@@ -119,7 +119,7 @@ class control_logic(design.design):
 
         # We will use the maximum since this same value is used to size the wl_en
         # and the p_en_bar drivers
-        max_fanout = max(self.num_rows, self.num_cols)
+        # max_fanout = max(self.num_rows, self.num_cols)
         
         # wl_en drives every row in the bank
         self.wl_en_driver = factory.create(module_type="pdriver",
@@ -162,7 +162,7 @@ class control_logic(design.design):
         self.delay_chain=factory.create(module_type="delay_chain",
                                         fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ])
         self.add_mod(self.delay_chain)
-          
+
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
         from math import ceil
@@ -721,10 +721,8 @@ class control_logic(design.design):
     def route_supply(self):
         """ Add vdd and gnd to the instance cells """
 
-        if OPTS.tech_name == "sky130":
-            supply_layer = "li"
-        else:
-            supply_layer = "m1"
+        supply_layer = self.dff.get_pin("vdd").layer
+        
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")

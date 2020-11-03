@@ -9,7 +9,7 @@ num_r_ports = 1
 num_w_ports = 0
 
 tech_name = "freepdk45"
-nominal_corners_only = True
+nominal_corner_only = True
 
 route_supplies = False
 check_lvsdrc = False

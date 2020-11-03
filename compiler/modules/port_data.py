@@ -11,6 +11,7 @@ from sram_factory import factory
 from collections import namedtuple
 from vector import vector
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class port_data(design.design):
@@ -580,20 +581,20 @@ class port_data(design.design):
                                         inst1_start_bit=self.num_cols + off,
                                         inst2_start_bit=self.word_size)
         
-        # This could be a channel route, but in some techs the bitlines
-        # are too close together.
-        elif OPTS.tech_name == "sky130":
-            self.connect_bitlines(inst1=inst1,
-                                  inst1_bls_template=inst1_bls_templ,
-                                  inst2=inst2,
-                                  num_bits=self.word_size,
-                                  inst1_start_bit=start_bit)
-        else:
+        elif layer_props.port_data.channel_route_bitlines:
             self.channel_route_bitlines(inst1=inst1,
                                         inst1_bls_template=inst1_bls_templ,
                                         inst2=inst2,
                                         num_bits=self.word_size + self.num_spare_cols,
                                         inst1_start_bit=start_bit)
+        # This could be a channel route, but in some techs the bitlines
+        # are too close together.
+        else:
+            self.connect_bitlines(inst1=inst1,
+                                  inst1_bls_template=inst1_bls_templ,
+                                  inst2=inst2,
+                                  num_bits=self.word_size,
+                                  inst1_start_bit=start_bit)
         
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
@@ -640,17 +641,16 @@ class port_data(design.design):
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.
-        elif OPTS.tech_name == "sky130":
+        elif layer_props.port_data.channel_route_bitlines:
+            self.channel_route_bitlines(inst1=inst1, inst2=inst2,
+                                        num_bits=self.word_size + self.num_spare_cols,
+                                        inst1_bls_template=inst1_bls_templ,
+                                        inst1_start_bit=start_bit)
+        else:
             self.connect_bitlines(inst1=inst1, inst2=inst2,
                                   num_bits=self.word_size,
                                   inst1_bls_template=inst1_bls_templ,
                                   inst1_start_bit=start_bit)
-        else:
-            self.channel_route_bitlines(inst1=inst1, inst2=inst2,
-                                        num_bits=self.word_size+self.num_spare_cols,
-                                        inst1_bls_template=inst1_bls_templ,
-                                        inst1_start_bit=start_bit)
-            
 
     def route_write_driver_to_sense_amp(self, port):
         """ Routing of BL and BR between write driver and sense amp """

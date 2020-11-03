@@ -11,6 +11,7 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class hierarchical_decoder(design.design):
@@ -181,25 +182,15 @@ class hierarchical_decoder(design.design):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "sky130":
-            self.bus_layer = "m1"
-            self.bus_directions = "nonpref"
-            self.bus_pitch = self.m1_pitch
-            self.bus_space = self.m2_space
-            self.input_layer = "m2"
-            self.output_layer = "li"
-            self.output_layer_pitch = self.li_pitch
-        else:
-            self.bus_layer = "m2"
-            self.bus_directions = "pref"
-            self.bus_pitch = self.m2_pitch
-            self.bus_space = self.m2_space
-            # These two layers being the same requires a special jog
-            # to ensure to conflicts with the output layers
-            self.input_layer = "m1"
-            self.output_layer = "m3"
-            self.output_layer_pitch = self.m3_pitch
 
+        self.bus_layer = layer_props.hierarchical_decoder.bus_layer
+        self.bus_directions = layer_props.hierarchical_decoder.bus_directions
+        self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
+        self.bus_space = getattr(self, self.bus_layer + "_space")
+        self.input_layer = layer_props.hierarchical_decoder.input_layer
+        self.output_layer = layer_props.hierarchical_decoder.output_layer
+        self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")
+        
         # Two extra pitches between modules on left and right
         self.internal_routing_width = self.total_number_of_predecoder_outputs * self.bus_pitch + self.bus_pitch
         self.row_decoder_height = self.and2.height * self.num_outputs
@@ -606,7 +597,7 @@ class hierarchical_decoder(design.design):
         must-connects next level up.
         """
                 
-        if OPTS.tech_name == "sky130":
+        if layer_props.hierarchical_decoder.vertical_supply:
             for n in ["vdd", "gnd"]:
                 pins = self.and_inst[0].get_pins(n)
                 for pin in pins:
@@ -678,9 +669,9 @@ class hierarchical_decoder(design.design):
         mid_point2 = vector(x_offset, y_offset)
         rail_pos = vector(self.predecode_bus[rail_name].cx(), mid_point2.y)
         self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
-        if OPTS.tech_name == "sky130":
-            above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height/2))
-            self.add_path(self.bus_layer, [rail_pos, above_rail], width = self.li_width + self.m1_enclose_mcon * 2)
+        if layer_props.hierarchical_decoder.vertical_supply:
+            above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height / 2))
+            self.add_path(self.bus_layer, [rail_pos, above_rail], width=self.li_width + self.m1_enclose_mcon * 2)
 
         # pin_pos = pin.center()
         # rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)

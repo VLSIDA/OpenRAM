@@ -2,7 +2,7 @@
 04_pbitcell_test.py
 04_precharge_pbitcell_test.py
 04_replica_pbitcell_test.py
-04_single_level_column_mux_pbitcell_test.py
+04_column_mux_pbitcell_test.py
 05_bitcell_1rw_1r_array_test.py
 05_bitcell_array_test.py
 05_dummy_array_test.py
@@ -14,7 +14,7 @@
 06_hierarchical_predecode3x8_pbitcell_test.py
 06_hierarchical_predecode3x8_test.py
 06_hierarchical_predecode4x16_test.py
-07_single_level_column_mux_array_pbitcell_test.py
+07_column_mux_array_pbitcell_test.py
 08_wordline_driver_array_pbitcell_test.py
 08_wordline_driver_array_test.py
 09_sense_amp_array_test_pbitcell.py

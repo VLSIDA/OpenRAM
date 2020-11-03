@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import contact
 import pgate
 import debug
-from globals import OPTS
 from tech import drc, parameter, spice
 from vector import vector
 from sram_factory import factory
+from tech import cell_properties as cell_props
 
 
 class pnor2(pgate.pgate):
@@ -37,7 +36,7 @@ class pnor2(pgate.pgate):
         debug.check(size==1, "Size 1 pnor2 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
 
@@ -211,7 +210,7 @@ class pnor2(pgate.pgate):
 
         self.output_yoffset = self.inputA_yoffset + self.m1_nonpref_pitch
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.add_enclosure([apin, bpin], "npc", drc("npc_enclose_poly"))
 
     def route_output(self):

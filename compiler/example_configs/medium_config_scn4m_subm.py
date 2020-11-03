@@ -2,7 +2,7 @@ word_size = 16
 num_words = 256
 
 tech_name = "scn4m_subm"
-nominal_corners_only = False
+nominal_corner_only = False
 process_corners = ["TT"]
 supply_voltages = [5.0]
 temperatures = [25]

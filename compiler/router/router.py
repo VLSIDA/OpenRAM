@@ -301,7 +301,6 @@ class router(router_tech):
                                                                        adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
                     
-
         debug.info(1, "Removed {} adjacent grids.".format(removed_grids))
 
     def remove_adjacent_grid(self, pg1, pg2, adj_grids):
@@ -539,7 +538,7 @@ class router(router_tech):
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
-                debug.info(2,
+                debug.info(3,
                            "Converting [ {0} , {1} ] full={2}".format(x,
                                                                       y,
                                                                       full_overlap))
@@ -632,26 +631,26 @@ class router(router_tech):
                                   pin.layer)
         
         overlap_length = pin.overlap_length(track_pin)
-        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord,
+        debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  pin.rect,
                                                                  track_pin,
                                                                  overlap_length))
         inflated_overlap_length = inflated_pin.overlap_length(track_pin)
-        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord,
+        debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  inflated_pin.rect,
                                                                  track_pin,
                                                                  inflated_overlap_length))
 
         # If it overlaps with the pin, it is sufficient
         if overlap_length == math.inf or overlap_length > 0:
-            debug.info(2,"  Overlap: {0} >? {1}".format(overlap_length, 0))
+            debug.info(4,"  Overlap: {0} >? {1}".format(overlap_length, 0))
             return (coord, None)
         # If it overlaps with the inflated pin, it is partial
         elif inflated_overlap_length == math.inf or inflated_overlap_length > 0:
-            debug.info(2,"  Partial overlap: {0} >? {1}".format(inflated_overlap_length, 0))  
+            debug.info(4,"  Partial overlap: {0} >? {1}".format(inflated_overlap_length, 0))  
             return (None, coord)
         else:
-            debug.info(2, "  No overlap: {0} {1}".format(overlap_length, 0))
+            debug.info(4, "  No overlap: {0} {1}".format(overlap_length, 0))
             return (None, None)
 
     def convert_track_to_pin(self, track):
@@ -846,7 +845,7 @@ class router(router_tech):
                     "Pin component index too large.")
         
         pin_in_tracks = self.pin_groups[pin_name][index].grids
-        debug.info(2,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
+        debug.info(3,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_source(pin_in_tracks)
 
     def add_path_target(self, paths):
@@ -914,7 +913,7 @@ class router(router_tech):
         """
         path = self.prepare_path(path)
         
-        debug.info(2, "Adding route: {}".format(str(path)))
+        debug.info(4, "Adding route: {}".format(str(path)))
         # If it is only a square, add an enclosure to the track
         if len(path) == 1:
             self.add_single_enclosure(path[0][0])
@@ -1007,8 +1006,7 @@ class router(router_tech):
         # returns the path in tracks
         (path, cost) = self.rg.route(detour_scale)
         if path:
-            debug.info(1, "Found path: cost={0} ".format(cost))
-            debug.info(1, str(path))
+            debug.info(2, "Found path: cost={0} {1}".format(cost, str(path)))
 
             self.paths.append(path)
             self.add_route(path)

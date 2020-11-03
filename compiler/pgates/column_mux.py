@@ -10,7 +10,7 @@ import debug
 from tech import drc, layer
 from vector import vector
 from sram_factory import factory
-from globals import OPTS
+from tech import cell_properties as cell_props
 
 
 class column_mux(pgate.pgate):
@@ -124,8 +124,8 @@ class column_mux(pgate.pgate):
                               + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
         self.nmos_upper.place(nmos_upper_position)
 
-        if OPTS.tech_name == "sky130":
-            self.add_implants()
+        if cell_props.pgate.add_implants:
+            self.extend_implants()
         
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
@@ -198,7 +198,7 @@ class column_mux(pgate.pgate):
         self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
  
-    def add_implants(self):
+    def extend_implants(self):
         """
         Add top-to-bottom implants for adjacency issues in s8.
         """

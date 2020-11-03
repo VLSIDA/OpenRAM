@@ -11,6 +11,7 @@ from tech import drc, layer
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class wordline_driver_array(design.design):
@@ -71,7 +72,7 @@ class wordline_driver_array(design.design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-        if OPTS.tech_name == "sky130":
+        if layer_props.wordline_driver.vertical_supply:
             for name in ["vdd", "gnd"]:
                 supply_pins = self.wld_inst[0].get_pins(name)
                 for pin in supply_pins:

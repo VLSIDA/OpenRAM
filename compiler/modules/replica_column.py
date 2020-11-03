@@ -9,6 +9,7 @@ from tech import cell_properties
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class replica_column(bitcell_base_array):
@@ -41,7 +42,7 @@ class replica_column(bitcell_base_array):
                     "Replica bit cannot be the dummy row.")
         debug.check(replica_bit <= self.left_rbl or replica_bit >= self.total_size - self.right_rbl - 1,
                     "Replica bit cannot be in the regular array.")
-        if OPTS.tech_name == "sky130":
+        if layer_props.replica_column.even_rows:
             debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
                         "sky130 currently requires rows to be even and to start with X mirroring"
                         + " (left_rbl must be odd) for LVS.")

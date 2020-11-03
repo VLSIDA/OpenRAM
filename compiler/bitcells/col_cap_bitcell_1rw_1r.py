@@ -22,9 +22,11 @@ class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "POWER", "GROUND"]
 
-    def __init__(self, name="col_cap_cell_1rw_1r"):
+    def __init__(self, name="col_cap_cell_1rw_1r", cell_name=None):
+        if not cell_name:
+            cell_name = name
         # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, name)
+        bitcell_base.bitcell_base.__init__(self, name, cell_name)
         debug.info(2, "Create col_cap bitcell 1rw+1r object")
 
         self.no_instances = True

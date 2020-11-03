@@ -22,9 +22,10 @@ class row_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
                  props.bitcell.cell_1rw1r.pin.gnd]
     type_list = ["INPUT", "INPUT", "GROUND"]
 
-    def __init__(self, name="row_cap_cell_1rw_1r"):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, name)
+    def __init__(self, name="row_cap_cell_1rw_1r", cell_name=None):
+        if not cell_name:
+            cell_name = name
+        bitcell_base.bitcell_base.__init__(self, name, cell_name)
         debug.info(2, "Create row_cap bitcell 1rw+1r object")
 
         self.no_instances = True

@@ -6,12 +6,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 class replica_column_test(openram_test):
 
@@ -19,15 +20,17 @@ class replica_column_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing replica column for 6t_cell")
+        debug.info(2, "Testing replica column for cell_6t")
         a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=1)
         self.local_check(a)
 
-        debug.info(2, "Testing replica column for 6t_cell")
+        debug.info(2, "Testing replica column for cell_1rw_1r")
+        globals.setup_bitcell()
         a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=6)
         self.local_check(a)
         
-        debug.info(2, "Testing replica column for 6t_cell")
+        debug.info(2, "Testing replica column for cell_1rw_1r")
+        globals.setup_bitcell()
         a = factory.create(module_type="replica_column", rows=4, rbl=[2, 0], replica_bit=2)
         self.local_check(a)
         

@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
 import debug
 import utils
+import bitcell_base
 from tech import GDS, layer
 from tech import cell_properties as props
 from globals import OPTS
 
 
-class replica_bitcell(design.design):
+class replica_bitcell(bitcell_base.bitcell_base):
     """
     A single bit cell (6T, 8T, etc.)
     This module implements the single memory cell used in the design. It
@@ -26,23 +26,14 @@ class replica_bitcell(design.design):
                  props.bitcell.cell_6t.pin.vdd,
                  props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    cell_size_layer = "boundary"
     
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.replica_bitcell_name
         # Ignore the name argument
-        design.design.__init__(self, name, cell_name)
+        super().__init__(name, cell_name)
         debug.info(2, "Create replica bitcell object")
         
-        (self.width, self.height) = utils.get_libcell_size(cell_name,
-                                                           GDS["unit"],
-                                                           layer[self.cell_size_layer])
-        self.pin_map = utils.get_libcell_pins(self.pin_names,
-                                              cell_name,
-                                              GDS["unit"])
-        
-
     def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node

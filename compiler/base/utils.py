@@ -78,6 +78,7 @@ def auto_measure_libcell(pin_list, name, units, lpp):
 
 _GDS_READER_CACHE = {}
 
+
 def _get_gds_reader(units, gds_filename):
     gds_absname = os.path.realpath(gds_filename)
     k = (units, gds_absname)

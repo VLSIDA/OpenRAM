@@ -5,13 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
 import debug
+import bitcell_base
 from tech import cell_properties as props
 from globals import OPTS
+from tech import GDS, layer
+import utils
 
 
-class replica_bitcell_1w_1r(design.design):
+class replica_bitcell_1w_1r(bitcell_base.bitcell_base):
     """
     A single bit cell which is forced to store a 0.
     This module implements the single memory cell used in the design. It
@@ -27,13 +29,14 @@ class replica_bitcell_1w_1r(design.design):
                  props.bitcell.cell_1w1r.pin.vdd,
                  props.bitcell.cell_1w1r.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"]
-
+    
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.replica_bitcell_name
-        design.design.__init__(self, name, cell_name)
+        super().__init__(name, cell_name)
         debug.info(2, "Create replica bitcell 1w+1r object")
 
+        
     def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node

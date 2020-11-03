@@ -32,7 +32,7 @@ class dummy_bitcell_1w_1r(bitcell_base.bitcell_base):
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.dummy_bitcell_name
-        bitcell_base.bitcell_base.__init__(self, name, cell_name)
+        super().__init__(name, cell_name)
         debug.info(2, "Create dummy bitcell 1w+1r object")
 
 

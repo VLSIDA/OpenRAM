@@ -257,8 +257,8 @@ def get_tool(tool_type, preferences, default_name=None):
     if default_name:
         exe_name = find_exe(default_name)
         if exe_name == None:
-            debug.error("{0} not found. Cannot find {1} tool.".format(default_name,
-                                                                      tool_type),
+            debug.error("{0} not found. Cannot find {1} tool.".format(default_name, tool_type)
+                        + "Disable DRC/LVS with check_lvsdrc=False to ignore.",
                         2)
         else:
             debug.info(1, "Using {0}: {1}".format(tool_type, exe_name))
@@ -271,8 +271,7 @@ def get_tool(tool_type, preferences, default_name=None):
                 return(name, exe_name)
             else:
                 debug.info(1,
-                           "Could not find {0}, trying next {1} tool.".format(name,
-                                                                              tool_type))
+                           "Could not find {0}, trying next {1} tool.".format(name, tool_type))
         else:
             return(None, "")
 

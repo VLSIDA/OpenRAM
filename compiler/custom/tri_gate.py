@@ -15,7 +15,7 @@ class tri_gate(design.design):
     """
     This module implements the tri gate cell used in the design forS
     bit-line isolation. It is a hand-made cell, so the layout and
-    netlist should be available in the technology library.  
+    netlist should be available in the technology library.
     """
 
     pin_names = ["in", "out", "en", "en_bar", "vdd", "gnd"]
@@ -23,7 +23,7 @@ class tri_gate(design.design):
     cell_size_layer = "boundary"
 
     unique_id = 1
-    
+
     def __init__(self, name=""):
         if name=="":
             name = "tri{0}".format(tri_gate.unique_id)
@@ -34,7 +34,7 @@ class tri_gate(design.design):
         (width, height) = utils.get_libcell_size(name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
-        
+
         pin_map = utils.get_libcell_pins(self.pin_names,
                                          name,
                                          GDS["unit"])
@@ -47,12 +47,12 @@ class tri_gate(design.design):
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         #Power in this module currently not defined. Returns 0 nW (leakage and dynamic).
-        total_power = self.return_power() 
+        total_power = self.return_power()
         return total_power
 
     def get_cin(self):
         return 9*spice["min_tx_gate_c"]
 
-    def build_graph(self, graph, inst_name, port_nets):        
+    def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
-        self.add_graph_edges(graph, port_nets) 
+        self.add_graph_edges(graph, port_nets)

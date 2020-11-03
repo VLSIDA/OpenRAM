@@ -19,7 +19,7 @@ class drc_value():
         Return the value.
         """
         return self.value
-                
-            
-        
+
+
+
 

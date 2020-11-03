@@ -21,7 +21,7 @@ class pand3(pgate.pgate):
 
         self.vertical = vertical
         self.size = size
-        
+
         # Creates the netlist and layout
         super().__init__(name, height, add_wells)
 
@@ -59,7 +59,7 @@ class pand3(pgate.pgate):
         self.route_supply_rails()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
@@ -72,7 +72,7 @@ class pand3(pgate.pgate):
         self.nand_inst = self.add_inst(name="pand3_nand",
                                        mod=self.nand)
         self.connect_inst(["A", "B", "C", "zb_int", "vdd", "gnd"])
-        
+
         self.inv_inst = self.add_inst(name="pand3_inv",
                                       mod=self.inv)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
@@ -103,7 +103,7 @@ class pand3(pgate.pgate):
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, self.height),
                                             width=self.width)
-        
+
         if self.vertical:
             # Shared between two gates
             y_offset = 0.5 * self.height
@@ -113,7 +113,7 @@ class pand3(pgate.pgate):
                                         layer=self.route_layer,
                                         offset=vector(0.5 * self.width, y_offset),
                                         width=self.width)
-            
+
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
@@ -161,4 +161,3 @@ class pand3(pgate.pgate):
                                               slew=nand_delay.slew,
                                               load=load)
         return nand_delay + inv_delay
-    

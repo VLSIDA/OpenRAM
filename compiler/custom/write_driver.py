@@ -14,7 +14,7 @@ from tech import cell_properties as props
 
 class write_driver(design.design):
     """
-    Tristate write driver to be active during write operations only.       
+    Tristate write driver to be active during write operations only.
     This module implements the write driver cell used in the design. It
     is a hand-made cell, so the layout and netlist should be available in
     the technology library.
@@ -37,7 +37,7 @@ class write_driver(design.design):
         (width, height) = utils.get_libcell_size(name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
-        
+
         pin_map = utils.get_libcell_pins(self.pin_names,
                                          name,
                                          GDS["unit"])
@@ -66,6 +66,6 @@ class write_driver(design.design):
         # This is approximated from SCMOS. It has roughly 5 3x transistor gates.
         return 5*3
 
-    def build_graph(self, graph, inst_name, port_nets):        
+    def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
-        self.add_graph_edges(graph, port_nets) 
+        self.add_graph_edges(graph, port_nets)

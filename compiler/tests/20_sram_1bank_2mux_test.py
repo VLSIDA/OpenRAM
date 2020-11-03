@@ -39,9 +39,9 @@ class sram_1bank_2mux_test(openram_test):
                                           c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

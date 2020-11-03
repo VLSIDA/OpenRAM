@@ -22,7 +22,7 @@ class direction(Enum):
 
 
     def get_offset(direct):
-        """ 
+        """
         Returns the vector offset for a given direction.
         """
         if direct==direction.NORTH:
@@ -55,14 +55,14 @@ class direction(Enum):
         if up_down_too:
             temp_dirs.extend([direction.UP, direction.DOWN])
         return temp_dirs
-    
+
     def cardinal_offsets(up_down_too=False):
         return [direction.get_offset(d) for d in direction.cardinal_directions(up_down_too)]
 
     def all_directions():
         return [direction.NORTH, direction.EAST, direction.SOUTH, direction.WEST,
                 direction.NORTHEAST, direction.NORTHWEST, direction.SOUTHEAST, direction.SOUTHWEST]
-    
+
     def all_offsets():
         return [direction.get_offset(d) for d in direction.all_directions()]
 
@@ -71,4 +71,4 @@ class direction(Enum):
 
     def cardinal_neighbors(cell):
         return [cell+x for x in direction.cardinal_offsets()]
-    
+

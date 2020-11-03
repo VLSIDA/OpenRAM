@@ -29,24 +29,24 @@ class replica_bitcell_1w_1r(bitcell_base.bitcell_base):
                  props.bitcell.cell_1w1r.pin.vdd,
                  props.bitcell.cell_1w1r.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"]
-    
+
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.replica_bitcell_name
         super().__init__(name, cell_name)
         debug.info(2, "Create replica bitcell 1w+1r object")
 
-        
+
     def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
         read_port_load = 0.5 #min size NMOS gate load
         return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
-        
+
     def input_load(self):
         """Return the relative capacitance of the access transistor gates"""
-        
+
         # FIXME: This applies to bitline capacitances as well.
         # FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]

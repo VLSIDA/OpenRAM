@@ -36,7 +36,7 @@ class hspice_pex_pinv_test(openram_test):
         # generate the pinv
         prev_purge_value = OPTS.purge_temp
         # force set purge to false to save the sp file
-        OPTS.purge_temp =  False 
+        OPTS.purge_temp =  False
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)

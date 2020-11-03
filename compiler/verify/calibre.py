@@ -202,7 +202,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
 
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
         shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
-                                
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # check the result for these lines in the summary:
@@ -335,7 +335,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
         shutil.copy(gds_name, OPTS.openram_temp)
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
         shutil.copy(sp_name, OPTS.openram_temp)
-    
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 
 

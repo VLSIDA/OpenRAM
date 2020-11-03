@@ -29,7 +29,7 @@ class pbitcell_array_test(openram_test):
         OPTS.num_w_ports = 2
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
-            
+
         debug.info(2, "Testing 4x4 array for multiport bitcell, with write ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 2
@@ -37,7 +37,7 @@ class pbitcell_array_test(openram_test):
         OPTS.num_w_ports = 2
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
-        
+
         debug.info(2, "Testing 4x4 array for multiport bitcell, with read/write ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 2

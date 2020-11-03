@@ -16,7 +16,7 @@ class pbuf_dec(pgate.pgate):
     This is a simple buffer used for driving wordlines.
     """
     def __init__(self, name, size=4, height=None):
-        
+
         debug.info(1, "creating {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
@@ -39,7 +39,7 @@ class pbuf_dec(pgate.pgate):
         self.add_layout_pins()
         self.route_supply_rails()
         self.add_boundary()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("Z", "OUTPUT")
@@ -53,7 +53,7 @@ class pbuf_dec(pgate.pgate):
                                    size=input_size,
                                    height=self.height)
         self.add_mod(self.inv1)
-        
+
         self.inv2 = factory.create(module_type="pinv_dec",
                                    size=self.size,
                                    height=self.height)
@@ -63,7 +63,7 @@ class pbuf_dec(pgate.pgate):
         self.inv1_inst = self.add_inst(name="buf_inv1",
                                        mod=self.inv1)
         self.connect_inst(["A", "zb_int", "vdd", "gnd"])
-        
+
         self.inv2_inst = self.add_inst(name="buf_inv2",
                                        mod=self.inv2)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
@@ -74,7 +74,7 @@ class pbuf_dec(pgate.pgate):
 
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))
-        
+
     def add_wires(self):
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
@@ -105,7 +105,7 @@ class pbuf_dec(pgate.pgate):
                                         offset=a_pin.center(),
                                         width=a_pin.width(),
                                         height=a_pin.height())
-        
+
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A -> Z path"""
         stage_effort_list = []
@@ -113,10 +113,10 @@ class pbuf_dec(pgate.pgate):
         stage1 = self.inv1.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
-        
+
         stage2 = self.inv2.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
-        
+
         return stage_effort_list
 
     def get_cin(self):

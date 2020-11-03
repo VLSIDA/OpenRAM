@@ -20,10 +20,10 @@ TECHNOLOGY = "freepdk45"
 # FreePDK45 paths
 
 PDK_DIR=os.path.abspath(os.environ.get("FREEPDK45"))
-os.environ["PDK_DIR"] = PDK_DIR 
-os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/ncsu_basekit/cdssetup".format(PDK_DIR) 
-os.environ["CDS_SITE"] = PDK_DIR 
-os.environ["MGC_TMPDIR"] = "/tmp" 
+os.environ["PDK_DIR"] = PDK_DIR
+os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/ncsu_basekit/cdssetup".format(PDK_DIR)
+os.environ["CDS_SITE"] = PDK_DIR
+os.environ["MGC_TMPDIR"] = "/tmp"
 
 ###########################
 #OpenRAM Paths

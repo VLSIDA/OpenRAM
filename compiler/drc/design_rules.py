@@ -46,7 +46,7 @@ class design_rules(dict):
 
     def keys(self):
         return self.rules.keys()
-    
+
     def add_layer(self, name, width, spacing, area=0):
         # Minimum width
         self.add("minwidth_{}".format(name), width)
@@ -54,7 +54,7 @@ class design_rules(dict):
         self.add("{0}_to_{0}".format(name), spacing)
         # Minimum area
         self.add("minarea_{}".format(name), area)
-        
+
     def add_enclosure(self, name, layer, enclosure, extension=None):
         self.add("{0}_enclose_{1}".format(name, layer), enclosure)
         # Reserved for asymmetric enclosures
@@ -62,4 +62,4 @@ class design_rules(dict):
             self.add("{0}_extend_{1}".format(name, layer), extension)
         else:
             self.add("{0}_extend_{1}".format(name, layer), enclosure)
-    
+

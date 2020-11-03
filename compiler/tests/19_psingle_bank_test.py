@@ -22,25 +22,25 @@ class psingle_bank_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
-        
+
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
         OPTS.dummy_bitcell="dummy_pbitcell"
-        
+
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
-        
+
         c = sram_config(word_size=4,
                         num_words=16)
-        
+
         c.words_per_row=1
         factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         c.num_words=32
         c.words_per_row=2
         factory.reset()
@@ -48,7 +48,7 @@ class psingle_bank_test(openram_test):
         debug.info(1, "Two way column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         c.num_words=64
         c.words_per_row=4
         factory.reset()
@@ -56,7 +56,7 @@ class psingle_bank_test(openram_test):
         debug.info(1, "Four way column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         c.word_size=2
         c.num_words=128
         c.words_per_row=8
@@ -65,9 +65,9 @@ class psingle_bank_test(openram_test):
         debug.info(1, "Four way column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

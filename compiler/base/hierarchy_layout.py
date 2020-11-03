@@ -67,13 +67,13 @@ class layout():
     def offset_x_coordinates(self):
         """
         This function is called after everything is placed to
-        shift the origin to the furthest left point. 
+        shift the origin to the furthest left point.
         Y offset is unchanged.
         """
         offset = self.find_lowest_coords()
         self.translate_all(offset.scale(1, 0))
         return offset
-    
+
     def get_gate_offset(self, x_offset, height, inv_num):
         """
         Gets the base offset and y orientation of stacked rows of gates
@@ -300,9 +300,9 @@ class layout():
                         tx_list.append(i)
             except AttributeError:
                 pass
-                        
+
         return tx_list
-                        
+
     def get_pin(self, text):
         """
         Return the pin or list of pins
@@ -613,24 +613,24 @@ class layout():
                 next_id = 0
 
             curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
-            
+
             via = self.add_via_center(layers=curr_stack,
                                       size=size,
                                       offset=offset,
                                       directions=directions,
                                       implant_type=implant_type,
                                       well_type=well_type)
-            
+
             if cur_layer != from_layer:
                 self.add_min_area_rect_center(cur_layer,
                                               offset,
                                               via.mod.first_layer_width,
                                               via.mod.first_layer_height)
-                
+
             cur_layer = curr_stack[next_id]
 
         return via
-        
+
     def add_min_area_rect_center(self,
                                  layer,
                                  offset,
@@ -644,14 +644,14 @@ class layout():
         min_area = drc("minarea_{}".format(layer))
         if min_area == 0:
             return
-        
+
         min_width = drc("minwidth_{}".format(layer))
-        
+
         if preferred_directions[layer] == "V":
             height = max(min_area / width, min_width)
         else:
             width = max(min_area / height, min_width)
-            
+
         self.add_rect_center(layer=layer,
                              offset=offset,
                              width=width,
@@ -735,7 +735,7 @@ class layout():
 
             height = boundary[1][1] - boundary[0][1]
             width = boundary[1][0] - boundary[0][0]
-            
+
             for boundary_layer in boundary_layers:
                 (layer_number, layer_purpose) = techlayer[boundary_layer]
                 gds_layout.addBox(layerNumber=layer_number,
@@ -887,7 +887,7 @@ class layout():
                     new_pin = pin_layout(names[i],
                                          [rect.ll(), rect.ur()],
                                          layer)
-                    
+
                 pins[names[i]] = new_pin
         else:
             for i in range(len(names)):
@@ -905,7 +905,7 @@ class layout():
                     new_pin = pin_layout(names[i],
                                          [rect.ll(), rect.ur()],
                                          layer)
-                    
+
                 pins[names[i]] = new_pin
 
         return pins
@@ -1043,7 +1043,7 @@ class layout():
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
         self.add_inst(cr.name, cr)
         self.connect_inst([])
-        
+
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:
@@ -1108,7 +1108,7 @@ class layout():
                              width=xmax - xmin,
                              height=ymax - ymin)
         return rect
-    
+
     def copy_power_pins(self, inst, name, add_vias=True):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
@@ -1167,7 +1167,7 @@ class layout():
         bottom = ll.y
         right = ur.x
         top = ur.y
-        
+
         pin_loc = pin.center()
         if side == "left":
             peri_pin_loc = vector(left, pin_loc.y)
@@ -1185,14 +1185,14 @@ class layout():
         self.add_via_stack_center(from_layer=pin.layer,
                                   to_layer=layer,
                                   offset=pin_loc)
-        
+
         self.add_path(layer,
                       [pin_loc, peri_pin_loc])
 
         return self.add_layout_pin_rect_center(text=name,
                                                layer=layer,
                                                offset=peri_pin_loc)
-        
+
     def add_power_ring(self, bbox):
         """
         Create vdd and gnd power rings around an area of the bounding box

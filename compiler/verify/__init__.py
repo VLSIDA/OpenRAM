@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 """
-This is a module that will import the correct DRC/LVS/PEX 
+This is a module that will import the correct DRC/LVS/PEX
 module based on what tools are found. It is a layer of indirection
 to enable multiple verification tool support.
 
@@ -77,4 +77,4 @@ if OPTS.tech_name == "sky130":
         from .magic import filter_gds
     else:
         debug.warning("Did not find Magic.")
- 
+

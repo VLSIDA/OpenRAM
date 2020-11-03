@@ -22,13 +22,13 @@ class psram_1bank_2mux_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
-        
+
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=4,
                         num_words=32,
                         num_banks=1)
@@ -46,9 +46,9 @@ class psram_1bank_2mux_test(openram_test):
                                           c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

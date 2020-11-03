@@ -29,7 +29,7 @@ class supply_grid_router(router):
 
         # Power rail width in minimum wire widths
         self.rail_track_width = 3
-        
+
         router.__init__(self, layers, design, gds_filename, self.rail_track_width)
 
         # The list of supply rails (grid sets) that may be routed
@@ -38,9 +38,9 @@ class supply_grid_router(router):
         self.supply_rail_tracks = {}
 
         print_time("Init supply router", datetime.now(), start_time, 3)
-        
+
     def create_routing_grid(self):
-        """ 
+        """
         Create a sprase routing grid with A* expansion functions.
         """
         size = self.ur - self.ll
@@ -48,7 +48,7 @@ class supply_grid_router(router):
 
         import supply_grid
         self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
-    
+
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
         Add power supply rails and connect all pins to these rails.
@@ -76,18 +76,18 @@ class supply_grid_router(router):
         self.prepare_blockages(self.gnd_name)
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
-        
+
         # Block everything
         self.prepare_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)
-        
+
         start_time = datetime.now()
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
         print_time("Simple overlap routing", datetime.now(), start_time, 3)
-        
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
@@ -101,7 +101,7 @@ class supply_grid_router(router):
             return False
         if not self.check_all_routed(gnd_name):
             return False
-        
+
         return True
 
     def check_all_routed(self, pin_name):
@@ -111,7 +111,7 @@ class supply_grid_router(router):
         for pg in self.pin_groups[pin_name]:
             if not pg.is_routed():
                 return False
-    
+
     def route_simple_overlaps(self, pin_name):
         """
         This checks for simple cases where a pin component already overlaps a supply rail.
@@ -125,20 +125,20 @@ class supply_grid_router(router):
         for pg in self.pin_groups[pin_name]:
             if pg.is_routed():
                 continue
-            
+
             # First, check if we just overlap, if so, we are done.
             overlap_grids = wire_tracks & pg.grids
             if len(overlap_grids)>0:
                 routed_count += 1
                 pg.set_routed()
                 continue
-            
+
             # Else, if we overlap some of the space track, we can patch it with an enclosure
             # pg.create_simple_overlap_enclosure(pg.grids)
             # pg.add_enclosure(self.cell)
 
         debug.info(1, "Routed {} simple overlap pins".format(routed_count))
-    
+
     def finalize_supply_rails(self, name):
         """
         Determine which supply rails overlap and can accomodate a via.
@@ -164,7 +164,7 @@ class supply_grid_router(router):
                 # Never compare to yourself
                 if i1==i2:
                     continue
-                
+
                 # Only consider r2 vertical rails
                 e = next(iter(r2))
                 if e.z==0:
@@ -179,7 +179,7 @@ class supply_grid_router(router):
                     debug.info(3, "Via overlap {0} {1}".format(len(overlap),overlap))
                     connections.update([i1, i2])
                     via_areas.append(overlap)
-                
+
         # Go through and add the vias at the center of the intersection
         for area in via_areas:
             ll = grid_utils.get_lower_left(area)
@@ -190,7 +190,7 @@ class supply_grid_router(router):
         # Determien which indices were not connected to anything above
         missing_indices = set([x for x in range(len(self.supply_rails[name]))])
         missing_indices.difference_update(connections)
-        
+
         # Go through and remove those disconnected indices
         # (No via was added, so that doesn't need to be removed)
         for rail_index in sorted(missing_indices, reverse=True):
@@ -202,7 +202,7 @@ class supply_grid_router(router):
         # Make the supply rails into a big giant set of grids for easy blockages.
         # Must be done after we determine which ones are connected.
         self.create_supply_track_set(name)
-            
+
     def add_supply_rails(self, name):
         """
         Add the shapes that represent the routed supply rails.
@@ -211,7 +211,7 @@ class supply_grid_router(router):
         """
         for rail in self.supply_rails[name]:
             ll = grid_utils.get_lower_left(rail)
-            ur = grid_utils.get_upper_right(rail)        
+            ur = grid_utils.get_upper_right(rail)
             z = ll.z
             pin = self.compute_pin_enclosure(ll, ur, z, name)
             debug.info(3, "Adding supply rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
@@ -229,12 +229,12 @@ class supply_grid_router(router):
         """
 
         self.supply_rails[name]=[]
-        
+
         max_yoffset = self.rg.ur.y
         max_xoffset = self.rg.ur.x
         min_yoffset = self.rg.ll.y
         min_xoffset = self.rg.ll.x
-        
+
         # Horizontal supply rails
         start_offset = min_yoffset + supply_number
         for offset in range(start_offset, max_yoffset, 2):
@@ -272,19 +272,19 @@ class supply_grid_router(router):
         """
         # Sweep to find an initial unblocked valid wave
         start_wave = self.rg.find_start_wave(seed_wave, direct)
-        
+
         # This means there were no more unblocked grids in the row/col
         if not start_wave:
             return None
 
         wave_path = self.probe_supply_rail(name, start_wave, direct)
-        
+
         self.approve_supply_rail(name, wave_path)
 
         # Return the rail whether we approved it or not,
         # as it will be used to find the next start location
         return wave_path
-    
+
     def probe_supply_rail(self, name, start_wave, direct):
         """
         This finds the first valid starting location and routes a supply rail
@@ -308,7 +308,7 @@ class supply_grid_router(router):
             wave_path.trim_first()
 
         wave_path.trim_last()
-            
+
         return wave_path
 
     def approve_supply_rail(self, name, wave_path):
@@ -321,7 +321,7 @@ class supply_grid_router(router):
             grid_set = wave_path.get_grids()
             self.supply_rails[name].append(grid_set)
             return True
-        
+
         return False
 
     def route_supply_rails(self, name, supply_number):
@@ -333,7 +333,7 @@ class supply_grid_router(router):
 
         # Compute the grid locations of the supply rails
         self.compute_supply_rails(name, supply_number)
-        
+
         # Add the supply rail vias (and prune disconnected rails)
         self.finalize_supply_rails(name)
 
@@ -348,7 +348,7 @@ class supply_grid_router(router):
         for rail in self.supply_rails[pin_name]:
             rail_set.update(rail)
         self.supply_rail_tracks[pin_name] = rail_set
-        
+
     def route_pins_to_rails(self, pin_name):
         """
         This will route each of the remaining pin components to the supply rails.
@@ -362,7 +362,7 @@ class supply_grid_router(router):
         for index, pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():
                 continue
-            
+
             debug.info(3, "Routing component {0} {1}".format(pin_name, index))
 
             # Clear everything in the routing grid.
@@ -371,7 +371,7 @@ class supply_grid_router(router):
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
             self.prepare_blockages(pin_name)
-            
+
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name, index)
@@ -383,7 +383,7 @@ class supply_grid_router(router):
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds("debug_route.gds", False)
-                
+
             # if index==3 and pin_name=="vdd":
             #     self.write_debug_gds("route.gds",False)
 
@@ -396,7 +396,7 @@ class supply_grid_router(router):
         self.rg.set_target(self.supply_rail_tracks[pin_name])
         # But unblock all the rail tracks including the space
         self.rg.set_blocked(self.supply_rail_tracks[pin_name], False)
-                
+
     def set_supply_rail_blocked(self, value=True):
         """
         Add the supply rails of given name as a routing target.
@@ -404,4 +404,4 @@ class supply_grid_router(router):
         debug.info(4, "Blocking supply rail")
         for rail_name in self.supply_rail_tracks:
             self.rg.set_blocked(self.supply_rail_tracks[rail_name])
-                
+

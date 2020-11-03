@@ -31,7 +31,7 @@ class pnand3_test(openram_test):
         # self.local_drc_check(tx)
 
         globals.end_openram()
-        
+
 
 # run the test from the command line
 if __name__ == "__main__":

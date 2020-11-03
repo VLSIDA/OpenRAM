@@ -48,7 +48,7 @@ class lib_model_corners_lib_test(openram_test):
             OPTS.process_corners = ["TT", "SS", "FF"]
             OPTS.supply_voltages = [1.0]
             OPTS.temperatures = [25]
-            
+
         lib(out_dir=OPTS.openram_temp, sram=s.s, sp_file=tempspice, use_model=True)
 
         # get all of the .lib files generated
@@ -62,7 +62,7 @@ class lib_model_corners_lib_test(openram_test):
             libname = "{0}/{1}".format(OPTS.openram_temp,filename)
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
             self.assertTrue(self.isapproxdiff(libname,golden,0.15))
-            
+
         globals.end_openram()
 
 # run the test from the command line

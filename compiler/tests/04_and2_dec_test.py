@@ -27,7 +27,7 @@ class and2_dec_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Testing and2_dec gate")
         a = factory.create(module_type="and2_dec")
         self.local_check(a)

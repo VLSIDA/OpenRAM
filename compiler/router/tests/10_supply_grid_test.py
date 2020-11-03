@@ -38,13 +38,13 @@ class no_blockages_test(openram_test):
             c = sram_config(word_size=4,
                             num_words=32,
                             num_banks=1)
-            
+
             c.words_per_row=1
             sram = sram(c, "sram1")
             cell = sram.s
 
         self.local_check(cell,True)
-        
+
         # fails if there are any DRC errors on any cells
         globals.end_openram()
 

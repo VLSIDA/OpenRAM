@@ -63,9 +63,9 @@ class single_bank_1rw_1r_test(openram_test):
         debug.info(1, "Eight way column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

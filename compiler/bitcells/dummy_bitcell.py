@@ -24,7 +24,7 @@ class dummy_bitcell(bitcell_base.bitcell_base):
                  props.bitcell.cell_6t.pin.vdd,
                  props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    
+
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.dummy_bitcell_name

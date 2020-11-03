@@ -25,16 +25,16 @@ def parse_html(file, comment):
     end_tag = comment+'-->'
 
     with open(file, 'r') as f:
-        
+
         file_string = f.read()
 
     with open(file, 'w') as f:
 
         file_string = file_string.replace(start_tag,"")
         file_string = file_string.replace(end_tag,"")
- 
+
         f.write(file_string)
-       
+
 def uncomment(comments):
     comment_files = []
     for datasheet in datasheet_list:

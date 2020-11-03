@@ -33,7 +33,7 @@ class pin_layout:
 
         # These are the valid pin layers
         valid_layers = { x: layer[x] for x in layer_indices.keys()}
-        
+
         # if it's a string, use the name
         if type(layer_name_pp) == str:
             self._layer = layer_name_pp
@@ -378,7 +378,7 @@ class pin_layout:
             from tech import label_purpose
         except ImportError:
             label_purpose = purpose
-        
+
         newLayout.addBox(layerNumber=layer_num,
                          purposeNumber=pin_purpose,
                          offsetInMicrons=self.ll(),

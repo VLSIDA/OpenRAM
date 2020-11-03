@@ -24,14 +24,14 @@ class delay_chain(design.design):
         super().__init__(name)
         debug.info(1, "creating delay chain {0}".format(str(fanout_list)))
         self.add_comment("fanouts: {0}".format(str(fanout_list)))
-        
+
         # Two fanouts are needed so that we can route the vdd/gnd connections
         for f in fanout_list:
             debug.check(f>=2, "Must have >=2 fanouts for each stage.")
 
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -40,7 +40,7 @@ class delay_chain(design.design):
         self.add_modules()
         self.add_pins()
         self.create_inverters()
-        
+
     def create_layout(self):
         # Each stage is a a row
         self.height = len(self.fanout_list) * self.inv.height
@@ -53,7 +53,7 @@ class delay_chain(design.design):
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         """ Add the pins of the delay chain"""
         self.add_pin("in", "INPUT")
@@ -86,7 +86,7 @@ class delay_chain(design.design):
             else:
                 stagein_name = "dout_{}".format(stage_num)
             self.connect_inst([stagein_name, stageout_name, "vdd", "gnd"])
-            
+
             # Now add the dummy loads to the right
             self.load_inst_map[cur_driver]=[]
             for i in range(fanout_size):
@@ -95,7 +95,7 @@ class delay_chain(design.design):
                 # Fanout stage is always driven by driver and output is disconnected
                 disconnect_name = "n_{0}_{1}".format(stage_num, i)
                 self.connect_inst([stageout_name, disconnect_name, "vdd", "gnd"])
-            
+
                 # Keep track of all the loads to connect their inputs as a load
                 self.load_inst_map[cur_driver].append(cur_load)
 
@@ -108,19 +108,19 @@ class delay_chain(design.design):
             else:
                 inv_mirror = "R0"
                 inv_offset = vector(0, stage_num * self.inv.height)
-                
+
             # Add the inverter
             cur_driver=self.driver_inst_list[stage_num]
             cur_driver.place(offset=inv_offset,
                              mirror=inv_mirror)
-            
+
             # Now add the dummy loads to the right
             load_list = self.load_inst_map[cur_driver]
             for i in range(fanout_size):
                 inv_offset += vector(self.inv.width, 0)
                 load_list[i].place(offset=inv_offset,
                                    mirror=inv_mirror)
-                
+
     def add_route(self, pin1, pin2):
         """ This guarantees that we route from the top to bottom row correctly. """
         pin1_pos = pin1.center()
@@ -131,7 +131,7 @@ class delay_chain(design.design):
             mid_point = vector(pin2_pos.x, 0.5 * (pin1_pos.y + pin2_pos.y))
             # Written this way to guarantee it goes right first if we are switching rows
             self.add_path("m2", [pin1_pos, vector(pin1_pos.x, mid_point.y), mid_point, vector(mid_point.x, pin2_pos.y), pin2_pos])
-    
+
     def route_inverters(self):
         """ Add metal routing for each of the fanout stages """
 
@@ -180,12 +180,12 @@ class delay_chain(design.design):
                 self.add_power_pin(pin_name,
                                    pin.rc() - vector(self.m1_pitch, 0),
                                    start_layer=pin.layer)
-                
+
                 pin = load_list[-2].get_pin(pin_name)
                 self.add_power_pin(pin_name,
                                    pin.rc() - vector(self.m1_pitch, 0),
                                    start_layer=pin.layer)
-                
+
     def add_layout_pins(self):
 
         # input is A pin of first inverter

@@ -56,7 +56,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             debug.error("Couldn't find instance {0}".format(inst.name), -1)
         inst_map = inst.mod.pin_map
         return inst_map
-        
+
     def DRC_LVS(self, final_verification=False, force_check=False):
         """Checks both DRC and LVS for a module"""
         import verify
@@ -93,7 +93,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if OPTS.purge_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
-            
+
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
         import verify
@@ -137,19 +137,19 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if OPTS.purge_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
-            
+
     def init_graph_params(self):
-        """ 
+        """
         Initializes parameters relevant to the graph creation
         """
         # Only initializes a set for checking instances which should not be added
         self.graph_inst_exclude = set()
-    
+
     def build_graph(self, graph, inst_name, port_nets):
         """
         Recursively create graph from instances in module.
         """
-        
+
         # Translate port names to external nets
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,
@@ -163,7 +163,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             subinst_name = inst_name + '.X' + subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             subinst.mod.build_graph(graph, subinst_name, subinst_ports)
-    
+
     def build_names(self, name_dict, inst_name, port_nets):
         """
         Collects all the nets and the parent inst of that net.
@@ -196,7 +196,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             else:
                 converted_conns.append("{}.{}".format(inst_name, conn))
         return converted_conns
-            
+
     def add_graph_edges(self, graph, port_nets):
         """
         For every input, adds an edge to every output.
@@ -212,7 +212,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             for out in output_pins + inout_pins:
                 if inp != out: # do not add self loops
                     graph.add_edge(pin_dict[inp], pin_dict[out], self)
- 
+
     def __str__(self):
         """ override print function output """
         pins = ",".join(self.pins)
@@ -232,4 +232,4 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         for i in self.insts:
             text+=str(i) + ",\n"
         return text
-     
+

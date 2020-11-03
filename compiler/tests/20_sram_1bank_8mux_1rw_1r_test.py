@@ -26,7 +26,7 @@ class sram_1bank_8mux_1rw_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=2,
                         num_words=128,
                         num_banks=1)
@@ -46,7 +46,7 @@ class sram_1bank_8mux_1rw_1r_test(openram_test):
         self.local_check(a, final_verification=True)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

@@ -23,7 +23,7 @@ class and3_dec(design.design):
         self.add_comment("size: {}".format(size))
         self.size = size
         self.height = height
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -52,14 +52,14 @@ class and3_dec(design.design):
 
         self.width = self.nand.width + self.inv.width
         self.height = self.nand.height
-        
+
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
         self.route_supply_rails()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
@@ -72,7 +72,7 @@ class and3_dec(design.design):
         self.nand_inst = self.add_inst(name="pand3_dec_nand",
                                        mod=self.nand)
         self.connect_inst(["A", "B", "C", "zb_int", "vdd", "gnd"])
-        
+
         self.inv_inst = self.add_inst(name="pand3_dec_inv",
                                       mod=self.inv)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
@@ -99,7 +99,7 @@ class and3_dec(design.design):
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, self.height),
                                             width=self.width)
-            
+
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
@@ -136,7 +136,7 @@ class and3_dec(design.design):
                                               slew=nand_delay.slew,
                                               load=load)
         return nand_delay + inv_delay
-    
+
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A or B -> Z path"""
         stage_effort_list = []
@@ -144,13 +144,13 @@ class and3_dec(design.design):
         stage1 = self.nand.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
-        
+
         stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
-        
+
         return stage_effort_list
 
     def get_cin(self):
         """Return the relative input capacitance of a single input"""
         return self.nand.get_cin()
-        
+

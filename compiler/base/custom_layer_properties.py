@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 
-    
+
 class _bank:
     def __init__(self, stack, pitch):
         # bank
@@ -15,8 +15,8 @@ class _bank:
         # m2_stack, m3_pitch (sky130)
         self.stack = stack
         self.pitch = pitch
-    
-                                                           
+
+
 class _hierarchical_decoder:
     def __init__(self,
                  bus_layer,
@@ -60,7 +60,7 @@ class _hierarchical_predecode:
         self.output_layer = output_layer
         self.vertical_supply = vertical_supply
 
-        
+
 class _column_mux_array:
     def __init__(self,
                  select_layer,
@@ -74,7 +74,7 @@ class _column_mux_array:
         self.select_pitch= select_pitch
         self.bitline_layer = bitline_layer
 
-        
+
 class _port_address:
     def __init__(self,
                  supply_offset):
@@ -82,7 +82,7 @@ class _port_address:
         # special supply offset
         self.supply_offset = supply_offset
 
-        
+
 class _port_data:
     def __init__(self,
                  channel_route_bitlines,
@@ -94,7 +94,7 @@ class _port_data:
         # en_layer
         # m1
         # m3 (sky130)
-    
+
         # precharge_array
         # en_bar_layer
         # m1
@@ -110,7 +110,7 @@ class _replica_column:
         # even row check (sky130)
         self.even_rows = even_rows
 
-        
+
 class _wordline_driver:
     def __init__(self,
                  vertical_supply):
@@ -122,14 +122,14 @@ class _wordline_driver:
         # vertical vdd/gnd (sky130)
         self.vertical_supply = vertical_supply
 
-        
+
 class layer_properties():
     """
     This contains meta information about the module routing layers. These
     can be overriden in the tech.py file.
     """
     def __init__(self):
-        
+
         self._bank = _bank(stack="m1_stack",
                            pitch="m2_pitch")
 
@@ -138,7 +138,7 @@ class layer_properties():
                                                            input_layer="m1",
                                                            output_layer="m3",
                                                            vertical_supply=False)
-                                                        
+
         self._hierarchical_predecode = _hierarchical_predecode(bus_layer="m2",
                                                                bus_directions="pref",
                                                                bus_space_factor=1,
@@ -156,13 +156,13 @@ class layer_properties():
                                      enable_layer="m1")
 
         self._replica_column = _replica_column(even_rows=False)
-        
+
         self._wordline_driver = _wordline_driver(vertical_supply=False)
 
     @property
     def bank(self):
         return self._bank
-                 
+
     @property
     def column_mux_array(self):
         return self._column_mux_array
@@ -174,7 +174,7 @@ class layer_properties():
     @property
     def hierarchical_predecode(self):
         return self._hierarchical_predecode
-    
+
     @property
     def port_address(self):
         return self._port_address
@@ -190,4 +190,4 @@ class layer_properties():
     @property
     def wordline_driver(self):
         return self._wordline_driver
-    
+

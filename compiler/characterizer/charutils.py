@@ -9,7 +9,7 @@ import re
 import debug
 from globals import OPTS
 
-    
+
 def relative_compare(value1,value2,error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
     return (abs(value1 - value2) / abs(max(value1,value2)) <= error_tolerance)
@@ -37,7 +37,7 @@ def parse_spice_list(filename, key):
         return convert_to_float(val.group(1))
     else:
         return "Failed"
-    
+
 def round_time(time,time_precision=3):
     # times are in ns, so this is how many digits of precision
     # 3 digits = 1ps
@@ -58,10 +58,10 @@ def convert_to_float(number):
     """Converts a string into a (float) number; also converts units(m,u,n,p)"""
     if number == "Failed":
         return False
-    
+
     # start out with a binary value
     float_value = False
-    try:  
+    try:
         # checks if string is a float without letter units
         float_value = float(number)
     except ValueError:
@@ -69,7 +69,7 @@ def convert_to_float(number):
         unit = re.search(r"(-?\d+\.?\d*)e(\-?\+?\d+)", number)
         if unit != None:
             float_value=float(unit.group(1)) * (10 ^ float(unit.group(2)))
-            
+
         # see if it is in spice notation
         unit = re.search(r"(-?\d+\.?\d*)(m?u?n?p?f?)", number)
         if unit != None:

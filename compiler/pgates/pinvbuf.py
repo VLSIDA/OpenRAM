@@ -24,7 +24,7 @@ class pinvbuf(pgate.pgate):
         self.stage_effort = 4
         self.row_height = height
         # FIXME: Change the number of stages to support high drives.
-        
+
         # stage effort of 4 or less
         # The pinvbuf has a FO of 2 for the first stage, so the second stage
         # should be sized "half" to prevent loading of the first stage
@@ -43,14 +43,14 @@ class pinvbuf(pgate.pgate):
 
         self.width = 2 * self.inv1.width + self.inv2.width
         self.height = 2 * self.inv1.height
-        
+
         self.place_modules()
         self.route_wires()
         self.add_layout_pins()
         self.add_boundary()
-        
+
         self.offset_all_coordinates()
-        
+
     def add_pins(self):
         self.add_pin("A")
         self.add_pin("Zb")
@@ -59,14 +59,14 @@ class pinvbuf(pgate.pgate):
         self.add_pin("gnd")
 
     def add_modules(self):
-                
+
         # Shield the cap, but have at least a stage effort of 4
         input_size = max(1, int(self.predriver_size / self.stage_effort))
         self.inv = factory.create(module_type="pinv",
                                   size=input_size,
                                   height=self.row_height)
         self.add_mod(self.inv)
-        
+
         self.inv1 = factory.create(module_type="pinv",
                                    size=self.predriver_size,
                                    height=self.row_height)
@@ -82,11 +82,11 @@ class pinvbuf(pgate.pgate):
         self.inv1_inst = self.add_inst(name="buf_inv1",
                                        mod=self.inv)
         self.connect_inst(["A", "zb_int", "vdd", "gnd"])
-        
+
         self.inv2_inst = self.add_inst(name="buf_inv2",
                                        mod=self.inv1)
         self.connect_inst(["zb_int", "z_int", "vdd", "gnd"])
-        
+
         self.inv3_inst = self.add_inst(name="buf_inv3",
                                        mod=self.inv2)
         self.connect_inst(["z_int", "Zb", "vdd", "gnd"])
@@ -101,7 +101,7 @@ class pinvbuf(pgate.pgate):
 
         # Add INV2 to the right of INV1
         self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))
-        
+
         # Add INV3 to the right of INV2
         self.inv3_inst.place(vector(self.inv2_inst.rx(), 0))
 
@@ -109,13 +109,13 @@ class pinvbuf(pgate.pgate):
         self.inv4_inst.place(offset=vector(self.inv2_inst.rx(),
                                            2 * self.inv2.height),
                              mirror="MX")
-        
+
     def route_wires(self):
         if "li" in layer:
             route_stack = self.li_stack
         else:
             route_stack = self.m1_stack
-            
+
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
@@ -124,7 +124,7 @@ class pinvbuf(pgate.pgate):
         self.add_via_stack_center(from_layer=z1_pin.layer,
                                   to_layer=a2_pin.layer,
                                   offset=a2_pin.center())
-        
+
         # inv2 Z to inv3 A
         z2_pin = self.inv2_inst.get_pin("Z")
         a3_pin = self.inv3_inst.get_pin("A")
@@ -143,7 +143,7 @@ class pinvbuf(pgate.pgate):
         self.add_via_stack_center(from_layer=z1_pin.layer,
                                   to_layer=route_stack[2],
                                   offset=z1_pin.center())
-        
+
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
@@ -161,7 +161,7 @@ class pinvbuf(pgate.pgate):
                             offset=gnd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=gnd_pin.height())
-        
+
         # Continous gnd rail along with label.
         gnd_pin = self.inv1_inst.get_pin("gnd")
         self.add_layout_pin(text="gnd",
@@ -169,7 +169,7 @@ class pinvbuf(pgate.pgate):
                             offset=gnd_pin.ll().scale(0, 1),
                             width=self.width,
                             height=vdd_pin.height())
-            
+
         z_pin = self.inv4_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
                                         layer=z_pin.layer,
@@ -179,7 +179,7 @@ class pinvbuf(pgate.pgate):
         self.add_layout_pin_rect_center(text="Zb",
                                         layer=zb_pin.layer,
                                         offset=zb_pin.center())
-        
+
         a_pin = self.inv1_inst.get_pin("A")
         self.add_layout_pin_rect_center(text="A",
                                         layer=a_pin.layer,

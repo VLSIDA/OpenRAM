@@ -15,18 +15,18 @@ class nand2_dec(design.design):
     """
     2-input NAND decoder for address decoders.
     """
-    
+
     pin_names = ["A", "B", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
     cell_size_layer = "boundary"
-    
+
     def __init__(self, name="nand2_dec", height=None):
         design.design.__init__(self, name)
 
         (width, height) = utils.get_libcell_size(name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
-        
+
         pin_map = utils.get_libcell_pins(self.pin_names,
                                          name,
                                          GDS["unit"])
@@ -43,17 +43,17 @@ class nand2_dec(design.design):
         self.pmos_size = parameter["beta"] * size
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        
+
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand2_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -65,7 +65,7 @@ class nand2_dec(design.design):
     def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size + self.pmos_size
-    
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.
@@ -86,4 +86,4 @@ class nand2_dec(design.design):
         Overrides base class function.
         """
         self.add_graph_edges(graph, port_nets)
-        
+

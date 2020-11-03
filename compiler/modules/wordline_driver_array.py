@@ -24,7 +24,7 @@ class wordline_driver_array(design.design):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
-        
+
         self.rows = rows
         self.cols = cols
 
@@ -36,7 +36,7 @@ class wordline_driver_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_drivers()
-        
+
     def create_layout(self):
         if "li" in layer:
             self.route_layer = "li"
@@ -48,7 +48,7 @@ class wordline_driver_array(design.design):
         self.offset_x_coordinates()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
@@ -61,12 +61,12 @@ class wordline_driver_array(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-            
+
         self.wl_driver = factory.create(module_type="wordline_driver",
                                         cols=self.cols)
-            
+
         self.add_mod(self.wl_driver)
-        
+
     def route_vdd_gnd(self):
         """
         Add a pin for each row of vdd/gnd which
@@ -85,7 +85,7 @@ class wordline_driver_array(design.design):
             xoffset_list = [self.wld_inst[0].rx()]
             for num in range(self.rows):
                 # this will result in duplicate polygons for rails, but who cares
-                
+
                 # use the inverter offset even though it will be the and's too
                 (gate_offset, y_dir) = self.get_gate_offset(0,
                                                             self.wl_driver.height,
@@ -93,12 +93,12 @@ class wordline_driver_array(design.design):
                 # Route both supplies
                 for name in ["vdd", "gnd"]:
                     supply_pin = self.wld_inst[num].get_pin(name)
-                    
+
                     # Add pins in two locations
                     for xoffset in xoffset_list:
                         pin_pos = vector(xoffset, supply_pin.cy())
                         self.add_power_pin(name, pin_pos)
-            
+
     def create_drivers(self):
         self.wld_inst = []
         for row in range(self.rows):
@@ -123,7 +123,7 @@ class wordline_driver_array(design.design):
                 inst_mirror = "R0"
 
             and2_offset = [self.wl_driver.width, y_offset]
-            
+
             # add and2
             self.wld_inst[row].place(offset=and2_offset,
                                      mirror=inst_mirror)
@@ -143,7 +143,7 @@ class wordline_driver_array(design.design):
                                      layer="m2",
                                      offset=en_bottom_pos,
                                      height=self.height)
-        
+
         for row in range(self.rows):
             and_inst = self.wld_inst[row]
 
@@ -152,7 +152,7 @@ class wordline_driver_array(design.design):
             self.add_via_stack_center(from_layer=b_pin.layer,
                                       to_layer="m2",
                                       offset=b_pin.center())
-            
+
             # connect the decoder input pin to and2 A
             self.copy_layout_pin(and_inst, "A", "in_{0}".format(row))
 

@@ -22,49 +22,49 @@ class dummy_pbitcell(design.design):
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
-    
+
         design.design.__init__(self, name, name)
         debug.info(1, "create a dummy bitcell using pbitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                                     self.num_w_ports,
                                                                                                                     self.num_r_ports))
-                                                                                                                      
+
         self.create_netlist()
         self.create_layout()
         self.add_boundary()
-        
+
     def create_netlist(self):
         self.add_pins()
         self.add_modules()
         self.create_modules()
-        
+
     def create_layout(self):
         self.place_pbitcell()
         self.route_rbc_connections()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         for port in range(self.total_ports):
             self.add_pin("bl{}".format(port))
             self.add_pin("br{}".format(port))
-        
+
         for port in range(self.total_ports):
             self.add_pin("wl{}".format(port))
-            
+
         self.add_pin("vdd")
         self.add_pin("gnd")
-        
+
     def add_modules(self):
         self.prbc = factory.create(module_type="pbitcell",
                                    dummy_bitcell=True)
         self.add_mod(self.prbc)
-        
+
         self.height = self.prbc.height
         self.width = self.prbc.width
-        
+
     def create_modules(self):
         self.prbc_inst = self.add_inst(name="pbitcell",
                                        mod=self.prbc)
-        
+
         temp = []
         for port in range(self.total_ports):
             temp.append("bl{}".format(port))
@@ -74,10 +74,10 @@ class dummy_pbitcell(design.design):
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
-        
+
     def place_pbitcell(self):
         self.prbc_inst.place(offset=vector(0, 0))
-        
+
     def route_rbc_connections(self):
         for port in range(self.total_ports):
             self.copy_layout_pin(self.prbc_inst, "bl{}".format(port))
@@ -86,7 +86,7 @@ class dummy_pbitcell(design.design):
             self.copy_layout_pin(self.prbc_inst, "wl{}".format(port))
         self.copy_layout_pin(self.prbc_inst, "vdd")
         self.copy_layout_pin(self.prbc_inst, "gnd")
-    
+
     def get_wl_cin(self):
         """Return the relative capacitance of the access transistor gates"""
         #This module is made using a pbitcell. Get the cin from that module

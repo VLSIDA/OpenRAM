@@ -467,7 +467,7 @@ class font:
         return fontinfo
 
     def __str__(self):
-        return "font %s designed at %g TeX pts used at %g TeX pts" % (self.name, 
+        return "font %s designed at %g TeX pts used at %g TeX pts" % (self.name,
                                                                       16.0*self.d/16777216L,
                                                                       16.0*self.q/16777216L)
     __repr__ = __str__
@@ -510,7 +510,7 @@ class font:
 
     def _convert_tfm_to_ds(self, length):
         return (16*long(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv * 1000 / self.getsize_pt()
-    
+
     def _convert_tfm_to_pt(self, length):
         return (16*long(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv
 
@@ -528,7 +528,7 @@ class font:
     def getitalic_dvi(self, charcode):
         return self._convert_tfm_to_dvi(self.tfmfile.italic[self.tfmfile.char_info[charcode].italic_index])
 
-    # routines returning lengths as integers in design size (AFM) units 
+    # routines returning lengths as integers in design size (AFM) units
 
     def getwidth_ds(self, charcode):
         return self._convert_tfm_to_ds(self.tfmfile.width[self.tfmfile.char_info[charcode].width_index])
@@ -767,7 +767,7 @@ class dvifile:
                 if fontslant is not None:
                     fontslant = float(fontslant)
 
-                # XXX we currently misuse use self.activefont as metric 
+                # XXX we currently misuse use self.activefont as metric
                 font = type1font.font(fontbasefontname, fontfilename, fontencoding, fontslant, self.activefont)
 
                 self.activetext = type1font.text_pt(self.pos[_POS_H] * self.pyxconv, -self.pos[_POS_V] * self.pyxconv, font)
@@ -973,14 +973,14 @@ class dvifile:
                 den = afile.readuint32()
                 self.mag = afile.readuint32()
 
-                # For the interpretation of the lengths in dvi and tfm files, 
+                # For the interpretation of the lengths in dvi and tfm files,
                 # three conversion factors are relevant:
                 # - self.tfmconv: tfm units -> dvi units
                 # - self.pyxconv: dvi units -> (PostScript) points
                 # - self.conv:    dvi units -> pixels
                 self.tfmconv = (25400000.0/num)*(den/473628672.0)/16.0
 
-                # calculate conv as described in the DVIType docu using 
+                # calculate conv as described in the DVIType docu using
                 # a given resolution in dpi
                 self.resolution = 300.0
                 self.conv = (num/254000.0)*(self.resolution/den)

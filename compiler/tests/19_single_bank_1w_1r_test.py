@@ -26,7 +26,7 @@ class single_bank_1w_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=4,
                         num_words=16)
 
@@ -61,9 +61,9 @@ class single_bank_1w_1r_test(openram_test):
         debug.info(1, "Eight way column mux")
         a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

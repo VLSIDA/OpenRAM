@@ -32,7 +32,7 @@ class contact_test(openram_test):
             debug.info(2, "1 x 1 {} test".format(stack_name))
             c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("H", "H"))
             self.local_drc_check(c)
-            
+
             # Check single 1 x 1 contact"
             debug.info(2, "1 x 1 {} test".format(stack_name))
             c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 1), directions=("H","V"))
@@ -51,7 +51,7 @@ class contact_test(openram_test):
         # Only do multiple contacts for BEOL
         for layer_stack in beol_stacks:
             stack_name = ":".join(map(str, layer_stack))
-            
+
             # check vertical array with one in the middle and two ends
             debug.info(2, "1 x 3 {} test".format(stack_name))
             c = factory.create(module_type="contact", layer_stack=layer_stack, dimensions=(1, 3))
@@ -71,7 +71,7 @@ class contact_test(openram_test):
         # check vertical array with one in the middle and two ends
         layer_stack = active_stack
         stack_name = ":".join(map(str, layer_stack))
-        
+
         debug.info(2, "1 x 1 {} nwell".format(stack_name))
         c = factory.create(module_type="contact",
                            layer_stack=layer_stack,
@@ -85,9 +85,9 @@ class contact_test(openram_test):
                            implant_type="p",
                            well_type="p")
         self.local_drc_check(c)
-        
+
         globals.end_openram()
-        
+
 
 
 # run the test from the command line

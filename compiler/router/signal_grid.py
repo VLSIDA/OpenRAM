@@ -22,7 +22,7 @@ class signal_grid(grid):
     def __init__(self, ll, ur, track_factor):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
         grid.__init__(self, ll, ur, track_factor)
-        
+
         # priority queue for the maze routing
         self.q = []
 
@@ -32,12 +32,12 @@ class signal_grid(grid):
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()
-        
+
         # clear source and target pins
         self.source=[]
         self.target=[]
-        
-        # Clear the queue 
+
+        # Clear the queue
         while len(self.q)>0:
             heappop(self.q)
         self.counter = 0
@@ -60,14 +60,14 @@ class signal_grid(grid):
             heappush(self.q,(cost,self.counter,grid_path([vector3d(s)])))
             self.counter+=1
 
-            
+
     def route(self,detour_scale):
         """
         This does the A* maze routing with preferred direction routing.
         This only works for 1 track wide routes!
         """
-        
-        # We set a cost bound of the HPWL for run-time. This can be 
+
+        # We set a cost bound of the HPWL for run-time. This can be
         # over-ridden if the route fails due to pruning a feasible solution.
         any_source_element = next(iter(self.source))
         cost_bound = detour_scale*self.cost_to_target(any_source_element)*grid.PREFERRED_COST
@@ -76,28 +76,28 @@ class signal_grid(grid):
         for s in self.source:
             if self.is_target(s):
                 return((grid_path([vector3d(s)]),0))
-            
+
         # Make sure the queue is empty if we run another route
         while len(self.q)>0:
             heappop(self.q)
-            
+
         # Put the source items into the queue
         self.init_queue()
         cheapest_path = None
         cheapest_cost = None
 
-            
+
         # Keep expanding and adding to the priority queue until we are done
         while len(self.q)>0:
             # should we keep the path in the queue as well or just the final node?
             (cost,count,curpath) = heappop(self.q)
             debug.info(3,"Queue size: size=" + str(len(self.q)) + " " + str(cost))
             debug.info(4,"Expanding: cost=" + str(cost) + " " + str(curpath))
-            
+
             # expand the last element
             neighbors =  self.expand_dirs(curpath)
             debug.info(4,"Neighbors: " + str(neighbors))
-            
+
             for n in neighbors:
                 # make a new copy of the path to not update the old ones
                 newpath = deepcopy(curpath)
@@ -134,10 +134,10 @@ class signal_grid(grid):
         but not expanding to blocked cells. Expands in all directions
         regardless of preferred directions.
         """
-        
-        # Expand all directions. 
+
+        # Expand all directions.
         neighbors = curpath.expand_dirs()
-        
+
         # Filter the blocked ones
         unblocked_neighbors = [x for x in neighbors if not self.is_blocked(x)]
 
@@ -145,9 +145,9 @@ class signal_grid(grid):
 
 
     def hpwl(self, src, dest):
-        """ 
+        """
         Return half perimeter wire length from point to another.
-        Either point can have positive or negative coordinates. 
+        Either point can have positive or negative coordinates.
         Include the via penalty if there is one.
         """
         hpwl = abs(src.x-dest.x)
@@ -155,10 +155,10 @@ class signal_grid(grid):
         if src.x!=dest.x and src.y!=dest.y:
             hpwl += grid.VIA_COST
         return hpwl
-            
+
     def cost_to_target(self,source):
         """
-        Find the cheapest HPWL distance to any target point ignoring 
+        Find the cheapest HPWL distance to any target point ignoring
         blockages for A* search.
         """
         any_target_element = next(iter(self.target))
@@ -170,8 +170,8 @@ class signal_grid(grid):
 
 
     def get_inertia(self,p0,p1):
-        """ 
-        Sets the direction based on the previous direction we came from. 
+        """
+        Sets the direction based on the previous direction we came from.
         """
         # direction (index) of movement
         if p0.x==p1.x:
@@ -182,5 +182,5 @@ class signal_grid(grid):
             # z direction
             return 2
 
-        
-        
+
+

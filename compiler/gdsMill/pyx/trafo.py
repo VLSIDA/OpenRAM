@@ -38,7 +38,7 @@ def set(epsilon=None):
 def _rmatrix(angle):
     phi = math.pi*angle/180.0
 
-    return  ((math.cos(phi), -math.sin(phi)), 
+    return  ((math.cos(phi), -math.sin(phi)),
              (math.sin(phi),  math.cos(phi)))
 
 def _rvector(angle, x, y):
@@ -198,7 +198,7 @@ class trafo(trafo_pt):
                           epsilon=epsilon)
 
 #
-# some standard transformations 
+# some standard transformations
 #
 
 class mirror(trafo):
@@ -219,7 +219,7 @@ class rotate_pt(trafo_pt):
 
 class rotate(trafo_pt):
     def __init__(self, angle, x=None, y=None, epsilon=_marker):
-        vector = 0, 0 
+        vector = 0, 0
         if x is not None or y is not None:
             if x is None or y is None:
                 raise TrafoException("either specify both x and y or none of them")

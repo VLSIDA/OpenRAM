@@ -28,7 +28,7 @@ import unit
 #
 
 class bbox_pt:
-    
+
     """class for bounding boxes
 
     This variant requires points in the constructor, and is used for internal

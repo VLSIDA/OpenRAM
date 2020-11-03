@@ -28,7 +28,7 @@ class vector3d():
             self.y = y
             self.z = z
         self._hash = hash((self.x,self.y,self.z))
-            
+
     def __str__(self):
         """ override print function output """
         return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
@@ -38,8 +38,8 @@ class vector3d():
         return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
 
     def __setitem__(self, index, value):
-        """ 
-        override setitem function 
+        """
+        override setitem function
         can set value by vector3d[index]=value
         """
         if index==0:
@@ -51,11 +51,11 @@ class vector3d():
         else:
             self.x=value[0]
             self.y=value[1]
-            self.z=value[2] 
+            self.z=value[2]
 
     def __getitem__(self, index):
         """
-        override getitem function 
+        override getitem function
         can get value by value=vector3d[index]
         """
         if index==0:
@@ -65,7 +65,7 @@ class vector3d():
         elif index==2:
             return self.z
         else:
-            return self                
+            return self
 
     def __add__(self, other):
         """
@@ -142,7 +142,7 @@ class vector3d():
         Override round function
         """
         return vector3d(int(round(self.x)),int(round(self.y)), self.z)
-    
+
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):
@@ -157,7 +157,7 @@ class vector3d():
             if self.x==other.x and self.y<other.y:
                 return True
         return False
-    
+
     def __ne__(self, other):
         """Override the default non-equality behavior"""
         return not self.__eq__(other)
@@ -177,7 +177,7 @@ class vector3d():
     def euclidean_distance(self, other):
         """ Return the euclidean distance between two values """
         return math.sqrt((self.x-other.x)**2+(self.y-other.y)**2)
-    
+
 
     def adjacent(self, other):
         """ Is the one grid adjacent in any planar direction to the other """
@@ -191,4 +191,4 @@ class vector3d():
             return True
         else:
             return False
-        
+

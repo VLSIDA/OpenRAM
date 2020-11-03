@@ -126,13 +126,13 @@ class custom_cell(design.design):
                 if w == self.write_size:
                     w = 0
                     windex+=1
-            
+
             elif self.num_spare_cols and not self.write_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
                                    self.get_br_name() + "_{0}".format(index),
                                    self.en_name + "_{0}".format(0), "vdd", "gnd"])
-            
+
             else:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
@@ -177,13 +177,13 @@ class custom_cell(design.design):
         for i in range(self.num_spare_cols):
             index = self.word_size + i
             xoffset = (self.columns + i) * self.driver_spacing
-                
+
             if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
                 mirror = ""
-              
+
             base = vector(xoffset, 0)
             self.driver_insts[index].place(offset=base, mirror=mirror)
 
@@ -233,14 +233,14 @@ class custom_cell(design.design):
                                     offset=en_pin.ll(),
                                     width=wmask_en_len - en_gap,
                                     height=en_pin.height())
-            
+
             for i in range(self.num_spare_cols):
                 inst = self.driver_insts[self.word_size + i]
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
                                     layer="m1",
                                     offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
-         
+
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
             inst = self.driver_insts[0]

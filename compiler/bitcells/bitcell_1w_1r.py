@@ -30,7 +30,7 @@ class bitcell_1w_1r(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
-    
+
     def __init__(self, name, cell_name):
         if not cell_name:
             cell_name = OPTS.bitcell_name

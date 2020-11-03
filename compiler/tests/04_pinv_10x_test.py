@@ -25,7 +25,7 @@ class pinv_test(openram_test):
         tx = factory.create(module_type="pinv", size=8)
         self.local_check(tx)
 
-        globals.end_openram()        
+        globals.end_openram()
 
 
 # run the test from the command line

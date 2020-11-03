@@ -21,7 +21,7 @@ class dff_buf(design.design):
     and qbar. This is to enable driving large fanout loads.
     """
     unique_id = 1
-    
+
     def __init__(self, inv1_size=2, inv2_size=4, name=""):
 
         if name=="":
@@ -30,7 +30,7 @@ class dff_buf(design.design):
         super().__init__(name)
         debug.info(1, "Creating {}".format(self.name))
         self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
-        
+
         # This is specifically for SCMOS where the DFF vdd/gnd rails are more than min width.
         # This causes a DRC in the pinv which assumes min width rails. This ensures the output
         # contact does not violate spacing to the rail in the NMOS.
@@ -39,7 +39,7 @@ class dff_buf(design.design):
 
         self.inv1_size=inv1_size
         self.inv2_size=inv2_size
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -57,7 +57,7 @@ class dff_buf(design.design):
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_modules(self):
         self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
@@ -71,7 +71,7 @@ class dff_buf(design.design):
                                    size=self.inv2_size,
                                    height=self.dff.height)
         self.add_mod(self.inv2)
-        
+
     def add_pins(self):
         self.add_pin("D", "INPUT")
         self.add_pin("Q", "OUTPUT")
@@ -93,7 +93,7 @@ class dff_buf(design.design):
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",
                                      mod=self.inv1)
         self.connect_inst(["qint", "Qb", "vdd", "gnd"])
-        
+
         self.inv2_inst=self.add_inst(name="dff_buf_inv2",
                                      mod=self.inv2)
         self.connect_inst(["Qb", "Q", "vdd", "gnd"])
@@ -119,16 +119,16 @@ class dff_buf(design.design):
         except AttributeError:
             pass
         self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active, 0))
-       
+
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))
-        
+
     def route_wires(self):
         if "li" in layer:
             self.route_layer = "li"
         else:
             self.route_layer = "m1"
-        
+
         # Route dff q to inv1 a
         q_pin = self.dff_inst.get_pin("Q")
         a1_pin = self.inv1_inst.get_pin("A")
@@ -143,7 +143,7 @@ class dff_buf(design.design):
         a2_pin = self.inv2_inst.get_pin("A")
         self.mid_qb_pos = vector(0.5 * (z1_pin.cx() + a2_pin.cx()), z1_pin.cy())
         self.add_zjog(z1_pin.layer, z1_pin.center(), a2_pin.center())
-        
+
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
@@ -161,7 +161,7 @@ class dff_buf(design.design):
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
-            
+
         clk_pin = self.dff_inst.get_pin("clk")
         self.add_layout_pin(text="clk",
                             layer=clk_pin.layer,

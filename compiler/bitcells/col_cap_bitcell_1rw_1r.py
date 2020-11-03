@@ -21,7 +21,7 @@ class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
                  props.bitcell.cell_1rw1r.pin.vdd]
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "POWER", "GROUND"]
-    
+
     def __init__(self, name="col_cap_cell_1rw_1r"):
         # Ignore the name argument
         bitcell_base.bitcell_base.__init__(self, name)

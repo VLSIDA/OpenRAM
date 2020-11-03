@@ -16,18 +16,18 @@ class inv_dec(design.design):
     """
     INV for address decoders.
     """
-    
+
     pin_names = ["A", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "POWER", "GROUND"]
     cell_size_layer = "boundary"
-    
+
     def __init__(self, name="inv_dec", height=None):
         design.design.__init__(self, name)
 
         (width, height) = utils.get_libcell_size(name,
                                                  GDS["unit"],
                                                  layer[self.cell_size_layer])
-        
+
         pin_map = utils.get_libcell_pins(self.pin_names,
                                          name,
                                          GDS["unit"])
@@ -43,10 +43,10 @@ class inv_dec(design.design):
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["inv_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -61,7 +61,7 @@ class inv_dec(design.design):
         units relative to the minimum width of a transistor
         """
         return self.nmos_size + self.pmos_size
-      
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.

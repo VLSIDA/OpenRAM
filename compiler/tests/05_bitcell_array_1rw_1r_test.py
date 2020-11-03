@@ -22,16 +22,16 @@ class bitcell_array_1rw_1r_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
+
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Testing 4x4 array for cell_1rw_1r")
         a = factory.create(module_type="bitcell_array", cols=4, rows=4)
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

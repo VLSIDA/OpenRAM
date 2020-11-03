@@ -24,7 +24,7 @@ class supply_grid(signal_grid):
     def __init__(self, ll, ur, track_width):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
         signal_grid.__init__(self, ll, ur, track_width)
-        
+
     def reinit(self):
         """ Reinitialize everything for a new route. """
         self.source = set()
@@ -32,10 +32,10 @@ class supply_grid(signal_grid):
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()
-        
+
 
     def find_start_wave(self, wave, direct):
-        """ 
+        """
         Finds the first loc  starting at loc and up that is open.
         Returns None if it reaches max size first.
         """
@@ -54,10 +54,10 @@ class supply_grid(signal_grid):
             # Return a start if it isn't blocked
             if not self.is_wave_blocked(wave):
                 return wave
-                
+
         return wave
-    
-        
+
+
     def is_wave_blocked(self, wave):
         """
         Checks if any of the locations are blocked
@@ -68,7 +68,7 @@ class supply_grid(signal_grid):
         else:
             return False
 
-    
+
     def probe(self, wave, direct):
         """
         Expand the wave until there is a blockage and return
@@ -83,4 +83,4 @@ class supply_grid(signal_grid):
 
         return wave_path
 
-    
+

@@ -25,19 +25,19 @@ class pdriver_test(openram_test):
         # a tests the error message for specifying conflicting conditions
         #a = pdriver.pdriver(fanout = 4,size_list = [1,2,4,8])
         #self.local_check(a)
-        
+
         b = factory.create(module_type="pdriver", size_list = [1,2,4,8])
         self.local_check(b)
-        
+
         c = factory.create(module_type="pdriver", fanout = 50)
         self.local_check(c)
-        
+
         d = factory.create(module_type="pdriver", fanout = 50, inverting = True)
         self.local_check(d)
-        
+
         e = factory.create(module_type="pdriver", fanout = 64)
         self.local_check(e)
-        
+
         f = factory.create(module_type="pdriver", fanout = 64, inverting = True)
         self.local_check(f)
 

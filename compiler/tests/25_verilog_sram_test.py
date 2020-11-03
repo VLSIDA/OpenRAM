@@ -44,7 +44,7 @@ class verilog_test(openram_test):
         self.assertTrue(self.isdiff(vname,golden))
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

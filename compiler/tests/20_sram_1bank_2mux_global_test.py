@@ -44,7 +44,7 @@ class sram_1bank_2mux_global_test(openram_test):
         self.local_check(a, final_verification=True)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

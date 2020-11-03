@@ -66,7 +66,7 @@ class port_data_wmask_1rw_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
         globals.setup_bitcell()
-        
+
         c.num_words = 16
         c.words_per_row = 1
         factory.reset()

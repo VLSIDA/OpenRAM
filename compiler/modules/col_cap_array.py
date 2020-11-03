@@ -34,7 +34,7 @@ class col_cap_array(bitcell_base_array):
         if not end_caps_enabled:
             self.create_all_wordline_names()
         self.create_all_bitline_names()
-        
+
         self.add_modules()
         self.add_pins()
         self.create_instances()

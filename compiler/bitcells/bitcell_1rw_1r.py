@@ -30,7 +30,7 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
-    
+
     def __init__(self, name, cell_name=None):
         if not cell_name:
             cell_name = OPTS.bitcell_name
@@ -45,7 +45,7 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
         self.wl_names = [pin_names[4], pin_names[5]]
 
     def get_bitcell_pins(self, col, row):
-        """ 
+        """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
         """

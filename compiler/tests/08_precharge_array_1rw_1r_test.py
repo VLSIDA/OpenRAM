@@ -20,7 +20,7 @@ class precharge_1rw_1r_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
+
         # check precharge array in multi-port
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
@@ -35,7 +35,7 @@ class precharge_1rw_1r_test(openram_test):
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell (port 1)")
         pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0", column_offset=1)
         self.local_check(pc)
-        
+
         globals.end_openram()
 
 # run the test from the command line

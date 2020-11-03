@@ -14,7 +14,7 @@ class gds_cell(design):
         self.name = name
         self.gds_file = gds_file
         self.sp_file = None
-        
+
         design.__init__(self, name)
 
         # The dimensions will not be defined, so do this...

@@ -25,9 +25,9 @@ class control_logic_test(openram_test):
         debug.info(1, "Testing sample for control_logic_rw")
         a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=32)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

@@ -28,7 +28,7 @@ class control_logic(design.design):
         self.add_comment("num_rows: {0}".format(num_rows))
         self.add_comment("words_per_row: {0}".format(words_per_row))
         self.add_comment("word_size {0}".format(word_size))
-        
+
         self.sram=sram
         self.num_rows = num_rows
         self.words_per_row = words_per_row
@@ -42,21 +42,21 @@ class control_logic(design.design):
 
         self.num_cols = word_size * words_per_row + self.num_spare_cols
         self.num_words = num_rows * words_per_row
-        
+
         self.enable_delay_chain_resizing = False
         self.inv_parasitic_delay = logical_effort.logical_effort.pinv
-        
+
         # Determines how much larger the sen delay should be. Accounts for possible error in model.
         # FIXME: This should be made a parameter
         self.wl_timing_tolerance = 1
         self.wl_stage_efforts = None
         self.sen_stage_efforts = None
-        
+
         if self.port_type == "rw":
             self.num_control_signals = 2
         else:
             self.num_control_signals = 1
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -66,7 +66,7 @@ class control_logic(design.design):
         self.add_pins()
         self.add_modules()
         self.create_instances()
-        
+
     def create_layout(self):
         """ Create layout and route between modules """
         self.place_instances()
@@ -84,16 +84,16 @@ class control_logic(design.design):
 
     def add_modules(self):
         """ Add all the required modules """
-        
+
         self.dff = factory.create(module_type="dff_buf")
         dff_height = self.dff.height
-        
+
         self.ctrl_dff_array = factory.create(module_type="dff_buf_array",
                                              rows=self.num_control_signals,
                                              columns=1)
-                                             
+
         self.add_mod(self.ctrl_dff_array)
-        
+
         self.and2 = factory.create(module_type="pand2",
                                    size=12,
                                    height=dff_height)
@@ -103,7 +103,7 @@ class control_logic(design.design):
                                          size=self.num_cols,
                                          height=dff_height)
         self.add_mod(self.rbl_driver)
-        
+
         # clk_buf drives a flop for every address
         addr_flops = math.log(self.num_words, 2) + math.log(self.words_per_row, 2)
         # plus data flops and control flops
@@ -114,13 +114,13 @@ class control_logic(design.design):
         self.clk_buf_driver = factory.create(module_type="pdriver",
                                              fanout=clock_fanout,
                                              height=dff_height)
-        
+
         self.add_mod(self.clk_buf_driver)
 
         # We will use the maximum since this same value is used to size the wl_en
         # and the p_en_bar drivers
         # max_fanout = max(self.num_rows, self.num_cols)
-        
+
         # wl_en drives every row in the bank
         self.wl_en_driver = factory.create(module_type="pdriver",
                                            fanout=self.num_rows,
@@ -144,7 +144,7 @@ class control_logic(design.design):
                                   size=1,
                                   height=dff_height)
         self.add_mod(self.inv)
-        
+
         # p_en_bar drives every column in the bitcell array
         # but it is sized the same as the wl_en driver with
         # prepended 3 inverter stages to guarantee it is slower and odd polarity
@@ -183,14 +183,14 @@ class control_logic(design.design):
             # Fanout can be varied as well but is a little more complicated but potentially optimal.
         debug.info(1, "Setting delay chain to {} stages with {} fanout to match {} delay".format(delay_stages, delay_fanout, required_delay))
         return (delay_stages, delay_fanout)
-    
+
     def get_dynamic_delay_fanout_list(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""
 
         previous_delay_per_stage = previous_fanout + 1 + self.inv_parasitic_delay
         previous_delay_chain_delay = previous_delay_per_stage * previous_stages
         debug.info(2, "Previous delay chain produced {} delay units".format(previous_delay_chain_delay))
-        
+
         fanout_rise = fanout_fall = 2 # This can be anything >=2
         # The delay chain uses minimum sized inverters. There are (fanout+1)*stages inverters and each
         # inverter adds 1 unit of delay (due to minimum size). This also depends on the pinv value
@@ -201,7 +201,7 @@ class control_logic(design.design):
         debug.info(2,
                    "Required delays from chain: fall={}, rise={}".format(required_delay_fall,
                                                                          required_delay_rise))
-        
+
         # If the fanout is different between rise/fall by this amount. Stage algorithm is made more pessimistic.
         WARNING_FANOUT_DIFF = 5
         stages_close = False
@@ -218,7 +218,7 @@ class control_logic(design.design):
                 stages_close = True
                 safe_fanout_rise = fanout_rise
                 safe_fanout_fall = fanout_fall
-            
+
             if stages_fall == stages_rise:
                 break
             elif abs(stages_fall - stages_rise) == 1 and WARNING_FANOUT_DIFF < abs(fanout_fall - fanout_rise):
@@ -232,14 +232,14 @@ class control_logic(design.design):
                 fanout_fall+=1
             else:
                 fanout_rise+=1
-        
+
         total_stages = max(stages_fall, stages_rise) * 2
         debug.info(1, "New Delay chain: stages={}, fanout_rise={}, fanout_fall={}".format(total_stages, fanout_rise, fanout_fall))
-        
+
         # Creates interleaved fanout list of rise/fall delays. Assumes fall is the first stage.
         stage_list = [fanout_fall if i % 2==0 else fanout_rise for i in range(total_stages)]
         return stage_list
-    
+
     def calculate_stages_with_fixed_fanout(self, required_delay, fanout):
         from math import ceil
         # Delay being negative is not an error. It implies that any amount of stages would have a negative effect on the overall delay
@@ -249,7 +249,7 @@ class control_logic(design.design):
         delay_per_stage = fanout + 1 + self.inv_parasitic_delay
         delay_stages = ceil(required_delay / delay_per_stage)
         return delay_stages
-                
+
     def setup_signal_busses(self):
         """ Setup bus names, determine the size of the busses etc """
 
@@ -265,7 +265,7 @@ class control_logic(design.design):
             self.dff_output_list = ["cs_bar", "cs", "we_bar", "we"]
         else:
             self.dff_output_list = ["cs_bar", "cs"]
-        
+
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
             self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
@@ -275,7 +275,7 @@ class control_logic(design.design):
             self.internal_bus_list = ["rbl_bl_delay_bar", "rbl_bl_delay", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list) + 1) * self.m2_pitch
-        
+
         # Outputs to the bank
         if self.port_type == "rw":
             self.output_list = ["s_en", "w_en"]
@@ -286,14 +286,14 @@ class control_logic(design.design):
         self.output_list.append("p_en_bar")
         self.output_list.append("wl_en")
         self.output_list.append("clk_buf")
-        
+
         self.supply_list = ["vdd", "gnd"]
 
     def route_rails(self):
         """ Add the input signal inverted tracks """
         height = self.control_logic_center.y - self.m2_pitch
         offset = vector(self.ctrl_dff_array.width, 0)
-        
+
         self.input_bus = self.create_vertical_bus("m2",
                                                   offset,
                                                   self.internal_bus_list,
@@ -325,7 +325,7 @@ class control_logic(design.design):
 
         # All of the control logic is placed to the right of the DFFs and bus
         self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width
-        
+
         row = 0
         # Add the logic on the right of the bus
         self.place_clk_buf_row(row)
@@ -396,7 +396,7 @@ class control_logic(design.design):
         # Add to the right of the control rows and routing channel
         offset = vector(self.delay_chain.width, y_off)
         self.delay_inst.place(offset, mirror="MY")
-        
+
     def route_delay(self):
 
         out_pos = self.delay_inst.get_pin("out").bc()
@@ -408,21 +408,21 @@ class control_logic(design.design):
         self.add_wire(self.m1_stack, [out_pos, mid1, in_pos])
         self.add_via_center(layers=self.m1_stack,
                             offset=in_pos)
-        
+
         # Input from RBL goes to the delay line for futher delay
         self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
-        
+
     def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
         self.clk_buf_inst = self.add_inst(name="clkbuf",
                                           mod=self.clk_buf_driver)
         self.connect_inst(["clk", "clk_buf", "vdd", "gnd"])
-        
+
     def place_clk_buf_row(self, row):
         x_offset = self.control_x_offset
-        
+
         x_offset = self.place_util(self.clk_buf_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.clk_buf_inst)
 
     def route_clk_buf(self):
@@ -443,17 +443,17 @@ class control_logic(design.design):
         self.clk_bar_inst = self.add_inst(name="inv_clk_bar",
                                             mod=self.inv)
         self.connect_inst(["clk_buf", "clk_bar", "vdd", "gnd"])
-        
+
         self.gated_clk_bar_inst = self.add_inst(name="and2_gated_clk_bar",
                                                 mod=self.and2)
         self.connect_inst(["clk_bar", "cs", "gated_clk_bar", "vdd", "gnd"])
 
     def place_gated_clk_bar_row(self, row):
         x_offset = self.control_x_offset
-        
+
         x_offset = self.place_util(self.clk_bar_inst, x_offset, row)
         x_offset = self.place_util(self.gated_clk_bar_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.gated_clk_bar_inst)
 
     def route_gated_clk_bar(self):
@@ -468,7 +468,7 @@ class control_logic(design.design):
         self.add_via_stack_center(from_layer=out_pin.layer,
                                   to_layer=in_pin.layer,
                                   offset=in_pos)
-        
+
 
         # This is the second gate over, so it needs to be on M3
         clkbuf_map = zip(["B"], ["cs"])
@@ -495,9 +495,9 @@ class control_logic(design.design):
         x_offset = self.control_x_offset
 
         x_offset = self.place_util(self.gated_clk_buf_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.gated_clk_buf_inst)
-        
+
     def route_gated_clk_buf(self):
         clkbuf_map = zip(["A", "B"], ["clk_buf", "cs"])
         self.connect_vertical_bus(clkbuf_map,
@@ -514,7 +514,7 @@ class control_logic(design.design):
         self.add_via_stack_center(from_layer=z_pin.layer,
                                   to_layer="m2",
                                   offset=z_pin.center())
-        
+
     def create_wlen_row(self):
         # input pre_p_en, output: wl_en
         self.wl_en_inst=self.add_inst(name="buf_wl_en",
@@ -531,7 +531,7 @@ class control_logic(design.design):
     def route_wlen(self):
         wlen_map = zip(["A"], ["gated_clk_bar"])
         self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.input_bus)
-        
+
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
     def create_pen_row(self):
@@ -544,7 +544,7 @@ class control_logic(design.design):
         self.p_en_bar_driver_inst=self.add_inst(name="buf_p_en_bar",
                                                 mod=self.p_en_bar_driver)
         self.connect_inst(["p_en_bar_unbuf", "p_en_bar", "vdd", "gnd"])
-        
+
     def place_pen_row(self, row):
         x_offset = self.control_x_offset
 
@@ -568,7 +568,7 @@ class control_logic(design.design):
                                   offset=in_pin.center())
 
         self.connect_output(self.p_en_bar_driver_inst, "Z", "p_en_bar")
-        
+
     def create_sen_row(self):
         """ Create the sense enable buffer. """
         if self.port_type=="rw":
@@ -582,24 +582,24 @@ class control_logic(design.design):
         # we also must wait until the bitline has been discharged enough for proper sensing
         # hence we use rbl_bl_delay as well.
         self.connect_inst(["rbl_bl_delay", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
-        
+
     def place_sen_row(self, row):
         x_offset = self.control_x_offset
 
         x_offset = self.place_util(self.s_en_gate_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.s_en_gate_inst)
-        
+
     def route_sen(self):
 
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
             input_name = "cs"
-            
+
         sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.input_bus)
-        
+
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
 
     def create_rbl_delay_row(self):
@@ -612,15 +612,15 @@ class control_logic(design.design):
         x_offset = self.control_x_offset
 
         x_offset = self.place_util(self.rbl_bl_delay_inv_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.rbl_bl_delay_inv_inst)
-        
+
     def route_rbl_delay(self):
         # Connect from delay line
         # Connect to rail
 
         self.route_output_to_bus_jogged(self.rbl_bl_delay_inv_inst, "rbl_bl_delay_bar")
-        
+
         rbl_map = zip(["A"], ["rbl_bl_delay"])
         self.connect_vertical_bus(rbl_map, self.rbl_bl_delay_inv_inst, self.input_bus)
 
@@ -638,26 +638,26 @@ class control_logic(design.design):
                                             mod=self.wen_and)
         # Only drive the writes in the second half of the clock cycle during a write operation.
         self.connect_inst([input_name, "rbl_bl_delay_bar", "gated_clk_bar", "w_en", "vdd", "gnd"])
-        
+
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
 
         x_offset = self.place_util(self.w_en_gate_inst, x_offset, row)
-        
+
         self.row_end_inst.append(self.w_en_gate_inst)
-        
+
     def route_wen(self):
         if self.port_type == "rw":
             input_name = "we"
         else:
             # No we for write-only reports, so use cs
             input_name = "cs"
-            
+
         wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay_bar", "gated_clk_bar"])
         self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus)
 
         self.connect_output(self.w_en_gate_inst, "Z", "w_en")
-        
+
     def create_dffs(self):
         self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
                                          mod=self.ctrl_dff_array)
@@ -669,7 +669,7 @@ class control_logic(design.design):
 
     def place_dffs(self):
         self.ctrl_dff_inst.place(vector(0, 0))
-        
+
     def route_dffs(self):
         if self.port_type == "rw":
             dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
@@ -678,7 +678,7 @@ class control_logic(design.design):
         else:
             dff_out_map = zip(["dout_bar_0"], ["cs"])
         self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.input_bus, self.m2_stack[::-1])
-        
+
         # Connect the clock rail to the other clock rail
         # by routing in the supply rail track to avoid channel conflicts
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
@@ -691,7 +691,7 @@ class control_logic(design.design):
         self.copy_layout_pin(self.ctrl_dff_inst, "din_0", "csb")
         if (self.port_type == "rw"):
             self.copy_layout_pin(self.ctrl_dff_inst, "din_1", "web")
-        
+
     def get_offset(self, row):
         """ Compute the y-offset and mirroring """
         y_off = row * self.and2.height
@@ -702,14 +702,14 @@ class control_logic(design.design):
             mirror="R0"
 
         return (y_off, mirror)
-                      
+
     def connect_output(self, inst, pin_name, out_name):
         """ Create an output pin on the right side from the pin of a given instance. """
-        
+
         out_pin = inst.get_pin(pin_name)
         out_pos = out_pin.center()
         right_pos = out_pos + vector(self.width - out_pin.cx(), 0)
-        
+
         self.add_via_stack_center(from_layer=out_pin.layer,
                                   to_layer="m2",
                                   offset=out_pos)
@@ -722,7 +722,7 @@ class control_logic(design.design):
         """ Add vdd and gnd to the instance cells """
 
         supply_layer = self.dff.get_pin("vdd").layer
-        
+
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
@@ -740,13 +740,13 @@ class control_logic(design.design):
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     self.add_power_pin("gnd", pin_loc, start_layer=pin.layer)
                     self.add_path(supply_layer, [row_loc, pin_loc])
-            
+
         self.copy_layout_pin(self.delay_inst, "gnd")
         self.copy_layout_pin(self.delay_inst, "vdd")
 
         self.copy_layout_pin(self.ctrl_dff_inst, "gnd")
         self.copy_layout_pin(self.ctrl_dff_inst, "vdd")
-        
+
     def add_lvs_correspondence_points(self):
         """ This adds some points for easier debugging if LVS goes wrong.
         These should probably be turned off by default though, since extraction
@@ -772,10 +772,10 @@ class control_logic(design.design):
                            offset=pin.ll(),
                            height=pin.height(),
                            width=pin.width())
-        
+
     def graph_exclude_dffs(self):
         """Exclude dffs from graph as they do not represent critical path"""
-        
+
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
         if self.port_type=="rw" or self.port_type=="w":
             self.graph_inst_exclude.add(self.w_en_gate_inst)
@@ -799,4 +799,4 @@ class control_logic(design.design):
         self.add_via_stack_center(from_layer=out_pin.layer,
                                   to_layer="m2",
                                   offset=out_pos)
-    
+

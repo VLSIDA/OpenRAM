@@ -8,12 +8,10 @@
 import debug
 import bitcell_base
 from tech import cell_properties as props
-from tech import GDS, layer
 from globals import OPTS
-import utils
 
 
-class replica_bitcell_1rw_1r(bitcell_base):
+class replica_bitcell_1rw_1r(bitcell_base.bitcell_base):
     """
     A single bit cell which is forced to store a 0.
     This module implements the single memory cell used in the design. It

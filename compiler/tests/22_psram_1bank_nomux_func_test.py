@@ -32,7 +32,7 @@ class psram_1bank_nomux_func_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 1
-        
+
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -55,14 +55,14 @@ class psram_1bank_nomux_func_test(openram_test):
         s = factory.create(module_type="sram", sram_config=c)
         tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
-        
+
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         f = functional(s.s, tempspice, corner)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

@@ -25,9 +25,9 @@ class hierarchical_predecode3x8(hierarchical_predecode):
         self.add_modules()
         self.create_input_inverters()
         connections=[["inbar_0", "inbar_1", "inbar_2", "out_0", "vdd", "gnd"],
-                     ["in_0",    "inbar_1", "inbar_2", "out_1", "vdd", "gnd"],            
+                     ["in_0",    "inbar_1", "inbar_2", "out_1", "vdd", "gnd"],
                      ["inbar_0", "in_1",    "inbar_2", "out_2", "vdd", "gnd"],
-                     ["in_0",    "in_1",    "inbar_2", "out_3", "vdd", "gnd"],            
+                     ["in_0",    "in_1",    "inbar_2", "out_3", "vdd", "gnd"],
                      ["inbar_0", "inbar_1", "in_2",    "out_4", "vdd", "gnd"],
                      ["in_0",    "inbar_1", "in_2",    "out_5", "vdd", "gnd"],
                      ["inbar_0", "in_1",    "in_2",    "out_6", "vdd", "gnd"],
@@ -41,7 +41,7 @@ class hierarchical_predecode3x8(hierarchical_predecode):
                        ["Abar_0", "A_1",    "Abar_2"],
                        ["A_0",    "A_1",    "Abar_2"],
                        ["Abar_0", "Abar_1", "A_2"],
-                       ["A_0",    "Abar_1", "A_2"], 
-                       ["Abar_0", "A_1",    "A_2"], 
+                       ["A_0",    "Abar_1", "A_2"],
+                       ["Abar_0", "A_1",    "A_2"],
                        ["A_0",    "A_1",    "A_2"]]
         return combination

@@ -42,15 +42,15 @@ class pnor2(pgate.pgate):
 
         # Creates the netlist and layout
         super().__init__(name, height, add_wells)
-        
+
     def create_netlist(self):
         self.add_pins()
         self.add_ptx()
         self.create_ptx()
-        
+
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
-        
+
         self.setup_layout_constants()
         self.place_ptx()
         if self.add_wells:
@@ -86,7 +86,7 @@ class pnor2(pgate.pgate):
                                          add_source_contact=self.route_layer,
                                          add_drain_contact=self.route_layer)
         self.add_mod(self.nmos_right)
-        
+
         self.pmos_left = factory.create(module_type="ptx",
                                         width=self.pmos_width,
                                         mults=self.tx_mults,
@@ -102,7 +102,7 @@ class pnor2(pgate.pgate):
                                          add_source_contact="active",
                                          add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_right)
-        
+
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
 
@@ -118,7 +118,7 @@ class pnor2(pgate.pgate):
                      + 0.5 * self.nwell_enclose_active
         self.well_width = self.width + 2 * self.nwell_enclose_active
         # Height is an input parameter, so it is not recomputed.
-        
+
     def create_ptx(self):
         """
         Add PMOS and NMOS to the layout at the upper-most and lowest position
@@ -140,7 +140,7 @@ class pnor2(pgate.pgate):
         self.nmos2_inst = self.add_inst(name="pnor2_nmos2",
                                         mod=self.nmos_right)
         self.connect_inst(["Z", "B", "gnd", "gnd"])
-        
+
     def place_ptx(self):
         """
         Add PMOS and NMOS to the layout at the upper-most and lowest position
@@ -163,10 +163,10 @@ class pnor2(pgate.pgate):
 
         self.pmos2_pos = pmos1_pos + self.overlap_offset
         self.pmos2_inst.place(self.pmos2_pos)
-        
+
         nmos1_pos = vector(self.pmos_right.active_offset.x, self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
-        
+
         self.nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst.place(self.nmos2_pos)
 
@@ -175,7 +175,7 @@ class pnor2(pgate.pgate):
 
         self.add_nwell_contact(self.pmos_right, self.pmos2_pos)
         self.add_pwell_contact(self.nmos_right, self.nmos2_pos)
-        
+
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
 
@@ -193,14 +193,14 @@ class pnor2(pgate.pgate):
         bottom_pin_offset = nmos_pin.uy()
         self.inputB_yoffset = bottom_pin_offset + self.m1_nonpref_pitch
         self.inputA_yoffset = self.inputB_yoffset + self.m1_nonpref_pitch
-        
+
         bpin = self.route_input_gate(self.pmos2_inst,
                                      self.nmos2_inst,
                                      self.inputB_yoffset,
                                      "B",
                                      position="right",
                                      directions=("V", "V"))
-        
+
         # This will help with the wells and the input/output placement
         apin = self.route_input_gate(self.pmos1_inst,
                                      self.nmos1_inst,
@@ -227,7 +227,7 @@ class pnor2(pgate.pgate):
         #                     offset=pmos_pin.center())
         # m1m2_contact = self.add_via_center(layers=self.m1_stack,
         #                                    offset=nmos_pin.center())
-        
+
         mid1_offset = vector(nmos_pin.center().x, self.output_yoffset)
         mid2_offset = vector(pmos_pin.center().x, self.output_yoffset)
 
@@ -244,10 +244,10 @@ class pnor2(pgate.pgate):
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nor2_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -255,7 +255,7 @@ class pnor2(pgate.pgate):
         c_para = spice["min_tx_drain_c"] * (self.nmos_size / parameter["min_tx_size"])
         transition_prob = 0.1875
         return transition_prob * (c_load + c_para)
-        
+
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets)

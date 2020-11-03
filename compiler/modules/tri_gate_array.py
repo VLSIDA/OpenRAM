@@ -25,7 +25,7 @@ class tri_gate_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -34,7 +34,7 @@ class tri_gate_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_array()
-        
+
     def create_layout(self):
         self.width = (self.columns / self.words_per_row) * self.tri.width
         self.height = self.tri.height
@@ -47,7 +47,7 @@ class tri_gate_array(design.design):
     def add_modules(self):
         self.tri = factory.create(module_type="tri_gate")
         self.add_mod(self.tri)
-        
+
     def add_pins(self):
         """create the name of pins depend on the word size"""
         for i in range(self.word_size):
@@ -74,10 +74,10 @@ class tri_gate_array(design.design):
         for i in range(0,self.columns,self.words_per_row):
             base = vector(i*self.tri.width, 0)
             self.tri_inst[i].place(base)
-            
+
 
     def add_layout_pins(self):
-        
+
         for i in range(0,self.columns,self.words_per_row):
             index = int(i/self.words_per_row)
 
@@ -105,7 +105,7 @@ class tri_gate_array(design.design):
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="m3",
                                                     offset=pin_pos)
-            
+
 
         width = self.tri.width * self.columns - (self.words_per_row - 1) * self.tri.width
         en_pin = self.tri_inst[0].get_pin("en")
@@ -114,7 +114,7 @@ class tri_gate_array(design.design):
                             offset=en_pin.ll().scale(0, 1),
                             width=width,
                             height=drc("minwidth_m1"))
-        
+
         enbar_pin = self.tri_inst[0].get_pin("en_bar")
         self.add_layout_pin(text="en_bar",
                             layer="m1",

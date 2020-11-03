@@ -33,8 +33,8 @@ class contact(hierarchy_design.hierarchy_design):
                  implant_type=None, well_type=None, name=""):
         # This will ignore the name parameter since
         # we can guarantee a unique name here
-        
-        super().__init__(name)
+
+        super().__init__(name, name)
         debug.info(4, "create contact object {0}".format(name))
 
         self.add_comment("layers: {0}".format(layer_stack))
@@ -80,7 +80,7 @@ class contact(hierarchy_design.hierarchy_design):
         self.create_first_layer_enclosure()
         self.create_second_layer_enclosure()
         self.create_nitride_cut_enclosure()
-        
+
         self.height = max(self.first_layer_position.y + self.first_layer_height,
                           self.second_layer_position.y + self.second_layer_height)
         self.width = max(self.first_layer_position.x + self.first_layer_width,
@@ -99,7 +99,7 @@ class contact(hierarchy_design.hierarchy_design):
         (first_layer, via_layer, second_layer) = self.layer_stack
         self.first_layer_name = first_layer
         self.second_layer_name = second_layer
-        
+
         # Contacts will have unique per first layer
         if via_layer in tech.layer:
             self.via_layer_name = via_layer
@@ -115,7 +115,7 @@ class contact(hierarchy_design.hierarchy_design):
 
     def setup_layout_constants(self):
         """ Determine the design rules for the enclosure layers """
-        
+
         self.contact_width = drc("minwidth_{0}". format(self.via_layer_name))
         contact_to_contact = drc("{0}_to_{0}".format(self.via_layer_name))
         self.contact_pitch = self.contact_width + contact_to_contact
@@ -126,7 +126,7 @@ class contact(hierarchy_design.hierarchy_design):
         # DRC rules
         # The extend rule applies to asymmetric enclosures in one direction.
         # The enclosure rule applies to symmetric enclosure component.
-        
+
         self.first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
         self.first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
         # If there's a different rule for active
@@ -171,7 +171,7 @@ class contact(hierarchy_design.hierarchy_design):
                                                        (self.second_layer_minwidth - self.contact_array_width) / 2)
         else:
             debug.error("Invalid secon layer direction: ".format(self.directions[1]), -1)
-            
+
     def create_contact_array(self):
         """ Create the contact array at the origin"""
         # offset for the via array
@@ -210,7 +210,7 @@ class contact(hierarchy_design.hierarchy_design):
                           offset=self.second_layer_position - npc_enclose_offset,
                           width=self.second_layer_width + 2 * npc_enclose_poly,
                           height=self.second_layer_height + 2 * npc_enclose_poly)
-    
+
     def create_first_layer_enclosure(self):
         # this is if the first and second layers are different
         self.first_layer_position = vector(
@@ -269,12 +269,12 @@ class contact(hierarchy_design.hierarchy_design):
                           offset=well_position,
                           width=self.well_width,
                           height=self.well_height)
-        
+
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
         return self.return_power()
 
-    
+
 # Set up a static for each layer to be used for measurements
 for layer_stack in tech.layer_stacks:
     (layer1, via, layer2) = layer_stack
@@ -295,7 +295,7 @@ if "nwell" in tech.layer:
                           well_type="n")
     module = sys.modules[__name__]
     setattr(module, "nwell_contact", cont)
-    
+
 if "pwell" in tech.layer:
     cont = factory.create(module_type="contact",
                           layer_stack=tech.active_stack,

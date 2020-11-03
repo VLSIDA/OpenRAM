@@ -25,7 +25,7 @@ class library_drc_test(openram_test):
         drc_errors = 0
         debug.info(1, "\nPerforming DRC on: " + ", ".join(allnames))
         for f in allnames:
-            gds_name = "{0}/{1}.gds".format(gds_dir, f)            
+            gds_name = "{0}/{1}.gds".format(gds_dir, f)
             if not os.path.isfile(gds_name):
                 drc_errors += 1
                 debug.error("Missing GDS file: {}".format(gds_name))
@@ -43,7 +43,7 @@ def setup_files():
     gds_files = list(filter(nametest.search, files))
 
     tempnames = gds_files
-    
+
     # remove the .gds and .sp suffixes
     for i in range(len(tempnames)):
         gds_files[i] = re.sub('\.gds$', '', tempnames[i])

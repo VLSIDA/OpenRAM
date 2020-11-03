@@ -34,7 +34,7 @@ class sense_amp_array(design.design):
             self.num_spare_cols = 0
         else:
             self.num_spare_cols = num_spare_cols
-                
+
         self.column_offset = column_offset
         self.row_size = self.word_size * self.words_per_row
 
@@ -71,13 +71,13 @@ class sense_amp_array(design.design):
     def create_layout(self):
 
         self.place_sense_amp_array()
-        
+
         self.height = self.amp.height
         self.width = self.local_insts[-1].rx()
 
         self.add_layout_pins()
         self.route_rails()
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
@@ -115,7 +115,7 @@ class sense_amp_array(design.design):
             self.amp_spacing = self.bitcell.width
         else:
             self.amp_spacing = self.amp.width
-        
+
         if not self.offsets:
             self.offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
@@ -130,7 +130,7 @@ class sense_amp_array(design.design):
 
             amp_position = vector(xoffset, 0)
             self.local_insts[i].place(offset=amp_position, mirror=mirror)
-            
+
         # place spare sense amps (will share the same enable as regular sense amps)
         for i, xoffset in enumerate(self.offsets[self.num_cols:]):
             index = self.word_size + i

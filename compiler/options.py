@@ -33,7 +33,7 @@ class options(optparse.Values):
 
     # By default, use local arrays with a max fanout of 16
     #local_array_size = 16
-    
+
     # Write mask size, default will be overwritten with word_size if not user specified
     write_size = None
 
@@ -140,7 +140,7 @@ class options(optparse.Values):
 
     # Route the input/output pins to the perimeter
     perimeter_pins = False
-    
+
     purge_temp = True
 
     # These are the default modules that can be over-riden

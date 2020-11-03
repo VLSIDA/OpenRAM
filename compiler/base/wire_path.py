@@ -15,7 +15,7 @@ def create_rectilinear_route(my_list):
     """ Add intermediate nodes if it isn't rectilinear. Also skip
         repeated nodes. Also, convert to vector if the aren't."""
     pl = [snap_to_grid(x) for x in my_list]
-    
+
     my_list = []
     for index in range(len(pl) - 1):
         if pl[index] != pl[index + 1]:
@@ -121,7 +121,7 @@ class wire_path():
         """
 
         width = layer_width
-        height = length 
+        height = length
 
         if orientation == "horizontal":
             width = length

@@ -12,7 +12,7 @@ class wire_spice_model():
     """
     def __init__(self, lump_num, wire_length, wire_width):
         self.lump_num = lump_num # the number of segment the wire delay has
-        self.wire_c = self.cal_wire_c(wire_length, wire_width) # c in each segment  
+        self.wire_c = self.cal_wire_c(wire_length, wire_width) # c in each segment
         self.wire_r = self.cal_wire_r(wire_length, wire_width) # r in each segment
 
     def cal_wire_c(self, wire_length, wire_width):
@@ -36,7 +36,7 @@ class wire_spice_model():
 
         swing_factor = abs(math.log(1-swing)) # time constant based on swing
         sum_factor = (1+self.lump_num) * self.lump_num * 0.5 # sum of the arithmetic sequence
-        delay = sum_factor * swing_factor * self.wire_r * self.wire_c 
+        delay = sum_factor * swing_factor * self.wire_r * self.wire_c
         slew = delay * 2 + slew
         result= delay_data(delay, slew)
         return result

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
 import unittest
@@ -26,7 +26,7 @@ class dummy_row_test(openram_test):
         debug.info(2, "Testing dummy column for 6t_cell")
         a = factory.create(module_type="dummy_array", rows=4, cols=1)
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

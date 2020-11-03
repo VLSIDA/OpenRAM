@@ -29,7 +29,7 @@ class write_driver_array_spare_cols_test(openram_test):
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8 and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=16, word_size=8, num_spare_cols=3)
         self.local_check(a)
-        
+
         # check write driver array for multi-port
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
@@ -44,7 +44,7 @@ class write_driver_array_spare_cols_test(openram_test):
         debug.info(2, "Testing write_driver_array for columns=16, word_size=8 (multi-port case and num_spare_cols=3")
         a = factory.create(module_type="write_driver_array", columns=16, word_size=8, num_spare_cols=3)
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

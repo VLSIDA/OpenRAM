@@ -18,21 +18,21 @@ from globals import OPTS
 
 class lib:
     """ lib file generation."""
-    
+
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
-    
+
         self.out_dir = out_dir
         self.sram = sram
-        self.sp_file = sp_file        
+        self.sp_file = sp_file
         self.use_model = use_model
         self.set_port_indices()
-        
+
         self.prepare_tables()
-        
+
         self.create_corners()
-        
+
         self.characterize_corners()
-        
+
     def set_port_indices(self):
         """Copies port information set in the SRAM instance"""
         self.total_port_num = len(self.sram.all_ports)
@@ -40,7 +40,7 @@ class lib:
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
-             
+
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
@@ -48,12 +48,12 @@ class lib:
         self.load = tech.spice["dff_in_cap"]
         self.loads = self.load_scales * self.load
         debug.info(1, "Loads: {0}".format(self.loads))
-        
+
         self.slew_scales = np.array(OPTS.slew_scales)
         self.slew = tech.spice["rise_time"]
         self.slews = self.slew_scales * self.slew
         debug.info(1, "Slews: {0}".format(self.slews))
-        
+
     def create_corners(self):
         """ Create corners for characterization. """
         # Get the corners from the options file
@@ -71,7 +71,7 @@ class lib:
         min_process = "FF"
         nom_process = "TT"
         max_process = "SS"
-        
+
         self.corners = []
         self.lib_files = []
 
@@ -103,15 +103,15 @@ class lib:
                                                       temp)
         self.corner_name = self.corner_name.replace(".","p") # Remove decimals
         lib_name = self.out_dir+"{}.lib".format(self.corner_name)
-        
+
         # A corner is a tuple of PVT
         self.corners.append((proc, volt, temp))
         self.lib_files.append(lib_name)
-                    
-        
+
+
     def characterize_corners(self):
         """ Characterize the list of corners. """
-        debug.info(1,"Characterizing corners: " + str(self.corners))        
+        debug.info(1,"Characterizing corners: " + str(self.corners))
         for (self.corner,lib_name) in zip(self.corners,self.lib_files):
             debug.info(1,"Corner: " + str(self.corner))
             (self.process, self.voltage, self.temperature) = self.corner
@@ -121,7 +121,7 @@ class lib:
             self.characterize()
             self.lib.close()
             self.parse_info(self.corner,lib_name)
-    
+
     def characterize(self):
         """ Characterize the current corner. """
 
@@ -130,8 +130,8 @@ class lib:
         self.compute_setup_hold()
 
         self.write_header()
-        
-        # Loop over all ports. 
+
+        # Loop over all ports.
         for port in self.all_ports:
             # set the read and write port as inputs.
             self.write_data_bus(port)
@@ -143,7 +143,7 @@ class lib:
             self.write_clk_timing_power(port)
 
         self.write_footer()
-        
+
     def write_footer(self):
         """ Write the footer """
         self.lib.write("    }\n") #Closing brace for the cell
@@ -154,13 +154,13 @@ class lib:
         self.lib.write("library ({0}_lib)".format(self.corner_name))
         self.lib.write("{\n")
         self.lib.write("    delay_model : \"table_lookup\";\n")
-        
+
         self.write_units()
         self.write_defaults()
         self.write_LUT_templates()
 
         self.lib.write("    default_operating_conditions : OC; \n")
-        
+
         self.write_bus()
 
         self.lib.write("cell ({0})".format(self.sram.name))
@@ -182,7 +182,7 @@ class lib:
         control_str = 'csb0' #assume at least 1 port
         for i in range(1, self.total_port_num):
             control_str += ' & csb{0}'.format(i)
-            
+
         # Leakage is included in dynamic when macro is enabled
         self.lib.write("    leakage_power () {\n")
         # 'when' condition unnecessary when cs pin does not turn power to devices
@@ -190,15 +190,15 @@ class lib:
         self.lib.write("      value : {};\n".format(self.char_sram_results["leakage_power"]))
         self.lib.write("    }\n")
         self.lib.write("    cell_leakage_power : {};\n".format(self.char_sram_results["leakage_power"]))
-        
-    
+
+
     def write_units(self):
         """ Adds default units for time, voltage, current,...
-            Valid values are 1mV, 10mV, 100mV, and 1V. 
+            Valid values are 1mV, 10mV, 100mV, and 1V.
             For time: Valid values are 1ps, 10ps, 100ps, and 1ns.
-            For power: Valid values are 1mW, 100uW (for 100mW), 10uW (for 10mW), 
+            For power: Valid values are 1mW, 100uW (for 100mW), 10uW (for 10mW),
                        1uW (for 1mW), 100nW, 10nW, 1nW, 100pW, 10pW, and 1pW.
-        """   
+        """
         self.lib.write("    time_unit : \"1ns\" ;\n")
         self.lib.write("    voltage_unit : \"1V\" ;\n")
         self.lib.write("    current_unit : \"1mA\" ;\n")
@@ -214,7 +214,7 @@ class lib:
 
     def write_defaults(self):
         """ Adds default values for slew and capacitance."""
-        
+
         self.lib.write("    input_threshold_pct_fall       :  50.0 ;\n")
         self.lib.write("    output_threshold_pct_fall      :  50.0 ;\n")
         self.lib.write("    input_threshold_pct_rise       :  50.0 ;\n")
@@ -255,7 +255,7 @@ class lib:
         formatted_rows = list(map(self.create_list,split_values))
         formatted_array = ",\\\n".join(formatted_rows)
         return formatted_array
-    
+
     def write_index(self, number, values):
         """ Write the index """
         quoted_string = self.create_list(values)
@@ -267,10 +267,10 @@ class lib:
         # indent each newline plus extra spaces for word values
         indented_string = quoted_string.replace('\n', '\n' + indent +"       ")
         self.lib.write("{0}values({1});\n".format(indent,indented_string))
-        
+
     def write_LUT_templates(self):
         """ Adds lookup_table format (A 1x1 lookup_table)."""
-        
+
         Tran = ["CELL_TABLE"]
         for i in Tran:
             self.lib.write("    lu_table_template({0})".format(i))
@@ -278,8 +278,8 @@ class lib:
             self.lib.write("        variable_1 : input_net_transition;\n")
             self.lib.write("        variable_2 : total_output_net_capacitance;\n")
             self.write_index(1,self.slews)
-            # Dividing by 1000 to all cap values since output of .sp is in fF, 
-            # and it needs to be in pF for Innovus. 
+            # Dividing by 1000 to all cap values since output of .sp is in fF,
+            # and it needs to be in pF for Innovus.
             self.write_index(2,self.loads/1000)
             self.lib.write("    }\n\n")
 
@@ -292,12 +292,12 @@ class lib:
             self.write_index(1,self.slews)
             self.write_index(2,self.slews)
             self.lib.write("    }\n\n")
-    
+
         # self.lib.write("    lu_table_template(CLK_TRAN) {\n")
         # self.lib.write("        variable_1 : constrained_pin_transition;\n")
         # self.write_index(1,self.slews)
         # self.lib.write("    }\n\n")
-    
+
         # self.lib.write("    lu_table_template(TRAN) {\n")
         # self.lib.write("        variable_1 : total_output_net_capacitance;\n")
         # self.write_index(1,self.slews)
@@ -311,10 +311,10 @@ class lib:
         #     #self.write_index(1,self.slews)
         #     self.write_index(1,[self.slews[0]])
         #     self.lib.write("    }\n\n")
-    
+
     def write_bus(self):
         """ Adds format of data and addr bus."""
-    
+
         self.lib.write("\n\n")
         self.lib.write("    type (data){\n")
         self.lib.write("    base_type : array;\n")
@@ -378,11 +378,11 @@ class lib:
         self.lib.write("        direction  : output; \n")
         # This is conservative, but limit to range that we characterized.
         self.lib.write("        max_capacitance : {0};  \n".format(max(self.loads)/1000))
-        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)/1000))        
+        self.lib.write("        min_capacitance : {0};  \n".format(min(self.loads)/1000))
         self.lib.write("        memory_read(){ \n")
         self.lib.write("            address : addr{0}; \n".format(read_port))
         self.lib.write("        }\n")
-        
+
 
         self.lib.write("        pin(dout{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
         self.lib.write("        timing(){ \n")
@@ -402,7 +402,7 @@ class lib:
         self.write_values(self.char_port_results[read_port]["slew_hl"],len(self.loads),"            ")
         self.lib.write("            }\n") # fall trans
         self.lib.write("        }\n") # timing
-        self.lib.write("        }\n") # pin        
+        self.lib.write("        }\n") # pin
         self.lib.write("    }\n\n") # bus
 
     def write_data_bus_input(self, write_port):
@@ -416,10 +416,10 @@ class lib:
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : addr{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
-        self.lib.write("        }\n") 
+        self.lib.write("        }\n")
         self.lib.write("        pin(din{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
         self.write_FF_setuphold(write_port)
-        self.lib.write("        }\n") # pin  
+        self.lib.write("        }\n") # pin
         self.lib.write("    }\n") #bus
 
     def write_data_bus(self, port):
@@ -431,7 +431,7 @@ class lib:
 
     def write_addr_bus(self, port):
         """ Adds addr bus timing results."""
-        
+
         self.lib.write("    bus(addr{0}){{\n".format(port))
         self.lib.write("        bus_type  : addr; \n")
         self.lib.write("        direction  : input; \n")
@@ -439,9 +439,9 @@ class lib:
         self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
         self.lib.write("        pin(addr{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
-        
+
         self.write_FF_setuphold(port)
-        self.lib.write("        }\n")        
+        self.lib.write("        }\n")
         self.lib.write("    }\n\n")
 
     def write_wmask_bus(self, port):
@@ -465,7 +465,7 @@ class lib:
         ctrl_pin_names = ["csb{0}".format(port)]
         if port in self.readwrite_ports:
             ctrl_pin_names.append("web{0}".format(port))
-            
+
         for i in ctrl_pin_names:
             self.lib.write("    pin({0})".format(i))
             self.lib.write("{\n")
@@ -508,12 +508,12 @@ class lib:
         self.lib.write("            }\n")
         self.lib.write("         }\n")
         self.lib.write("    }\n\n")
-    
+
     def add_clk_control_power(self, port):
         """Writes powers under the clock pin group for a specified port"""
         #Web added to read/write ports. Likely to change when control logic finished.
         web_name = ""
-            
+
         if port in self.write_ports:
             if port in self.read_ports:
                 web_name = " & !web{0}".format(port)
@@ -556,7 +556,7 @@ class lib:
             self.lib.write("                values(\"{0:.6e}\");\n".format(read0_power))
             self.lib.write("            }\n")
             self.lib.write("        }\n")
-            
+
             # Disabled power.
             disabled_read1_power = np.mean(self.char_port_results[port]["disabled_read1_power"])
             disabled_read0_power = np.mean(self.char_port_results[port]["disabled_read0_power"])
@@ -585,7 +585,7 @@ class lib:
         self.d = delay(self.sram, self.sp_file, self.corner)
         if self.use_model:
             char_results = self.d.analytical_delay(self.slews,self.loads)
-            self.char_sram_results, self.char_port_results = char_results  
+            self.char_sram_results, self.char_port_results = char_results
         else:
             if (self.sram.num_spare_rows == 0):
                 probe_address = "1" * self.sram.addr_size
@@ -593,8 +593,8 @@ class lib:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-            self.char_sram_results, self.char_port_results = char_results  
-              
+            self.char_sram_results, self.char_port_results = char_results
+
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet
@@ -604,8 +604,8 @@ class lib:
                 self.times = self.sh.analytical_setuphold(self.slews,self.loads)
             else:
                 self.times = self.sh.analyze(self.slews,self.slews)
-                
-                
+
+
     def parse_info(self,corner,lib_name):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.is_unit_test:
@@ -617,9 +617,9 @@ class lib:
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
 
                 git_id = str(proc.stdout.read())
-                
+
                 try:
-                    git_id = git_id[2:-3] 
+                    git_id = git_id[2:-3]
                 except:
                     pass
                 # check if git id is valid
@@ -628,7 +628,7 @@ class lib:
                     git_id = 'Failed to retruieve'
 
         datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-        
+
         current_time = datetime.date.today()
         # write static information to be parser later
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
@@ -654,10 +654,10 @@ class lib:
         # information of checks
         # run it only the first time
         datasheet.write("{0},{1},".format(self.sram.drc_errors, self.sram.lvs_errors))
-        
+
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')
-        
+
         # write timing information for all ports
         for port in self.all_ports:
             #din timings
@@ -675,7 +675,7 @@ class lib:
 
                         min(list(map(round_time,self.times["hold_times_HL"]))),
                         max(list(map(round_time,self.times["hold_times_HL"])))
-                        
+
                         ))
 
         for port in self.all_ports:
@@ -695,7 +695,7 @@ class lib:
                         min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
                         max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
 
-                        
+
                         ))
 
         for port in self.all_ports:
@@ -791,9 +791,9 @@ class lib:
         control_str = 'csb0'
         for i in range(1, self.total_port_num):
             control_str += ' & csb{0}'.format(i)
-        
+
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
-                
+
 
         datasheet.write("END\n")
         datasheet.close()

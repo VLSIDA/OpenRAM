@@ -44,7 +44,7 @@ class pinv(pgate.pgate):
         self.nmos_size = size
         self.pmos_size = beta * size
         self.beta = beta
-    
+
         super().__init__(name, height, add_wells)
 
     def create_netlist(self):
@@ -53,7 +53,7 @@ class pinv(pgate.pgate):
         self.determine_tx_mults()
         self.add_ptx()
         self.create_ptx()
-        
+
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.place_ptx()
@@ -70,7 +70,7 @@ class pinv(pgate.pgate):
         self.route_supply_rails()
         self.connect_rails()
         self.add_boundary()
-        
+
     def add_pins(self):
         """ Adds pins for spice netlist """
         pin_list = ["A", "Z", "vdd", "gnd"]
@@ -92,7 +92,7 @@ class pinv(pgate.pgate):
                 (self.nmos_width, self.tx_mults) = pgate.pgate.best_bin("nmos", self.nmos_width)
                 (self.pmos_width, self.tx_mults) = pgate.pgate.best_bin("pmos", self.pmos_width)
             return
-        
+
         # Do a quick sanity check and bail if unlikely feasible height
         # Sanity check. can we make an inverter in the height
         # with minimum tx sizes?
@@ -108,7 +108,7 @@ class pinv(pgate.pgate):
         # rotated m1 pitch or poly to active spacing
         min_channel = max(contact.poly_contact.width + self.m1_space,
                           contact.poly_contact.width + 2 * self.poly_to_active)
-        
+
         total_height = tx_height + min_channel + 2 * self.top_bottom_space
         # debug.check(self.height > total_height,
         #             "Cell height {0} too small for simple min height {1}.".format(self.height,
@@ -208,7 +208,7 @@ class pinv(pgate.pgate):
                                    connect_poly=True,
                                    connect_drain_active=True)
         self.add_mod(self.nmos)
-        
+
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=self.tx_mults,
@@ -218,12 +218,12 @@ class pinv(pgate.pgate):
                                    connect_poly=True,
                                    connect_drain_active=True)
         self.add_mod(self.pmos)
-        
+
     def create_ptx(self):
         """
         Create the PMOS and NMOS netlist.
         """
-        
+
         self.pmos_inst = self.add_inst(name="pinv_pmos",
                                        mod=self.pmos)
         self.connect_inst(["Z", "A", "vdd", "vdd"])
@@ -237,7 +237,7 @@ class pinv(pgate.pgate):
         Place PMOS and NMOS to the layout at the upper-most and lowest position
         to provide maximum routing in channel
         """
-        
+
         # place PMOS so it is half a poly spacing down from the top
         self.pmos_pos = self.pmos.active_offset.scale(1, 0) \
                         + vector(0,
@@ -259,7 +259,7 @@ class pinv(pgate.pgate):
         Route the output (drains) together.
         Optionally, routes output to edge.
         """
-            
+
         # Get the drain pins
         nmos_drain_pin = self.nmos_inst.get_pin("D")
         pmos_drain_pin = self.pmos_inst.get_pin("D")
@@ -291,17 +291,17 @@ class pinv(pgate.pgate):
         self.connect_pin_to_rail(self.nmos_inst, "S", "gnd")
 
         self.connect_pin_to_rail(self.pmos_inst, "S", "vdd")
-        
+
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["inv_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -316,7 +316,7 @@ class pinv(pgate.pgate):
         units relative to the minimum width of a transistor
         """
         return self.nmos_size + self.pmos_size
-      
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.

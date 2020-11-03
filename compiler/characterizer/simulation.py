@@ -17,7 +17,7 @@ class simulation():
 
     def __init__(self, sram, spfile, corner):
         self.sram = sram
-        
+
         self.name = self.sram.name
         self.word_size = self.sram.word_size
         self.addr_size = self.sram.addr_size
@@ -28,7 +28,7 @@ class simulation():
         else:
             self.num_spare_cols = self.sram.num_spare_cols
         self.sp_file = spfile
-        
+
         self.all_ports = self.sram.all_ports
         self.readwrite_ports = self.sram.readwrite_ports
         self.read_ports = self.sram.read_ports
@@ -53,7 +53,7 @@ class simulation():
         self.v_high = self.vdd_voltage - tech.spice["nom_threshold"]
         self.v_low = tech.spice["nom_threshold"]
         self.gnd_voltage = 0
-        
+
     def create_signal_names(self):
         self.addr_name = "a"
         self.din_name = "din"
@@ -66,12 +66,12 @@ class simulation():
                     "Number of pins generated for characterization \
                     do not match pins of SRAM\nsram.pins = {0}\npin_names = {1}".format(self.sram.pins,
                                                                                         self.pins))
-        
+
     def set_stimulus_variables(self):
         # Clock signals
         self.cycle_times = []
         self.t_current = 0
-        
+
         # control signals: only one cs_b for entire multiported sram, one we_b for each write port
         self.csb_values = {port: [] for port in self.all_ports}
         self.web_values = {port: [] for port in self.readwrite_ports}
@@ -81,13 +81,13 @@ class simulation():
         self.data_value = {port: [] for port in self.write_ports}
         self.wmask_value = {port: [] for port in self.write_ports}
         self.spare_wen_value = {port: [] for port in self.write_ports}
-                           
+
         # Three dimensional list to handle each addr and data bits for each port over the number of checks
         self.addr_values = {port: [[] for bit in range(self.addr_size)] for port in self.all_ports}
         self.data_values = {port: [[] for bit in range(self.word_size + self.num_spare_cols)] for port in self.write_ports}
         self.wmask_values = {port: [[] for bit in range(self.num_wmasks)] for port in self.write_ports}
         self.spare_wen_values = {port: [[] for bit in range(self.num_spare_cols)] for port in self.write_ports}
-        
+
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
         self.fn_cycle_comments = []
@@ -104,13 +104,13 @@ class simulation():
             web_val = 0
         elif op != "noop":
             debug.error("Could not add control signals for port {0}. Command {1} not recognized".format(port, op), 1)
-        
+
         # Append the values depending on the type of port
         self.csb_values[port].append(csb_val)
         # If port is in both lists, add rw control signal. Condition indicates its a RW port.
         if port in self.readwrite_ports:
             self.web_values[port].append(web_val)
-            
+
     def add_data(self, data, port):
         """ Add the array of data values """
         debug.check(len(data)==(self.word_size + self.num_spare_cols), "Invalid data word size.")
@@ -129,7 +129,7 @@ class simulation():
     def add_address(self, address, port):
         """ Add the array of address values """
         debug.check(len(address)==self.addr_size, "Invalid address size.")
-        
+
         self.addr_value[port].append(address)
         bit = self.addr_size - 1
         for c in address:
@@ -170,7 +170,7 @@ class simulation():
             else:
                 debug.error("Non-binary spare enable signal string", 1)
             bit -= 1
- 
+
     def add_write(self, comment, address, data, wmask, port):
         """ Add the control values for a write cycle. """
         debug.check(port in self.write_ports,
@@ -182,18 +182,18 @@ class simulation():
 
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
-        
+
         self.add_control_one_port(port, "write")
         self.add_data(data, port)
         self.add_address(address, port)
-        self.add_wmask(wmask, port)       
+        self.add_wmask(wmask, port)
         self.add_spare_wen("1" * self.num_spare_cols, port)
-        
+
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(unselected_port)
-                    
+
     def add_read(self, comment, address, port):
         """ Add the control values for a read cycle. """
         debug.check(port in self.read_ports,
@@ -206,8 +206,8 @@ class simulation():
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.add_control_one_port(port, "read")
-        self.add_address(address, port)        
-     
+        self.add_address(address, port)
+
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
@@ -220,7 +220,7 @@ class simulation():
             except:
                 self.add_wmask("0" * self.num_wmasks, port)
             self.add_spare_wen("0" * self.num_spare_cols, port)
-        
+
         #Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
@@ -234,7 +234,7 @@ class simulation():
 
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
-         
+
         for port in self.all_ports:
             self.add_noop_one_port(port)
 
@@ -251,7 +251,7 @@ class simulation():
         self.add_address(address, port)
         self.add_wmask(wmask, port)
         self.add_spare_wen("1" * self.num_spare_cols, port)
-                
+
     def add_read_one_port(self, comment, address, port):
         """ Add the control values for a read cycle. Does not increment the period. """
         debug.check(port in self.read_ports,
@@ -259,7 +259,7 @@ class simulation():
                                                                                              self.read_ports))
         debug.info(2, comment)
         self.fn_cycle_comments.append(comment)
-        
+
         self.add_control_one_port(port, "read")
         self.add_address(address, port)
 
@@ -275,16 +275,16 @@ class simulation():
             except:
                 self.add_wmask("0" * self.num_wmasks, port)
             self.add_spare_wen("0" * self.num_spare_cols, port)
-                
+
     def add_noop_one_port(self, port):
-        """ Add the control values for a noop to a single port. Does not increment the period. """   
+        """ Add the control values for a noop to a single port. Does not increment the period. """
         self.add_control_one_port(port, "noop")
-       
+
         try:
             self.add_address(self.addr_value[port][-1], port)
         except:
             self.add_address("0" * self.addr_size, port)
-            
+
         # If the port is also a readwrite then add
         # the same value as previous cycle
         if port in self.write_ports:
@@ -297,7 +297,7 @@ class simulation():
             except:
                 self.add_wmask("0" * self.num_wmasks, port)
             self.add_spare_wen("0" * self.num_spare_cols, port)
- 
+
     def add_noop_clock_one_port(self, port):
         """ Add the control values for a noop to a single port. Increments the period. """
         debug.info(2, 'Clock only on port {}'.format(port))
@@ -324,7 +324,7 @@ class simulation():
                                                                                     time,
                                                                                     time_spacing,
                                                                                     comment))
-        
+
     def gen_cycle_comment(self, op, word, addr, wmask, port, t_current):
         if op == "noop":
             str = "\tIdle during cycle {0} ({1}ns - {2}ns)"
@@ -355,22 +355,22 @@ class simulation():
                                  int(t_current / self.period),
                                  t_current,
                                  t_current + self.period)
-        
+
         return comment
-        
+
     def gen_pin_names(self, port_signal_names, port_info, abits, dbits):
         """Creates the pins names of the SRAM based on the no. of ports."""
-        # This may seem redundant as the pin names are already defined in the sram. However, it is difficult 
-        # to extract the functionality from the names, so they are recreated. As the order is static, changing 
+        # This may seem redundant as the pin names are already defined in the sram. However, it is difficult
+        # to extract the functionality from the names, so they are recreated. As the order is static, changing
         # the order of the pin names will cause issues here.
         pin_names = []
         (addr_name, din_name, dout_name) = port_signal_names
         (total_ports, write_index, read_index) = port_info
-        
+
         for write_input in write_index:
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(din_name, write_input, i))
-        
+
         for port in range(total_ports):
             for i in range(abits):
                 pin_names.append("{0}{1}_{2}".format(addr_name, port, i))
@@ -389,25 +389,25 @@ class simulation():
             for port in write_index:
                 for bit in range(self.num_wmasks):
                     pin_names.append("WMASK{0}_{1}".format(port, bit))
-        
+
         if self.num_spare_cols:
             for port in write_index:
                 for bit in range(self.num_spare_cols):
                     pin_names.append("SPARE_WEN{0}_{1}".format(port, bit))
-            
+
         for read_output in read_index:
             for i in range(dbits):
                 pin_names.append("{0}{1}_{2}".format(dout_name, read_output, i))
-                
+
         pin_names.append("{0}".format("vdd"))
         pin_names.append("{0}".format("gnd"))
         return pin_names
-        
+
     def add_graph_exclusions(self):
         """
         Exclude portions of SRAM from timing graph which are not relevant
         """
-        
+
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
         self.sram.bank.graph_exclude_precharge()
@@ -415,29 +415,29 @@ class simulation():
         self.sram.graph_exclude_data_dff()
         self.sram.graph_exclude_ctrl_dffs()
         self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
-        
+
     def set_internal_spice_names(self):
         """
         Sets important names for characterization such as Sense amp enable and internal bit nets.
         """
-        
+
         port = self.read_ports[0]
         if not OPTS.use_pex:
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-            
+
             sen_with_port = self.get_sen_name(self.graph.all_paths)
             if sen_with_port.endswith(str(port)):
                 self.sen_name = sen_with_port[:-len(str(port))]
             else:
                 self.sen_name = sen_with_port
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
-                
+
             debug.info(2, "s_en name = {}".format(self.sen_name))
-            
+
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
             port_pos = -1 - len(str(self.probe_data)) - len(str(port))
-            
+
             if bl_name_port.endswith(str(port) + "_" + str(self.probe_data)):
                 self.bl_name = bl_name_port[:port_pos] + "{}" + bl_name_port[port_pos + len(str(port)):]
             elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
@@ -445,7 +445,7 @@ class simulation():
             else:
                 self.bl_name = bl_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
-                
+
             if br_name_port.endswith(str(port) + "_" + str(self.probe_data)):
                 self.br_name = br_name_port[:port_pos] + "{}" + br_name_port[port_pos + len(str(port)):]
             elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
@@ -457,22 +457,22 @@ class simulation():
         else:
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-            
+
             self.sen_name = self.get_sen_name(self.graph.all_paths)
             debug.info(2, "s_en name = {}".format(self.sen_name))
-            
+
             self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size - 1)
             self.br_name = "br{0}_{1}".format(port, OPTS.word_size - 1)
             debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
-        
+
     def get_sen_name(self, paths, assumed_port=None):
         """
         Gets the signal name associated with the sense amp enable from input paths.
         Only expects a single path to contain the sen signal name.
         """
-        
+
         sa_mods = factory.get_mods(OPTS.sense_amp)
-        # Any sense amp instantiated should be identical, any change to that 
+        # Any sense amp instantiated should be identical, any change to that
         # will require some identification to determine the mod desired.
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
@@ -480,15 +480,15 @@ class simulation():
         if OPTS.use_pex:
             sen_name = sen_name.split('.')[-1]
         return sen_name
-        
+
     def create_graph(self):
         """
         Creates timing graph to generate the timing paths for the SRAM output.
         """
-        
+
         self.sram.clear_exclude_bits() # Removes previous bit exclusions
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
-        
+
         # Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
         self.sram_instance_name = "X{}".format(self.sram.name)
@@ -498,14 +498,14 @@ class simulation():
         """
         Gets the mods as a set which should be excluded while searching for name.
         """
-        
+
         # Exclude the RBL as it contains bitcells which are not in the main bitcell array
         # so it makes the search awkward
         return set(factory.get_mods(OPTS.replica_bitline))
-        
+
     def get_alias_in_path(self, paths, internal_net, mod, exclusion_set=None):
         """
-        Finds a single alias for the internal_net in given paths. 
+        Finds a single alias for the internal_net in given paths.
         More or less hits cause an error
         """
         net_found = False
@@ -520,7 +520,7 @@ class simulation():
                 net_found = True
         if not net_found:
             debug.error("Could not find {} net in timing paths.".format(internal_net), 1)
-                
+
         return path_net_name
 
     def get_bl_name(self, paths, port):
@@ -530,7 +530,7 @@ class simulation():
         cell_mod = factory.create(module_type=OPTS.bitcell)
         cell_bl = cell_mod.get_bl_name(port)
         cell_br = cell_mod.get_br_name(port)
-            
+
         bl_names = []
         exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
@@ -540,5 +540,5 @@ class simulation():
                 bl_names[i] = bl_names[i].split('.')[-1]
         return bl_names[0], bl_names[1]
 
-     
-    
+
+

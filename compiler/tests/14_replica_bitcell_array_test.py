@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
 import unittest
@@ -27,7 +27,7 @@ class replica_bitcell_array_test(openram_test):
         debug.info(2, "Testing 4x4 array for bitcell")
         a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, rbl=[1, 0])
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

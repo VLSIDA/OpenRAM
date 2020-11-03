@@ -35,7 +35,7 @@ class replica_column(bitcell_base_array):
                 self.total_size += 2
         except AttributeError:
             self.total_size += 2
-            
+
         self.column_offset = column_offset
 
         debug.check(replica_bit != 0 and replica_bit != rows,
@@ -77,9 +77,9 @@ class replica_column(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.replica_cell = factory.create(module_type="replica_{}".format(OPTS.bitcell))
+        self.replica_cell = factory.create(module_type=OPTS.replica_bitcell)
         self.add_mod(self.replica_cell)
-        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
+        self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
         self.add_mod(self.dummy_cell)
         try:
             edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")
@@ -96,7 +96,7 @@ class replica_column(bitcell_base_array):
             end_caps_enabled = cell_properties.bitcell.end_caps
         except AttributeError:
             end_caps_enabled = False
-        
+
         for row in range(self.total_size):
             name="rbc_{0}".format(row)
             # Top/bottom cell are always dummy cells.
@@ -197,7 +197,7 @@ class replica_column(bitcell_base_array):
                     self.copy_power_pins(inst, pin_name)
                 else:
                     self.copy_layout_pin(inst, pin_name)
-       
+
     def get_bitline_names(self, port=None):
         if port == None:
             return self.all_bitline_names
@@ -205,9 +205,9 @@ class replica_column(bitcell_base_array):
             return self.bitline_names[port]
 
     def get_bitcell_pins(self, row, col):
-        """ 
+        """
         Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array 
+        indexed by column and row, for instance use in bitcell_array
         """
         bitcell_pins = []
         for port in self.all_ports:
@@ -219,7 +219,7 @@ class replica_column(bitcell_base_array):
         return bitcell_pins
 
     def get_bitcell_pins_col_cap(self, row, col):
-        """ 
+        """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
         """
@@ -242,4 +242,4 @@ class replica_column(bitcell_base_array):
             if row != self.replica_bit:
                 self.graph_inst_exclude.add(cell)
 
-                
+

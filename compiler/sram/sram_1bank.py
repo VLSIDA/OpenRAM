@@ -19,13 +19,13 @@ class sram_1bank(sram_base):
     """
     def __init__(self, name, sram_config):
         sram_base.__init__(self, name, sram_config)
-            
+
     def create_modules(self):
         """
         This adds the modules for a single bank SRAM with control
         logic.
         """
-        
+
         self.bank_inst=self.create_bank(0)
 
         self.control_logic_insts = self.create_control_logic()
@@ -51,7 +51,7 @@ class sram_1bank(sram_base):
         This places the instances for a single bank SRAM with control
         logic and up to 2 ports.
         """
-        
+
         # No orientation or offset
         self.place_bank(self.bank_inst, [0, 0], 1, 1)
 
@@ -129,10 +129,10 @@ class sram_1bank(sram_base):
             y_offset = self.bank.bank_array_ll.y
             self.row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(self.row_addr_pos[port], mirror="XY")
-        
+
     def place_control(self):
         port = 0
-        
+
         # This includes 2 M2 pitches for the row addr clock line.
         # The delay line is aligned with the bitcell array while the control logic is aligned with the port_data
         # using the control_logic_center value.
@@ -171,7 +171,7 @@ class sram_1bank(sram_base):
             x_offset = self.col_addr_dff_insts[port].rx()
         else:
             self.col_addr_pos[port] = vector(x_offset, 0)
-            
+
         if port in self.write_ports:
             if self.write_size:
                 # Add the write mask flops below the write mask AND array.
@@ -201,7 +201,7 @@ class sram_1bank(sram_base):
 
         if len(self.all_ports) > 1:
             port = 1
-            
+
             # Add the col address flops below the bank to the right of the control logic
             x_offset = self.control_logic_insts[port].lx() - 2 * self.dff.width
             # Place it a data bus below the x-axis, but at least as high as the control logic to not block
@@ -215,7 +215,7 @@ class sram_1bank(sram_base):
                 x_offset = self.col_addr_dff_insts[port].lx()
             else:
                 self.col_addr_pos[port] = vector(x_offset, y_offset)
-            
+
             if port in self.write_ports:
                 # Add spare write enable flops to the right of the data flops since the spare
                 # columns will be on the left
@@ -248,7 +248,7 @@ class sram_1bank(sram_base):
         highest_coord = self.find_highest_coords()
         lowest_coord = self.find_lowest_coords()
         bbox = [lowest_coord, highest_coord]
-        
+
         for port in self.all_ports:
             # Depending on the port, use the bottom/top or left/right sides
             # Port 0 is left/bottom
@@ -296,7 +296,7 @@ class sram_1bank(sram_base):
                         self.copy_layout_pin(self.data_dff_insts[port],
                                              "din_{}".format(bit),
                                              "din{0}[{1}]".format(port, bit))
-                        
+
             # Data output pins go to BOTTOM/TOP
             if port in self.readwrite_ports and OPTS.perimeter_pins:
                 for bit in range(self.word_size + self.num_spare_cols):
@@ -319,8 +319,8 @@ class sram_1bank(sram_base):
                         self.copy_layout_pin(self.bank_inst,
                                              "dout{0}_{1}".format(port, bit),
                                              "dout{0}[{1}]".format(port, bit))
-                    
-                        
+
+
 
             # Lower address bits go to BOTTOM/TOP
             for bit in range(self.col_addr_size):
@@ -333,7 +333,7 @@ class sram_1bank(sram_base):
                     self.copy_layout_pin(self.col_addr_dff_insts[port],
                                          "din_{}".format(bit),
                                          "addr{0}[{1}]".format(port, bit))
-                
+
             # Upper address bits go to LEFT/RIGHT
             for bit in range(self.row_addr_size):
                 if OPTS.perimeter_pins:
@@ -345,7 +345,7 @@ class sram_1bank(sram_base):
                     self.copy_layout_pin(self.row_addr_dff_insts[port],
                                          "din_{}".format(bit),
                                          "addr{0}[{1}]".format(port, bit + self.col_addr_size))
-                    
+
             # Write mask pins go to BOTTOM/TOP
             if port in self.write_ports:
                 if self.write_size:
@@ -379,20 +379,20 @@ class sram_1bank(sram_base):
         self.add_layout_pins()
 
         self.route_clk()
-        
+
         self.route_control_logic()
-        
+
         self.route_row_addr_dff()
 
     def route_dffs(self, add_routes=True):
-        
+
         for port in self.all_ports:
             self.route_dff(port, add_routes)
 
     def route_dff(self, port, add_routes):
 
         route_map = []
-        
+
         # column mux dff is routed on it's own since it is to the far end
         # decoder inputs are min pitch M2, so need to use lower layer stack
         if self.col_addr_size > 0:
@@ -408,7 +408,7 @@ class sram_1bank(sram_base):
             else:
                 offset = vector(0,
                                 self.bank.height + 2 * self.m1_space)
-            
+
             cr = channel_route.channel_route(netlist=route_map,
                                              offset=offset,
                                              layer_stack=self.m1_stack,
@@ -420,7 +420,7 @@ class sram_1bank(sram_base):
                 self.col_addr_bus_size[port] = cr.height
 
         route_map = []
-        
+
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
@@ -436,7 +436,7 @@ class sram_1bank(sram_base):
             bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
-            
+
         if port in self.readwrite_ports and OPTS.perimeter_pins:
             # outputs from sense amp
             # These are the output pins which had their pin placed on the perimeter, so route from the
@@ -454,14 +454,14 @@ class sram_1bank(sram_base):
             bank_names = ["bank_spare_wen{0}_{1}".format(port, x) for x in range(self.num_spare_cols)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
-                
+
         if len(route_map) > 0:
-            
+
             if self.num_wmasks > 0 and port in self.write_ports:
                 layer_stack = self.m3_stack
             else:
                 layer_stack = self.m1_stack
-                
+
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 - self.data_bus_size[port] + 2 * self.m1_pitch)
@@ -486,7 +486,7 @@ class sram_1bank(sram_base):
                     self.connect_inst([])
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
-                    
+
     def route_clk(self):
         """ Route the clock network """
 
@@ -497,7 +497,7 @@ class sram_1bank(sram_base):
             # are clk_buf and clk_buf_bar
             control_clk_buf_pin = self.control_logic_insts[port].get_pin("clk_buf")
             control_clk_buf_pos = control_clk_buf_pin.center()
-            
+
             # This uses a metal2 track to the right (for port0) of the control/row addr DFF
             # to route vertically. For port1, it is to the left.
             row_addr_clk_pin = self.row_addr_dff_insts[port].get_pin("clk")
@@ -518,11 +518,11 @@ class sram_1bank(sram_base):
             self.add_via_stack_center(from_layer=control_clk_buf_pin.layer,
                                       to_layer="m2",
                                       offset=clk_steiner_pos)
-            
+
             # Note, the via to the control logic is taken care of above
             self.add_wire(self.m2_stack[::-1],
                           [row_addr_clk_pos, mid1_pos, clk_steiner_pos])
-        
+
             if self.col_addr_dff:
                 dff_clk_pin = self.col_addr_dff_insts[port].get_pin("clk")
                 dff_clk_pos = dff_clk_pin.center()
@@ -567,9 +567,9 @@ class sram_1bank(sram_base):
             self.add_via_stack_center(from_layer=dest_pin.layer,
                                       to_layer="m2",
                                       offset=dest_pin.center())
-            
+
     def route_row_addr_dff(self):
-        """ 
+        """
         Connect the output of the row flops to the bank pins
         """
         for port in self.all_ports:
@@ -602,7 +602,7 @@ class sram_1bank(sram_base):
             self.add_label(text=n,
                            layer=pin.layer,
                            offset=pin.center())
-                           
+
     def graph_exclude_data_dff(self):
         """
         Removes data dff and wmask dff (if applicable) from search graph.
@@ -616,7 +616,7 @@ class sram_1bank(sram_base):
         if self.num_spare_cols:
             for inst in self.spare_wen_dff_insts:
                 self.graph_inst_exclude.add(inst)
-    
+
     def graph_exclude_addr_dff(self):
         """
         Removes data dff from search graph.
@@ -624,7 +624,7 @@ class sram_1bank(sram_base):
         # Address is considered not part of the critical path, subjectively removed
         for inst in self.row_addr_dff_insts:
             self.graph_inst_exclude.add(inst)
-            
+
         if self.col_addr_dff:
             for inst in self.col_addr_dff_insts:
                 self.graph_inst_exclude.add(inst)
@@ -636,7 +636,7 @@ class sram_1bank(sram_base):
         # Insts located in control logic, exclusion function called here
         for inst in self.control_logic_insts:
             inst.mod.graph_exclude_dffs()
-        
+
     def get_cell_name(self, inst_name, row, col):
         """
         Gets the spice name of the target bitcell.
@@ -645,6 +645,6 @@ class sram_1bank(sram_base):
         if inst_name.find("x") != 0:
             inst_name = "x" + inst_name
         return self.bank_inst.mod.get_cell_name(inst_name + ".x" + self.bank_inst.name, row, col)
-    
+
     def get_bank_num(self, inst_name, row, col):
         return 0

@@ -28,7 +28,7 @@ class ptx(design.design):
 
     ll, ur, width and height refer to the active area.
     Wells and poly may extend beyond this.
- 
+
     """
     def __init__(self,
                  name="",
@@ -91,7 +91,7 @@ class ptx(design.design):
 
         self.route_layer_width = drc("minwidth_{}".format(self.route_layer))
         self.route_layer_space = drc("{0}_to_{0}".format(self.route_layer))
-        
+
         # Since it has variable height, it is not a pgate.
         self.create_netlist()
         # We must always create ptx layout for pbitcell
@@ -104,7 +104,7 @@ class ptx(design.design):
 
         # (0,0) will be the corner of the active area (not the larger well)
         self.translate_all(self.active_offset)
-        
+
     def create_layout(self):
         """Calls all functions related to the generation of the layout"""
         self.setup_layout_constants()
@@ -166,7 +166,7 @@ class ptx(design.design):
                                                                              self.mults,
                                                                              self.tx_width,
                                                                              drc("minwidth_poly"))
-            
+
     def setup_layout_constants(self):
         """
         Pre-compute some handy layout parameters.
@@ -184,7 +184,7 @@ class ptx(design.design):
             self.well_type = "n"
         else:
             self.error("Invalid transitor type.", -1)
-            
+
         # This is not actually instantiated but used for calculations
         self.active_contact = factory.create(module_type="contact",
                                              layer_stack=self.active_stack,
@@ -194,7 +194,7 @@ class ptx(design.design):
         # This is the extra poly spacing due to the poly contact to poly contact pitch
         # of contacted gates
         extra_poly_contact_width = contact.poly_contact.width - self.poly_width
-        
+
         # This is the spacing between S/D contacts
         # This is the spacing between the poly gates
         self.min_poly_pitch = self.poly_space + self.poly_width
@@ -205,7 +205,7 @@ class ptx(design.design):
                               self.contact_pitch)
 
         self.end_to_contact = 0.5 * self.active_contact.width
-        
+
         # Active width is determined by enclosure on both ends and contacted pitch,
         # at least one poly and n-1 poly pitches
         self.active_width = 2 * self.end_to_contact + self.active_contact.width \
@@ -216,7 +216,7 @@ class ptx(design.design):
 
         # Poly height must include poly extension over active
         self.poly_height = self.tx_width + 2 * self.poly_extend_active
-        
+
         self.active_offset = vector([self.well_enclose_active] * 2)
 
         # Well enclosure of active, ensure minwidth as well
@@ -230,7 +230,7 @@ class ptx(design.design):
         else:
             self.well_height = self.height
             self.well_width = self.width
-            
+
         # We are going to shift the 0,0, so include that in the width and height
         self.height = self.active_height
         self.width = self.active_width
@@ -238,7 +238,7 @@ class ptx(design.design):
         # This is the center of the first active contact offset (centered vertically)
         self.contact_offset = self.active_offset + vector(0.5 * self.active_contact.width,
                                                           0.5 * self.active_height)
-                                     
+
         # Min area results are just flagged for now.
         debug.check(self.active_width * self.active_height >= self.minarea_active,
                     "Minimum active area violated.")
@@ -286,7 +286,7 @@ class ptx(design.design):
         """
         Connect each contact  up/down to a source or drain pin
         """
-            
+
         if len(positions) <= 1:
             return
 
@@ -325,11 +325,11 @@ class ptx(design.design):
         # poly is one contacted spacing from the end and down an extension
         poly_offset = self.contact_offset \
                       + vector(0.5 * self.active_contact.width + 0.5 * self.poly_width + self.active_contact_to_gate, 0)
-        
+
         # poly_positions are the bottom center of the poly gates
         self.poly_positions = []
         self.poly_gates = []
-        
+
         # It is important that these are from left to right,
         # so that the pins are in the right
         # order for the accessors
@@ -347,12 +347,12 @@ class ptx(design.design):
                                                    width=self.poly_width)
             self.poly_positions.append(poly_offset)
             self.poly_gates.append(gate)
-            
+
             poly_offset = poly_offset + vector(self.poly_pitch, 0)
 
         if self.connect_poly:
             self.connect_fingered_poly(self.poly_positions)
-            
+
     def add_active(self):
         """
         Adding the diffusion (active region = diffusion region)
@@ -388,7 +388,7 @@ class ptx(design.design):
                                  width=self.well_width,
                                  height=self.well_height)
             setattr(self, well_name, well)
-            
+
         if "vtg" in layer:
             self.add_rect(layer="vtg",
                           offset=well_ll,
@@ -412,7 +412,7 @@ class ptx(design.design):
         # Keep a list of the source/drain contacts
         self.source_contacts = []
         self.drain_contacts = []
-        
+
         # First one is always a SOURCE
         label = "S"
         pos = self.contact_offset
@@ -437,7 +437,7 @@ class ptx(design.design):
                 else:
                     label = "S"
                     source_positions.append(pos)
-                    
+
                 if (label=="S" and self.add_source_contact):
                     contact = self.add_diff_contact(label, pos)
                     self.source_contacts.append(contact)
@@ -469,16 +469,16 @@ class ptx(design.design):
             self.add_layout_pin_rect_center(text=label,
                                             layer="active",
                                             offset=pos)
-                
+
         if self.connect_source_active:
             self.connect_fingered_active(source_positions, "S", top=(self.tx_type=="pmos"))
 
         if self.connect_drain_active:
             self.connect_fingered_active(drain_positions, "D", top=(self.tx_type=="nmos"))
-            
+
     def get_stage_effort(self, cout):
         """Returns an object representing the parameters for delay in tau units."""
-        
+
         # FIXME: Using the same definition as the pinv.py.
         parasitic_delay = 1
         size = self.mults * self.tx_width / drc("minwidth_tx")
@@ -487,12 +487,12 @@ class ptx(design.design):
                                              self.input_load(),
                                              cout,
                                              parasitic_delay)
-                                             
+
     def input_load(self):
         """
         Returns the relative gate cin of the tx
         """
-        
+
         # FIXME: this will be applied for the loads of the drain/source
         return self.mults * self.tx_width / drc("minwidth_tx")
 
@@ -518,10 +518,10 @@ class ptx(design.design):
             pin_width = via.mod.second_layer_width
         else:
             via = None
-            
+
             pin_height = None
             pin_width = None
-            
+
         # Source drain vias are all vertical
         self.add_layout_pin_rect_center(text=label,
                                         layer=layer,
@@ -530,7 +530,7 @@ class ptx(design.design):
                                         height=pin_height)
 
         return(via)
-        
+
     def get_cin(self):
         """Returns the relative gate cin of the tx"""
         return self.tx_width / drc("minwidth_tx")
@@ -541,4 +541,4 @@ class ptx(design.design):
         Overrides base class function.
         """
         self.add_graph_edges(graph, port_nets)
-        
+

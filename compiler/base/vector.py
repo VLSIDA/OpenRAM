@@ -39,8 +39,8 @@ class vector():
         return "v["+str(self.x)+","+str(self.y)+"]"
 
     def __setitem__(self, index, value):
-        """ 
-        override setitem function 
+        """
+        override setitem function
         can set value by vector[index]=value
         """
         if index==0:
@@ -50,10 +50,10 @@ class vector():
         else:
             self.x=float(value[0])
             self.y=float(value[1])
-            
+
     def __getitem__(self, index):
         """
-        override getitem function 
+        override getitem function
         can get value by value=vector[index]
         """
         if index==0:
@@ -61,7 +61,7 @@ class vector():
         elif index==1:
             return self.y
         else:
-            return self                
+            return self
 
     def __add__(self, other):
         """
@@ -109,7 +109,7 @@ class vector():
         """
         Changes the coodrinate to match the grid settings
         """
-        grid = tech.drc["grid"]  
+        grid = tech.drc["grid"]
         # this gets the nearest integer value
         off_in_grid = int(round(round((offset / grid), 2), 0))
         offset = off_in_grid * grid
@@ -150,8 +150,8 @@ class vector():
         Override round function
         """
         return vector(int(round(self.x)),int(round(self.y)))
-    
-    
+
+
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):

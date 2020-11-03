@@ -58,13 +58,13 @@ class wire(wire_path):
                                             via_connect.first_layer_width)
         self.horiz_layer_contact_width = max(via_connect.second_layer_height,
                                              via_connect.first_layer_height)
-        
+
         self.node_to_node = [drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.width,
                              drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.height]
         self.pitch = self.compute_pitch(self.layer_stack)
 
     def compute_pitch(self, layer_stack):
-        
+
         """
         This is contact direction independent pitch,
         i.e. we take the maximum contact dimension
@@ -79,13 +79,13 @@ class wire(wire_path):
             except AttributeError:
                 contact1 = getattr(contact, layer2 + "_via")
         max_contact = max(contact1.width, contact1.height)
-        
+
         layer1_space = drc("{0}_to_{0}".format(layer1))
         layer2_space = drc("{0}_to_{0}".format(layer2))
         pitch = max_contact + max(layer1_space, layer2_space)
 
         return pitch
-        
+
     # create a 1x1 contact
     def create_vias(self):
         """ Add a via and corner square at every corner of the path."""

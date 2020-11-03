@@ -26,7 +26,7 @@ scale = { 't':1, 'u':1, 'v':1, 'w':1, 'x':1 }
 
 _default_unit = "cm"
 
-_m = { 
+_m = {
       'm' :   1,
       'cm':   0.01,
       'mm':   0.001,
@@ -51,7 +51,7 @@ def set(uscale=None, vscale=None, wscale=None, xscale=None, defaultunit=None):
 def _convert_to(l, dest_unit="m"):
     if type(l) in (types.IntType, types.LongType, types.FloatType):
         return l * _m[_default_unit] * scale['u'] / _m[dest_unit]
-    elif not isinstance(l, length): 
+    elif not isinstance(l, length):
         l = length(l)       # convert to length instance if necessary
 
     return (l.t + l.u*scale['u'] + l.v*scale['v'] + l.w*scale['w'] + l.x*scale['x']) / _m[dest_unit]

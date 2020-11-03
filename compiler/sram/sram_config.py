@@ -13,7 +13,7 @@ from sram_factory import factory
 
 class sram_config:
     """ This is a structure that is used to hold the SRAM configuration options. """
-    
+
     def __init__(self, word_size, num_words, write_size=None, num_banks=1, words_per_row=None, num_spare_rows=0, num_spare_cols=0):
         self.word_size = word_size
         self.num_words = num_words
@@ -29,7 +29,7 @@ class sram_config:
 
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """
-        
+
         members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
 
         # Copy all the variables to the local module
@@ -39,14 +39,14 @@ class sram_config:
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
 
-        bitcell = factory.create(module_type="bitcell")
-        
+        bitcell = factory.create(module_type=OPTS.bitcell, cell_name=OPTS.bitcell_name)
+
         debug.check(self.num_banks in [1, 2, 4],
                     "Valid number of banks are 1 , 2 and 4.")
 
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank
-        
+
         # If this was hard coded, don't dynamically compute it!
         if not self.words_per_row:
             # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
@@ -64,18 +64,18 @@ class sram_config:
         self.recompute_sizes()
 
     def recompute_sizes(self):
-        """ 
-        Calculate the auxiliary values assuming fixed number of words per row. 
-        This can be called multiple times from the unit test when we reconfigure an 
+        """
+        Calculate the auxiliary values assuming fixed number of words per row.
+        This can be called multiple times from the unit test when we reconfigure an
         SRAM for testing.
         """
 
         debug.info(1, "Recomputing with words per row: {}".format(self.words_per_row))
-        
+
         # If the banks changed
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank
-        
+
         # Fix the number of columns and rows
         self.num_cols = int(self.words_per_row * self.word_size)
         self.num_rows_temp = int(self.num_words_per_bank / self.words_per_row)
@@ -116,11 +116,11 @@ class sram_config:
             debug.check(tentative_num_rows * words_per_row <= 4096,
                         "Number of words exceeds 2048")
             return int(words_per_row * tentative_num_rows / 512)
-        
+
         # Recompute the words per row given a hard min
         if (not OPTS.is_unit_test and tentative_num_rows < 16):
             debug.check(tentative_num_rows * words_per_row >= 16,
                         "Minimum number of rows is 16, but given {0}".format(tentative_num_rows))
             return int(words_per_row * tentative_num_rows / 16)
-            
+
         return words_per_row

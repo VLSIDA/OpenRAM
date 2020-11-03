@@ -8,17 +8,29 @@
 
 import debug
 import design
+import utils
 from globals import OPTS
 import logical_effort
-from tech import parameter, drc, layer
+from tech import GDS, parameter, drc, layer
 
 
 class bitcell_base(design.design):
     """
     Base bitcell parameters to be over-riden.
     """
-    def __init__(self, name):
-        design.design.__init__(self, name)
+    cell_size_layer = "boundary"
+
+    def __init__(self, name, cell_name, hard_cell=True):
+        design.design.__init__(self, name, cell_name)
+
+        if hard_cell:
+            (self.width, self.height) = utils.get_libcell_size(cell_name,
+                                                               GDS["unit"],
+                                                               layer[self.cell_size_layer])
+            self.pin_map = utils.get_libcell_pins(self.pin_names,
+                                                  cell_name,
+                                                  GDS["unit"])
+            self.add_pin_types(self.type_list)
 
     def get_stage_effort(self, load):
         parasitic_delay = 1
@@ -49,13 +61,13 @@ class bitcell_base(design.design):
 
     def input_load(self):
         """ Return the relative capacitance of the access transistor gates """
-        
+
         # FIXME: This applies to bitline capacitances as well.
         # FIXME: sizing is not accurate with the handmade cell.
         # Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"] / drc["minwidth_tx"]
         return 2 * access_tx_cin
-        
+
     def get_wl_cin(self):
         """Return the relative capacitance of the access transistor gates"""
         # This is a handmade cell so the value must be entered
@@ -82,7 +94,7 @@ class bitcell_base(design.design):
 
     def get_storage_net_offset(self):
         """
-        Gets the location of the storage net labels to add top level 
+        Gets the location of the storage net labels to add top level
         labels for pex simulation.
         """
         # If we generated the bitcell, we already know where Q and Q_bar are
@@ -92,7 +104,7 @@ class bitcell_base(design.design):
                 for text in self.gds.getTexts(layer["m1"]):
                     if self.storage_nets[i] == text.textString.rstrip('\x00'):
                         self.storage_net_offsets.append(text.coordinates[0])
-                    
+
             for i in range(len(self.storage_net_offsets)):
                 self.storage_net_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.storage_net_offsets[i]])
 
@@ -116,7 +128,7 @@ class bitcell_base(design.design):
                     if bl_names[i] == text.textString.rstrip('\x00'):
                         self.bl_offsets.append(text.coordinates[0])
                         found_bl.append(bl_names[i])
-                        
+
                         continue
 
         for i in range(len(br_names)):
@@ -131,16 +143,16 @@ class bitcell_base(design.design):
             self.bl_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.bl_offsets[i]])
 
         for i in range(len(self.br_offsets)):
-            self.br_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.br_offsets[i]]) 
+            self.br_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.br_offsets[i]])
 
         return(self.bl_offsets, self.br_offsets, found_bl, found_br)
 
-    def get_normalized_storage_nets_offset(self):               
+    def get_normalized_storage_nets_offset(self):
         """
         Convert storage net offset to be relative to the bottom left corner
-        of the bitcell. This is useful for making sense of offsets outside 
+        of the bitcell. This is useful for making sense of offsets outside
         of the bitcell.
-        """     
+        """
         if OPTS.bitcell is not "pbitcell":
             normalized_storage_net_offset = self.get_storage_net_offset()
 

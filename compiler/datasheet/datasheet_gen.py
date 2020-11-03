@@ -112,7 +112,7 @@ def parse_characterizer_csv(f, pages):
 
             DATETIME = row[col]
             col += 1
-          
+
             ANALYTICAL_MODEL = row[col]
             col += 1
 
@@ -121,7 +121,7 @@ def parse_characterizer_csv(f, pages):
 
             LVS = row[col]
             col += 1
- 
+
             AREA = row[col]
             col += 1
 
@@ -565,7 +565,7 @@ def parse_characterizer_csv(f, pages):
                         for element in row[col_start:col-1]:
                             sheet.description.append(str(element))
                         break
-                # parse initial power and leakage information 
+                # parse initial power and leakage information
                 while(True):
                     start = col
                     if(row[col].startswith('power')):

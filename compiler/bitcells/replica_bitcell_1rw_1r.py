@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
 import debug
-import utils
-from tech import GDS,layer,drc,parameter
+import bitcell_base
 from tech import cell_properties as props
+from globals import OPTS
 
-class replica_bitcell_1rw_1r(design.design):
+
+class replica_bitcell_1rw_1r(bitcell_base.bitcell_base):
     """
     A single bit cell which is forced to store a 0.
     This module implements the single memory cell used in the design. It
@@ -26,20 +26,13 @@ class replica_bitcell_1rw_1r(design.design):
                  props.bitcell.cell_1rw1r.pin.wl1,
                  props.bitcell.cell_1rw1r.pin.vdd,
                  props.bitcell.cell_1rw1r.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
 
-    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]  
-    (width,height) = utils.get_libcell_size("replica_cell_1rw_1r", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1rw_1r", GDS["unit"])
-
-    def __init__(self, name=""):
-        # Ignore the name argument        
-        design.design.__init__(self, "replica_cell_1rw_1r")
+    def __init__(self, name, cell_name=None):
+        if not cell_name:
+            cell_name = OPTS.replica_bitcell_name
+        super().__init__(name, cell_name)
         debug.info(2, "Create replica bitcell 1rw+1r object")
-
-        self.width = replica_bitcell_1rw_1r.width
-        self.height = replica_bitcell_1rw_1r.height
-        self.pin_map = replica_bitcell_1rw_1r.pin_map
-        self.add_pin_types(self.type_list)
 
     def get_stage_effort(self, load):
         parasitic_delay = 1
@@ -47,10 +40,10 @@ class replica_bitcell_1rw_1r(design.design):
         cin = 3 #Assumes always a minimum sizes inverter. Could be specified in the tech.py file.
         read_port_load = 0.5 #min size NMOS gate load
         return logical_effort.logical_effort('bitline', size, cin, load+read_port_load, parasitic_delay, False)
-        
+
     def input_load(self):
         """Return the relative capacitance of the access transistor gates"""
-        
+
         # FIXME: This applies to bitline capacitances as well.
         # FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"]/drc["minwidth_tx"]

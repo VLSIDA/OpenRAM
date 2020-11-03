@@ -23,7 +23,7 @@ class precharge_array(design.design):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} size: {1} bl: {2} br: {3}".format(columns, size, bitcell_bl, bitcell_br))
-        
+
         self.columns = columns
         self.offsets = offsets
         self.size = size
@@ -35,7 +35,7 @@ class precharge_array(design.design):
             self.en_bar_layer = "m3"
         else:
             self.en_bar_layer = "m1"
-            
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -61,10 +61,10 @@ class precharge_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_insts()
-        
+
     def create_layout(self):
         self.place_insts()
-        
+
         self.width = self.offsets[-1] + self.pc_cell.width
         self.height = self.pc_cell.height
 
@@ -94,12 +94,12 @@ class precharge_array(design.design):
                                       to_layer=self.en_bar_layer,
                                       offset=inst.get_pin("en_bar").center())
             self.copy_layout_pin(inst, "vdd")
-            
+
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             self.copy_layout_pin(inst, "bl", "bl_{0}".format(i))
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
-        
+
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""
         self.local_insts = []
@@ -114,7 +114,7 @@ class precharge_array(design.design):
 
     def place_insts(self):
         """ Places precharge array by horizontally tiling the precharge cell"""
-        
+
         # Default to single spaced columns
         if not self.offsets:
             self.offsets = [n * self.pc_cell.width for n in range(self.columns)]
@@ -130,4 +130,4 @@ class precharge_array(design.design):
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
 
-        
+

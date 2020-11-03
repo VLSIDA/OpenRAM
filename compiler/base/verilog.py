@@ -9,13 +9,13 @@ import debug
 import math
 
 class verilog:
-    """ 
+    """
     Create a behavioral Verilog file for simulation.
     This is inherited by the sram_base class.
     """
     def __init__(self):
         pass
-        
+
     def verilog_write(self,verilog_name):
         """ Write a behavioral Verilog model. """
         self.vf = open(verilog_name, "w")
@@ -67,7 +67,7 @@ class verilog:
             self.add_inputs_outputs(port)
 
         self.vf.write("\n")
-            
+
         for port in self.all_ports:
             self.register_inputs(port)
 
@@ -79,8 +79,8 @@ class verilog:
                 self.add_write_block(port)
             if port in self.read_ports:
                 self.add_read_block(port)
-                
-        self.vf.write("\n")    
+
+        self.vf.write("\n")
         self.vf.write("endmodule\n")
         self.vf.close()
 
@@ -91,9 +91,9 @@ class verilog:
         """
         self.add_regs(port)
         self.add_flops(port)
-            
+
     def add_regs(self, port):
-        """ 
+        """
         Create the input regs for the given port.
         """
         self.vf.write("  reg  csb{0}_reg;\n".format(port))
@@ -107,7 +107,7 @@ class verilog:
             self.vf.write("  reg [DATA_WIDTH-1:0]  din{0}_reg;\n".format(port))
         if port in self.read_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  dout{0};\n".format(port))
-            
+
     def add_flops(self, port):
         """
         Add the flop behavior logic for a port.
@@ -125,7 +125,7 @@ class verilog:
         self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
         if port in self.read_ports:
             self.add_write_read_checks(port)
-        
+
         if port in self.write_ports:
             self.vf.write("    din{0}_reg = din{0};\n".format(port))
         if port in self.read_ports:
@@ -150,7 +150,7 @@ class verilog:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b\",addr{0}_reg,din{0}_reg);\n".format(port))
 
         self.vf.write("  end\n\n")
-            
+
 
     def add_inputs_outputs(self, port):
         """
@@ -203,7 +203,7 @@ class verilog:
         else:
             self.vf.write("        mem[addr{0}_reg] = din{0}_reg;\n".format(port))
         self.vf.write("  end\n")
-        
+
     def add_read_block(self, port):
         """
         Add a read port block.
@@ -231,12 +231,12 @@ class verilog:
             wport_control = "!csb{0} && !web{0}".format(wport)
         else:
             wport_control = "!csb{0}".format(wport)
-            
+
         self.vf.write("    if ({1} && {3} && (addr{0} == addr{2}))\n".format(wport,wport_control,rport,rport_control))
         self.vf.write("         $display($time,\" WARNING: Writing and reading addr{0}=%b and addr{1}=%b simultaneously!\",addr{0},addr{1});\n".format(wport,rport))
 
     def add_write_read_checks(self, rport):
-        """ 
+        """
         Add a warning if we read from an address that we are currently writing.
         Can be fixed if we appropriately size the write drivers to do this .
         """

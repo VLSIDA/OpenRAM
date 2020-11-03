@@ -27,11 +27,11 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
         debug.check(len(self.all_ports)<=2, "Only support dual port or less in global bitcell array.")
         self.rbl = [1, 1 if len(self.all_ports)>1 else 0]
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        
+
     def create_netlist(self):
         """ Create and connect the netlist """
         self.add_modules()
@@ -43,11 +43,11 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.place()
 
         self.route()
-        
+
         self.add_layout_pins()
 
         self.add_boundary()
-        
+
         self.DRC_LVS()
 
     def add_modules(self):
@@ -88,7 +88,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     rows=self.row_size,
                                     cols=cols,
                                     rbl=self.rbl)
-                
+
             self.add_mod(la)
             self.local_mods.append(la)
 
@@ -108,7 +108,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             self.rbl_bitline_names[0].append("rbl_bl_{}_0".format(port))
         for port in self.all_ports:
             self.rbl_bitline_names[0].append("rbl_br_{}_0".format(port))
-        
+
         for col in range(self.column_size):
             for port in self.all_ports:
                 self.bitline_names[port].append("bl_{0}_{1}".format(port, col))
@@ -120,7 +120,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                 self.rbl_bitline_names[1].append("rbl_bl_{}_1".format(port))
             for port in self.all_ports:
                 self.rbl_bitline_names[1].append("rbl_br_{}_1".format(port))
-                
+
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
         # Make a flat list too
@@ -130,19 +130,19 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         self.add_pin_list(self.all_bitline_names, "INOUT")
         if len(self.all_ports) > 1:
             self.add_pin_list(self.rbl_bitline_names[1], "INOUT")
-            
+
     def add_wordline_pins(self):
 
         self.rbl_wordline_names = [[] for x in self.all_ports]
-        
+
         self.wordline_names = [[] for x in self.all_ports]
 
         for bit in self.all_ports:
             for port in self.all_ports:
                 self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
-            
+
         self.all_rbl_wordline_names = [x for sl in zip(*self.rbl_wordline_names) for x in sl]
-        
+
         # Regular WLs
         for row in range(self.row_size):
             for port in self.all_ports:
@@ -163,11 +163,11 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
             name = "la_{0}".format(col)
             self.local_insts.append(self.add_inst(name=name,
                                                   mod=mod))
-            
+
             temp = []
             if col == 0:
                 temp.extend(self.get_rbl_bitline_names(0))
-        
+
             port_inouts = [x for x in mod.get_inouts() if x.startswith("bl") or x.startswith("br")]
             for pin_name in port_inouts:
                 # Offset of the last underscore that defines the bit number
@@ -180,18 +180,18 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                 # Strip the bit and add the new one
                 new_name = "{0}_{1}".format(base_name, col + col_value)
                 temp.append(new_name)
-            
+
             if len(self.all_ports) > 1 and mod == self.local_mods[-1]:
                 temp.extend(self.get_rbl_bitline_names(1))
 
             for port in self.all_ports:
                 port_inputs = [x for x in mod.get_inputs() if "wl_{}".format(port) in x]
                 temp.extend(port_inputs)
-                    
+
             temp.append("vdd")
             temp.append("gnd")
             self.connect_inst(temp)
-        
+
     def place(self):
         offset = vector(0, 0)
         for inst in self.local_insts:
@@ -204,7 +204,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
     def route(self):
 
         pass
-    
+
     def add_layout_pins(self):
 
         # Regular bitlines
@@ -230,11 +230,11 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                                layer=left_pin.layer,
                                                start=left_pin.lc(),
                                                end=right_pin.rc())
-                    
+
         # Replica bitlines
         self.copy_layout_pin(self.local_insts[0], "rbl_bl_0_0")
         self.copy_layout_pin(self.local_insts[0], "rbl_br_0_0")
-        
+
         if len(self.all_ports) > 1:
             self.copy_layout_pin(self.local_insts[0], "rbl_bl_1_0")
             self.copy_layout_pin(self.local_insts[0], "rbl_br_1_0")
@@ -269,10 +269,10 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         return offsets
 
     def graph_exclude_bits(self, targ_row, targ_col):
-        """ 
-        Excludes bits in column from being added to graph except target 
         """
-        
+        Excludes bits in column from being added to graph except target
+        """
+
         # This must find which local array includes the specified column
         # Find the summation of columns that is large and take the one before
         for i, col in enumerate(self.col_offsets):
@@ -303,7 +303,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""
-        
+
         # This must find which local array includes the specified column
         # Find the summation of columns that is large and take the one before
         for i, local_col in enumerate(self.col_offsets):
@@ -321,9 +321,9 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         local_col = col - self.col_offsets[i - 1]
 
         return local_array.get_cell_name(inst_name + '.x' + local_inst.name, row, local_col)
-            
+
     def clear_exclude_bits(self):
-        """ 
+        """
         Clears the bit exclusions
         """
         for mod in self.local_mods:
@@ -331,6 +331,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def graph_exclude_dffs(self):
         """Exclude dffs from graph as they do not represent critical path"""
-        
+
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
-            
+

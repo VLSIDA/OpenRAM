@@ -26,7 +26,7 @@ class pwrite_driver_test(openram_test):
         tx = factory.create(module_type="pwrite_driver", size=1)
         self.local_check(tx)
 
-        globals.end_openram()        
+        globals.end_openram()
 
 # run the test from the command line
 if __name__ == "__main__":

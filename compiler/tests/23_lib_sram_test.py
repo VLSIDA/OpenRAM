@@ -62,7 +62,7 @@ class lib_test(openram_test):
 
         reload(characterizer)
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

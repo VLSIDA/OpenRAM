@@ -30,7 +30,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
         globals.setup_bitcell()
-        
+
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer

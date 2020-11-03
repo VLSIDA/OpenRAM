@@ -1188,7 +1188,7 @@ class parallel(deformer): # <<<
                         intsparams = np[nsp_i][nspitem_i].intersect(np[nsp_j][nspitem_j], epsilon)
                         if intsparams:
                             for intsparam_i, intsparam_j in intsparams:
-                                if ( (abs(intsparam_i) < epsilon and abs(1-intsparam_j) < epsilon) or 
+                                if ( (abs(intsparam_i) < epsilon and abs(1-intsparam_j) < epsilon) or
                                      (abs(intsparam_j) < epsilon and abs(1-intsparam_i) < epsilon) ):
                                      continue
                                 npp_i = normpath.normpathparam(np, nsp_i, float(nspitem_i)+intsparam_i)

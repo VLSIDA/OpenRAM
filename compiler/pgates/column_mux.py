@@ -110,7 +110,7 @@ class column_mux(pgate.pgate):
                             layer=self.pin_layer,
                             offset=br_pos,
                             height=self.pin_height)
-        
+
     def place_ptx(self):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""
 
@@ -126,7 +126,7 @@ class column_mux(pgate.pgate):
 
         if cell_props.pgate.add_implants:
             self.extend_implants()
-        
+
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
 
@@ -197,7 +197,7 @@ class column_mux(pgate.pgate):
                + nmos_lower_d_pin.uc().scale(1, 0.5)
         self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
- 
+
     def extend_implants(self):
         """
         Add top-to-bottom implants for adjacency issues in s8.
@@ -210,7 +210,7 @@ class column_mux(pgate.pgate):
                       ll,
                       ur.x - ll.x,
                       ur.y - ll.y)
-       
+
     def add_pn_wells(self):
         """
         Add a well and implant over the whole cell. Also, add the

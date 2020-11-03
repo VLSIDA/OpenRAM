@@ -45,7 +45,7 @@ class openram_front_end_test(openram_test):
 
         if OPTS.spice_name:
             options += " -s {}".format(OPTS.spice_name)
-            
+
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
@@ -61,7 +61,7 @@ class openram_front_end_test(openram_test):
                                                                           out_path)
         debug.info(1, cmd)
         os.system(cmd)
-        
+
         # assert an error until we actually check a result
         for extension in ["v", "lef", "sp", "gds"]:
             filename = "{0}/{1}.{2}".format(out_path, out_file, extension)
@@ -72,12 +72,12 @@ class openram_front_end_test(openram_test):
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
-        
+
         # Make sure there is any .html file
         if os.path.exists(out_path):
             datasheets = glob.glob('{0}/*html'.format(out_path))
             self.assertTrue(len(datasheets)>0)
-        
+
         # grep any errors from the output
         output_log = open("{0}/output.log".format(out_path), "r")
         output = output_log.read()

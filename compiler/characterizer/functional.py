@@ -23,7 +23,7 @@ class functional(simulation):
 
     def __init__(self, sram, spfile, corner, cycles=15):
         super().__init__(sram, spfile, corner)
-        
+
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
@@ -50,7 +50,7 @@ class functional(simulation):
         self.set_internal_spice_names()
         self.q_name, self.qbar_name = self.get_bit_name()
         debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
-        
+
         # Number of checks can be changed
         self.num_cycles = cycles
         # This is to have ordered keys for random selection
@@ -63,16 +63,16 @@ class functional(simulation):
             self.period = feasible_period
         # Generate a random sequence of reads and writes
         self.create_random_memory_sequence()
-    
+
         # Run SPICE simulation
         self.write_functional_stimulus()
         self.stim.run_sim()
-        
+
         # read dout values from SPICE simulation. If the values do not fall within the noise margins, return the error.
         (success, error) = self.read_stim_results()
         if not success:
             return (0, error)
-            
+
         # Check read values with written values. If the values do not match, return an error.
         return self.check_stim_results()
 
@@ -94,7 +94,7 @@ class functional(simulation):
                                                                                                     len(val),
                                                                                                     port,
                                                                                                     name))
-        
+
     def create_random_memory_sequence(self):
         if self.write_size:
             rw_ops = ["noop", "write", "partial_write", "read"]
@@ -123,7 +123,7 @@ class functional(simulation):
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.check_lengths()
-        
+
         # 2. Read at least once.  For multiport, it is important that one
         # read cycle uses all RW and R port to read from the same
         # address simultaniously.  This will test the viablilty of the
@@ -138,7 +138,7 @@ class functional(simulation):
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.check_lengths()
-        
+
         # 3. Perform a random sequence of writes and reads on random
         # ports, using random addresses and random words and random
         # write masks (if applicable)
@@ -151,7 +151,7 @@ class functional(simulation):
                     op = random.choice(w_ops)
                 else:
                     op = random.choice(r_ops)
-                    
+
                 if op == "noop":
                     self.add_noop_one_port(port)
                 elif op == "write":
@@ -191,10 +191,10 @@ class functional(simulation):
                         comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
                         self.add_read_one_port(comment, addr, port)
                         self.add_read_check(word, port)
-                
+
             self.cycle_times.append(self.t_current)
             self.t_current += self.period
-        
+
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
         comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
@@ -203,7 +203,7 @@ class functional(simulation):
         """ Create the masked data word """
         # Start with the new word
         new_word = word
-        
+
         # When the write mask's bits are 0, the old data values should appear in the new word
         # as to not overwrite the old values
         for bit in range(len(wmask)):
@@ -211,9 +211,9 @@ class functional(simulation):
                 lower = bit * self.write_size
                 upper = lower + self.write_size - 1
                 new_word = new_word[:lower] + old_word[lower:upper + 1] + new_word[upper + 1:]
-                
+
         return new_word
-        
+
     def add_read_check(self, word, port):
         """ Add to the check array to ensure a read works. """
         try:
@@ -222,7 +222,7 @@ class functional(simulation):
             self.check = 0
         self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check])
         self.check += 1
-        
+
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
         for (word, dout_port, eo_period, check) in self.read_check:
@@ -247,12 +247,12 @@ class functional(simulation):
                                                                                            bit,
                                                                                            value,
                                                                                            eo_period)
-                    
+
                     return (0, error)
-                    
-            self.read_results.append([sp_read_value, dout_port, eo_period, check])                    
+
+            self.read_results.append([sp_read_value, dout_port, eo_period, check])
         return (1, "SUCCESS")
-        
+
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
@@ -307,14 +307,14 @@ class functional(simulation):
             random_value = random.randint(0, ((2 ** (self.addr_size - 1) - 1)) + (self.num_spare_rows * self.words_per_row))
         addr_bits = self.convert_to_bin(random_value, True)
         return addr_bits
-        
+
     def get_data(self):
         """ Gets an available address and corresponding word. """
         # Used for write masks since they should be writing to previously written addresses
         addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
         return (addr, word)
-        
+
     def convert_to_bin(self, value, is_addr):
         """ Converts addr & word to usable binary values. """
         new_value = str.replace(bin(value), "0b", "")
@@ -324,10 +324,10 @@ class functional(simulation):
             expected_value = self.word_size + self.num_spare_cols
         for i in range(expected_value - len(new_value)):
             new_value = "0" + new_value
-            
+
         # print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value
-            
+
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
         temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
@@ -341,7 +341,7 @@ class functional(simulation):
         # Write Vdd/Gnd statements
         self.sf.write("\n* Global Power Supplies\n")
         self.stim.write_supply()
-        
+
         # Instantiate the SRAM
         self.sf.write("\n* Instantiation of the SRAM\n")
         self.stim.inst_model(pins=self.pins,
@@ -361,19 +361,19 @@ class functional(simulation):
         self.sf.write("* s_en: {}\n".format(self.sen_name))
         self.sf.write("* q: {}\n".format(self.q_name))
         self.sf.write("* qbar: {}\n".format(self.qbar_name))
-                
+
         # Write debug comments to stim file
         self.sf.write("\n\n* Sequence of operations\n")
         for comment in self.fn_cycle_comments:
             self.sf.write("*{}\n".format(comment))
-                
+
         # Generate data input bits
         self.sf.write("\n* Generation of data and address signals\n")
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 sig_name="{0}{1}_{2} ".format(self.din_name, port, bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[port][bit], self.period, self.slew, 0.05)
-        
+
         # Generate address bits
         for port in self.all_ports:
             for bit in range(self.addr_size):
@@ -384,7 +384,7 @@ class functional(simulation):
         self.sf.write("\n * Generation of control signals\n")
         for port in self.all_ports:
             self.stim.gen_pwl("CSB{}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
-            
+
         for port in self.readwrite_ports:
             self.stim.gen_pwl("WEB{}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
 
@@ -417,7 +417,7 @@ class functional(simulation):
                                 period=self.period,
                                 t_rise=self.slew,
                                 t_fall=self.slew)
-        
+
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
         for (word, dout_port, eo_period, check) in self.read_check:
@@ -428,10 +428,10 @@ class functional(simulation):
                                          dout="{0}_{1}".format(dout_port, bit),
                                          t_intital=t_intital,
                                          t_final=t_final)
-        
+
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
- 
+
     #FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
@@ -444,4 +444,4 @@ class functional(simulation):
 
         return (q_name, qbar_name)
 
-    
+

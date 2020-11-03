@@ -24,13 +24,13 @@ class tri_gate_array_test(openram_test):
         debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")
         a = factory.create(module_type="tri_gate_array", columns=8, word_size=8)
         self.local_check(a)
-        
+
         debug.info(1, "Testing tri_gate_array for columns=16, word_size=8")
         a = factory.create(module_type="tri_gate_array", columns=16, word_size=8)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

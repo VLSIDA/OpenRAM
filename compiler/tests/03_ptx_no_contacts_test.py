@@ -48,7 +48,7 @@ class ptx_no_contacts_test(openram_test):
                              series_devices=True,
                              tx_type="nmos")
         self.local_drc_check(fet)
-        
+
         globals.end_openram()
 
 

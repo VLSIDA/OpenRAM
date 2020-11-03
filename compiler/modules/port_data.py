@@ -39,7 +39,7 @@ class port_data(design.design):
                 self.bit_offsets.append(i * bitcell.width)
         else:
             self.bit_offsets = bit_offsets
-            
+
         if name == "":
             name = "port_data_{0}".format(self.port)
         super().__init__(name)
@@ -189,7 +189,7 @@ class port_data(design.design):
         # Precharge will be shifted left if needed
         # Column offset is set to port so extra column can be on left or right
         # and mirroring happens correctly
-        
+
         # Used for names/dimensions only
         self.cell = factory.create(module_type="bitcell")
 
@@ -295,7 +295,7 @@ class port_data(design.design):
         for bit in range(self.num_cols):
             temp.append("bl_{0}".format(bit))
             temp.append("br_{0}".format(bit))
-        
+
         for bit in range(self.num_spare_cols):
             temp.append("sparebl_{0}".format(bit))
             temp.append("sparebr_{0}".format(bit))
@@ -352,12 +352,12 @@ class port_data(design.design):
             else:
                 temp.append("bl_out_{0}".format(bit))
                 temp.append("br_out_{0}".format(bit))
-        
+
         for bit in range(self.num_spare_cols):
             temp.append("dout_{}".format(self.word_size + bit))
             temp.append("sparebl_{0}".format(bit))
-            temp.append("sparebr_{0}".format(bit)) 
-        
+            temp.append("sparebr_{0}".format(bit))
+
         temp.append("s_en")
         temp.extend(["vdd", "gnd"])
         self.connect_inst(temp)
@@ -561,26 +561,26 @@ class port_data(design.design):
             else:
                 start_bit=0
 
-        # spare cols connected to precharge array since they are read independently       
+        # spare cols connected to precharge array since they are read independently
         if self.num_spare_cols and self.col_addr_size>0:
             if self.port==0:
                 off = 1
             else:
                 off = 0
-            
+
             self.channel_route_bitlines(inst1=self.column_mux_array_inst,
                                         inst1_bls_template="{inst}_out_{bit}",
                                         inst2=inst2,
                                         num_bits=self.word_size,
                                         inst1_start_bit=start_bit)
-            
+
             self.channel_route_bitlines(inst1=self.precharge_array_inst,
                                         inst1_bls_template="{inst}_{bit}",
                                         inst2=inst2,
                                         num_bits=self.num_spare_cols,
                                         inst1_start_bit=self.num_cols + off,
                                         inst2_start_bit=self.word_size)
-        
+
         elif layer_props.port_data.channel_route_bitlines:
             self.channel_route_bitlines(inst1=inst1,
                                         inst1_bls_template=inst1_bls_templ,
@@ -595,7 +595,7 @@ class port_data(design.design):
                                   inst2=inst2,
                                   num_bits=self.word_size,
                                   inst1_start_bit=start_bit)
-        
+
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
         """ Routing of BL and BR between sense_amp and column mux or precharge array """
         inst2 = self.write_driver_array_inst
@@ -619,19 +619,19 @@ class port_data(design.design):
         else:
             off = 0
 
-        # Channel route spare columns' bitlines 
+        # Channel route spare columns' bitlines
         if self.num_spare_cols and self.col_addr_size>0:
             if self.port==0:
                 off = 1
             else:
                 off = 0
-            
+
             self.channel_route_bitlines(inst1=self.column_mux_array_inst,
                                         inst1_bls_template="{inst}_out_{bit}",
                                         inst2=inst2,
                                         num_bits=self.word_size,
                                         inst1_start_bit=start_bit)
-            
+
             self.channel_route_bitlines(inst1=self.precharge_array_inst,
                                         inst1_bls_template="{inst}_{bit}",
                                         inst2=inst2,
@@ -689,7 +689,7 @@ class port_data(design.design):
                                      "br_{}".format(bit))
             else:
                 debug.error("Didn't find precharge array.")
-        
+
         # Copy bitlines of spare columns
         for bit in range(self.num_spare_cols):
             if self.precharge_array_inst:

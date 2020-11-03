@@ -710,9 +710,9 @@ class arct_pt(pathitem):
         # Negative (positive) angles alpha corresponds to a turn to the right (left)
         # as seen from currentpoint.
         if dx1*dy2-dy1*dx2 > 0:
-            alpha = acos(dx1*dx2+dy1*dy2) 
+            alpha = acos(dx1*dx2+dy1*dy2)
         else:
-            alpha = -acos(dx1*dx2+dy1*dy2) 
+            alpha = -acos(dx1*dx2+dy1*dy2)
 
         try:
             # two tangent points
@@ -744,7 +744,7 @@ class arct_pt(pathitem):
                 return [line, arcn_pt(mx_pt, my_pt, self.r_pt, phi-deltaphi, phi+deltaphi)]
 
         except ZeroDivisionError:
-            # in the degenerate case, we just return a line as specified by the PS 
+            # in the degenerate case, we just return a line as specified by the PS
             # language reference
             return [lineto_pt(self.x1_pt, self.y1_pt)]
 

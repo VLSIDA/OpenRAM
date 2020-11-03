@@ -26,7 +26,7 @@ class pnor2_test(openram_test):
         self.local_check(tx)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

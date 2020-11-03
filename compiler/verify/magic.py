@@ -43,7 +43,7 @@ def filter_gds(cell_name, input_gds, output_gds):
         shutil.copy(magic_file, OPTS.openram_temp)
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
-    
+
 
     run_file = OPTS.openram_temp + "run_filter.sh"
     f = open(run_file, "w")
@@ -65,7 +65,7 @@ def filter_gds(cell_name, input_gds, output_gds):
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
 
-    
+
 def write_magic_script(cell_name, extract=False, final_verification=False):
     """ Write a magic script to perform DRC and optionally extraction. """
 
@@ -488,14 +488,14 @@ def correct_port(name, output_file_name, ref_file_name):
     output_file.write(part2)
     output_file.close()
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

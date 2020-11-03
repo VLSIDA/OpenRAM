@@ -21,16 +21,18 @@ class pbitcell(bitcell_base.bitcell_base):
     with a variable number of read/write, write, and read ports
     """
 
-    def __init__(self, name, replica_bitcell=False, dummy_bitcell=False):
+    def __init__(self, name, cell_name=None, replica_bitcell=False, dummy_bitcell=False):
+        if not cell_name:
+            cell_name = name
         self.num_rw_ports = OPTS.num_rw_ports
         self.num_w_ports = OPTS.num_w_ports
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
-        
+
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
 
-        bitcell_base.bitcell_base.__init__(self, name)
+        bitcell_base.bitcell_base.__init__(self, name, cell_name, hard_cell=False)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"
         info_string = fmt_str.format(self.num_rw_ports,
                                      self.num_w_ports,
@@ -295,7 +297,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.width = -2 * self.leftmost_xpos
         self.height = self.topmost_ypos - self.botmost_ypos
         self.center_ypos = 0.5 * (self.topmost_ypos + self.botmost_ypos)
-        
+
     def create_storage(self):
         """
         Creates the crossed coupled inverters that act
@@ -322,7 +324,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.connect_inst(["vdd", self.Q, self.Q_bar, "vdd"])
 
     def place_storage(self):
-        """ 
+        """
         Places the transistors for the crossed
         coupled inverters in the bitcell
         """
@@ -406,7 +408,7 @@ class pbitcell(bitcell_base.bitcell_base):
             contact_offset_left_output =  vector(self.inverter_nmos_left.get_pin("D").rc().x \
                                     + 0.5 * contact.poly.height,
                                     self.cross_couple_upper_ypos)
-            
+
             contact_offset_right_output =  vector(self.inverter_nmos_right.get_pin("S").lc().x \
                                     - 0.5*contact.poly.height,
                                     self.cross_couple_lower_ypos)
@@ -421,8 +423,8 @@ class pbitcell(bitcell_base.bitcell_base):
                              offset=self.gnd_position,
                              width=self.width)
         self.add_power_pin("gnd", vector(0, gnd_ypos), directions=("H", "H"))
-        
-        
+
+
         vdd_ypos = self.inverter_nmos_ypos \
                    + self.inverter_nmos.active_height \
                    + self.inverter_gap \
@@ -433,7 +435,7 @@ class pbitcell(bitcell_base.bitcell_base):
                              offset=self.vdd_position,
                              width=self.width)
         self.add_power_pin("vdd", vector(0, vdd_ypos), directions=("H", "H"))
-        
+
     def create_readwrite_ports(self):
         """
         Creates read/write ports to the bit cell. A differential
@@ -461,7 +463,7 @@ class pbitcell(bitcell_base.bitcell_base):
             if self.dummy_bitcell:
                 bl_name += "_noconn"
                 br_name += "_noconn"
-                
+
             # add read/write transistors
             self.readwrite_nmos_left[k] = self.add_inst(name="readwrite_nmos_left{}".format(k),
                                                         mod=self.readwrite_nmos)
@@ -662,7 +664,7 @@ class pbitcell(bitcell_base.bitcell_base):
             if self.dummy_bitcell:
                 bl_name += "_noconn"
                 br_name += "_noconn"
-                
+
             # add read-access transistors
             self.read_access_nmos_left[k] = self.add_inst(name="read_access_nmos_left{}".format(k),
                                                           mod=self.read_nmos)
@@ -897,7 +899,7 @@ class pbitcell(bitcell_base.bitcell_base):
                       [self.inverter_pmos_right.get_pin("D").uc(), vdd_pos_right])
 
     def route_readwrite_access(self):
-        """ 
+        """
         Routes read/write transistors to the storage
         component of the bitcell
         """
@@ -917,7 +919,7 @@ class pbitcell(bitcell_base.bitcell_base):
                           [self.readwrite_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_write_access(self):
-        """ 
+        """
         Routes read/write transistors to the storage
         component of the bitcell
         """
@@ -937,7 +939,7 @@ class pbitcell(bitcell_base.bitcell_base):
                           [self.write_nmos_right[k].get_pin("S").uc(), mid, Q_bar_pos])
 
     def route_read_access(self):
-        """  
+        """
         Routes read access transistors to the storage
         component of the bitcell
         """
@@ -1016,7 +1018,7 @@ class pbitcell(bitcell_base.bitcell_base):
                           offset=offset,
                           width=well_width,
                           height=well_height)
-            
+
         # extend nwell to encompass inverter_pmos
         # calculate offset of the left pmos well
         if "nwell" in layer:
@@ -1024,7 +1026,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                  - self.nwell_enclose_active
             inverter_well_ypos = self.inverter_nmos_ypos + self.inverter_nmos.active_height \
                                  + self.inverter_gap - self.nwell_enclose_active
-            
+
             # calculate width of the two combined nwells
             # calculate height to encompass nimplant connected to vdd
             well_width = 2 * (self.inverter_nmos.active_width + 0.5 * self.inverter_to_inverter_spacing) \
@@ -1099,18 +1101,18 @@ class pbitcell(bitcell_base.bitcell_base):
         Q_bar_pos = self.inverter_pmos_right.get_pin("S").center()
         vdd_pos = self.inverter_pmos_right.get_pin("D").center()
         self.add_path("m1", [Q_bar_pos, vdd_pos])
-        
+
     def get_storage_net_names(self):
         """
         Returns names of storage nodes in bitcell in
         [non-inverting, inverting] format.
         """
         return self.storage_nets
-     
+
     def get_bl_name(self, port=0):
         """Get bl name by port"""
         return "bl{}".format(port)
-    
+
     def get_br_name(self, port=0):
         """Get bl name by port"""
         return "br{}".format(port)
@@ -1119,7 +1121,7 @@ class pbitcell(bitcell_base.bitcell_base):
         """Get wl name by port"""
         debug.check(port < 2, "Two ports for bitcell_1rw_1r only.")
         return "wl{}".format(port)
-    
+
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained thought the access
@@ -1128,7 +1130,7 @@ class pbitcell(bitcell_base.bitcell_base):
         # Assumes always a minimum sizes inverter. Could be
         # specified in the tech.py file.
         cin = 3
-        
+
         # Internal loads due to port configs are halved.
         # This is to account for the size already being halved
         # for stacked TXs, but internal loads do not see this size
@@ -1144,10 +1146,10 @@ class pbitcell(bitcell_base.bitcell_base):
                                              load + read_port_load,
                                              parasitic_delay,
                                              False)
-        
+
     def input_load(self):
         """ Return the relative capacitance of the access transistor gates """
-        
+
         # FIXME: This applies to bitline capacitances as well.
         # pbitcell uses the different sizing for the port access tx's. Not accounted for in this model.
         access_tx_cin = self.readwrite_nmos.get_cin()
@@ -1155,10 +1157,10 @@ class pbitcell(bitcell_base.bitcell_base):
 
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges to graph for pbitcell. Only readwrite and read ports."""
-        
+
         if self.dummy_bitcell:
             return
-        
+
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)

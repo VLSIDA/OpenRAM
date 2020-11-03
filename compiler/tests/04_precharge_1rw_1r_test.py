@@ -21,7 +21,7 @@ class precharge_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
+
         # check precharge array in multi-port
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
@@ -38,7 +38,7 @@ class precharge_test(openram_test):
         self.local_check(tx)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

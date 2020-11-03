@@ -36,7 +36,7 @@ class ptristate_inv(pgate.pgate):
 
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        
+
         # Creates the netlist and layout
         super().__init__(name, height)
 
@@ -45,7 +45,7 @@ class ptristate_inv(pgate.pgate):
         self.add_pins()
         self.add_ptx()
         self.create_ptx()
-        
+
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
         self.setup_layout_constants()
@@ -57,7 +57,7 @@ class ptristate_inv(pgate.pgate):
         self.route_inputs()
         self.route_outputs()
         self.add_boundary()
-        
+
     def add_pins(self):
         """ Adds pins for spice netlist """
         self.add_pin_list(["in", "out", "en", "en_bar", "vdd", "gnd"])
@@ -78,7 +78,7 @@ class ptristate_inv(pgate.pgate):
         # Add an extra space because we route the output on the right of the S/D
         self.width = self.well_width + 0.5 * self.m1_space
         # Height is an input parameter, so it is not recomputed.
-        
+
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos = factory.create(module_type="ptx",
@@ -86,13 +86,13 @@ class ptristate_inv(pgate.pgate):
                                    mults=1,
                                    tx_type="nmos")
         self.add_mod(self.nmos)
-        
+
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=1,
                                    tx_type="pmos")
         self.add_mod(self.pmos)
-        
+
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
@@ -151,13 +151,13 @@ class ptristate_inv(pgate.pgate):
         # Output position will be in between the PMOS and NMOS
         self.output_pos = vector(0,
                                  0.5 * (pmos_yoff + nmos_yoff + self.nmos.height))
-        
+
         # This will help with the wells
         self.well_pos = vector(0, self.nmos1_inst.uy())
 
     def route_inputs(self):
         """ Route the gates """
-        
+
         self.route_input_gate(self.pmos1_inst,
                               self.nmos1_inst,
                               self.output_pos.y,
@@ -181,7 +181,7 @@ class ptristate_inv(pgate.pgate):
                             height=pmos_drain_pos.y - nmos_drain_pos.y)
 
     def add_well_contacts(self):
-        """ 
+        """
         Add n/p well taps to the layout and connect to
         supplies AFTER the wells are created
         """
@@ -206,7 +206,7 @@ class ptristate_inv(pgate.pgate):
 
         self.connect_pin_to_rail(self.nmos1_inst, "S", "gnd")
         self.connect_pin_to_rail(self.pmos1_inst, "S", "vdd")
-        
+
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         # Power in this module currently not defined.

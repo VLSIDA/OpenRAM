@@ -38,7 +38,7 @@ class pinv_dec(pinv.pinv):
             self.supply_layer = "m1"
         else:
             self.supply_layer = "m2"
-        
+
         super().__init__(name, size, beta, self.cell_height, add_wells)
 
     def determine_tx_mults(self):
@@ -54,7 +54,7 @@ class pinv_dec(pinv.pinv):
         if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
-        
+
     # Over-ride the route input gate to call the horizontal version.
     # Other top-level netlist and layout functions are not changed.
     def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", directions=None):
@@ -71,7 +71,7 @@ class pinv_dec(pinv.pinv):
             self.gds_write("unaliged_gates.gds")
         debug.check(nmos_gate_pin.ll().y == pmos_gate_pin.ll().y,
                     "Connecting unaligned gates not supported. See unaligned_gates.gds.")
-        
+
         # Pick point on the left of NMOS and up to PMOS
         nmos_gate_pos = nmos_gate_pin.rc()
         pmos_gate_pos = pmos_gate_pin.lc()
@@ -86,7 +86,7 @@ class pinv_dec(pinv.pinv):
                                         offset=contact_offset,
                                         directions=directions)
         self.add_path("poly", [contact_offset, nmos_gate_pin.lc()])
-        
+
         self.add_layout_pin_rect_center(text=name,
                                         layer=self.route_layer,
                                         offset=contact_offset,
@@ -143,7 +143,7 @@ class pinv_dec(pinv.pinv):
 
         if cell_props.pgate.add_implants:
             self.extend_implants()
-            
+
     def extend_implants(self):
         """
         Add top-to-bottom implants for adjacency issues in s8.
@@ -165,13 +165,13 @@ class pinv_dec(pinv.pinv):
                       ll,
                       ur.x - ll.x,
                       ur.y - ll.y)
-        
+
     def route_outputs(self):
         """
         Route the output (drains) together.
         Optionally, routes output to edge.
         """
-            
+
         # Get the drain pin
         nmos_drain_pin = self.nmos_inst.get_pin("D")
 
@@ -225,7 +225,7 @@ class pinv_dec(pinv.pinv):
                                            self.supply_layer,
                                            start=bottom_pos,
                                            end=top_pos)
-        
+
     def connect_rails(self):
         """ Connect the nmos and pmos to its respective power rails """
 
@@ -238,4 +238,4 @@ class pinv_dec(pinv.pinv):
         self.add_via_stack_center(offset=source_pos,
                                   from_layer=self.route_layer,
                                   to_layer=self.supply_layer)
-        
+

@@ -144,18 +144,18 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
- 
+
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
     global OPTS
- 
+
     try:
         import coverage
         OPTS.coverage = 1
     except:
         OPTS.coverage = 0
 
-        
+
 def init_openram(config_file, is_unit_test=True):
     """ Initialize the technology, paths, simulators, etc. """
 
@@ -164,7 +164,7 @@ def init_openram(config_file, is_unit_test=True):
     debug.info(1, "Initializing OpenRAM...")
 
     setup_paths()
-    
+
     read_config(config_file, is_unit_test)
 
     import_tech()
@@ -188,7 +188,10 @@ def init_openram(config_file, is_unit_test=True):
     if is_unit_test and CHECKPOINT_OPTS:
         OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy()
         return
-    
+
+    # Setup correct bitcell names
+    setup_bitcell()
+
     # Import these to find the executables for checkpointing
     import characterizer
     import verify
@@ -197,22 +200,19 @@ def init_openram(config_file, is_unit_test=True):
     if not CHECKPOINT_OPTS:
         CHECKPOINT_OPTS = copy.copy(OPTS)
 
-        
+
 def setup_bitcell():
     """
     Determine the correct custom or parameterized bitcell for the design.
     """
-    global OPTS
-
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
     if (OPTS.bitcell == "bitcell"):
-        
+
         if (OPTS.num_rw_ports == 1 and OPTS.num_w_ports == 0 and OPTS.num_r_ports == 0):
             OPTS.bitcell = "bitcell"
-            OPTS.replica_bitcell = "replica_bitcell"
-            OPTS.dummy_bitcell = "dummy_bitcell"
+            OPTS.bitcell_name = "cell_6t"
         else:
             ports = ""
             if OPTS.num_rw_ports > 0:
@@ -225,6 +225,20 @@ def setup_bitcell():
             if ports != "":
                 OPTS.bitcell_suffix = "_" + ports
             OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
+            OPTS.bitcell_name = "cell" + OPTS.bitcell_suffix
+
+        OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
+        OPTS.dummy_bitcell_name = "dummy_" + OPTS.bitcell_name
+
+        OPTS.replica_bitcell = "replica_" + OPTS.bitcell
+        OPTS.replica_bitcell_name = "replica_" + OPTS.bitcell_name
+    elif (OPTS.bitcell == "pbitcell"):
+        OPTS.bitcell = "pbitcell"
+        OPTS.bitcell_name = "pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.dummy_bitcell_name = "dummy_pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell_name = "replica_pbitcell"
                 
     # See if bitcell exists
     try:
@@ -234,6 +248,11 @@ def setup_bitcell():
         # or its custom replica  bitcell
         # Use the pbitcell (and give a warning if not in unit test mode)
         OPTS.bitcell = "pbitcell"
+        OPTS.bitcell_name = "pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
+        OPTS.dummy_bitcell_name = "dummy_pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.replica_bitcell_name = "replica_pbitcell"
         if not OPTS.is_unit_test:
             debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))
@@ -269,7 +288,7 @@ def get_tool(tool_type, preferences, default_name=None):
         else:
             return(None, "")
 
-    
+
 def read_config(config_file, is_unit_test=True):
     """
     Read the configuration file that defines a few parameters. The
@@ -282,14 +301,14 @@ def read_config(config_file, is_unit_test=True):
     # it is already not an abs path, make it one
     if not os.path.isabs(config_file):
         config_file = os.getcwd() + "/" +  config_file
-        
+
     # Make it a python file if the base name was only given
     config_file = re.sub(r'\.py$', "", config_file)
-        
-    
+
+
     # Expand the user if it is used
     config_file = os.path.expanduser(config_file)
-    
+
     OPTS.config_file = config_file + ".py"
     # Add the path to the system path
     # so we can import things in the other directory
@@ -328,7 +347,7 @@ def read_config(config_file, is_unit_test=True):
     # If we are only generating a netlist, we can't do DRC/LVS
     if OPTS.netlist_only:
         OPTS.check_lvsdrc = False
-        
+
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
         ports = ""
@@ -343,7 +362,7 @@ def read_config(config_file, is_unit_test=True):
                                                          ports,
                                                          OPTS.tech_name)
 
-        
+
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()
@@ -353,8 +372,8 @@ def end_openram():
         verify.print_drc_stats()
         verify.print_lvs_stats()
         verify.print_pex_stats()
-    
-    
+
+
 def cleanup_paths():
     """
     We should clean up the temp directory after execution.
@@ -376,8 +395,8 @@ def cleanup_paths():
                 os.remove(i)
             else:
                 shutil.rmtree(i)
-        
-            
+
+
 def setup_paths():
     """ Set up the non-tech related paths. """
     debug.info(2, "Setting up paths...")
@@ -400,7 +419,7 @@ def setup_paths():
         debug.check(os.path.isdir(full_path),
                     "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir, full_path))
         if "__pycache__" not in full_path:
-            sys.path.append("{0}".format(full_path)) 
+            sys.path.append("{0}".format(full_path))
 
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -413,9 +432,9 @@ def is_exe(fpath):
 
 
 def find_exe(check_exe):
-    """ 
+    """
     Check if the binary exists in any path dir
-    and return the full path. 
+    and return the full path.
     """
     # Check if the preferred spice option exists in the path
     for path in os.environ["PATH"].split(os.pathsep):
@@ -437,7 +456,7 @@ def init_paths():
     except OSError as e:
         if e.errno == 17:  # errno.EEXIST
             os.chmod(OPTS.openram_temp, 0o750)
-    
+
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
@@ -448,7 +467,7 @@ def init_paths():
     except:
         debug.error("Unable to make output directory.", -1)
 
-        
+
 def set_default_corner():
     """ Set the default corner. """
 
@@ -459,13 +478,13 @@ def set_default_corner():
             OPTS.process_corners = ["TT"]
         else:
             OPTS.process_corners = tech.spice["fet_models"].keys()
-            
+
     if (OPTS.supply_voltages == ""):
         if OPTS.nominal_corner_only:
             OPTS.supply_voltages = [tech.spice["supply_voltages"][1]]
         else:
             OPTS.supply_voltages = tech.spice["supply_voltages"]
-            
+
     if (OPTS.temperatures == ""):
         if OPTS.nominal_corner_only:
             OPTS.temperatures = [tech.spice["temperatures"][1]]
@@ -479,8 +498,8 @@ def set_default_corner():
     # Load scales are fanout multiples of the default spice input slew
     if (OPTS.slew_scales == ""):
         OPTS.slew_scales = [0.25, 1, 8]
-            
-    
+
+
 def import_tech():
     """ Dynamically adds the tech directory to the path and imports it. """
     global OPTS
@@ -501,7 +520,7 @@ def import_tech():
         sys.path.append(tech_path)
         debug.info(1, "Adding technology path: {}".format(tech_path))
 
-    # Import the tech 
+    # Import the tech
     try:
         tech_mod = __import__(OPTS.tech_name)
     except ImportError:
@@ -526,7 +545,7 @@ def import_tech():
 def print_time(name, now_time, last_time=None, indentation=2):
     """ Print a statement about the time delta. """
     global OPTS
-    
+
     # Don't print during testing
     if not OPTS.is_unit_test or OPTS.debug_level > 0:
         if last_time:
@@ -537,12 +556,12 @@ def print_time(name, now_time, last_time=None, indentation=2):
 
 
 def report_status():
-    """ 
+    """
     Check for valid arguments and report the
-    info about the SRAM being generated 
+    info about the SRAM being generated
     """
     global OPTS
-    
+
     # Check if all arguments are integers for bits, size, banks
     if type(OPTS.word_size) != int:
         debug.error("{0} is not an integer in config file.".format(OPTS.word_size))
@@ -550,7 +569,7 @@ def report_status():
         debug.error("{0} is not an integer in config file.".format(OPTS.sram_size))
     if type(OPTS.write_size) is not int and OPTS.write_size is not None:
         debug.error("{0} is not an integer in config file.".format(OPTS.write_size))
-    
+
     # If a write mask is specified by the user, the mask write size should be the same as
     # the word size so that an entire word is written at once.
     if OPTS.write_size is not None:
@@ -582,10 +601,10 @@ def report_status():
 
     if OPTS.netlist_only:
         debug.print_raw("Netlist only mode (no physical design is being done, netlist_only=False to disable).")
-    
+
     if not OPTS.route_supplies:
         debug.print_raw("Design supply routing skipped. Supplies will have multiple must-connect pins. (route_supplies=True to enable supply routing).")
-        
+
     if not OPTS.inline_lvsdrc:
         debug.print_raw("DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).")
 

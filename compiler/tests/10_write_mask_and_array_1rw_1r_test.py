@@ -27,7 +27,7 @@ class write_mask_and_array_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Testing write_mask_and_array for columns=8, word_size=8, write_size=4")
         a = factory.create(module_type="write_mask_and_array", columns=8, word_size=8, write_size=4)
         self.local_check(a)

@@ -31,7 +31,7 @@ class stimuli():
         self.tx_length = tech.drc["minlength_channel"]
 
         self.sf = stim_file
-        
+
         (self.process, self.voltage, self.temperature) = corner
         found = False
         self.device_libraries = []
@@ -48,10 +48,10 @@ class stimuli():
             pass
         if not found:
             debug.error("Must define either fet_libraries or fet_models.", -1)
-                
+
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
-        
+
         if OPTS.use_pex:
             self.inst_pex_model(pins, model_name)
         else:
@@ -59,7 +59,7 @@ class stimuli():
             for pin in pins:
                 self.sf.write("{0} ".format(pin))
             self.sf.write("{0}\n".format(model_name))
-    
+
     def inst_pex_model(self, pins, model_name):
         self.sf.write("X{0} ".format(model_name))
         for pin in pins:
@@ -99,7 +99,7 @@ class stimuli():
     def create_buffer(self, buffer_name, size=[1, 3], beta=2.5):
         """
             Generates buffer for top level signals (only for sim
-            purposes). Size is pair for PMOS, NMOS width multiple. 
+            purposes). Size is pair for PMOS, NMOS width multiple.
             """
 
         self.sf.write(".SUBCKT test_{2} in out {0} {1}\n".format(self.vdd_name,
@@ -124,23 +124,23 @@ class stimuli():
         self.sf.write(".ENDS test_{0}\n\n".format(buffer_name))
 
     def gen_pulse(self, sig_name, v1, v2, offset, period, t_rise, t_fall):
-        """ 
+        """
             Generates a periodic signal with 50% duty cycle and slew rates. Period is measured
             from 50% to 50%.
         """
         self.sf.write("* PULSE: period={0}\n".format(period))
         pulse_string="V{0} {0} 0 PULSE ({1} {2} {3}n {4}n {5}n {6}n {7}n)\n"
-        self.sf.write(pulse_string.format(sig_name, 
+        self.sf.write(pulse_string.format(sig_name,
                                           v1,
                                           v2,
                                           offset,
                                           t_rise,
-                                          t_fall, 
+                                          t_fall,
                                           0.5*period-0.5*t_rise-0.5*t_fall,
                                           period))
 
     def gen_pwl(self, sig_name, clk_times, data_values, period, slew, setup):
-        """ 
+        """
             Generate a PWL stimulus given a signal name and data values at each period.
             Automatically creates slews and ensures each data occurs a setup before the clock
             edge. The first clk_time should be 0 and is the initial time that corresponds
@@ -152,7 +152,7 @@ class stimuli():
                     str.format(len(clk_times),
                                len(data_values),
                                sig_name))
-    
+
         # shift signal times earlier for setup time
         times = np.array(clk_times) - setup * period
         values = np.array(data_values) * self.voltage
@@ -185,7 +185,7 @@ class stimuli():
             return 1
         else:
             debug.error("Invalid value to get an inverse of: {0}".format(value))
-        
+
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={4}n TARG v({5}) VAL={6} {7}=1 TD={8}n\n\n"
@@ -198,7 +198,7 @@ class stimuli():
                                             targ_val,
                                             targ_dir,
                                             targ_td))
-    
+
     def gen_meas_find_voltage(self, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
@@ -208,7 +208,7 @@ class stimuli():
                                             trig_val,
                                             trig_dir,
                                             trig_td))
-    
+
     def gen_meas_find_voltage_at_time(self, meas_name, targ_name, time_at):
         """ Creates the .meas statement for voltage at time"""
         measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
@@ -227,15 +227,15 @@ class stimuli():
                                                                             power_exp,
                                                                             t_initial,
                                                                             t_final))
-                                                                            
+
     def gen_meas_value(self, meas_name, dout, t_intital, t_final):
         measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
         """ Write the control cards to run and end the simulation """
-        
-        # These are guesses... 
+
+        # These are guesses...
         if runlvl==1:
             reltol = 0.02 # 2%
         elif runlvl==2:
@@ -245,7 +245,7 @@ class stimuli():
         else:
             reltol = 0.001 # 0.1%
         timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
-           
+
         # UIC is needed for ngspice to converge
         self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
         self.sf.write(".TEMP {}\n".format(self.temperature))
@@ -281,9 +281,9 @@ class stimuli():
                 self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
             else:
                 debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
-                
+
         includes = self.device_models + [circuit]
-        
+
         for item in list(includes):
             if os.path.isfile(item):
                 self.sf.write(".include \"{0}\"\n".format(item))
@@ -305,7 +305,7 @@ class stimuli():
         import datetime
         start_time = datetime.datetime.now()
         debug.check(OPTS.spice_exe != "", "No spice simulator has been found.")
-    
+
         if OPTS.spice_name == "xa":
             # Output the xa configurations here. FIXME: Move this to write it once.
             xa_cfg = open("{}xa.cfg".format(OPTS.openram_temp), "w")
@@ -340,13 +340,13 @@ class stimuli():
 
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
-        
+
         debug.info(3, cmd)
         retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 
         spice_stdout.close()
         spice_stderr.close()
-        
+
         if (retcode > valid_retcode):
             debug.error("Spice simulation error: " + cmd, -1)
         else:
@@ -354,4 +354,4 @@ class stimuli():
             delta_time = round((end_time - start_time).total_seconds(), 1)
             debug.info(2, "*** Spice: {} seconds".format(delta_time))
 
-    
+

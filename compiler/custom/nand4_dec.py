@@ -18,18 +18,22 @@ class nand4_dec(design.design):
     
     pin_names = ["A", "B", "C", "D", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+    cell_size_layer = "boundary"
     
-    (width, height) = utils.get_libcell_size("nand4_dec",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "nand4_dec", GDS["unit"])
-        
     def __init__(self, name="nand4_dec", height=None):
         design.design.__init__(self, name)
 
-        self.width = nand4_dec.width
-        self.height = nand4_dec.height
-        self.pin_map = nand4_dec.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+        
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
         # FIXME: For now...

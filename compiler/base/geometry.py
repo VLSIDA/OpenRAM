@@ -227,7 +227,7 @@ class instance(geometry):
         self.mod.gds_write_file(self.gds)
         # now write an instance of my module/structure
         new_layout.addInstance(self.gds,
-                               self.mod.name,
+                               self.mod.cell_name,
                                offsetInMicrons=self.offset,
                                mirror=self.mirror,
                                rotate=self.rotate)
@@ -402,11 +402,11 @@ class instance(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
+        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.cell_name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
     def __repr__(self):
         """ override print function output """
-        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
+        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.cell_name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
     
 class path(geometry):

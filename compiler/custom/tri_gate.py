@@ -8,7 +8,8 @@
 import debug
 import design
 import utils
-from tech import GDS,layer
+from tech import GDS, layer
+
 
 class tri_gate(design.design):
     """
@@ -19,8 +20,7 @@ class tri_gate(design.design):
 
     pin_names = ["in", "out", "en", "en_bar", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
-    (width,height) = utils.get_libcell_size("tri_gate", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "tri_gate", GDS["unit"])
+    cell_size_layer = "boundary"
 
     unique_id = 1
     
@@ -31,9 +31,17 @@ class tri_gate(design.design):
         design.design.__init__(self, name)
         debug.info(2, "Create tri_gate")
 
-        self.width = tri_gate.width
-        self.height = tri_gate.height
-        self.pin_map = tri_gate.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
     def analytical_power(self, corner, load):

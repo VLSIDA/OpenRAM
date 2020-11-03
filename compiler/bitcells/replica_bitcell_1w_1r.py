@@ -7,9 +7,9 @@
 #
 import design
 import debug
-import utils
-from tech import GDS,layer,drc,parameter
 from tech import cell_properties as props
+from globals import OPTS
+
 
 class replica_bitcell_1w_1r(design.design):
     """
@@ -26,20 +26,13 @@ class replica_bitcell_1w_1r(design.design):
                  props.bitcell.cell_1w1r.pin.wl1,
                  props.bitcell.cell_1w1r.pin.vdd,
                  props.bitcell.cell_1w1r.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"]
 
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"] 
-    (width,height) = utils.get_libcell_size("replica_cell_1w_1r", GDS["unit"], layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "replica_cell_1w_1r", GDS["unit"])
-
-    def __init__(self, name=""):
-        # Ignore the name argument        
-        design.design.__init__(self, "replica_cell_1w_1r")
+    def __init__(self, name, cell_name=None):
+        if not cell_name:
+            cell_name = OPTS.replica_bitcell_name
+        design.design.__init__(self, name, cell_name)
         debug.info(2, "Create replica bitcell 1w+1r object")
-
-        self.width = replica_bitcell_1w_1r.width
-        self.height = replica_bitcell_1w_1r.height
-        self.pin_map = replica_bitcell_1w_1r.pin_map
-        self.add_pin_types(self.type_list)
 
     def get_stage_effort(self, load):
         parasitic_delay = 1

@@ -125,7 +125,7 @@ class sram_factory:
                 module_name = real_module_type
         else:
             if self.is_duplicate_name(module_name):
-                raise ValueError("Modules with duplicate name are not allowed." \
+                raise ValueError("Modules with duplicate name are not allowed."
                                  " '{}'".format(module_name))
 
         # type_str = "type={}".format(real_module_type)

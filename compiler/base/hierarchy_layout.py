@@ -30,8 +30,9 @@ class layout():
     layout/netlist and perform LVS/DRC.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cell_name):
         self.name = name
+        self.cell_name = cell_name
         self.width = None
         self.height = None
         self.bounding_box = None
@@ -214,7 +215,7 @@ class layout():
         # Contacts are not really instances, so skip them
         if "contact" not in mod.name:
             # Check that the instance name is unique
-            debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.name, name))
+            debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.cell_name, name))
 
         self.inst_names.add(name)
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
@@ -315,7 +316,7 @@ class layout():
             return any_pin
         except Exception:
             self.gds_write("missing_pin.gds")
-            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text, self.name), -1)
+            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text, self.cell_name), -1)
 
     def get_pins(self, text):
         """

@@ -20,8 +20,10 @@ class design(hierarchy_design):
 
     """
         
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, cell_name=None):
+        if not cell_name:
+            cell_name = name
+        super().__init__(name, cell_name)
 
         self.setup_multiport_constants()
         

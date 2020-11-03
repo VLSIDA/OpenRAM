@@ -188,6 +188,9 @@ def init_openram(config_file, is_unit_test=True):
     if is_unit_test and CHECKPOINT_OPTS:
         OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy()
         return
+
+    # Setup the correct bitcell names
+    setup_bitcell()
     
     # Import these to find the executables for checkpointing
     import characterizer
@@ -202,8 +205,6 @@ def setup_bitcell():
     """
     Determine the correct custom or parameterized bitcell for the design.
     """
-    global OPTS
-
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
@@ -211,8 +212,11 @@ def setup_bitcell():
         
         if (OPTS.num_rw_ports == 1 and OPTS.num_w_ports == 0 and OPTS.num_r_ports == 0):
             OPTS.bitcell = "bitcell"
+            OPTS.bitcell_name = "cell_6t"
             OPTS.replica_bitcell = "replica_bitcell"
+            OPTS.replica_bitcell_name = "replica_cell_6t"
             OPTS.dummy_bitcell = "dummy_bitcell"
+            OPTS.dummy_bitcell_name = "dummy_cell_6t"
         else:
             ports = ""
             if OPTS.num_rw_ports > 0:
@@ -225,6 +229,7 @@ def setup_bitcell():
             if ports != "":
                 OPTS.bitcell_suffix = "_" + ports
             OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
+            OPTS.bitcell_name = "cell" + OPTS.bitcell_suffix
                 
     # See if bitcell exists
     try:

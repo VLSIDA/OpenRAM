@@ -30,7 +30,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
 
-        bitcell_base.bitcell_base.__init__(self, name)
+        bitcell_base.bitcell_base.__init__(self, name, name, hard_cell=False)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"
         info_string = fmt_str.format(self.num_rw_ports,
                                      self.num_w_ports,

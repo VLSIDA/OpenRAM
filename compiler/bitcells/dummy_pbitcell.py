@@ -7,10 +7,10 @@
 #
 import debug
 import design
-from tech import drc, spice,parameter
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+
 
 class dummy_pbitcell(design.design):
     """
@@ -23,7 +23,7 @@ class dummy_pbitcell(design.design):
         self.num_r_ports = OPTS.num_r_ports
         self.total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
     
-        design.design.__init__(self, name)
+        design.design.__init__(self, name, name)
         debug.info(1, "create a dummy bitcell using pbitcell with {0} rw ports, {1} w ports and {2} r ports".format(self.num_rw_ports,
                                                                                                                     self.num_w_ports,
                                                                                                                     self.num_r_ports))
@@ -54,7 +54,8 @@ class dummy_pbitcell(design.design):
         self.add_pin("gnd")
         
     def add_modules(self):
-        self.prbc = factory.create(module_type="pbitcell",dummy_bitcell=True)
+        self.prbc = factory.create(module_type="pbitcell",
+                                   dummy_bitcell=True)
         self.add_mod(self.prbc)
         
         self.height = self.prbc.height
@@ -69,20 +70,20 @@ class dummy_pbitcell(design.design):
             temp.append("bl{}".format(port))
             temp.append("br{}".format(port))
         for port in range(self.total_ports):
-            temp.append("wl{}".format(port))    
+            temp.append("wl{}".format(port))
         temp.append("vdd")
         temp.append("gnd")
         self.connect_inst(temp)
         
     def place_pbitcell(self):
-        self.prbc_inst.place(offset=vector(0,0))
+        self.prbc_inst.place(offset=vector(0, 0))
         
-    def route_rbc_connections(self):        
+    def route_rbc_connections(self):
         for port in range(self.total_ports):
             self.copy_layout_pin(self.prbc_inst, "bl{}".format(port))
             self.copy_layout_pin(self.prbc_inst, "br{}".format(port))
         for port in range(self.total_ports):
-            self.copy_layout_pin(self.prbc_inst, "wl{}".format(port))    
+            self.copy_layout_pin(self.prbc_inst, "wl{}".format(port))
         self.copy_layout_pin(self.prbc_inst, "vdd")
         self.copy_layout_pin(self.prbc_inst, "gnd")
     

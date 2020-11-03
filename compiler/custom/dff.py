@@ -23,18 +23,22 @@ class dff(design.design):
         pin_names = props.dff.custom_port_list
         type_list = props.dff.custom_type_list
         clk_pin = props.dff.clk_pin
-
-    (width, height) = utils.get_libcell_size("dff",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
+    cell_size_layer = "boundary"
     
     def __init__(self, name="dff"):
         design.design.__init__(self, name)
 
-        self.width = dff.width
-        self.height = dff.height
-        self.pin_map = dff.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+        
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
     
     def analytical_power(self, corner, load):

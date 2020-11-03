@@ -8,9 +8,9 @@
 import debug
 import design
 import utils
-from globals import OPTS
-from tech import GDS,layer
+from tech import GDS, layer
 from tech import cell_properties as props
+
 
 class write_driver(design.design):
     """
@@ -28,20 +28,23 @@ class write_driver(design.design):
                  props.write_driver.pin.gnd]
 
     type_list = ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    if not OPTS.netlist_only:
-        (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
-        pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"])
-    else:
-        (width,height) = (0,0)
-        pin_map = []
+    cell_size_layer = "boundary"
 
     def __init__(self, name):
         design.design.__init__(self, name)
         debug.info(2, "Create write_driver")
 
-        self.width = write_driver.width
-        self.height = write_driver.height
-        self.pin_map = write_driver.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
     def get_bl_names(self):

@@ -10,6 +10,7 @@ import re
 import os
 import math
 import tech
+from pprint import pformat
 from delay_data import delay_data
 from wire_spice_model import wire_spice_model
 from power_data import power_data
@@ -26,8 +27,9 @@ class spice():
     Class consisting of a set of modules and instances of these modules
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cell_name):
         self.name = name
+        self.cell_name = cell_name
 
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
@@ -164,7 +166,6 @@ class spice():
         num_pins = len(self.insts[-1].mod.pins)
         num_args = len(args)
         if (check and num_pins != num_args):
-            from pprint import pformat
             if num_pins < num_args:
                 mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
                 arg_pins = args
@@ -181,7 +182,6 @@ class spice():
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):
-            from pprint import pformat
             insts_string=pformat(self.insts)
             conns_string=pformat(self.conns)
             
@@ -214,7 +214,7 @@ class spice():
             f.close()
 
             # find the correct subckt line in the file
-            subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
+            subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
@@ -234,7 +234,7 @@ class spice():
 
             # pins and subckt should be the same
             # find the correct subckt line in the file
-            subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
+            subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
@@ -293,7 +293,7 @@ class spice():
                 return
 
             # write out the first spice line (the subcircuit)
-            sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
+            sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
                                                   " ".join(self.pins)))
 
             for pin in self.pins:
@@ -304,7 +304,7 @@ class spice():
                 
             # every instance must have a set of connections, even if it is empty.
             if len(self.insts) != len(self.conns):
-                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
+                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.cell_name,
                                                                                             len(self.insts),
                                                                                             len(self.conns)))
                 debug.error("Instances: \n" + str(self.insts))
@@ -330,9 +330,9 @@ class spice():
                 else:
                     sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
                                                      " ".join(self.conns[i]),
-                                                     self.insts[i].mod.name))
+                                                     self.insts[i].mod.cell_name))
 
-            sp.write(".ENDS {0}\n".format(self.name))
+            sp.write(".ENDS {0}\n".format(self.cell_name))
 
         else:
             # If spice is a hard module, output the spice file contents.
@@ -390,7 +390,7 @@ class spice():
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
-                              self.name))
+                              self.cell_name))
         return None
         
     def get_cin(self):
@@ -408,7 +408,7 @@ class spice():
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
-                              self.name))
+                              self.cell_name))
         return 0
         
     def cal_delay_with_rc(self, corner, r, c, slew, swing=0.5):

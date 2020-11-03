@@ -19,18 +19,22 @@ class inv_dec(design.design):
     
     pin_names = ["A", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "POWER", "GROUND"]
+    cell_size_layer = "boundary"
     
-    (width, height) = utils.get_libcell_size("inv_dec",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "inv_dec", GDS["unit"])
-        
     def __init__(self, name="inv_dec", height=None):
         design.design.__init__(self, name)
 
-        self.width = inv_dec.width
-        self.height = inv_dec.height
-        self.pin_map = inv_dec.pin_map
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
     def analytical_power(self, corner, load):

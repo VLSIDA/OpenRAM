@@ -39,7 +39,7 @@ class sram_config:
     def compute_sizes(self):
         """  Computes the organization of the memory using bitcell size by trying to make it square."""
 
-        bitcell = factory.create(module_type="bitcell")
+        bitcell = factory.create(module_type=OPTS.bitcell, cell_name=OPTS.bitcell_name)
         
         debug.check(self.num_banks in [1, 2, 4],
                     "Valid number of banks are 1 , 2 and 4.")

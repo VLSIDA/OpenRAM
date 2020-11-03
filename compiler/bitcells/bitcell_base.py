@@ -8,18 +8,30 @@
 
 import debug
 import design
+import utils
 from globals import OPTS
 import logical_effort
-from tech import parameter, drc, layer
+from tech import GDS, parameter, drc, layer
 
 
 class bitcell_base(design.design):
     """
     Base bitcell parameters to be over-riden.
     """
-    def __init__(self, name):
-        design.design.__init__(self, name)
+    cell_size_layer = "boundary"
+    
+    def __init__(self, name, cell_name, hard_cell=True):
+        design.design.__init__(self, name, cell_name)
 
+        if hard_cell:
+            (self.width, self.height) = utils.get_libcell_size(cell_name,
+                                                               GDS["unit"],
+                                                               layer[self.cell_size_layer])
+            self.pin_map = utils.get_libcell_pins(self.pin_names,
+                                                  cell_name,
+                                                  GDS["unit"])
+            self.add_pin_types(self.type_list)
+        
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained

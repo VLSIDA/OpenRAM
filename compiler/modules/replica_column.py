@@ -77,9 +77,9 @@ class replica_column(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        self.replica_cell = factory.create(module_type="replica_{}".format(OPTS.bitcell))
+        self.replica_cell = factory.create(module_type=OPTS.replica_bitcell)
         self.add_mod(self.replica_cell)
-        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
+        self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
         self.add_mod(self.dummy_cell)
         try:
             edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")

@@ -8,10 +8,10 @@
 import design
 import debug
 import utils
-from tech import GDS,layer,drc,parameter,cell_properties
+from tech import GDS, layer
 from tech import cell_properties as props
-
 from globals import OPTS
+
 
 class replica_bitcell(design.design):
     """
@@ -26,24 +26,23 @@ class replica_bitcell(design.design):
                  props.bitcell.cell_6t.pin.vdd,
                  props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+    cell_size_layer = "boundary"
     
-    if not OPTS.netlist_only:
-        (width,height) = utils.get_libcell_size("replica_cell_6t", GDS["unit"], layer["boundary"])
-        pin_map = utils.get_libcell_pins(pin_names, "replica_cell_6t", GDS["unit"])
-    else:
-        (width,height) = (0,0)
-        pin_map = []
-
-    def __init__(self, name=""):
+    def __init__(self, name, cell_name=None):
+        if not cell_name:
+            cell_name = OPTS.replica_bitcell_name
         # Ignore the name argument
-        design.design.__init__(self, "replica_cell_6t")
+        design.design.__init__(self, name, cell_name)
         debug.info(2, "Create replica bitcell object")
-
-        self.width = replica_bitcell.width
-        self.height = replica_bitcell.height
-        self.pin_map = replica_bitcell.pin_map
-        self.add_pin_types(self.type_list)
         
+        (self.width, self.height) = utils.get_libcell_size(cell_name,
+                                                           GDS["unit"],
+                                                           layer[self.cell_size_layer])
+        self.pin_map = utils.get_libcell_pins(self.pin_names,
+                                              cell_name,
+                                              GDS["unit"])
+        
+
     def get_stage_effort(self, load):
         parasitic_delay = 1
         size = 0.5 #This accounts for bitline being drained thought the access TX and internal node

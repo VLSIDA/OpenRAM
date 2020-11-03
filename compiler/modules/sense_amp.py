@@ -10,7 +10,6 @@ import debug
 import utils
 from tech import GDS, layer, parameter, drc
 from tech import cell_properties as props
-from globals import OPTS
 import logical_effort
 
 
@@ -28,13 +27,25 @@ class sense_amp(design.design):
                  props.sense_amp.pin.vdd,
                  props.sense_amp.pin.gnd]
     type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    if not OPTS.netlist_only:
-        (width, height) = utils.get_libcell_size("sense_amp", GDS["unit"], layer["boundary"])
-        pin_map = utils.get_libcell_pins(pin_names, "sense_amp", GDS["unit"])
-    else:
-        (width, height) = (0, 0)
-        pin_map = []
+    cell_size_layer = "boundary"
 
+    def __init__(self, name="sense_amp"):
+        super().__init__(name)
+        debug.info(2, "Create sense_amp")
+
+        (width, height) = utils.get_libcell_size(name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+        
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         name,
+                                         GDS["unit"])
+        
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
+        self.add_pin_types(self.type_list)
+        
     def get_bl_names(self):
         return props.sense_amp.pin.bl
 
@@ -49,15 +60,6 @@ class sense_amp(design.design):
     def en_name(self):
         return props.sense_amp.pin.en
 
-    def __init__(self, name):
-        super().__init__(name)
-        debug.info(2, "Create sense_amp")
-
-        self.width = sense_amp.width
-        self.height = sense_amp.height
-        self.pin_map = sense_amp.pin_map
-        self.add_pin_types(self.type_list)
-        
     def get_cin(self):
     
         # FIXME: This input load will be applied to both the s_en timing and bitline timing.

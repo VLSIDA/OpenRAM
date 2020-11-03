@@ -95,6 +95,7 @@ def _get_gds_reader(units, gds_filename):
 
 _GDS_SIZE_CACHE = {}
 
+
 def get_gds_size(name, gds_filename, units, lpp):
     """
     Open a GDS file and return the size from either the
@@ -128,6 +129,7 @@ def get_libcell_size(name, units, lpp):
 
 
 _GDS_PINS_CACHE = {}
+
 
 def get_gds_pins(pin_names, name, gds_filename, units):
     """

@@ -13,7 +13,7 @@ nominal_corner_only = True
 
 route_supplies = True
 check_lvsdrc = True
-perimeter_pins = True
+perimeter_pins = False
 #netlist_only = True
 #analytical_delay = False
 output_path = "macros/sram_1rw1r_{0}_{1}_{2}_{3}".format(word_size,

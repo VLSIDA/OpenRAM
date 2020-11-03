@@ -12,7 +12,8 @@ import bitcell_base
 
 class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
     """
-    todo"""
+    Column end cap cell. 
+    """
 
     pin_names = [props.bitcell.cell_1rw1r.pin.bl0,
                  props.bitcell.cell_1rw1r.pin.br0,
@@ -22,11 +23,8 @@ class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "POWER", "GROUND"]
 
-    def __init__(self, name="col_cap_cell_1rw_1r", cell_name=None):
-        if not cell_name:
-            cell_name = name
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, name, cell_name)
+    def __init__(self, name="col_cap_cell_1rw_1r"):
+        bitcell_base.bitcell_base.__init__(self, name)
         debug.info(2, "Create col_cap bitcell 1rw+1r object")
 
         self.no_instances = True

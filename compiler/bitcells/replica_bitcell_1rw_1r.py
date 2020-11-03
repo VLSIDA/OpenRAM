@@ -8,6 +8,7 @@
 import debug
 import bitcell_base
 from tech import cell_properties as props
+from tech import parameter
 
 
 class replica_bitcell_1rw_1r(bitcell_base.bitcell_base):

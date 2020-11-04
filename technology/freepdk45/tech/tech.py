@@ -45,7 +45,7 @@ layer_properties = layer_properties()
 ###################################################
 
 GDS = {}
-# gds units 
+# gds units
 # From http://www.cnf.cornell.edu/cnf_spie9.html: "The first
 #is the size of a database unit in user units. The second is the size
 #of a database unit in meters.  For example, if your library was

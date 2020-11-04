@@ -15,7 +15,7 @@ class _pins:
         for k, v in pin_dict.items():
             self.__dict__[k] = v
 
-            
+
 class _cell:
     def __init__(self, pin_dict):
         pin_dict.update(self._default_power_pins())
@@ -29,24 +29,24 @@ class _cell:
         return {'vdd': 'vdd',
                 'gnd': 'gnd'}
 
-    
+
 class _mirror_axis:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-        
+
 class _ptx:
     def __init__(self, model_is_subckt, bin_spice_models):
         self.model_is_subckt = model_is_subckt
         self.bin_spice_models = bin_spice_models
 
-        
+
 class _pgate:
     def __init__(self, add_implants):
         self.add_implants = add_implants
 
-        
+
 class _bitcell:
     def __init__(self, mirror, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
@@ -110,25 +110,25 @@ class _dff:
         self.custom_type_list = custom_type_list
         self.clk_pin = clk_pin
 
-        
+
 class _dff_buff:
     def __init__(self, use_custom_ports, custom_buff_ports, add_body_contacts):
         self.use_custom_ports = use_custom_ports
         self.buf_ports = custom_buff_ports
         self.add_body_contacts = add_body_contacts
 
-        
+
 class _dff_buff_array:
     def __init__(self, use_custom_ports, add_body_contacts):
         self.use_custom_ports = use_custom_ports
         self.add_body_contacts = add_body_contacts
 
-        
+
 class _bitcell_array:
     def __init__(self, use_custom_cell_arrangement):
         self.use_custom_cell_arrangement = use_custom_cell_arrangement
 
-        
+
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -137,19 +137,34 @@ class cell_properties():
     """
     def __init__(self):
         self.names = {}
+        self.names["bitcell"] = "cell_6t"
+        self.names["bitcell_1rw_1r"] = "cell_1rw_1r"
+        self.names["bitcell_1w_1r"] = "cell_1w_1r"
+        self.names["dummy_bitcell"] = "dummy_cell_6t"
+        self.names["dummy_bitcell_1rw_1r"] = "dummy_cell_1rw_1r"
+        self.names["dummy_bitcell_1w_1r"] = "dummy_cell_1w_1r"
+        self.names["replica_bitcell"] = "replica_cell_6t"
+        self.names["replica_bitcell_1rw_1r"] = "replica_cell_1rw_1r"
+        self.names["replica_bitcell_1w_1r"] = "replica_cell_1w_1r"
+        self.names["col_cap_bitcell_6t"] = "col_cap_cell_6t"
+        self.names["col_cap_bitcell_1rw_1r"] = "col_cap_cell_1rw_1r"
+        self.names["col_cap_bitcell_1w_1r"] = "col_cap_cell_1w_1r"
+        self.names["row_cap_bitcell_6t"] = "row_cap_cell_6t"
+        self.names["row_cap_bitcell_1rw_1r"] = "row_cap_cell_1rw_1r"
+        self.names["row_cap_bitcell_1w_1r"] = "row_cap_cell_1w_1r"
 
         self._bitcell = _bitcell._default()
 
         self._ptx = _ptx(model_is_subckt=False,
                          bin_spice_models=False)
-        
+
         self._pgate = _pgate(add_implants=False)
-        
+
         self._dff = _dff(use_custom_ports=False,
                          custom_port_list=["D", "Q", "clk", "vdd", "gnd"],
                          custom_type_list=["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
                          clk_pin="clk")
-        
+
         self._dff_buff = _dff_buff(use_custom_ports=False,
                                    custom_buff_ports=["D", "qint", "clk", "vdd", "gnd"],
                                    add_body_contacts=False)
@@ -176,7 +191,7 @@ class cell_properties():
     @property
     def ptx(self):
         return self._ptx
-    
+
     @property
     def pgate(self):
         return self._pgate
@@ -184,7 +199,7 @@ class cell_properties():
     @property
     def dff(self):
         return self._dff
-    
+
     @property
     def dff_buff(self):
         return self._dff_buff
@@ -200,7 +215,7 @@ class cell_properties():
     @property
     def sense_amp(self):
         return self._sense_amp
-    
+
     @property
     def bitcell_array(self):
         return self._bitcell_array

@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -23,7 +23,7 @@ class timing_setup_test(openram_test):
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
-        
+
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -32,7 +32,7 @@ class timing_setup_test(openram_test):
         import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
-        
+
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         sh = setup_hold(corner)
         data = sh.analyze(slews,slews)
@@ -56,7 +56,7 @@ class timing_setup_test(openram_test):
         self.assertTrue(self.check_golden_data(data,golden_data,0.25))
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

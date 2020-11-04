@@ -43,7 +43,7 @@ class big_test(openram_test):
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
-                
+
                 layer_stack =("metal1","via1","metal2")
                 r=router(layer_stack,self,gds_file)
                 connections=[('out_0_2', 'a_0_0'),
@@ -76,10 +76,10 @@ class big_test(openram_test):
             self.local_drc_check(r)
         else:
             debug.warning("This test does not support technology {0}".format(OPTS.tech_name))
-                
+
         # fails if there are any DRC errors on any cells
         globals.end_openram()
-                             
+
 
 
 # instantiate a copy of the class to actually run the test

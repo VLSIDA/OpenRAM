@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -25,7 +25,7 @@ class pinv_test(openram_test):
         tx = factory.create(module_type="pinv", size=2)
         self.local_check(tx)
 
-        globals.end_openram()        
+        globals.end_openram()
 
 
 # run the test from the command line

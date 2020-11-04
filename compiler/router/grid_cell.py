@@ -16,10 +16,10 @@ class grid_cell:
         self.source = False
         self.target = False
         # -1 means it isn't visited yet
-        self.min_cost = -1 
+        self.min_cost = -1
 
     def reset(self):
-        """ 
+        """
         Reset the dynamic info about routing. The pins/blockages are not reset so
         that they can be reused.
         """
@@ -33,11 +33,11 @@ class grid_cell:
         # We can display the cost of the frontier
         if self.min_cost > 0:
             return self.min_cost
-        
-        
+
+
     def get_type(self):
         type_string = ""
-        
+
         if self.blocked:
             type_string += "X"
 
@@ -52,5 +52,5 @@ class grid_cell:
 
         if type_string != "":
             return type_string
-        
+
         return None

@@ -43,7 +43,7 @@ class pin_location_test(openram_test):
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
-                
+
                 layer_stack =("metal1","via1","metal2")
                 r=router(layer_stack,self,gds_file)
                 # these are user coordinates and layers
@@ -61,7 +61,7 @@ class pin_location_test(openram_test):
 
         # fails if there are any DRC errors on any cells
         globals.end_openram()
-                             
+
 
 
 # instantiate a copy of the class to actually run the test

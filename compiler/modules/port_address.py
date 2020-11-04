@@ -19,12 +19,12 @@ class port_address(design.design):
     """
 
     def __init__(self, cols, rows, port, name=""):
-        
+
         self.num_cols = cols
         self.num_rows = rows
         self.port = port
         self.addr_size = ceil(log(self.num_rows, 2))
-        
+
         if name == "":
             name = "port_address_{0}_{1}".format(cols, rows)
         super().__init__(name)
@@ -42,7 +42,7 @@ class port_address(design.design):
         self.create_row_decoder()
         self.create_wordline_driver()
         self.create_rbl_driver()
-        
+
     def create_layout(self):
         if "li" in layer:
             self.route_layer = "li"
@@ -57,23 +57,23 @@ class port_address(design.design):
 
         for bit in range(self.addr_size):
             self.add_pin("addr_{0}".format(bit), "INPUT")
-        
+
         self.add_pin("wl_en", "INPUT")
 
         for bit in range(self.num_rows):
             self.add_pin("wl_{0}".format(bit), "OUTPUT")
-            
+
         self.add_pin("rbl_wl", "OUTPUT")
-        
+
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
-        
+
     def route_layout(self):
         """ Create routing amoung the modules """
         self.route_pins()
         self.route_internal()
         self.route_supplies()
-        
+
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
         for inst in [self.wordline_driver_array_inst, self.row_decoder_inst]:
@@ -85,7 +85,7 @@ class port_address(design.design):
                 self.add_power_pin("vdd", rbl_vdd_pin.center())
             else:
                 self.add_power_pin("vdd", rbl_vdd_pin.lc())
-                
+
     def route_pins(self):
         for row in range(self.addr_size):
             decoder_name = "addr_{}".format(row)
@@ -96,7 +96,7 @@ class port_address(design.design):
             self.copy_layout_pin(self.wordline_driver_array_inst, driver_name)
 
         self.copy_layout_pin(self.rbl_driver_inst, "Z", "rbl_wl")
-            
+
     def route_internal(self):
         for row in range(self.num_rows):
             # The pre/post is to access the pin from "outside" the cell to avoid DRCs
@@ -133,13 +133,13 @@ class port_address(design.design):
         self.add_layout_pin_rect_center(text="wl_en",
                                         layer=en_pin.layer,
                                         offset=rbl_in_pos)
-        
+
     def add_modules(self):
 
         self.row_decoder = factory.create(module_type="decoder",
                                           num_outputs=self.num_rows)
         self.add_mod(self.row_decoder)
-        
+
         self.wordline_driver_array = factory.create(module_type="wordline_driver_array",
                                                     rows=self.num_rows,
                                                     cols=self.num_cols)
@@ -165,12 +165,12 @@ class port_address(design.design):
             self.rbl_driver = factory.create(module_type="buf_dec",
                                              size=driver_size,
                                              height=b.height)
-            
+
         self.add_mod(self.rbl_driver)
-        
+
     def create_row_decoder(self):
         """  Create the hierarchical row decoder  """
-        
+
         self.row_decoder_inst = self.add_inst(name="row_decoder",
                                               mod=self.row_decoder)
 
@@ -187,7 +187,7 @@ class port_address(design.design):
 
         self.rbl_driver_inst = self.add_inst(name="rbl_driver",
                                              mod=self.rbl_driver)
-        
+
         temp = []
         temp.append("wl_en")
         temp.append("rbl_wl")
@@ -197,7 +197,7 @@ class port_address(design.design):
 
     def create_wordline_driver(self):
         """ Create the Wordline Driver """
-        
+
         self.wordline_driver_array_inst = self.add_inst(name="wordline_driver",
                                                         mod=self.wordline_driver_array)
 
@@ -231,7 +231,7 @@ class port_address(design.design):
             rbl_driver_offset = vector(x_offset,
                                        self.wordline_driver_array.height)
             self.rbl_driver_inst.place(rbl_driver_offset)
-        
+
         # Pass this up
         self.predecoder_height = self.row_decoder.predecoder_height
 

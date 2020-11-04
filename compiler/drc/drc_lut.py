@@ -44,7 +44,7 @@ class drc_lut():
             if k1 < k2:
                 return False
         return True
-                
-            
-        
+
+
+
 

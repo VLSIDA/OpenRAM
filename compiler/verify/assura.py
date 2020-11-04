@@ -43,7 +43,7 @@ def run_drc(name, gds_name, final_verification=False):
 
     global num_drc_runs
     num_drc_runs += 1
-    
+
     from tech import drc
     drc_rules = drc["drc_rules"]
     drc_runset = OPTS.openram_temp + name + ".rsf"
@@ -106,7 +106,7 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
 
     global num_lvs_runs
     num_lvs_runs += 1
-    
+
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = OPTS.openram_temp + name + ".rsf"
@@ -192,7 +192,7 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
 
     global num_pex_runs
     num_pex_runs += 1
-    
+
 def print_drc_stats():
     debug.info(1,"DRC runs: {0}".format(num_drc_runs))
 def print_lvs_stats():

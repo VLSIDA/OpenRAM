@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -23,7 +23,7 @@ class timing_sram_test(openram_test):
         OPTS.spice_name="hspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
-        
+
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -44,7 +44,7 @@ class timing_sram_test(openram_test):
         s = factory.create(module_type="sram", sram_config=c)
         #import sys
         #sys.exit(1)
-        
+
         tempspice = OPTS.openram_temp + "temp.sp"
         s.sp_write(tempspice)
 
@@ -96,9 +96,9 @@ class timing_sram_test(openram_test):
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
 
         self.assertTrue(self.check_golden_data(data,golden_data,0.25))
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

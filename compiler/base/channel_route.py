@@ -17,7 +17,7 @@ class channel_net():
         self.name = net_name
         self.pins = pins
         self.vertical = vertical
-        
+
         # Keep track of the internval
         if vertical:
             self.min_value = min(i.by() for i in pins)
@@ -25,34 +25,34 @@ class channel_net():
         else:
             self.min_value = min(i.lx() for i in pins)
             self.max_value = max(i.rx() for i in pins)
-            
+
         # Keep track of the conflicts
         self.conflicts = []
 
     def __str__(self):
         return self.name
-    
+
     def __repr__(self):
         return self.name
-    
+
     def __lt__(self, other):
         return self.min_value < other.min_value
 
     def pin_overlap(self, pin1, pin2, pitch):
         """ Check for vertical or horizontal overlap of the two pins """
-        
+
         # FIXME: If the pins are not in a row, this may break.
         # However, a top pin shouldn't overlap another top pin,
         # for example, so the extra comparison *shouldn't* matter.
-        
+
         # Pin 1 must be in the "BOTTOM" set
         x_overlap = pin1.by() < pin2.by() and abs(pin1.center().x - pin2.center().x) < pitch
-        
+
         # Pin 1 must be in the "LEFT" set
         y_overlap = pin1.lx() < pin2.lx() and abs(pin1.center().y - pin2.center().y) < pitch
         overlaps = (not self.vertical and x_overlap) or (self.vertical and y_overlap)
         return overlaps
-        
+
     def pins_overlap(self, other, pitch):
         """
         Check all the pin pairs on two nets and return a pin
@@ -73,8 +73,8 @@ class channel_net():
         min_overlap = self.min_value >= other.min_value and self.min_value <= other.max_value
         max_overlap = self.max_value >= other.min_value and self.max_value <= other.max_value
         return min_overlap or max_overlap
-        
-        
+
+
 class channel_route(design.design):
 
     unique_id = 0
@@ -98,7 +98,7 @@ class channel_route(design.design):
         name = "cr_{0}".format(channel_route.unique_id)
         channel_route.unique_id += 1
         super().__init__(name)
-        
+
         self.netlist = netlist
         self.offset = offset
         self.layer_stack = layer_stack
@@ -106,7 +106,7 @@ class channel_route(design.design):
         self.vertical = vertical
         # For debugging...
         self.parent = parent
-        
+
         if not directions or directions == "pref":
             # Use the preferred layer directions
             if self.get_preferred_direction(layer_stack[0]) == "V":
@@ -154,7 +154,7 @@ class channel_route(design.design):
             if pin in conflicts:
                 g[other_pin].remove(pin)
         return g
-            
+
     def route(self):
         # Create names for the nets for the graphs
         nets = []
@@ -180,7 +180,7 @@ class channel_route(design.design):
                     except KeyError:
                         hcg[net2.name] = set([net1.name])
 
-            
+
         # Initialize the vertical conflict graph (vcg)
         # and make a list of all pins
         vcg = collections.OrderedDict()
@@ -204,12 +204,12 @@ class channel_route(design.design):
                 # Skip yourself
                 if net1.name == net2.name:
                     continue
-                
+
                 if net1.pins_overlap(net2, pitch):
                     vcg[net2.name].add(net1.name)
 
         # Check if there are any cycles net1 <---> net2 in the VCG
-        
+
 
         # Some of the pins may be to the left/below the channel offset,
         # so adjust if this is the case
@@ -226,7 +226,7 @@ class channel_route(design.design):
         while len(nets) > 0:
 
             current_offset_value = current_offset.y if self.vertical else current_offset.x
-            
+
             # from pprint import pformat
             # print("VCG:\n", pformat(vcg))
             # for name,net in vcg.items():
@@ -253,7 +253,7 @@ class channel_route(design.design):
                     # Remove the net from other constriants in the VCG
                     vcg = self.remove_net_from_graph(net.name, vcg)
                     nets.remove(net)
-                    
+
                     break
             else:
                 # If we made a full pass and the offset didn't change...
@@ -276,7 +276,7 @@ class channel_route(design.design):
                     current_offset = vector(current_offset.x + self.horizontal_nonpref_pitch, real_channel_offset.y)
                 else:
                     current_offset = vector(real_channel_offset.x, current_offset.y + self.vertical_nonpref_pitch)
-                    
+
         # Return the size of the channel
         if self.vertical:
             self.width = current_offset.x + self.horizontal_nonpref_pitch - self.offset.x
@@ -284,7 +284,7 @@ class channel_route(design.design):
         else:
             self.width = self.max_value + self.horizontal_nonpref_pitch - self.offset.x
             self.height = current_offset.y + self.vertical_nonpref_pitch - self.offset.y
-            
+
     def get_layer_pitch(self, layer):
         """ Return the track pitch on a given layer """
         try:
@@ -307,10 +307,10 @@ class channel_route(design.design):
         """
         max_x = max([pin.center().x for pin in pins])
         min_x = min([pin.center().x for pin in pins])
-        
+
         # if we are less than a pitch, just create a non-preferred layer jog
         non_preferred_route = max_x - min_x <= pitch
-        
+
         if non_preferred_route:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
             # Add the horizontal trunk on the vertical layer!
@@ -324,7 +324,7 @@ class channel_route(design.design):
                     pin_pos = pin.uc()
                 else:
                     pin_pos = pin.bc()
-                
+
                 # No bend needed here
                 mid = vector(pin_pos.x, trunk_offset.y)
                 self.add_path(self.vertical_layer, [pin_pos, mid])
@@ -361,10 +361,10 @@ class channel_route(design.design):
         """
         max_y = max([pin.center().y for pin in pins])
         min_y = min([pin.center().y for pin in pins])
-        
+
         # if we are less than a pitch, just create a non-preferred layer jog
         non_preferred_route = max_y - min_y <= pitch
-        
+
         if non_preferred_route:
             half_layer_width = 0.5 * drc["minwidth_{0}".format(self.horizontal_layer)]
             # Add the vertical trunk on the horizontal layer!

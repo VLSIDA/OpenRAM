@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice, parameter
+from tech import GDS, layer, spice
 from tech import cell_properties as props
 import utils
 
@@ -23,39 +23,42 @@ class dff(design.design):
         pin_names = props.dff.custom_port_list
         type_list = props.dff.custom_type_list
         clk_pin = props.dff.clk_pin
+    cell_size_layer = "boundary"
 
-    (width, height) = utils.get_libcell_size("dff",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "dff", GDS["unit"])
-    
     def __init__(self, name="dff"):
-        design.design.__init__(self, name)
+        super().__init__(name)
 
-        self.width = dff.width
-        self.height = dff.height
-        self.pin_map = dff.pin_map
+        (width, height) = utils.get_libcell_size(self.cell_name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         self.cell_name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
-    
+
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["dff_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
-        from tech import parameter
         c_load = load
         c_para = spice["dff_out_cap"]#ff
         transition_prob = 0.5
-        return transition_prob*(c_load + c_para) 
+        return transition_prob*(c_load + c_para)
 
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets)
-        
+

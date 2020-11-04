@@ -319,7 +319,7 @@ class epsfile(canvas.canvasitem):
         try:
             epsfile=open(self.filename,"rb")
         except:
-            raise IOError, "cannot open EPS file '%s'" % self.filename 
+            raise IOError, "cannot open EPS file '%s'" % self.filename
 
         file.write("BeginEPSF\n")
 
@@ -330,7 +330,7 @@ class epsfile(canvas.canvasitem):
         self.trafo.processPS(file, writer, context, registry, bbox)
 
         file.write("%%%%BeginDocument: %s\n" % self.filename)
-        file.write(epsfile.read()) 
+        file.write(epsfile.read())
         file.write("%%EndDocument\n")
         file.write("EndEPSF\n")
 

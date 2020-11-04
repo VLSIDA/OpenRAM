@@ -153,7 +153,7 @@ class pin_group:
 
         debug.check(len(new_pin_list) > 0,
                     "Did not find any enclosures.")
-        
+
         return new_pin_list
 
     def compute_connector(self, pin, enclosure):
@@ -198,7 +198,7 @@ class pin_group:
         return p
 
     def find_above_connector(self, pin, enclosures):
-        """ 
+        """
         Find the enclosure that is to above the pin
         and make a connector to it's upper edge.
         """
@@ -662,7 +662,7 @@ class pin_group:
         if len(self.grids) < 0:
             debug.error("Did not find any unblocked grids: {}".format(str(self.pins)))
             self.router.write_debug_gds("blocked_pin.gds")
-        
+
         # Remember the secondary grids for removing adjacent pins
         self.secondary_grids = partial_set
 

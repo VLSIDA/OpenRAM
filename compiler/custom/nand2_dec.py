@@ -15,21 +15,25 @@ class nand2_dec(design.design):
     """
     2-input NAND decoder for address decoders.
     """
-    
+
     pin_names = ["A", "B", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
-    
-    (width, height) = utils.get_libcell_size("nand2_dec",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "nand2_dec", GDS["unit"])
-        
-    def __init__(self, name="nand2_dec", height=None):
-        design.design.__init__(self, name)
+    cell_size_layer = "boundary"
 
-        self.width = nand2_dec.width
-        self.height = nand2_dec.height
-        self.pin_map = nand2_dec.pin_map
+    def __init__(self, name="nand2_dec", height=None):
+        super().__init__(name)
+
+        (width, height) = utils.get_libcell_size(self.cell_name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         self.cell_name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
         # FIXME: For now...
@@ -39,17 +43,17 @@ class nand2_dec(design.design):
         self.pmos_size = parameter["beta"] * size
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
-        
+
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
         c_eff = self.calculate_effective_capacitance(load)
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand2_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -61,7 +65,7 @@ class nand2_dec(design.design):
     def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size + self.pmos_size
-    
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.
@@ -82,4 +86,4 @@ class nand2_dec(design.design):
         Overrides base class function.
         """
         self.add_graph_edges(graph, port_nets)
-        
+

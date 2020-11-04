@@ -11,33 +11,33 @@ import re
 
 class trim_spice():
     """
-    A utility to trim redundant parts of an SRAM spice netlist. 
+    A utility to trim redundant parts of an SRAM spice netlist.
     Input is an SRAM spice file. Output is an equivalent netlist
     that works for a single address and range of data bits.
     """
 
     def __init__(self, spfile, reduced_spfile):
         self.sp_file = spfile
-        self.reduced_spfile = reduced_spfile        
+        self.reduced_spfile = reduced_spfile
 
         debug.info(1,"Trimming non-critical cells to speed-up characterization: {}.".format(reduced_spfile))
-        
+
         # Load the file into a buffer for performance
         sp = open(self.sp_file, "r")
         self.spice = sp.readlines()
         sp.close()
         for i in range(len(self.spice)):
             self.spice[i] = self.spice[i].rstrip(" \n")
-        
+
 
         self.sp_buffer = self.spice
 
     def set_configuration(self, banks, rows, columns, word_size):
         """ Set the configuration of SRAM sizes that we are simulating.
-        Need the: number of banks, number of rows in each bank, number of 
+        Need the: number of banks, number of rows in each bank, number of
         columns in each bank, and data word size."""
         self.num_banks = banks
-        self.num_rows = rows        
+        self.num_rows = rows
         self.num_columns = columns
         self.word_size = word_size
 
@@ -80,8 +80,8 @@ class trim_spice():
         debug.info(1,wl_msg)
         self.sp_buffer.insert(0, "* It should NOT be used for LVS!!")
         self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
-        
-        
+
+
         wl_regex = r"wl\d*_{}".format(wl_address)
         bl_regex = r"bl\d*_{}".format(int(self.words_per_row*data_bit + col_address))
         self.remove_insts("bitcell_array",[wl_regex,bl_regex])
@@ -92,7 +92,7 @@ class trim_spice():
 
         # 3. Keep column muxes basd on BL
         self.remove_insts("column_mux_array",[bl_regex])
-        
+
         # 4. Keep write driver based on DATA
         data_regex = r"data_{}".format(data_bit)
         self.remove_insts("write_driver_array",[data_regex])
@@ -100,18 +100,18 @@ class trim_spice():
         # 5. Keep wordline driver based on WL
         # Need to keep the gater too
         #self.remove_insts("wordline_driver",wl_regex)
-        
+
         # 6. Keep precharges based on BL
         self.remove_insts("precharge_array",[bl_regex])
-        
+
         # Everything else isn't worth removing. :)
-        
+
         # Finally, write out the buffer as the new reduced file
         sp = open(self.reduced_spfile, "w")
         sp.write("\n".join(self.sp_buffer))
         sp.close()
 
-        
+
     def remove_insts(self, subckt_name, keep_inst_list):
         """This will remove all of the instances in the list from the named
         subckt that DO NOT contain a term in the list.  It just does a
@@ -121,7 +121,7 @@ class trim_spice():
         removed_insts = 0
         #Expects keep_inst_list are regex patterns. Compile them here.
         compiled_patterns = [re.compile(pattern) for pattern in keep_inst_list]
-        
+
         start_name = ".SUBCKT {}".format(subckt_name)
         end_name = ".ENDS {}".format(subckt_name)
 

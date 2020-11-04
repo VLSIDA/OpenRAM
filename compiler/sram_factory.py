@@ -79,7 +79,7 @@ class sram_factory:
         user_module_type, um_overridden = self.get_usermodule_type(module_type)
         # print(module_type, tech_module_type, tm_overridden)
         # print(module_type, user_module_type, um_overridden)
-        
+
         # overridden user modules have priority
         if um_overridden:
             real_module_type = user_module_type
@@ -102,7 +102,7 @@ class sram_factory:
             self.modules[real_module_type] = mod
             self.module_indices[real_module_type] = 0
             self.objects[real_module_type] = []
-            
+
         # Either retreive a previous object or create a new one
         for obj in self.objects[real_module_type]:
             (obj_kwargs, obj_item) = obj
@@ -125,7 +125,7 @@ class sram_factory:
                 module_name = real_module_type
         else:
             if self.is_duplicate_name(module_name):
-                raise ValueError("Modules with duplicate name are not allowed." \
+                raise ValueError("Modules with duplicate name are not allowed."
                                  " '{}'".format(module_name))
 
         # type_str = "type={}".format(real_module_type)
@@ -150,6 +150,6 @@ class sram_factory:
             mods = []
         return mods
 
-    
+
 # Make a factory
 factory = sram_factory()

@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 @unittest.skip("Multibank is not working yet.")
 class sram_2bank_test(openram_test):
@@ -91,7 +92,7 @@ class sram_2bank_test(openram_test):
         self.local_check(a, final_verification=True)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

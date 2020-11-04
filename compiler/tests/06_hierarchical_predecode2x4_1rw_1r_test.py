@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -26,7 +26,7 @@ class hierarchical_predecode2x4_1rw_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(1, "Testing sample for hierarchy_predecode2x4")
         a = factory.create(module_type="hierarchical_predecode2x4")
         self.local_check(a)

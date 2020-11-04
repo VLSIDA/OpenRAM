@@ -6,12 +6,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 class port_data_spare_cols_test(openram_test):
 
@@ -57,11 +58,11 @@ class port_data_spare_cols_test(openram_test):
         debug.info(1, "Eight way column mux")
         a = factory.create("port_data", sram_config=c, port=0)
         self.local_check(a)
-        
-        OPTS.bitcell = "bitcell_1w_1r"
+
         OPTS.num_rw_ports = 0
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
+        globals.setup_bitcell()
         
         c.num_words=16
         c.words_per_row=1
@@ -72,7 +73,7 @@ class port_data_spare_cols_test(openram_test):
         self.local_check(a)
         a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
-        
+
         c.num_words=32
         c.words_per_row=2
         factory.reset()
@@ -103,9 +104,9 @@ class port_data_spare_cols_test(openram_test):
         self.local_check(a)
         a = factory.create("port_data", sram_config=c, port=1)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

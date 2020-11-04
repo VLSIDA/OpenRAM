@@ -33,7 +33,7 @@ GDS={}
 #1, since you use more than 1 database unit per user unit. To
 #calculate the size of a user unit in meters, divide the second number
 #by the first."
-GDS["unit"]=(0.001,1e-6)  
+GDS["unit"]=(0.001,1e-6)
 # default label zoom
 GDS["zoom"] = 0.5
 
@@ -43,7 +43,7 @@ GDS["zoom"] = 0.5
 ###################################################
 
 # create the GDS layer map
-layer={} 
+layer={}
 layer["vtg"]            = (-1, 0)
 layer["vth"]            = (-1, 0)
 layer["contact"]        = (47, 0)
@@ -75,7 +75,7 @@ _lambda_ = 0.3
 #technology parameter
 parameter={}
 parameter["min_tx_size"] = 4*_lambda_
-parameter["beta"] = 2 
+parameter["beta"] = 2
 
 parameter["6T_inv_nmos_size"] = 8*_lambda_
 parameter["6T_inv_pmos_size"] = 3*_lambda_
@@ -97,29 +97,29 @@ drc["drc_rules"]=drclvs_home+"/calibreDRC_scn3me_subm.rul"
 drc["lvs_rules"]=drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
 
-        	      					
+
 # minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"] = 4*_lambda_
 drc["minlength_channel"] = 2*_lambda_
 
-# 1.3 Minimum spacing between wells of same type (if both are drawn) 
+# 1.3 Minimum spacing between wells of same type (if both are drawn)
 drc["well_to_well"] = 6*_lambda_
-# 1.4 Minimum spacing between wells of different type (if both are drawn) 
+# 1.4 Minimum spacing between wells of different type (if both are drawn)
 drc["pwell_to_nwell"] = 0
-# 1.1 Minimum width 
+# 1.1 Minimum width
 drc["minwidth_well"] = 12*_lambda_
 
-# 3.1 Minimum width 
+# 3.1 Minimum width
 drc["minwidth_poly"] = 2*_lambda_
 # 3.2 Minimum spacing over active
 drc["poly_to_poly"] = 3*_lambda_
-# 3.3 Minimum gate extension of active 
+# 3.3 Minimum gate extension of active
 drc["poly_extend_active"] = 2*_lambda_
 # 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
 drc["poly_to_polycontact"] = 4*_lambda_
 # ??
 drc["active_enclosure_gate"] = 0.0
-# 3.5 Minimum field poly to active 
+# 3.5 Minimum field poly to active
 drc["poly_to_active"] = _lambda_
 # 3.2.a Minimum spacing over field poly
 drc["poly_to_field_poly"] = 3*_lambda_
@@ -128,22 +128,22 @@ drc["minarea_poly"] = 0.0
 
 # ??
 drc["active_to_body_active"] = 4*_lambda_  # Fix me
-# 2.1 Minimum width 
+# 2.1 Minimum width
 drc["minwidth_active"] = 3*_lambda_
 # 2.2 Minimum spacing
 drc["active_to_active"] = 3*_lambda_
-# 2.3 Source/drain active to well edge 
+# 2.3 Source/drain active to well edge
 drc["well_enclosure_active"] = 6*_lambda_
 # Reserved for asymmetric enclosures
 drc["well_extend_active"] = 6*_lambda_
 # Not a rule
 drc["minarea_active"] = 0.0
 
-# 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width 
+# 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width
 drc["implant_to_channel"] = 3*_lambda_
 # 4.2 Minimum select overlap of active
 drc["implant_enclosure_active"] = 2*_lambda_
-# 4.3 Minimum select overlap of contact  
+# 4.3 Minimum select overlap of contact
 drc["implant_enclosure_contact"] = _lambda_
 # Not a rule
 drc["implant_to_contact"] = 0
@@ -155,12 +155,12 @@ drc["minwidth_implant"] = 0
 # 6.1 Exact contact size
 drc["minwidth_contact"] = 2*_lambda_
 # 5.3 Minimum contact spacing
-drc["contact_to_contact"] = 3*_lambda_               
-# 6.2.b Minimum active overlap 
+drc["contact_to_contact"] = 3*_lambda_
+# 6.2.b Minimum active overlap
 drc["active_enclosure_contact"] = _lambda_
 # Reserved for asymmetric enclosure
 drc["active_extend_contact"] = _lambda_
-# 5.2.b Minimum poly overlap 
+# 5.2.b Minimum poly overlap
 drc["poly_enclosure_contact"] = _lambda_
 # Reserved for asymmetric enclosures
 drc["poly_extend_contact"] = _lambda_
@@ -168,32 +168,32 @@ drc["poly_extend_contact"] = _lambda_
 drc["contact_to_gate"] = 2*_lambda_
 # 5.4 Minimum spacing to gate of transistor
 drc["contact_to_poly"] = 2*_lambda_
-        
-# 7.1 Minimum width 
+
+# 7.1 Minimum width
 drc["minwidth_metal1"] = 3*_lambda_
-# 7.2 Minimum spacing 
+# 7.2 Minimum spacing
 drc["metal1_to_metal1"] = 3*_lambda_
-# 7.3 Minimum overlap of any contact 
+# 7.3 Minimum overlap of any contact
 drc["metal1_enclosure_contact"] = _lambda_
 # Reserved for asymmetric enclosure
 drc["metal1_extend_contact"] = _lambda_
-# 8.3 Minimum overlap by metal1 
-drc["metal1_enclosure_via1"] = _lambda_           
+# 8.3 Minimum overlap by metal1
+drc["metal1_enclosure_via1"] = _lambda_
 # Reserve for asymmetric enclosures
 drc["metal1_extend_via1"] = _lambda_
 # Not a rule
 drc["minarea_metal1"] = 0
 
-# 8.1 Exact size 
+# 8.1 Exact size
 drc["minwidth_via1"] = 2*_lambda_
-# 8.2 Minimum via1 spacing 
+# 8.2 Minimum via1 spacing
 drc["via1_to_via1"] = 3*_lambda_
 
 # 9.1 Minimum width
 drc["minwidth_metal2"] = 3*_lambda_
-# 9.2 Minimum spacing 
+# 9.2 Minimum spacing
 drc["metal2_to_metal2"] = 3*_lambda_
-# 9.3 Minimum overlap of via1 
+# 9.3 Minimum overlap of via1
 drc["metal2_extend_via1"] = _lambda_
 # Reserved for asymmetric enclosures
 drc["metal2_enclosure_via1"] = _lambda_
@@ -237,14 +237,14 @@ SPICE_MODEL_DIR=os.environ.get("SPICE_MODEL_DIR")
 spice["fet_models"] = { "TT" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
                         "FF" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
                         "FS" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
-                        "SF" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],                        
+                        "SF" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
                         "SS" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
                         "ST" : [SPICE_MODEL_DIR+"/ss/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
                         "TS" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/ss/nmos.sp"],
                         "FT" : [SPICE_MODEL_DIR+"/ff/pmos.sp",SPICE_MODEL_DIR+"/nom/nmos.sp"],
                         "TF" : [SPICE_MODEL_DIR+"/nom/pmos.sp",SPICE_MODEL_DIR+"/ff/nmos.sp"],
                         }
-                        
+
 
 #spice stimulus related variables
 spice["feasible_period"] = 10         # estimated feasible period in ns
@@ -278,7 +278,7 @@ spice["dff_leakage"] = 1      # Leakage power of flop in nW
 spice["default_event_frequency"] = 100         # Default event activity of every gate. MHz
 
 #Logical Effort relative values for the Handmade cells
-parameter["le_tau"] = 23                     #In pico-seconds. 
+parameter["le_tau"] = 23                     #In pico-seconds.
 parameter["min_inv_para_delay"] = 0.73        #In relative delay units
 parameter["cap_relative_per_ff"] = 0.91       #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 27.5              #In relative capacitance units

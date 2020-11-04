@@ -6,8 +6,6 @@
 # All rights reserved.
 #
 import debug
-import utils
-from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
 
@@ -31,27 +29,17 @@ class bitcell_1w_1r(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
-    (width, height) = utils.get_libcell_size("cell_1w_1r",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "cell_1w_1r", GDS["unit"])
 
-    def __init__(self, name=""):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, "cell_1w_1r")
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create bitcell with 1W and 1R Port")
 
-        self.width = bitcell_1w_1r.width
-        self.height = bitcell_1w_1r.height
-        self.pin_map = bitcell_1w_1r.pin_map
-        self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
-        pin_names = bitcell_1w_1r.pin_names
+        pin_names = self.pin_names
         self.bl_names = [pin_names[0], pin_names[2]]
         self.br_names = [pin_names[1], pin_names[3]]
         self.wl_names = [pin_names[4], pin_names[5]]
-
 
     def get_bitcell_pins(self, col, row):
         """

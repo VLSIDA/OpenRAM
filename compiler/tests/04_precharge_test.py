@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -21,14 +21,14 @@ class precharge_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        
+
         # check precharge in single port
         debug.info(2, "Checking precharge for handmade bitcell")
         tx = factory.create(module_type="precharge", size=1)
         self.local_check(tx)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

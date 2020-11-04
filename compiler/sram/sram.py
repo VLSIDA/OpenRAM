@@ -20,7 +20,7 @@ class sram():
     def __init__(self, sram_config, name):
 
         sram_config.set_local_config(self)
-        
+
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from design import design
@@ -32,7 +32,7 @@ class sram():
         start_time = datetime.datetime.now()
 
         self.name = name
-        
+
         if self.num_banks == 1:
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
@@ -44,16 +44,16 @@ class sram():
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
-        
+
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
-    
+
     def sp_write(self, name):
         self.s.sp_write(name)
 
     def lvs_write(self, name):
         self.s.lvs_write(name)
-        
+
     def lef_write(self, name):
         self.s.lef_write(name)
 
@@ -64,7 +64,7 @@ class sram():
         self.s.verilog_write(name)
 
     def extended_config_write(self, name):
-        """Dump config file with all options. 
+        """Dump config file with all options.
            Include defaults and anything changed by input config."""
         f = open(name, "w")
         var_dict = dict((name, getattr(OPTS, name)) for name in dir(OPTS) if not name.startswith('__') and not callable(getattr(OPTS, name)))
@@ -74,7 +74,7 @@ class sram():
             else:
                 f.write(str(var_name) + " = " + str(var_value)+ "\n")
         f.close()
-        
+
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
@@ -106,7 +106,7 @@ class sram():
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
         self.lvs_write(lvsname)
         print_time("LVS writing", datetime.datetime.now(), start_time)
-        
+
         # Save the extracted spice file
         if OPTS.use_pex:
             import verify

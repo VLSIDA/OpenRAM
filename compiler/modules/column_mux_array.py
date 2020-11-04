@@ -46,7 +46,7 @@ class column_mux_array(design.design):
         #     self.sel_layer = "m1"
         #     self.sel_pitch = self.m2_pitch
         #     self.bitline_layer = "m2"
-            
+
         if preferred_directions[self.sel_layer] == "V":
             self.via_directions = ("H", "H")
         else:
@@ -125,7 +125,7 @@ class column_mux_array(design.design):
         # Default to single spaced columns
         if not self.offsets:
             self.offsets = [n * self.mux.width for n in range(self.columns)]
-        
+
         # For every column, add a pass gate
         for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
             if cell_props.bitcell.mirror.y and (col_num + self.column_offset) % 2:
@@ -209,7 +209,7 @@ class column_mux_array(design.design):
                 br_offset_end = self.mux_inst[j + self.words_per_row - 1].get_pin("br_out").bc()
                 bl_out_offset_end = bl_offset_end - vector(0, (self.words_per_row + 1) * self.sel_pitch)
                 br_out_offset_end = br_offset_end - vector(0, (self.words_per_row + 2) * self.sel_pitch)
-                
+
                 self.add_path(self.sel_layer, [bl_out_offset_begin, bl_out_offset_end])
                 self.add_path(self.sel_layer, [br_out_offset_begin, br_out_offset_end])
 

@@ -16,7 +16,7 @@ class pdriver(pgate.pgate):
     This instantiates an even or odd number of inverters
     sized for driving a load.
     """
-    
+
     def __init__(self, name, inverting=False, fanout=0, size_list=None, height=None, add_wells=True):
 
         debug.info(1, "creating pdriver {}".format(name))
@@ -33,10 +33,10 @@ class pdriver(pgate.pgate):
             debug.error("Cannot specify both size_list and fanout.", -1)
         if self.size_list and self.inverting:
             debug.error("Cannot specify both size_list and inverting.", -1)
- 
+
         # Creates the netlist and layout
         super().__init__(name, height, add_wells)
-        
+
     def compute_sizes(self):
         # size_list specified
         if self.size_list:
@@ -78,7 +78,7 @@ class pdriver(pgate.pgate):
         self.extend_wells()
         self.route_supply_rails()
         self.add_boundary()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("Z", "OUTPUT")
@@ -96,7 +96,7 @@ class pdriver(pgate.pgate):
             add_well=False
             self.inv_list.append(temp_inv)
             self.add_mod(temp_inv)
-    
+
     def create_insts(self):
         self.inv_inst_list = []
         for x in range(1, self.num_stages + 1):
@@ -110,7 +110,7 @@ class pdriver(pgate.pgate):
                     self.connect_inst(["A", "Z", "vdd", "gnd"])
                 else:
                     self.connect_inst(["A", zbx_int, "vdd", "gnd"])
-            
+
             # Create last inverter
             elif x == self.num_stages:
                 zbn_int = "Zb{}_int".format(x - 1)
@@ -127,7 +127,7 @@ class pdriver(pgate.pgate):
                                      mod=self.inv_list[x - 1])
                 self.inv_inst_list.append(inst)
                 self.connect_inst([zbx_int, zbn_int, "vdd", "gnd"])
-        
+
     def place_modules(self):
         # Add the first inverter at the origin
         self.inv_inst_list[0].place(vector(0, 0))
@@ -136,7 +136,7 @@ class pdriver(pgate.pgate):
         for x in range(1, len(self.inv_inst_list)):
             loc = vector(self.inv_inst_list[x - 1].rx(), 0)
             self.inv_inst_list[x].place(loc)
-                
+
     def route_wires(self):
         z_inst_list = []
         a_inst_list = []
@@ -168,4 +168,3 @@ class pdriver(pgate.pgate):
     def get_sizes(self):
         """ Return the relative sizes of the buffers """
         return self.size_list
-    

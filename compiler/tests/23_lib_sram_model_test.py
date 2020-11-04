@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os,re
+import sys, os,re
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -22,7 +22,7 @@ class lib_sram_model_test(openram_test):
         globals.init_openram(config_file)
         OPTS.nominal_corner_only = False
         OPTS.netlist_only = True
-        
+
         from characterizer import lib
         from sram import sram
         from sram_config import sram_config
@@ -52,7 +52,7 @@ class lib_sram_model_test(openram_test):
             libname = "{0}/{1}".format(OPTS.openram_temp,filename)
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
             self.assertTrue(self.isapproxdiff(libname,golden,0.15))
-            
+
         globals.end_openram()
 
 # run the test from the command line

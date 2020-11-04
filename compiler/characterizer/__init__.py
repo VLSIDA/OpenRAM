@@ -30,10 +30,10 @@ if not OPTS.analytical_delay:
     else:
         (OPTS.spice_name,OPTS.spice_exe) = get_tool("spice",["hspice", "ngspice", "ngspice.exe", "xa"])
 
-    # set the input dir for spice files if using ngspice 
+    # set the input dir for spice files if using ngspice
     if OPTS.spice_name == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
-    
+
     if OPTS.spice_exe == "":
         debug.error("No recognizable spice version found. Unable to perform characterization.",1)
 else:

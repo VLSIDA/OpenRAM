@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -25,7 +25,7 @@ class pbuf_dec_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Checking 8x size decoder buffer")
         a = factory.create(module_type="pbuf_dec", size=8)
         self.local_check(a)

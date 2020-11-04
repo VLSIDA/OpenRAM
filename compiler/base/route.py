@@ -14,12 +14,12 @@ from vector3d import vector3d
 from sram_factory import factory
 
 class route(design):
-    """ 
+    """
     Object route (used by the router module)
     Add a route of minimium metal width between a set of points.
-    The widths are the layer widths of the layer stack. 
+    The widths are the layer widths of the layer stack.
     (Vias are in numer of vias.)
-    The wire must be completely rectilinear and the 
+    The wire must be completely rectilinear and the
     z-dimension of the points refers to the layers.
     The points are the center of the wire.
     This can have non-preferred direction routing.
@@ -45,12 +45,12 @@ class route(design):
     def setup_layers(self):
         (self.horiz_layer_name, self.via_layer, self.vert_layer_name) = self.layer_stack
         (self.horiz_layer_width, self.num_vias, self.vert_layer_width) = self.layer_widths
-        
+
         if not self.vert_layer_width:
             self.vert_layer_width = drc("minwidth_{0}".format(self.vert_layer_name))
         if not self.horiz_layer_width:
             self.horiz_layer_width = drc("minwidth_{0}".format(self.horiz_layer_name))
-        
+
         # offset this by 1/2 the via size
         self.c=factory.create(module_type="contact",
                               layer_stack=self.layer_stack,
@@ -58,7 +58,7 @@ class route(design):
 
 
     def create_wires(self):
-        """ 
+        """
         Add the wire segments of the route.
         """
 
@@ -67,7 +67,7 @@ class route(design):
             a, b = tee(iterable)
             next(b, None)
             return zip(a, b)
-        
+
         plist = list(pairwise(self.path))
         for p0,p1 in plist:
             if p0.z != p1.z: # via
@@ -87,10 +87,10 @@ class route(design):
         self.draw_corner_wire(plist[0][0])
         self.draw_corner_wire(plist[-1][1])
 
-                
+
     def get_layer_width(self, layer_zindex):
         """
-        Return the layer width 
+        Return the layer width
         """
         if layer_zindex==0:
             return self.horiz_layer_width
@@ -109,11 +109,11 @@ class route(design):
             return self.vert_layer_name
         else:
             debug.error("Incorrect layer zindex.",-1)
-            
+
 
     def draw_wire(self, p0, p1):
         """
-        This draws a straight wire with layer_minwidth 
+        This draws a straight wire with layer_minwidth
         """
 
         layer_width = self.get_layer_width(p0.z)
@@ -145,8 +145,8 @@ class route(design):
                           offset=vector(offset.x,offset.y),
                           width=width,
                           height=height)
-        
-    
+
+
     def draw_corner_wire(self, p0):
         """ This function adds the corner squares since the center
         line convention only draws to the center of the corner."""

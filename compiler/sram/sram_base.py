@@ -26,7 +26,7 @@ class sram_base(design, verilog, lef):
         design.__init__(self, name)
         lef.__init__(self, ["m1", "m2", "m3", "m4"])
         verilog.__init__(self)
-        
+
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 
@@ -46,7 +46,7 @@ class sram_base(design, verilog, lef):
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}[{1}]".format(port, bit), "INPUT")
-                
+
         for port in self.all_ports:
             for bit in range(self.addr_size):
                 self.add_pin("addr{0}[{1}]".format(port, bit), "INPUT")
@@ -64,7 +64,7 @@ class sram_base(design, verilog, lef):
             else:
                 self.control_logic_inputs.append(self.control_logic_r.get_inputs())
                 self.control_logic_outputs.append(self.control_logic_r.get_outputs())
-        
+
         for port in self.all_ports:
             self.add_pin("csb{}".format(port), "INPUT")
         for port in self.readwrite_ports:
@@ -80,7 +80,7 @@ class sram_base(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
-        
+
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -89,7 +89,7 @@ class sram_base(design, verilog, lef):
         Add pex labels at the sram level for spice analysis
         """
 
-        
+
 
         # add pex labels for bitcells
         for bank_num in range(len(self.bank_insts)):
@@ -103,13 +103,13 @@ class sram_base(design, verilog, lef):
             br_offsets = pex_data[4]
             bl_meta = pex_data[5]
             br_meta = pex_data[6]
-            
+
             bl = []
             br = []
 
             storage_layer_name = "m1"
             bitline_layer_name = self.bitcell.get_pin("bl").layer
-            
+
             for cell in range(len(bank_offset)):
                 Q = [bank_offset[cell][0] + Q_offset[cell][0],
                      bank_offset[cell][1] + Q_offset[cell][1]]
@@ -166,21 +166,21 @@ class sram_base(design, verilog, lef):
 
     def create_netlist(self):
         """ Netlist creation """
-        
+
         start_time = datetime.datetime.now()
-        
+
         # Must create the control logic before pins to get the pins
         self.add_modules()
         self.add_pins()
         self.create_modules()
-        
+
         # This is for the lib file if we don't create layout
         self.width=0
         self.height=0
-        
+
         if not OPTS.is_unit_test:
             print_time("Submodules", datetime.datetime.now(), start_time)
-        
+
     def create_layout(self):
         """ Layout creation """
         start_time = datetime.datetime.now()
@@ -195,7 +195,7 @@ class sram_base(design, verilog, lef):
             print_time("Routing", datetime.datetime.now(), start_time)
 
         self.add_lvs_correspondence_points()
-        
+
         self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
@@ -214,7 +214,7 @@ class sram_base(design, verilog, lef):
 
     def create_modules(self):
         debug.error("Must override pure virtual function.", -1)
-    
+
     def route_supplies(self):
         """ Route the supply grid and connect the pins to them. """
 
@@ -244,10 +244,10 @@ class sram_base(design, verilog, lef):
         from supply_grid_router import supply_grid_router as router
         rtr=router(grid_stack, self)
         rtr.route()
-        
+
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
-        
+
         # address size + control signals + one-hot bank select signals
         self.num_vertical_line = self.addr_size + self.control_size + log(self.num_banks, 2) + 1
         # data bus size
@@ -255,20 +255,20 @@ class sram_base(design, verilog, lef):
 
         self.vertical_bus_width = self.m2_pitch * self.num_vertical_line
         # vertical bus height depends on 2 or 4 banks
-        
+
         self.data_bus_height = self.m3_pitch * self.num_horizontal_line
         self.data_bus_width = 2 * (self.bank.width + self.bank_to_bus_distance) + self.vertical_bus_width
-        
+
         self.control_bus_height = self.m1_pitch * (self.control_size + 2)
         self.control_bus_width = self.bank.width + self.bank_to_bus_distance + self.vertical_bus_width
-        
+
         self.supply_bus_height = self.m1_pitch * 2 # 2 for vdd/gnd placed with control bus
         self.supply_bus_width = self.data_bus_width
 
         # Sanity check to ensure we can fit the control logic above a single bank (0.9 is a hack really)
         debug.check(self.bank.width + self.vertical_bus_width > 0.9 * self.control_logic.width,
                     "Bank is too small compared to control logic.")
-        
+
     def add_busses(self):
         """ Add the horizontal and vertical busses """
         # Vertical bus
@@ -304,7 +304,7 @@ class sram_base(design, verilog, lef):
                                                                                 offset=self.bank_sel_bus_offset,
                                                                                 names=self.bank_sel_bus_names,
                                                                                 length=self.vertical_bus_height))
-            
+
             # Horizontal data bus
             self.data_bus_names = ["DATA{0}[{1}]".format(port, i) for i in range(self.word_size)]
             self.data_bus_positions = self.create_horizontal_pin_bus(layer="m3",
@@ -333,7 +333,7 @@ class sram_base(design, verilog, lef):
                                                                               offset=self.control_bus_offset,
                                                                               names=self.control_bus_names[port],
                                                                               length=self.control_bus_width))
-        
+
     def add_multi_bank_modules(self):
         """ Create the multibank address flops and bank decoder """
         from dff_buf_array import dff_buf_array
@@ -345,7 +345,7 @@ class sram_base(design, verilog, lef):
         if self.num_banks>2:
             self.msb_decoder = self.bank.decoder.pre2_4
             self.add_mod(self.msb_decoder)
-            
+
     def add_modules(self):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.dff = factory.create(module_type="dff")
@@ -370,7 +370,7 @@ class sram_base(design, verilog, lef):
         if self.num_spare_cols:
             self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
             self.add_mod(self.spare_wen_dff)
-        
+
         # Create the bank module (up to four are instantiated)
         self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
         self.add_mod(self.bank)
@@ -383,7 +383,7 @@ class sram_base(design, verilog, lef):
 
         c = reload(__import__(OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
-        
+
         # Create the control logic module for each port type
         if len(self.readwrite_ports)>0:
             self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
@@ -470,7 +470,7 @@ class sram_base(design, verilog, lef):
             bank_mirror = "MY"
         else:
             bank_mirror = "R0"
-            
+
         bank_inst.place(offset=position,
                         mirror=bank_mirror,
                         rotate=bank_rotation)
@@ -483,7 +483,7 @@ class sram_base(design, verilog, lef):
         for port in self.all_ports:
             insts.append(self.add_inst(name="row_address{}".format(port),
                                        mod=self.row_addr_dff))
-                    
+
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
@@ -492,16 +492,16 @@ class sram_base(design, verilog, lef):
                 outputs.append("a{}[{}]".format(port, bit + self.col_addr_size))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
-        
+
         return insts
-        
+
     def create_col_addr_dff(self):
         """ Add and place all address flops for the column decoder """
         insts = []
         for port in self.all_ports:
             insts.append(self.add_inst(name="col_address{}".format(port),
                                        mod=self.col_addr_dff))
-                  
+
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
@@ -510,7 +510,7 @@ class sram_base(design, verilog, lef):
                 outputs.append("a{}[{}]".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
-        
+
         return insts
 
     def create_data_dff(self):
@@ -523,7 +523,7 @@ class sram_base(design, verilog, lef):
             else:
                 insts.append(None)
                 continue
-                  
+
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
@@ -532,7 +532,7 @@ class sram_base(design, verilog, lef):
                 outputs.append("bank_din{}[{}]".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
-        
+
         return insts
 
     def create_wmask_dff(self):
@@ -556,7 +556,7 @@ class sram_base(design, verilog, lef):
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
 
         return insts
-    
+
     def create_spare_wen_dff(self):
         """ Add all spare write enable flops """
         insts = []
@@ -578,7 +578,7 @@ class sram_base(design, verilog, lef):
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
 
         return insts
-    
+
     def create_control_logic(self):
         """ Add control logic instances """
 
@@ -590,7 +590,7 @@ class sram_base(design, verilog, lef):
                 mod = self.control_logic_w
             else:
                 mod = self.control_logic_r
-                
+
             insts.append(self.add_inst(name="control{}".format(port), mod=mod))
 
             # Inputs
@@ -608,9 +608,9 @@ class sram_base(design, verilog, lef):
             temp.append("p_en_bar{}".format(port))
             temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
             self.connect_inst(temp)
-        
+
         return insts
-            
+
     def sp_write(self, sp_name, lvs_netlist=False):
         # Write the entire spice of the object to the file
         ############################################################
@@ -626,7 +626,7 @@ class sram_base(design, verilog, lef):
         sp.write("* Column mux: {}:1\n".format(self.words_per_row))
         sp.write("**************************************************\n")
         # This causes unit test mismatch
-                                            
+
         # sp.write("* Created: {0}\n".format(datetime.datetime.now()))
         # sp.write("* User: {0}\n".format(getpass.getuser()))
         # sp.write(".global {0} {1}\n".format(spice["vdd_name"],
@@ -644,9 +644,9 @@ class sram_base(design, verilog, lef):
         Excludes bits in column from being added to graph except target
         """
         self.bank.graph_exclude_bits(targ_row, targ_col)
-        
+
     def clear_exclude_bits(self):
-        """ 
+        """
         Clears the bit exclusions
         """
         self.bank.clear_exclude_bits()

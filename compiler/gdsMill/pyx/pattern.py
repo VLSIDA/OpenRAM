@@ -48,7 +48,7 @@ class pattern(canvas._canvas, attr.exclusiveattr, style.fillstyle):
         self.patternbbox = bbox
         self.patterntrafo = trafo
 
-    def __call__(self, painttype=_marker, tilingtype=_marker, xstep=_marker, ystep=_marker, 
+    def __call__(self, painttype=_marker, tilingtype=_marker, xstep=_marker, ystep=_marker,
                  bbox=_marker, trafo=_marker):
         if painttype is _marker:
             painttype = self.painttype

@@ -38,7 +38,7 @@ class delay_data():
         assert isinstance(other, delay_data)
         return delay_data(other.delay + self.delay,
                           self.slew)
-                          
+
 
 
 

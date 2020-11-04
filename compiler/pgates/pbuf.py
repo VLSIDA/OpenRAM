@@ -16,7 +16,7 @@ class pbuf(pgate.pgate):
     This is a simple buffer used for driving loads.
     """
     def __init__(self, name, size=4, height=None):
-        
+
         debug.info(1, "creating {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
 
@@ -39,7 +39,7 @@ class pbuf(pgate.pgate):
         self.add_layout_pins()
         self.route_supply_rails()
         self.add_boundary()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("Z", "OUTPUT")
@@ -53,7 +53,7 @@ class pbuf(pgate.pgate):
                                    size=input_size,
                                    height=self.height)
         self.add_mod(self.inv1)
-        
+
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.size,
                                    height=self.height,
@@ -64,7 +64,7 @@ class pbuf(pgate.pgate):
         self.inv1_inst = self.add_inst(name="buf_inv1",
                                        mod=self.inv1)
         self.connect_inst(["A", "zb_int", "vdd", "gnd"])
-        
+
         self.inv2_inst = self.add_inst(name="buf_inv2",
                                        mod=self.inv2)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
@@ -75,13 +75,13 @@ class pbuf(pgate.pgate):
 
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))
-        
+
     def add_wires(self):
         # inv1 Z to inv2 A
         z1_pin = self.inv1_inst.get_pin("Z")
         a2_pin = self.inv2_inst.get_pin("A")
         self.add_zjog(self.route_layer, z1_pin.center(), a2_pin.center())
-        
+
     def add_layout_pins(self):
         z_pin = self.inv2_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
@@ -96,4 +96,4 @@ class pbuf(pgate.pgate):
                                         offset=a_pin.center(),
                                         width=a_pin.width(),
                                         height=a_pin.height())
-                                        
+

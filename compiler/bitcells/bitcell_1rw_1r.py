@@ -6,10 +6,7 @@
 # All rights reserved.
 #
 import debug
-import utils
-from tech import GDS, layer, parameter, drc
 from tech import cell_properties as props
-import logical_effort
 import bitcell_base
 
 
@@ -29,33 +26,23 @@ class bitcell_1rw_1r(bitcell_base.bitcell_base):
                  props.bitcell.cell_1rw1r.pin.wl1,
                  props.bitcell.cell_1rw1r.pin.vdd,
                  props.bitcell.cell_1rw1r.pin.gnd]
-
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
-    (width, height) = utils.get_libcell_size("cell_1rw_1r",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "cell_1rw_1r", GDS["unit"])
 
-    def __init__(self, name=""):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, "cell_1rw_1r")
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create bitcell with 1RW and 1R Port")
 
-        self.width = bitcell_1rw_1r.width
-        self.height = bitcell_1rw_1r.height
-        self.pin_map = bitcell_1rw_1r.pin_map
-        self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
-        pin_names = bitcell_1rw_1r.pin_names
+        pin_names = self.pin_names
         self.bl_names = [pin_names[0], pin_names[2]]
         self.br_names = [pin_names[1], pin_names[3]]
         self.wl_names = [pin_names[4], pin_names[5]]
 
     def get_bitcell_pins(self, col, row):
-        """ 
+        """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
         """

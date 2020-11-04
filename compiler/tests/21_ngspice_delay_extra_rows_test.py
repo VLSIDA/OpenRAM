@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -90,7 +90,7 @@ class timing_sram_test(openram_test):
 
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
-        
+
         self.assertTrue(self.check_golden_data(data,golden_data,0.25))
 
         globals.end_openram()

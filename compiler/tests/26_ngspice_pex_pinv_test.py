@@ -10,7 +10,7 @@ with Ngspice.
 """
 import unittest
 from testutils import header,openram_test
-import sys,os
+import sys, os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -50,7 +50,7 @@ class ngspice_pex_pinv_test(openram_test):
 
         # now generate its pex file
         pex_file = self.run_pex(tx)
-        # restore the old purge value        
+        # restore the old purge value
         OPTS.purge_temp = prev_purge_value
         # generate simulation for pex, make sure the simulation is successful
         pex_delay = self.simulate_delay(test_module=pex_file,

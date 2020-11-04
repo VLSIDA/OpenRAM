@@ -47,11 +47,11 @@ class bitcell_base_array(design.design):
                                                  "br_{0}_{1}".format(port, col)])
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
-                
+
     def create_all_wordline_names(self, row_size=None):
         if row_size == None:
             row_size = self.row_size
-            
+
         for row in range(row_size):
             for port in self.all_ports:
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
@@ -69,7 +69,7 @@ class bitcell_base_array(design.design):
     def get_bitcell_pins(self, row, col):
         """
         Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array 
+        indexed by column and row, for instance use in bitcell_array
         """
         bitcell_pins = []
         for port in self.all_ports:
@@ -81,7 +81,7 @@ class bitcell_base_array(design.design):
         return bitcell_pins
 
     def get_rbl_wordline_names(self, port=None):
-        """ 
+        """
         Return the WL for the given RBL port.
         """
         if port == None:
@@ -102,7 +102,7 @@ class bitcell_base_array(design.design):
             return self.all_bitline_names
         else:
             return self.bitline_names[port]
-        
+
     def get_all_bitline_names(self, port=None):
         """ Return ALL the bitline names (including rbl) """
         temp = []
@@ -121,7 +121,7 @@ class bitcell_base_array(design.design):
             return self.all_wordline_names
         else:
             return self.wordline_names[port]
-    
+
     def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
@@ -133,7 +133,7 @@ class bitcell_base_array(design.design):
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
         return temp
-        
+
     def add_layout_pins(self):
         """ Add the layout pins """
         bitline_names = self.cell.get_all_bitline_names()
@@ -161,7 +161,7 @@ class bitcell_base_array(design.design):
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=wl_pin.height())
-                                    
+
         # Copy a vdd/gnd layout pin from every cell
         for row in range(self.row_size):
             for col in range(self.column_size):

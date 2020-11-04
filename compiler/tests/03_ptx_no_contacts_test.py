@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -48,7 +48,7 @@ class ptx_no_contacts_test(openram_test):
                              series_devices=True,
                              tx_type="nmos")
         self.local_drc_check(fet)
-        
+
         globals.end_openram()
 
 

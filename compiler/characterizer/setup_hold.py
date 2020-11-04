@@ -31,7 +31,7 @@ class setup_hold():
 
         self.set_corner(corner)
 
-                
+
     def set_corner(self,corner):
         """ Set the corner values """
         self.corner = corner
@@ -60,9 +60,9 @@ class setup_hold():
 
         self.write_clock()
 
-        self.write_measures(mode=mode, 
+        self.write_measures(mode=mode,
                             correct_value=correct_value)
-                         
+
 
         self.stim.write_control(4*self.period)
 
@@ -102,14 +102,14 @@ class setup_hold():
                           data_values=[init_value, start_value, end_value],
                           period=target_time,
                           slew=self.constrained_input_slew,
-                          setup=0)        
+                          setup=0)
 
     def write_clock(self):
         """ Create the clock signal for setup/hold analysis. First period initializes the FF
         while the second is used for characterization."""
-        
+
         self.stim.gen_pwl(sig_name="clk",
-                          # initial clk edge is right after the 0 time to initialize a flop 
+                          # initial clk edge is right after the 0 time to initialize a flop
                           # without using .IC on an internal node.
                           # Return input to value after one period.
                           # The second pulse is the characterization one at 2*period
@@ -117,7 +117,7 @@ class setup_hold():
                           data_values=[0, 1, 0, 1],
                           period=2*self.period,
                           slew=self.constrained_input_slew,
-                          setup=0)        
+                          setup=0)
 
 
 
@@ -154,7 +154,7 @@ class setup_hold():
                                  targ_dir=dout_rise_or_fall,
                                  trig_td=1.9*self.period,
                                  targ_td=1.9*self.period)
-        
+
         targ_name = "data"
         # Start triggers right after initialize value is returned to normal
         # at one period
@@ -167,14 +167,14 @@ class setup_hold():
                                  targ_dir=din_rise_or_fall,
                                  trig_td=1.2*self.period,
                                  targ_td=1.2*self.period)
-        
+
 
 
 
     def bidir_search(self, correct_value, mode):
         """ This will perform a bidirectional search for either setup or hold times.
         It starts with the feasible priod and looks a half period beyond or before it
-        depending on whether we are doing setup or hold. 
+        depending on whether we are doing setup or hold.
         """
 
         # NOTE: The feasible bound is always feasible. This is why they are different for setup and hold.
@@ -189,8 +189,8 @@ class setup_hold():
             feasible_bound = 2.75*self.period
 
         # Initial check if reference feasible bound time passes for correct_value, if not, we can't start the search!
-        self.write_stimulus(mode=mode, 
-                            target_time=feasible_bound, 
+        self.write_stimulus(mode=mode,
+                            target_time=feasible_bound,
                             correct_value=correct_value)
         self.stim.run_sim()
         ideal_clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
@@ -204,18 +204,18 @@ class setup_hold():
             setuphold_time *= -1e9
         else:
             setuphold_time *= 1e9
-            
+
         passing_setuphold_time = setuphold_time
         debug.info(2,"Checked initial {0} time {1}, data at {2}, clock at {3} ".format(mode,
                                                                                        setuphold_time,
                                                                                        feasible_bound,
                                                                                        2*self.period))
         #raw_input("Press Enter to continue...")
-            
+
         while True:
             target_time = (feasible_bound + infeasible_bound)/2
-            self.write_stimulus(mode=mode, 
-                                target_time=target_time, 
+            self.write_stimulus(mode=mode,
+                                target_time=target_time,
                                 correct_value=correct_value)
 
             debug.info(2,"{0} value: {1} Target time: {2} Infeasible: {3} Feasible: {4}".format(mode,
@@ -245,7 +245,7 @@ class setup_hold():
             if relative_compare(feasible_bound, infeasible_bound, error_tolerance=0.001):
                 debug.info(3,"CONVERGE {0} vs {1}".format(feasible_bound,infeasible_bound))
                 break
-            
+
 
         debug.info(2,"Converged on {0} time {1}.".format(mode,passing_setuphold_time))
         return passing_setuphold_time
@@ -261,7 +261,7 @@ class setup_hold():
         """Calculates the setup time for high-to-low transition for a DFF
         """
         return self.bidir_search(0, "SETUP")
-    
+
     def hold_LH_time(self):
         """Calculates the hold time for low-to-high transition for a DFF
         """
@@ -283,7 +283,7 @@ class setup_hold():
         HL_setup = []
         LH_hold = []
         HL_hold = []
-        
+
         #For debugging, skips characterization and returns dummy values.
         # i = 1.0
         # for self.related_input_slew in related_slews:
@@ -293,15 +293,15 @@ class setup_hold():
                 # LH_hold.append(i+2.0)
                 # HL_hold.append(i+3.0)
                 # i+=4.0
-                
+
         # times = {"setup_times_LH": LH_setup,
                  # "setup_times_HL": HL_setup,
                  # "hold_times_LH": LH_hold,
                  # "hold_times_HL": HL_hold
                  # }
         # return times
-        
-        
+
+
         for self.related_input_slew in related_slews:
             for self.constrained_input_slew in constrained_slews:
                 debug.info(1, "Clock slew: {0} Data slew: {1}".format(self.related_input_slew,self.constrained_input_slew))
@@ -317,7 +317,7 @@ class setup_hold():
                 HL_setup.append(HL_setup_time)
                 LH_hold.append(LH_hold_time)
                 HL_hold.append(HL_hold_time)
-                
+
         times = {"setup_times_LH": LH_setup,
                  "setup_times_HL": HL_setup,
                  "hold_times_LH": LH_hold,
@@ -332,7 +332,7 @@ class setup_hold():
         HL_setup = []
         LH_hold = []
         HL_hold = []
-        
+
         for self.related_input_slew in related_slews:
             for self.constrained_input_slew in constrained_slews:
                 # convert from ps to ns
@@ -340,7 +340,7 @@ class setup_hold():
                 HL_setup.append(tech.spice["dff_setup"]/1e3)
                 LH_hold.append(tech.spice["dff_hold"]/1e3)
                 HL_hold.append(tech.spice["dff_hold"]/1e3)
-                
+
         times = {"setup_times_LH": LH_setup,
                  "setup_times_HL": HL_setup,
                  "hold_times_LH": LH_hold,

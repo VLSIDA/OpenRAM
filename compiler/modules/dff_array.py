@@ -27,7 +27,7 @@ class dff_array(design.design):
         super().__init__(name)
         debug.info(1, "Creating {0} rows={1} cols={2}".format(self.name, self.rows, self.columns))
         self.add_comment("rows: {0} cols: {1}".format(rows, columns))
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -36,11 +36,11 @@ class dff_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_dff_array()
-        
+
     def create_layout(self):
         self.width = self.columns * self.dff.width
         self.height = self.rows * self.dff.height
-        
+
         self.place_dff_array()
         self.add_layout_pins()
         self.add_boundary()
@@ -49,7 +49,7 @@ class dff_array(design.design):
     def add_modules(self):
         self.dff = factory.create(module_type="dff")
         self.add_mod(self.dff)
-        
+
     def add_pins(self):
         for row in range(self.rows):
             for col in range(self.columns):
@@ -86,7 +86,7 @@ class dff_array(design.design):
                     mirror = "MX"
                 self.dff_insts[row, col].place(offset=base,
                                                mirror=mirror)
-                
+
     def get_din_name(self, row, col):
         if self.columns == 1:
             din_name = "din_{0}".format(row)
@@ -96,7 +96,7 @@ class dff_array(design.design):
             din_name = "din_{0}_{1}".format(row, col)
 
         return din_name
-    
+
     def get_dout_name(self, row, col):
         if self.columns == 1:
             dout_name = "dout_{0}".format(row)
@@ -106,7 +106,7 @@ class dff_array(design.design):
             dout_name = "dout_{0}_{1}".format(row, col)
 
         return dout_name
-    
+
     def add_layout_pins(self):
         for row in range(self.rows):
             for col in range(self.columns):
@@ -117,7 +117,7 @@ class dff_array(design.design):
                 # Continous gnd rail along with label.
                 gnd_pin=self.dff_insts[row, col].get_pin("gnd")
                 self.add_power_pin("gnd", gnd_pin.center(), start_layer=gnd_pin.layer)
-            
+
         for row in range(self.rows):
             for col in range(self.columns):
                 din_pin = self.dff_insts[row, col].get_pin("D")

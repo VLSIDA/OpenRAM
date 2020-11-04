@@ -9,22 +9,30 @@ from hierarchy_design import hierarchy_design
 from utils import round_to_grid
 import contact
 from tech import preferred_directions
+from tech import cell_properties as props
 from globals import OPTS
 import re
+import debug
 
 
 class design(hierarchy_design):
     """
     This is the same as the hierarchy_design class except it contains
     some DRC/layer constants and analytical models for other modules to reuse.
-
     """
-        
-    def __init__(self, name):
-        super().__init__(name)
+
+    def __init__(self, name, cell_name=None):
+        # This allows us to use different GDS/spice circuits for hard cells instead of the default ones
+        # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
+        # depending on the number of ports.
+        if name in props.names:
+            cell_name = props.names[name]
+        elif not cell_name:
+            cell_name = name
+        super().__init__(name, cell_name)
 
         self.setup_multiport_constants()
-        
+
     def check_pins(self):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
@@ -52,7 +60,7 @@ class design(hierarchy_design):
             match = re.search(r"minarea_(.*)", rule)
             if match:
                 setattr(design, match.group(0), drc(match.group(0)))
-                    
+
             # Single layer spacing rules
             match = re.search(r"(.*)_to_(.*)", rule)
             if match and match.group(1) == match.group(2):
@@ -63,7 +71,7 @@ class design(hierarchy_design):
                             drc(match.group(0)))
                 else:
                     setattr(design, match.group(0), drc(match.group(0)))
-                
+
             match = re.search(r"(.*)_enclose_(.*)", rule)
             if match:
                 setattr(design, match.group(0), drc(match.group(0)))
@@ -94,7 +102,7 @@ class design(hierarchy_design):
         design.well_enclose_active = max(design.pwell_enclose_active,
                                        design.nwell_enclose_active,
                                        design.active_space)
-            
+
         # These are for debugging previous manual rules
         if False:
             print("poly_width", design.poly_width)
@@ -127,7 +135,7 @@ class design(hierarchy_design):
         These are some layer constants used
         in many places in the compiler.
         """
-        
+
         from tech import layer_indices
         import tech
         for layer in layer_indices:
@@ -143,17 +151,17 @@ class design(hierarchy_design):
             # Skip computing the pitch for active
             if layer == "active":
                 continue
-            
+
             # Add the pitch
             setattr(design,
                     "{}_pitch".format(layer),
                     design.compute_pitch(layer, True))
-            
+
             # Add the non-preferrd pitch (which has vias in the "wrong" way)
             setattr(design,
                     "{}_nonpref_pitch".format(layer),
                     design.compute_pitch(layer, False))
-                
+
         if False:
             from tech import preferred_directions
             print(preferred_directions)
@@ -173,9 +181,9 @@ class design(hierarchy_design):
             import sys
             sys.exit(1)
 
-    @staticmethod            
+    @staticmethod
     def compute_pitch(layer, preferred=True):
-        
+
         """
         This is the preferred direction pitch
         i.e. we take the minimum or maximum contact dimension
@@ -195,7 +203,7 @@ class design(hierarchy_design):
     @staticmethod
     def get_preferred_direction(layer):
         return preferred_directions[layer]
-    
+
     @staticmethod
     def compute_layer_pitch(layer_stack, preferred):
 
@@ -228,7 +236,7 @@ class design(hierarchy_design):
 
 
     def setup_multiport_constants(self):
-        """ 
+        """
         These are contants and lists that aid multiport design.
         Ports are always in the order RW, W, R.
         Port indices start from 0 and increment.
@@ -266,14 +274,14 @@ class design(hierarchy_design):
             self.read_ports.append(port_number)
             self.readonly_ports.append(port_number)
             port_number += 1
-        
+
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
         total_module_power = self.return_power()
         for inst in self.insts:
             total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
-    
+
 design.setup_drc_constants()
 design.setup_layer_constants()
-    
+

@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -29,7 +29,7 @@ class sense_amp_array_spare_cols_test(openram_test):
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4 and num_spare_cols=2")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4, num_spare_cols=2)
         self.local_check(a)
-        
+
         # check sense amp array for multi-port
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
@@ -44,9 +44,9 @@ class sense_amp_array_spare_cols_test(openram_test):
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=4, num_spare_cols=3 (multi-port case)")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=4, num_spare_cols=3)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

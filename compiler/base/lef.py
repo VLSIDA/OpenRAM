@@ -41,7 +41,7 @@ class lef:
         self.lef_write_obstructions()
         self.lef_write_footer()
         self.lef.close()
-        
+
     def lef_write_header(self):
         """ Header of LEF file """
         self.lef.write("VERSION 5.4 ;\n")
@@ -51,7 +51,7 @@ class lef:
         self.lef.write("UNITS\n")
         self.lef.write("  DATABASE MICRONS {0} ;\n".format(self.lef_units))
         self.lef.write("END UNITS\n")
-        
+
         self.lef.write("{0}MACRO {1}\n".format(self.indent,self.name))
         self.indent += "   "
         self.lef.write("{0}CLASS BLOCK ;\n".format(self.indent))
@@ -59,25 +59,25 @@ class lef:
                                                         round(self.width,self.round_grid),
                                                         round(self.height,self.round_grid)))
         self.lef.write("{0}SYMMETRY X Y R90 ;\n".format(self.indent))
-        
+
     def lef_write_footer(self):
         self.lef.write("{0}END    {1}\n".format(self.indent,self.name))
         self.indent = self.indent[:-3]
         self.lef.write("END    LIBRARY\n")
-        
-        
+
+
     def lef_write_pin(self, name):
         pin_dir = self.get_pin_dir(name)
         pin_type = self.get_pin_type(name)
         self.lef.write("{0}PIN {1}\n".format(self.indent,name))
         self.indent += "   "
-        
+
         self.lef.write("{0}DIRECTION {1} ;\n".format(self.indent,pin_dir))
-        
+
         if pin_type in ["POWER","GROUND"]:
             self.lef.write("{0}USE {1} ; \n".format(self.indent,pin_type))
             self.lef.write("{0}SHAPE ABUTMENT ; \n".format(self.indent))
-            
+
         self.lef.write("{0}PORT\n".format(self.indent))
         self.indent += "   "
 
@@ -86,7 +86,7 @@ class lef:
         for pin in pin_list:
             self.lef.write("{0}LAYER {1} ;\n".format(self.indent,pin.layer))
             self.lef_write_shape(pin.rect)
-            
+
         # End the PORT
         self.indent = self.indent[:-3]
         self.lef.write("{0}END\n".format(self.indent))
@@ -94,7 +94,7 @@ class lef:
         # End the PIN
         self.indent = self.indent[:-3]
         self.lef.write("{0}END {1}\n".format(self.indent,name))
-            
+
     def lef_write_obstructions(self):
         """ Write all the obstructions on each layer """
         self.lef.write("{0}OBS\n".format(self.indent))
@@ -111,16 +111,16 @@ class lef:
         self.lef.write("{0}END\n".format(self.indent))
 
     def lef_write_shape(self, rect):
-        if len(rect) == 2: 
+        if len(rect) == 2:
             """ Write a LEF rectangle """
-            self.lef.write("{0}RECT ".format(self.indent)) 
+            self.lef.write("{0}RECT ".format(self.indent))
             for item in rect:
                 # print(rect)
                 self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
             self.lef.write(" ;\n")
-        else:            
+        else:
             """ Write a LEF polygon """
-            self.lef.write("{0}POLYGON ".format(self.indent)) 
+            self.lef.write("{0}POLYGON ".format(self.indent))
             for item in rect:
                 self.lef.write(" {0} {1}".format(round(item[0],self.round_grid), round(item[1],self.round_grid)))
             # for i in range(0,len(rect)):

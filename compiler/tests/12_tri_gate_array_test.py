@@ -15,6 +15,8 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
+@unittest.skip("SKIPPING 12_tri_gate_array_test")
 class tri_gate_array_test(openram_test):
 
     def runTest(self):

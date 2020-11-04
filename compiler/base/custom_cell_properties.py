@@ -139,19 +139,19 @@ class cell_properties():
         self.names = {}
         self.names["bitcell"] = "cell_6t"
         self.names["bitcell_1rw_1r"] = "cell_1rw_1r"
-        self.names["bitcell_1r_1w"] = "cell_1r_1w"
+        self.names["bitcell_1w_1r"] = "cell_1w_1r"
         self.names["dummy_bitcell"] = "dummy_cell_6t"
         self.names["dummy_bitcell_1rw_1r"] = "dummy_cell_1rw_1r"
-        self.names["dummy_bitcell_1r_1w"] = "dummy_cell_1r_1w"
+        self.names["dummy_bitcell_1w_1r"] = "dummy_cell_1w_1r"
         self.names["replica_bitcell"] = "replica_cell_6t"
         self.names["replica_bitcell_1rw_1r"] = "replica_cell_1rw_1r"
-        self.names["replica_bitcell_1r_1w"] = "replica_cell_1r_1w"
+        self.names["replica_bitcell_1w_1r"] = "replica_cell_1w_1r"
         self.names["col_cap_bitcell_6t"] = "col_cap_cell_6t"
         self.names["col_cap_bitcell_1rw_1r"] = "col_cap_cell_1rw_1r"
-        self.names["col_cap_bitcell_1r_1w"] = "col_cap_cell_1r_1w"
+        self.names["col_cap_bitcell_1w_1r"] = "col_cap_cell_1w_1r"
         self.names["row_cap_bitcell_6t"] = "row_cap_cell_6t"
         self.names["row_cap_bitcell_1rw_1r"] = "row_cap_cell_1rw_1r"
-        self.names["row_cap_bitcell_1r_1w"] = "row_cap_cell_1r_1w"
+        self.names["row_cap_bitcell_1w_1r"] = "row_cap_cell_1w_1r"
 
         self._bitcell = _bitcell._default()
 

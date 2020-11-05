@@ -16,6 +16,9 @@ import sys
 # 2 = verbose
 # n = custom setting
 
+import globals
+import pdb
+
 
 def check(check, str):
     if not check:
@@ -26,6 +29,9 @@ def check(check, str):
         log("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
 
+        if globals.OPTS.debug:
+            pdb.set_trace()
+            
         assert 0
 
 
@@ -37,6 +43,9 @@ def error(str, return_value=0):
     log("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
+    if globals.OPTS.debug:
+        pdb.set_trace()
+            
     assert return_value == 0
 
 

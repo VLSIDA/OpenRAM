@@ -157,10 +157,17 @@ class ptx(design.design):
             #                                                                        self.tx_width,
             #                                                                        drc("minwidth_poly"))
             # TEMP FIX: Use old device names if using Calibre.
+            
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format("nshort" if self.tx_type == "nmos" else "pshort",
                                                                                    self.mults,
                                                                                    self.tx_width,
                                                                                    drc("minwidth_poly"))
+        elif cell_props.ptx.model_is_subckt:
+            # sky130 requires mult parameter too
+            self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
+                                                                            self.mults,
+                                                                            self.tx_width,
+                                                                            drc("minwidth_poly"))
         else:
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
                                                                              self.mults,

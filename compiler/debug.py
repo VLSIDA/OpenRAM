@@ -18,7 +18,6 @@ import pdb
 # n = custom setting
 
 
-
 def check(check, str):
     if not check:
         (frame, filename, line_number, function_name, lines,

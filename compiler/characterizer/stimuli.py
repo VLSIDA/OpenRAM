@@ -260,7 +260,7 @@ class stimuli():
 
         # create plots for all signals
         self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
-        if OPTS.debug_level>0:
+        if OPTS.verbose_level>0:
             if OPTS.spice_name in ["hspice", "xa"]:
                 self.sf.write(".probe V(*)\n")
             else:

@@ -40,7 +40,7 @@ class openram_front_end_test(openram_test):
 
         # specify the same verbosity for the system call
         options = ""
-        for i in range(OPTS.debug_level):
+        for i in range(OPTS.verbose_level):
             options += " -v"
 
         if OPTS.spice_name:
@@ -86,7 +86,7 @@ class openram_front_end_test(openram_test):
         self.assertEqual(len(re.findall('WARNING', output)), 0)
 
         # now clean up the directory
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             if os.path.exists(out_path):
                 shutil.rmtree(out_path, ignore_errors=True)
             self.assertEqual(os.path.exists(out_path), False)

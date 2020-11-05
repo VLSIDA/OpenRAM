@@ -15,7 +15,6 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 05_array_test")
 
 class array_test(openram_test):
 

@@ -90,7 +90,7 @@ log.create_file = True
 
 def info(lev, str):
     from globals import OPTS
-    if (OPTS.debug_level >= lev):
+    if (OPTS.verbose_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         # classname = frm.f_globals['__name__']

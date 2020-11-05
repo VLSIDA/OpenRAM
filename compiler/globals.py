@@ -63,7 +63,7 @@ def parse_args():
         optparse.make_option("-v",
                              "--verbose",
                              action="count",
-                             dest="debug_level",
+                             dest="verbose_level",
                              help="Increase the verbosity level"),
         optparse.make_option("-t",
                              "--tech",
@@ -83,11 +83,16 @@ def parse_args():
                              action="store_false",
                              dest="analytical_delay",
                              help="Perform characterization to calculate delays (default is analytical models)"),
+        optparse.make_option("-k",
+                             "--keeptemp",
+                             action="store_true",
+                             dest="keep_temp",
+                             help="Keep the contents of the temp directory after a successful run"),
         optparse.make_option("-d",
-                             "--dontpurge",
-                             action="store_false",
-                             dest="purge_temp",
-                             help="Don't purge the contents of the temp directory after a successful run")
+                             "--debug",
+                             action="store_true",
+                             dest="debug",
+                             help="Run in debug mode to drop to pdb on failure")
         # -h --help is implicit.
     }
 
@@ -366,7 +371,7 @@ def cleanup_paths():
     We should clean up the temp directory after execution.
     """
     global OPTS
-    if not OPTS.purge_temp:
+    if OPTS.keep_temp:
         debug.info(0,
                    "Preserving temp directory: {}".format(OPTS.openram_temp))
         return
@@ -534,12 +539,12 @@ def print_time(name, now_time, last_time=None, indentation=2):
     global OPTS
 
     # Don't print during testing
-    if not OPTS.is_unit_test or OPTS.debug_level > 0:
+    if not OPTS.is_unit_test or OPTS.verbose_level > 0:
         if last_time:
-            time = str(round((now_time-last_time).total_seconds(),1)) + " seconds"
+            time = str(round((now_time - last_time).total_seconds(), 1)) + " seconds"
         else:
             time = now_time.strftime('%m/%d/%Y %H:%M:%S')
-        debug.print_raw("{0} {1}: {2}".format("*"*indentation, name, time))
+        debug.print_raw("{0} {1}: {2}".format("*" * indentation, name, time))
 
 
 def report_status():

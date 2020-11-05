@@ -90,7 +90,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                             "LVS failed for {0} with {1} errors(s)".format(self.cell_name,
                                                                            self.lvs_errors))
 
-            if OPTS.purge_temp:
+            if not OPTS.keep_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
 
@@ -112,7 +112,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                         "DRC failed for {0} with {1} error(s)".format(self.cell_name,
                                                                       num_errors))
 
-            if OPTS.purge_temp:
+            if not OPTS.keep_temp:
                 os.remove(tempgds)
 
     def LVS(self, final_verification=False):
@@ -134,7 +134,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             debug.check(num_errors == 0,
                         "LVS failed for {0} with {1} error(s)".format(self.cell_name,
                                                                       num_errors))
-            if OPTS.purge_temp:
+            if not OPTS.keep_temp:
                 os.remove(tempspice)
                 os.remove(tempgds)
 

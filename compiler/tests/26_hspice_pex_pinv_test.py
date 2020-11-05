@@ -34,9 +34,9 @@ class hspice_pex_pinv_test(openram_test):
         reload(characterizer)
 
         # generate the pinv
-        prev_purge_value = OPTS.purge_temp
+        prev_keep_value = OPTS.keep_temp
         # force set purge to false to save the sp file
-        OPTS.purge_temp =  False
+        OPTS.keep_temp =  True
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)
@@ -52,7 +52,7 @@ class hspice_pex_pinv_test(openram_test):
 
         # now generate its pex file
         pex_file = self.run_pex(tx)
-        OPTS.purge_temp = prev_purge_value # restore the old purge value
+        OPTS.keep_temp = prev_keep_value # restore the old keep
         # generate simulation for pex, make sure the simulation is successful
         pex_delay = self.simulate_delay(test_module=pex_file,
                                         top_level_name=tx.name)

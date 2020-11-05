@@ -9,6 +9,7 @@ import os
 import inspect
 import globals
 import sys
+import pdb
 
 # the debug levels:
 # 0 = minimum output (default)
@@ -16,8 +17,6 @@ import sys
 # 2 = verbose
 # n = custom setting
 
-import globals
-import pdb
 
 
 def check(check, str):

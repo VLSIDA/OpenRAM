@@ -8,7 +8,6 @@
 import debug
 from tech import cell_properties as props
 import bitcell_base
-from globals import OPTS
 
 
 class dummy_bitcell(bitcell_base.bitcell_base):
@@ -25,10 +24,8 @@ class dummy_bitcell(bitcell_base.bitcell_base):
                  props.bitcell.cell_6t.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
 
-    def __init__(self, name, cell_name=None):
-        if not cell_name:
-            cell_name = OPTS.dummy_bitcell_name
-        super().__init__(name, cell_name)
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create dummy bitcell")
 
 

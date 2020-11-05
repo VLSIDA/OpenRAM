@@ -208,11 +208,9 @@ def setup_bitcell():
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    if (OPTS.bitcell == "bitcell"):
-
+    if OPTS.bitcell == "bitcell":
         if (OPTS.num_rw_ports == 1 and OPTS.num_w_ports == 0 and OPTS.num_r_ports == 0):
             OPTS.bitcell = "bitcell"
-            OPTS.bitcell_name = "cell_6t"
         else:
             ports = ""
             if OPTS.num_rw_ports > 0:
@@ -225,20 +223,13 @@ def setup_bitcell():
             if ports != "":
                 OPTS.bitcell_suffix = "_" + ports
             OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
-            OPTS.bitcell_name = "cell" + OPTS.bitcell_suffix
 
         OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
-        OPTS.dummy_bitcell_name = "dummy_" + OPTS.bitcell_name
-
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-        OPTS.replica_bitcell_name = "replica_" + OPTS.bitcell_name
-    elif (OPTS.bitcell == "pbitcell"):
+    elif OPTS.bitcell == "pbitcell":
         OPTS.bitcell = "pbitcell"
-        OPTS.bitcell_name = "pbitcell"
         OPTS.dummy_bitcell = "dummy_pbitcell"
-        OPTS.dummy_bitcell_name = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
-        OPTS.replica_bitcell_name = "replica_pbitcell"
                 
     # See if bitcell exists
     try:
@@ -248,11 +239,8 @@ def setup_bitcell():
         # or its custom replica  bitcell
         # Use the pbitcell (and give a warning if not in unit test mode)
         OPTS.bitcell = "pbitcell"
-        OPTS.bitcell_name = "pbitcell"
         OPTS.dummy_bitcell = "dummy_pbitcell"
-        OPTS.dummy_bitcell_name = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
-        OPTS.replica_bitcell_name = "replica_pbitcell"
         if not OPTS.is_unit_test:
             debug.warning("Using the parameterized bitcell which may have suboptimal density.")
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))
@@ -269,8 +257,8 @@ def get_tool(tool_type, preferences, default_name=None):
     if default_name:
         exe_name = find_exe(default_name)
         if exe_name == None:
-            debug.error("{0} not found. Cannot find {1} tool.".format(default_name,
-                                                                      tool_type),
+            debug.error("{0} not found. Cannot find {1} tool.".format(default_name, tool_type)
+                        + "Disable DRC/LVS with check_lvsdrc=False to ignore.",
                         2)
         else:
             debug.info(1, "Using {0}: {1}".format(tool_type, exe_name))
@@ -283,8 +271,7 @@ def get_tool(tool_type, preferences, default_name=None):
                 return(name, exe_name)
             else:
                 debug.info(1,
-                           "Could not find {0}, trying next {1} tool.".format(name,
-                                                                              tool_type))
+                           "Could not find {0}, trying next {1} tool.".format(name, tool_type))
         else:
             return(None, "")
 
@@ -619,4 +606,4 @@ def report_status():
         if OPTS.trim_netlist:
             debug.print_raw("Trimming netlist to speed up characterization (trim_netlist=False to disable).")
     if OPTS.nominal_corner_only:
-        debug.print_raw("Only characterizing nominal corner.")
+        debug.print_raw("Only generating nominal corner timing.")

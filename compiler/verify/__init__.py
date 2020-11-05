@@ -15,7 +15,6 @@ run_pex, repsectively. If there is an error, they should abort and report the er
 If not, OpenRAM will continue as if nothing happened!
 """
 
-import os
 import debug
 from globals import OPTS
 from globals import get_tool
@@ -49,7 +48,8 @@ elif "assura"==OPTS.drc_exe[0]:
 elif "magic"==OPTS.drc_exe[0]:
     from .magic import run_drc, print_drc_stats
 else:
-    debug.warning("Did not find a supported DRC tool.")
+    debug.error("Did not find a supported DRC tool."
+                + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 if not OPTS.lvs_exe:
     from .none import run_lvs, print_lvs_stats
@@ -60,7 +60,8 @@ elif "assura"==OPTS.lvs_exe[0]:
 elif "netgen"==OPTS.lvs_exe[0]:
     from .magic import run_lvs, print_lvs_stats
 else:
-    debug.warning("Did not find a supported LVS tool.")
+    debug.warning("Did not find a supported LVS tool."
+                  + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 
 if not OPTS.pex_exe:
@@ -70,7 +71,8 @@ elif "calibre"==OPTS.pex_exe[0]:
 elif "magic"==OPTS.pex_exe[0]:
     from .magic import run_pex,print_pex_stats
 else:
-    debug.warning("Did not find a supported PEX tool.")
+    debug.warning("Did not find a supported PEX tool."
+                  + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 if OPTS.tech_name == "sky130":
     if OPTS.magic_exe and "magic"==OPTS.magic_exe[0]:

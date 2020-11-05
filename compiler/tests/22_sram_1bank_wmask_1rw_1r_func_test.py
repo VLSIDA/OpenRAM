@@ -9,7 +9,6 @@
 import unittest
 from testutils import *
 import sys, os
-
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -17,7 +16,6 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING sram_wmask_1w_1r_func_test")
 class sram_wmask_1w_1r_func_test(openram_test):
 
     def runTest(self):

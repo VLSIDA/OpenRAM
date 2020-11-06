@@ -58,9 +58,9 @@ class hierarchical_decoder_test(openram_test):
         self.local_check(a)
 
         # Checks 3 x 4x16 and 4-input NAND decoder
-        debug.info(1, "Testing 4096 row sample for hierarchical_decoder")
-        a = factory.create(module_type="hierarchical_decoder", num_outputs=4096)
-        self.local_check(a)
+        # debug.info(1, "Testing 4096 row sample for hierarchical_decoder")
+        # a = factory.create(module_type="hierarchical_decoder", num_outputs=4096)
+        # self.local_check(a)
 
         globals.end_openram()
 

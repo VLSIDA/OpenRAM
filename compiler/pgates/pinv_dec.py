@@ -27,7 +27,7 @@ class pinv_dec(pinv.pinv):
                    "creating pinv_dec structure {0} with size of {1}".format(name,
                                                                              size))
         if not height:
-            b = factory.create(module_type="bitcell")
+            b = factory.create(module_type=OPTS.bitcell)
             self.cell_height = b.height
         else:
             self.cell_height = height

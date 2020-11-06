@@ -25,7 +25,7 @@ class wordline_driver(design.design):
         super().__init__(name)
 
         if height is None:
-            b = factory.create(module_type="bitcell")
+            b = factory.create(module_type=OPTS.bitcell)
             self.height = b.height
         else:
             self.height = height

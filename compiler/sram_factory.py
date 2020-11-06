@@ -7,6 +7,7 @@
 #
 from globals import OPTS
 
+
 class sram_factory:
     """
     This is a factory pattern to create modules for usage in an SRAM.
@@ -39,6 +40,11 @@ class sram_factory:
         try:
             from tech import tech_modules
             real_module_type = tech_modules[module_type]
+            # If we are given a list of modules, it is indexed by number of ports starting from 1
+            if type(real_module_type) is list:
+                # For now we will just index by the number of ports (except can't have 0 ports)
+                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
+                real_module_type = real_module_type[num_ports - 1]
             overridden = tech_modules.is_overridden(module_type)
         except ImportError:
             # If they didn't define these, then don't use the option types.

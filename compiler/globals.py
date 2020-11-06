@@ -314,7 +314,7 @@ def read_config(config_file, is_unit_test=True):
     try:
         config = importlib.import_module(module_name)
     except:
-        debug.error("Unable to read configuration file: {0}".format(config_file),2)
+        debug.error("Unable to read configuration file: {0}".format(config_file), 2)
 
     OPTS.overridden = {}
     for k, v in config.__dict__.items():

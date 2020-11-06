@@ -23,7 +23,7 @@ class hierarchical_decoder_test(openram_test):
         globals.init_openram(config_file)
 
         OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
 

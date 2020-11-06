@@ -148,7 +148,7 @@ def check_versions():
     major_required = 3
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
-        debug.error("Python {0}.{1} or greater is required.".format(major_required,minor_required),-1)
+        debug.error("Python {0}.{1} or greater is required.".format(major_required, minor_required), -1)
 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
@@ -157,7 +157,7 @@ def check_versions():
     try:
         import coverage
         OPTS.coverage = 1
-    except:
+    except ModuleNotFoundError:
         OPTS.coverage = 0
 
 

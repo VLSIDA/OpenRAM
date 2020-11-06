@@ -81,7 +81,7 @@ class write_mask_and_array(design.design):
         # This ensures the write mask AND array will be directly under the corresponding write driver enable wire.
 
         # This is just used for measurements, so don't add the module
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.driver = factory.create(module_type="write_driver")
         if self.bitcell.width > self.driver.width:
             self.driver_spacing = self.bitcell.width

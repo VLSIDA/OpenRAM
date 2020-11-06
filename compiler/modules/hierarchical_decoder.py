@@ -27,7 +27,7 @@ class hierarchical_decoder(design.design):
         self.pre3x8_inst = []
         self.pre4x16_inst = []
 
-        b = factory.create(module_type="bitcell")
+        b = factory.create(module_type=OPTS.bitcell)
         self.cell_height = b.height
 
         self.num_outputs = num_outputs

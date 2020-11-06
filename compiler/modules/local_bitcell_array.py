@@ -64,7 +64,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         # This is just used for names
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
         self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                             cols=self.cols,

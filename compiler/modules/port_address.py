@@ -155,7 +155,7 @@ class port_address(design.design):
 
         # The polarity must be switched if we have a hierarchical wordline
         # to compensate for the local array inverters
-        b = factory.create(module_type="bitcell")
+        b = factory.create(module_type=OPTS.bitcell)
 
         if local_array_size > 0:
             self.rbl_driver = factory.create(module_type="inv_dec",

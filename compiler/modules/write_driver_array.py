@@ -99,7 +99,7 @@ class write_driver_array(design.design):
 
         # This is just used for measurements,
         # so don't add the module
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
     def create_write_array(self):
         self.driver_insts = []

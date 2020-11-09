@@ -469,7 +469,7 @@ def set_default_corner():
         if OPTS.nominal_corner_only:
             OPTS.process_corners = ["TT"]
         else:
-            OPTS.process_corners = tech.spice["fet_models"].keys()
+            OPTS.process_corners = list(tech.spice["fet_models"].keys())
 
     if (OPTS.supply_voltages == ""):
         if OPTS.nominal_corner_only:

@@ -17,6 +17,10 @@ lvs_warned = False
 pex_warned = False
 
 
+def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
+    pass
+
+
 def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     global drc_warned
     if not drc_warned:
@@ -24,6 +28,10 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         drc_warned=True
     # Since we warned, return a failing test.
     return 1
+
+
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
+    pass
 
 
 def run_lvs(cell_name, gds_name, sp_name, final_verification=False):

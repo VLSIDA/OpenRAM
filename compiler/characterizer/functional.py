@@ -21,12 +21,23 @@ class functional(simulation):
        for successful SRAM operation.
     """
 
-    def __init__(self, sram, spfile, corner, cycles=15):
+    def __init__(self, sram, spfile, corner=None, cycles=15, period=None, output_path=None):
         super().__init__(sram, spfile, corner)
 
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
+
+        if not corner:
+            corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+
+        if period:
+            self.period = period
+            
+        if not output_path:
+            self.output_path = OPTS.openram_temp
+        else:
+            self.output_path = output_path
 
         if self.write_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
@@ -58,15 +69,14 @@ class functional(simulation):
         self.read_check = []
         self.read_results = []
 
-    def run(self, feasible_period=None):
-        if feasible_period: # period defaults to tech.py feasible period otherwise.
-            self.period = feasible_period
         # Generate a random sequence of reads and writes
         self.create_random_memory_sequence()
 
-        # Run SPICE simulation
+        # Write SPICE simulation
         self.write_functional_stimulus()
-        self.stim.run_sim()
+
+    def run(self):
+        self.stim.run_sim(self.stim_sp)
 
         # read dout values from SPICE simulation. If the values do not fall within the noise margins, return the error.
         (success, error) = self.read_stim_results()
@@ -330,7 +340,8 @@ class functional(simulation):
 
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
-        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
+        self.stim_sp = "functional_stim.sp"
+        temp_stim = "{0}/{1}".format(self.output_path, self.stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Functional test stimulus file for {}ns period\n\n".format(self.period))
         self.stim = stimuli(self.sf, self.corner)

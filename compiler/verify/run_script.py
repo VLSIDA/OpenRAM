@@ -13,6 +13,7 @@ import os
 import debug
 from globals import OPTS
 
+
 def run_script(cell_name, script="lvs"):
     """ Run script and create output files. """
 
@@ -30,5 +31,5 @@ def run_script(cell_name, script="lvs"):
     os.system(cmd)
     os.chdir(cwd)
 
-    return (outfile,errfile,resultsfile)
+    return (outfile, errfile, resultsfile)
 

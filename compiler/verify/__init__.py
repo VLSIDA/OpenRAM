@@ -42,34 +42,34 @@ else:
 if not OPTS.drc_exe:
     from .none import run_drc, print_drc_stats
 elif "calibre"==OPTS.drc_exe[0]:
-    from .calibre import run_drc, print_drc_stats
+    from .calibre import run_drc, print_drc_stats, write_drc_script
 elif "assura"==OPTS.drc_exe[0]:
-    from .assura import run_drc, print_drc_stats
+    from .assura import run_drc, print_drc_stats, write_drc_script
 elif "magic"==OPTS.drc_exe[0]:
-    from .magic import run_drc, print_drc_stats
+    from .magic import run_drc, print_drc_stats, write_drc_script
 else:
     debug.error("Did not find a supported DRC tool."
                 + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 if not OPTS.lvs_exe:
-    from .none import run_lvs, print_lvs_stats
+    from .none import run_lvs, print_lvs_stats, write_lvs_script
 elif "calibre"==OPTS.lvs_exe[0]:
-    from .calibre import run_lvs, print_lvs_stats
+    from .calibre import run_lvs, print_lvs_stats, write_lvs_script
 elif "assura"==OPTS.lvs_exe[0]:
-    from .assura import run_lvs, print_lvs_stats
+    from .assura import run_lvs, print_lvs_stats, write_lvs_script
 elif "netgen"==OPTS.lvs_exe[0]:
-    from .magic import run_lvs, print_lvs_stats
+    from .magic import run_lvs, print_lvs_stats, write_lvs_script
 else:
     debug.warning("Did not find a supported LVS tool."
                   + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 
 if not OPTS.pex_exe:
-    from .none import run_pex,print_pex_stats
+    from .none import run_pex, print_pex_stats
 elif "calibre"==OPTS.pex_exe[0]:
-    from .calibre import run_pex,print_pex_stats
+    from .calibre import run_pex, print_pex_stats
 elif "magic"==OPTS.pex_exe[0]:
-    from .magic import run_pex,print_pex_stats
+    from .magic import run_pex, print_pex_stats
 else:
     debug.warning("Did not find a supported PEX tool."
                   + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)

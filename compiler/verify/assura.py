@@ -28,7 +28,7 @@ inserted in the runset.
 
 import os
 import re
-import time
+from run_script import *
 import debug
 from globals import OPTS
 
@@ -37,16 +37,11 @@ num_drc_runs = 0
 num_lvs_runs = 0
 num_pex_runs = 0
 
-def run_drc(name, gds_name, final_verification=False):
-    """Run DRC check on a given top-level name which is
-       implemented in gds_name."""
 
-    global num_drc_runs
-    num_drc_runs += 1
-
+def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
     from tech import drc
     drc_rules = drc["drc_rules"]
-    drc_runset = OPTS.openram_temp + name + ".rsf"
+    drc_runset = output_path + cell_name + ".rsf"
     drc_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
 
     # write the runset file
@@ -64,8 +59,8 @@ def run_drc(name, gds_name, final_verification=False):
     f.write("\n")
     f.write("avParameters(\n")
     f.write("  ?inputLayout ( \"gds2\" \"{}\" )\n".format(gds_name))
-    f.write("  ?cellName \"{}\"\n".format(name))
-    f.write("  ?workingDirectory \"{}\"\n".format(OPTS.openram_temp))
+    f.write("  ?cellName \"{}\"\n".format(cell_name))
+    f.write("  ?workingDirectory \"{}\"\n".format(output_path))
     f.write("  ?rulesFile \"{}\"\n".format(drc_rules))
     f.write("  ?set ( \"GridCheck\" )\n")
     f.write("  ?avrpt t\n")
@@ -73,26 +68,37 @@ def run_drc(name, gds_name, final_verification=False):
     f.close()
 
     # run drc
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    cmd = "assura {0} 2> {1} 1> {2}".format(drc_runset, drc_log_file, drc_log_file)
-    debug.info(1, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    run_file = output_path + "/run_drc.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("assura {0} 2> {1} 1> {2}\n".format(drc_runset, drc_log_file, drc_log_file))
+    f.close()
+    
+    
+def run_drc(name, gds_name, final_verification=False):
+    """Run DRC check on a given top-level name which is
+       implemented in gds_name."""
 
+    global num_drc_runs
+    num_drc_runs += 1
+
+    write_drc_script(name, gds_name, True, final_verification, OPTS.openram_temp)
+
+    (outfile, errfile, resultsfile) = run_script(name, "drc")
+    
     # count and report errors
     errors = 0
     try:
-        f = open(OPTS.openram_temp+name+".err", "r")
+        f = open(OPTS.openram_temp + name +".err", "r")
     except:
-        debug.error("Unable to retrieve DRC results file.",1)
+        debug.error("Unable to retrieve DRC results file.", 1)
     results = f.readlines()
     f.close()
     for line in results:
         if re.match("Rule No.", line):
             if re.search("# INFO:", line) == None:
-               errors = errors + 1
-               debug.info(1, line)
+                errors = errors + 1
+                debug.info(1, line)
 
     if errors > 0:
         debug.error("Errors: {}".format(errors))
@@ -100,23 +106,18 @@ def run_drc(name, gds_name, final_verification=False):
     return errors
 
 
-def run_lvs(name, gds_name, sp_name, final_verification=False):
-    """Run LVS check on a given top-level name which is
-       implemented in gds_name and sp_name. """
-
-    global num_lvs_runs
-    num_lvs_runs += 1
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
 
     from tech import drc
     lvs_rules = drc["lvs_rules"]
-    lvs_runset = OPTS.openram_temp + name + ".rsf"
+    lvs_runset = output_path + name + ".rsf"
     # The LVS compare rules must be defined in the tech file for Assura.
     lvs_compare = drc["lvs_compare"]
     # Define the must-connect names for disconnected LVS nets for Assura
     lvs_bindings = drc["lvs_bindings"]
-    lvs_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
+    lvs_log_file = "{0}{1}.log".format(output_path, name)
     # Needed when FET models are sub-circuits
-    if drc.has_key("lvs_subcircuits"):
+    if "lvs_subcircuits" in drc:
         lvs_sub_file = drc["lvs_subcircuits"]
     else:
         lvs_sub_file = ""
@@ -128,7 +129,7 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
     f.write("avParameters(\n")
     f.write("  ?inputLayout ( \"gds2\" \"{}\" )\n".format(gds_name))
     f.write("  ?cellName \"{}\"\n".format(name))
-    f.write("  ?workingDirectory \"{}\"\n".format(OPTS.openram_temp))
+    f.write("  ?workingDirectory \"{}\"\n".format(output_path))
     f.write("  ?rulesFile \"{}\"\n".format(lvs_rules))
     f.write("  ?autoGrid nil\n")
     f.write("  ?avrpt t\n")
@@ -160,27 +161,38 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
     f.write("avLVS()\n")
     f.close()
 
-    # run lvs
-    cwd = os.getcwd()
-    os.chdir(OPTS.openram_temp)
-    cmd = "assura {0} 2> {1} 1> {2}".format(lvs_runset, lvs_log_file, lvs_log_file)
-    debug.info(1, cmd)
-    os.system(cmd)
-    os.chdir(cwd)
+    # run drc
+    run_file = output_path + "/run_vls.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("assura {0} 2> {1} 1> {2}\n".format(lvs_runset, lvs_log_file, lvs_log_file))
+    f.close()
 
+    
+def run_lvs(name, gds_name, sp_name, final_verification=False):
+    """Run LVS check on a given top-level name which is
+       implemented in gds_name and sp_name. """
+
+    global num_lvs_runs
+    num_lvs_runs += 1
+
+    write_lvs_script(name, gds_name, sp_name, final_verification, OPTS.openram_temp)
+
+    (outfile, errfile, resultsfile) = run_script(name, "drc")
+    
     errors = 0
     try:
-        f = open(OPTS.openram_temp+name+".csm", "r")
+        f = open(OPTS.openram_temp + name + ".csm", "r")
     except:
-        debug.error("Unable to retrieve LVS results file.",1)
+        debug.error("Unable to retrieve LVS results file.", 1)
     results = f.readlines()
     f.close()
     for line in results:
         if re.search("errors", line):
-           errors = errors + 1
-           debug.info(1, line)
+            errors = errors + 1
+            debug.info(1, line)
         elif re.search("Schematic and Layout", line):
-           debug.info(1, line)
+            debug.info(1, line)
 
     return errors
 
@@ -188,14 +200,19 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
 def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
-    debug.error("PEX extraction not implemented with Assura.",-1)
+    debug.error("PEX extraction not implemented with Assura.", -1)
 
     global num_pex_runs
     num_pex_runs += 1
 
+    
 def print_drc_stats():
-    debug.info(1,"DRC runs: {0}".format(num_drc_runs))
+    debug.info(1, "DRC runs: {0}".format(num_drc_runs))
+
+    
 def print_lvs_stats():
-    debug.info(1,"LVS runs: {0}".format(num_lvs_runs))
+    debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
+
+    
 def print_pex_stats():
-    debug.info(1,"PEX runs: {0}".format(num_pex_runs))
+    debug.info(1, "PEX runs: {0}".format(num_pex_runs))

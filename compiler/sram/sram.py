@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import datetime
+import os
 import debug
 from globals import OPTS, print_time
 
@@ -84,6 +85,12 @@ class sram():
             gdsname = OPTS.output_path + self.s.name + ".gds"
             debug.print_raw("GDS: Writing to {0}".format(gdsname))
             self.gds_write(gdsname)
+            from verify import write_drc_script
+            write_drc_script(cell_name=self.s.name,
+                             gds_name=os.path.basename(gdsname),
+                             extract=True,
+                             final_verification=True,
+                             output_path=OPTS.output_path)
             print_time("GDS", datetime.datetime.now(), start_time)
 
             # Create a LEF physical model
@@ -105,6 +112,13 @@ class sram():
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
         self.lvs_write(lvsname)
+        if not OPTS.netlist_only:
+            from verify import write_lvs_script
+            write_lvs_script(cell_name=self.s.name,
+                             gds_name=os.path.basename(gdsname),
+                             sp_name=os.path.basename(lvsname),
+                             final_verification=True,
+                             output_path=OPTS.output_path)
         print_time("LVS writing", datetime.datetime.now(), start_time)
 
         # Save the extracted spice file
@@ -120,6 +134,8 @@ class sram():
         else:
             # Use generated spice file for characterization
             sp_file = spname
+
+        # Save a functional simulation file
 
         # Characterize the design
         start_time = datetime.datetime.now()

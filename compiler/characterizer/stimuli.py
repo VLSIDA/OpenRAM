@@ -299,9 +299,9 @@ class stimuli():
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
         self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
-    def run_sim(self):
+    def run_sim(self, name):
         """ Run hspice in batch mode and output rawfile to parse. """
-        temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
+        temp_stim = "{0}{1}".format(OPTS.openram_temp, name)
         import datetime
         start_time = datetime.datetime.now()
         debug.check(OPTS.spice_exe != "", "No spice simulator has been found.")

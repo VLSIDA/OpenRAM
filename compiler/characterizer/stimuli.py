@@ -285,10 +285,7 @@ class stimuli():
         includes = self.device_models + [circuit]
 
         for item in list(includes):
-            if os.path.isfile(item):
-                self.sf.write(".include \"{0}\"\n".format(item))
-            else:
-                debug.error("Could not find spice model: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item))
+            self.sf.write(".include \"{0}\"\n".format(item))
 
     def write_supply(self):
         """ Writes supply voltage statements """

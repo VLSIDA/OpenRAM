@@ -782,7 +782,7 @@ class delay(simulation):
         # sys.exit(1)
 
         self.write_power_stimulus(trim=True)
-        self.stim.run_sim()
+        self.stim.run_sim(self.power_stim_sp)
         trim_leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed", "Could not measure leakage power.")
         debug.info(1, "Leakage power of trimmed array is {0} mW".format(trim_leakage_power * 1e3))

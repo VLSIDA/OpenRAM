@@ -40,7 +40,7 @@ else:
         OPTS.magic_exe = get_tool("GDS", ["magic"])
 
 if not OPTS.drc_exe:
-    from .none import run_drc, print_drc_stats
+    from .none import run_drc, print_drc_stats, write_drc_script
 elif "calibre"==OPTS.drc_exe[0]:
     from .calibre import run_drc, print_drc_stats, write_drc_script
 elif "assura"==OPTS.drc_exe[0]:

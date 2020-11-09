@@ -218,7 +218,7 @@ class setup_hold():
                                                                                                  infeasible_bound,
                                                                                                  feasible_bound))
 
-            self.stim.run_sim()
+            self.stim.run_sim(self.stim_sp)
             clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
             setuphold_time = convert_to_float(parse_spice_list("timing", "setup_hold_time"))
             if type(clk_to_q) == float and (clk_to_q < 1.1 * ideal_clk_to_q) and type(setuphold_time)==float:

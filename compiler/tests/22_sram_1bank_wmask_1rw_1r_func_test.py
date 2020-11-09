@@ -52,8 +52,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
 
-        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, tempspice, corner)
+        f = functional(s.s, tempspice)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

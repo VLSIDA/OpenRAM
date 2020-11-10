@@ -9,7 +9,6 @@
 import unittest
 from testutils import *
 import sys, os
-
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -17,7 +16,6 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING psram_1bank_2mux_1rw_1w_wmask_test, multiport layout not complete")
 class psram_1bank_2mux_1rw_1w_wmask_test(openram_test):
 
     def runTest(self):
@@ -26,12 +24,11 @@ class psram_1bank_2mux_1rw_1w_wmask_test(openram_test):
         from sram_config import sram_config
 
         OPTS.bitcell = "pbitcell"
-        OPTS.replica_bitcell = "replica_pbitcell"
-        OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 0
-
+        globals.setup_bitcell()
+        
         c = sram_config(word_size=8,
                         write_size=4,
                         num_words=32,

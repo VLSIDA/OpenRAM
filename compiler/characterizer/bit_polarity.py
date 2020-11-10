@@ -11,4 +11,4 @@ from enum import Enum
 class bit_polarity(Enum):
     NONINVERTING = 0
     INVERTING = 1
-    
+

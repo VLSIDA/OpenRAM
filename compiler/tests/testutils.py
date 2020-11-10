@@ -10,6 +10,8 @@ import sys, os, glob
 sys.path.append(os.getenv("OPENRAM_HOME"))
 from globals import OPTS
 import debug
+import pdb
+import traceback
 
 
 class openram_test(unittest.TestCase):
@@ -27,7 +29,7 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def local_check(self, a, final_verification=False):
@@ -50,7 +52,7 @@ class openram_test(unittest.TestCase):
 
             # We can still run LVS even if DRC fails in Magic OR Calibre
             lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
-                
+
             # Only allow DRC to fail and LVS to pass if we are using magic
             if lvs_result == 0 and drc_result != 0:
                 # import shutil
@@ -64,7 +66,7 @@ class openram_test(unittest.TestCase):
                 # debug.info(0,"Archiving failed files to {}.zip".format(zip_file))
                 # shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("DRC failed: {}".format(a.name))
-                
+
             if lvs_result != 0:
                 # import shutil
                 # zip_file = "/tmp/{0}_{1}".format(a.name, os.getpid())
@@ -74,7 +76,7 @@ class openram_test(unittest.TestCase):
 
         # For debug...
         # import pdb; pdb.set_trace()
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def run_pex(self, a, output=None):
@@ -82,7 +84,7 @@ class openram_test(unittest.TestCase):
             output = OPTS.openram_temp + a.name + ".pex.netlist"
         tempspice = "{0}{1}.sp".format(OPTS.openram_temp, a.name)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp, a.name)
-        
+
         a.gds_write(tempgds)
 
         import verify
@@ -300,7 +302,7 @@ class openram_test(unittest.TestCase):
     def dbg():
         import pdb; pdb.set_trace()
 
-        
+
 def header(filename, technology):
     # Skip the header for gitlab regression
     import getpass
@@ -318,14 +320,12 @@ def header(filename, technology):
     print("|=========" + OPTS.openram_temp.center(60) + "=========|")
     print("|==============================================================================|")
 
-    
+
 def debugTestRunner(post_mortem=None):
     """unittest runner doing post mortem debugging on failing tests"""
-    import pdb
-    import traceback
-    if post_mortem is None and not OPTS.purge_temp:
+    if post_mortem is None and OPTS.debug:
         post_mortem = pdb.post_mortem
-        
+
     class DebugTestResult(unittest.TextTestResult):
         def addError(self, test, err):
             # called before tearDown()
@@ -333,7 +333,7 @@ def debugTestRunner(post_mortem=None):
             if post_mortem:
                 post_mortem(err[2])
             super(DebugTestResult, self).addError(test, err)
-            
+
         def addFailure(self, test, err):
             traceback.print_exception(*err)
             if post_mortem:

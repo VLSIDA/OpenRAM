@@ -13,6 +13,7 @@ from tech import parameter, drc
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
+from tech import cell_properties as cell_props
 
 
 class precharge(design.design):
@@ -25,7 +26,7 @@ class precharge(design.design):
         debug.info(2, "creating precharge cell {0}".format(name))
         super().__init__(name)
 
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.beta = parameter["beta"]
         self.ptx_width = self.beta * parameter["min_tx_size"]
         self.ptx_mults = 1
@@ -41,7 +42,7 @@ class precharge(design.design):
         else:
             self.bitline_layer = "m2"
             self.en_layer = "m1"
-            
+
         # Creates the netlist and layout
         # Since it has variable height, it is not a pgate.
         self.create_netlist()
@@ -59,7 +60,7 @@ class precharge(design.design):
         self.add_pins()
         self.add_ptx()
         self.create_ptx()
-        
+
     def create_layout(self):
 
         self.place_ptx()
@@ -70,7 +71,7 @@ class precharge(design.design):
         self.route_bitlines()
         self.connect_to_bitlines()
         self.add_boundary()
-        
+
     def add_pins(self):
         self.add_pin_list(["bl", "br", "en_bar", "vdd"],
                           ["OUTPUT", "OUTPUT", "INPUT", "POWER"])
@@ -79,7 +80,7 @@ class precharge(design.design):
         """
         Initializes the upper and lower pmos
         """
-        if(OPTS.tech_name == "sky130"):
+        if cell_props.ptx.bin_spice_models:
             self.ptx_width = pgate.nearest_bin("pmos", self.ptx_width)
         self.pmos = factory.create(module_type="ptx",
                                    width=self.ptx_width,
@@ -91,7 +92,7 @@ class precharge(design.design):
         """
         Adds a vdd rail at the top of the cell
         """
-        
+
         # Adds the rail across the width of the cell
         vdd_position = vector(0.5 * self.width, self.height)
         layer_width = drc("minwidth_" + self.en_layer)
@@ -101,11 +102,11 @@ class precharge(design.design):
                              height=layer_width)
 
         pmos_pin = self.upper_pmos2_inst.get_pin("S")
-        
+
         # center of vdd rail
         pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
         self.add_path(self.en_layer, [pmos_pin.center(), pmos_vdd_pos])
-        
+
         self.add_power_pin("vdd",
                            self.well_contact_pos,
                            directions=("V", "V"))
@@ -114,7 +115,7 @@ class precharge(design.design):
                                   to_layer=self.en_layer,
                                   offset=pmos_pin.center(),
                                   directions=("V", "V"))
-        
+
     def create_ptx(self):
         """
         Create both the upper_pmos and lower_pmos to the module
@@ -131,7 +132,7 @@ class precharge(design.design):
         self.upper_pmos2_inst = self.add_inst(name="upper_pmos2",
                                               mod=self.pmos)
         self.connect_inst(["br", "en_bar", "vdd", "vdd"])
-        
+
     def place_ptx(self):
         """
         Place both the upper_pmos and lower_pmos to the module
@@ -142,7 +143,7 @@ class precharge(design.design):
         # Compute the other pmos2 location,
         # but determining offset to overlap the source and drain pins
         overlap_offset = self.pmos.get_pin("D").ll() - self.pmos.get_pin("S").ll()
-        
+
         # adds the lower pmos to layout
         self.lower_pmos_position = vector(self.well_enclose_active + 0.5 * self.m1_width,
                                           self.initial_yoffset)
@@ -156,7 +157,7 @@ class precharge(design.design):
         # Second pmos to the right of the first
         upper_pmos2_pos = self.upper_pmos1_pos + overlap_offset
         self.upper_pmos2_inst.place(upper_pmos2_pos)
-        
+
     def connect_poly(self):
         """
         Connects the upper and lower pmos together
@@ -201,12 +202,12 @@ class precharge(design.design):
                                            layer=self.en_layer,
                                            start=offset.scale(0, 1),
                                            end=offset.scale(0, 1) + vector(self.width, 0))
-                     
+
     def place_nwell_and_contact(self):
         """
         Adds a nwell tap to connect to the vdd rail
         """
-        
+
         # adds the contact from active to metal1
         offset_height = self.upper_pmos1_inst.uy() + \
                         contact.active_contact.height + \
@@ -244,7 +245,7 @@ class precharge(design.design):
                                                          layer=self.bitline_layer,
                                                          start=pin_pos,
                                                          end=top_pos)
-        
+
         # adds the BR
         self.br_xoffset = self.width - layer_pitch
         top_pos = vector(self.br_xoffset, self.height)
@@ -264,7 +265,7 @@ class precharge(design.design):
                           self.bl_xoffset)
         self.connect_pmos(self.lower_pmos_inst.get_pin("D"),
                           self.br_xoffset)
-        
+
         self.connect_pmos(self.upper_pmos1_inst.get_pin("S"),
                           self.bl_xoffset)
         self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),
@@ -300,4 +301,4 @@ class precharge(design.design):
         self.add_path(self.bitline_layer,
                       [left_pos, right_pos],
                       width=pmos_pin.height())
-                      
+

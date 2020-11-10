@@ -9,7 +9,6 @@
 import unittest
 from testutils import *
 import sys, os
-
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -17,7 +16,6 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING sram_wmask_1w_1r_func_test")
 class sram_wmask_1w_1r_func_test(openram_test):
 
     def runTest(self):
@@ -30,7 +28,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
         globals.setup_bitcell()
-        
+
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -54,8 +52,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
 
-        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, tempspice, corner)
+        f = functional(s.s, tempspice)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

@@ -23,7 +23,7 @@ class riscv_phys_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
-        
+
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
@@ -31,7 +31,7 @@ class riscv_phys_test(openram_test):
         globals.setup_bitcell()
         OPTS.route_supplies = False
         OPTS.perimeter_pins = False
-         
+
         c = sram_config(word_size=32,
                         write_size=8,
                         num_words=256,
@@ -50,9 +50,9 @@ class riscv_phys_test(openram_test):
                                           c.num_banks))
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
-        
+
         globals.end_openram()
-        
+
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

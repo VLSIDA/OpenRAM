@@ -10,7 +10,7 @@ with Ngspice.
 """
 import unittest
 from testutils import header,openram_test
-import sys,os
+import sys, os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -33,8 +33,8 @@ class ngspice_pex_pinv_test(openram_test):
         reload(characterizer)
 
         # generate the pinv module
-        prev_purge_value = OPTS.purge_temp
-        OPTS.purge_temp = False # force set purge to false to save the sp file
+        prev_keep_value = OPTS.keep_temp
+        OPTS.keep_temp = True # force set keep to true to save the sp file
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
         tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)
@@ -50,8 +50,8 @@ class ngspice_pex_pinv_test(openram_test):
 
         # now generate its pex file
         pex_file = self.run_pex(tx)
-        # restore the old purge value        
-        OPTS.purge_temp = prev_purge_value
+        # restore the old keep value
+        OPTS.keep_temp = prev_keep_value
         # generate simulation for pex, make sure the simulation is successful
         pex_delay = self.simulate_delay(test_module=pex_file,
                                         top_level_name=tx.name)
@@ -76,7 +76,7 @@ class ngspice_pex_pinv_test(openram_test):
         sim_file = OPTS.openram_temp + "stim.sp"
         log_file_name = "timing"
         test_sim = self.write_simulation(sim_file, test_module, top_level_name)
-        test_sim.run_sim()
+        test_sim.run_sim("stim.sp")
         delay = parse_spice_list(log_file_name, "pinv_delay")
         return delay
 

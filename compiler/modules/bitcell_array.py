@@ -25,11 +25,11 @@ class bitcell_array(bitcell_base_array):
         # This will create a default set of bitline/wordline names
         self.create_all_bitline_names()
         self.create_all_wordline_names()
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        
+
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         # self.offset_all_coordinates()
@@ -52,7 +52,7 @@ class bitcell_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
         self.add_mod(self.cell)
 
     def create_instances(self):

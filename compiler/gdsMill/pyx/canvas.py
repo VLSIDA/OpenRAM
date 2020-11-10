@@ -47,7 +47,7 @@ class canvasitem:
         - the PS code corresponding to the canvasitem has to be written in the
           stream file, which provides a write(string) method
         - writer is the PSwriter used for the output
-        - context is an instance of pswriter.context which is used for keeping 
+        - context is an instance of pswriter.context which is used for keeping
           track of the graphics state (current linewidth, colorspace and font))
         - registry is used for tracking resources needed by the canvasitem
         - bbox has to be updated to include the bounding box of the canvasitem
@@ -63,7 +63,7 @@ class canvasitem:
         - writer is the PDFwriter used for the output, which contains properties
           like whether streamcompression is used
         - context is an instance of pdfwriter.context which is used for keeping
-          track of the graphics state, in particular for the emulation of PS 
+          track of the graphics state, in particular for the emulation of PS
           behaviour regarding fill and stroke styles, for keeping track of the
           currently selected font as well as of text regions.
         - registry is used for tracking resources needed by the canvasitem
@@ -145,8 +145,8 @@ class _canvas(canvasitem):
         attr.checkattrs(attrs, [trafo.trafo_pt, clip, style.strokestyle, style.fillstyle])
         # We have to reverse the trafos such that the PostScript concat operators
         # are in the right order. Correspondingly, we below multiply the current self.trafo
-        # from the right. 
-        # Note that while for the stroke and fill styles the order doesn't matter at all, 
+        # from the right.
+        # Note that while for the stroke and fill styles the order doesn't matter at all,
         # this is not true for the clip operation.
         attrs = attrs[:]
         attrs.reverse()

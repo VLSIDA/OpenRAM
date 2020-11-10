@@ -11,8 +11,8 @@ from tech import drc, parameter, spice
 from vector import vector
 import logical_effort
 from sram_factory import factory
-from globals import OPTS
 import contact
+from tech import cell_properties as cell_props
 
 
 class pnand3(pgate.pgate):
@@ -41,13 +41,13 @@ class pnand3(pgate.pgate):
                     "Size 1 pnand3 is only supported now.")
         self.tx_mults = 1
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.ptx.bin_spice_models:
             self.nmos_width = self.nearest_bin("nmos", self.nmos_width)
             self.pmos_width = self.nearest_bin("pmos", self.pmos_width)
 
         # Creates the netlist and layout
         super().__init__(name, height, add_wells)
-        
+
     def add_pins(self):
         """ Adds pins for spice netlist """
         pin_list = ["A", "B", "C", "Z", "vdd", "gnd"]
@@ -58,7 +58,7 @@ class pnand3(pgate.pgate):
         self.add_pins()
         self.add_ptx()
         self.create_ptx()
-        
+
     def create_layout(self):
         """ Calls all functions related to the generation of the layout """
 
@@ -73,7 +73,7 @@ class pnand3(pgate.pgate):
         self.connect_rails()
         self.extend_wells()
         self.add_boundary()
-        
+
     def add_ptx(self):
         """ Create the PMOS and NMOS transistors. """
         self.nmos_center = factory.create(module_type="ptx",
@@ -99,7 +99,7 @@ class pnand3(pgate.pgate):
                                         add_source_contact=self.route_layer,
                                         add_drain_contact="active")
         self.add_mod(self.nmos_left)
-        
+
         self.pmos_left = factory.create(module_type="ptx",
                                         width=self.pmos_width,
                                         mults=self.tx_mults,
@@ -123,13 +123,13 @@ class pnand3(pgate.pgate):
                                          add_source_contact=self.route_layer,
                                          add_drain_contact=self.route_layer)
         self.add_mod(self.pmos_right)
-        
+
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
-        
+
         # Compute the overlap of the source and drain pins
         self.ptx_offset = self.pmos_left.get_pin("D").center() - self.pmos_left.get_pin("S").center()
-        
+
         # This is the extra space needed to ensure DRC rules
         # to the active contacts
         nmos = factory.create(module_type="ptx", tx_type="nmos")
@@ -150,7 +150,7 @@ class pnand3(pgate.pgate):
         self.pmos3_inst = self.add_inst(name="pnand3_pmos3",
                                         mod=self.pmos_right)
         self.connect_inst(["Z", "C", "vdd", "vdd"])
-        
+
         self.nmos1_inst = self.add_inst(name="pnand3_nmos1",
                                         mod=self.nmos_left)
         self.connect_inst(["Z", "C", "net1", "gnd"])
@@ -158,7 +158,7 @@ class pnand3(pgate.pgate):
         self.nmos2_inst = self.add_inst(name="pnand3_nmos2",
                                         mod=self.nmos_center)
         self.connect_inst(["net1", "B", "net2", "gnd"])
-        
+
         self.nmos3_inst = self.add_inst(name="pnand3_nmos3",
                                         mod=self.nmos_right)
         self.connect_inst(["net2", "A", "gnd", "gnd"])
@@ -178,14 +178,14 @@ class pnand3(pgate.pgate):
 
         self.pmos3_pos = pmos2_pos + self.ptx_offset
         self.pmos3_inst.place(self.pmos3_pos)
-        
+
         nmos1_pos = vector(self.pmos_left.active_offset.x,
                            self.top_bottom_space)
         self.nmos1_inst.place(nmos1_pos)
 
         nmos2_pos = nmos1_pos + self.ptx_offset
         self.nmos2_inst.place(nmos2_pos)
-        
+
         self.nmos3_pos = nmos2_pos + self.ptx_offset
         self.nmos3_inst.place(self.nmos3_pos)
 
@@ -225,7 +225,7 @@ class pnand3(pgate.pgate):
         self.inputA_yoffset = max(active_contact_to_poly_contact,
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
-        
+
         apin = self.route_input_gate(self.pmos1_inst,
                                      self.nmos1_inst,
                                      self.inputA_yoffset,
@@ -246,9 +246,9 @@ class pnand3(pgate.pgate):
                                      "C",
                                      position="right")
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.add_enclosure([apin, bpin, cpin], "npc", drc("npc_enclose_poly"))
-        
+
     def route_output(self):
         """ Route the Z output """
 
@@ -272,7 +272,7 @@ class pnand3(pgate.pgate):
         # self.add_via_center(layers=self.m1_stack,
         #                     offset=nmos3_pin.center(),
         #                     directions=("V", "V"))
-        
+
         # # Route in the A input track (top track)
         # mid_offset = vector(nmos3_pin.center().x, self.inputA_yoffset)
         # self.add_path("m1", [pmos1_pin.center(), mid_offset, nmos3_pin.uc()])
@@ -284,7 +284,7 @@ class pnand3(pgate.pgate):
         top_left_pin_offset = pmos1_pin.center()
         top_right_pin_offset = pmos3_pin.center()
         bottom_pin_offset = nmos3_pin.center()
-        
+
         # PMOS1 to output
         self.add_path(self.route_layer, [top_left_pin_offset,
                                            vector(top_left_pin_offset.x, out_offset.y),
@@ -300,7 +300,7 @@ class pnand3(pgate.pgate):
                       width=nmos3_pin.height())
         mid3_offset = vector(out_offset.x, nmos3_pin.by())
         self.add_path(self.route_layer, [mid3_offset, out_offset])
-        
+
         self.add_layout_pin_rect_center(text="Z",
                                         layer=self.route_layer,
                                         offset=out_offset)
@@ -311,10 +311,10 @@ class pnand3(pgate.pgate):
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["nand3_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -326,7 +326,7 @@ class pnand3(pgate.pgate):
     def input_load(self):
         """Return the relative input capacitance of a single input"""
         return self.nmos_size + self.pmos_size
-        
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.

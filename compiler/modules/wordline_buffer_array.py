@@ -7,10 +7,11 @@
 #
 import debug
 import design
-from tech import drc, layer
+from tech import layer
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class wordline_buffer_array(design.design):
@@ -22,7 +23,7 @@ class wordline_buffer_array(design.design):
         design.design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
-        
+
         self.rows = rows
         self.cols = cols
 
@@ -34,7 +35,7 @@ class wordline_buffer_array(design.design):
         self.add_modules()
         self.add_pins()
         self.create_drivers()
-        
+
     def create_layout(self):
         if "li" in layer:
             self.route_layer = "li"
@@ -46,7 +47,7 @@ class wordline_buffer_array(design.design):
         self.offset_all_coordinates()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         # inputs to wordline_driver.
         for i in range(self.rows):
@@ -58,19 +59,19 @@ class wordline_buffer_array(design.design):
         self.add_pin("gnd", "GROUND")
 
     def add_modules(self):
-        b = factory.create(module_type="bitcell")
-        
+        b = factory.create(module_type=OPTS.bitcell)
+
         self.wl_driver = factory.create(module_type="inv_dec",
                                         size=self.cols,
                                         height=b.height)
         self.add_mod(self.wl_driver)
-        
+
     def route_vdd_gnd(self):
         """
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-        if OPTS.tech_name == "sky130":
+        if layer_props.wordline_driver.vertical_supply:
             for name in ["vdd", "gnd"]:
                 supply_pins = self.wld_inst[0].get_pins(name)
                 for pin in supply_pins:
@@ -83,7 +84,7 @@ class wordline_buffer_array(design.design):
             xoffset_list = [self.wld_inst[0].rx()]
             for num in range(self.rows):
                 # this will result in duplicate polygons for rails, but who cares
-                
+
                 # use the inverter offset even though it will be the and's too
                 (gate_offset, y_dir) = self.get_gate_offset(0,
                                                             self.wl_driver.height,
@@ -91,12 +92,12 @@ class wordline_buffer_array(design.design):
                 # Route both supplies
                 for name in ["vdd", "gnd"]:
                     supply_pin = self.wld_inst[num].get_pin(name)
-                    
+
                     # Add pins in two locations
                     for xoffset in xoffset_list:
                         pin_pos = vector(xoffset, supply_pin.cy())
                         self.add_power_pin(name, pin_pos)
-            
+
     def create_drivers(self):
         self.wld_inst = []
         for row in range(self.rows):
@@ -118,7 +119,7 @@ class wordline_buffer_array(design.design):
                 inst_mirror = "MX"
 
             offset = [0, y_offset]
-            
+
             self.wld_inst[row].place(offset=offset,
                                      mirror=inst_mirror)
 

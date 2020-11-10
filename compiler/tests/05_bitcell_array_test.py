@@ -8,14 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 
-#@unittest.skip("SKIPPING 05_array_test")
 
 class array_test(openram_test):
 
@@ -26,7 +25,7 @@ class array_test(openram_test):
         debug.info(2, "Testing 8x8 array for 6t_cell")
         a = factory.create(module_type="bitcell_array", cols=8, rows=8)
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

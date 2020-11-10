@@ -52,7 +52,7 @@ class replica_bitcell_array(bitcell_base_array):
         else:
             self.right_rbl=[1] if len(self.all_ports) > 1 else []
         self.rbls = self.left_rbl + self.right_rbl
-        
+
         debug.check(sum(self.rbl) == len(self.all_ports),
                     "Invalid number of RBLs for port configuration.")
         debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
@@ -80,7 +80,7 @@ class replica_bitcell_array(bitcell_base_array):
         # We don't offset this because we need to align
         # the replica bitcell in the control logic
         # self.offset_all_coordinates()
-        
+
     def create_netlist(self):
         """ Create and connect the netlist """
         self.add_modules()
@@ -119,7 +119,7 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Replica bitlines
         self.replica_columns = {}
-        
+
         for port in self.all_ports:
             if port in self.left_rbl:
                 # We will always have self.rbl[0] rows of replica wordlines below
@@ -127,17 +127,17 @@ class replica_bitcell_array(bitcell_base_array):
                 # These go from the top (where the bitcell array starts ) down
                 replica_bit = self.rbl[0] - port
             elif port in self.right_rbl:
-                
+
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the bottom up
                 replica_bit = self.rbl[0] + self.row_size + port
             else:
                 continue
-            
+
             # If we have an odd numer on the bottom
             column_offset = self.rbl[0] + 1
-                
+
             self.replica_columns[port] = factory.create(module_type="replica_column",
                                                         rows=self.row_size,
                                                         rbl=self.rbl,
@@ -213,7 +213,7 @@ class replica_bitcell_array(bitcell_base_array):
         #
         # vdd
         # gnd
-        
+
         self.add_bitline_pins()
         self.add_wordline_pins()
         self.add_pin("vdd", "POWER")
@@ -238,13 +238,13 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_pin_list(self.all_bitline_names, "INOUT")
         for port in self.right_rbl:
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
-        
+
     def add_wordline_pins(self):
         try:
             end_caps_enabled = cell_properties.bitcell.end_caps
         except AttributeError:
             end_caps_enabled = False
-        
+
 
         # Wordlines to ground
         self.gnd_wordline_names = []
@@ -259,7 +259,7 @@ class replica_bitcell_array(bitcell_base_array):
 
         self.wordline_names = self.bitcell_array.wordline_names
         self.all_wordline_names = self.bitcell_array.all_wordline_names
- 
+
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
         self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
@@ -281,7 +281,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.supplies = ["vdd", "gnd"]
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
         # Main array
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",
@@ -297,7 +297,7 @@ class replica_bitcell_array(bitcell_base_array):
                 self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + self.supplies)
             else:
                 self.replica_col_insts.append(None)
-                
+
         # Dummy rows under the bitcell array (connected with with the replica cell wl)
         self.dummy_row_replica_insts = []
         # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
@@ -347,7 +347,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.bitcell_array_inst.place(offset=self.unused_offset)
 
         self.add_replica_columns()
-        
+
         self.add_end_caps()
 
 
@@ -359,7 +359,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_layout_pins()
 
         self.route_unused_wordlines()
-        
+
         self.add_boundary()
 
         self.DRC_LVS()
@@ -419,7 +419,7 @@ class replica_bitcell_array(bitcell_base_array):
             dummy_offset = self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul()
             self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=dummy_offset,
                                                                   mirror="MX" if bit % 2 else "R0")
-        
+
     def add_end_caps(self):
         """ Add dummy cells or end caps around the array """
         try:
@@ -465,7 +465,7 @@ class replica_bitcell_array(bitcell_base_array):
 
     def add_layout_pins(self):
         """ Add the layout pins """
-        
+
         #All wordlines
         #Main array wl and bl/br
 
@@ -514,7 +514,7 @@ class replica_bitcell_array(bitcell_base_array):
         # vdd/gnd are only connected in the perimeter cells
         # replica column should only have a vdd/gnd in the dummy cell on top/bottom
         supply_insts = self.dummy_col_insts + self.dummy_row_insts
-        
+
         for pin_name in self.supplies:
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
@@ -560,7 +560,7 @@ class replica_bitcell_array(bitcell_base_array):
     def ground_pin(self, inst, name):
         pin = inst.get_pin(name)
         pin_layer = pin.layer
-        
+
         left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
         right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
 
@@ -573,7 +573,7 @@ class replica_bitcell_array(bitcell_base_array):
         # Add a path to connect to the array
         self.add_path(pin_layer, [left_loc, left_pin_loc])
         self.add_path(pin_layer, [right_loc, right_pin_loc])
-        
+
     def gen_bl_wire(self):
         if OPTS.netlist_only:
             height = 0
@@ -605,7 +605,7 @@ class replica_bitcell_array(bitcell_base_array):
         return self.bitcell_array.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name, row, col)
 
     def clear_exclude_bits(self):
-        """ 
+        """
         Clears the bit exclusions
         """
         self.bitcell_array.init_graph_params()

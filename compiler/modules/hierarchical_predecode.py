@@ -11,6 +11,7 @@ import math
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class hierarchical_predecode(design.design):
@@ -20,7 +21,7 @@ class hierarchical_predecode(design.design):
     def __init__(self, name, input_number, height=None):
         self.number_of_inputs = input_number
 
-        b = factory.create(module_type="bitcell")
+        b = factory.create(module_type=OPTS.bitcell)
 
         if not height:
             self.cell_height = b.height
@@ -30,10 +31,10 @@ class hierarchical_predecode(design.design):
             # If we are pitch matched to the bitcell, it's a predecoder
             # otherwise it's a column decoder (out of pgates)
             self.column_decoder = (height != b.height)
-            
+
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         super().__init__(name)
-    
+
     def add_pins(self):
         for k in range(self.number_of_inputs):
             self.add_pin("in_{0}".format(k), "INPUT")
@@ -47,7 +48,7 @@ class hierarchical_predecode(design.design):
 
         debug.check(self.number_of_inputs <= 4,
                     "Invalid number of predecode inputs: {}".format(self.number_of_inputs))
-            
+
         if self.column_decoder:
             and_type = "pand{}".format(self.number_of_inputs)
             inv_type = "pinv"
@@ -78,29 +79,20 @@ class hierarchical_predecode(design.design):
         self.route()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def setup_layout_constraints(self):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "sky130":
-            self.bus_layer = "m1"
-            self.bus_directions = "nonpref"
-            self.bus_pitch = self.m1_pitch
-            self.bus_space = 1.5 * self.m1_space
-            self.input_layer = "m2"
-            self.output_layer = "li"
-            self.output_layer_pitch = self.li_pitch
-        else:
-            self.bus_layer = "m2"
-            self.bus_directions = "pref"
-            self.bus_pitch = self.m2_pitch
-            self.bus_space = self.m2_space
-            # This requires a special jog to ensure to conflicts with the output layers
-            self.input_layer = "m1"
-            self.output_layer = "m1"
-            self.output_layer_pitch = self.m1_pitch
-            
+
+        self.bus_layer = layer_props.hierarchical_predecode.bus_layer
+        self.bus_directions = layer_props.hierarchical_predecode.bus_directions
+        self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
+        self.bus_space = layer_props.hierarchical_predecode.bus_space_factor * getattr(self, self.bus_layer + "_space")
+        self.input_layer = layer_props.hierarchical_predecode.input_layer
+        self.output_layer = layer_props.hierarchical_predecode.output_layer
+        self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")
+
         self.height = self.number_of_outputs * self.and_mod.height
 
         # x offset for input inverters
@@ -147,7 +139,7 @@ class hierarchical_predecode(design.design):
     def place_input_inverters(self):
         """ Place the input inverters to invert input signals for the decode stage. """
         for inv_num in range(self.number_of_inputs):
-            
+
             if (inv_num % 2 == 0):
                 y_off = inv_num * (self.inv.height)
                 mirror = "R0"
@@ -157,7 +149,7 @@ class hierarchical_predecode(design.design):
             offset = vector(self.x_off_inv_1, y_off)
             self.inv_inst[inv_num].place(offset=offset,
                                          mirror=mirror)
-            
+
     def create_and_array(self, connections):
         """ Create the AND stage for the decodes """
         self.and_inst = []
@@ -204,7 +196,7 @@ class hierarchical_predecode(design.design):
                 pin = top_and_gate.get_pin("D")
             else:
                 debug.error("Too many inputs for predecoder.", -1)
-                
+
             y_offset = pin.cy()
             in_pin = "in_{}".format(num)
             a_pin = "A_{}".format(num)
@@ -230,7 +222,7 @@ class hierarchical_predecode(design.design):
                                 offset=z_pin.ll(),
                                 height=z_pin.height(),
                                 width=z_pin.width())
-    
+
     def route_input_inverters(self):
         """
         Route all conections of the inputs inverters [Inputs, outputs, vdd, gnd]
@@ -240,7 +232,7 @@ class hierarchical_predecode(design.design):
             in_pin = "in_{}".format(inv_num)
 
             inv_out_pin = self.inv_inst[inv_num].get_pin("Z")
-            
+
             # add output so that it is just below the vdd or gnd rail
             # since this is where the p/n devices are and there are no
             # pins in the and gates.
@@ -249,7 +241,7 @@ class hierarchical_predecode(design.design):
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
             rail_pos = vector(self.decode_rails[out_pin].cx(), y_offset)
             self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
-                
+
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
                                       to_layer=self.output_layer,
                                       offset=inv_out_pos)
@@ -257,7 +249,7 @@ class hierarchical_predecode(design.design):
                                       to_layer=self.bus_layer,
                                       offset=rail_pos,
                                       directions=self.bus_directions)
-            
+
             # route input
             pin = self.inv_inst[inv_num].get_pin("A")
             inv_in_pos = pin.center()
@@ -275,11 +267,11 @@ class hierarchical_predecode(design.design):
                                             offset=in_pos,
                                             height=via.mod.second_layer_height,
                                             width=via.mod.second_layer_width)
-            
-            if OPTS.tech_name == "sky130":
-                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height/2))
-                self.add_path(self.bus_layer, [rail_pos, below_rail], width = self.li_width + self.m1_enclose_mcon * 2)
-            
+
+            if layer_props.hierarchical_predecode.vertical_supply:
+                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height / 2))
+                self.add_path(self.bus_layer, [rail_pos, below_rail], width=self.li_width + self.m1_enclose_mcon * 2)
+
     def route_and_to_rails(self):
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()
@@ -310,7 +302,7 @@ class hierarchical_predecode(design.design):
                     direction = None
                 else:
                     direction = ("H", "H")
-                    
+
                 self.add_via_stack_center(from_layer=pin.layer,
                                           to_layer=self.input_layer,
                                           offset=pin_pos,
@@ -319,8 +311,8 @@ class hierarchical_predecode(design.design):
     def route_vdd_gnd(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
-        # In sky130, we use hand-made decoder cells with vertical power
-        if OPTS.tech_name == "sky130" and not self.column_decoder:
+        # We may ahve vertical power supply rails
+        if layer_props.hierarchical_predecode.vertical_supply and not self.column_decoder:
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
                 for i in [self.inv_inst, self.and_inst]:
@@ -342,7 +334,7 @@ class hierarchical_predecode(design.design):
                         self.add_power_pin(name=n,
                                            loc=pin.uc(),
                                            start_layer=pin.layer)
-                    
+
         # In other techs, we are using standard cell decoder cells with horizontal power
         else:
             for num in range(0, self.number_of_outputs):
@@ -362,6 +354,6 @@ class hierarchical_predecode(design.design):
                             self.add_power_pin(name=n,
                                                loc=pin_pos,
                                                start_layer=and_pin.layer)
-            
+
 
 

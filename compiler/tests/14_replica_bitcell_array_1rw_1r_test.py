@@ -6,12 +6,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 class replica_bitcell_array_1rw_1r_test(openram_test):
 
@@ -23,7 +24,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Testing 4x4 non-replica array for cell_1rw_1r")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
@@ -38,7 +39,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
                            rbl=[1, 1],
                            left_rbl=[0])
         self.local_check(a)
-        
+
         debug.info(2, "Testing 4x4 array left and right replica for cell_1rw_1r")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
@@ -48,7 +49,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
                            right_rbl=[1])
         self.local_check(a)
 
-        
+
         # Sky 130 has restrictions on the symmetries
         if OPTS.tech_name != "sky130":
             debug.info(2, "Testing 4x4 array right only replica for cell_1rw_1r")

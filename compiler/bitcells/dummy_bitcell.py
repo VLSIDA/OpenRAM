@@ -6,8 +6,6 @@
 # All rights reserved.
 #
 import debug
-import utils
-from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
 
@@ -24,19 +22,10 @@ class dummy_bitcell(bitcell_base.bitcell_base):
                  props.bitcell.cell_6t.pin.wl,
                  props.bitcell.cell_6t.pin.vdd,
                  props.bitcell.cell_6t.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
 
-    (width, height) = utils.get_libcell_size("dummy_cell_6t",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "dummy_cell_6t", GDS["unit"])
-
-    def __init__(self, name=""):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, "dummy_cell_6t")
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create dummy bitcell")
-
-        self.width = dummy_bitcell.width
-        self.height = dummy_bitcell.height
-        self.pin_map = dummy_bitcell.pin_map
 
 

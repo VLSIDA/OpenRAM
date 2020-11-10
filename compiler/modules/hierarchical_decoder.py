@@ -11,6 +11,7 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import layer_properties as layer_props
 
 
 class hierarchical_decoder(design.design):
@@ -21,14 +22,14 @@ class hierarchical_decoder(design.design):
         super().__init__(name)
 
         self.AND_FORMAT = "DEC_AND_{0}"
-        
+
         self.pre2x4_inst = []
         self.pre3x8_inst = []
         self.pre4x16_inst = []
 
-        b = factory.create(module_type="bitcell")
+        b = factory.create(module_type=OPTS.bitcell)
         self.cell_height = b.height
-            
+
         self.num_outputs = num_outputs
         self.num_inputs = math.ceil(math.log(self.num_outputs, 2))
         (self.no_of_pre2x4, self.no_of_pre3x8, self.no_of_pre4x16)=self.determine_predecodes(self.num_inputs)
@@ -36,7 +37,7 @@ class hierarchical_decoder(design.design):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        
+
     def create_netlist(self):
         self.add_modules()
         self.setup_netlist_constants()
@@ -48,33 +49,33 @@ class hierarchical_decoder(design.design):
         self.setup_layout_constants()
         self.place_pre_decoder()
         self.place_row_decoder()
-        
+
         self.height = max(self.predecoder_height, self.row_decoder_height) + self.bus_space
-        
+
         self.route_inputs()
         self.route_outputs()
         self.route_decoder_bus()
         self.route_vdd_gnd()
-        
+
         self.offset_x_coordinates()
-        
+
         self.width = self.and_inst[0].rx() + 0.5 * self.m1_width
-        
+
         self.add_boundary()
         self.DRC_LVS()
-                
+
     def add_modules(self):
         self.and2 = factory.create(module_type="and2_dec",
                                    height=self.cell_height)
         self.add_mod(self.and2)
-        
+
         self.and3 = factory.create(module_type="and3_dec",
                                    height=self.cell_height)
         self.add_mod(self.and3)
         # TBD
         # self.and4 = factory.create(module_type="and4_dec")
         # self.add_mod(self.and4)
-        
+
         self.add_decoders()
 
     def add_decoders(self):
@@ -82,7 +83,7 @@ class hierarchical_decoder(design.design):
         self.pre2_4 = factory.create(module_type="hierarchical_predecode2x4",
                                      height=self.cell_height)
         self.add_mod(self.pre2_4)
-        
+
         self.pre3_8 = factory.create(module_type="hierarchical_predecode3x8",
                                      height=self.cell_height)
         self.add_mod(self.pre3_8)
@@ -90,11 +91,11 @@ class hierarchical_decoder(design.design):
         self.pre4_16 = factory.create(module_type="hierarchical_predecode4x16",
                                       height=self.cell_height)
         self.add_mod(self.pre4_16)
-        
+
     def determine_predecodes(self, num_inputs):
-        """ 
+        """
         Determines the number of 2:4, 3:8 and 4:16 pre-decoders
-        needed based on the number of inputs 
+        needed based on the number of inputs
         """
         if (num_inputs == 2):
             return (1, 0, 0)
@@ -150,7 +151,7 @@ class hierarchical_decoder(design.design):
                 lines.append(index)
                 index = index + 1
             self.predec_groups.append(lines)
-            
+
     def setup_layout_constants(self):
         """ Calculate the overall dimensions of the hierarchical decoder """
 
@@ -181,24 +182,14 @@ class hierarchical_decoder(design.design):
 
         # Inputs to cells are on input layer
         # Outputs from cells are on output layer
-        if OPTS.tech_name == "sky130":
-            self.bus_layer = "m1"
-            self.bus_directions = "nonpref"
-            self.bus_pitch = self.m1_pitch
-            self.bus_space = self.m2_space
-            self.input_layer = "m2"
-            self.output_layer = "li"
-            self.output_layer_pitch = self.li_pitch
-        else:
-            self.bus_layer = "m2"
-            self.bus_directions = "pref"
-            self.bus_pitch = self.m2_pitch
-            self.bus_space = self.m2_space
-            # These two layers being the same requires a special jog
-            # to ensure to conflicts with the output layers
-            self.input_layer = "m1"
-            self.output_layer = "m3"
-            self.output_layer_pitch = self.m3_pitch
+
+        self.bus_layer = layer_props.hierarchical_decoder.bus_layer
+        self.bus_directions = layer_props.hierarchical_decoder.bus_directions
+        self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
+        self.bus_space = getattr(self, self.bus_layer + "_space")
+        self.input_layer = layer_props.hierarchical_decoder.input_layer
+        self.output_layer = layer_props.hierarchical_decoder.output_layer
+        self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")
 
         # Two extra pitches between modules on left and right
         self.internal_routing_width = self.total_number_of_predecoder_outputs * self.bus_pitch + self.bus_pitch
@@ -224,7 +215,7 @@ class hierarchical_decoder(design.design):
                                                       offset=input_offset,
                                                       names=input_bus_names,
                                                       length=self.predecoder_height)
-        
+
         self.route_input_to_predecodes()
 
     def route_input_to_predecodes(self):
@@ -240,13 +231,13 @@ class hierarchical_decoder(design.design):
 
                 decoder_offset = decoder_pin.center()
                 input_offset = input_pos.scale(1, 0) + decoder_offset.scale(0, 1)
-                
+
                 self.route_input_bus(decoder_offset, input_offset)
-            
+
         for pre_num in range(self.no_of_pre3x8):
             for i in range(3):
                 index = pre_num * 3 + i + self.no_of_pre2x4 * 2
-                
+
                 input_pos = self.input_bus["addr_{}".format(index)].center()
 
                 in_name = "in_{}".format(i)
@@ -254,13 +245,13 @@ class hierarchical_decoder(design.design):
 
                 decoder_offset = decoder_pin.center()
                 input_offset = input_pos.scale(1, 0) + decoder_offset.scale(0, 1)
-                
+
                 self.route_input_bus(decoder_offset, input_offset)
 
         for pre_num in range(self.no_of_pre4x16):
             for i in range(4):
                 index = pre_num * 4 + i + self.no_of_pre3x8 * 3 + self.no_of_pre2x4 * 2
-                
+
                 input_pos = self.input_bus["addr_{}".format(index)].center()
 
                 in_name = "in_{}".format(i)
@@ -268,15 +259,15 @@ class hierarchical_decoder(design.design):
 
                 decoder_offset = decoder_pin.center()
                 input_offset = input_pos.scale(1, 0) + decoder_offset.scale(0, 1)
-                
+
                 self.route_input_bus(decoder_offset, input_offset)
-                
+
     def route_input_bus(self, input_offset, output_offset):
         """
         Route a vertical M2 coordinate to another
         vertical M2 coordinate to the predecode inputs
         """
-        
+
         self.add_via_stack_center(from_layer=self.bus_layer,
                                   to_layer=self.input_layer,
                                   offset=input_offset)
@@ -285,10 +276,10 @@ class hierarchical_decoder(design.design):
                                   offset=output_offset,
                                   directions=self.bus_directions)
         self.add_path(self.input_layer, [input_offset, output_offset])
-    
+
     def add_pins(self):
         """ Add the module pins """
-        
+
         for i in range(self.num_inputs):
             self.add_pin("addr_{0}".format(i), "INPUT")
 
@@ -299,10 +290,10 @@ class hierarchical_decoder(design.design):
 
     def create_pre_decoder(self):
         """ Creates pre-decoder and places labels input address [A] """
-        
+
         for i in range(self.no_of_pre2x4):
             self.create_pre2x4(i)
-            
+
         for i in range(self.no_of_pre3x8):
             self.create_pre3x8(i)
 
@@ -311,7 +302,7 @@ class hierarchical_decoder(design.design):
 
     def create_pre2x4(self, num):
         """ Add a 2x4 predecoder to the left of the origin """
-        
+
         if (self.num_inputs == 2):
             index_off1 = index_off2 = 0
         else:
@@ -364,19 +355,19 @@ class hierarchical_decoder(design.design):
         self.pre4x16_inst.append(self.add_inst(name="pre4x16_{0}".format(num),
                                               mod=self.pre4_16))
         self.connect_inst(pins)
-        
+
     def place_pre_decoder(self):
         """ Creates pre-decoder and places labels input address [A] """
-        
+
         for i in range(self.no_of_pre2x4):
             self.place_pre2x4(i)
-            
+
         for i in range(self.no_of_pre3x8):
             self.place_pre3x8(i)
 
         for i in range(self.no_of_pre4x16):
             self.place_pre4x16(i)
-            
+
         self.predecode_height = 0
         if self.no_of_pre2x4 > 0:
             self.predecode_height = self.pre2x4_inst[-1].uy()
@@ -387,10 +378,10 @@ class hierarchical_decoder(design.design):
 
     def place_pre2x4(self, num):
         """ Place 2x4 predecoder to the left of the origin """
-        
+
         base= vector(-self.pre2_4.width, num * (self.pre2_4.height + self.predecoder_spacing))
         self.pre2x4_inst[num].place(base)
-        
+
     def place_pre3x8(self, num):
         """ Place 3x8 predecoder to the left of the origin and above any 2x4 decoders """
         height = self.no_of_pre2x4 * (self.pre2_4.height + self.predecoder_spacing) \
@@ -405,7 +396,7 @@ class hierarchical_decoder(design.design):
                  + num * (self.pre4_16.height + self.predecoder_spacing)
         offset = vector(-self.pre4_16.width, height)
         self.pre4x16_inst[num].place(offset)
-        
+
     def create_row_decoder(self):
         """ Create the row-decoder by placing AND2/AND3 and Inverters
         and add the primary decoder output pins. """
@@ -416,7 +407,7 @@ class hierarchical_decoder(design.design):
         """ Add a column of AND gates for final decode """
 
         self.and_inst = []
-        
+
         # Row Decoder AND GATE array for address inputs <5.
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for i in range(len(self.predec_groups[0])):
@@ -444,7 +435,7 @@ class hierarchical_decoder(design.design):
                             name = self.AND_FORMAT.format(output)
                             self.and_inst.append(self.add_inst(name=name,
                                                                mod=self.and3))
-                        
+
                             pins = ["out_{0}".format(i),
                                     "out_{0}".format(j + len(self.predec_groups[0])),
                                     "out_{0}".format(k + len(self.predec_groups[0]) + len(self.predec_groups[1])),
@@ -465,7 +456,7 @@ class hierarchical_decoder(design.design):
         Add a column of AND gates for final decode.
         This may have more than one decoder per row to match the bitcell height.
         """
-        
+
         # Row Decoder AND GATE array for address inputs <5.
         if (self.num_inputs == 4 or self.num_inputs == 5):
             self.place_and_array(and_mod=self.and2)
@@ -498,7 +489,7 @@ class hierarchical_decoder(design.design):
         for row in range(self.num_outputs):
             and_inst = self.and_inst[row]
             self.copy_layout_pin(and_inst, "Z", "decode_{0}".format(row))
-        
+
     def route_decoder_bus(self):
         """
         Creates vertical metal 2 bus to connect predecoder and decoder stages.
@@ -531,7 +522,7 @@ class hierarchical_decoder(design.design):
                 x_offset = self.pre2x4_inst[pre_num].rx() + self.output_layer_pitch
                 y_offset = self.pre2x4_inst[pre_num].by() + i * self.cell_height
                 self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset)
-            
+
         # FIXME: convert to connect_bus
         for pre_num in range(self.no_of_pre3x8):
             for i in range(8):
@@ -551,7 +542,7 @@ class hierarchical_decoder(design.design):
                 x_offset = self.pre4x16_inst[pre_num].rx() + self.output_layer_pitch
                 y_offset = self.pre4x16_inst[pre_num].by() + i * self.cell_height
                 self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset)
-                
+
     def route_bus_to_decoder(self):
         """
         Use the self.predec_groups to determine the connections to the decoder AND gates.
@@ -564,7 +555,7 @@ class hierarchical_decoder(design.design):
         and the 128th AND3 is connected to [3,7,15]
         """
         output_index = 0
-            
+
         if (self.num_inputs == 4 or self.num_inputs == 5):
             for index_B in self.predec_groups[1]:
                 for index_A in self.predec_groups[0]:
@@ -605,8 +596,8 @@ class hierarchical_decoder(design.design):
         Add a pin for each row of vdd/gnd which are
         must-connects next level up.
         """
-                
-        if OPTS.tech_name == "sky130":
+
+        if layer_props.hierarchical_decoder.vertical_supply:
             for n in ["vdd", "gnd"]:
                 pins = self.and_inst[0].get_pins(n)
                 for pin in pins:
@@ -645,7 +636,7 @@ class hierarchical_decoder(design.design):
                 for pre in self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst:
                     for pin_name in ["vdd", "gnd"]:
                         self.copy_layout_pin(pre, pin_name)
-        
+
     def route_predecode_bus_outputs(self, rail_name, pin, row):
         """
         Connect the routing rail to the given metal1 pin
@@ -655,17 +646,17 @@ class hierarchical_decoder(design.design):
         pin_pos = pin.center()
         rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
         self.add_path(self.input_layer, [rail_pos, pin_pos])
-        
+
         self.add_via_stack_center(from_layer=self.bus_layer,
                                   to_layer=self.input_layer,
                                   offset=rail_pos,
                                   directions=self.bus_directions)
-        
+
         self.add_via_stack_center(from_layer=pin.layer,
                                   to_layer=self.input_layer,
                                   offset=pin_pos,
                                   directions=("H", "H"))
-        
+
     def route_predecode_bus_inputs(self, rail_name, pin, x_offset, y_offset):
         """
         Connect the routing rail to the given metal1 pin using a jog
@@ -678,9 +669,9 @@ class hierarchical_decoder(design.design):
         mid_point2 = vector(x_offset, y_offset)
         rail_pos = vector(self.predecode_bus[rail_name].cx(), mid_point2.y)
         self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
-        if OPTS.tech_name == "sky130":
-            above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height/2))
-            self.add_path(self.bus_layer, [rail_pos, above_rail], width = self.li_width + self.m1_enclose_mcon * 2)
+        if layer_props.hierarchical_decoder.vertical_supply:
+            above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height / 2))
+            self.add_path(self.bus_layer, [rail_pos, above_rail], width=self.li_width + self.m1_enclose_mcon * 2)
 
         # pin_pos = pin.center()
         # rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)

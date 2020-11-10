@@ -10,6 +10,7 @@ import debug
 from tech import drc, layer
 from vector import vector
 from sram_factory import factory
+from tech import cell_properties as cell_props
 from globals import OPTS
 
 
@@ -64,7 +65,7 @@ class column_mux(pgate.pgate):
         self.add_pn_wells()
 
     def add_ptx(self):
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size * drc("minwidth_tx")
@@ -110,7 +111,7 @@ class column_mux(pgate.pgate):
                             layer=self.pin_layer,
                             offset=br_pos,
                             height=self.pin_height)
-        
+
     def place_ptx(self):
         """ Create the two pass gate NMOS transistors to switch the bitlines"""
 
@@ -124,9 +125,9 @@ class column_mux(pgate.pgate):
                               + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
         self.nmos_upper.place(nmos_upper_position)
 
-        if OPTS.tech_name == "sky130":
-            self.add_implants()
-        
+        if cell_props.pgate.add_implants:
+            self.extend_implants()
+
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
 
@@ -197,8 +198,8 @@ class column_mux(pgate.pgate):
                + nmos_lower_d_pin.uc().scale(1, 0.5)
         self.add_path(self.col_mux_stack[2],
                       [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
- 
-    def add_implants(self):
+
+    def extend_implants(self):
         """
         Add top-to-bottom implants for adjacency issues in s8.
         """
@@ -210,7 +211,7 @@ class column_mux(pgate.pgate):
                       ll,
                       ur.x - ll.x,
                       ur.y - ll.y)
-       
+
     def add_pn_wells(self):
         """
         Add a well and implant over the whole cell. Also, add the

@@ -6,7 +6,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -54,9 +54,9 @@ class port_data_test(openram_test):
         debug.info(1, "Eight way column mux")
         a = factory.create("port_data", sram_config=c, port=0)
         self.local_check(a)
-        
+
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

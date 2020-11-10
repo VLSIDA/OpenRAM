@@ -9,28 +9,31 @@ import design
 from tech import GDS, layer, spice, parameter
 import logical_effort
 import utils
-import debug
 
 
 class inv_dec(design.design):
     """
     INV for address decoders.
     """
-    
+
     pin_names = ["A", "Z", "vdd", "gnd"]
     type_list = ["INPUT", "OUTPUT", "POWER", "GROUND"]
-    
-    (width, height) = utils.get_libcell_size("inv_dec",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "inv_dec", GDS["unit"])
-        
-    def __init__(self, name="inv_dec", height=None):
-        design.design.__init__(self, name)
+    cell_size_layer = "boundary"
 
-        self.width = inv_dec.width
-        self.height = inv_dec.height
-        self.pin_map = inv_dec.pin_map
+    def __init__(self, name="inv_dec", height=None):
+        super().__init__(name)
+
+        (width, height) = utils.get_libcell_size(self.cell_name,
+                                                 GDS["unit"],
+                                                 layer[self.cell_size_layer])
+
+        pin_map = utils.get_libcell_pins(self.pin_names,
+                                         self.cell_name,
+                                         GDS["unit"])
+
+        self.width = width
+        self.height = height
+        self.pin_map = pin_map
         self.add_pin_types(self.type_list)
 
     def analytical_power(self, corner, load):
@@ -39,10 +42,10 @@ class inv_dec(design.design):
         freq = spice["default_event_frequency"]
         power_dyn = self.calc_dynamic_power(corner, c_eff, freq)
         power_leak = spice["inv_leakage"]
-        
+
         total_power = self.return_power(power_dyn, power_leak)
         return total_power
-        
+
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
@@ -57,7 +60,7 @@ class inv_dec(design.design):
         units relative to the minimum width of a transistor
         """
         return self.nmos_size + self.pmos_size
-      
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """
         Returns an object representing the parameters for delay in tau units.

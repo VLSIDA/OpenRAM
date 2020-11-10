@@ -20,22 +20,22 @@ def increment_set(curset, direct):
     Return the cells incremented in given direction
     """
     offset = direction.get_offset(direct)
-    
+
     newset = set()
     for c in curset:
         newc = c+offset
         newset.add(newc)
-        
+
     return newset
 
 
 def remove_border(curset, direct):
-    """ 
+    """
     Remove the cells on a given border.
     """
     border = get_border(curset, direct)
     curset.difference_update(border)
-    
+
 
 def get_upper_right(curset):
     ur = None
@@ -55,7 +55,7 @@ def get_border( curset, direct):
     """
     Return the furthest cell(s) in a given direction.
     """
-    
+
     # find direction-most cell(s)
     maxc = []
     if direct==direction.NORTH:
@@ -94,7 +94,7 @@ def expand_border(curset, direct):
     border_set = get_border(curset, direct)
     next_border_set = increment_set(border_set, direct)
     return next_border_set
-    
+
 def expand_borders(curset):
     """
     Return the expansions in planar directions.
@@ -103,7 +103,7 @@ def expand_borders(curset):
     south_set=expand_border(curset,direction.SOUTH)
     east_set=expand_border(curset,direction.EAST)
     west_set=expand_border(curset,direction.WEST)
-        
+
     return(north_set, east_set, south_set, west_set)
 
 def inflate_cell(cell, distance):
@@ -111,7 +111,7 @@ def inflate_cell(cell, distance):
     Expand the current cell in all directions and return the set.
     """
     newset = set(cell)
-    
+
     if distance==0:
         return(newset)
 
@@ -119,7 +119,7 @@ def inflate_cell(cell, distance):
     for offset in direction.all_offsets():
         # FIXME: If distance is large this will be inefficient, but it is like 1 or 2
         newset.update(inflate_cell(cell+offset,distance-1))
-                      
+
     return newset
 
 def inflate_set(curset, distance):
@@ -128,7 +128,7 @@ def inflate_set(curset, distance):
     """
     if distance<=0:
         return curset
-    
+
     newset = curset.copy()
     # Add all my neighbors
     for c in curset:
@@ -149,7 +149,7 @@ def flatten_set(curset):
     return newset
 
 
-    
+
 def distance_set(coord, curset):
     """
     Return the distance from a coordinate to any item in the set
@@ -159,4 +159,4 @@ def distance_set(coord, curset):
         min_dist = min(coord.euclidean_distance(c), min_dist)
 
     return min_dist
-        
+

@@ -153,7 +153,7 @@ class geometry:
     def center(self):
         """ Return the center coordinate """
         return vector(self.cx(), self.cy())
-    
+
 
 class instance(geometry):
     """
@@ -227,7 +227,7 @@ class instance(geometry):
         self.mod.gds_write_file(self.gds)
         # now write an instance of my module/structure
         new_layout.addInstance(self.gds,
-                               self.mod.name,
+                               self.mod.cell_name,
                                offsetInMicrons=self.offset,
                                mirror=self.mirror,
                                rotate=self.rotate)
@@ -271,9 +271,9 @@ class instance(geometry):
             p.transform(self.offset, self.mirror, self.rotate)
             new_pins.append(p)
         return new_pins
-    
+
     def calculate_transform(self, node):
-        #set up the rotation matrix        
+        #set up the rotation matrix
         angle = math.radians(float(node.rotate))
         mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
                             [math.sin(angle),math.cos(angle),0.0],
@@ -285,7 +285,7 @@ class instance(geometry):
         mTranslate = np.array([[1.0,0.0,translateX],
                                 [0.0,1.0,translateY],
                                 [0.0,0.0,1.0]])
-        
+
         #set up the scale matrix (handles mirror X)
         scaleX = 1.0
         if(node.mirror == 'MX'):
@@ -295,7 +295,7 @@ class instance(geometry):
         mScale = np.array([[scaleX,0.0,0.0],
                             [0.0,scaleY,0.0],
                             [0.0,0.0,1.0]])
-        
+
         return (mRotate, mScale, mTranslate)
 
     def apply_transform(self, mtransforms, uVector, vVector, origin):
@@ -312,13 +312,13 @@ class instance(geometry):
     def apply_path_transform(self, path):
         uVector = np.array([[1.0],[0.0],[0.0]])
         vVector = np.array([[0.0],[1.0],[0.0]])
-        origin = np.array([[0.0],[0.0],[1.0]]) 
+        origin = np.array([[0.0],[0.0],[1.0]])
 
         while(path):
             instance = path.pop(-1)
             mtransforms = self.calculate_transform(instance)
             (uVector, vVector, origin) = self.apply_transform(mtransforms, uVector, vVector, origin)
-        
+
         return (uVector, vVector, origin)
 
     def reverse_transformation_bitcell(self, cell_name):
@@ -339,7 +339,7 @@ class instance(geometry):
                 cell_paths.append(copy.copy(path))
 
                 inst_name = path[-1].name
-                
+
                 # get the row and col names from the path
                 row = int(path[-1].name.split('_')[-2][1:])
                 col = int(path[-1].name.split('_')[-1][1:])
@@ -349,7 +349,7 @@ class instance(geometry):
 
                 normalized_storage_nets = node.mod.get_normalized_storage_nets_offset()
                 (normalized_bl_offsets, normalized_br_offsets, bl_names, br_names) = node.mod.get_normalized_bitline_offset()
-                
+
                 for offset in range(len(normalized_bl_offsets)):
                     for port in range(len(bl_names)):
                         cell_bl_meta.append([bl_names[offset], row, col, port])
@@ -369,18 +369,18 @@ class instance(geometry):
                     Q_bar_y = -1 * Q_bar_y
 
                     for pair in range(len(normalized_bl_offsets)):
-                        normalized_bl_offsets[pair] = (normalized_bl_offsets[pair][0], 
+                        normalized_bl_offsets[pair] = (normalized_bl_offsets[pair][0],
                                 -1 * normalized_bl_offsets[pair][1])
 
                     for pair in range(len(normalized_br_offsets)):
-                        normalized_br_offsets[pair] = (normalized_br_offsets[pair][0], 
+                        normalized_br_offsets[pair] = (normalized_br_offsets[pair][0],
                                 -1 * normalized_br_offsets[pair][1])
-                            
 
-                Q_offsets.append([Q_x, Q_y])    
+
+                Q_offsets.append([Q_x, Q_y])
                 Q_bar_offsets.append([Q_bar_x, Q_bar_y])
-                
-                
+
+
                 bl_offsets.append(normalized_bl_offsets)
                 br_offsets.append(normalized_br_offsets)
 
@@ -402,13 +402,13 @@ class instance(geometry):
 
     def __str__(self):
         """ override print function output """
-        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
+        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.cell_name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
     def __repr__(self):
         """ override print function output """
-        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.name + " " + self.mirror + " R=" + str(self.rotate) + ")"
+        return "( inst: " + self.name + " @" + str(self.offset) + " mod=" + self.mod.cell_name + " " + self.mirror + " R=" + str(self.rotate) + ")"
 
-    
+
 class path(geometry):
     """Represents a Path"""
 

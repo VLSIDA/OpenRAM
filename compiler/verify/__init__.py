@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 """
-This is a module that will import the correct DRC/LVS/PEX 
+This is a module that will import the correct DRC/LVS/PEX
 module based on what tools are found. It is a layer of indirection
 to enable multiple verification tool support.
 
@@ -15,7 +15,6 @@ run_pex, repsectively. If there is an error, they should abort and report the er
 If not, OpenRAM will continue as if nothing happened!
 """
 
-import os
 import debug
 from globals import OPTS
 from globals import get_tool
@@ -30,51 +29,54 @@ if not OPTS.check_lvsdrc:
     OPTS.drc_exe = None
     OPTS.lvs_exe = None
     OPTS.pex_exe = None
-    if OPTS.tech_name == "sky130":
-        OPTS.magic_exe = None
+    # if OPTS.tech_name == "sky130":
+    #     OPTS.magic_exe = None
 else:
     debug.info(1, "Finding DRC/LVS/PEX tools.")
     OPTS.drc_exe = get_tool("DRC", ["calibre", "assura", "magic"], drc_name)
     OPTS.lvs_exe = get_tool("LVS", ["calibre", "assura", "netgen"], lvs_name)
     OPTS.pex_exe = get_tool("PEX", ["calibre", "magic"], pex_name)
-    if OPTS.tech_name == "sky130":
-        OPTS.magic_exe = get_tool("GDS", ["magic"])
+    # if OPTS.tech_name == "sky130":
+    #     OPTS.magic_exe = get_tool("GDS", ["magic"])
 
 if not OPTS.drc_exe:
-    from .none import run_drc, print_drc_stats
+    from .none import run_drc, print_drc_stats, write_drc_script
 elif "calibre"==OPTS.drc_exe[0]:
-    from .calibre import run_drc, print_drc_stats
+    from .calibre import run_drc, print_drc_stats, write_drc_script
 elif "assura"==OPTS.drc_exe[0]:
-    from .assura import run_drc, print_drc_stats
+    from .assura import run_drc, print_drc_stats, write_drc_script
 elif "magic"==OPTS.drc_exe[0]:
-    from .magic import run_drc, print_drc_stats
+    from .magic import run_drc, print_drc_stats, write_drc_script
 else:
-    debug.warning("Did not find a supported DRC tool.")
+    debug.error("Did not find a supported DRC tool."
+                + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 if not OPTS.lvs_exe:
-    from .none import run_lvs, print_lvs_stats
+    from .none import run_lvs, print_lvs_stats, write_lvs_script
 elif "calibre"==OPTS.lvs_exe[0]:
-    from .calibre import run_lvs, print_lvs_stats
+    from .calibre import run_lvs, print_lvs_stats, write_lvs_script
 elif "assura"==OPTS.lvs_exe[0]:
-    from .assura import run_lvs, print_lvs_stats
+    from .assura import run_lvs, print_lvs_stats, write_lvs_script
 elif "netgen"==OPTS.lvs_exe[0]:
-    from .magic import run_lvs, print_lvs_stats
+    from .magic import run_lvs, print_lvs_stats, write_lvs_script
 else:
-    debug.warning("Did not find a supported LVS tool.")
+    debug.warning("Did not find a supported LVS tool."
+                  + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
 
 if not OPTS.pex_exe:
-    from .none import run_pex,print_pex_stats
+    from .none import run_pex, print_pex_stats
 elif "calibre"==OPTS.pex_exe[0]:
-    from .calibre import run_pex,print_pex_stats
+    from .calibre import run_pex, print_pex_stats
 elif "magic"==OPTS.pex_exe[0]:
-    from .magic import run_pex,print_pex_stats
+    from .magic import run_pex, print_pex_stats
 else:
-    debug.warning("Did not find a supported PEX tool.")
+    debug.warning("Did not find a supported PEX tool."
+                  + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
 
-if OPTS.tech_name == "sky130":
-    if OPTS.magic_exe and "magic"==OPTS.magic_exe[0]:
-        from .magic import filter_gds
-    else:
-        debug.warning("Did not find Magic.")
- 
+# if OPTS.tech_name == "sky130":
+#     if OPTS.magic_exe and "magic"==OPTS.magic_exe[0]:
+#         from .magic import filter_gds
+#     else:
+#         debug.warning("Did not find Magic.")
+

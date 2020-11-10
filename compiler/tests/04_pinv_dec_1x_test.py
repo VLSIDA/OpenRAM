@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 class pinv_dec_1x_test(openram_test):
 
@@ -25,7 +26,7 @@ class pinv_dec_1x_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         debug.info(2, "Checking 1x size decoder inverter")
         tx = factory.create(module_type="pinv_dec", size=1)
         self.local_check(tx)

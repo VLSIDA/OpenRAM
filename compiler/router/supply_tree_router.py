@@ -13,7 +13,7 @@ from globals import OPTS,print_time
 from contact import contact
 from pin_group import pin_group
 from pin_layout import pin_layout
-from vector3d import vector3d 
+from vector3d import vector3d
 from router import router
 from direction import direction
 from datetime import datetime
@@ -33,12 +33,12 @@ class supply_tree_router(router):
         """
         # Power rail width in minimum wire widths
         self.rail_track_width = 3
-        
+
         router.__init__(self, layers, design, gds_filename, self.rail_track_width)
 
-        
+
     def create_routing_grid(self):
-        """ 
+        """
         Create a sprase routing grid with A* expansion functions.
         """
         size = self.ur - self.ll
@@ -46,9 +46,9 @@ class supply_tree_router(router):
 
         import supply_grid
         self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
-    
+
     def route(self, vdd_name="vdd", gnd_name="gnd"):
-        """ 
+        """
         Route the two nets in a single layer)
         """
         debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
@@ -82,19 +82,19 @@ class supply_tree_router(router):
         self.route_pins(gnd_name)
         print_time("Maze routing supplies",datetime.now(), start_time, 3)
 
-        #self.write_debug_gds("final.gds",False)  
+        #self.write_debug_gds("final.gds",False)
 
         # Did we route everything??
         if not self.check_all_routed(vdd_name):
             return False
         if not self.check_all_routed(gnd_name):
             return False
-        
+
         return True
 
 
     def check_all_routed(self, pin_name):
-        """ 
+        """
         Check that all pin groups are routed.
         """
         for pg in self.pin_groups[pin_name]:
@@ -107,7 +107,7 @@ class supply_tree_router(router):
         Names is a list of pins to add as a blockage.
         """
         debug.info(3,"Preparing blockages.")
-        
+
         # Start fresh. Not the best for run-time, but simpler.
         self.clear_blockages()
         # This adds the initial blockges of the design
@@ -131,9 +131,9 @@ class supply_tree_router(router):
         # route over them
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
         self.set_blockages(blockage_grids,False)
-            
 
-        
+
+
     def route_pins(self, pin_name):
         """
         This will route each of the remaining pin components to the other pins.
@@ -147,7 +147,7 @@ class supply_tree_router(router):
         for index,pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():
                 continue
-            
+
             debug.info(1,"Routing component {0} {1}".format(pin_name, index))
 
             # Clear everything in the routing grid.
@@ -156,11 +156,11 @@ class supply_tree_router(router):
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
             self.prepare_blockages(pin_name)
-            
+
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name,index)
-            
+
             # Marks all pin components except index as target
             self.add_pin_component_target_except(pin_name,index)
             # Add the prevous paths as a target too
@@ -179,15 +179,15 @@ class supply_tree_router(router):
             import pdb; pdb.set_trace()
             if index==1:
                 self.write_debug_gds("debug{}.gds".format(pin_name),False)
-                
+
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 self.write_debug_gds("debug_route.gds",True)
-                
+
             #if index==3 and pin_name=="vdd":
             #    self.write_debug_gds("route.gds",False)
 
-    
 
-                
-                
+
+
+

@@ -19,7 +19,7 @@ class dff_inv(design.design):
     do not have Qbar, so this will create it.
     """
     unique_id = 1
-    
+
     def __init__(self, inv_size=2, name=""):
 
         if name=="":
@@ -30,7 +30,7 @@ class dff_inv(design.design):
         self.add_comment("inv: {0}".format(inv_size))
 
         self.inv_size = inv_size
-        
+
         # This is specifically for SCMOS where the DFF vdd/gnd rails are more than min width.
         # This causes a DRC in the pinv which assumes min width rails. This ensures the output
         # contact does not violate spacing to the rail in the NMOS.
@@ -44,7 +44,7 @@ class dff_inv(design.design):
         self.add_pins()
         self.add_modules()
         self.create_modules()
-        
+
     def create_layout(self):
         self.width = self.dff.width + self.inv1.width
         self.height = self.dff.height
@@ -52,10 +52,10 @@ class dff_inv(design.design):
         self.place_modules()
         self.add_wires()
         self.add_layout_pins()
-        
+
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("D")
         self.add_pin("Q")
@@ -67,7 +67,7 @@ class dff_inv(design.design):
     def add_modules(self):
         self.dff = dff_inv.dff_inv(self.inv_size)
         self.add_mod(self.dff)
-        
+
         self.inv1 = factory.create(module_type="pinv",
                                    size=self.inv_size,
                                    height=self.dff.height)
@@ -88,8 +88,8 @@ class dff_inv(design.design):
 
         # Place the INV1 to the right
         self.inv1_inst.place(vector(self.dff_inst.rx(),0))
-        
-        
+
+
     def add_wires(self):
         # Route dff q to inv1 a
         q_pin = self.dff_inst.get_pin("Q")
@@ -106,7 +106,7 @@ class dff_inv(design.design):
         self.add_via_center(layers=self.m1_stack,
                             offset=a1_pin.center())
 
-        
+
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
@@ -124,7 +124,7 @@ class dff_inv(design.design):
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
-            
+
         clk_pin = self.dff_inst.get_pin("clk")
         self.add_layout_pin(text="clk",
                             layer=clk_pin.layer,

@@ -8,11 +8,12 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 import debug
+
 
 class verilog_test(openram_test):
 
@@ -40,11 +41,11 @@ class verilog_test(openram_test):
 
 
         # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),vfile)
-        self.assertTrue(self.isdiff(vname,golden))
+        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)
+        self.assertTrue(self.isdiff(vname, golden))
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

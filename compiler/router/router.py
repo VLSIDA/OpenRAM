@@ -34,7 +34,7 @@ class router(router_tech):
         considered.
         """
         router_tech.__init__(self, layers, rail_track_width)
-        
+
         self.cell = design
 
         # If didn't specify a gds blockage file, write it out to read the gds
@@ -50,7 +50,7 @@ class router(router_tech):
         self.reader.loadFromFile(gds_filename)
         self.top_name = self.layout.rootStructureName
         # print_time("GDS read",datetime.now(), start_time)
-            
+
         # The pin data structures
         # A map of pin names to a set of pin_layout structures
         # (i.e. pins with a given label)
@@ -60,18 +60,18 @@ class router(router_tech):
         # (They will be blocked when we are routing other
         # nets based on their name.)
         self.all_pins = set()
-        
+
         # The labeled pins above categorized into pin groups
         # that are touching/connected.
         self.pin_groups = {}
-        
+
         # The blockage data structures
         # A list of metal shapes (using the same pin_layout structure)
         # that are not pins but blockages.
         self.blockages = []
         # The corresponding set of blocked grids for above pin shapes
         self.blocked_grids = set()
-        
+
         # The routed data structures
         # A list of paths that have been "routed"
         self.paths = []
@@ -95,18 +95,18 @@ class router(router_tech):
         self.pin_groups = {}
         # DO NOT clear the blockages as these don't change
         self.rg.reinit()
-        
+
     def set_top(self, top_name):
         """ If we want to route something besides the top-level cell."""
         self.top_name = top_name
-        
+
     def is_wave(self, path):
         """
         Determines if this is a multi-track width wave (True)
         # or a normal route (False)
         """
         return len(path[0]) > 1
-    
+
     def retrieve_pins(self, pin_name):
         """
         Retrieve the pin shapes on metal 3 from the layout.
@@ -142,7 +142,7 @@ class router(router_tech):
         debug.info(1, "Finding blockages.")
         for lpp in [self.vert_lpp, self.horiz_lpp]:
             self.retrieve_blockages(lpp)
-            
+
     def find_pins_and_blockages(self, pin_list):
         """
         Find the pins and blockages in the design
@@ -155,7 +155,7 @@ class router(router_tech):
         for pin_name in pin_list:
             self.retrieve_pins(pin_name)
         print_time("Retrieving pins", datetime.now(), start_time, 4)
-        
+
         start_time = datetime.now()
         for pin_name in pin_list:
             self.analyze_pins(pin_name)
@@ -171,7 +171,7 @@ class router(router_tech):
         start_time = datetime.now()
         self.convert_blockages()
         print_time("Converting blockages", datetime.now(), start_time, 4)
-        
+
         # This will convert the pins to grid units
         # It must be done after blockages to ensure no DRCs
         # between expanded pins and blocked grids
@@ -195,7 +195,7 @@ class router(router_tech):
         start_time = datetime.now()
         self.separate_adjacent_pins(0)
         print_time("Separating adjacent pins", datetime.now(), start_time, 4)
-        
+
         # Enclose the continguous grid units in a metal
         # rectangle to fix some DRCs
         start_time = datetime.now()
@@ -208,15 +208,15 @@ class router(router_tech):
     # def combine_adjacent_pins(self, pin_name):
     #     """
     #     Find pins that have adjacent routing tracks and merge them into a
-    #     single pin_group.  The pins themselves may not be touching, but 
+    #     single pin_group.  The pins themselves may not be touching, but
     #     enclose_pins in the next step will ensure they are touching.
-    #     """        
-    #     debug.info(1,"Combining adjacent pins for {}.".format(pin_name))        
+    #     """
+    #     debug.info(1,"Combining adjacent pins for {}.".format(pin_name))
     #     # Find all adjacencies
     #     adjacent_pins = {}
     #     for index1,pg1 in enumerate(self.pin_groups[pin_name]):
     #         for index2,pg2 in enumerate(self.pin_groups[pin_name]):
-    #             # Cannot combine with yourself, also don't repeat 
+    #             # Cannot combine with yourself, also don't repeat
     #             if index1<=index2:
     #                 continue
     #             # Combine if at least 1 grid cell is adjacent
@@ -228,7 +228,7 @@ class router(router_tech):
 
     #     # Make a list of indices to ensure every group gets in the new set
     #     all_indices = set([x for x in range(len(self.pin_groups[pin_name]))])
-        
+
     #     # Now reconstruct the new groups
     #     new_pin_groups = []
     #     for index1,index2_set in adjacent_pins.items():
@@ -251,18 +251,18 @@ class router(router_tech):
     #     for index in all_indices:
     #         new_pin_groups.append(self.pin_groups[pin_name][index])
 
-    #     old_size = len(self.pin_groups[pin_name])   
+    #     old_size = len(self.pin_groups[pin_name])
     #     # Use the new pin group!
     #     self.pin_groups[pin_name] = new_pin_groups
     #     removed_pairs = old_size - len(new_pin_groups)
     #     debug.info(1,
     #                "Combined {0} pin groups for {1}".format(removed_pairs,pin_name))
-        
+
     #     return removed_pairs
-            
+
     def separate_adjacent_pins(self, separation):
         """
-        This will try to separate all grid pins by the supplied 
+        This will try to separate all grid pins by the supplied
         number of separation tracks (default is to prevent adjacency).
         """
         # Commented out to debug with SCMOS
@@ -277,7 +277,7 @@ class router(router_tech):
                 if i > j:
                     return
                 self.separate_adjacent_pin(pin_name1, pin_name2, separation)
-        
+
     def separate_adjacent_pin(self, pin_name1, pin_name2, separation):
         """
         Go through all of the pin groups and check if any other pin group is
@@ -300,7 +300,6 @@ class router(router_tech):
                                                                        index2,
                                                                        adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
-                    
 
         debug.info(1, "Removed {} adjacent grids.".format(removed_grids))
 
@@ -317,9 +316,9 @@ class router(router_tech):
         else:
             bigger = pg2
             smaller = pg1
-        
+
         for adj in adj_grids:
-            
+
 
             # If the adjacent grids are a subset of the secondary
             # grids (i.e. not necessary) remove them from each
@@ -354,7 +353,7 @@ class router(router_tech):
         Names is a list of pins to add as a blockage.
         """
         debug.info(3, "Preparing blockages.")
-        
+
         # Start fresh. Not the best for run-time, but simpler.
         self.clear_blockages()
         # This adds the initial blockges of the design
@@ -364,7 +363,7 @@ class router(router_tech):
         # Block all of the supply rails
         # (some will be unblocked if they're a target)
         self.set_supply_rail_blocked(True)
-        
+
         # Block all of the pin components
         # (some will be unblocked if they're a source/target)
         # Also block the previous routes
@@ -383,7 +382,7 @@ class router(router_tech):
         # route over them
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
         self.set_blockages(blockage_grids, False)
-        
+
     def convert_shape_to_units(self, shape):
         """
         Scale a shape (two vector list) to user units
@@ -392,7 +391,7 @@ class router(router_tech):
         ll = shape[0].scale(unit_factor)
         ur = shape[1].scale(unit_factor)
         return [ll, ur]
-        
+
     def min_max_coord(self, coord):
         """
         Find the lowest and highest corner of a Rectangle
@@ -425,7 +424,7 @@ class router(router_tech):
         """
         debug.info(3, "Clearing all blockages")
         self.rg.clear_blockages()
-        
+
     def set_blockages(self, blockages, value=True):
         """ Flag the blockages in the grid """
         self.rg.set_blocked(blockages, value)
@@ -449,7 +448,7 @@ class router(router_tech):
         zlayer = self.get_zindex(blockage.lpp)
         blockage_tracks = self.get_blockage_tracks(ll, ur, zlayer)
         return blockage_tracks
-        
+
     def convert_blockages(self):
         """ Convert blockages to grid tracks. """
         debug.info(1, "Converting blockages.")
@@ -457,7 +456,7 @@ class router(router_tech):
             debug.info(3, "Converting blockage {}".format(str(blockage)))
             blockage_list = self.convert_blockage(blockage)
             self.blocked_grids.update(blockage_list)
-        
+
     def retrieve_blockages(self, lpp):
         """
         Recursive find boundaries as blockages to the routing grid.
@@ -471,14 +470,14 @@ class router(router_tech):
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),
                                  rect,
                                  lpp)
-            
+
             # If there is a rectangle that is the same in the pins,
             # it isn't a blockage!
             if new_pin not in self.all_pins:
                 self.blockages.append(new_pin)
 
     def convert_point_to_units(self, p):
-        """ 
+        """
         Convert a path set of tracks to center line path.
         """
         pt = vector3d(p)
@@ -490,7 +489,7 @@ class router(router_tech):
         Convert a wave to a set of center points
         """
         return [self.convert_point_to_units(i) for i in wave]
-    
+
     def convert_blockage_to_tracks(self, shape):
         """
         Convert a rectangular blockage shape into track units.
@@ -519,7 +518,7 @@ class router(router_tech):
         """
         (ll, ur) = pin.rect
         debug.info(3, "Converting pin [ {0} , {1} ]".format(ll, ur))
-        
+
         # scale the size bigger to include neaby tracks
         ll = ll.scale(self.track_factor).floor()
         ur = ur.scale(self.track_factor).ceil()
@@ -539,7 +538,7 @@ class router(router_tech):
                     sufficient_list.update([full_overlap])
                 if partial_overlap:
                     insufficient_list.update([partial_overlap])
-                debug.info(2,
+                debug.info(3,
                            "Converting [ {0} , {1} ] full={2}".format(x,
                                                                       y,
                                                                       full_overlap))
@@ -562,7 +561,7 @@ class router(router_tech):
             max_overlap = max(overlap_rect)
             if max_overlap > 0:
                 any_overlap.update([coord])
-            
+
         return any_overlap
 
     def get_best_offgrid_pin(self, pin, insufficient_list):
@@ -581,14 +580,14 @@ class router(router_tech):
             if min_overlap > best_overlap:
                 best_overlap = min_overlap
                 best_coord = coord
-            
+
         return set([best_coord])
-    
+
     def get_furthest_offgrid_pin(self, pin, insufficient_list):
         """
         Get a grid cell that is the furthest from the blocked grids.
         """
-        
+
         # Find the coordinate with the most overlap
         best_coord = None
         best_dist = math.inf
@@ -597,7 +596,7 @@ class router(router_tech):
             if min_dist < best_dist:
                 best_dist = min_dist
                 best_coord = coord
-            
+
         return set([best_coord])
 
     def get_nearest_offgrid_pin(self, pin, insufficient_list):
@@ -614,9 +613,9 @@ class router(router_tech):
             if min_dist < best_dist:
                 best_dist = min_dist
                 best_coord = coord
-            
+
         return set([best_coord])
-        
+
     def convert_pin_coord_to_tracks(self, pin, coord):
         """
         Return all tracks that an inflated pin overlaps
@@ -630,28 +629,28 @@ class router(router_tech):
         inflated_pin = pin_layout(pin.name,
                                   pin.inflate(0.5 * self.track_space),
                                   pin.layer)
-        
+
         overlap_length = pin.overlap_length(track_pin)
-        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord,
+        debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  pin.rect,
                                                                  track_pin,
                                                                  overlap_length))
         inflated_overlap_length = inflated_pin.overlap_length(track_pin)
-        debug.info(2,"Check overlap: {0} {1} . {2} = {3}".format(coord,
+        debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  inflated_pin.rect,
                                                                  track_pin,
                                                                  inflated_overlap_length))
 
         # If it overlaps with the pin, it is sufficient
         if overlap_length == math.inf or overlap_length > 0:
-            debug.info(2,"  Overlap: {0} >? {1}".format(overlap_length, 0))
+            debug.info(4,"  Overlap: {0} >? {1}".format(overlap_length, 0))
             return (coord, None)
         # If it overlaps with the inflated pin, it is partial
         elif inflated_overlap_length == math.inf or inflated_overlap_length > 0:
-            debug.info(2,"  Partial overlap: {0} >? {1}".format(inflated_overlap_length, 0))  
+            debug.info(4,"  Partial overlap: {0} >? {1}".format(inflated_overlap_length, 0))
             return (None, coord)
         else:
-            debug.info(2, "  No overlap: {0} {1}".format(overlap_length, 0))
+            debug.info(4, "  No overlap: {0} {1}".format(overlap_length, 0))
             return (None, None)
 
     def convert_track_to_pin(self, track):
@@ -663,7 +662,7 @@ class router(router_tech):
         x = track.x * self.track_width - 0.5 * self.track_width + 0.5 * self.track_space
         y = track.y * self.track_width - 0.5 * self.track_width + 0.5 * self.track_space
         ll = snap_to_grid(vector(x,y))
-            
+
         # calculate upper right
         x = track.x * self.track_width + 0.5 * self.track_width - 0.5 * self.track_space
         y = track.y * self.track_width + 0.5 * self.track_width - 0.5 * self.track_space
@@ -703,7 +702,7 @@ class router(router_tech):
         ur = snap_to_grid(ll + vector(self.track_width, self.track_width))
 
         return [ll, ur]
-    
+
     def convert_track_to_inflated_pin(self, track):
         """
         Convert a grid point into a rectangle shape
@@ -713,7 +712,7 @@ class router(router_tech):
         x = track.x*self.track_width - 0.5*self.track_width - 0.5*self.track_space
         y = track.y*self.track_width - 0.5*self.track_width - 0.5*self.track_space
         ll = snap_to_grid(vector(x,y))
-            
+
         # calculate upper right
         x = track.x*self.track_width + 0.5*self.track_width + 0.5*self.track_space
         y = track.y*self.track_width + 0.5*self.track_width + 0.5*self.track_space
@@ -721,13 +720,13 @@ class router(router_tech):
 
         p = pin_layout("", [ll, ur], self.get_layer(track[2]))
         return p
-    
+
     def analyze_pins(self, pin_name):
         """
         Analyze the shapes of a pin and combine
         them into pin_groups which are connected.
         """
-        debug.info(2, "Analyzing pin groups for {}.".format(pin_name))        
+        debug.info(2, "Analyzing pin groups for {}.".format(pin_name))
         pin_set = self.pins[pin_name]
 
         # This will be a list of pin tuples that overlap
@@ -774,13 +773,13 @@ class router(router_tech):
         for pin in pin_list:
             group_id[pin] = gid
             gid += 1
-                    
+
         for p in overlap_list:
             (p1, p2) = p
             for pin in pin_list:
                 if group_id[pin] == group_id[p2]:
                     group_id[pin] = group_id[p1]
-            
+
         # For each pin add it to it's group
         group_map = {}
         for pin in pin_list:
@@ -793,7 +792,7 @@ class router(router_tech):
             group_map[gid].pins.add(pin)
 
         self.pin_groups[pin_name] = list(group_map.values())
-        
+
     def convert_pins(self, pin_name):
         """
         Convert the pin groups into pin tracks and blockage tracks.
@@ -801,7 +800,7 @@ class router(router_tech):
         debug.info(1, "Converting pins for {}.".format(pin_name))
         for pg in self.pin_groups[pin_name]:
             pg.convert_pin()
-    
+
     def enclose_pins(self):
         """
         This will find the biggest rectangle enclosing some grid squares and
@@ -829,24 +828,24 @@ class router(router_tech):
         """
         for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_target(pin_name, i)
-            
+
     def num_pin_components(self, pin_name):
         """
         This returns how many disconnected pin components there are.
         """
         return len(self.pin_groups[pin_name])
-    
+
     def add_pin_component_source(self, pin_name, index):
         """
-        This will mark only the pin tracks 
+        This will mark only the pin tracks
         from the indexed pin component as a source.
         It also unsets it as a blockage.
         """
         debug.check(index<self.num_pin_components(pin_name),
                     "Pin component index too large.")
-        
+
         pin_in_tracks = self.pin_groups[pin_name][index].grids
-        debug.info(2,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
+        debug.info(3,"Set source: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_source(pin_in_tracks)
 
     def add_path_target(self, paths):
@@ -864,7 +863,7 @@ class router(router_tech):
         It also unsets it as a blockage.
         """
         debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
-        
+
         pin_in_tracks = self.pin_groups[pin_name][index].grids
         debug.info(2, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
@@ -877,7 +876,7 @@ class router(router_tech):
         for i in range(self.num_pin_components(pin_name)):
             if i != index:
                 self.add_pin_component_target(pin_name, i)
-        
+
     def set_component_blockages(self, pin_name, value=True):
         """
         Block all of the pin components.
@@ -889,7 +888,7 @@ class router(router_tech):
     def prepare_path(self,path):
         """
         Prepare a path or wave for routing ebedding.
-        This tracks the path, simplifies the path and 
+        This tracks the path, simplifies the path and
         marks it as a path for debug output.
         """
         debug.info(4, "Set path: " + str(path))
@@ -902,19 +901,19 @@ class router(router_tech):
         #     self.write_debug_gds()
 
         # First, simplify the path for
-        # debug.info(1, str(self.path))        
+        # debug.info(1, str(self.path))
         contracted_path = self.contract_path(path)
         debug.info(3, "Contracted path: " + str(contracted_path))
-        
+
         return contracted_path
-        
+
     def add_route(self, path):
         """
         Add the current wire route to the given design instance.
         """
         path = self.prepare_path(path)
-        
-        debug.info(2, "Adding route: {}".format(str(path)))
+
+        debug.info(4, "Adding route: {}".format(str(path)))
         # If it is only a square, add an enclosure to the track
         if len(path) == 1:
             self.add_single_enclosure(path[0][0])
@@ -931,7 +930,7 @@ class router(router_tech):
                 self.cell.add_path(layer=self.layers[0],
                                    coordinates=abs_path,
                                    width=self.layer_widths[0])
-            
+
     def add_single_enclosure(self, track):
         """
         Add a metal enclosure that is the size of
@@ -943,7 +942,7 @@ class router(router_tech):
                            offset=ll,
                            width=ur.x-ll.x,
                            height=ur.y-ll.y)
-        
+
     def add_via(self, loc, size=1):
         """
         Add a via centered at the current location
@@ -959,16 +958,16 @@ class router(router_tech):
         the track DRC rules.
         """
         layer = self.get_layer(zindex)
-        
+
         # This finds the pin shape enclosed by the
         # track with DRC spacing on the sides
         pin = self.convert_track_to_pin(ll)
         (abs_ll, unused) = pin.rect
         pin = self.convert_track_to_pin(ur)
         (unused, abs_ur) = pin.rect
-        
+
         pin = pin_layout(name, [abs_ll, abs_ur], layer)
-        
+
         return pin
 
     def contract_path(self, path):
@@ -992,7 +991,7 @@ class router(router_tech):
         if len(path) > 1:
             newpath.append(path[-1])
         return newpath
-            
+
     def run_router(self, detour_scale):
         """
         This assumes the blockages, source, and target are all set up.
@@ -1003,16 +1002,15 @@ class router(router_tech):
             if v.source and v.target:
                 debug.error("Grid cell is source and target! {}".format(k))
                 return False
-            
+
         # returns the path in tracks
         (path, cost) = self.rg.route(detour_scale)
         if path:
-            debug.info(1, "Found path: cost={0} ".format(cost))
-            debug.info(1, str(path))
+            debug.info(2, "Found path: cost={0} {1}".format(cost, str(path)))
 
             self.paths.append(path)
             self.add_route(path)
-            
+
             path_set = grid_utils.flatten_set(path)
             self.path_blockages.append(path_set)
         else:
@@ -1069,7 +1067,7 @@ class router(router_tech):
                            width=shape[1].x-shape[0].x,
                            height=shape[1].y-shape[0].y)
         t = self.rg.map[g].get_type()
-                
+
         # midpoint offset
         off = vector((shape[1].x+shape[0].x)/2,
                    (shape[1].y+shape[0].y)/2)
@@ -1096,7 +1094,7 @@ class router(router_tech):
             self.cell.add_label(text=str(t),
                                 layer="text",
                                 offset=type_off)
-            
+
         self.cell.add_label(text="{0},{1}".format(g[0], g[1]),
                             layer="text",
                             offset=shape[0],
@@ -1109,7 +1107,7 @@ class router(router_tech):
         debug.info(0, "Erasing router info")
         layer_num = techlayer["text"]
         self.cell.objs = [x for x in self.cell.objs if x.layerNumber != layer_num]
-        
+
     def add_router_info(self):
         """
         Write the routing grid and router cost, blockage, pins on
@@ -1122,12 +1120,12 @@ class router(router_tech):
         show_blockage_grids = False
         show_enclosures = False
         show_all_grids = True
-        
+
         if show_all_grids:
             self.rg.add_all_grids()
             for g in self.rg.map:
                 self.annotate_grid(g)
-            
+
         if show_blockages:
             # Display the inflated blockage
             for blockage in self.blockages:
@@ -1158,7 +1156,7 @@ class router(router_tech):
                                            width=pin.width(),
                                            height=pin.height())
 
-                        
+
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):
     """

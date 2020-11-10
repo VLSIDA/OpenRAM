@@ -29,7 +29,7 @@ class signal_router(router):
 
 
     def create_routing_grid(self):
-        """ 
+        """
         Create a sprase routing grid with A* expansion functions.
         """
         # We will add a halo around the boundary
@@ -39,19 +39,19 @@ class signal_router(router):
 
         import signal_grid
         self.rg = signal_grid.signal_grid(self.ll, self.ur, self.track_width)
-        
+
 
     def route(self, src, dest, detour_scale=5):
-        """ 
+        """
         Route a single source-destination net and return
-        the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route. 
+        the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route.
         This is used to speed up the routing when there is not much detouring needed.
         """
         debug.info(1,"Running signal router from {0} to {1}...".format(src,dest))
 
         self.pins[src] = []
         self.pins[dest] = []
-        
+
         # Clear the pins if we have previously routed
         if (hasattr(self,'rg')):
             self.clear_pins()
@@ -63,13 +63,13 @@ class signal_router(router):
 
         # Get the pin shapes
         self.find_pins_and_blockages([src, dest])
-        
+
         # Block everything
         self.prepare_blockages()
         # Clear the pins we are routing
         self.set_blockages(self.pin_components[src],False)
-        self.set_blockages(self.pin_components[dest],False)        
-            
+        self.set_blockages(self.pin_components[dest],False)
+
         # Now add the src/tgt if they are not blocked by other shapes
         self.add_source(src)
         self.add_target(dest)
@@ -77,12 +77,12 @@ class signal_router(router):
         if not self.run_router(detour_scale=detour_scale):
             self.write_debug_gds(stop_program=False)
             return False
-        
-        self.write_debug_gds(stop_program=False)        
+
+        self.write_debug_gds(stop_program=False)
         return True
 
-                           
-        
+
+
 
 
 

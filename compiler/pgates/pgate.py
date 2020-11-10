@@ -13,11 +13,11 @@ from bisect import bisect_left
 from tech import layer, drc
 from vector import vector
 from globals import OPTS
-
-if(OPTS.tech_name == "sky130"):
+from tech import cell_properties as cell_props
+if cell_props.ptx.bin_spice_models:
     from tech import nmos_bins, pmos_bins
 
-    
+
 class pgate(design.design):
     """
     This is a module that implements some shared
@@ -34,7 +34,7 @@ class pgate(design.design):
             # By default, something simple
             self.height = 14 * self.m1_pitch
         self.add_wells = add_wells
-        
+
         if "li" in layer:
             self.route_layer = "li"
         else:
@@ -50,10 +50,10 @@ class pgate(design.design):
         contact_to_vdd_rail_space = 0.5 * self.route_layer_width + self.route_layer_space
         # This is a poly-to-poly of a flipped cell
         poly_to_poly_gate_space = self.poly_extend_active + 0.5 * self.poly_space
-        
+
         self.top_bottom_space = max(contact_to_vdd_rail_space,
                                     poly_to_poly_gate_space)
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -63,7 +63,7 @@ class pgate(design.design):
     def create_netlist(self):
         """ Pure virtual function """
         debug.error("Must over-ride create_netlist.", -1)
-        
+
     def create_layout(self):
         """ Pure virtual function """
         debug.error("Must over-ride create_layout.", -1)
@@ -71,10 +71,10 @@ class pgate(design.design):
     def connect_pin_to_rail(self, inst, pin_name, supply_name):
         """ Connects a ptx pin to a supply rail. """
         supply_pin = self.get_pin(supply_name)
-        
+
         source_pins = inst.get_pins(pin_name)
         for source_pin in source_pins:
-            
+
             if supply_name == "gnd":
                 height = supply_pin.by() - source_pin.by()
             elif supply_name == "vdd":
@@ -87,7 +87,7 @@ class pgate(design.design):
                           offset=source_pin.ll(),
                           height=height,
                           width=source_pin.width())
-    
+
     def route_input_gate(self, pmos_inst, nmos_inst, ypos, name, position="left", directions=None):
         """
         Route the input gate to the left side of the cell for access.
@@ -103,7 +103,7 @@ class pgate(design.design):
             self.gds_write("unaliged_gates.gds")
         debug.check(nmos_gate_pin.ll().x == pmos_gate_pin.ll().x,
                     "Connecting unaligned gates not supported. See unaligned_gates.gds.")
-        
+
         # Pick point on the left of NMOS and up to PMOS
         nmos_gate_pos = nmos_gate_pin.ul() + vector(0.5 * self.poly_width, 0)
         pmos_gate_pos = vector(nmos_gate_pos.x, pmos_gate_pin.bc().y)
@@ -114,7 +114,7 @@ class pgate(design.design):
 
         # Center is completely symmetric.
         contact_width = contact.poly_contact.width
-            
+
         if position == "center":
             contact_offset = left_gate_offset \
                              + vector(0.5 * self.poly_width, 0)
@@ -158,7 +158,7 @@ class pgate(design.design):
         self.nwell_yoffset = 0.48 * self.height
         full_height = self.height + 0.5 * self.m1_width
 
-        
+
         # FIXME: float rounding problem
         if "nwell" in layer:
             # Add a rail width to extend the well to the top of the rail
@@ -192,18 +192,18 @@ class pgate(design.design):
                               width=self.width + 2 * self.well_extend_active,
                               height=pwell_height)
 
-        if OPTS.tech_name == "sky130":
+        if cell_props.pgate.add_implants:
             self.extend_implants()
 
     def add_nwell_contact(self, pmos, pmos_pos):
         """ Add an nwell contact next to the given pmos device. """
-        
+
         layer_stack = self.active_stack
-        
+
         # To the right a spacing away from the pmos right active edge
         contact_xoffset = pmos_pos.x + pmos.active_width \
                           + self.active_space
-        
+
         # Must be at least an well enclosure of active down
         # from the top of the well
         # OR align the active with the top of PMOS active.
@@ -219,12 +219,12 @@ class pgate(design.design):
                                                  implant_type="n",
                                                  well_type="n",
                                                  directions=("V", "V"))
-        
+
         self.add_rect_center(layer=self.route_layer,
                              offset=contact_offset + vector(0, 0.5 * (self.height - contact_offset.y)),
                              width=self.nwell_contact.mod.second_layer_width,
                              height=self.height - contact_offset.y)
-        
+
         # Now add the full active and implant for the PMOS
         # active_offset = pmos_pos + vector(pmos.active_width,0)
         # This might be needed if the spacing between the actives
@@ -257,7 +257,7 @@ class pgate(design.design):
             rightx = None
         else:
             rightx = self.width
-            
+
         nmos_insts = self.get_tx_insts("nmos")
         if len(nmos_insts) > 0:
             self.add_enclosure(nmos_insts,
@@ -266,7 +266,7 @@ class pgate(design.design):
                                leftx=0,
                                rightx=rightx,
                                boty=0)
-        
+
         pmos_insts = self.get_tx_insts("pmos")
         if len(pmos_insts) > 0:
             self.add_enclosure(pmos_insts,
@@ -275,7 +275,7 @@ class pgate(design.design):
                                leftx=0,
                                rightx=rightx,
                                topy=self.height)
-        
+
         try:
             ntap_insts = [self.nwell_contact]
             self.add_enclosure(ntap_insts,
@@ -294,7 +294,7 @@ class pgate(design.design):
                                boty=0)
         except AttributeError:
             pass
-        
+
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
 
@@ -318,7 +318,7 @@ class pgate(design.design):
                                                 implant_type="p",
                                                 well_type="p",
                                                 directions=("V", "V"))
-            
+
         self.add_rect_center(layer=self.route_layer,
                              offset=contact_offset.scale(1, 0.5),
                              width=self.pwell_contact.mod.second_layer_width,
@@ -343,14 +343,14 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
-        
+
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """
         self.add_layout_pin_rect_center(text="gnd",
                                         layer=self.route_layer,
                                         offset=vector(0.5 * self.width, 0),
                                         width=self.width)
-        
+
         self.add_layout_pin_rect_center(text="vdd",
                                         layer=self.route_layer,
                                         offset=vector(0.5 * self.width, self.height),
@@ -368,7 +368,7 @@ class pgate(design.design):
             max_active_xoffset = self.find_highest_layer_coords("active").x
             max_route_xoffset = self.find_highest_layer_coords(self.route_layer).x + 0.5 * self.m1_space
             width = max(max_active_xoffset, max_route_xoffset)
-            
+
         self.width = width
 
     @staticmethod
@@ -379,7 +379,7 @@ class pgate(design.design):
 
         # Find all of the relavent scaled bins and multiples
         scaled_bins = pgate.scaled_bins(tx_type, target_width)
-        
+
         for (scaled_width, multiple) in scaled_bins:
             if abs(target_width - scaled_width) / target_width <= 1 - OPTS.accuracy_requirement:
                 break

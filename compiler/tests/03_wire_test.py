@@ -51,7 +51,7 @@ class wire_test(openram_test):
                 self.local_drc_check(w)
 
         globals.end_openram()
-        
+
 
 # run the test from the command line
 if __name__ == "__main__":

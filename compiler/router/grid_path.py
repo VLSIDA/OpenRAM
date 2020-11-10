@@ -14,13 +14,13 @@ from direction import direction
 
 class grid_path:
     """
-    A grid path is a list of lists of grid cells. 
+    A grid path is a list of lists of grid cells.
     It can have a width that is more than one cell.
     All of the sublists will be the same dimension.
     Cells should be continguous.
     It can have a name to define pin shapes as well.
     """
-    
+
     def __init__(self, items=[], name=""):
         self.name = name
         if items:
@@ -36,22 +36,22 @@ class grid_path:
         return p
 
     def __setitem__(self, index, value):
-        """ 
-        override setitem function 
+        """
+        override setitem function
         can set value by pathinstance[index]=value
         """
         self.pathlist[index]=value
 
     def __getitem__(self, index):
         """
-        override getitem function 
+        override getitem function
         can get value by value=pathinstance[index]
         """
         return self.pathlist[index]
 
     def __contains__(self, key):
-        """ 
-        Determine if cell exists in this path 
+        """
+        Determine if cell exists in this path
         """
         # FIXME: Could maintain a hash to make in O(1)
         for sublist in self.pathlist:
@@ -63,13 +63,13 @@ class grid_path:
 
     def __add__(self, items):
         """
-        Override add to do append 
+        Override add to do append
         """
         return self.pathlist.extend(items)
 
     def __len__(self):
         return len(self.pathlist)
-        
+
     def trim_last(self):
         """
         Drop the last item
@@ -83,7 +83,7 @@ class grid_path:
         """
         if len(self.pathlist)>0:
             self.pathlist.pop(0)
-        
+
     def append(self,item):
         """
         Append the list of items to the cells
@@ -95,7 +95,7 @@ class grid_path:
         Extend the list of items to the cells
         """
         self.pathlist.extend(item)
-        
+
     def set_path(self,value=True):
         for sublist in self.pathlist:
             for p in sublist:
@@ -124,9 +124,9 @@ class grid_path:
         for sublist in self.pathlist:
             newset.update(sublist[start_index:end_index])
         return newset
-    
+
     def cost(self):
-        """ 
+        """
         The cost of the path is the length plus a penalty for the number
         of vias. We assume that non-preferred direction is penalized.
         This cost only works with 1 wide tracks.
@@ -151,9 +151,9 @@ class grid_path:
             elif p0.x != p1.x and p0.z==1: # horizontal on vertical layer
                 cost += grid.NONPREFERRED_COST
             elif p0.y != p1.y and p0.z==0: # vertical on horizontal layer
-                cost += grid.NONPREFERRED_COST 
+                cost += grid.NONPREFERRED_COST
             else:
-                cost += grid.PREFERRED_COST                
+                cost += grid.PREFERRED_COST
 
         return cost
 
@@ -173,7 +173,7 @@ class grid_path:
             n = self.neighbor(d)
             if n:
                 neighbors.append(n)
-                
+
         return neighbors
 
     def neighbor(self, d):
@@ -185,20 +185,20 @@ class grid_path:
             return None
         elif newwave[0].z>1 or newwave[0].z<0:
             return None
-        
+
         return newwave
-            
-    
+
+
     def set_layer(self, zindex):
         new_pathlist = [vector3d(item.x, item.y, zindex) for wave in self.pathlist for item in wave]
         self.pathlist = new_pathlist
-    
-        
+
+
     def overlap(self, other):
         """
         Return the overlap waves ignoring different layers
         """
-        
+
         my_zindex = self.pathlist[0][0].z
         other_flat_cells = [vector3d(item.x,item.y,my_zindex) for wave in other.pathlist for item in wave]
         # This keeps the wave structure of the self layer
@@ -216,4 +216,4 @@ class grid_path:
             ur = shared_waves[-1][-1]
             return [ll,ur]
         return None
-        
+

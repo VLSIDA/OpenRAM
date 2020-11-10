@@ -30,7 +30,7 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
-def write_calibre_drc_script(cell_name, extract, final_verification, gds_name):
+def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
     """ Write a Calibre runset file and script to run DRC """
     # the runset file contains all the options to run calibre
     from tech import drc
@@ -38,7 +38,7 @@ def write_calibre_drc_script(cell_name, extract, final_verification, gds_name):
 
     drc_runset = {
         'drcRulesFile': drc_rules,
-        'drcRunDir': OPTS.openram_temp,
+        'drcRunDir': output_path,
         'drcLayoutPaths': gds_name,
         'drcLayoutPrimary': cell_name,
         'drcLayoutSystem': 'GDSII',
@@ -50,17 +50,17 @@ def write_calibre_drc_script(cell_name, extract, final_verification, gds_name):
     }
 
     # write the runset file
-    f = open(OPTS.openram_temp + "drc_runset", "w")
+    f = open(output_path + "drc_runset", "w")
     for k in sorted(iter(drc_runset.keys())):
         f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
     # Create an auxiliary script to run calibre with the runset
-    run_file = OPTS.openram_temp + "run_drc.sh"
+    run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     cmd = "{0} -gui -drc {1}drc_runset -batch".format(OPTS.drc_exe[1],
-                                                      OPTS.openram_temp)
+                                                      output_path)
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -68,14 +68,14 @@ def write_calibre_drc_script(cell_name, extract, final_verification, gds_name):
     return drc_runset
 
 
-def write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name):
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
     """ Write a Calibre runset file and script to run LVS """
 
     from tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
-        'lvsRunDir': OPTS.openram_temp,
+        'lvsRunDir': output_path,
         'lvsLayoutPaths': gds_name,
         'lvsLayoutPrimary': cell_name,
         'lvsSourcePath': sp_name,
@@ -111,19 +111,19 @@ def write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name):
 
 
     # write the runset file
-    f = open(OPTS.openram_temp + "lvs_runset", "w")
+    f = open(output_path + "lvs_runset", "w")
     for k in sorted(iter(lvs_runset.keys())):
         f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
     # Create an auxiliary script to run calibre with the runset
-    run_file = OPTS.openram_temp + "run_lvs.sh"
+    run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     PDK_DIR=os.environ.get("PDK_DIR")
     f.write("export PDK_DIR={}\n".format(PDK_DIR))
     cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
-                                                      OPTS.openram_temp)
+                                                      output_path)
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -132,16 +132,16 @@ def write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name):
     return lvs_runset
 
 
-def write_calibre_pex_script(cell_name, extract, output, final_verification):
+def write_pex_script(cell_name, extract, output, final_verification, output_path):
     """ Write a pex script that can either just extract the netlist or the netlist+parasitics """
     if output == None:
         output = cell_name + ".pex.sp"
 
     # check if lvs report has been done
     # if not run drc and lvs
-    if not os.path.isfile(OPTS.openram_temp + cell_name + ".lvs.report"):
-        gds_name = OPTS.openram_temp +"/"+ cell_name + ".gds"
-        sp_name = OPTS.openram_temp +"/"+ cell_name + ".sp"
+    if not os.path.isfile(output_path + cell_name + ".lvs.report"):
+        gds_name = output_path +"/"+ cell_name + ".gds"
+        sp_name = output_path +"/"+ cell_name + ".sp"
         run_drc(cell_name, gds_name)
         run_lvs(cell_name, gds_name, sp_name)
 
@@ -149,7 +149,7 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
-        'pexRunDir': OPTS.openram_temp,
+        'pexRunDir': output_path,
         'pexLayoutPaths': cell_name + ".gds",
         'pexLayoutPrimary': cell_name,
         'pexSourcePath': cell_name + ".sp",
@@ -162,13 +162,13 @@ def write_calibre_pex_script(cell_name, extract, output, final_verification):
     }
 
     # write the runset file
-    f = open(OPTS.openram_temp + "pex_runset", "w")
+    f = open(output_path + "pex_runset", "w")
     for k in sorted(iter(pex_runset.keys())):
         f.write("*{0}: {1}\n".format(k, pex_runset[k]))
     f.close()
 
     # Create an auxiliary script to run calibre with the runset
-    run_file = OPTS.openram_temp + "run_pex.sh"
+    run_file = output_path + "run_pex.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     cmd = "{0} -gui -pex {1}pex_runset -batch".format(OPTS.pex_exe[1],
@@ -189,7 +189,8 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     num_drc_runs += 1
 
     # Filter the layouts through magic as a GDS filter for nsdm/psdm/nwell merging
-    if OPTS.tech_name == "sky130" and False:
+    # Disabled for now
+    if False and OPTS.tech_name == "sky130":
         shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
         from magic import filter_gds
         filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")
@@ -198,11 +199,11 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
         if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
             shutil.copy(gds_name, OPTS.openram_temp)
 
-    drc_runset = write_calibre_drc_script(cell_name, extract, final_verification, gds_name)
+    drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
 
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
         shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
-                                
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # check the result for these lines in the summary:
@@ -212,7 +213,7 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     try:
         f = open(OPTS.openram_temp + drc_runset['drcSummaryFile'], "r")
     except:
-        debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
+        debug.error("Unable to retrieve DRC results file. Is calibre set up?", 1)
     results = f.readlines()
     f.close()
     # those lines should be the last 3
@@ -241,7 +242,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
 
-    lvs_runset = write_calibre_lvs_script(cell_name, final_verification, gds_name, sp_name)
+    lvs_runset = write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
 
     # Copy file to local dir if it isn't already
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
@@ -328,14 +329,14 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
     global num_pex_runs
     num_pex_runs += 1
 
-    write_calibre_pex_script(cell_name, True, output, final_verification)
+    write_pex_script(cell_name, True, output, final_verification, OPTS.openram_temp)
 
     # Copy file to local dir if it isn't already
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
         shutil.copy(gds_name, OPTS.openram_temp)
     if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
         shutil.copy(sp_name, OPTS.openram_temp)
-    
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 
 
@@ -390,9 +391,14 @@ def correct_port(name, output_file_name, ref_file_name):
     output_file.write(part2)
     output_file.close()
 
+    
 def print_drc_stats():
-    debug.info(1,"DRC runs: {0}".format(num_drc_runs))
+    debug.info(1, "DRC runs: {0}".format(num_drc_runs))
+
+    
 def print_lvs_stats():
-    debug.info(1,"LVS runs: {0}".format(num_lvs_runs))
+    debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
+
+    
 def print_pex_stats():
-    debug.info(1,"PEX runs: {0}".format(num_pex_runs))
+    debug.info(1, "PEX runs: {0}".format(num_pex_runs))

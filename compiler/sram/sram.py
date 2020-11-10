@@ -6,7 +6,10 @@
 # All rights reserved.
 #
 import datetime
+import os
 import debug
+import verify
+from characterizer import functional
 from globals import OPTS, print_time
 
 
@@ -38,7 +41,7 @@ class sram():
         start_time = datetime.datetime.now()
 
         self.name = name
-        
+
         if self.num_banks == 1:
             from sram_1bank import sram_1bank as sram
         elif self.num_banks == 2:
@@ -50,16 +53,16 @@ class sram():
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
-        
+
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
-    
+
     def sp_write(self, name):
         self.s.sp_write(name)
 
     def lvs_write(self, name):
         self.s.lvs_write(name)
-        
+
     def lef_write(self, name):
         self.s.lef_write(name)
 
@@ -70,7 +73,7 @@ class sram():
         self.s.verilog_write(name)
 
     def extended_config_write(self, name):
-        """Dump config file with all options. 
+        """Dump config file with all options.
            Include defaults and anything changed by input config."""
         f = open(name, "w")
         var_dict = dict((name, getattr(OPTS, name)) for name in dir(OPTS) if not name.startswith('__') and not callable(getattr(OPTS, name)))
@@ -80,7 +83,7 @@ class sram():
             else:
                 f.write(str(var_name) + " = " + str(var_value)+ "\n")
         f.close()
-        
+
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
@@ -90,6 +93,11 @@ class sram():
             gdsname = OPTS.output_path + self.s.name + ".gds"
             debug.print_raw("GDS: Writing to {0}".format(gdsname))
             self.gds_write(gdsname)
+            verify.write_drc_script(cell_name=self.s.name,
+                                    gds_name=os.path.basename(gdsname),
+                                    extract=True,
+                                    final_verification=True,
+                                    output_path=OPTS.output_path)
             print_time("GDS", datetime.datetime.now(), start_time)
 
             # Create a LEF physical model
@@ -104,6 +112,10 @@ class sram():
         spname = OPTS.output_path + self.s.name + ".sp"
         debug.print_raw("SP: Writing to {0}".format(spname))
         self.sp_write(spname)
+        functional(self.s,
+                   os.path.basename(spname),
+                   cycles=200,
+                   output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
         # Save the LVS file
@@ -111,11 +123,16 @@ class sram():
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
         self.lvs_write(lvsname)
+        if not OPTS.netlist_only:
+            verify.write_lvs_script(cell_name=self.s.name,
+                                    gds_name=os.path.basename(gdsname),
+                                    sp_name=os.path.basename(lvsname),
+                                    final_verification=True,
+                                    output_path=OPTS.output_path)
         print_time("LVS writing", datetime.datetime.now(), start_time)
-        
+
         # Save the extracted spice file
         if OPTS.use_pex:
-            import verify
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
             pexname = OPTS.output_path + self.s.name + ".pex.sp"
@@ -126,6 +143,8 @@ class sram():
         else:
             # Use generated spice file for characterization
             sp_file = spname
+
+        # Save a functional simulation file
 
         # Characterize the design
         start_time = datetime.datetime.now()

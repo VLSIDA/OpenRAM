@@ -10,6 +10,7 @@ import re
 import os
 import math
 import tech
+from pprint import pformat
 from delay_data import delay_data
 from wire_spice_model import wire_spice_model
 from power_data import power_data
@@ -26,8 +27,9 @@ class spice():
     Class consisting of a set of modules and instances of these modules
     """
 
-    def __init__(self, name):
+    def __init__(self, name, cell_name):
         self.name = name
+        self.cell_name = cell_name
 
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
@@ -63,7 +65,7 @@ class spice():
             self.comments = []
 
         self.comments.append(comment)
-        
+
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
         self.pins.append(name)
@@ -82,7 +84,7 @@ class spice():
                             "Invalid signaltype for {0}: {1}".format(pin,
                                                                      pin_type))
                 self.add_pin(pin, pin_type)
-                
+
         elif len(pin_type)==len(pin_list):
             for (pin, ptype) in zip(pin_list, pin_type):
                 debug.check(ptype in self.valid_signal_types,
@@ -104,7 +106,7 @@ class spice():
                       \n Module names={}\
                       ".format(self.name, self.pin_names, self.pins), 1)
         self.pin_type = {pin: type for pin, type in zip(self.pin_names, type_list)}
-            
+
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         pin_type = self.pin_type[name]
@@ -118,7 +120,7 @@ class spice():
             return "INOUT"
         else:
             return self.pin_type[name]
-        
+
     def get_inputs(self):
         """ These use pin types to determine pin lists. These
         may be over-ridden by submodules that didn't use pin directions yet."""
@@ -164,7 +166,6 @@ class spice():
         num_pins = len(self.insts[-1].mod.pins)
         num_args = len(args)
         if (check and num_pins != num_args):
-            from pprint import pformat
             if num_pins < num_args:
                 mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
                 arg_pins = args
@@ -181,10 +182,9 @@ class spice():
         self.conns.append(args)
 
         if check and (len(self.insts)!=len(self.conns)):
-            from pprint import pformat
             insts_string=pformat(self.insts)
             conns_string=pformat(self.conns)
-            
+
             debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
                                                                                         len(self.insts),
                                                                                         len(self.conns)))
@@ -214,7 +214,7 @@ class spice():
             f.close()
 
             # find the correct subckt line in the file
-            subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
+            subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
@@ -234,12 +234,12 @@ class spice():
 
             # pins and subckt should be the same
             # find the correct subckt line in the file
-            subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
+            subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
             debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.")
-            
+
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
         # Remove spaces and lower case then add spaces.
@@ -255,14 +255,14 @@ class spice():
             if net_formatted in line:
                 return True
         return False
-                
+
     def do_nets_exist(self, nets):
         """For handmade cell, checks sp file contains the storage nodes."""
         nets_match = True
         for net in nets:
             nets_match = nets_match and self.check_net_in_spice(net)
         return nets_match
-            
+
     def contains(self, mod, modlist):
         for x in modlist:
             if x.name == mod.name:
@@ -279,7 +279,7 @@ class spice():
             return
         elif not self.spice:
             # If spice isn't defined, we dynamically generate one.
-            
+
             # recursively write the modules
             for i in self.mods:
                 if self.contains(i, usedMODS):
@@ -293,18 +293,18 @@ class spice():
                 return
 
             # write out the first spice line (the subcircuit)
-            sp.write("\n.SUBCKT {0} {1}\n".format(self.name,
+            sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
                                                   " ".join(self.pins)))
 
             for pin in self.pins:
                 sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
-            
+
             for line in self.comments:
                 sp.write("* {}\n".format(line))
-                
+
             # every instance must have a set of connections, even if it is empty.
             if len(self.insts) != len(self.conns):
-                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
+                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.cell_name,
                                                                                             len(self.insts),
                                                                                             len(self.conns)))
                 debug.error("Instances: \n" + str(self.insts))
@@ -330,9 +330,9 @@ class spice():
                 else:
                     sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
                                                      " ".join(self.conns[i]),
-                                                     self.insts[i].mod.name))
+                                                     self.insts[i].mod.cell_name))
 
-            sp.write(".ENDS {0}\n".format(self.name))
+            sp.write(".ENDS {0}\n".format(self.cell_name))
 
         else:
             # If spice is a hard module, output the spice file contents.
@@ -343,7 +343,7 @@ class spice():
                 sp.write("\n".join(self.lvs))
             else:
                 sp.write("\n".join(self.spice))
-            
+
             sp.write("\n")
 
     def sp_write(self, spname):
@@ -365,19 +365,19 @@ class spice():
         self.sp_write_file(spfile, usedMODS, True)
         del usedMODS
         spfile.close()
-        
+
     def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
-        
+
         # FIXME: Slew is not used in the model right now.
         # Can be added heuristically as linear factor
         relative_cap = logical_effort.convert_farad_to_relative_c(load)
         stage_effort = self.get_stage_effort(relative_cap)
-        
+
         # If it fails, then keep running with a valid object.
         if not stage_effort:
             return delay_data(0.0, 0.0)
-            
+
         abs_delay = stage_effort.get_absolute_delay()
         corner_delay = self.apply_corners_analytically(abs_delay, corner)
         SLEW_APPROXIMATION = 0.1
@@ -390,27 +390,27 @@ class spice():
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
-                              self.name))
+                              self.cell_name))
         return None
-        
+
     def get_cin(self):
         """Returns input load in Femto-Farads. All values generated using
            relative capacitance function then converted based on tech file parameter."""
-        
+
         # Override this function within a module if a more accurate input capacitance is needed.
         # Input/outputs with differing capacitances is not implemented.
         relative_cap = self.input_load()
         return logical_effort.convert_relative_c_to_farad(relative_cap)
-        
+
     def input_load(self):
         """Inform users undefined relative capacitance functions used for analytical delays."""
         debug.warning("Design Class {0} input capacitance function needs to be defined"
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
-                              self.name))
+                              self.cell_name))
         return 0
-        
+
     def cal_delay_with_rc(self, corner, r, c, slew, swing=0.5):
         """
         Calculate the delay of a mosfet by
@@ -420,7 +420,7 @@ class spice():
         delay = swing_factor * r * c # c is in ff and delay is in fs
         delay = self.apply_corners_analytically(delay, corner)
         delay = delay * 0.001 # make the unit to ps
-        
+
         # Output slew should be linear to input slew which is described
         # as 0.005* slew.
 
@@ -439,7 +439,7 @@ class spice():
         volt_mult = self.get_voltage_delay_factor(vdd)
         temp_mult = self.get_temp_delay_factor(temp)
         return delay * proc_mult * volt_mult * temp_mult
-        
+
     def get_process_delay_factor(self, proc):
         """Returns delay increase estimate based off process
            Currently does +/-10 for fast/slow corners."""
@@ -452,13 +452,13 @@ class spice():
             elif mos_proc == 'S':
                 proc_factors.append(1.1)
         return proc_factors
-        
+
     def get_voltage_delay_factor(self, voltage):
         """Returns delay increase due to voltage.
            Implemented as linear factor based off nominal voltage.
         """
         return tech.spice["nom_supply_voltage"] / voltage
-        
+
     def get_temp_delay_factor(self, temp):
         """Returns delay increase due to temperature (in C).
            Determines effect on threshold voltage and then linear factor is estimated.
@@ -478,7 +478,7 @@ class spice():
 
     def generate_rc_net(self, lump_num, wire_length, wire_width):
         return wire_spice_model(lump_num, wire_length, wire_width)
-        
+
     def calc_dynamic_power(self, corner, c, freq, swing=1.0):
         """
         Calculate dynamic power using effective capacitance, frequency, and corner (PVT)
@@ -486,16 +486,16 @@ class spice():
         proc, vdd, temp = corner
         net_vswing = vdd * swing
         power_dyn = c * vdd * net_vswing * freq
-        
+
         # A pply process and temperature factors.
         # Roughly, process and Vdd affect the delay which affects the power.
         # No other estimations are currently used. Increased delay->slower freq.->less power
         proc_div = max(self.get_process_delay_factor(proc))
         temp_div = self.get_temp_delay_factor(temp)
         power_dyn = power_dyn / (proc_div * temp_div)
-        
+
         return power_dyn
-        
+
     def return_power(self, dynamic=0.0, leakage=0.0):
         return power_data(dynamic, leakage)
 
@@ -519,7 +519,7 @@ class spice():
             if int_mod.is_net_alias(int_net, alias, alias_mod, exclusion_set):
                 aliases.append(net)
         return aliases
-            
+
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
         """
         Checks if the alias_net in input mod is the same as the input net for this mod (self).
@@ -541,7 +541,7 @@ class spice():
                         return True
                     mod_set.add(subinst.mod)
         return False
-     
+
     def is_net_alias_name_check(self, parent_net, child_net, alias_net, mod):
         """
         Utility function for checking single net alias.

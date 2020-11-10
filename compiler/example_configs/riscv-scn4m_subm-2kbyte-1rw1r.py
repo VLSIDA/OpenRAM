@@ -1,19 +1,17 @@
 word_size = 32
-num_words = 2048
+num_words = 512
 write_size = 8
-
-local_array_size = 32
 
 num_rw_ports = 1
 num_r_ports = 1
 num_w_ports = 0
 
 tech_name = "scn4m_subm"
-nominal_corners_only = True
+nominal_corner_only = True
 
-route_supplies = False
-check_lvsdrc = False
-perimeter_pins = False
+route_supplies = True
+check_lvsdrc = True
+perimeter_pins = True
 #netlist_only = True
 #analytical_delay = False
 output_path = "macros/sram_1rw1r_{0}_{1}_{2}_{3}".format(word_size,

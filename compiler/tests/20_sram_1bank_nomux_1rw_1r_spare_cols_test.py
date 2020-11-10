@@ -8,12 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
+
 
 class sram_1bank_nomux_1rw_1r_spare_cols_test(openram_test):
 
@@ -21,12 +22,12 @@ class sram_1bank_nomux_1rw_1r_spare_cols_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
-        
+
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=4,
                         num_words=16,
                         num_spare_cols=4,
@@ -48,7 +49,7 @@ class sram_1bank_nomux_1rw_1r_spare_cols_test(openram_test):
         self.local_check(a, final_verification=True)
 
         globals.end_openram()
-        
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()

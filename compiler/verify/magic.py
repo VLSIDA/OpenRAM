@@ -33,53 +33,60 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
-def filter_gds(cell_name, input_gds, output_gds):
-    """ Run the gds through magic for any layer processing """
-    global OPTS
+# def filter_gds(cell_name, input_gds, output_gds):
+#     """ Run the gds through magic for any layer processing """
+#     global OPTS
 
-    # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
-    if os.path.exists(magic_file):
-        shutil.copy(magic_file, OPTS.openram_temp)
-    else:
-        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
-    
+#     # Copy .magicrc file into temp dir
+#     magic_file = OPTS.openram_tech + "tech/.magicrc"
+#     if os.path.exists(magic_file):
+#         shutil.copy(magic_file, OPTS.openram_temp)
+#     else:
+#         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
-    run_file = OPTS.openram_temp + "run_filter.sh"
-    f = open(run_file, "w")
-    f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
-    f.write("gds polygon subcell true\n")
-    f.write("gds warning default\n")
-    f.write("gds read {}\n".format(input_gds))
-    f.write("load {}\n".format(cell_name))
-    f.write("cellname delete \\(UNNAMED\\)\n")
-    #f.write("writeall force\n")
-    f.write("select top cell\n")
-    f.write("gds write {}\n".format(output_gds))
-    f.write("quit -noprompt\n")
-    f.write("EOF\n")
 
-    f.close()
-    os.system("chmod u+x {}".format(run_file))
+#     run_file = OPTS.openram_temp + "run_filter.sh"
+#     f = open(run_file, "w")
+#     f.write("#!/bin/sh\n")
+#     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
+#     f.write("gds polygon subcell true\n")
+#     f.write("gds warning default\n")
+#     f.write("gds read {}\n".format(input_gds))
+#     f.write("load {}\n".format(cell_name))
+#     f.write("cellname delete \\(UNNAMED\\)\n")
+#     #f.write("writeall force\n")
+#     f.write("select top cell\n")
+#     f.write("gds write {}\n".format(output_gds))
+#     f.write("quit -noprompt\n")
+#     f.write("EOF\n")
 
-    (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
+#     f.close()
+#     os.system("chmod u+x {}".format(run_file))
 
-    
-def write_magic_script(cell_name, extract=False, final_verification=False):
+#     (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
+
+
+def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
 
-    run_file = OPTS.openram_temp + "run_drc.sh"
+    # Copy .magicrc file into the output directory
+    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    if os.path.exists(magic_file):
+        shutil.copy(magic_file, output_path)
+    else:
+        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+    
+    run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    # This causes substrate contacts to not be extracted
-    f.write("# gds readonly true\n")
-    f.write("gds read {}.gds\n".format(cell_name))
+    f.write("gds flatten true\n")
+    f.write("gds readonly true\n")
+    f.write("gds read {}\n".format(gds_name))
     f.write("load {}\n".format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
@@ -131,32 +138,6 @@ def write_magic_script(cell_name, extract=False, final_verification=False):
     os.system("chmod u+x {}".format(run_file))
 
 
-def write_netgen_script(cell_name):
-    """ Write a netgen script to perform LVS. """
-
-    global OPTS
-
-    setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
-    if os.path.exists(full_setup_file):
-        # Copy setup.tcl file into temp dir
-        shutil.copy(full_setup_file, OPTS.openram_temp)
-    else:
-        setup_file = 'nosetup'
-
-    run_file = OPTS.openram_temp + "run_lvs.sh"
-    f = open(run_file, "w")
-    f.write("#!/bin/sh\n")
-    f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
-    f.write("readnet spice {0}.spice\n".format(cell_name))
-    f.write("readnet spice {0}.sp\n".format(cell_name))
-    f.write("lvs {{{0}.spice {0}}} {{{0}.sp {0}}} {1} {0}.lvs.report -json\n".format(cell_name, setup_file))
-    f.write("quit\n")
-    f.write("EOF\n")
-    f.close()
-    os.system("chmod u+x {}".format(run_file))
-
-
 def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
@@ -167,14 +148,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(gds_name, OPTS.openram_temp)
 
-    # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
-    if os.path.exists(magic_file):
-        shutil.copy(magic_file, OPTS.openram_temp)
-    else:
-        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
-
-    write_magic_script(cell_name, extract, final_verification)
+    write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
@@ -214,6 +188,32 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     return errors
 
 
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
+    """ Write a netgen script to perform LVS. """
+
+    global OPTS
+
+    setup_file = "setup.tcl"
+    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
+    if os.path.exists(full_setup_file):
+        # Copy setup.tcl file into temp dir
+        shutil.copy(full_setup_file, output_path)
+    else:
+        setup_file = 'nosetup'
+
+    run_file = output_path + "/run_lvs.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
+    # f.write("readnet spice {0}.spice\n".format(cell_name))
+    # f.write("readnet spice {0}\n".format(sp_name))
+    f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report -json\n".format(cell_name, sp_name, setup_file))
+    f.write("quit\n")
+    f.write("EOF\n")
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+
+
 def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
     implemented in gds_name and sp_name. Final verification will
@@ -228,7 +228,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(sp_name, OPTS.openram_temp)
 
-    write_netgen_script(cell_name)
+    write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -238,7 +238,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     try:
         f = open(resultsfile, "r")
     except FileNotFoundError:
-        debug.error("Unable to load LVS results from {}".format(resultsfile),1)
+        debug.error("Unable to load LVS results from {}".format(resultsfile), 1)
 
     results = f.readlines()
     f.close()
@@ -249,7 +249,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         if "Subcircuit summary:" in line:
             break
         else:
-            final_results.insert(0,line)
+            final_results.insert(0, line)
 
     # There were property errors in any module.
     test = re.compile("Property errors were found.")
@@ -488,14 +488,14 @@ def correct_port(name, output_file_name, ref_file_name):
     output_file.write(part2)
     output_file.close()
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

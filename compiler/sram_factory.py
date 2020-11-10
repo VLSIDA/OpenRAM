@@ -7,6 +7,7 @@
 #
 from globals import OPTS
 
+
 class sram_factory:
     """
     This is a factory pattern to create modules for usage in an SRAM.
@@ -39,6 +40,11 @@ class sram_factory:
         try:
             from tech import tech_modules
             real_module_type = tech_modules[module_type]
+            # If we are given a list of modules, it is indexed by number of ports starting from 1
+            if type(real_module_type) is list:
+                # For now we will just index by the number of ports (except can't have 0 ports)
+                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
+                real_module_type = real_module_type[num_ports - 1]
             overridden = tech_modules.is_overridden(module_type)
         except ImportError:
             # If they didn't define these, then don't use the option types.
@@ -79,7 +85,7 @@ class sram_factory:
         user_module_type, um_overridden = self.get_usermodule_type(module_type)
         # print(module_type, tech_module_type, tm_overridden)
         # print(module_type, user_module_type, um_overridden)
-        
+
         # overridden user modules have priority
         if um_overridden:
             real_module_type = user_module_type
@@ -102,7 +108,7 @@ class sram_factory:
             self.modules[real_module_type] = mod
             self.module_indices[real_module_type] = 0
             self.objects[real_module_type] = []
-            
+
         # Either retreive a previous object or create a new one
         for obj in self.objects[real_module_type]:
             (obj_kwargs, obj_item) = obj
@@ -125,7 +131,7 @@ class sram_factory:
                 module_name = real_module_type
         else:
             if self.is_duplicate_name(module_name):
-                raise ValueError("Modules with duplicate name are not allowed." \
+                raise ValueError("Modules with duplicate name are not allowed."
                                  " '{}'".format(module_name))
 
         # type_str = "type={}".format(real_module_type)
@@ -150,6 +156,6 @@ class sram_factory:
             mods = []
         return mods
 
-    
+
 # Make a factory
 factory = sram_factory()

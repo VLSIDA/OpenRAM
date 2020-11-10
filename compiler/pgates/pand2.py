@@ -38,7 +38,7 @@ class pand2(pgate.pgate):
                                   size_list=[self.size],
                                   height=self.height,
                                   add_wells=self.add_wells)
-            
+
         self.add_mod(self.nand)
         self.add_mod(self.inv)
 
@@ -48,14 +48,14 @@ class pand2(pgate.pgate):
             self.width = max(self.nand.width, self.inv.width)
         else:
             self.width = self.nand.width + self.inv.width
-            
+
         self.place_insts()
         self.add_wires()
         self.add_layout_pins()
         self.route_supply_rails()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
@@ -67,7 +67,7 @@ class pand2(pgate.pgate):
         self.nand_inst = self.add_inst(name="pand2_nand",
                                        mod=self.nand)
         self.connect_inst(["A", "B", "zb_int", "vdd", "gnd"])
-        
+
         self.inv_inst = self.add_inst(name="pand2_inv",
                                       mod=self.inv)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
@@ -98,7 +98,7 @@ class pand2(pgate.pgate):
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, self.height),
                                             width=self.width)
-        
+
         if self.vertical:
             # Shared between two gates
             y_offset = 0.5 * self.height
@@ -108,7 +108,7 @@ class pand2(pgate.pgate):
                                         layer=self.route_layer,
                                         offset=vector(0.5 * self.width, y_offset),
                                         width=self.width)
-            
+
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
@@ -130,7 +130,7 @@ class pand2(pgate.pgate):
             mid1_point = vector(z1_pin.cx(), a2_pin.cy())
             self.add_path(route_layer,
                           [z1_pin.center(), mid1_point, a2_pin.center()])
-        
+
     def add_layout_pins(self):
         pin = self.inv_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
@@ -146,4 +146,3 @@ class pand2(pgate.pgate):
                                             offset=pin.center(),
                                             width=pin.width(),
                                             height=pin.height())
-        

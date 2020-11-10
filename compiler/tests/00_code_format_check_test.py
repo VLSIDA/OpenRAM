@@ -9,7 +9,7 @@
 
 import unittest
 from testutils import *
-import sys,os,re
+import sys, os,re
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 import debug
@@ -27,7 +27,7 @@ class code_format_test(openram_test):
             if re.search("gdsMill", code):
                 continue
             errors += check_file_format_tab(code)
-            errors += check_file_format_carriage(code)            
+            errors += check_file_format_carriage(code)
 
         for code in source_codes:
             if re.search("gdsMill", code):
@@ -79,7 +79,7 @@ def check_file_format_tab(file_name):
 
 def check_file_format_carriage(file_name):
     """
-    Check if file contains carriage returns at the end of lines 
+    Check if file contains carriage returns at the end of lines
     and return the number of carriage return lines.
     """
 

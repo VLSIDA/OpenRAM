@@ -9,6 +9,7 @@ import os
 from design_rules import *
 from module_type import *
 from custom_cell_properties import cell_properties
+from custom_layer_properties import layer_properties
 
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
@@ -33,6 +34,11 @@ cell_properties.bitcell.mirror.x = True
 cell_properties.bitcell.mirror.y = False
 
 ###################################################
+# Custom cell properties
+###################################################
+layer_properties = layer_properties()
+
+###################################################
 # GDS file info
 ###################################################
 GDS={}
@@ -46,7 +52,7 @@ GDS={}
 #1, since you use more than 1 database unit per user unit. To
 #calculate the size of a user unit in meters, divide the second number
 #by the first."
-GDS["unit"]=(0.001,1e-6)  
+GDS["unit"]=(0.001,1e-6)
 # default label zoom
 GDS["zoom"] = 0.5
 
@@ -115,6 +121,26 @@ layer["m4"]         = (31, 0)
 layer["text"]           = (63, 0)
 layer["boundary"]       = (63, 0)
 
+# Layer names for external PDKs
+layer_names = {}
+layer_names["active"]  = "active"
+layer_names["pwell"]   = "pwell"
+layer_names["nwell"]   = "nwell"
+layer_names["nimplant"]= "nimplant"
+layer_names["pimplant"]= "pimplant"
+layer_names["poly"]    = "poly"
+layer_names["poly_contact"] = "poly_contact"
+layer_names["active_contact"] = "active_contact"
+layer_names["m1"]      = "metal1"
+layer_names["via1"]    = "via1"
+layer_names["m2"]      = "metal2"
+layer_names["via2"]    = "via2"
+layer_names["m3"]      = "metal3"
+layer_names["via3"]    = "via3"
+layer_names["m4"]      = "metal4"
+layer_names["text"]    = "text"
+layer_names["boundary"]= "boundary"
+
 ###################################################
 # DRC/LVS Rules Setup
 ###################################################
@@ -123,7 +149,7 @@ _lambda_ = 0.2
 #technology parameter
 parameter={}
 parameter["min_tx_size"] = 4*_lambda_
-parameter["beta"] = 2 
+parameter["beta"] = 2
 
 # These 6T sizes are used in the parameterized bitcell.
 parameter["6T_inv_nmos_size"] = 8*_lambda_
@@ -141,7 +167,7 @@ drc["grid"]=0.5*_lambda_
 drc["drc_rules"]=None #drclvs_home+"/calibreDRC_scn3me_subm.rul"
 drc["lvs_rules"]=None #drclvs_home+"/calibreLVS_scn3me_subm.rul"
 drc["layer_map"]=os.environ.get("OPENRAM_TECH")+"/scn3me_subm/layers.map"
-        	      					
+
 # minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"] = 4*_lambda_
 drc["minlength_channel"] = 2*_lambda_
@@ -157,29 +183,29 @@ drc.add_layer("pwell",
               width = 12*_lambda_,
               spacing = 6*_lambda_)
 
-# 3.1 Minimum width 
+# 3.1 Minimum width
 # 3.2 Minimum spacing over active
 drc.add_layer("poly",
               width = 2*_lambda_,
               spacing = 3*_lambda_)
-# 3.3 Minimum gate extension of active 
+# 3.3 Minimum gate extension of active
 drc["poly_extend_active"] = 2*_lambda_
 # 5.5.b Minimum spacing between poly contact and other poly (alternative rules)
 drc["poly_to_contact"] = 4*_lambda_
 # ??
 drc["active_enclose_gate"] = 0.0
-# 3.5 Minimum field poly to active 
+# 3.5 Minimum field poly to active
 drc["poly_to_active"] = _lambda_
 # 3.2.a Minimum spacing over field poly
 drc["poly_to_field_poly"] = 3*_lambda_
 
-# 2.1 Minimum width 
+# 2.1 Minimum width
 # 2.2 Minimum spacing
 drc.add_layer("active",
               width = 3*_lambda_,
               spacing = 4*_lambda_)
 
-# 2.3 Source/drain active to well edge 
+# 2.3 Source/drain active to well edge
 drc.add_enclosure("nwell",
                   layer = "active",
                   enclosure = 6*_lambda_)
@@ -187,13 +213,13 @@ drc.add_enclosure("pwell",
                   layer = "active",
                   enclosure = 6*_lambda_)
 
-# 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width 
+# 4.1 Minimum select spacing to channel of transistor to ensure adequate source/drain width
 drc["implant_to_channel"] = 3*_lambda_
 # 4.2 Minimum select overlap of active
 drc.add_enclosure("implant",
                   layer = "active",
                   enclosure = 2*_lambda_)
-# 4.3 Minimum select overlap of contact  
+# 4.3 Minimum select overlap of contact
 drc.add_enclosure("implant",
                   layer = "contact",
                   enclosure = _lambda_)
@@ -226,7 +252,7 @@ drc["poly_contact_to_gate"] = 2*_lambda_
 drc.add_layer("poly_contact",
               width = 2*_lambda_,
               spacing = 3*_lambda_)
-# 5.2.b Minimum poly overlap 
+# 5.2.b Minimum poly overlap
 drc.add_enclosure("poly",
                   layer = "poly_contact",
                   enclosure = _lambda_)
@@ -235,12 +261,12 @@ drc["poly_contact_to_gate"] = 2*_lambda_
 # 5.4 Minimum spacing to gate of transistor
 drc["poly_contact_to_poly"] = 2*_lambda_
 
-# 7.1 Minimum width 
-# 7.2 Minimum spacing 
+# 7.1 Minimum width
+# 7.2 Minimum spacing
 drc.add_layer("m1",
               width = 3*_lambda_,
               spacing = 3*_lambda_)
-# 7.3 Minimum overlap of any contact 
+# 7.3 Minimum overlap of any contact
 drc.add_enclosure("m1",
                   layer = "poly_contact",
                   enclosure = _lambda_)
@@ -252,18 +278,18 @@ drc.add_enclosure("m1",
                   layer = "via1",
                   enclosure = _lambda_)
 
-# 8.1 Exact size 
-# 8.2 Minimum via1 spacing 
+# 8.1 Exact size
+# 8.2 Minimum via1 spacing
 drc.add_layer("via1",
               width = 2*_lambda_,
               spacing = 3*_lambda_)
 
 # 9.1 Minimum width
-# 9.2 Minimum spacing 
+# 9.2 Minimum spacing
 drc.add_layer("m2",
               width = 3*_lambda_,
               spacing = 3*_lambda_)
-# 9.3 Minimum overlap of via1 
+# 9.3 Minimum overlap of via1
 drc.add_enclosure("m2",
                   layer = "via1",
                   enclosure = _lambda_)
@@ -331,7 +357,7 @@ spice["fet_models"] = {"TT": [SPICE_MODEL_DIR + "/nom/pmos.sp", SPICE_MODEL_DIR 
                        "FT": [SPICE_MODEL_DIR + "/ff/pmos.sp", SPICE_MODEL_DIR + "/nom/nmos.sp"],
                        "TF": [SPICE_MODEL_DIR + "/nom/pmos.sp", SPICE_MODEL_DIR + "/ff/nmos.sp"],
                        }
-                        
+
 
 #spice stimulus related variables
 spice["feasible_period"] = 10         # estimated feasible period in ns
@@ -365,7 +391,7 @@ spice["dff_leakage"] = 1      # Leakage power of flop in nW
 spice["default_event_frequency"] = 100         # Default event activity of every gate. MHz
 
 #Logical Effort relative values for the Handmade cells
-parameter["le_tau"] = 18.17                  #In pico-seconds. 
+parameter["le_tau"] = 18.17                  #In pico-seconds.
 parameter["min_inv_para_delay"] = 2.07       #In relative delay units
 parameter["cap_relative_per_ff"] = .91       #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 27.5              #In relative capacitance units

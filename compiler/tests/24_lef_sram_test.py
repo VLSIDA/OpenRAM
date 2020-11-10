@@ -8,11 +8,12 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 import debug
+
 
 @unittest.skip("SKIPPING 24_lef_sram_test")
 class lef_test(openram_test):
@@ -20,7 +21,8 @@ class lef_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-
+        OPTS.route_supplies=False
+        OPTS.check_lvsdrc=False
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=2,
@@ -41,8 +43,8 @@ class lef_test(openram_test):
         s.lef_write(lefname)
 
         # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),leffile)
-        self.assertTrue(self.isdiff(lefname,golden))
+        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), leffile)
+        self.assertTrue(self.isdiff(lefname, golden))
 
         globals.end_openram()
 

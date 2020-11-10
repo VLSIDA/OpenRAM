@@ -99,7 +99,7 @@ class write_driver_array(design.design):
 
         # This is just used for measurements,
         # so don't add the module
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
     def create_write_array(self):
         self.driver_insts = []
@@ -121,13 +121,13 @@ class write_driver_array(design.design):
                 if w == self.write_size:
                     w = 0
                     windex+=1
-            
+
             elif self.num_spare_cols and not self.write_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
                                    self.get_br_name() + "_{0}".format(index),
                                    self.en_name + "_{0}".format(0), "vdd", "gnd"])
-            
+
             else:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
@@ -173,13 +173,13 @@ class write_driver_array(design.design):
         # place spare write drivers (if spare columns are specified)
         for i, xoffset in enumerate(self.offsets[self.columns:]):
             index = self.word_size + i
-            
+
             if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
                 mirror = ""
-              
+
             base = vector(xoffset, 0)
             self.driver_insts[index].place(offset=base, mirror=mirror)
 
@@ -229,14 +229,14 @@ class write_driver_array(design.design):
                                     offset=en_pin.ll(),
                                     width=wmask_en_len - en_gap,
                                     height=en_pin.height())
-            
+
             for i in range(self.num_spare_cols):
                 inst = self.driver_insts[self.word_size + i]
                 en_pin = inst.get_pin(inst.mod.en_name)
                 self.add_layout_pin(text=self.en_name + "_{0}".format(i + self.num_wmasks),
                                     layer="m1",
                                     offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
-         
+
         elif self.num_spare_cols and not self.write_size:
             # shorten enable rail to accomodate those for spare write drivers
             left_inst = self.driver_insts[0]

@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -29,9 +29,9 @@ class pnand2_test(openram_test):
         # tx = factory.create(module_type="pnand2", size=1, add_wells=False)
         # # Only DRC because well contacts will fail LVS
         # self.local_drc_check(tx)
-        
+
         globals.end_openram()
-        
+
 
 # run the test from the command line
 if __name__ == "__main__":

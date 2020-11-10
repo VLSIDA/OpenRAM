@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California 
+# Copyright (c) 2016-2019 Regents of the University of California
 # All rights reserved.
 #
 from bitcell_base_array import bitcell_base_array
@@ -20,13 +20,13 @@ class dummy_array(bitcell_base_array):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-        
+
     def create_netlist(self):
         """ Create and connect the netlist """
         # This will create a default set of bitline/wordline names
         self.create_all_bitline_names()
         self.create_all_wordline_names()
-        
+
         self.add_modules()
         self.add_pins()
         self.create_instances()
@@ -38,16 +38,16 @@ class dummy_array(bitcell_base_array):
         self.add_layout_pins()
 
         self.add_boundary()
-        
+
         self.DRC_LVS()
 
     def add_modules(self):
         """ Add the modules used in this design """
-        
-        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
-        self.cell = factory.create(module_type="bitcell")
+
+        self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
+        self.cell = factory.create(module_type=OPTS.bitcell)
         self.add_mod(self.dummy_cell)
-        
+
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
@@ -67,7 +67,7 @@ class dummy_array(bitcell_base_array):
             self.add_pin(wl_name, "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
-                
+
     def add_layout_pins(self):
         """ Add the layout pins """
 
@@ -86,7 +86,7 @@ class dummy_array(bitcell_base_array):
                               offset=br_pin.ll().scale(1, 0),
                               width=br_pin.width(),
                               height=self.height)
-        
+
         wl_names = self.cell.get_all_wl_names()
         for row in range(self.row_size):
             for port in self.all_ports:
@@ -104,7 +104,7 @@ class dummy_array(bitcell_base_array):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
-        
+
     def input_load(self):
         # FIXME: This appears to be old code from previous characterization. Needs to be updated.
         wl_wire = self.gen_wl_wire()

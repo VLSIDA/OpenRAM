@@ -6,11 +6,9 @@
 # All rights reserved.
 #
 import debug
-import utils
-from tech import GDS, layer
 from tech import cell_properties as props
 import bitcell_base
-from globals import OPTS
+
 
 class bitcell(bitcell_base.bitcell_base):
     """
@@ -20,8 +18,6 @@ class bitcell(bitcell_base.bitcell_base):
     library.
     """
 
-    # If we have a split WL bitcell, if not be backwards
-    # compatible in the tech file
     pin_names = [props.bitcell.cell_6t.pin.bl,
                  props.bitcell.cell_6t.pin.br,
                  props.bitcell.cell_6t.pin.wl,
@@ -30,24 +26,12 @@ class bitcell(bitcell_base.bitcell_base):
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
-    (width, height) = utils.get_libcell_size("cell_6t",
-                                             GDS["unit"],
-                                             layer["boundary"])
-    pin_map = utils.get_libcell_pins(pin_names, "cell_6t", GDS["unit"])
-
-    def __init__(self, name=""):
-        # Ignore the name argument
-        bitcell_base.bitcell_base.__init__(self, "cell_6t")
+    def __init__(self, name):
+        super().__init__(name)
         debug.info(2, "Create bitcell")
 
-        self.width = bitcell.width
-        self.height = bitcell.height
-        self.pin_map = bitcell.pin_map
-        self.add_pin_types(self.type_list)
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
-        #debug.check(OPTS.tech_name != "sky130", "sky130 does not yet support single port cells")
-              
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         row_pins = [props.bitcell.cell_6t.pin.wl]

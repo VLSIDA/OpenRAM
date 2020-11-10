@@ -27,7 +27,7 @@ class bank_select(design.design):
         super().__init__(name)
 
         self.port = port
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -36,7 +36,7 @@ class bank_select(design.design):
         self.add_pins()
         self.add_modules()
         self.create_instances()
-        
+
     def create_layout(self):
         self.calculate_module_offsets()
         self.place_instances()
@@ -44,12 +44,12 @@ class bank_select(design.design):
 
         self.height = max([x.uy() for x in self.inv_inst]) + self.m1_width
         self.width = max([x.rx() for x in self.inv_inst])
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):
-        
+
         # Number of control lines in the bus
         if self.port == "rw":
             self.num_control_lines = 4
@@ -86,7 +86,7 @@ class bank_select(design.design):
 
         self.nor2 = factory.create(module_type="pnor2", height=height)
         self.add_mod(self.nor2)
-        
+
         self.inv4x_nor = factory.create(module_type="pinv", height=height, size=4)
         self.add_mod(self.inv4x_nor)
 
@@ -94,15 +94,15 @@ class bank_select(design.design):
         self.add_mod(self.nand2)
 
     def calculate_module_offsets(self):
-        
+
         self.xoffset_nand = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
         self.xoffset_nor = self.inv4x.width + 3 * self.m2_pitch + drc("pwell_to_nwell")
         self.xoffset_bank_sel_inv = 0
         self.xoffset_inputs = 0
         self.yoffset_maxpoint = self.num_control_lines * self.inv4x.height
-        
+
     def create_instances(self):
-        
+
         self.bank_sel_inv=self.add_inst(name="bank_sel_inv",
                                         mod=self.inv_sel)
         self.connect_inst(["bank_sel", "bank_sel_bar", "vdd", "gnd"])
@@ -119,7 +119,7 @@ class bank_select(design.design):
             # These require OR (nor2+inv) gates since they are active low.
             # (writes occur on clk low)
             if input_name in ("clk_buf"):
-                
+
                 self.logic_inst.append(self.add_inst(name=name_nor,
                                                      mod=self.nor2))
                 self.connect_inst([input_name,
@@ -127,7 +127,7 @@ class bank_select(design.design):
                                    gated_name + "_temp_bar",
                                    "vdd",
                                    "gnd"])
-                
+
                 # They all get inverters on the output
                 self.inv_inst.append(self.add_inst(name=name_inv,
                                                    mod=self.inv4x_nor))
@@ -135,7 +135,7 @@ class bank_select(design.design):
                                    gated_name,
                                    "vdd",
                                    "gnd"])
-                
+
             # the rest are AND (nand2+inv) gates
             else:
                 self.logic_inst.append(self.add_inst(name=name_nand,
@@ -155,7 +155,7 @@ class bank_select(design.design):
                                    "gnd"])
 
     def place_instances(self):
-        
+
         # bank select inverter
         self.bank_select_inv_position = vector(self.xoffset_bank_sel_inv, 0)
 
@@ -166,27 +166,27 @@ class bank_select(design.design):
 
             logic_inst = self.logic_inst[i]
             inv_inst = self.inv_inst[i]
-            
+
             input_name = self.input_control_signals[i]
 
             if i == 0:
                 y_offset = 0
             else:
                 y_offset = self.inv4x_nor.height + self.inv4x.height * (i - 1)
-            
+
             if i % 2:
                 y_offset += self.inv4x.height
                 mirror = "MX"
             else:
                 mirror = ""
-            
+
             # These require OR (nor2+inv) gates since they are active low.
             # (writes occur on clk low)
             if input_name in ("clk_buf"):
-                
+
                 logic_inst.place(offset=[self.xoffset_nor, y_offset],
                                  mirror=mirror)
-                
+
             # the rest are AND (nand2+inv) gates
             else:
                 logic_inst.place(offset=[self.xoffset_nand, y_offset],
@@ -197,7 +197,7 @@ class bank_select(design.design):
                            mirror=mirror)
 
     def route_instances(self):
-        
+
         # bank_sel is vertical wire
         bank_sel_inv_pin = self.bank_sel_inv.get_pin("A")
         xoffset_bank_sel = bank_sel_inv_pin.lx()
@@ -227,19 +227,19 @@ class bank_select(design.design):
                            height=self.inv4x.height)
         self.add_via_center(layers=self.m1_stack,
                             offset=bank_sel_bar_pin.rc())
-            
+
         for i in range(self.num_control_lines):
 
             logic_inst = self.logic_inst[i]
             inv_inst = self.inv_inst[i]
-            
+
             input_name = self.input_control_signals[i]
             gated_name = self.control_signals[i]
             if input_name in ("clk_buf"):
                 xoffset_bank_signal = xoffset_bank_sel_bar
             else:
                 xoffset_bank_signal = xoffset_bank_sel
-                
+
             # Connect the logic output to inverter input
             out_pin = logic_inst.get_pin("Z")
             out_pos = out_pin.center()
@@ -248,7 +248,7 @@ class bank_select(design.design):
             mid1_pos = vector(0.5 * (out_pos.x + in_pos.x), out_pos.y)
             mid2_pos = vector(0.5 * (out_pos.x + in_pos.x), in_pos.y)
             self.add_path("m1", [out_pos, mid1_pos, mid2_pos, in_pos])
-            
+
             # Connect the logic B input to bank_sel / bank_sel_bar
             logic_pin = logic_inst.get_pin("B")
             logic_pos = logic_pin.center()
@@ -304,7 +304,7 @@ class bank_select(design.design):
                     self.add_layout_pin_rect_center(text=n,
                                                     layer="m3",
                                                     offset=pin_pos)
-            
+
             # Add vdd/gnd supply rails
             gnd_pin = self.inv_inst[num].get_pin("gnd")
             left_gnd_pos = vector(0, gnd_pin.cy())
@@ -312,7 +312,7 @@ class bank_select(design.design):
                                                layer="m1",
                                                start=left_gnd_pos,
                                                end=gnd_pin.rc())
-            
+
             vdd_pin = self.inv_inst[num].get_pin("vdd")
             left_vdd_pos = vector(0, vdd_pin.cy())
             self.add_layout_pin_segment_center(text="vdd",

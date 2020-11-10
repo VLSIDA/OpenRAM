@@ -13,19 +13,17 @@ from globals import OPTS
 from tech import layer
 
 
-class and4_dec(design.design):
+class and3_dec(design.design):
     """
     This is an AND with configurable drive strength.
     """
     def __init__(self, name, size=1, height=None, add_wells=True):
-        
         design.design.__init__(self, name)
-        
-        debug.info(1, "Creating and4_dec {}".format(name))
+        debug.info(1, "Creating and3_dec {}".format(name))
         self.add_comment("size: {}".format(size))
         self.size = size
         self.height = height
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -36,7 +34,7 @@ class and4_dec(design.design):
         self.create_insts()
 
     def create_modules(self):
-        self.nand = factory.create(module_type="nand4_dec",
+        self.nand = factory.create(module_type="nand3_dec",
                                    height=self.height)
 
         self.inv = factory.create(module_type="inv_dec",
@@ -61,22 +59,21 @@ class and4_dec(design.design):
         self.route_supply_rails()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
         self.add_pin("C", "INPUT")
-        self.add_pin("D", "INPUT")
         self.add_pin("Z", "OUTPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
     def create_insts(self):
-        self.nand_inst = self.add_inst(name="pand4_dec_nand",
+        self.nand_inst = self.add_inst(name="pand3_dec_nand",
                                        mod=self.nand)
-        self.connect_inst(["A", "B", "C", "D", "zb_int", "vdd", "gnd"])
-        
-        self.inv_inst = self.add_inst(name="pand4_dec_inv",
+        self.connect_inst(["A", "B", "C", "zb_int", "vdd", "gnd"])
+
+        self.inv_inst = self.add_inst(name="pand3_dec_inv",
                                       mod=self.inv)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
 
@@ -102,7 +99,7 @@ class and4_dec(design.design):
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, self.height),
                                             width=self.width)
-            
+
     def add_wires(self):
         # nand Z to inv A
         z1_pin = self.nand_inst.get_pin("Z")
@@ -122,7 +119,7 @@ class and4_dec(design.design):
                                         width=pin.width(),
                                         height=pin.height())
 
-        for pin_name in ["A", "B", "C", "D"]:
+        for pin_name in ["A", "B", "C"]:
             pin = self.nand_inst.get_pin(pin_name)
             self.add_layout_pin_rect_center(text=pin_name,
                                             layer=pin.layer,
@@ -139,7 +136,7 @@ class and4_dec(design.design):
                                               slew=nand_delay.slew,
                                               load=load)
         return nand_delay + inv_delay
-    
+
     def get_stage_efforts(self, external_cout, inp_is_rise=False):
         """Get the stage efforts of the A or B -> Z path"""
         stage_effort_list = []
@@ -147,13 +144,13 @@ class and4_dec(design.design):
         stage1 = self.nand.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
         last_stage_is_rise = stage1.is_rise
-        
+
         stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
         stage_effort_list.append(stage2)
-        
+
         return stage_effort_list
 
     def get_cin(self):
         """Return the relative input capacitance of a single input"""
         return self.nand.get_cin()
-        
+

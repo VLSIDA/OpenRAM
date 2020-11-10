@@ -19,7 +19,7 @@ class dff_buf_array(design.design):
     Unlike the data flops, these are never spaced out.
     """
     unique_id = 1
-    
+
     def __init__(self, rows, columns, inv1_size=2, inv2_size=4, name=""):
         self.rows = rows
         self.columns = columns
@@ -31,10 +31,10 @@ class dff_buf_array(design.design):
         debug.info(1, "Creating {}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, columns))
         self.add_comment("inv1: {0} inv2: {1}".format(inv1_size, inv2_size))
-        
+
         self.inv1_size = inv1_size
         self.inv2_size = inv2_size
-        
+
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -110,7 +110,7 @@ class dff_buf_array(design.design):
             pass
 
         dff_pitch = self.dff.width + well_spacing + self.well_extend_active
-        
+
         for row in range(self.rows):
             for col in range(self.columns):
                 # name = "Xdff_r{0}_c{1}".format(row, col)
@@ -122,7 +122,7 @@ class dff_buf_array(design.design):
                     mirror = "MX"
                 self.dff_insts[row, col].place(offset=base,
                                                mirror=mirror)
-                
+
     def get_din_name(self, row, col):
         if self.columns == 1:
             din_name = "din_{0}".format(row)
@@ -132,7 +132,7 @@ class dff_buf_array(design.design):
             din_name = "din_{0}_{1}".format(row, col)
 
         return din_name
-    
+
     def get_dout_name(self, row, col):
         if self.columns == 1:
             dout_name = "dout_{0}".format(row)
@@ -142,7 +142,7 @@ class dff_buf_array(design.design):
             dout_name = "dout_{0}_{1}".format(row, col)
 
         return dout_name
-    
+
     def get_dout_bar_name(self, row, col):
         if self.columns == 1:
             dout_bar_name = "dout_bar_{0}".format(row)
@@ -158,11 +158,11 @@ class dff_buf_array(design.design):
             vdd0_pin=self.dff_insts[row, 0].get_pin("vdd")
             vddn_pin=self.dff_insts[row, self.columns - 1].get_pin("vdd")
             self.add_path(vdd0_pin.layer, [vdd0_pin.lc(), vddn_pin.rc()], width=vdd0_pin.height())
-            
+
             gnd0_pin=self.dff_insts[row, 0].get_pin("gnd")
             gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
             self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
-                
+
         for row in range(self.rows):
             for col in range(self.columns):
                 # Continous vdd rail along with label.
@@ -172,9 +172,9 @@ class dff_buf_array(design.design):
                 # Continous gnd rail along with label.
                 gnd_pin=self.dff_insts[row, col].get_pin("gnd")
                 self.add_power_pin("gnd", gnd_pin.lc(), start_layer=gnd_pin.layer)
-        
+
     def add_layout_pins(self):
-            
+
         for row in range(self.rows):
             for col in range(self.columns):
                 din_pin = self.dff_insts[row, col].get_pin("D")
@@ -200,7 +200,7 @@ class dff_buf_array(design.design):
                                     offset=dout_bar_pin.ll(),
                                     width=dout_bar_pin.width(),
                                     height=dout_bar_pin.height())
-                
+
         # Create vertical spines to a single horizontal rail
         clk_pin = self.dff_insts[0, 0].get_pin("clk")
         clk_ypos = 2 * self.m3_pitch + self.m3_width

@@ -44,7 +44,7 @@ class two_nets_test(openram_test):
                               mod=cell,
                               offset=[0,0])
                 self.connect_inst([])
-                
+
                 layer_stack =("metal1","via1","metal2")
                 r=router(layer_stack,self,gds_file)
                 self.assertTrue(r.route(src="A",dest="B"))
@@ -52,7 +52,7 @@ class two_nets_test(openram_test):
 
         r = routing("05_two_nets_test_{0}".format(OPTS.tech_name))
         self.local_drc_check(r)
-        
+
         # fails if there are any DRC errors on any cells
         globals.end_openram()
 

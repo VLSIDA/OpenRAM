@@ -11,6 +11,7 @@ import design
 from sram_factory import factory
 from globals import OPTS
 from tech import layer
+from tech import layer_properties as layer_props
 
 
 class wordline_driver(design.design):
@@ -24,7 +25,7 @@ class wordline_driver(design.design):
         super().__init__(name)
 
         if height is None:
-            b = factory.create(module_type="bitcell")
+            b = factory.create(module_type=OPTS.bitcell)
             self.height = b.height
         else:
             self.height = height
@@ -61,7 +62,7 @@ class wordline_driver(design.design):
             self.driver = factory.create(module_type="inv_dec",
                                          size=driver_size,
                                          height=self.nand.height)
-            
+
         self.add_mod(self.nand)
         self.add_mod(self.driver)
 
@@ -71,14 +72,14 @@ class wordline_driver(design.design):
             self.route_layer = "li"
         else:
             self.route_layer = "m1"
-            
+
         self.place_insts()
         self.route_wires()
         self.add_layout_pins()
         self.route_supply_rails()
         self.add_boundary()
         self.DRC_LVS()
-        
+
     def add_pins(self):
         self.add_pin("A", "INPUT")
         self.add_pin("B", "INPUT")
@@ -90,21 +91,21 @@ class wordline_driver(design.design):
         self.nand_inst = self.add_inst(name="wld_nand",
                                        mod=self.nand)
         self.connect_inst(["A", "B", "zb_int", "vdd", "gnd"])
-        
+
         self.driver_inst = self.add_inst(name="wl_driver",
                                          mod=self.driver)
         self.connect_inst(["zb_int", "Z", "vdd", "gnd"])
-        
+
     def place_insts(self):
         # Add NAND to the right
         self.nand_inst.place(offset=vector(0, 0))
 
         # Add INV to the right
         self.driver_inst.place(offset=vector(self.nand_inst.rx(), 0))
-        
+
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top, (middle), and bottom. """
-        if OPTS.tech_name == "sky130":
+        if layer_props.wordline_driver.vertical_supply:
             for name in ["vdd", "gnd"]:
                 for inst in [self.nand_inst, self.driver_inst]:
                     self.copy_layout_pin(inst, name)
@@ -119,7 +120,7 @@ class wordline_driver(design.design):
                                             layer=self.route_layer,
                                             offset=vector(0.5 * self.width, y_offset),
                                             width=self.width)
-            
+
     def route_wires(self):
 
         # nand Z to inv A
@@ -131,7 +132,7 @@ class wordline_driver(design.design):
             mid1_point = vector(z1_pin.cx(), a2_pin.cy())
         self.add_path(self.route_layer,
                       [z1_pin.center(), mid1_point, a2_pin.center()])
-        
+
     def add_layout_pins(self):
         pin = self.driver_inst.get_pin("Z")
         self.add_layout_pin_rect_center(text="Z",
@@ -154,13 +155,13 @@ class wordline_driver(design.design):
         stage1_cout = self.driver.get_cin()
         stage1 = self.nand.get_stage_effort(stage1_cout, inp_is_rise)
         stage_effort_list.append(stage1)
-        
+
         stage2 = self.driver.get_stage_effort(external_cout, stage1.is_rise)
         stage_effort_list.append(stage2)
-        
+
         return stage_effort_list
 
     def get_cin(self):
         """Return the relative input capacitance of a single input"""
         return self.nand.get_cin()
-        
+

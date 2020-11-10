@@ -8,7 +8,7 @@
 #
 import unittest
 from testutils import *
-import sys,os
+import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
@@ -87,7 +87,7 @@ class path_test(openram_test):
         self.local_drc_check(w)
 
         globals.end_openram()
-        
+
 
 
 # run the test from the command line

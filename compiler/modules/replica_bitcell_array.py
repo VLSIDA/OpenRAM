@@ -281,7 +281,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.supplies = ["vdd", "gnd"]
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
         # Main array
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",

@@ -80,7 +80,10 @@ class options(optparse.Values):
                                                            os.getpid())
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
-    debug_level = 0
+    verbose_level = 0
+    # Drop to pdb on failure?
+    debug = False
+    
 
     ###################
     # Run-time vs accuracy options.
@@ -141,7 +144,8 @@ class options(optparse.Values):
     # Route the input/output pins to the perimeter
     perimeter_pins = False
 
-    purge_temp = True
+    keep_temp = False
+
 
     # These are the default modules that can be over-riden
     bitcell_suffix = ""

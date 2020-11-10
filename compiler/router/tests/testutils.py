@@ -26,7 +26,7 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def local_check(self, a, final_verification=False):
@@ -49,7 +49,7 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("LVS mismatch: {}".format(a.name))
 
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def cleanup(self):

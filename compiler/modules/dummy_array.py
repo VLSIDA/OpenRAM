@@ -44,8 +44,8 @@ class dummy_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
 
-        self.dummy_cell = factory.create(module_type="dummy_{}".format(OPTS.bitcell))
-        self.cell = factory.create(module_type="bitcell")
+        self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
+        self.cell = factory.create(module_type=OPTS.bitcell)
         self.add_mod(self.dummy_cell)
 
     def create_instances(self):

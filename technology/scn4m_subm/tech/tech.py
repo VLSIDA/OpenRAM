@@ -121,6 +121,26 @@ layer["m4"]         = (31, 0)
 layer["text"]           = (63, 0)
 layer["boundary"]       = (63, 0)
 
+# Layer names for external PDKs
+layer_names = {}
+layer_names["active"]  = "active"
+layer_names["pwell"]   = "pwell"
+layer_names["nwell"]   = "nwell"
+layer_names["nimplant"]= "nimplant"
+layer_names["pimplant"]= "pimplant"
+layer_names["poly"]    = "poly"
+layer_names["poly_contact"] = "poly_contact"
+layer_names["active_contact"] = "active_contact"
+layer_names["m1"]      = "metal1"
+layer_names["via1"]    = "via1"
+layer_names["m2"]      = "metal2"
+layer_names["via2"]    = "via2"
+layer_names["m3"]      = "metal3"
+layer_names["via3"]    = "via3"
+layer_names["m4"]      = "metal4"
+layer_names["text"]    = "text"
+layer_names["boundary"]= "boundary"
+
 ###################################################
 # DRC/LVS Rules Setup
 ###################################################

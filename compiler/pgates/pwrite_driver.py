@@ -25,15 +25,15 @@ class pwrite_driver(design.design):
         super().__init__(name)
         self.size = size
         self.beta = parameter["beta"]
-        self.pmos_width = self.beta*self.size*parameter["min_tx_size"]
-        self.nmos_width = self.size*parameter["min_tx_size"]
+        self.pmos_width = self.beta * self.size * parameter["min_tx_size"]
+        self.nmos_width = self.size * parameter["min_tx_size"]
 
         # The tech M2 pitch is based on old via orientations
         self.m2_pitch = self.m2_space + self.m2_width
 
         # Width is matched to the bitcell,
         # Height will be variable
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.width = self.bitcell.width
 
         # Creates the netlist and layout

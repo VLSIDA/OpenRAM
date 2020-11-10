@@ -51,7 +51,7 @@ class col_cap_array(bitcell_base_array):
         self.dummy_cell = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
 
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         """ Create the module instances used in this design """

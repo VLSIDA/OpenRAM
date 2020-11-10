@@ -10,6 +10,8 @@ import sys, os, glob
 sys.path.append(os.getenv("OPENRAM_HOME"))
 from globals import OPTS
 import debug
+import pdb
+import traceback
 
 
 class openram_test(unittest.TestCase):
@@ -27,7 +29,7 @@ class openram_test(unittest.TestCase):
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def local_check(self, a, final_verification=False):
@@ -74,7 +76,7 @@ class openram_test(unittest.TestCase):
 
         # For debug...
         # import pdb; pdb.set_trace()
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
 
     def run_pex(self, a, output=None):
@@ -321,9 +323,7 @@ def header(filename, technology):
 
 def debugTestRunner(post_mortem=None):
     """unittest runner doing post mortem debugging on failing tests"""
-    import pdb
-    import traceback
-    if post_mortem is None and not OPTS.purge_temp:
+    if post_mortem is None and OPTS.debug:
         post_mortem = pdb.post_mortem
 
     class DebugTestResult(unittest.TextTestResult):

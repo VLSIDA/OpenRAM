@@ -11,6 +11,7 @@ from tech import drc, layer
 from vector import vector
 from sram_factory import factory
 from tech import cell_properties as cell_props
+from globals import OPTS
 
 
 class column_mux(pgate.pgate):
@@ -64,7 +65,7 @@ class column_mux(pgate.pgate):
         self.add_pn_wells()
 
     def add_ptx(self):
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size * drc("minwidth_tx")

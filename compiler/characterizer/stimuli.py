@@ -260,7 +260,7 @@ class stimuli():
 
         # create plots for all signals
         self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
-        if OPTS.debug_level>0:
+        if OPTS.verbose_level>0:
             if OPTS.spice_name in ["hspice", "xa"]:
                 self.sf.write(".probe V(*)\n")
             else:
@@ -285,10 +285,7 @@ class stimuli():
         includes = self.device_models + [circuit]
 
         for item in list(includes):
-            if os.path.isfile(item):
-                self.sf.write(".include \"{0}\"\n".format(item))
-            else:
-                debug.error("Could not find spice model: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item))
+            self.sf.write(".include \"{0}\"\n".format(item))
 
     def write_supply(self):
         """ Writes supply voltage statements """
@@ -299,9 +296,9 @@ class stimuli():
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
         self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
-    def run_sim(self):
+    def run_sim(self, name):
         """ Run hspice in batch mode and output rawfile to parse. """
-        temp_stim = "{0}stim.sp".format(OPTS.openram_temp)
+        temp_stim = "{0}{1}".format(OPTS.openram_temp, name)
         import datetime
         start_time = datetime.datetime.now()
         debug.check(OPTS.spice_exe != "", "No spice simulator has been found.")

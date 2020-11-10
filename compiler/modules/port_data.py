@@ -33,7 +33,7 @@ class port_data(design.design):
             self.num_spare_cols = 0
 
         if not bit_offsets:
-            bitcell = factory.create(module_type="bitcell")
+            bitcell = factory.create(module_type=OPTS.bitcell)
             self.bit_offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
                 self.bit_offsets.append(i * bitcell.width)
@@ -191,7 +191,7 @@ class port_data(design.design):
         # and mirroring happens correctly
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
         if self.port == 0:
             # Append an offset on the left
@@ -270,7 +270,7 @@ class port_data(design.design):
 
         # create arrays of bitline and bitline_bar names for read,
         # write, or all ports
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.bl_names = self.bitcell.get_all_bl_names()
         self.br_names = self.bitcell.get_all_br_names()
         self.wl_names = self.bitcell.get_all_wl_names()

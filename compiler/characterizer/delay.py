@@ -306,7 +306,8 @@ class delay(simulation):
         self.create_test_cycles()
 
         # creates and opens stimulus file for writing
-        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
+        self.delay_stim_sp = "delay_stim.sp"
+        temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
                                                                                              self.load,
@@ -350,7 +351,8 @@ class delay(simulation):
         self.check_arguments()
 
         # creates and opens stimulus file for writing
-        temp_stim = "{0}/stim.sp".format(OPTS.openram_temp)
+        self.power_stim_sp = "power_stim.sp"
+        temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.power_stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
         self.stim = stimuli(self.sf, self.corner)
@@ -616,7 +618,7 @@ class delay(simulation):
 
         self.write_delay_stimulus()
 
-        self.stim.run_sim()
+        self.stim.run_sim(self.delay_stim_sp)
 
         return self.check_measurements()
 
@@ -772,7 +774,7 @@ class delay(simulation):
 
         debug.info(1, "Performing leakage power simulations.")
         self.write_power_stimulus(trim=False)
-        self.stim.run_sim()
+        self.stim.run_sim(self.power_stim_sp)
         leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(leakage_power!="Failed", "Could not measure leakage power.")
         debug.info(1, "Leakage power of full array is {0} mW".format(leakage_power * 1e3))
@@ -780,7 +782,7 @@ class delay(simulation):
         # sys.exit(1)
 
         self.write_power_stimulus(trim=True)
-        self.stim.run_sim()
+        self.stim.run_sim(self.power_stim_sp)
         trim_leakage_power=parse_spice_list("timing", "leakage_power")
         debug.check(trim_leakage_power!="Failed", "Could not measure leakage power.")
         debug.info(1, "Leakage power of trimmed array is {0} mW".format(trim_leakage_power * 1e3))

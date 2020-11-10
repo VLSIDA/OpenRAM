@@ -9,6 +9,7 @@ import os
 import inspect
 import globals
 import sys
+import pdb
 
 # the debug levels:
 # 0 = minimum output (default)
@@ -26,6 +27,9 @@ def check(check, str):
         log("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
 
+        if globals.OPTS.debug:
+            pdb.set_trace()
+            
         assert 0
 
 
@@ -37,6 +41,9 @@ def error(str, return_value=0):
     log("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
+    if globals.OPTS.debug:
+        pdb.set_trace()
+            
     assert return_value == 0
 
 
@@ -90,7 +97,7 @@ log.create_file = True
 
 def info(lev, str):
     from globals import OPTS
-    if (OPTS.debug_level >= lev):
+    if (OPTS.verbose_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         # classname = frm.f_globals['__name__']

@@ -9,6 +9,7 @@ import debug
 import design
 from tech import cell_properties
 from sram_factory import factory
+from globals import OPTS
 
 
 class bitcell_base_array(design.design):
@@ -24,7 +25,7 @@ class bitcell_base_array(design.design):
         self.column_offset = column_offset
 
         # Bitcell for port names only
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
         self.wordline_names = [[] for port in self.all_ports]
         self.all_wordline_names = []

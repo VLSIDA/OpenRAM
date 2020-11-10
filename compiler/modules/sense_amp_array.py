@@ -97,7 +97,7 @@ class sense_amp_array(design.design):
 
         # This is just used for measurements,
         # so don't add the module
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
 
     def create_sense_amp_array(self):
         self.local_insts = []

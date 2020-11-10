@@ -26,7 +26,7 @@ class precharge(design.design):
         debug.info(2, "creating precharge cell {0}".format(name))
         super().__init__(name)
 
-        self.bitcell = factory.create(module_type="bitcell")
+        self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.beta = parameter["beta"]
         self.ptx_width = self.beta * parameter["min_tx_size"]
         self.ptx_mults = 1

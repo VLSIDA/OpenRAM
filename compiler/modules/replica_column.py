@@ -88,7 +88,7 @@ class replica_column(bitcell_base_array):
         self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
         self.add_mod(self.edge_cell)
         # Used for pin names only
-        self.cell = factory.create(module_type="bitcell")
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         self.cell_inst = {}

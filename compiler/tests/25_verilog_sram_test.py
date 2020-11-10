@@ -14,6 +14,7 @@ import globals
 from globals import OPTS
 import debug
 
+
 class verilog_test(openram_test):
 
     def runTest(self):
@@ -40,8 +41,8 @@ class verilog_test(openram_test):
 
 
         # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),vfile)
-        self.assertTrue(self.isdiff(vname,golden))
+        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)
+        self.assertTrue(self.isdiff(vname, golden))
 
         globals.end_openram()
 

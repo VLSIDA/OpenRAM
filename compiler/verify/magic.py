@@ -33,37 +33,37 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
-def filter_gds(cell_name, input_gds, output_gds):
-    """ Run the gds through magic for any layer processing """
-    global OPTS
+# def filter_gds(cell_name, input_gds, output_gds):
+#     """ Run the gds through magic for any layer processing """
+#     global OPTS
 
-    # Copy .magicrc file into temp dir
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
-    if os.path.exists(magic_file):
-        shutil.copy(magic_file, OPTS.openram_temp)
-    else:
-        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+#     # Copy .magicrc file into temp dir
+#     magic_file = OPTS.openram_tech + "tech/.magicrc"
+#     if os.path.exists(magic_file):
+#         shutil.copy(magic_file, OPTS.openram_temp)
+#     else:
+#         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
 
 
-    run_file = OPTS.openram_temp + "run_filter.sh"
-    f = open(run_file, "w")
-    f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
-    f.write("gds polygon subcell true\n")
-    f.write("gds warning default\n")
-    f.write("gds read {}\n".format(input_gds))
-    f.write("load {}\n".format(cell_name))
-    f.write("cellname delete \\(UNNAMED\\)\n")
-    #f.write("writeall force\n")
-    f.write("select top cell\n")
-    f.write("gds write {}\n".format(output_gds))
-    f.write("quit -noprompt\n")
-    f.write("EOF\n")
+#     run_file = OPTS.openram_temp + "run_filter.sh"
+#     f = open(run_file, "w")
+#     f.write("#!/bin/sh\n")
+#     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.magic_exe[1]))
+#     f.write("gds polygon subcell true\n")
+#     f.write("gds warning default\n")
+#     f.write("gds read {}\n".format(input_gds))
+#     f.write("load {}\n".format(cell_name))
+#     f.write("cellname delete \\(UNNAMED\\)\n")
+#     #f.write("writeall force\n")
+#     f.write("select top cell\n")
+#     f.write("gds write {}\n".format(output_gds))
+#     f.write("quit -noprompt\n")
+#     f.write("EOF\n")
 
-    f.close()
-    os.system("chmod u+x {}".format(run_file))
+#     f.close()
+#     os.system("chmod u+x {}".format(run_file))
 
-    (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
+#     (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
 
 
 def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
@@ -71,7 +71,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
 
     global OPTS
 
-    # Copy .magicrc file into the directory
+    # Copy .magicrc file into the output directory
     magic_file = OPTS.openram_tech + "tech/.magicrc"
     if os.path.exists(magic_file):
         shutil.copy(magic_file, output_path)

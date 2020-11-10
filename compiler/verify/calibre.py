@@ -189,7 +189,8 @@ def run_drc(cell_name, gds_name, extract=False, final_verification=False):
     num_drc_runs += 1
 
     # Filter the layouts through magic as a GDS filter for nsdm/psdm/nwell merging
-    if OPTS.tech_name == "sky130" and False:
+    # Disabled for now
+    if False and OPTS.tech_name == "sky130":
         shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
         from magic import filter_gds
         filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")

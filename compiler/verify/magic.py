@@ -66,7 +66,7 @@ num_pex_runs = 0
 #     (outfile, errfile, resultsfile) = run_script(cell_name, "filter")
 
 
-def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
+def write_drc_script(cell_name, gds_name, extract, final_verification, output_path, sp_name=None):
     """ Write a magic script to perform DRC and optionally extraction. """
 
     global OPTS
@@ -102,35 +102,38 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("drc catchup\n")
     f.write("drc count total\n")
     f.write("drc count\n")
-    f.write("port makeall\n")
+    if not sp_name:
+        f.write("port makeall\n")
+    else:
+        f.write("readspice {}\n".format(sp_name))
     if not extract:
         pre = "#"
     else:
         pre = ""
     if final_verification and OPTS.route_supplies:
-        f.write(pre + "extract unique all\n".format(cell_name))
+        f.write(pre + "extract unique all\n")
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
-    f.write(pre + "extract\n".format(cell_name))
+    f.write(pre + "extract\n")
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
-    #f.write(pre+"ext2spice lvs\n")
-    f.write(pre+"ext2spice hierarchy on\n")
-    f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice cthresh infinite\n")
-    f.write(pre+"ext2spice rthresh infinite\n")
-    f.write(pre+"ext2spice renumber off\n")
-    f.write(pre+"ext2spice scale off\n")
-    f.write(pre+"ext2spice blackbox on\n")
-    f.write(pre+"ext2spice subcircuit top on\n")
-    f.write(pre+"ext2spice global off\n")
+    # f.write(pre + "ext2spice lvs\n")
+    f.write(pre + "ext2spice hierarchy on\n")
+    f.write(pre + "ext2spice format ngspice\n")
+    f.write(pre + "ext2spice cthresh infinite\n")
+    f.write(pre + "ext2spice rthresh infinite\n")
+    f.write(pre + "ext2spice renumber off\n")
+    f.write(pre + "ext2spice scale off\n")
+    f.write(pre + "ext2spice blackbox on\n")
+    f.write(pre + "ext2spice subcircuit top on\n")
+    f.write(pre + "ext2spice global off\n")
 
     # Can choose hspice, ngspice, or spice3,
     # but they all seem compatible enough.
-    f.write(pre+"ext2spice format ngspice\n")
-    f.write(pre+"ext2spice {}\n".format(cell_name))
+    f.write(pre + "ext2spice format ngspice\n")
+    f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("EOF\n")
 
@@ -138,7 +141,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     os.system("chmod u+x {}".format(run_file))
 
 
-def run_drc(cell_name, gds_name, extract=True, final_verification=False):
+def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
 
     global num_drc_runs
@@ -148,7 +151,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
         shutil.copy(gds_name, OPTS.openram_temp)
 
-    write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
+    write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp, sp_name=sp_name)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
@@ -161,7 +164,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     try:
         f = open(outfile, "r")
     except FileNotFoundError:
-        debug.error("Unable to load DRC results file from {}. Is magic set up?".format(outfile),1)
+        debug.error("Unable to load DRC results file from {}. Is magic set up?".format(outfile), 1)
 
     results = f.readlines()
     f.close()
@@ -172,7 +175,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
             errors = int(re.split(": ", line)[1])
             break
     else:
-        debug.error("Unable to find the total error line in Magic output.",1)
+        debug.error("Unable to find the total error line in Magic output.", 1)
 
 
     # always display this summary
@@ -180,7 +183,7 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     if errors > 0:
         for line in results:
             if "error tiles" in line:
-                debug.info(1,line.rstrip("\n"))
+                debug.info(1, line.rstrip("\n"))
         debug.warning(result_str)
     else:
         debug.info(1, result_str)
@@ -188,10 +191,13 @@ def run_drc(cell_name, gds_name, extract=True, final_verification=False):
     return errors
 
 
-def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, output_path=None):
     """ Write a netgen script to perform LVS. """
 
     global OPTS
+
+    if not output_path:
+        output_path = OPTS.openram_temp
 
     setup_file = "setup.tcl"
     full_setup_file = OPTS.openram_tech + "tech/" + setup_file
@@ -214,7 +220,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_pa
     os.system("chmod u+x {}".format(run_file))
 
 
-def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=None):
     """Run LVS check on a given top-level name which is
     implemented in gds_name and sp_name. Final verification will
     ensure that there are no remaining virtual conections. """
@@ -222,13 +228,16 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     global num_lvs_runs
     num_lvs_runs += 1
 
+    if not output_path:
+        output_path = OPTS.openram_temp
+    
     # Copy file to local dir if it isn't already
-    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
-        shutil.copy(gds_name, OPTS.openram_temp)
-    if os.path.dirname(sp_name)!=OPTS.openram_temp.rstrip('/'):
-        shutil.copy(sp_name, OPTS.openram_temp)
+    if os.path.dirname(gds_name) != output_path.rstrip('/'):
+        shutil.copy(gds_name, output_path)
+    if os.path.dirname(sp_name) != output_path.rstrip('/'):
+        shutil.copy(sp_name, output_path)
 
-    write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
+    write_lvs_script(cell_name, gds_name, sp_name, final_verification)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -289,13 +298,17 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     return total_errors
 
 
-def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
+def run_pex(name, gds_name, sp_name, output=None, final_verification=False, output_path=None):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
 
     global num_pex_runs
     num_pex_runs += 1
-    os.chdir(OPTS.openram_temp)
+    
+    os.chdir(output_path)
+
+    if not output_path:
+        output_path = OPTS.openram_temp
 
     if output == None:
         output = name + ".pex.netlist"
@@ -311,8 +324,8 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     # the dev old code using batch mode does not run and is split into functions
     pex_runset = write_script_pex_rule(gds_name, name, output)
 
-    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, name)
-    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, name)
+    errfile = "{0}{1}.pex.err".format(output_path, name)
+    outfile = "{0}{1}.pex.out".format(output_path, name)
 
     script_cmd = "{0} 2> {1} 1> {2}".format(pex_runset,
                                             errfile,
@@ -387,7 +400,7 @@ def write_batch_pex_rule(gds_name, name, sp_name, output):
     return file
 
 
-def write_script_pex_rule(gds_name, cell_name, output):
+def write_script_pex_rule(gds_name, cell_name, sp_name, output):
     global OPTS
     run_file = OPTS.openram_temp + "run_pex.sh"
     f = open(run_file, "w")
@@ -399,26 +412,24 @@ def write_script_pex_rule(gds_name, cell_name, output):
     f.write("load {}\n".format(cell_name))
     f.write("select top cell\n")
     f.write("expand\n")
-    f.write("port makeall\n")
-    extract = True
-    if not extract:
-        pre = "#"
+    if not sp_name:
+        f.write("port makeall\n")
     else:
-        pre = ""
-    f.write(pre + "extract\n")
-    f.write(pre + "ext2sim labels on\n")
-    f.write(pre + "ext2sim\n")
-    f.write(pre + "extresist simplify off\n")
-    f.write(pre + "extresist all\n")
-    f.write(pre + "ext2spice hierarchy off\n")
-    f.write(pre + "ext2spice format ngspice\n")
-    f.write(pre + "ext2spice renumber off\n")
-    f.write(pre + "ext2spice scale off\n")
-    f.write(pre + "ext2spice blackbox on\n")
-    f.write(pre + "ext2spice subcircuit top on\n")
-    f.write(pre + "ext2spice global off\n")
-    f.write(pre + "ext2spice extresist on\n")
-    f.write(pre + "ext2spice {}\n".format(cell_name))
+        f.write("readspice {}\n".format(sp_name))
+    f.write("extract\n")
+    f.write("ext2sim labels on\n")
+    f.write("ext2sim\n")
+    f.write("extresist simplify off\n")
+    f.write("extresist all\n")
+    f.write("ext2spice hierarchy off\n")
+    f.write("ext2spice format ngspice\n")
+    f.write("ext2spice renumber off\n")
+    f.write("ext2spice scale off\n")
+    f.write("ext2spice blackbox on\n")
+    f.write("ext2spice subcircuit top on\n")
+    f.write("ext2spice global off\n")
+    f.write("ext2spice extresist on\n")
+    f.write("ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
     f.write("eof\n")
     f.write("mv {0}.spice {1}\n".format(cell_name, output))

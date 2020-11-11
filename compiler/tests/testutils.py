@@ -48,7 +48,7 @@ class openram_test(unittest.TestCase):
             # Run both DRC and LVS even if DRC might fail
             # Magic can still extract despite DRC failing, so it might be ok in some techs
             # if we ignore things like minimum metal area of pins
-            drc_result=verify.run_drc(a.name, tempgds, extract=True, final_verification=final_verification)
+            drc_result=verify.run_drc(a.name, tempgds, tempspice, extract=True, final_verification=final_verification)
 
             # We can still run LVS even if DRC fails in Magic OR Calibre
             lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)

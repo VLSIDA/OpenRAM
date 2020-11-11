@@ -213,7 +213,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
     # f.write("readnet spice {0}.spice\n".format(cell_name))
     # f.write("readnet spice {0}\n".format(sp_name))
-    f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report -json\n".format(cell_name, sp_name, setup_file))
+    f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report -full -json\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
     f.close()

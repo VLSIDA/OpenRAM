@@ -296,6 +296,18 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
                                                   " ".join(self.pins)))
 
+            # write a PININFO line
+            pin_info = ".PININFO"
+            for pin in self.pins:
+                if self.pin_type[pin] == "INPUT":
+                    pin_info += " {0}:I".format(pin)
+                elif self.pin_type[pin] == "OUTPUT":
+                    pin_info += " {0}:O".format(pin)
+                else:
+                    pin_info += " {0}:B".format(pin)
+            sp.write(pin_info + "\n")
+
+            # Also write pins as comments
             for pin in self.pins:
                 sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
 

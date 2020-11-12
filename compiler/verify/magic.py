@@ -305,6 +305,9 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False, outp
     global num_pex_runs
     num_pex_runs += 1
     
+    if not output_path:
+        output_path = OPTS.openram_temp
+    
     os.chdir(output_path)
 
     if not output_path:
@@ -322,7 +325,7 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False, outp
     # pex_fix did run the pex using a script while dev orignial method
     # use batch mode.
     # the dev old code using batch mode does not run and is split into functions
-    pex_runset = write_script_pex_rule(gds_name, name, output)
+    pex_runset = write_script_pex_rule(gds_name, name, sp_name, output)
 
     errfile = "{0}{1}.pex.err".format(output_path, name)
     outfile = "{0}{1}.pex.out".format(output_path, name)

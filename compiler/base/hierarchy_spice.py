@@ -297,7 +297,7 @@ class spice():
                                                   " ".join(self.pins)))
 
             # write a PININFO line
-            pin_info = ".PININFO"
+            pin_info = "*.PININFO"
             for pin in self.pins:
                 if self.pin_type[pin] == "INPUT":
                     pin_info += " {0}:I".format(pin)

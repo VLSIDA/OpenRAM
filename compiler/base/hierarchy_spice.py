@@ -104,7 +104,7 @@ class spice():
             debug.error("{} spice subcircuit port names do not match pin_names\
                       \n SPICE names={}\
                       \n Module names={}\
-                      ".format(self.name, self.pin_names, self.pins), 1)
+                      ".format(self.name, self.pin, self.pin_names), 1)
         self.pin_type = {pin: type for pin, type in zip(self.pin_names, type_list)}
 
     def get_pin_type(self, name):

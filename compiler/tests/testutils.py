@@ -25,7 +25,7 @@ class openram_test(unittest.TestCase):
         w.gds_write(tempgds)
         import verify
 
-        result=verify.run_drc(w.name, tempgds)
+        result=verify.run_drc(w.name, tempgds, None)
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
 

@@ -32,7 +32,7 @@ class pin_layout:
         debug.check(self.height() > 0, "Zero height pin.")
 
         # These are the valid pin layers
-        valid_layers = { x: layer[x] for x in layer_indices.keys()}
+        valid_layers = {x: layer[x] for x in layer_indices.keys()}
 
         # if it's a string, use the name
         if type(layer_name_pp) == str:
@@ -46,7 +46,7 @@ class pin_layout:
                     self._layer = layer_name
                     break
             else:
-                debug.error("Couldn't find layer {}".format(layer_name_pp), -1)
+                debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
 
         self.lpp = layer[self.layer]
         self._recompute_hash()

@@ -10,7 +10,7 @@ from tech import cell_properties as props
 import bitcell_base
 
 
-class bitcell(bitcell_base.bitcell_base):
+class bitcell_1port(bitcell_base.bitcell_base):
     """
     A single bit cell (6T, 8T, etc.)  This module implements the
     single memory cell used in the design. It is a hand-made cell, so

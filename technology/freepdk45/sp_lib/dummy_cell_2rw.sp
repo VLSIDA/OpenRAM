@@ -1,5 +1,5 @@
 
-.SUBCKT dummy_cell_1w_1r bl0 br0 bl1 br1 wl0 wl1 vdd gnd
+.SUBCKT dummy_cell_2rw bl0 br0 bl1 br1 wl0 wl1 vdd gnd
 MM9 RA_to_R_right wl1 br1_noconn gnd NMOS_VTG W=180.0n L=50n m=1
 MM8 RA_to_R_right Q gnd gnd NMOS_VTG W=180.0n L=50n m=1
 MM7 RA_to_R_left Q_bar gnd gnd NMOS_VTG W=180.0n L=50n m=1

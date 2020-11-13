@@ -151,7 +151,7 @@ class options(optparse.Values):
     bitcell_suffix = ""
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
-    bitcell = "bitcell"
+    bitcell = "bitcell_1port"
     buf_dec = "pbuf"
     column_mux_array = "column_mux_array"
     control_logic = "control_logic"

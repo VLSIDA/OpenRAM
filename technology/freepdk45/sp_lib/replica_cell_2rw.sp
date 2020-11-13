@@ -1,5 +1,5 @@
 
-.SUBCKT replica_cell_1rw_1r bl0 br0 bl1 br1 wl0 wl1 vdd gnd
+.SUBCKT replica_cell_2rw bl0 br0 bl1 br1 wl0 wl1 vdd gnd
 MM9 RA_to_R_right wl1 br1 gnd NMOS_VTG W=180.0n L=50n m=1
 MM8 RA_to_R_right Q gnd gnd NMOS_VTG W=180.0n L=50n m=1
 MM7 RA_to_R_left vdd gnd gnd NMOS_VTG W=180.0n L=50n m=1

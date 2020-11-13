@@ -48,7 +48,7 @@ class _pgate:
 
 
 class _bitcell:
-    def __init__(self, mirror, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
+    def __init__(self, mirror, cell_6t, cell_1rw1r, cell_1w1r):
         self.mirror = mirror
         self._6t = cell_6t
         self._1rw1r = cell_1rw1r
@@ -75,15 +75,10 @@ class _bitcell:
                            'wl0': 'wl0',
                            'wl1': 'wl1'})
 
-        return _bitcell(cell_s8_6t=cell_s8_6t,
-                        cell_6t=cell_6t,
+        return _bitcell(cell_6t=cell_6t,
                         cell_1rw1r=cell_1rw1r,
                         cell_1w1r=cell_1w1r,
                         mirror=axis)
-
-    @property
-    def cell_s8_6t(self):
-        return self._s8_6t
 
     @property
     def cell_6t(self):

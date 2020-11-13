@@ -12,26 +12,23 @@ from tech import parameter, drc
 import logical_effort
 
 
-class replica_bitcell_1w_1r(bitcell_base.bitcell_base):
+class replica_bitcell(bitcell_base.bitcell_base):
     """
-    A single bit cell which is forced to store a 0.
+    A single bit cell (6T, 8T, etc.)
     This module implements the single memory cell used in the design. It
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = [props.bitcell.cell_1w1r.pin.bl0,
-                 props.bitcell.cell_1w1r.pin.br0,
-                 props.bitcell.cell_1w1r.pin.bl1,
-                 props.bitcell.cell_1w1r.pin.br1,
-                 props.bitcell.cell_1w1r.pin.wl0,
-                 props.bitcell.cell_1w1r.pin.wl1,
-                 props.bitcell.cell_1w1r.pin.vdd,
-                 props.bitcell.cell_1w1r.pin.gnd]
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "POWER", "GROUND"]
+    pin_names = [props.bitcell.cell_6t.pin.bl,
+                 props.bitcell.cell_6t.pin.br,
+                 props.bitcell.cell_6t.pin.wl,
+                 props.bitcell.cell_6t.pin.vdd,
+                 props.bitcell.cell_6t.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
 
     def __init__(self, name):
         super().__init__(name)
-        debug.info(2, "Create replica bitcell 1w+1r object")
+        debug.info(2, "Create replica bitcell object")
 
     def get_stage_effort(self, load):
         parasitic_delay = 1
@@ -44,18 +41,17 @@ class replica_bitcell_1w_1r(bitcell_base.bitcell_base):
         """Return the relative capacitance of the access transistor gates"""
 
         # FIXME: This applies to bitline capacitances as well.
-        # FIXME: sizing is not accurate with the handmade cell. Change once cell widths are fixed.
         access_tx_cin = parameter["6T_access_size"] / drc["minwidth_tx"]
         return 2 * access_tx_cin
 
+    def analytical_power(self, corner, load):
+        """Bitcell power in nW. Only characterizes leakage."""
+        from tech import spice
+        leakage = spice["bitcell_leakage"]
+        dynamic = 0 # FIXME
+        total_power = self.return_power(dynamic, leakage)
+        return total_power
+
     def build_graph(self, graph, inst_name, port_nets):
-        """Adds edges to graph. Multiport bitcell timing graph is too complex
-           to use the add_graph_edges function."""
-        debug.info(1, 'Adding edges for {}'.format(inst_name))
-        pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
-        pins = props.bitcell.cell_1w1r.pin
-        # Edges hardcoded here. Essentially wl->bl/br for the read port.
-        # Port 1 edges
-        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.bl1], self)
-        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.br1], self)
-        # Port 0 is a write port, so its timing is not considered here.
+        """Adds edges based on inputs/outputs. Overrides base class function."""
+        self.add_graph_edges(graph, port_nets)

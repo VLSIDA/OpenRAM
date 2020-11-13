@@ -72,30 +72,22 @@ class dff_buf(design.design):
         self.add_mod(self.inv2)
 
     def add_pins(self):
-        self.add_pin("D", "INPUT")
-        self.add_pin("Q", "OUTPUT")
-        self.add_pin("Qb", "OUTPUT")
-        self.add_pin("clk", "INPUT")
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
-
-        if props.dff_buff.add_body_contacts:
-            self.add_pin("vpb", "INPUT")
-            self.add_pin("vpn", "INPUT")
+        self.add_pin_list(props.dff_buf.port_names,
+                          props.dff_buf.port_types)
 
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",
                                     mod=self.dff)
 
-        self.connect_inst(["D", "qint", "clk", "vdd", "gnd"])
+        self.connect_inst([props.dff_buf.pin.D, "qint", props.dff_buf.pin.clk, props.dff_buf.pin.vdd, props.dff_buf.pin.gnd])
 
         self.inv1_inst=self.add_inst(name="dff_buf_inv1",
                                      mod=self.inv1)
-        self.connect_inst(["qint", "Qb", "vdd", "gnd"])
+        self.connect_inst(["qint", "Qb", props.dff_buf.pin.vdd, props.dff_buf.pin.gnd])
 
         self.inv2_inst=self.add_inst(name="dff_buf_inv2",
                                      mod=self.inv2)
-        self.connect_inst(["Qb", "Q", "vdd", "gnd"])
+        self.connect_inst(["Qb", props.dff_buf.pin.Q, props.dff_buf.pin.vdd, props.dff_buf.pin.gnd])
 
     def place_instances(self):
         # Add the DFF
@@ -129,7 +121,7 @@ class dff_buf(design.design):
             self.route_layer = "m1"
 
         # Route dff q to inv1 a
-        q_pin = self.dff_inst.get_pin("Q")
+        q_pin = self.dff_inst.get_pin(props.dff.pin.Q)
         a1_pin = self.inv1_inst.get_pin("A")
         mid1 = vector(a1_pin.cx(), q_pin.cy())
         self.add_path(q_pin.layer, [q_pin.center(), mid1, a1_pin.center()], width=q_pin.height())
@@ -146,30 +138,30 @@ class dff_buf(design.design):
     def add_layout_pins(self):
 
         # Continous vdd rail along with label.
-        vdd_pin=self.dff_inst.get_pin("vdd")
-        self.add_layout_pin(text="vdd",
+        vdd_pin=self.dff_inst.get_pin(props.dff.pin.vdd)
+        self.add_layout_pin(text=props.dff_buf.pin.vdd,
                             layer=vdd_pin.layer,
                             offset=vdd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
 
         # Continous gnd rail along with label.
-        gnd_pin=self.dff_inst.get_pin("gnd")
-        self.add_layout_pin(text="gnd",
+        gnd_pin=self.dff_inst.get_pin(props.dff.pin.gnd)
+        self.add_layout_pin(text=props.dff_buf.pin.gnd,
                             layer=gnd_pin.layer,
                             offset=gnd_pin.ll(),
                             width=self.width,
                             height=vdd_pin.height())
 
-        clk_pin = self.dff_inst.get_pin("clk")
-        self.add_layout_pin(text="clk",
+        clk_pin = self.dff_inst.get_pin(props.dff.pin.clk)
+        self.add_layout_pin(text=props.dff_buf.pin.clk,
                             layer=clk_pin.layer,
                             offset=clk_pin.ll(),
                             width=clk_pin.width(),
                             height=clk_pin.height())
 
-        din_pin = self.dff_inst.get_pin("D")
-        self.add_layout_pin(text="D",
+        din_pin = self.dff_inst.get_pin(props.dff_buf.pin.D)
+        self.add_layout_pin(text=props.dff_buf.pin.D,
                             layer=din_pin.layer,
                             offset=din_pin.ll(),
                             width=din_pin.width(),
@@ -178,7 +170,7 @@ class dff_buf(design.design):
         dout_pin = self.inv2_inst.get_pin("Z")
         mid_pos = dout_pin.center() + vector(self.m2_nonpref_pitch, 0)
         q_pos = mid_pos - vector(0, 2 * self.m2_nonpref_pitch)
-        self.add_layout_pin_rect_center(text="Q",
+        self.add_layout_pin_rect_center(text=props.dff_buf.pin.Q,
                                         layer="m2",
                                         offset=q_pos)
         self.add_path(self.route_layer, [dout_pin.center(), mid_pos, q_pos])

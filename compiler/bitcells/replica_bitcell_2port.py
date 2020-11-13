@@ -19,18 +19,8 @@ class replica_bitcell_2port(bitcell_base.bitcell_base):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = [props.bitcell.cell_2port.pin.bl0,
-                 props.bitcell.cell_2port.pin.br0,
-                 props.bitcell.cell_2port.pin.bl1,
-                 props.bitcell.cell_2port.pin.br1,
-                 props.bitcell.cell_2port.pin.wl0,
-                 props.bitcell.cell_2port.pin.wl1,
-                 props.bitcell.cell_2port.pin.vdd,
-                 props.bitcell.cell_2port.pin.gnd]
-    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"]
-
     def __init__(self, name):
-        super().__init__(name)
+        super().__init__(name, props.bitcell_2port)
         debug.info(2, "Create replica bitcell 2 port object")
 
     def get_stage_effort(self, load):

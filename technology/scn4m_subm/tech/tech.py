@@ -30,9 +30,6 @@ tech_modules = module_type()
 # Custom cell properties
 ###################################################
 cell_properties = cell_properties()
-cell_properties.bitcell.mirror.x = True
-cell_properties.bitcell.mirror.y = False
-
 
 ###################################################
 # Custom cell properties

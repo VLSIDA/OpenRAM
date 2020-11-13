@@ -10,7 +10,6 @@ from vector import vector
 from sram_factory import factory
 import debug
 from globals import OPTS
-from tech import cell_properties
 
 
 class sense_amp_array(design.design):
@@ -92,7 +91,6 @@ class sense_amp_array(design.design):
 
     def add_modules(self):
         self.amp = factory.create(module_type="sense_amp")
-
         self.add_mod(self.amp)
 
         # This is just used for measurements,
@@ -122,7 +120,7 @@ class sense_amp_array(design.design):
                 self.offsets.append(i * self.bitcell.width)
 
         for i, xoffset in enumerate(self.offsets[0:self.num_cols:self.words_per_row]):
-            if cell_properties.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
+            if self.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.amp_spacing
             else:
@@ -134,7 +132,7 @@ class sense_amp_array(design.design):
         # place spare sense amps (will share the same enable as regular sense amps)
         for i, xoffset in enumerate(self.offsets[self.num_cols:]):
             index = self.word_size + i
-            if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
+            if self.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.amp_width
             else:

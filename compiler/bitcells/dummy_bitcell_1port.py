@@ -17,15 +17,8 @@ class dummy_bitcell_1port(bitcell_base.bitcell_base):
     the layout and netlist should be available in the technology
     library.
     """
-    pin_names = [props.bitcell.cell_1port.pin.bl,
-                 props.bitcell.cell_1port.pin.br,
-                 props.bitcell.cell_1port.pin.wl,
-                 props.bitcell.cell_1port.pin.vdd,
-                 props.bitcell.cell_1port.pin.gnd]
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-
     def __init__(self, name):
-        super().__init__(name)
+        super().__init__(name, props.bitcell_1port)
         debug.info(2, "Create dummy bitcell")
 
 

@@ -70,7 +70,7 @@ class dff_array(design.design):
                                                        mod=self.dff)
                 instance_ports = [self.get_din_name(row, col),
                                   self.get_dout_name(row, col)]
-                for port in self.dff.pin_names:
+                for port in self.dff.pins:
                     if port != 'D' and port != 'Q':
                         instance_ports.append(port)
                 self.connect_inst(instance_ports)

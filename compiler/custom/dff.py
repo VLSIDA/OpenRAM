@@ -6,40 +6,19 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice
+from tech import spice
 from tech import cell_properties as props
-import utils
 
 
 class dff(design.design):
     """
     Memory address flip-flop
     """
-    if not props.dff.use_custom_ports:
-        pin_names = ["D", "Q", "clk", "vdd", "gnd"]
-        type_list = ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-        clk_pin = "clk"
-    else:
-        pin_names = props.dff.custom_port_list
-        type_list = props.dff.custom_type_list
-        clk_pin = props.dff.clk_pin
-    cell_size_layer = "boundary"
 
     def __init__(self, name="dff"):
         super().__init__(name)
 
-        (width, height) = utils.get_libcell_size(self.cell_name,
-                                                 GDS["unit"],
-                                                 layer[self.cell_size_layer])
-
-        pin_map = utils.get_libcell_pins(self.pin_names,
-                                         self.cell_name,
-                                         GDS["unit"])
-
-        self.width = width
-        self.height = height
-        self.pin_map = pin_map
-        self.add_pin_types(self.type_list)
+        self.clk_pin = props.dff.clk_pin
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
@@ -54,9 +33,9 @@ class dff(design.design):
     def calculate_effective_capacitance(self, load):
         """Computes effective capacitance. Results in fF"""
         c_load = load
-        c_para = spice["dff_out_cap"]#ff
+        c_para = spice["dff_out_cap"] # ff
         transition_prob = 0.5
-        return transition_prob*(c_load + c_para)
+        return transition_prob * (c_load + c_para)
 
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""

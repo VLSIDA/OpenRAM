@@ -65,10 +65,6 @@ class dff_buf_array(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        if props.dff_buff_array.add_body_contacts:
-            self.add_pin("vpb", "INPUT")
-            self.add_pin("vnb", "INPUT")
-
     def add_modules(self):
         self.dff = factory.create(module_type="dff_buf",
                                   inv1_size=self.inv1_size,
@@ -88,9 +84,6 @@ class dff_buf_array(design.design):
                                    "clk",
                                    "vdd",
                                    "gnd"]
-                if props.dff_buff_array.add_body_contacts:
-                    inst_ports.append("vpb")
-                    inst_ports.append("vnb")
                 self.connect_inst(inst_ports)
 
     def place_dff_array(self):
@@ -155,7 +148,7 @@ class dff_buf_array(design.design):
 
     def route_supplies(self):
         for row in range(self.rows):
-            vdd0_pin=self.dff_insts[row, 0].get_pin("vdd")
+            vdd0_pin=self.dff_insts[row, 0].get_pin(props.dff.pin.vdd)
             vddn_pin=self.dff_insts[row, self.columns - 1].get_pin("vdd")
             self.add_path(vdd0_pin.layer, [vdd0_pin.lc(), vddn_pin.rc()], width=vdd0_pin.height())
 

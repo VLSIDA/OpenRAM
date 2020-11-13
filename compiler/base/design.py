@@ -6,8 +6,9 @@
 # All rights reserved.
 #
 from hierarchy_design import hierarchy_design
-from utils import round_to_grid
+import utils
 import contact
+from tech import GDS, layer
 from tech import preferred_directions
 from tech import cell_properties as props
 from globals import OPTS
@@ -30,6 +31,26 @@ class design(hierarchy_design):
         elif not cell_name:
             cell_name = name
         super().__init__(name, cell_name)
+
+        # This means it is a custom cell...
+        if hasattr(props, name):
+            prop = getattr(props, name)
+            if prop.hard_cell:
+                # The pins get added from the spice file
+                debug.check(prop.port_names == self.pins,
+                            "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+                self.add_pin_types(prop.port_types)
+            
+                (width, height) = utils.get_libcell_size(self.cell_name,
+                                                         GDS["unit"],
+                                                         layer[prop.boundary_layer])
+
+                self.pin_map = utils.get_libcell_pins(self.pins,
+                                                      self.cell_name,
+                                                      GDS["unit"])
+
+                self.width = width
+                self.height = height
 
         self.setup_multiport_constants()
 
@@ -232,8 +253,7 @@ class design(hierarchy_design):
         #print(contact1)
         pitch = contact_width + layer_space
 
-        return round_to_grid(pitch)
-
+        return utils.round_to_grid(pitch)
 
     def setup_multiport_constants(self):
         """

@@ -6,9 +6,8 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice, parameter, drc
+from tech import spice, parameter, drc
 import logical_effort
-import utils
 
 
 class nand3_dec(design.design):
@@ -16,25 +15,8 @@ class nand3_dec(design.design):
     3-input NAND decoder for address decoders.
     """
 
-    pin_names = ["A", "B", "C", "Z", "vdd", "gnd"]
-    type_list = ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
-    cell_size_layer = "boundary"
-
     def __init__(self, name="nand3_dec", height=None):
         super().__init__(name)
-
-        (width, height) = utils.get_libcell_size(self.cell_name,
-                                                 GDS["unit"],
-                                                 layer[self.cell_size_layer])
-
-        pin_map = utils.get_libcell_pins(self.pin_names,
-                                         self.cell_name,
-                                         GDS["unit"])
-
-        self.width = width
-        self.height = height
-        self.pin_map = pin_map
-        self.add_pin_types(self.type_list)
 
         # FIXME: For now...
         size = 1

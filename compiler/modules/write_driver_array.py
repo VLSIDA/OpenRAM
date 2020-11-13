@@ -12,7 +12,6 @@ from tech import drc
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
-from tech import cell_properties
 
 
 class write_driver_array(design.design):
@@ -161,7 +160,7 @@ class write_driver_array(design.design):
                 self.offsets.append(i * self.driver_spacing)
 
         for i, xoffset in enumerate(self.offsets[0:self.columns:self.words_per_row]):
-            if cell_properties.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
+            if self.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:
@@ -174,7 +173,7 @@ class write_driver_array(design.design):
         for i, xoffset in enumerate(self.offsets[self.columns:]):
             index = self.word_size + i
 
-            if cell_properties.bitcell.mirror.y and (index + self.column_offset) % 2:
+            if self.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.driver.width
             else:

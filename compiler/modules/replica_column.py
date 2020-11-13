@@ -5,7 +5,7 @@
 #
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import cell_properties
+from tech import cell_properties as props
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
@@ -30,11 +30,9 @@ class replica_column(bitcell_base_array):
         self.replica_bit = replica_bit
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl + rows + self.right_rbl
-        try:
-            if not cell_properties.bitcell.end_caps:
-                self.total_size += 2
-        except AttributeError:
-            self.total_size += 2
+
+        # For end caps
+        self.total_size += 2
 
         self.column_offset = column_offset
 
@@ -82,20 +80,17 @@ class replica_column(bitcell_base_array):
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
         self.add_mod(self.dummy_cell)
         try:
-            edge_module_type = ("col_cap" if cell_properties.bitcell.end_caps else "dummy")
+            edge_module_type = ("col_cap" if self.cell.end_caps else "dummy")
         except AttributeError:
             edge_module_type = "dummy"
         self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
         self.add_mod(self.edge_cell)
+
         # Used for pin names only
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         self.cell_inst = {}
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
 
         for row in range(self.total_size):
             name="rbc_{0}".format(row)
@@ -113,7 +108,7 @@ class replica_column(bitcell_base_array):
             elif (row == 0 or row == self.total_size - 1):
                 self.cell_inst[row]=self.add_inst(name=name,
                                                   mod=self.edge_cell)
-                if end_caps_enabled:
+                if self.cell.end_caps:
                     self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
                 else:
                     self.connect_inst(self.get_bitcell_pins(row, 0))
@@ -131,13 +126,13 @@ class replica_column(bitcell_base_array):
         # column that needs to be flipped.
         dir_y = False
         xoffset = 0
-        if cell_properties.bitcell.mirror.y and self.column_offset % 2:
+        if self.replica_cell.mirror.y and self.column_offset % 2:
             dir_y = True
             xoffset = self.replica_cell.width
 
         for row in range(self.total_size):
             # name = "bit_r{0}_{1}".format(row, "rbl")
-            dir_x = cell_properties.bitcell.mirror.x and (row + rbl_offset) % 2
+            dir_x = self.replica_cell.mirror.x and (row + rbl_offset) % 2
 
             offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
 
@@ -169,12 +164,7 @@ class replica_column(bitcell_base_array):
                                 width=bl_pin.width(),
                                 height=self.height)
 
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
-
-        if end_caps_enabled:
+        if self.cell.end_caps:
             row_range_max = self.total_size - 1
             row_range_min = 1
         else:

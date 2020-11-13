@@ -7,8 +7,6 @@
 #
 import debug
 import design
-import utils
-from tech import GDS, layer
 from tech import cell_properties as props
 
 
@@ -20,32 +18,9 @@ class write_driver(design.design):
     the technology library.
     """
 
-    pin_names = [props.write_driver.pin.din,
-                 props.write_driver.pin.bl,
-                 props.write_driver.pin.br,
-                 props.write_driver.pin.en,
-                 props.write_driver.pin.vdd,
-                 props.write_driver.pin.gnd]
-
-    type_list = ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    cell_size_layer = "boundary"
-
     def __init__(self, name):
         super().__init__(name)
         debug.info(2, "Create write_driver")
-
-        (width, height) = utils.get_libcell_size(self.cell_name,
-                                                 GDS["unit"],
-                                                 layer[self.cell_size_layer])
-
-        pin_map = utils.get_libcell_pins(self.pin_names,
-                                         self.cell_name,
-                                         GDS["unit"])
-
-        self.width = width
-        self.height = height
-        self.pin_map = pin_map
-        self.add_pin_types(self.type_list)
 
     def get_bl_names(self):
         return props.write_driver.pin.bl
@@ -64,7 +39,7 @@ class write_driver(design.design):
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""
         # This is approximated from SCMOS. It has roughly 5 3x transistor gates.
-        return 5*3
+        return 5 * 3
 
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""

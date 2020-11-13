@@ -18,19 +18,22 @@ class bitcell_base(design.design):
     """
     Base bitcell parameters to be over-riden.
     """
-    cell_size_layer = "boundary"
-
-    def __init__(self, name, hard_cell=True):
+    def __init__(self, name, prop=None):
         design.design.__init__(self, name)
 
-        if hard_cell:
+        if prop:
+            self.pins = prop.port_names
+            self.add_pin_types(prop.port_types)
+            self.nets_match = self.do_nets_exist(prop.storage_nets)
+            self.mirror = prop.mirror
+            self.end_caps = prop.end_caps
+        
             (self.width, self.height) = utils.get_libcell_size(self.cell_name,
                                                                GDS["unit"],
-                                                               layer[self.cell_size_layer])
-            self.pin_map = utils.get_libcell_pins(self.pin_names,
+                                                               layer[prop.boundary_layer])
+            self.pin_map = utils.get_libcell_pins(self.pins,
                                                   self.cell_name,
                                                   GDS["unit"])
-            self.add_pin_types(self.type_list)
 
     def get_stage_effort(self, load):
         parasitic_delay = 1

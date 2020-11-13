@@ -7,7 +7,6 @@
 #
 import debug
 import design
-from tech import cell_properties
 from sram_factory import factory
 from globals import OPTS
 
@@ -174,7 +173,7 @@ class bitcell_base_array(design.design):
         tempx = xoffset
         dir_y = False
         # If we mirror the current cell on the y axis adjust the x position
-        if cell_properties.bitcell.mirror.y and (col + col_offset) % 2:
+        if self.cell.mirror.y and (col + col_offset) % 2:
             tempx = xoffset + self.cell.width
             dir_y = True
         return (tempx, dir_y)
@@ -183,7 +182,7 @@ class bitcell_base_array(design.design):
         tempy = yoffset
         dir_x = False
         # If we mirror the current cell on the x axis adjust the y position
-        if cell_properties.bitcell.mirror.x and (row + row_offset) % 2:
+        if self.cell.mirror.x and (row + row_offset) % 2:
             tempy = yoffset + self.cell.height
             dir_x = True
         return (tempy, dir_x)

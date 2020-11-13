@@ -26,12 +26,9 @@ class col_cap_array(bitcell_base_array):
     def create_netlist(self):
         """ Create and connect the netlist """
         # This will create a default set of bitline/wordline names
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             self.create_all_wordline_names()
         self.create_all_bitline_names()
 
@@ -50,8 +47,6 @@ class col_cap_array(bitcell_base_array):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
-
-        self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         """ Create the module instances used in this design """

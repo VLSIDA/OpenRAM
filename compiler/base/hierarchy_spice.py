@@ -78,6 +78,7 @@ class spice():
         """ Adds a pin_list to the pins list """
         # The type list can be a single type for all pins
         # or a list that is the same length as the pin list.
+            
         if type(pin_type)==str:
             for pin in pin_list:
                 debug.check(pin_type in self.valid_signal_types,
@@ -100,12 +101,12 @@ class spice():
            Typically, should only be used for handmade cells.
         """
         # This only works if self.pins == bitcell.pin_names
-        if self.pin_names != self.pins:
-            debug.error("{} spice subcircuit port names do not match pin_names\
+        if len(type_list) != len(self.pins):
+            debug.error("{} spice subcircuit number of port types does not match number of pins\
                       \n SPICE names={}\
                       \n Module names={}\
-                      ".format(self.name, self.pins, self.pin_names), 1)
-        self.pin_type = {pin: type for pin, type in zip(self.pin_names, type_list)}
+                      ".format(self.name, self.pins, type_list), 1)
+        self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """

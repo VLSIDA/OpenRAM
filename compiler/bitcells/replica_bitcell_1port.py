@@ -12,18 +12,18 @@ from tech import parameter, drc
 import logical_effort
 
 
-class replica_bitcell(bitcell_base.bitcell_base):
+class replica_bitcell_1port(bitcell_base.bitcell_base):
     """
     A single bit cell (6T, 8T, etc.)
     This module implements the single memory cell used in the design. It
     is a hand-made cell, so the layout and netlist should be available in
     the technology library. """
 
-    pin_names = [props.bitcell.cell_6t.pin.bl,
-                 props.bitcell.cell_6t.pin.br,
-                 props.bitcell.cell_6t.pin.wl,
-                 props.bitcell.cell_6t.pin.vdd,
-                 props.bitcell.cell_6t.pin.gnd]
+    pin_names = [props.bitcell.cell_1port.pin.bl,
+                 props.bitcell.cell_1port.pin.br,
+                 props.bitcell.cell_1port.pin.wl,
+                 props.bitcell.cell_1port.pin.vdd,
+                 props.bitcell.cell_1port.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
 
     def __init__(self, name):

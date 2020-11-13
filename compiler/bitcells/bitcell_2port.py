@@ -18,21 +18,21 @@ class bitcell_2port(bitcell_base.bitcell_base):
     library.
     """
 
-    pin_names = [props.bitcell.cell_1rw1r.pin.bl0,
-                 props.bitcell.cell_1rw1r.pin.br0,
-                 props.bitcell.cell_1rw1r.pin.bl1,
-                 props.bitcell.cell_1rw1r.pin.br1,
-                 props.bitcell.cell_1rw1r.pin.wl0,
-                 props.bitcell.cell_1rw1r.pin.wl1,
-                 props.bitcell.cell_1rw1r.pin.vdd,
-                 props.bitcell.cell_1rw1r.pin.gnd]
+    pin_names = [props.bitcell.cell_2port.pin.bl0,
+                 props.bitcell.cell_2port.pin.br0,
+                 props.bitcell.cell_2port.pin.bl1,
+                 props.bitcell.cell_2port.pin.br1,
+                 props.bitcell.cell_2port.pin.wl0,
+                 props.bitcell.cell_2port.pin.wl1,
+                 props.bitcell.cell_2port.pin.vdd,
+                 props.bitcell.cell_2port.pin.gnd]
     type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
                  "INPUT", "INPUT", "POWER", "GROUND"]
     storage_nets = ['Q', 'Q_bar']
 
     def __init__(self, name):
         super().__init__(name)
-        debug.info(2, "Create bitcell with 1RW and 1R Port")
+        debug.info(2, "Create bitcell with 2 ports")
 
         self.nets_match = self.do_nets_exist(self.storage_nets)
 
@@ -46,7 +46,7 @@ class bitcell_2port(bitcell_base.bitcell_base):
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
         """
-        pin_name = props.bitcell.cell_1rw1r.pin
+        pin_name = props.bitcell.cell_2port.pin
         bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
                         "{0}_{1}".format(pin_name.br0, col),
                         "{0}_{1}".format(pin_name.bl1, col),
@@ -59,43 +59,43 @@ class bitcell_2port(bitcell_base.bitcell_base):
 
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        return [props.bitcell.cell_1rw1r.pin.wl0,
-                props.bitcell.cell_1rw1r.pin.wl1]
+        return [props.bitcell.cell_2port.pin.wl0,
+                props.bitcell.cell_2port.pin.wl1]
 
     def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
-        return [props.bitcell.cell_1rw1r.pin.bl0,
-                props.bitcell.cell_1rw1r.pin.br0,
-                props.bitcell.cell_1rw1r.pin.bl1,
-                props.bitcell.cell_1rw1r.pin.br1]
+        return [props.bitcell.cell_2port.pin.bl0,
+                props.bitcell.cell_2port.pin.br0,
+                props.bitcell.cell_2port.pin.bl1,
+                props.bitcell.cell_2port.pin.br1]
 
     def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
-        return [props.bitcell.cell_1rw1r.pin.bl0,
-                props.bitcell.cell_1rw1r.pin.bl1]
+        return [props.bitcell.cell_2port.pin.bl0,
+                props.bitcell.cell_2port.pin.bl1]
 
     def get_all_br_names(self):
         """ Creates a list of all br pins names """
-        return [props.bitcell.cell_1rw1r.pin.br0,
-                props.bitcell.cell_1rw1r.pin.br1]
+        return [props.bitcell.cell_2port.pin.br0,
+                props.bitcell.cell_2port.pin.br1]
 
     def get_read_bl_names(self):
         """ Creates a list of bl pin names associated with read ports """
-        return [props.bitcell.cell_1rw1r.pin.bl0,
-                props.bitcell.cell_1rw1r.pin.bl1]
+        return [props.bitcell.cell_2port.pin.bl0,
+                props.bitcell.cell_2port.pin.bl1]
 
     def get_read_br_names(self):
         """ Creates a list of br pin names associated with read ports """
-        return [props.bitcell.cell_1rw1r.pin.br0,
-                props.bitcell.cell_1rw1r.pin.br1]
+        return [props.bitcell.cell_2port.pin.br0,
+                props.bitcell.cell_2port.pin.br1]
 
     def get_write_bl_names(self):
         """ Creates a list of bl pin names associated with write ports """
-        return [props.bitcell.cell_1rw1r.pin.bl0]
+        return [props.bitcell.cell_2port.pin.bl0]
 
     def get_write_br_names(self):
         """ Creates a list of br pin names asscociated with write ports"""
-        return [props.bitcell.cell_1rw1r.pin.br1]
+        return [props.bitcell.cell_2port.pin.br1]
 
     def get_bl_name(self, port=0):
         """Get bl name by port"""
@@ -118,7 +118,7 @@ class bitcell_2port(bitcell_base.bitcell_base):
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
         # Edges hardcoded here. Essentially wl->bl/br for both ports.
         # Port 0 edges
-        pins = props.bitcell.cell_1rw1r.pin
+        pins = props.bitcell.cell_2port.pin
         graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.bl0], self)
         graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.br0], self)
         # Port 1 edges

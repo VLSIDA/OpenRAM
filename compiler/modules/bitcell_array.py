@@ -62,7 +62,7 @@ class bitcell_array(bitcell_base_array):
             for row in range(self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
-                                                    mod=self.cell)
+                                                       mod=self.cell)
                 self.connect_inst(self.get_bitcell_pins(row, col))
 
     def analytical_power(self, corner, load):

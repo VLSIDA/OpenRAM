@@ -1,7 +1,7 @@
 
-*********************** "cell_6t" ******************************
-.SUBCKT replica_cell_6t bl br wl vdd gnd
-* SPICE3 file created from cell_6t.ext - technology: scmos
+*********************** "cell_1rw" ******************************
+.SUBCKT replica_cell_1rw bl br wl vdd gnd
+* SPICE3 file created from cell_1rw.ext - technology: scmos
 
 * Inverter 1
 M1000 Q vdd vdd vdd p w=0.6u l=0.8u

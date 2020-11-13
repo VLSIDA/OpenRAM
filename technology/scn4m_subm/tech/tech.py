@@ -33,12 +33,6 @@ cell_properties = cell_properties()
 cell_properties.bitcell.mirror.x = True
 cell_properties.bitcell.mirror.y = False
 
-cell_properties.names["bitcell_1port"] = "cell_6t"
-cell_properties.names["dummy_bitcell_1port"] = "dummy_cell_6t"
-cell_properties.names["replcia_bitcell_1port"] = "replica_cell_6t"
-cell_properties.names["bitcell_2port"] = "cell_2rw"
-cell_properties.names["dummy_bitcell_2port"] = "dummy_cell_2rw"
-cell_properties.names["replica_bitcell_2port"] = "replica_cell_2rw"
 
 ###################################################
 # Custom cell properties

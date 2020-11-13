@@ -1,6 +1,6 @@
 
-*********************** "dummy_cell_6t" ******************************
-.SUBCKT dummy_cell_6t bl br wl vdd gnd
+*********************** "dummy_cell_1rw" ******************************
+.SUBCKT dummy_cell_1rw bl br wl vdd gnd
 
 * Inverter 1
 M1000 Q Q_bar vdd vdd p w=0.6u l=0.8u

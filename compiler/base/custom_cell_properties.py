@@ -11,7 +11,7 @@ from globals import OPTS
 class _pins:
     def __init__(self, pin_dict):
         # make the pins elements of the class to allow "." access.
-        # For example: props.bitcell.cell_6t.pin.bl = "foobar"
+        # For example: props.bitcell.cell_1port.pin.bl = "foobar"
         for k, v in pin_dict.items():
             self.__dict__[k] = v
 
@@ -48,49 +48,36 @@ class _pgate:
 
 
 class _bitcell:
-    def __init__(self, mirror, cell_6t, cell_1rw1r, cell_1w1r):
+    def __init__(self, mirror, cell_1port, cell_2port):
         self.mirror = mirror
-        self._6t = cell_6t
-        self._1rw1r = cell_1rw1r
-        self._1w1r = cell_1w1r
+        self._1rw = cell_1port
+        self._2rw = cell_2port
 
     def _default():
         axis = _mirror_axis(True, False)
 
-        cell_6t = _cell({'bl': 'bl',
-                         'br': 'br',
-                         'wl': 'wl'})
+        cell_1port = _cell({'bl': 'bl',
+                            'br': 'br',
+                            'wl': 'wl'})
 
-        cell_1rw1r = _cell({'bl0': 'bl0',
+        cell_2port = _cell({'bl0': 'bl0',
                             'br0': 'br0',
                             'bl1': 'bl1',
                             'br1': 'br1',
                             'wl0': 'wl0',
                             'wl1': 'wl1'})
 
-        cell_1w1r = _cell({'bl0': 'bl0',
-                           'br0': 'br0',
-                           'bl1': 'bl1',
-                           'br1': 'br1',
-                           'wl0': 'wl0',
-                           'wl1': 'wl1'})
-
-        return _bitcell(cell_6t=cell_6t,
-                        cell_1rw1r=cell_1rw1r,
-                        cell_1w1r=cell_1w1r,
+        return _bitcell(cell_1port=cell_1port,
+                        cell_2port=cell_2port,
                         mirror=axis)
 
     @property
-    def cell_6t(self):
-        return self._6t
+    def cell_1port(self):
+        return self._1rw
 
     @property
-    def cell_1rw1r(self):
-        return self._1rw1r
-
-    @property
-    def cell_1w1r(self):
-        return self._1w1r
+    def cell_2port(self):
+        return self._2rw
 
 
 class _dff:
@@ -127,22 +114,18 @@ class cell_properties():
     """
     def __init__(self):
         self.names = {}
-        self.names["bitcell"] = "cell_6t"
-        self.names["bitcell_1rw_1r"] = "cell_1rw_1r"
-        self.names["bitcell_1w_1r"] = "cell_1w_1r"
-        self.names["dummy_bitcell"] = "dummy_cell_6t"
-        self.names["dummy_bitcell_1rw_1r"] = "dummy_cell_1rw_1r"
-        self.names["dummy_bitcell_1w_1r"] = "dummy_cell_1w_1r"
-        self.names["replica_bitcell"] = "replica_cell_6t"
-        self.names["replica_bitcell_1rw_1r"] = "replica_cell_1rw_1r"
-        self.names["replica_bitcell_1w_1r"] = "replica_cell_1w_1r"
-        self.names["col_cap_bitcell_6t"] = "col_cap_cell_6t"
-        self.names["col_cap_bitcell_1rw_1r"] = "col_cap_cell_1rw_1r"
-        self.names["col_cap_bitcell_1w_1r"] = "col_cap_cell_1w_1r"
-        self.names["row_cap_bitcell_6t"] = "row_cap_cell_6t"
-        self.names["row_cap_bitcell_1rw_1r"] = "row_cap_cell_1rw_1r"
-        self.names["row_cap_bitcell_1w_1r"] = "row_cap_cell_1w_1r"
 
+        self.names["bitcell_1port"] = "cell_1rw"
+        self.names["bitcell_2port"] = "cell_2rw"
+        self.names["dummy_bitcell_1port"] = "dummy_cell_1rw"
+        self.names["dummy_bitcell_2port"] = "dummy_cell_2rw"
+        self.names["replica_bitcell_1port"] = "replica_cell_1rw"
+        self.names["replica_bitcell_2port"] = "replica_cell_2rw"
+        self.names["col_cap_bitcell_1port"] = "col_cap_cell_1rw"
+        self.names["col_cap_bitcell_2port"] = "col_cap_cell_2rw"
+        self.names["row_cap_bitcell_1port"] = "row_cap_cell_1rw"
+        self.names["row_cap_bitcell_2port"] = "row_cap_cell_2rw"
+        
         self._bitcell = _bitcell._default()
 
         self._ptx = _ptx(model_is_subckt=False,

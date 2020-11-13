@@ -10,22 +10,26 @@ from tech import cell_properties as props
 import bitcell_base
 
 
-class dummy_bitcell(bitcell_base.bitcell_base):
+class dummy_bitcell_2port(bitcell_base.bitcell_base):
     """
-    A single bit cell (6T, 8T, etc.)  This module implements the
-    single memory cell used in the design. It is a hand-made cell, so
-    the layout and netlist should be available in the technology
-    library.
-    """
-    pin_names = [props.bitcell.cell_6t.pin.bl,
-                 props.bitcell.cell_6t.pin.br,
-                 props.bitcell.cell_6t.pin.wl,
-                 props.bitcell.cell_6t.pin.vdd,
-                 props.bitcell.cell_6t.pin.gnd]
-    type_list = ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
+    A single bit cell which is forced to store a 0.
+    This module implements the single memory cell used in the design. It
+    is a hand-made cell, so the layout and netlist should be available in
+    the technology library. """
+
+    pin_names = [props.bitcell.cell_2port.pin.bl0,
+                 props.bitcell.cell_2port.pin.br0,
+                 props.bitcell.cell_2port.pin.bl1,
+                 props.bitcell.cell_2port.pin.br1,
+                 props.bitcell.cell_2port.pin.wl0,
+                 props.bitcell.cell_2port.pin.wl1,
+                 props.bitcell.cell_2port.pin.vdd,
+                 props.bitcell.cell_2port.pin.gnd]
+    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
+                 "INPUT", "INPUT", "POWER", "GROUND"]
 
     def __init__(self, name):
         super().__init__(name)
-        debug.info(2, "Create dummy bitcell")
+        debug.info(2, "Create dummy bitcell 2 port object")
 
 

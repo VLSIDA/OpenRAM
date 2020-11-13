@@ -30,9 +30,13 @@ num_lvs_runs = 0
 num_pex_runs = 0
 
 
-def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
+def write_drc_script(cell_name, gds_name, extract, final_verification=False, output_path=None):
     """ Write a Calibre runset file and script to run DRC """
     # the runset file contains all the options to run calibre
+
+    if not output_path:
+        output_path = OPTS.openram_temp
+        
     from tech import drc
     drc_rules = drc["drc_rules"]
 
@@ -68,8 +72,11 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     return drc_runset
 
 
-def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
+def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, output_path=None):
     """ Write a Calibre runset file and script to run LVS """
+
+    if not output_path:
+        output_path = OPTS.openram_temp
 
     from tech import drc
     lvs_rules = drc["lvs_rules"]
@@ -132,8 +139,12 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_pa
     return lvs_runset
 
 
-def write_pex_script(cell_name, extract, output, final_verification, output_path):
+def write_pex_script(cell_name, extract, output, final_verification=False, output_path=None):
     """ Write a pex script that can either just extract the netlist or the netlist+parasitics """
+
+    if not output_path:
+        output_path = OPTS.openram_temp
+    
     if output == None:
         output = cell_name + ".pex.sp"
 
@@ -142,7 +153,7 @@ def write_pex_script(cell_name, extract, output, final_verification, output_path
     if not os.path.isfile(output_path + cell_name + ".lvs.report"):
         gds_name = output_path +"/"+ cell_name + ".gds"
         sp_name = output_path +"/"+ cell_name + ".sp"
-        run_drc(cell_name, gds_name)
+        run_drc(cell_name, gds_name, sp_name)
         run_lvs(cell_name, gds_name, sp_name)
 
     from tech import drc
@@ -181,7 +192,7 @@ def write_pex_script(cell_name, extract, output, final_verification, output_path
     return pex_runset
 
 
-def run_drc(cell_name, gds_name, extract=False, final_verification=False):
+def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
 

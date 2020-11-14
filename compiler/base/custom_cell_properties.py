@@ -13,13 +13,11 @@ class _cell:
         # Specifies the order in the spice modules
         self._port_order = port_order
         # Specifies the port directions
-        self._port_types = port_types
+        self._port_types = {x: y for (x, y) in zip(port_order, port_types)}
         # Specifies a map from OpenRAM names to cell names
         # by default it is 1:1
         if not port_map:
-            port_map = {}
-            for pin in port_order:
-                port_map[pin] = pin
+            port_map = {x: x for x in port_order}
         self._pins = _pins(port_map)
 
         self._boundary_layer = boundary_layer
@@ -35,9 +33,8 @@ class _cell:
     def port_names(self):
         return [getattr(self._pins, x) for x in self._port_order]
 
-    @property
     def port_types(self):
-        return self._port_types
+        return [self._port_types[x] for x in self._port_order]
 
     @property
     def boundary_layer(self):
@@ -143,7 +140,7 @@ class cell_properties():
                                 ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
         self._bitcell_1port = _bitcell(["bl", "br", "wl", "vdd", "gnd"],
-                                       ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND<"])
+                                       ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
         self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])

@@ -39,7 +39,7 @@ class design(hierarchy_design):
                 # The pins get added from the spice file
                 debug.check(prop.port_names() == self.pins,
                             "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names(), self.pins))
-                self.add_pin_types(prop.port_types)
+                self.add_pin_types(prop.port_types())
             
                 (width, height) = utils.get_libcell_size(self.cell_name,
                                                          GDS["unit"],

@@ -67,7 +67,7 @@ class sense_amp(design.design):
         """Returns name used for enable net"""
         # FIXME: A better programmatic solution to designate pins
         enable_name = self.en_name
-        debug.check(enable_name in self.pin_names, "Enable name {} not found in pin list".format(enable_name))
+        debug.check(enable_name in self.pins, "Enable name {} not found in pin list".format(enable_name))
         return enable_name
 
     def build_graph(self, graph, inst_name, port_nets):

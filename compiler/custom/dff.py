@@ -7,7 +7,6 @@
 #
 import design
 from tech import spice
-from tech import cell_properties as props
 
 
 class dff(design.design):
@@ -17,8 +16,6 @@ class dff(design.design):
 
     def __init__(self, name="dff"):
         super().__init__(name)
-
-        self.clk_pin = props.dff.pin.clk
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

@@ -70,26 +70,14 @@ class _bitcell(_cell):
     def __init__(self, port_order, port_types, port_map=None, storage_nets=["Q", "Q_bar"], mirror=None, end_caps=False):
         super().__init__(port_order, port_types, port_map)
 
-        self._end_caps = end_caps
+        self.end_caps = end_caps
         
         if not mirror:
-            self._mirror = _mirror_axis(True, False)
+            self.mirror = _mirror_axis(True, False)
         else:
-            self._mirror = mirror
+            self.mirror = mirror
 
-        self._storage_nets = storage_nets
-        
-    @property
-    def end_caps(self):
-        return self._end_caps
-    
-    @property
-    def mirror(self):
-        return self._mirror
-    
-    @property
-    def storage_nets(self):
-        return self._storage_nets
+        self.storage_nets = storage_nets
 
     
 class cell_properties():

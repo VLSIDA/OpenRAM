@@ -7,7 +7,7 @@
 #
 import debug
 import design
-from tech import custom_properties as props
+from tech import cell_properties as props
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -146,7 +146,7 @@ class dff_array(design.design):
                                            start=vector(0, clk_ypos),
                                            end=vector(self.width, clk_ypos))
         for col in range(self.columns):
-            clk_pin = self.dff_insts[0, col].get_pin(self.dff.clk_pin)
+            clk_pin = self.dff_insts[0, col].get_pin(props.dff.pin.clk)
             # Make a vertical strip for each column
             self.add_rect(layer="m2",
                           offset=clk_pin.ll().scale(1, 0),

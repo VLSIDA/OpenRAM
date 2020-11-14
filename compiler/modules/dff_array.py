@@ -7,6 +7,7 @@
 #
 import debug
 import design
+from tech import custom_properties as props
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
@@ -137,7 +138,7 @@ class dff_array(design.design):
                                     height=dout_pin.height())
 
         # Create vertical spines to a single horizontal rail
-        clk_pin = self.dff_insts[0, 0].get_pin(self.dff.clk_pin)
+        clk_pin = self.dff_insts[0, 0].get_pin(props.dff.pin.clk)
         clk_ypos = 2 * self.m3_pitch + self.m3_width
         debug.check(clk_pin.layer == "m2", "DFF clk pin not on metal2")
         self.add_layout_pin_segment_center(text="clk",

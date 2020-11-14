@@ -19,7 +19,7 @@ class bitcell_2port(bitcell_base.bitcell_base):
     """
 
     def __init__(self, name):
-        super().__init__(name, props.bitcell_2port)
+        super().__init__(name, prop=props.bitcell_2port)
         debug.info(2, "Create bitcell with 2 ports")
 
         self.bl_names = [props.bitcell_2port.pin.bl0, props.bitcell_2port.pin.bl1]

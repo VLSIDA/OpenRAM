@@ -19,7 +19,7 @@ class bitcell_1port(bitcell_base.bitcell_base):
     """
 
     def __init__(self, name):
-        super().__init__(name, props.bitcell_1port)
+        super().__init__(name, prop=props.bitcell_1port)
         debug.info(2, "Create bitcell")
 
     def get_all_wl_names(self):

@@ -7,6 +7,7 @@
 #
 import design
 from tech import spice, parameter, drc
+from tech import cell_properties as props
 import logical_effort
 
 
@@ -16,7 +17,7 @@ class nand2_dec(design.design):
     """
 
     def __init__(self, name="nand2_dec", height=None):
-        super().__init__(name)
+        super().__init__(name, prop=props.nand2_dec)
 
         # FIXME: For now...
         size = 1

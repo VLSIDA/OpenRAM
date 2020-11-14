@@ -19,7 +19,7 @@ class write_driver(design.design):
     """
 
     def __init__(self, name):
-        super().__init__(name)
+        super().__init__(name, prop=props.write_driver)
         debug.info(2, "Create write_driver")
 
     def get_bl_names(self):

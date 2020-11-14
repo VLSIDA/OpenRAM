@@ -18,16 +18,13 @@ class _cell:
         if not port_map:
             port_map = {x: x for x in port_order}
 
-        self.set_ports(port_order, port_map)
-
-    def set_ports(self,
-                  port_order,
-                  port_map):
         # Update mapping of names
         self._pins = _pins(port_map)
         self._port_order = port_order
+        
         # Update ordered name list
         self._port_names = [getattr(self._pins, x) for x in self._port_order]
+        
         # Update ordered type list
         self._port_types = [self._port_types_map[x] for x in port_order]
         
@@ -44,13 +41,40 @@ class _cell:
         return self._port_names
 
     @property
+    def port_order(self):
+        return self._port_order
+
+    @port_order.setter
+    def port_order(self, x):
+        self._port_order = x
+        # Update ordered name list in the new order
+        self._port_names = [getattr(self._pins, x) for x in self._port_order]
+        # Update ordered type list in the new order
+        self._port_types = [self._port_types_map[x] for x in self._port_order]
+
+    @property
+    def port_map(self):
+        return self._port_map
+    
+    @port_map.setter
+    def port_map(self, x):
+        self._port_map = x
+        self._pins = _pins(x)
+        # Update ordered name list to use the new names
+        self._port_names = [getattr(self._pins, x) for x in self._port_order]
+    
+    @property
     def port_types(self):
         return self._port_types
 
     @property
     def boundary_layer(self):
         return self._boundary_layer
-    
+
+    @boundary_layer.setter
+    def boundary_layer(self, x):
+        self._boundary_layer = x
+        
     
 class _pins:
     def __init__(self, pin_dict):
@@ -116,13 +140,16 @@ class cell_properties():
 
         self._pgate = _pgate(add_implants=False)
 
+        self._inv_dec = _cell(["A", "Z", "vdd", "gnd"],
+                              ["INPUT", "OUTPUT", "POWER", "GROUND"])
+        
         self._nand2_dec = _cell(["A", "B", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._nand2_dec = _cell(["A", "B", "C", "Z", "vdd", "gnd"],
+        self._nand3_dec = _cell(["A", "B", "C", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._nand2_dec = _cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
+        self._nand4_dec = _cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
         self._dff = _cell(["D", "Q", "clk", "vdd", "gnd"],
@@ -152,6 +179,22 @@ class cell_properties():
     def pgate(self):
         return self._pgate
 
+    @property
+    def inv_dec(self):
+        return self._inv_dec
+
+    @property
+    def nand2_dec(self):
+        return self._nand2_dec
+    
+    @property
+    def nand3_dec(self):
+        return self._nand3_dec
+    
+    @property
+    def nand4_dec(self):
+        return self._nand4_dec
+    
     @property
     def dff(self):
         return self._dff

@@ -21,7 +21,7 @@ class sense_amp(design.design):
     """
 
     def __init__(self, name="sense_amp"):
-        super().__init__(name)
+        super().__init__(name, prop=props.sense_amp)
         debug.info(2, "Create sense_amp")
 
     def get_bl_names(self):

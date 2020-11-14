@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import design
+from tech import cell_properties as props
 from tech import spice
 
 
@@ -15,7 +16,7 @@ class dff(design.design):
     """
 
     def __init__(self, name="dff"):
-        super().__init__(name)
+        super().__init__(name, prop=props.dff)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

@@ -10,21 +10,13 @@ from tech import cell_properties as props
 import bitcell_base
 
 
-class col_cap_bitcell_1rw_1r(bitcell_base.bitcell_base):
+class col_cap_bitcell_2port(bitcell_base.bitcell_base):
     """
     Column end cap cell. 
     """
 
-    pin_names = [props.bitcell.cell_1rw1r.pin.bl0,
-                 props.bitcell.cell_1rw1r.pin.br0,
-                 props.bitcell.cell_1rw1r.pin.bl1,
-                 props.bitcell.cell_1rw1r.pin.br1,
-                 props.bitcell.cell_1rw1r.pin.vdd]
-    type_list = ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT",
-                 "POWER", "GROUND"]
-
     def __init__(self, name="col_cap_cell_1rw_1r"):
-        bitcell_base.bitcell_base.__init__(self, name)
-        debug.info(2, "Create col_cap bitcell 1rw+1r object")
+        bitcell_base.bitcell_base.__init__(self, name, prop=props.bitcell_2port)
+        debug.info(2, "Create col_cap bitcell 2 port object")
 
         self.no_instances = True

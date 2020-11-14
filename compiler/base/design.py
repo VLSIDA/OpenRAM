@@ -22,7 +22,7 @@ class design(hierarchy_design):
     some DRC/layer constants and analytical models for other modules to reuse.
     """
 
-    def __init__(self, name, cell_name=None):
+    def __init__(self, name, cell_name=None, prop=None):
         # This allows us to use different GDS/spice circuits for hard cells instead of the default ones
         # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
         # depending on the number of ports.
@@ -32,25 +32,24 @@ class design(hierarchy_design):
             cell_name = name
         super().__init__(name, cell_name)
 
-        # This means it is a custom cell...
-        if hasattr(props, name):
-            prop = getattr(props, name)
-            if prop.hard_cell:
-                # The pins get added from the spice file
-                debug.check(prop.port_names == self.pins,
-                            "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
-                self.add_pin_types(prop.port_types)
+        # This means it is a custom cell.
+        # It could have properties and not be a hard cell too (e.g. dff_buf)
+        if prop and prop.hard_cell:
+            # The pins get added from the spice file
+            debug.check(prop.port_names == self.pins,
+                        "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+            self.add_pin_types(prop.port_types)
             
-                (width, height) = utils.get_libcell_size(self.cell_name,
-                                                         GDS["unit"],
-                                                         layer[prop.boundary_layer])
+            (width, height) = utils.get_libcell_size(self.cell_name,
+                                                     GDS["unit"],
+                                                     layer[prop.boundary_layer])
 
-                self.pin_map = utils.get_libcell_pins(self.pins,
-                                                      self.cell_name,
-                                                      GDS["unit"])
+            self.pin_map = utils.get_libcell_pins(self.pins,
+                                                  self.cell_name,
+                                                  GDS["unit"])
 
-                self.width = width
-                self.height = height
+            self.width = width
+            self.height = height
 
         self.setup_multiport_constants()
 

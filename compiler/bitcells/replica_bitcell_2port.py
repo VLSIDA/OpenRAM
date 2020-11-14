@@ -20,7 +20,7 @@ class replica_bitcell_2port(bitcell_base.bitcell_base):
     the technology library. """
 
     def __init__(self, name):
-        super().__init__(name, props.bitcell_2port)
+        super().__init__(name, prop=props.bitcell_2port)
         debug.info(2, "Create replica bitcell 2 port object")
 
     def get_stage_effort(self, load):

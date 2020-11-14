@@ -7,6 +7,7 @@
 #
 import design
 import logical_effort
+from tech import cell_properties as props
 from tech import spice, parameter
 
 
@@ -16,7 +17,7 @@ class inv_dec(design.design):
     """
 
     def __init__(self, name="inv_dec", height=None):
-        super().__init__(name)
+        super().__init__(name, prop=props.inv_dec)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

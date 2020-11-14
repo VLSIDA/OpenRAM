@@ -72,7 +72,7 @@ class dff_buf(design.design):
         self.add_mod(self.inv2)
 
     def add_pins(self):
-        self.add_pin_list(props.dff_buf.port_names,
+        self.add_pin_list(props.dff_buf.port_names(),
                           props.dff_buf.port_types)
 
     def create_instances(self):

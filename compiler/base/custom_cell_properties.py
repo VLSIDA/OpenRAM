@@ -20,11 +20,8 @@ class _cell:
             port_map = {}
             for pin in port_order:
                 port_map[pin] = pin
-                self._pins = _pins(port_map)
-        else:
-            self._pins = _pins(port_map)
+        self._pins = _pins(port_map)
 
-        self._port_names = [getattr(self._pins, x) for x in self._port_order]
         self._boundary_layer = boundary_layer
 
     @property
@@ -35,9 +32,8 @@ class _cell:
     def hard_cell(self):
         return self._hard_cell
     
-    @property
     def port_names(self):
-        return self._port_names
+        return [getattr(self._pins, x) for x in self._port_order]
 
     @property
     def port_types(self):
@@ -98,13 +94,7 @@ class _bitcell(_cell):
     def storage_nets(self):
         return self._storage_nets
 
-        
-class _dff(_cell):
-    def __init__(self, clk_pin, port_order, port_types, port_map=None, hard_cell=True):
-        super().__init__(port_order, port_types, port_map, hard_cell)
-        self.clk_pin = clk_pin
-
-        
+    
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -139,14 +129,12 @@ class cell_properties():
         self._nand2_dec = _cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._dff = _dff("clk",
-                         ["D", "Q", "clk", "vdd", "gnd"],
-                         ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
+        self._dff = _cell(["D", "Q", "clk", "vdd", "gnd"],
+                          ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._dff_buf = _dff("clk",
-                             ["D", "Q", "Qb", "clk", "vdd", "gnd"],
-                             ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
-                             hard_cell=False)
+        self._dff_buf = _cell(["D", "Q", "Qb", "clk", "vdd", "gnd"],
+                              ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
+                              hard_cell=False)
         
         self._write_driver = _cell(['din', 'bl', 'br', 'en', 'vdd', 'gnd'],
                                    ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
@@ -155,7 +143,7 @@ class cell_properties():
                                 ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
         self._bitcell_1port = _bitcell(["bl", "br", "wl", "vdd", "gnd"],
-                                       ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
+                                       ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND<"])
 
         self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])

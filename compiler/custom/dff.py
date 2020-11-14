@@ -18,7 +18,7 @@ class dff(design.design):
     def __init__(self, name="dff"):
         super().__init__(name)
 
-        self.clk_pin = props.dff.clk_pin
+        self.clk_pin = props.dff.pin.clk
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""

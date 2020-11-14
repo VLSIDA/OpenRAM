@@ -22,8 +22,8 @@ class bitcell_base(design.design):
         design.design.__init__(self, name)
 
         if prop:
-            self.pins = prop.port_names()
-            self.add_pin_types(prop.port_types())
+            self.pins = prop.port_names
+            self.add_pin_types(prop.port_types)
             self.storage_nets = prop.storage_nets
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror

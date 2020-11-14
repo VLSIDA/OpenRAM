@@ -8,13 +8,13 @@
 #
 import unittest
 from testutils import *
-import sys, os,re,shutil
+import sys, os, re, shutil
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
-from sram_factory import factory
 import debug
 import getpass
+
 
 class openram_back_end_test(openram_test):
 
@@ -25,12 +25,12 @@ class openram_back_end_test(openram_test):
 
         debug.info(1, "Testing top-level back-end openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
-        out_path = "/tmp/testsram_{0}_{1}_{2}/".format(OPTS.tech_name,getpass.getuser(),os.getpid())
+        out_path = "/tmp/testsram_{0}_{1}_{2}/".format(OPTS.tech_name, getpass.getuser(), os.getpid())
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
             shutil.rmtree(out_path, ignore_errors=True)
-        self.assertEqual(os.path.exists(out_path),False)
+        self.assertEqual(os.path.exists(out_path), False)
 
         try:
             os.makedirs(out_path, 0o0750)

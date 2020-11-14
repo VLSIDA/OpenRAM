@@ -10,18 +10,27 @@ class _cell:
     def __init__(self, port_order, port_types, port_map=None, hard_cell=True, boundary_layer="boundary"):
         # Specifies if this is a hard (i.e. GDS) cell
         self._hard_cell = hard_cell
-        # Specifies the order in the spice modules
-        self._port_order = port_order
+        self._boundary_layer = boundary_layer
         # Specifies the port directions
-        self._port_types = {x: y for (x, y) in zip(port_order, port_types)}
+        self._port_types_map = {x: y for (x, y) in zip(port_order, port_types)}
         # Specifies a map from OpenRAM names to cell names
         # by default it is 1:1
         if not port_map:
             port_map = {x: x for x in port_order}
+
+        self.set_ports(port_order, port_map)
+
+    def set_ports(self,
+                  port_order,
+                  port_map):
+        # Update mapping of names
         self._pins = _pins(port_map)
-
-        self._boundary_layer = boundary_layer
-
+        self._port_order = port_order
+        # Update ordered name list
+        self._port_names = [getattr(self._pins, x) for x in self._port_order]
+        # Update ordered type list
+        self._port_types = [self._port_types_map[x] for x in port_order]
+        
     @property
     def pin(self):
         return self._pins
@@ -29,12 +38,14 @@ class _cell:
     @property
     def hard_cell(self):
         return self._hard_cell
-    
-    def port_names(self):
-        return [getattr(self._pins, x) for x in self._port_order]
 
+    @property
+    def port_names(self):
+        return self._port_names
+
+    @property
     def port_types(self):
-        return [self._port_types[x] for x in self._port_order]
+        return self._port_types
 
     @property
     def boundary_layer(self):

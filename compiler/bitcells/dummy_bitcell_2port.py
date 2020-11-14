@@ -18,7 +18,7 @@ class dummy_bitcell_2port(bitcell_base.bitcell_base):
     the technology library. """
 
     def __init__(self, name):
-        super().__init__(name, props.bitcel_2port)
+        super().__init__(name, props.bitcell_2port)
         debug.info(2, "Create dummy bitcell 2 port object")
 
 

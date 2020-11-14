@@ -31,6 +31,7 @@ class pbitcell(bitcell_base.bitcell_base):
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
         self.mirror = props.bitcell_1port.mirror
+        self.end_caps = props.bitcell_1port.end_caps
 
         bitcell_base.bitcell_base.__init__(self, name)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"

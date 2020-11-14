@@ -126,13 +126,13 @@ class replica_column(bitcell_base_array):
         # column that needs to be flipped.
         dir_y = False
         xoffset = 0
-        if self.replica_cell.mirror.y and self.column_offset % 2:
+        if self.cell.mirror.y and self.column_offset % 2:
             dir_y = True
             xoffset = self.replica_cell.width
 
         for row in range(self.total_size):
             # name = "bit_r{0}_{1}".format(row, "rbl")
-            dir_x = self.replica_cell.mirror.x and (row + rbl_offset) % 2
+            dir_x = self.cell.mirror.x and (row + rbl_offset) % 2
 
             offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
 

@@ -28,6 +28,7 @@ class spice():
     """
 
     def __init__(self, name, cell_name):
+        # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
 
@@ -78,7 +79,6 @@ class spice():
         """ Adds a pin_list to the pins list """
         # The type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-            
         if type(pin_type)==str:
             for pin in pin_list:
                 debug.check(pin_type in self.valid_signal_types,

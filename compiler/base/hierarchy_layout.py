@@ -32,8 +32,10 @@ class layout():
     """
 
     def __init__(self, name, cell_name):
+        # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
+        
         self.width = None
         self.height = None
         self.bounding_box = None
@@ -43,6 +45,7 @@ class layout():
         self.pin_map = {}    # Holds name->pin_layout map for all pins
         self.visited = []    # List of modules we have already visited
         self.is_library_cell = False # Flag for library cells
+        
         self.gds_read()
 
         try:

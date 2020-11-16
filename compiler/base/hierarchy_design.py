@@ -40,8 +40,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.drc_errors = "skipped"
         self.lvs_errors = "skipped"
 
-        self.name = name
-        self.cell_name = cell_name
         hierarchy_spice.spice.__init__(self, name, cell_name)
         hierarchy_layout.layout.__init__(self, name, cell_name)
         self.init_graph_params()

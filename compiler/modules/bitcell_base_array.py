@@ -35,10 +35,10 @@ class bitcell_base_array(design.design):
         self.rbl_wordline_names = [[] for port in self.all_ports]
         self.all_rbl_wordline_names = []
 
-        # The supply pin namesn
-        self.bitcell_supplies = ["vdd", "gnd"]
+        # The supply pin names
+        self.bitcell_supplies = self.cell.supplies
         # If the technology needs renaming of the supplies
-        self.supplies = self.bitcell_supplies
+        self.supplies = ["vdd", "gnd"]
 
     def create_all_bitline_names(self):
         for col in range(self.column_size):

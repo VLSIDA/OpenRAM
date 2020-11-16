@@ -26,6 +26,9 @@ class bitcell_base(design.design):
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror
             self.end_caps = prop.end_caps
+            self.supplies = [prop.pin.vdd, prop.pin.gnd]
+        else:
+            self.supplies = ["vdd", "gnd"]
         
     def get_stage_effort(self, load):
         parasitic_delay = 1

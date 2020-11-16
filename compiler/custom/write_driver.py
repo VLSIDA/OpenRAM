@@ -23,18 +23,18 @@ class write_driver(design.design):
         debug.info(2, "Create write_driver")
 
     def get_bl_names(self):
-        return props.write_driver.pin.bl
+        return "bl"
 
     def get_br_names(self):
-        return props.write_driver.pin.br
+        return "br"
 
     @property
     def din_name(self):
-        return props.write_driver.pin.din
+        return "din"
 
     @property
     def en_name(self):
-        return props.write_driver.pin.en
+        return "en"
 
     def get_w_en_cin(self):
         """Get the relative capacitance of a single input"""

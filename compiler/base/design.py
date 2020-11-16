@@ -35,9 +35,11 @@ class design(hierarchy_design):
         # This means it is a custom cell.
         # It could have properties and not be a hard cell too (e.g. dff_buf)
         if prop and prop.hard_cell:
-            # The pins get added from the spice file
+            # The pins get added from the spice file, so just check
+            # that they matched here
             debug.check(prop.port_names == self.pins,
                         "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+            self.add_pin_names(prop.port_map)
             self.add_pin_types(prop.port_types)
             
             (width, height) = utils.get_libcell_size(self.cell_name,

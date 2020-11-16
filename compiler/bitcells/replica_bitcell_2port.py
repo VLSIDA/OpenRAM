@@ -42,11 +42,10 @@ class replica_bitcell_2port(bitcell_base.bitcell_base):
         """Adds edges to graph. Multiport bitcell timing graph is too complex
            to use the add_graph_edges function."""
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
-        pins = props.bitcell_2port.pin
         # Edges hardcoded here. Essentially wl->bl/br for both ports.
         # Port 0 edges
-        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.bl0], self)
-        graph.add_edge(pin_dict[pins.wl0], pin_dict[pins.br0], self)
+        graph.add_edge(pin_dict["wl0"], pin_dict["bl0"], self)
+        graph.add_edge(pin_dict["wl0"], pin_dict["br0"], self)
         # Port 1 edges
-        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.bl1], self)
-        graph.add_edge(pin_dict[pins.wl1], pin_dict[pins.br1], self)
+        graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)
+        graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)

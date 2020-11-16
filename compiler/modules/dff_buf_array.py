@@ -7,7 +7,6 @@
 #
 import debug
 import design
-from tech import cell_properties as props
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -148,7 +147,7 @@ class dff_buf_array(design.design):
 
     def route_supplies(self):
         for row in range(self.rows):
-            vdd0_pin=self.dff_insts[row, 0].get_pin(props.dff.pin.vdd)
+            vdd0_pin=self.dff_insts[row, 0].get_pin("vdd")
             vddn_pin=self.dff_insts[row, self.columns - 1].get_pin("vdd")
             self.add_path(vdd0_pin.layer, [vdd0_pin.lc(), vddn_pin.rc()], width=vdd0_pin.height())
 

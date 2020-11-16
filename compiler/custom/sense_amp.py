@@ -25,18 +25,18 @@ class sense_amp(design.design):
         debug.info(2, "Create sense_amp")
 
     def get_bl_names(self):
-        return props.sense_amp.pin.bl
+        return "bl"
 
     def get_br_names(self):
-        return props.sense_amp.pin.br
+        return "br"
 
     @property
     def dout_name(self):
-        return props.sense_amp.pin.dout
+        return "dout"
 
     @property
     def en_name(self):
-        return props.sense_amp.pin.en
+        return "en"
 
     def get_cin(self):
 

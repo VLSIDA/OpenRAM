@@ -24,37 +24,35 @@ class bitcell_1port(bitcell_base.bitcell_base):
 
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
-        row_pins = [props.bitcell_1port.pin.wl]
+        row_pins = ["wl"]
         return row_pins
 
     def get_all_bitline_names(self):
         """ Creates a list of all bitline pin names (both bl and br) """
-        pin = props.bitcell_1port.pin
-        column_pins = [pin.bl, pin.br]
-        return column_pins
+        return ["bl", "br"]
 
     def get_all_bl_names(self):
         """ Creates a list of all bl pins names """
-        return [props.bitcell_1port.pin.bl]
+        return ["bl"]
 
     def get_all_br_names(self):
         """ Creates a list of all br pins names """
-        return [props.bitcell_1port.pin.br]
+        return ["br"]
 
     def get_bl_name(self, port=0):
         """Get bl name"""
         debug.check(port == 0, "One port for bitcell only.")
-        return props.bitcell_1port.pin.bl
+        return "bl"
 
     def get_br_name(self, port=0):
         """Get bl name"""
         debug.check(port == 0, "One port for bitcell only.")
-        return props.bitcell_1port.pin.br
+        return "br"
 
     def get_wl_name(self, port=0):
         """Get wl name"""
         debug.check(port == 0, "One port for bitcell only.")
-        return props.bitcell_1port.pin.wl
+        return "wl"
 
     def build_graph(self, graph, inst_name, port_nets):
         """

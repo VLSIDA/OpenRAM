@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 import design
-from tech import cell_properties as props
 import debug
 from sram_factory import factory
 import math

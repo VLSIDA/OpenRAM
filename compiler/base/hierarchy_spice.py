@@ -239,7 +239,8 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.")
+            debug.check(lvs_pins == self.pins,
+                        "Spice netlists for LVS and simulation have port mismatches: {0} (LVS) vs {1} (sim)".format(lvs_pins, self.pins))
 
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""

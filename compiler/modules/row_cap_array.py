@@ -6,7 +6,6 @@
 from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
-from tech import cell_properties
 
 
 class row_cap_array(bitcell_base_array):
@@ -61,9 +60,8 @@ class row_cap_array(bitcell_base_array):
         indexed by column and row, for instance use in bitcell_array
         """
 
-        pin_name = cell_properties.bitcell.cell_1rw1r.pin
-        bitcell_pins = ["{0}_{1}".format(pin_name.wl0, row),
-                        "{0}_{1}".format(pin_name.wl1, row),
+        bitcell_pins = ["wl0_{0}".format(row),
+                        "wl1_{0}".format(row),
                         "gnd"]
 
         return bitcell_pins

@@ -6,7 +6,6 @@
 from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
-from tech import cell_properties
 
 
 class col_cap_array(bitcell_base_array):
@@ -65,16 +64,14 @@ class col_cap_array(bitcell_base_array):
         """
 
         if len(self.all_ports) == 1:
-            pin_name = cell_properties.bitcell.cell_6t.pin
-            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
-                            "{0}_{1}".format(pin_name.br0, col),
+            bitcell_pins = ["bl0_{0}".format(col),
+                            "br0_{0}".format(col),
                             "vdd"]
         else:
-            pin_name = cell_properties.bitcell.cell_1rw1r.pin
-            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
-                            "{0}_{1}".format(pin_name.br0, col),
-                            "{0}_{1}".format(pin_name.bl1, col),
-                            "{0}_{1}".format(pin_name.br1, col),
+            bitcell_pins = ["bl0_{0}".format(col),
+                            "br0_{0}".format(col),
+                            "bl1_{0}".format(col),
+                            "br1_{0}".format(col),
                             "vdd"]
 
         return bitcell_pins

@@ -46,7 +46,7 @@ class _cell:
     def port_order(self, x):
         self._port_order = x
         # Update ordered name list in the new order
-        self._port_names = [getattr(self._pins, x) for x in self._port_order]
+        self._port_names = [self._port_map[x] for x in self._port_order]
         # Update ordered type list in the new order
         self._port_types = [self._port_types_map[x] for x in self._port_order]
 
@@ -57,9 +57,8 @@ class _cell:
     @port_map.setter
     def port_map(self, x):
         self._port_map = x
-        self._pins = _pins(x)
         # Update ordered name list to use the new names
-        self._port_names = [getattr(self._pins, x) for x in self._port_order]
+        self._port_names = [self.port_map[x] for x in self._port_order]
     
     @property
     def port_types(self):
@@ -153,10 +152,6 @@ class cell_properties():
         self._dff = _cell(["D", "Q", "clk", "vdd", "gnd"],
                           ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._dff_buf = _cell(["D", "Q", "Qb", "clk", "vdd", "gnd"],
-                              ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
-                              hard_cell=False)
-        
         self._write_driver = _cell(['din', 'bl', 'br', 'en', 'vdd', 'gnd'],
                                    ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
@@ -168,6 +163,12 @@ class cell_properties():
 
         self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])
+
+        self._col_cap_2port = _bitcell(["bl0", "br0", "bl1", "br1", "vdd"],
+                                       ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "POWER"])
+
+        self._row_cap_2port = _bitcell(["wl0", "wl1", "gnd"],
+                                       ["INPUT", "INPUT", "POWER", "GROUND"])
 
     @property
     def ptx(self):
@@ -198,10 +199,6 @@ class cell_properties():
         return self._dff
 
     @property
-    def dff_buf(self):
-        return self._dff_buf
-    
-    @property
     def write_driver(self):
         return self._write_driver
 
@@ -217,3 +214,11 @@ class cell_properties():
     def bitcell_2port(self):
         return self._bitcell_2port
 
+    @property
+    def col_cap_2port(self):
+        return self._col_cap_2port
+
+    @property
+    def row_cap_2port(self):
+        return self._row_cap_2port
+    

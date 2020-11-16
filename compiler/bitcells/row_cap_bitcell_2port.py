@@ -15,8 +15,8 @@ class row_cap_bitcell_2port(bitcell_base.bitcell_base):
     Row end cap cell. 
     """
 
-    def __init__(self, name="row_cap_cell_1rw_1r"):
-        bitcell_base.bitcell_base.__init__(self, name, prop=props.bitcell_2port)
-        debug.info(2, "Create row_cap bitcell 1rw+1r object")
+    def __init__(self, name="row_cap_bitcell_2port"):
+        bitcell_base.bitcell_base.__init__(self, name, prop=props.row_cap_2port)
+        debug.info(2, "Create row_cap bitcell 2 port object")
 
         self.no_instances = True

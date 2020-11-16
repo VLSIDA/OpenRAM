@@ -5,7 +5,6 @@
 #
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import cell_properties as props
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
@@ -31,8 +30,15 @@ class replica_column(bitcell_base_array):
         # left, right, regular rows plus top/bottom dummy cells
         self.total_size = self.left_rbl + rows + self.right_rbl
 
+        # Used for pin names and properties
+        self.cell = factory.create(module_type=OPTS.bitcell)
+        
         # For end caps
-        self.total_size += 2
+        try:
+            if not self.cell.end_caps:
+                self.total_size += 2
+        except AttributeError:
+            self.total_size += 2
 
         self.column_offset = column_offset
 
@@ -85,9 +91,6 @@ class replica_column(bitcell_base_array):
             edge_module_type = "dummy"
         self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
         self.add_mod(self.edge_cell)
-
-        # Used for pin names only
-        self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         self.cell_inst = {}

@@ -373,7 +373,7 @@ class layout():
 
         for pin in pins:
             if new_name == "":
-                new_name = pin.name
+                new_name = pin_name
             self.add_layout_pin(new_name,
                                 pin.layer,
                                 pin.ll(),

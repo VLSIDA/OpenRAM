@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
 import tech
 from .stimuli import *
 import debug
 from .charutils import *
-import dff
 from globals import OPTS
+from sram_factory import factory
 
 
 class setup_hold():
@@ -22,9 +21,8 @@ class setup_hold():
 
     def __init__(self, corner):
         # This must match the spice model order
-        self.pins = ["data", "dout", "clk", "vdd", "gnd"]
-        self.model_name = "dff"
-        self.model_location = OPTS.openram_tech + "sp_lib/dff.sp"
+        self.dff = factory.create(module_type=OPTS.dff)
+        
         self.period = tech.spice["feasible_period"]
 
         debug.info(2, "Feasible period from technology file: {0} ".format(self.period))
@@ -50,8 +48,8 @@ class setup_hold():
 
         # instantiate the master-slave d-flip-flop
         self.sf.write("\n* Instantiation of the Master-Slave D-flip-flop\n")
-        self.stim.inst_model(pins=self.pins,
-                             model_name=self.model_name)
+        self.stim.inst_model(pins=self.dff.get_ordered_inputs(self.dff.pins),
+                             model_name=self.dff.cell_name)
 
         self.write_data(mode=mode,
                         target_time=target_time,
@@ -71,7 +69,7 @@ class setup_hold():
         self.sf.write("\n* Stimulus for setup/hold: data {0} period {1}n\n".format(correct_value, self.period))
 
         # include files in stimulus file
-        self.stim.write_include(self.model_location)
+        self.stim.write_include(self.dff.sp_file)
 
         # add vdd/gnd statements
         self.sf.write("\n* Global Power Supplies\n")
@@ -94,7 +92,7 @@ class setup_hold():
             start_value = incorrect_value
             end_value = correct_value
 
-        self.stim.gen_pwl(sig_name="data",
+        self.stim.gen_pwl(sig_name="D",
                           clk_times=[0, self.period, target_time],
                           data_values=[init_value, start_value, end_value],
                           period=target_time,
@@ -136,7 +134,7 @@ class setup_hold():
 
         self.sf.write("\n* Measure statements for pass/fail verification\n")
         trig_name = "clk"
-        targ_name = "dout"
+        targ_name = "Q"
         trig_val = targ_val = 0.5 * self.vdd_voltage
         # Start triggers right before the clock edge at 2*period
         self.stim.gen_meas_delay(meas_name="clk2q_delay",
@@ -149,7 +147,7 @@ class setup_hold():
                                  trig_td=1.9 * self.period,
                                  targ_td=1.9 * self.period)
 
-        targ_name = "data"
+        targ_name = "D"
         # Start triggers right after initialize value is returned to normal
         # at one period
         self.stim.gen_meas_delay(meas_name="setup_hold_time",

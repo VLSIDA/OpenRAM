@@ -128,7 +128,7 @@ class delay(simulation):
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
         read_measures.append(self.create_read_bit_measures())
-        read_measures.append(self.create_sen_and_bitline_path_measures())
+        #read_measures.append(self.create_sen_and_bitline_path_measures())
 
         return read_measures
 

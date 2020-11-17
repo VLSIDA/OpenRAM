@@ -123,6 +123,9 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
+    
+    # Number of threads to use
+    num_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True

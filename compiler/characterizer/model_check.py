@@ -412,7 +412,7 @@ class model_check(delay):
         data_dict[self.bl_meas_name] = bl_delays[read_port]
         data_dict[self.power_name] = powers[read_port]
 
-        if not OPTS.use_tech_delay_chain_size: #Model is not used in this case
+        if OPTS.auto_delay_chain_sizing: #Model is not used in this case
             wl_model_delays, sae_model_delays = self.get_model_delays(read_port)
             debug.info(1,"Wordline model delays:\n\t {}".format(wl_model_delays))
             debug.info(1,"SAE model delays:\n\t {}".format(sae_model_delays))
@@ -439,7 +439,7 @@ class model_check(delay):
         name_dict[self.power_name] = self.power_meas_names
         #name_dict[self.wl_slew_name] = self.wl_slew_meas_names
 
-        if not OPTS.use_tech_delay_chain_size:
+        if OPTS.auto_delay_chain_sizing:
             name_dict[self.wl_model_name] = name_dict["wl_measures"] #model uses same names as measured.
             name_dict[self.sae_model_name] = name_dict["sae_measures"]
 

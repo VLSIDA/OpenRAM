@@ -60,7 +60,7 @@ class options(optparse.Values):
     rbl_delay_percentage = 0.5
 
     # Allow manual adjustment of the delay chain over automatic
-    use_tech_delay_chain_size = False
+    auto_delay_chain_sizing = False 
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
 

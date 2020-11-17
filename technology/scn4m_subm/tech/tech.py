@@ -30,8 +30,6 @@ tech_modules = module_type()
 # Custom cell properties
 ###################################################
 cell_properties = cell_properties()
-cell_properties.bitcell.mirror.x = True
-cell_properties.bitcell.mirror.y = False
 
 ###################################################
 # Custom cell properties
@@ -385,22 +383,23 @@ spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
 spice["inv_leakage"] = 1         # Leakage power of inverter in nW
 spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
 spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
+spice["nand4_leakage"] = 1       # Leakage power of 4-input nand in nW
 spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
 spice["dff_leakage"] = 1      # Leakage power of flop in nW
 
 spice["default_event_frequency"] = 100         # Default event activity of every gate. MHz
 
-#Logical Effort relative values for the Handmade cells
-parameter["le_tau"] = 18.17                  #In pico-seconds.
-parameter["min_inv_para_delay"] = 2.07       #In relative delay units
-parameter["cap_relative_per_ff"] = .91       #Units of Relative Capacitance/ Femto-Farad
-parameter["dff_clk_cin"] = 27.5              #In relative capacitance units
-parameter["6tcell_wl_cin"] = 2               #In relative capacitance units
-parameter["sa_en_pmos_size"] = 24*_lambda_
-parameter["sa_en_nmos_size"] = 9*_lambda_
-parameter["sa_inv_pmos_size"] = 18*_lambda_
-parameter["sa_inv_nmos_size"] = 9*_lambda_
-parameter["bitcell_drain_cap"] = 0.2        #In Femto-Farad, approximation of drain capacitance
+# Logical Effort relative values for the Handmade cells
+parameter["le_tau"] = 18.17                  # In pico-seconds.
+parameter["min_inv_para_delay"] = 2.07       # In relative delay units
+parameter["cap_relative_per_ff"] = .91       # Units of Relative Capacitance/ Femto-Farad
+parameter["dff_clk_cin"] = 27.5              # In relative capacitance units
+parameter["6tcell_wl_cin"] = 2               # In relative capacitance units
+parameter["sa_en_pmos_size"] = 24 * _lambda_
+parameter["sa_en_nmos_size"] = 9 * _lambda_
+parameter["sa_inv_pmos_size"] = 18 * _lambda_
+parameter["sa_inv_nmos_size"] = 9 * _lambda_
+parameter["bitcell_drain_cap"] = 0.2        # In Femto-Farad, approximation of drain capacitance
 
 ###################################################
 # Technology Tool Preferences

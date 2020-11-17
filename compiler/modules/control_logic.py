@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 import design
-from tech import cell_properties as props
 import debug
 from sram_factory import factory
 import math
@@ -662,9 +661,6 @@ class control_logic(design.design):
         self.ctrl_dff_inst=self.add_inst(name="ctrl_dffs",
                                          mod=self.ctrl_dff_array)
         inst_pins = self.input_list + self.dff_output_list + ["clk_buf"] + self.supply_list
-        if props.dff_buff_array.add_body_contacts:
-            inst_pins.append("vpb")
-            inst_pins.append("vnb")
         self.connect_inst(inst_pins)
 
     def place_dffs(self):

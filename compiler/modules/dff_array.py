@@ -70,7 +70,7 @@ class dff_array(design.design):
                                                        mod=self.dff)
                 instance_ports = [self.get_din_name(row, col),
                                   self.get_dout_name(row, col)]
-                for port in self.dff.pin_names:
+                for port in self.dff.pins:
                     if port != 'D' and port != 'Q':
                         instance_ports.append(port)
                 self.connect_inst(instance_ports)
@@ -137,7 +137,7 @@ class dff_array(design.design):
                                     height=dout_pin.height())
 
         # Create vertical spines to a single horizontal rail
-        clk_pin = self.dff_insts[0, 0].get_pin(self.dff.clk_pin)
+        clk_pin = self.dff_insts[0, 0].get_pin("clk")
         clk_ypos = 2 * self.m3_pitch + self.m3_width
         debug.check(clk_pin.layer == "m2", "DFF clk pin not on metal2")
         self.add_layout_pin_segment_center(text="clk",
@@ -145,7 +145,7 @@ class dff_array(design.design):
                                            start=vector(0, clk_ypos),
                                            end=vector(self.width, clk_ypos))
         for col in range(self.columns):
-            clk_pin = self.dff_insts[0, col].get_pin(self.dff.clk_pin)
+            clk_pin = self.dff_insts[0, col].get_pin("clk")
             # Make a vertical strip for each column
             self.add_rect(layer="m2",
                           offset=clk_pin.ll().scale(1, 0),

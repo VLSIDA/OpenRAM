@@ -28,6 +28,7 @@ class spice():
     """
 
     def __init__(self, name, cell_name):
+        # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
 
@@ -100,12 +101,12 @@ class spice():
            Typically, should only be used for handmade cells.
         """
         # This only works if self.pins == bitcell.pin_names
-        if self.pin_names != self.pins:
-            debug.error("{} spice subcircuit port names do not match pin_names\
+        if len(type_list) != len(self.pins):
+            debug.error("{} spice subcircuit number of port types does not match number of pins\
                       \n SPICE names={}\
                       \n Module names={}\
-                      ".format(self.name, self.pin_names, self.pins), 1)
-        self.pin_type = {pin: type for pin, type in zip(self.pin_names, type_list)}
+                      ".format(self.name, self.pins, type_list), 1)
+        self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
@@ -238,7 +239,8 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.")
+            debug.check(lvs_pins == self.pins,
+                        "Spice netlists for LVS and simulation have port mismatches: {0} (LVS) vs {1} (sim)".format(lvs_pins, self.pins))
 
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
@@ -296,6 +298,18 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
                                                   " ".join(self.pins)))
 
+            # write a PININFO line
+            pin_info = "*.PININFO"
+            for pin in self.pins:
+                if self.pin_type[pin] == "INPUT":
+                    pin_info += " {0}:I".format(pin)
+                elif self.pin_type[pin] == "OUTPUT":
+                    pin_info += " {0}:O".format(pin)
+                else:
+                    pin_info += " {0}:B".format(pin)
+            sp.write(pin_info + "\n")
+
+            # Also write pins as comments
             for pin in self.pins:
                 sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
 

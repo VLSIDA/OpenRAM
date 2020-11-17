@@ -5,29 +5,80 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import OPTS
 
+class _cell:
+    def __init__(self, port_order, port_types, port_map=None, hard_cell=True, boundary_layer="boundary"):
+        
+        # Specifies if this is a hard (i.e. GDS) cell
+        self._hard_cell = hard_cell
+        self._boundary_layer = boundary_layer
+        
+        # Specifies the port directions
+        self._port_types_map = {x: y for (x, y) in zip(port_order, port_types)}
+        
+        # Specifies a map from OpenRAM names to cell names
+        # by default it is 1:1
+        if not port_map:
+            self._port_map = {x: x for x in port_order}
 
+        # Update mapping of names
+        self._port_order = port_order
+        
+        # Update ordered name list
+        self._port_names = [self._port_map[x] for x in self._port_order]
+        
+        # Update ordered type list
+        self._port_types = [self._port_types_map[x] for x in self._port_order]
+        
+    @property
+    def hard_cell(self):
+        return self._hard_cell
+
+    @property
+    def port_names(self):
+        return self._port_names
+
+    @property
+    def port_order(self):
+        return self._port_order
+
+    @port_order.setter
+    def port_order(self, x):
+        self._port_order = x
+        # Update ordered name list in the new order
+        self._port_names = [self._port_map[x] for x in self._port_order]
+        # Update ordered type list in the new order
+        self._port_types = [self._port_types_map[x] for x in self._port_order]
+
+    @property
+    def port_map(self):
+        return self._port_map
+    
+    @port_map.setter
+    def port_map(self, x):
+        self._port_map = x
+        # Update ordered name list to use the new names
+        self._port_names = [self.port_map[x] for x in self._port_order]
+    
+    @property
+    def port_types(self):
+        return self._port_types
+
+    @property
+    def boundary_layer(self):
+        return self._boundary_layer
+
+    @boundary_layer.setter
+    def boundary_layer(self, x):
+        self._boundary_layer = x
+        
+    
 class _pins:
     def __init__(self, pin_dict):
         # make the pins elements of the class to allow "." access.
-        # For example: props.bitcell.cell_6t.pin.bl = "foobar"
+        # For example: props.bitcell.cell_1port.pin.bl = "foobar"
         for k, v in pin_dict.items():
             self.__dict__[k] = v
-
-
-class _cell:
-    def __init__(self, pin_dict):
-        pin_dict.update(self._default_power_pins())
-        self._pins = _pins(pin_dict)
-
-    @property
-    def pin(self):
-        return self._pins
-
-    def _default_power_pins(self):
-        return {'vdd': 'vdd',
-                'gnd': 'gnd'}
 
 
 class _mirror_axis:
@@ -47,88 +98,20 @@ class _pgate:
         self.add_implants = add_implants
 
 
-class _bitcell:
-    def __init__(self, mirror, cell_s8_6t, cell_6t, cell_1rw1r, cell_1w1r):
-        self.mirror = mirror
-        self._s8_6t = cell_s8_6t
-        self._6t = cell_6t
-        self._1rw1r = cell_1rw1r
-        self._1w1r = cell_1w1r
+class _bitcell(_cell):
+    def __init__(self, port_order, port_types, port_map=None, storage_nets=["Q", "Q_bar"], mirror=None, end_caps=False):
+        super().__init__(port_order, port_types, port_map)
 
-    def _default():
-        axis = _mirror_axis(True, False)
+        self.end_caps = end_caps
+        
+        if not mirror:
+            self.mirror = _mirror_axis(True, False)
+        else:
+            self.mirror = mirror
 
-        cell_s8_6t = _cell({'bl': 'bl',
-                            'br': 'br',
-                            'wl': 'wl'})
+        self.storage_nets = storage_nets
 
-        cell_6t = _cell({'bl': 'bl',
-                         'br': 'br',
-                         'wl': 'wl'})
-
-        cell_1rw1r = _cell({'bl0': 'bl0',
-                            'br0': 'br0',
-                            'bl1': 'bl1',
-                            'br1': 'br1',
-                            'wl0': 'wl0',
-                            'wl1': 'wl1'})
-
-        cell_1w1r = _cell({'bl0': 'bl0',
-                           'br0': 'br0',
-                           'bl1': 'bl1',
-                           'br1': 'br1',
-                           'wl0': 'wl0',
-                           'wl1': 'wl1'})
-
-        return _bitcell(cell_s8_6t=cell_s8_6t,
-                        cell_6t=cell_6t,
-                        cell_1rw1r=cell_1rw1r,
-                        cell_1w1r=cell_1w1r,
-                        mirror=axis)
-
-    @property
-    def cell_s8_6t(self):
-        return self._s8_6t
-
-    @property
-    def cell_6t(self):
-        return self._6t
-
-    @property
-    def cell_1rw1r(self):
-        return self._1rw1r
-
-    @property
-    def cell_1w1r(self):
-        return self._1w1r
-
-
-class _dff:
-    def __init__(self, use_custom_ports, custom_port_list, custom_type_list, clk_pin):
-        self.use_custom_ports = use_custom_ports
-        self.custom_port_list = custom_port_list
-        self.custom_type_list = custom_type_list
-        self.clk_pin = clk_pin
-
-
-class _dff_buff:
-    def __init__(self, use_custom_ports, custom_buff_ports, add_body_contacts):
-        self.use_custom_ports = use_custom_ports
-        self.buf_ports = custom_buff_ports
-        self.add_body_contacts = add_body_contacts
-
-
-class _dff_buff_array:
-    def __init__(self, use_custom_ports, add_body_contacts):
-        self.use_custom_ports = use_custom_ports
-        self.add_body_contacts = add_body_contacts
-
-
-class _bitcell_array:
-    def __init__(self, use_custom_cell_arrangement):
-        self.use_custom_cell_arrangement = use_custom_cell_arrangement
-
-
+    
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -137,56 +120,55 @@ class cell_properties():
     """
     def __init__(self):
         self.names = {}
-        self.names["bitcell"] = "cell_6t"
-        self.names["bitcell_1rw_1r"] = "cell_1rw_1r"
-        self.names["bitcell_1w_1r"] = "cell_1w_1r"
-        self.names["dummy_bitcell"] = "dummy_cell_6t"
-        self.names["dummy_bitcell_1rw_1r"] = "dummy_cell_1rw_1r"
-        self.names["dummy_bitcell_1w_1r"] = "dummy_cell_1w_1r"
-        self.names["replica_bitcell"] = "replica_cell_6t"
-        self.names["replica_bitcell_1rw_1r"] = "replica_cell_1rw_1r"
-        self.names["replica_bitcell_1w_1r"] = "replica_cell_1w_1r"
-        self.names["col_cap_bitcell_6t"] = "col_cap_cell_6t"
-        self.names["col_cap_bitcell_1rw_1r"] = "col_cap_cell_1rw_1r"
-        self.names["col_cap_bitcell_1w_1r"] = "col_cap_cell_1w_1r"
-        self.names["row_cap_bitcell_6t"] = "row_cap_cell_6t"
-        self.names["row_cap_bitcell_1rw_1r"] = "row_cap_cell_1rw_1r"
-        self.names["row_cap_bitcell_1w_1r"] = "row_cap_cell_1w_1r"
 
-        self._bitcell = _bitcell._default()
+        self.names["bitcell_1port"] = "cell_1rw"
+        self.names["bitcell_2port"] = "cell_2rw"
+        self.names["dummy_bitcell_1port"] = "dummy_cell_1rw"
+        self.names["dummy_bitcell_2port"] = "dummy_cell_2rw"
+        self.names["replica_bitcell_1port"] = "replica_cell_1rw"
+        self.names["replica_bitcell_2port"] = "replica_cell_2rw"
+        self.names["col_cap_bitcell_1port"] = "col_cap_cell_1rw"
+        self.names["col_cap_bitcell_2port"] = "col_cap_cell_2rw"
+        self.names["row_cap_bitcell_1port"] = "row_cap_cell_1rw"
+        self.names["row_cap_bitcell_2port"] = "row_cap_cell_2rw"
 
         self._ptx = _ptx(model_is_subckt=False,
                          bin_spice_models=False)
 
         self._pgate = _pgate(add_implants=False)
 
-        self._dff = _dff(use_custom_ports=False,
-                         custom_port_list=["D", "Q", "clk", "vdd", "gnd"],
-                         custom_type_list=["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"],
-                         clk_pin="clk")
+        self._inv_dec = _cell(["A", "Z", "vdd", "gnd"],
+                              ["INPUT", "OUTPUT", "POWER", "GROUND"])
+        
+        self._nand2_dec = _cell(["A", "B", "Z", "vdd", "gnd"],
+                                ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
+        
+        self._nand3_dec = _cell(["A", "B", "C", "Z", "vdd", "gnd"],
+                                ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
+        
+        self._nand4_dec = _cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
+                                ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
+        
+        self._dff = _cell(["D", "Q", "clk", "vdd", "gnd"],
+                          ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._dff_buff = _dff_buff(use_custom_ports=False,
-                                   custom_buff_ports=["D", "qint", "clk", "vdd", "gnd"],
-                                   add_body_contacts=False)
+        self._write_driver = _cell(['din', 'bl', 'br', 'en', 'vdd', 'gnd'],
+                                   ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._dff_buff_array = _dff_buff_array(use_custom_ports=False,
-                                               add_body_contacts=False)
+        self._sense_amp = _cell(['bl', 'br', 'dout', 'en', 'vdd', 'gnd'],
+                                ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._write_driver = _cell({'din': 'din',
-                                    'bl': 'bl',
-                                    'br': 'br',
-                                    'en': 'en'})
+        self._bitcell_1port = _bitcell(["bl", "br", "wl", "vdd", "gnd"],
+                                       ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._sense_amp = _cell({'bl': 'bl',
-                                 'br': 'br',
-                                 'dout': 'dout',
-                                 'en': 'en'})
+        self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
+                                       ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])
 
-        self._bitcell_array = _bitcell_array(use_custom_cell_arrangement=[])
+        self._col_cap_2port = _bitcell(["bl0", "br0", "bl1", "br1", "vdd"],
+                                       ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "POWER"])
 
-    @property
-    def bitcell(self):
-        return self._bitcell
+        self._row_cap_2port = _bitcell(["wl0", "wl1", "gnd"],
+                                       ["INPUT", "INPUT", "POWER", "GROUND"])
 
     @property
     def ptx(self):
@@ -197,16 +179,24 @@ class cell_properties():
         return self._pgate
 
     @property
+    def inv_dec(self):
+        return self._inv_dec
+
+    @property
+    def nand2_dec(self):
+        return self._nand2_dec
+    
+    @property
+    def nand3_dec(self):
+        return self._nand3_dec
+    
+    @property
+    def nand4_dec(self):
+        return self._nand4_dec
+    
+    @property
     def dff(self):
         return self._dff
-
-    @property
-    def dff_buff(self):
-        return self._dff_buff
-
-    @property
-    def dff_buff_array(self):
-        return self._dff_buff_array
 
     @property
     def write_driver(self):
@@ -217,13 +207,18 @@ class cell_properties():
         return self._sense_amp
 
     @property
-    def bitcell_array(self):
-        return self._bitcell_array
+    def bitcell_1port(self):
+        return self._bitcell_1port
+    
+    @property
+    def bitcell_2port(self):
+        return self._bitcell_2port
 
-    def compare_ports(self, port_list):
-        use_custom_arrangement = False
-        for ports in port_list:
-            if ports == "{}R_{}W_{}RW".format(OPTS.num_r_ports, OPTS.num_w_ports, OPTS.num_rw_ports):
-                use_custom_arrangement = True
-                break
-        return use_custom_arrangement
+    @property
+    def col_cap_2port(self):
+        return self._col_cap_2port
+
+    @property
+    def row_cap_2port(self):
+        return self._row_cap_2port
+    

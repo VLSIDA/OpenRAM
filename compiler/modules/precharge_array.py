@@ -10,7 +10,6 @@ import debug
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
-from tech import cell_properties
 
 
 class precharge_array(design.design):
@@ -79,6 +78,8 @@ class precharge_array(design.design):
                                       bitcell_br=self.bitcell_br)
         self.add_mod(self.pc_cell)
 
+        self.cell = factory.create(module_type=OPTS.bitcell)
+
     def add_layout_pins(self):
 
         en_pin = self.pc_cell.get_pin("en_bar")
@@ -120,7 +121,7 @@ class precharge_array(design.design):
             self.offsets = [n * self.pc_cell.width for n in range(self.columns)]
 
         for i, xoffset in enumerate(self.offsets):
-            if cell_properties.bitcell.mirror.y and (i + self.column_offset) % 2:
+            if self.cell.mirror.y and (i + self.column_offset) % 2:
                 mirror = "MY"
                 tempx = xoffset + self.pc_cell.width
             else:

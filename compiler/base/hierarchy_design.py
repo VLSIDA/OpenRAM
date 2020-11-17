@@ -40,8 +40,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.drc_errors = "skipped"
         self.lvs_errors = "skipped"
 
-        self.name = name
-        self.cell_name = cell_name
         hierarchy_spice.spice.__init__(self, name, cell_name)
         hierarchy_layout.layout.__init__(self, name, cell_name)
         self.init_graph_params()
@@ -73,11 +71,11 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         elif (OPTS.inline_lvsdrc or force_check or final_verification):
 
             tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.name)
-            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
             self.lvs_write(tempspice)
+            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
             self.gds_write(tempgds)
             # Final verification option does not allow nets to be connected by label.
-            self.drc_errors = verify.run_drc(self.cell_name, tempgds, extract=True, final_verification=final_verification)
+            self.drc_errors = verify.run_drc(self.cell_name, tempgds, tempspice, extract=True, final_verification=final_verification)
             self.lvs_errors = verify.run_lvs(self.cell_name, tempgds, tempspice, final_verification=final_verification)
 
             # force_check is used to determine decoder height and other things, so we shouldn't fail
@@ -105,9 +103,11 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         if OPTS.netlist_only:
             return
         elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
-            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.cell_name)
+            tempspice = "{0}{1}.sp".format(OPTS.openram_temp, self.name)
+            self.lvs_write(tempspice)
+            tempgds = "{0}{1}.gds".format(OPTS.openram_temp, self.cell_name)
             self.gds_write(tempgds)
-            num_errors = verify.run_drc(self.cell_name, tempgds, final_verification=final_verification)
+            num_errors = verify.run_drc(self.cell_name, tempgds, tempspice, final_verification=final_verification)
             debug.check(num_errors == 0,
                         "DRC failed for {0} with {1} error(s)".format(self.cell_name,
                                                                       num_errors))
@@ -126,9 +126,9 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         if OPTS.netlist_only:
             return
         elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
-            tempspice = "{0}/{1}.sp".format(OPTS.openram_temp, self.cell_name)
-            tempgds = "{0}/{1}.gds".format(OPTS.openram_temp, self.name)
+            tempspice = "{0}{1}.sp".format(OPTS.openram_temp, self.cell_name)
             self.lvs_write(tempspice)
+            tempgds = "{0}{1}.gds".format(OPTS.openram_temp, self.name)
             self.gds_write(tempgds)
             num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)
             debug.check(num_errors == 0,

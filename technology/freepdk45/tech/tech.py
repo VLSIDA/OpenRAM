@@ -31,8 +31,6 @@ tech_modules = module_type()
 # Custom cell properties
 ###################################################
 cell_properties = cell_properties()
-cell_properties.bitcell.mirror.x = True
-cell_properties.bitcell.mirror.y = False
 cell_properties.bitcell_power_pin_directions = ("V", "V")
 
 ###################################################
@@ -438,22 +436,23 @@ spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
 spice["inv_leakage"] = 1         # Leakage power of inverter in nW
 spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
 spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
+spice["nand4_leakage"] = 1       # Leakage power of 4-input nand in nW
 spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
 spice["dff_leakage"] = 1      # Leakage power of flop in nW
 
 spice["default_event_frequency"] = 100     # Default event activity of every gate. MHz
 
-#Parameters related to sense amp enable timing and delay chain/RBL sizing
-parameter["le_tau"] = 2.25                  #In pico-seconds.
-parameter["cap_relative_per_ff"] = 7.5      #Units of Relative Capacitance/ Femto-Farad
-parameter["dff_clk_cin"] = 30.6             #relative capacitance
-parameter["6tcell_wl_cin"] = 3              #relative capacitance
-parameter["min_inv_para_delay"] = 2.4        #Tau delay units
-parameter["sa_en_pmos_size"] = 0.72          #micro-meters
-parameter["sa_en_nmos_size"] = 0.27          #micro-meters
-parameter["sa_inv_pmos_size"] = 0.54          #micro-meters
-parameter["sa_inv_nmos_size"] = 0.27          #micro-meters
-parameter["bitcell_drain_cap"] = 0.1        #In Femto-Farad, approximation of drain capacitance
+# Parameters related to sense amp enable timing and delay chain/RBL sizing
+parameter["le_tau"] = 2.25                  # In pico-seconds.
+parameter["cap_relative_per_ff"] = 7.5      # Units of Relative Capacitance/ Femto-Farad
+parameter["dff_clk_cin"] = 30.6             # relative capacitance
+parameter["6tcell_wl_cin"] = 3              # relative capacitance
+parameter["min_inv_para_delay"] = 2.4       # Tau delay units
+parameter["sa_en_pmos_size"] = 0.72         # micro-meters
+parameter["sa_en_nmos_size"] = 0.27         # micro-meters
+parameter["sa_inv_pmos_size"] = 0.54        # micro-meters
+parameter["sa_inv_nmos_size"] = 0.27        # micro-meters
+parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of drain capacitance
 
 ###################################################
 # Technology Tool Preferences

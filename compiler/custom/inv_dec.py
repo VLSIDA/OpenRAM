@@ -6,9 +6,9 @@
 # All rights reserved.
 #
 import design
-from tech import GDS, layer, spice, parameter
 import logical_effort
-import utils
+from tech import cell_properties as props
+from tech import spice, parameter
 
 
 class inv_dec(design.design):
@@ -16,25 +16,8 @@ class inv_dec(design.design):
     INV for address decoders.
     """
 
-    pin_names = ["A", "Z", "vdd", "gnd"]
-    type_list = ["INPUT", "OUTPUT", "POWER", "GROUND"]
-    cell_size_layer = "boundary"
-
     def __init__(self, name="inv_dec", height=None):
-        super().__init__(name)
-
-        (width, height) = utils.get_libcell_size(self.cell_name,
-                                                 GDS["unit"],
-                                                 layer[self.cell_size_layer])
-
-        pin_map = utils.get_libcell_pins(self.pin_names,
-                                         self.cell_name,
-                                         GDS["unit"])
-
-        self.width = width
-        self.height = height
-        self.pin_map = pin_map
-        self.add_pin_types(self.type_list)
+        super().__init__(name, prop=props.inv_dec)
 
     def analytical_power(self, corner, load):
         """Returns dynamic and leakage power. Results in nW"""
@@ -52,7 +35,7 @@ class inv_dec(design.design):
         # In fF
         c_para = spice["min_tx_drain_c"] * (self.nmos_size / parameter["min_tx_size"])
 
-        return transition_prob * (c_load + c_para)
+        return 0.5 * (c_load + c_para)
 
     def input_load(self):
         """

@@ -213,28 +213,15 @@ def setup_bitcell():
     # If we have non-1rw ports,
     # and the user didn't over-ride the bitcell manually,
     # figure out the right bitcell to use
-    if OPTS.bitcell == "bitcell":
-        if (OPTS.num_rw_ports == 1 and OPTS.num_w_ports == 0 and OPTS.num_r_ports == 0):
-            OPTS.bitcell = "bitcell"
-        else:
-            ports = ""
-            if OPTS.num_rw_ports > 0:
-                ports += "{}rw_".format(OPTS.num_rw_ports)
-            if OPTS.num_w_ports > 0:
-                ports += "{}w_".format(OPTS.num_w_ports)
-            if OPTS.num_r_ports > 0:
-                ports += "{}r".format(OPTS.num_r_ports)
-
-            if ports != "":
-                OPTS.bitcell_suffix = "_" + ports
-            OPTS.bitcell = "bitcell" + OPTS.bitcell_suffix
-
-        OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
-        OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-    elif OPTS.bitcell == "pbitcell":
+    if OPTS.bitcell == "pbitcell":
         OPTS.bitcell = "pbitcell"
         OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
+    else:
+        num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        OPTS.bitcell = "bitcell_{}port".format(num_ports)
+        OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
+        OPTS.replica_bitcell = "replica_" + OPTS.bitcell
                 
     # See if bitcell exists
     try:
@@ -247,7 +234,8 @@ def setup_bitcell():
         OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
         if not OPTS.is_unit_test:
-            debug.warning("Using the parameterized bitcell which may have suboptimal density.")
+            msg = "Didn't find {0}rw {1}w {2}r port bitcell. ".format(OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports)
+            debug.warning("{} Using the parameterized bitcell which may have suboptimal density.".format(msg))
     debug.info(1, "Using bitcell: {}".format(OPTS.bitcell))
 
 

@@ -5,7 +5,6 @@
 #
 from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
-from tech import cell_properties as props
 from globals import OPTS
 
 
@@ -77,15 +76,17 @@ class dummy_array(bitcell_base_array):
         for col in range(self.column_size):
             for port in self.all_ports:
                 bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
-                self.add_rect(layer=bl_pin.layer,
-                              offset=bl_pin.ll().scale(1, 0),
-                              width=bl_pin.width(),
-                              height=self.height)
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
                 br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
-                self.add_rect(layer=br_pin.layer,
-                              offset=br_pin.ll().scale(1, 0),
-                              width=br_pin.width(),
-                              height=self.height)
+                self.add_layout_pin(text="br_{0}_{1}".format(port, col),
+                                    layer=br_pin.layer,
+                                    offset=br_pin.ll().scale(1, 0),
+                                    width=br_pin.width(),
+                                    height=self.height)
 
         wl_names = self.cell.get_all_wl_names()
         for row in range(self.row_size):

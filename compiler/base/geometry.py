@@ -275,16 +275,16 @@ class instance(geometry):
     def calculate_transform(self, node):
         #set up the rotation matrix
         angle = math.radians(float(node.rotate))
-        mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
-                            [math.sin(angle),math.cos(angle),0.0],
-                            [0.0,0.0,1.0]])
+        mRotate = np.array([[math.cos(angle), -math.sin(angle), 0.0],
+                            [math.sin(angle), math.cos(angle), 0.0],
+                            [0.0, 0.0, 1.0]])
 
         #set up translation matrix
         translateX = float(node.offset[0])
         translateY = float(node.offset[1])
-        mTranslate = np.array([[1.0,0.0,translateX],
-                                [0.0,1.0,translateY],
-                                [0.0,0.0,1.0]])
+        mTranslate = np.array([[1.0, 0.0, translateX],
+                                [0.0, 1.0, translateY],
+                                [0.0, 0.0, 1.0]])
 
         #set up the scale matrix (handles mirror X)
         scaleX = 1.0
@@ -292,27 +292,27 @@ class instance(geometry):
             scaleY = -1.0
         else:
             scaleY = 1.0
-        mScale = np.array([[scaleX,0.0,0.0],
-                            [0.0,scaleY,0.0],
-                            [0.0,0.0,1.0]])
+        mScale = np.array([[scaleX, 0.0, 0.0],
+                            [0.0, scaleY, 0.0],
+                            [0.0, 0.0, 1.0]])
 
         return (mRotate, mScale, mTranslate)
 
     def apply_transform(self, mtransforms, uVector, vVector, origin):
-        origin = np.dot(mtransforms[0], origin)  #rotate
-        uVector = np.dot(mtransforms[0], uVector)  #rotate
-        vVector = np.dot(mtransforms[0], vVector)  #rotate
-        origin = np.dot(mtransforms[1], origin)  #scale
-        uVector = np.dot(mtransforms[1], uVector)  #scale
-        vVector = np.dot(mtransforms[1], vVector)  #scale
+        origin = np.dot(mtransforms[0], origin)    # rotate
+        uVector = np.dot(mtransforms[0], uVector)  # rotate
+        vVector = np.dot(mtransforms[0], vVector)  # rotate
+        origin = np.dot(mtransforms[1], origin)    # scale
+        uVector = np.dot(mtransforms[1], uVector)  # scale
+        vVector = np.dot(mtransforms[1], vVector)  # scale
         origin = np.dot(mtransforms[2], origin)
 
         return(uVector, vVector, origin)
 
     def apply_path_transform(self, path):
-        uVector = np.array([[1.0],[0.0],[0.0]])
-        vVector = np.array([[0.0],[1.0],[0.0]])
-        origin = np.array([[0.0],[0.0],[1.0]])
+        uVector = np.array([[1.0], [0.0], [0.0]])
+        vVector = np.array([[0.0], [1.0], [0.0]])
+        origin = np.array([[0.0], [0.0], [1.0]])
 
         while(path):
             instance = path.pop(-1)
@@ -330,15 +330,13 @@ class instance(geometry):
         bl_offsets = [] # bl to cell offset
         br_offsets = [] # br to cell offset
         bl_meta = [] # bl offset metadata (row,col,name)
-        br_meta  = [] #br offset metadata (row,col,name)
+        br_meta  = [] # br offset metadata (row,col,name)
 
         def walk_subtree(node):
             path.append(node)
 
             if node.mod.name == cell_name:
                 cell_paths.append(copy.copy(path))
-
-                inst_name = path[-1].name
 
                 # get the row and col names from the path
                 row = int(path[-1].name.split('_')[-2][1:])
@@ -370,16 +368,14 @@ class instance(geometry):
 
                     for pair in range(len(normalized_bl_offsets)):
                         normalized_bl_offsets[pair] = (normalized_bl_offsets[pair][0],
-                                -1 * normalized_bl_offsets[pair][1])
+                                                       -1 * normalized_bl_offsets[pair][1])
 
                     for pair in range(len(normalized_br_offsets)):
                         normalized_br_offsets[pair] = (normalized_br_offsets[pair][0],
-                                -1 * normalized_br_offsets[pair][1])
-
+                                                       -1 * normalized_br_offsets[pair][1])
 
                 Q_offsets.append([Q_x, Q_y])
                 Q_bar_offsets.append([Q_bar_x, Q_bar_y])
-
 
                 bl_offsets.append(normalized_bl_offsets)
                 br_offsets.append(normalized_br_offsets)
@@ -428,7 +424,7 @@ class path(geometry):
 
     def gds_write_file(self, new_layout):
         """Writes the path to GDS"""
-        debug.info(4, "writing path (" + str(self.layerNumber) +  "): " + self.coordinates)
+        debug.info(4, "writing path (" + str(self.layerNumber) + "): " + self.coordinates)
         new_layout.addPath(layerNumber=self.layerNumber,
                            purposeNumber=self.layerPurpose,
                            coordinates=self.coordinates,

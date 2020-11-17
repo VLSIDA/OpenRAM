@@ -6,7 +6,6 @@
 from bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
-from tech import cell_properties
 
 
 class col_cap_array(bitcell_base_array):
@@ -26,12 +25,9 @@ class col_cap_array(bitcell_base_array):
     def create_netlist(self):
         """ Create and connect the netlist """
         # This will create a default set of bitline/wordline names
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
+        self.cell = factory.create(module_type=OPTS.bitcell)
 
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             self.create_all_wordline_names()
         self.create_all_bitline_names()
 
@@ -51,8 +47,6 @@ class col_cap_array(bitcell_base_array):
         self.dummy_cell = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
         self.add_mod(self.dummy_cell)
 
-        self.cell = factory.create(module_type=OPTS.bitcell)
-
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst = {}
@@ -70,16 +64,14 @@ class col_cap_array(bitcell_base_array):
         """
 
         if len(self.all_ports) == 1:
-            pin_name = cell_properties.bitcell.cell_6t.pin
-            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
-                            "{0}_{1}".format(pin_name.br0, col),
+            bitcell_pins = ["bl0_{0}".format(col),
+                            "br0_{0}".format(col),
                             "vdd"]
         else:
-            pin_name = cell_properties.bitcell.cell_1rw1r.pin
-            bitcell_pins = ["{0}_{1}".format(pin_name.bl0, col),
-                            "{0}_{1}".format(pin_name.br0, col),
-                            "{0}_{1}".format(pin_name.bl1, col),
-                            "{0}_{1}".format(pin_name.br1, col),
+            bitcell_pins = ["bl0_{0}".format(col),
+                            "br0_{0}".format(col),
+                            "bl1_{0}".format(col),
+                            "br1_{0}".format(col),
                             "vdd"]
 
         return bitcell_pins

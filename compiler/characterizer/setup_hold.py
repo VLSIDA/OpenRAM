@@ -48,7 +48,7 @@ class setup_hold():
 
         # instantiate the master-slave d-flip-flop
         self.sf.write("\n* Instantiation of the Master-Slave D-flip-flop\n")
-        self.stim.inst_model(pins=self.dff.get_ordered_inputs(self.dff.pins),
+        self.stim.inst_model(pins=self.dff.get_original_pin_names(),
                              model_name=self.dff.cell_name)
 
         self.write_data(mode=mode,

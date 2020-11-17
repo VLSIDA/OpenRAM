@@ -39,6 +39,7 @@ class design(hierarchy_design):
             # that they matched here
             debug.check(prop.port_names == self.pins,
                         "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+            self.add_pin_indices(prop.port_indices)
             self.add_pin_names(prop.port_map)
             self.add_pin_types(prop.port_types)
             

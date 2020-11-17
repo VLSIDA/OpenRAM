@@ -62,14 +62,7 @@ class layout():
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
-
-    def add_pin_names(self, pin_dict):
-        """
-        Create a mapping from internal pin names to external pin names.
-        """
-        self.pin_names = pin_dict
-        
-        
+    
     ############################################################
     # GDS layout
     ############################################################
@@ -325,11 +318,8 @@ class layout():
         """
         Return the pin or list of pins
         """
-        if text in self.pin_names:
-            name = self.pin_names[text]
-        else:
-            name = text
-            
+        name = self.get_pin_name(text)
+        
         try:
             if len(self.pin_map[name]) > 1:
                 debug.error("Should use a pin iterator since more than one pin {}".format(text), -1)
@@ -345,16 +335,42 @@ class layout():
         """
         Return a pin list (instead of a single pin)
         """
-        if text in self.pin_names:
-            name = self.pin_names[text]
-        else:
-            name = text
+        name = self.get_pin_name(text)
             
         if name in self.pin_map.keys():
             return self.pin_map[name]
         else:
             return set()
 
+    def add_pin_names(self, pin_dict):
+        """
+        Create a mapping from internal pin names to external pin names.
+        """
+        self.pin_names = pin_dict
+        
+        self.original_pin_names = {y: x for (x, y) in self.pin_names.items()}
+
+    def get_pin_name(self, text):
+        """ Return the custom cell pin name """
+        
+        if text in self.pin_names:
+            return self.pin_names[text]
+        else:
+            return text
+
+    def get_original_pin_names(self):
+        """ Return the internal cell pin name """
+        
+        # This uses the hierarchy_spice pins (in order)
+        return [self.get_original_pin_name(x) for x in self.pins]
+
+    def get_original_pin_name(self, text):
+        """ Return the internal cell pin names in custom port order """
+        if text in self.original_pin_names:
+            return self.original_pin_names[text]
+        else:
+            return text
+    
     def get_pin_names(self):
         """
         Return a pin list of all pins

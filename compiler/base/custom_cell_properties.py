@@ -22,7 +22,11 @@ class _cell:
             self._port_map = {x: x for x in port_order}
 
         # Update mapping of names
+        self._original_port_order = port_order
         self._port_order = port_order
+
+        # Create an index array
+        self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
         
         # Update ordered name list
         self._port_names = [self._port_map[x] for x in self._port_order]
@@ -49,7 +53,13 @@ class _cell:
         self._port_names = [self._port_map[x] for x in self._port_order]
         # Update ordered type list in the new order
         self._port_types = [self._port_types_map[x] for x in self._port_order]
+        # Update the index array
+        self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
 
+    @property
+    def port_indices(self):
+        return self._port_indices
+        
     @property
     def port_map(self):
         return self._port_map

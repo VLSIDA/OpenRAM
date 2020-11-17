@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 import math
+
 
 class verilog:
     """
@@ -16,7 +16,7 @@ class verilog:
     def __init__(self):
         pass
 
-    def verilog_write(self,verilog_name):
+    def verilog_write(self, verilog_name):
         """ Write a behavioral Verilog model. """
         self.vf = open(verilog_name, "w")
 
@@ -219,6 +219,9 @@ class verilog:
             self.vf.write("    if (!csb{0}_reg)\n".format(port))
         self.vf.write("       dout{0} <= #(DELAY) mem[addr{0}_reg];\n".format(port))
         self.vf.write("  end\n")
+
+        self.vf.write("  always @(csb{0})\n".format(port))
+        self.vf.write("       dout{0} = 0)\n".format(port))
 
     def add_address_check(self, wport, rport):
         """ Output a warning if the two addresses match """

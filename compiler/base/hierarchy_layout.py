@@ -32,17 +32,29 @@ class layout():
     """
 
     def __init__(self, name, cell_name):
+        # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
+        
         self.width = None
         self.height = None
         self.bounding_box = None
-        self.insts = []      # Holds module/cell layout instances
-        self.inst_names = set() # Set of names to check for duplicates
-        self.objs = []       # Holds all other objects (labels, geometries, etc)
-        self.pin_map = {}    # Holds name->pin_layout map for all pins
-        self.visited = []    # List of modules we have already visited
-        self.is_library_cell = False # Flag for library cells
+        # Holds module/cell layout instances
+        self.insts = []
+        # Set of names to check for duplicates
+        self.inst_names = set()
+        # Holds all other objects (labels, geometries, etc)
+        self.objs = []
+        # This is a mapping of internal pin names to cell pin names
+        # If the key is not found, the internal pin names is assumed
+        self.pin_names = {}
+        # Holds name->pin_layout map for all pins
+        self.pin_map = {}
+        # List of modules we have already visited
+        self.visited = []
+        # Flag for library cells
+        self.is_library_cell = False
+        
         self.gds_read()
 
         try:
@@ -50,9 +62,7 @@ class layout():
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
-
-
-
+    
     ############################################################
     # GDS layout
     ############################################################
@@ -308,26 +318,59 @@ class layout():
         """
         Return the pin or list of pins
         """
+        name = self.get_pin_name(text)
+        
         try:
-            if len(self.pin_map[text]) > 1:
+            if len(self.pin_map[name]) > 1:
                 debug.error("Should use a pin iterator since more than one pin {}".format(text), -1)
             # If we have one pin, return it and not the list.
             # Otherwise, should use get_pins()
-            any_pin = next(iter(self.pin_map[text]))
+            any_pin = next(iter(self.pin_map[name]))
             return any_pin
         except Exception:
             self.gds_write("missing_pin.gds")
-            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(text, self.cell_name), -1)
+            debug.error("No pin found with name {0} on {1}. Saved as missing_pin.gds.".format(name, self.cell_name), -1)
 
     def get_pins(self, text):
         """
         Return a pin list (instead of a single pin)
         """
-        if text in self.pin_map.keys():
-            return self.pin_map[text]
+        name = self.get_pin_name(text)
+            
+        if name in self.pin_map.keys():
+            return self.pin_map[name]
         else:
             return set()
 
+    def add_pin_names(self, pin_dict):
+        """
+        Create a mapping from internal pin names to external pin names.
+        """
+        self.pin_names = pin_dict
+        
+        self.original_pin_names = {y: x for (x, y) in self.pin_names.items()}
+
+    def get_pin_name(self, text):
+        """ Return the custom cell pin name """
+        
+        if text in self.pin_names:
+            return self.pin_names[text]
+        else:
+            return text
+
+    def get_original_pin_names(self):
+        """ Return the internal cell pin name """
+        
+        # This uses the hierarchy_spice pins (in order)
+        return [self.get_original_pin_name(x) for x in self.pins]
+
+    def get_original_pin_name(self, text):
+        """ Return the internal cell pin names in custom port order """
+        if text in self.original_pin_names:
+            return self.original_pin_names[text]
+        else:
+            return text
+    
     def get_pin_names(self):
         """
         Return a pin list of all pins
@@ -346,7 +389,7 @@ class layout():
 
         for pin in pins:
             if new_name == "":
-                new_name = pin.name
+                new_name = pin_name
             self.add_layout_pin(new_name,
                                 pin.layer,
                                 pin.ll(),

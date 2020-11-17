@@ -7,8 +7,7 @@
 #
 import design
 import debug
-import utils
-from tech import GDS, layer, parameter, drc
+from tech import parameter, drc
 from tech import cell_properties as props
 import logical_effort
 
@@ -20,45 +19,24 @@ class sense_amp(design.design):
     the technology library.
     Sense amplifier to read a pair of bit-lines.
     """
-    pin_names = [props.sense_amp.pin.bl,
-                 props.sense_amp.pin.br,
-                 props.sense_amp.pin.dout,
-                 props.sense_amp.pin.en,
-                 props.sense_amp.pin.vdd,
-                 props.sense_amp.pin.gnd]
-    type_list = ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"]
-    cell_size_layer = "boundary"
 
     def __init__(self, name="sense_amp"):
-        super().__init__(name)
+        super().__init__(name, prop=props.sense_amp)
         debug.info(2, "Create sense_amp")
 
-        (width, height) = utils.get_libcell_size(self.cell_name,
-                                                 GDS["unit"],
-                                                 layer[self.cell_size_layer])
-
-        pin_map = utils.get_libcell_pins(self.pin_names,
-                                         self.cell_name,
-                                         GDS["unit"])
-
-        self.width = width
-        self.height = height
-        self.pin_map = pin_map
-        self.add_pin_types(self.type_list)
-
     def get_bl_names(self):
-        return props.sense_amp.pin.bl
+        return "bl"
 
     def get_br_names(self):
-        return props.sense_amp.pin.br
+        return "br"
 
     @property
     def dout_name(self):
-        return props.sense_amp.pin.dout
+        return "dout"
 
     @property
     def en_name(self):
-        return props.sense_amp.pin.en
+        return "en"
 
     def get_cin(self):
 

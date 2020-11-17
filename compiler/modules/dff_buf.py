@@ -8,7 +8,6 @@
 import debug
 import design
 from tech import layer
-from tech import cell_properties as props
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -72,16 +71,8 @@ class dff_buf(design.design):
         self.add_mod(self.inv2)
 
     def add_pins(self):
-        self.add_pin("D", "INPUT")
-        self.add_pin("Q", "OUTPUT")
-        self.add_pin("Qb", "OUTPUT")
-        self.add_pin("clk", "INPUT")
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
-
-        if props.dff_buff.add_body_contacts:
-            self.add_pin("vpb", "INPUT")
-            self.add_pin("vpn", "INPUT")
+        self.add_pin_list(["D", "Q", "Qb", "clk", "vdd", "gnd"],
+                          ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
     def create_instances(self):
         self.dff_inst=self.add_inst(name="dff_buf_dff",

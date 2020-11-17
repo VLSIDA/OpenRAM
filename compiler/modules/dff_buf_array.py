@@ -7,7 +7,6 @@
 #
 import debug
 import design
-from tech import cell_properties as props
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -65,10 +64,6 @@ class dff_buf_array(design.design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        if props.dff_buff_array.add_body_contacts:
-            self.add_pin("vpb", "INPUT")
-            self.add_pin("vnb", "INPUT")
-
     def add_modules(self):
         self.dff = factory.create(module_type="dff_buf",
                                   inv1_size=self.inv1_size,
@@ -88,9 +83,6 @@ class dff_buf_array(design.design):
                                    "clk",
                                    "vdd",
                                    "gnd"]
-                if props.dff_buff_array.add_body_contacts:
-                    inst_ports.append("vpb")
-                    inst_ports.append("vnb")
                 self.connect_inst(inst_ports)
 
     def place_dff_array(self):

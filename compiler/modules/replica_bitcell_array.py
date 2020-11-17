@@ -63,13 +63,8 @@ class replica_bitcell_array(bitcell_base_array):
         # Two dummy cols plus replica if we add the column
         self.extra_cols = len(self.left_rbl) + len(self.right_rbl)
 
-
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
         # If we aren't using row/col caps, then we need to use the bitcell
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             self.extra_rows += 2
             self.extra_cols += 2
 
@@ -144,10 +139,6 @@ class replica_bitcell_array(bitcell_base_array):
                                                         column_offset=column_offset,
                                                         replica_bit=replica_bit)
             self.add_mod(self.replica_columns[port])
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
 
         # Dummy row
         self.dummy_row = factory.create(module_type="dummy_array",
@@ -159,7 +150,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_mod(self.dummy_row)
 
         # Dummy Row or Col Cap, depending on bitcell array properties
-        col_cap_module_type = ("col_cap_array" if end_caps_enabled else "dummy_array")
+        col_cap_module_type = ("col_cap_array" if self.cell.end_caps else "dummy_array")
         self.col_cap_top = factory.create(module_type=col_cap_module_type,
                                           cols=self.column_size,
                                           rows=1,
@@ -179,7 +170,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_mod(self.col_cap_bottom)
 
         # Dummy Col or Row Cap, depending on bitcell array properties
-        row_cap_module_type = ("row_cap_array" if end_caps_enabled else "dummy_array")
+        row_cap_module_type = ("row_cap_array" if self.cell.end_caps else "dummy_array")
 
         self.row_cap_left = factory.create(module_type=row_cap_module_type,
                                             cols=1,
@@ -240,11 +231,6 @@ class replica_bitcell_array(bitcell_base_array):
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
 
     def add_wordline_pins(self):
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
-
 
         # Wordlines to ground
         self.gnd_wordline_names = []
@@ -385,14 +371,10 @@ class replica_bitcell_array(bitcell_base_array):
 
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
 
         # Grow from left to right, toward the array
         for bit, port in enumerate(self.left_rbl):
-            if not end_caps_enabled:
+            if not self.cell.end_caps:
                 offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1) + self.strap_offset.scale(-len(self.left_rbl) + bit, 0) + self.unused_offset
             else:
                 offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - (self.col_end_offset.y/self.cell.height)) + self.strap_offset.scale(-len(self.left_rbl) + bit, 0) + self.unused_offset
@@ -400,7 +382,7 @@ class replica_bitcell_array(bitcell_base_array):
             self.replica_col_insts[bit].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit, port in enumerate(self.right_rbl):
-            if not end_caps_enabled:
+            if not self.cell.end_caps:
                 offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - 1) + self.strap_offset.scale(bit, -self.rbl[0] - 1)
             else:
                 offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - (self.col_end_offset.y/self.cell.height)) + self.strap_offset.scale(bit, -self.rbl[0] - 1)
@@ -422,15 +404,11 @@ class replica_bitcell_array(bitcell_base_array):
 
     def add_end_caps(self):
         """ Add dummy cells or end caps around the array """
-        try:
-            end_caps_enabled = cell_properties.bitcell.end_caps
-        except AttributeError:
-            end_caps_enabled = False
 
         # FIXME: These depend on the array size itself
         # Far top dummy row (first row above array is NOT flipped)
         flip_dummy = self.rbl[1] % 2
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             dummy_row_offset = self.bitcell_offset.scale(0,  self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
         else:
             dummy_row_offset = self.bitcell_offset.scale(0,  self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
@@ -440,7 +418,7 @@ class replica_bitcell_array(bitcell_base_array):
         # FIXME: These depend on the array size itself
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.rbl[0] + 1) % 2
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy) + self.unused_offset
         else:
              dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - (self.col_end_offset.y/self.cell.height) + flip_dummy) + self.unused_offset
@@ -448,7 +426,7 @@ class replica_bitcell_array(bitcell_base_array):
                                           mirror="MX" if flip_dummy else "R0")
         # Far left dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1)  + self.unused_offset
         else:
             dummy_col_offset = self.bitcell_offset.scale(-(len(self.left_rbl)*(1+self.strap_offset.x/self.cell.width)) - (self.row_end_offset.x/self.cell.width), -len(self.left_rbl) - (self.col_end_offset.y/self.cell.height))
@@ -456,7 +434,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.dummy_col_insts[0].place(offset=dummy_col_offset)
         # Far right dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        if not end_caps_enabled:
+        if not self.cell.end_caps:
             dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] - 1) + self.bitcell_array_inst.lr()
         else:
             dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl)*(1+self.strap_offset.x/self.cell.width), -self.rbl[0] - (self.col_end_offset.y/self.cell.height)) + self.bitcell_array_inst.lr()

@@ -28,17 +28,20 @@ class spice():
     """
 
     def __init__(self, name, cell_name):
+        # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
 
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = []
-        # Holds the pins for this module
+        # Holds the pins for this module (in order)
         self.pins = []
         # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
         # for each instance, this is the set of nets/nodes that map to the pins for this instance
         self.pin_type = {}
+        # An (optional) list of indices to reorder the pins to match the spice.
+        self.pin_indices = []
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         self.conns = []
@@ -94,19 +97,34 @@ class spice():
         else:
             debug.error("Mismatch in type and pin list lengths.", -1)
 
+    def add_pin_indices(self, index_list):
+        """
+        Add pin indices for all the cell's pins.
+        """
+        self.pin_indices = index_list
+
+    def get_ordered_inputs(self, input_list):
+        """
+        Return the inputs reordered to match the pins.
+        """
+        if not self.pin_indices:
+            return input_list
+
+        new_list = [input_list[x] for x in self.pin_indices]
+        return new_list
+        
     def add_pin_types(self, type_list):
         """
         Add pin types for all the cell's pins.
-           Typically, should only be used for handmade cells.
         """
         # This only works if self.pins == bitcell.pin_names
-        if self.pin_names != self.pins:
-            debug.error("{} spice subcircuit port names do not match pin_names\
+        if len(type_list) != len(self.pins):
+            debug.error("{} spice subcircuit number of port types does not match number of pins\
                       \n SPICE names={}\
                       \n Module names={}\
-                      ".format(self.name, self.pin_names, self.pins), 1)
-        self.pin_type = {pin: type for pin, type in zip(self.pin_names, type_list)}
-
+                      ".format(self.name, self.pins, type_list), 1)
+        self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
+    
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         pin_type = self.pin_type[name]
@@ -158,19 +176,26 @@ class spice():
         self.mods.append(mod)
 
     def connect_inst(self, args, check=True):
-        """Connects the pins of the last instance added
+        """
+        Connects the pins of the last instance added
         It is preferred to use the function with the check to find if
         there is a problem. The check option can be set to false
         where we dynamically generate groups of connections after a
-        group of modules are generated."""
+        group of modules are generated.
+        """
+        
         num_pins = len(self.insts[-1].mod.pins)
         num_args = len(args)
+
+        # Order the arguments if the hard cell has a custom port order
+        ordered_args = self.get_ordered_inputs(args)
+        
         if (check and num_pins != num_args):
             if num_pins < num_args:
                 mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
-                arg_pins = args
+                arg_pins = ordered_args
             else:
-                arg_pins = args + [""] * (num_pins - num_args)
+                arg_pins = ordered_args + [""] * (num_pins - num_args)
                 mod_pins = self.insts[-1].mod.pins
 
             modpins_string = "\n".join(["{0} -> {1}".format(arg, mod) for (arg, mod) in zip(arg_pins, mod_pins)])
@@ -179,8 +204,9 @@ class spice():
                                                                                     modpins_string),
                         1)
 
-        self.conns.append(args)
+        self.conns.append(ordered_args)
 
+        # This checks if we don't have enough instance port connections for the number of insts
         if check and (len(self.insts)!=len(self.conns)):
             insts_string=pformat(self.insts)
             conns_string=pformat(self.conns)
@@ -238,7 +264,8 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins, "LVS and spice file pin mismatch.")
+            debug.check(lvs_pins == self.pins,
+                        "Spice netlists for LVS and simulation have port mismatches: {0} (LVS) vs {1} (sim)".format(lvs_pins, self.pins))
 
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
@@ -296,6 +323,18 @@ class spice():
             sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
                                                   " ".join(self.pins)))
 
+            # write a PININFO line
+            pin_info = "*.PININFO"
+            for pin in self.pins:
+                if self.pin_type[pin] == "INPUT":
+                    pin_info += " {0}:I".format(pin)
+                elif self.pin_type[pin] == "OUTPUT":
+                    pin_info += " {0}:O".format(pin)
+                else:
+                    pin_info += " {0}:B".format(pin)
+            sp.write(pin_info + "\n")
+
+            # Also write pins as comments
             for pin in self.pins:
                 sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
 

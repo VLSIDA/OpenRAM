@@ -8,6 +8,7 @@
 import contact
 import debug
 from tech import drc, parameter, layer
+from tech import cell_properties as props
 from vector import vector
 from ptx import ptx
 from globals import OPTS
@@ -29,8 +30,10 @@ class pbitcell(bitcell_base.bitcell_base):
 
         self.replica_bitcell = replica_bitcell
         self.dummy_bitcell = dummy_bitcell
+        self.mirror = props.bitcell_1port.mirror
+        self.end_caps = props.bitcell_1port.end_caps
 
-        bitcell_base.bitcell_base.__init__(self, name, hard_cell=False)
+        bitcell_base.bitcell_base.__init__(self, name)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"
         info_string = fmt_str.format(self.num_rw_ports,
                                      self.num_w_ports,

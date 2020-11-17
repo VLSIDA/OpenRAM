@@ -11,7 +11,6 @@ from tech import layer, preferred_directions
 from vector import vector
 from sram_factory import factory
 from globals import OPTS
-from tech import cell_properties as cell_props
 from tech import layer_properties as layer_props
 
 
@@ -99,6 +98,8 @@ class column_mux_array(design.design):
                                   bitcell_br=self.bitcell_br)
         self.add_mod(self.mux)
 
+        self.cell = factory.create(module_type=OPTS.bitcell)
+
     def setup_layout_constants(self):
         self.column_addr_size = int(self.words_per_row / 2)
         self.width = self.columns * self.mux.width
@@ -128,7 +129,7 @@ class column_mux_array(design.design):
 
         # For every column, add a pass gate
         for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
-            if cell_props.bitcell.mirror.y and (col_num + self.column_offset) % 2:
+            if self.cell.mirror.y and (col_num + self.column_offset) % 2:
                 mirror = "MY"
                 xoffset = xoffset + self.mux.width
             else:

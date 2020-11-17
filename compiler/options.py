@@ -144,7 +144,6 @@ class options(optparse.Values):
 
 
     # These are the default modules that can be over-riden
-    bitcell_suffix = ""
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"

@@ -128,7 +128,7 @@ class delay(simulation):
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
         read_measures.append(self.create_read_bit_measures())
-        #read_measures.append(self.create_sen_and_bitline_path_measures())
+        read_measures.append(self.create_sen_and_bitline_path_measures())
 
         return read_measures
 
@@ -756,6 +756,8 @@ class delay(simulation):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict), 1)
 
             result[port].update(read_port_dict)
+            
+            self.check_path_measures()
 
         return (True, result)
 
@@ -856,6 +858,21 @@ class delay(simulation):
 
         debug.info(1, "min_dicharge={}, min_diff={}".format(min_dicharge, min_diff))
         return (min_dicharge and min_diff)
+
+    def check_path_measures(self):
+        """Get and check all the delays along the sen and bitline paths"""
+        
+        # Get and set measurement, no error checking done other than prints.
+        debug.info(2, "Checking measures in Delay Path")
+        value_dict = {}
+        for meas in self.sen_path_meas+self.bl_path_meas:
+            val = meas.retrieve_measure()
+            debug.info(2, '{}={}'.format(meas.name, val))
+            if type(val) != float or val > self.period/2:
+                debug.info(1,'Failed measurement:{}={}'.format(meas.name, val))
+            value_dict[meas.name] = val
+        
+        return value_dict
 
     def run_power_simulation(self):
         """

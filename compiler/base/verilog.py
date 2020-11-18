@@ -220,9 +220,6 @@ class verilog:
         self.vf.write("       dout{0} <= #(DELAY) mem[addr{0}_reg];\n".format(port))
         self.vf.write("  end\n")
 
-        self.vf.write("  always @(csb{0})\n".format(port))
-        self.vf.write("       dout{0} = 0)\n".format(port))
-
     def add_address_check(self, wport, rport):
         """ Output a warning if the two addresses match """
         # If the rport is actually reading... and addresses match.

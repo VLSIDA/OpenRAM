@@ -35,7 +35,7 @@ class design(hierarchy_design):
                 cell_name = props.name[name]
 
         elif not cell_name:
-            cell_name = nacell_name = props.name[name]
+            cell_name = name
         super().__init__(name, cell_name)
 
         # This means it is a custom cell.

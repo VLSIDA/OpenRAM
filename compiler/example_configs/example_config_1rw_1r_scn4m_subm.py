@@ -14,7 +14,10 @@ temperatures = [25]
 route_supplies = True
 check_lvsdrc = True
 
-output_path = "temp"
-output_name = "sram_1rw_1r_{0}_{1}_{2}".format(word_size,
-                                               num_words,
-                                               tech_name)
+output_name = "sram_{0}rw{1}r{2}w_{3}_{4}_{5}".format(num_rw_ports,
+                                                      num_r_ports,
+                                                      num_w_ports,
+                                                      word_size,
+                                                      num_words,
+                                                      tech_name)
+output_path = "macro/{}".format(output_name)

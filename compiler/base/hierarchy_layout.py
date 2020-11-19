@@ -36,6 +36,8 @@ class layout():
         self.name = name
         self.cell_name = cell_name
         
+        self.gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
+        
         self.width = None
         self.height = None
         self.bounding_box = None

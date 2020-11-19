@@ -28,11 +28,11 @@ class design(hierarchy_design):
         # depending on the number of ports.
 
         if name in props.names:
-            if type(name) is list:
-                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
+            if type(props.names[name]) is list:
+                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports - 1
                 cell_name = props.names[name][num_ports]
             else:
-                cell_name = props.name[name]
+                cell_name = props.names[name]
 
         elif not cell_name:
             cell_name = name

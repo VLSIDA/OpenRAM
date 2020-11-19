@@ -377,7 +377,7 @@ class layout():
         """
         Return a pin list of all pins
         """
-        return self.pin_map.keys()
+        return self.pins
 
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """

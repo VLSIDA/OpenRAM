@@ -145,11 +145,10 @@ class port_address(design.design):
                                                     cols=self.num_cols)
         self.add_mod(self.wordline_driver_array)
 
-        try:
-            local_array_size = OPTS.local_array_size
+        local_array_size = OPTS.local_array_size
+        if local_array_size > 0:
             driver_size = max(int(self.num_cols / local_array_size), 1)
-        except AttributeError:
-            local_array_size = 0
+        else:
             # Defautl to FO4
             driver_size = max(int(self.num_cols / 4), 1)
 

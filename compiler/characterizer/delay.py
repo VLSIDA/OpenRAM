@@ -305,7 +305,10 @@ class delay(simulation):
             cur_net, next_net = path[i], path[i+1]
             cur_dir, next_dir = path_dirs[i], path_dirs[i+1]
             meas_name = "delay_{}_to_{}".format(cur_net, next_net)
-            path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, next_dir, measure_scale=1e9, has_port=False))
+            if i+1 != len(path)-1:
+                path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, next_dir, measure_scale=1e9, has_port=False))
+            else: # Make the last measurement always measure on FALL because is a read 0
+                path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, "FALL", measure_scale=1e9, has_port=False))
             # Some bitcell logic is hardcoded for only read zeroes, force that here as well.
             path_meas[-1].meta_str = sram_op.READ_ZERO
             path_meas[-1].meta_add_delay = True

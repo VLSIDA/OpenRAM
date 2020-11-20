@@ -1163,7 +1163,7 @@ class delay(simulation):
 
         # The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines
         # This is only an issue when there is a column mux and the address maps to different bitlines.
-        column_addr = self.probe_address[:self.sram.col_addr_size] # do not invert this part
+        column_addr = self.get_column_addr() # do not invert this part
         inverse_address = ""
         for c in self.probe_address[self.sram.col_addr_size:]: # invert everything else
             if c=="0":

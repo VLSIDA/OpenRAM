@@ -1,6 +1,13 @@
+import os
+import sys
+
+util_dir = "gen_model_util"
+cur_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(1, cur_dir+'/'+util_dir)
+
 import mapping 
-import lr_scikit
-import keras_models
+import linreg_scikit
+#import keras_models
 
 train_sets = []
 test_sets = []     

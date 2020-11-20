@@ -1120,7 +1120,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
     def get_wl_name(self, port=0):
         """Get wl name by port"""
-        debug.check(port < 2, "Two ports for bitcell_1rw_1r only.")
+        debug.check(port < 2, "Two ports for bitcell_2port only.")
         return "wl{}".format(port)
 
     def get_stage_effort(self, load):
@@ -1163,6 +1163,7 @@ class pbitcell(bitcell_base.bitcell_base):
             return
 
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
+        
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
         r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)

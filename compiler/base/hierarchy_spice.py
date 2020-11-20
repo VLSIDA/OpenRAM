@@ -10,6 +10,7 @@ import re
 import os
 import math
 import tech
+from globals import OPTS
 from pprint import pformat
 from delay_data import delay_data
 from wire_spice_model import wire_spice_model
@@ -32,6 +33,21 @@ class spice():
         self.name = name
         self.cell_name = cell_name
 
+        self.sp_file = OPTS.openram_tech + "sp_lib/" + cell_name + ".sp"
+
+        # If we have a separate lvs directory, then all the lvs files
+        # should be in there (all or nothing!)
+        try:
+            lvs_subdir = tech.lvs_lib
+        except AttributeError:
+            lvs_subdir = "lvs_lib"
+        lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+
+        if os.path.exists(lvs_dir):
+            self.lvs_file = lvs_dir + cell_name + ".sp"
+        else:
+            self.lvs_file = self.sp_file
+        
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = []

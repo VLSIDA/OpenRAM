@@ -26,8 +26,14 @@ class design(hierarchy_design):
         # This allows us to use different GDS/spice circuits for hard cells instead of the default ones
         # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
         # depending on the number of ports.
+
         if name in props.names:
-            cell_name = props.names[name]
+            if type(props.names[name]) is list:
+                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports - 1
+                cell_name = props.names[name][num_ports]
+            else:
+                cell_name = props.names[name]
+
         elif not cell_name:
             cell_name = name
         super().__init__(name, cell_name)

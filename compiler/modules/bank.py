@@ -375,10 +375,7 @@ class bank(design.design):
                                                     port=port))
             self.add_mod(self.port_address[port])
 
-        try:
-            local_array_size = OPTS.local_array_size
-        except AttributeError:
-            local_array_size = 0
+        local_array_size = OPTS.local_array_size
 
         if local_array_size > 0:
             # Find the even multiple that satisfies the fanout with equal sized local arrays

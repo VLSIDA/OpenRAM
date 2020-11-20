@@ -44,11 +44,10 @@ class wordline_driver(design.design):
         self.nand = factory.create(module_type="nand2_dec",
                                    height=self.height)
 
-        try:
-            local_array_size = OPTS.local_array_size
+        local_array_size = OPTS.local_array_size
+        if local_array_size > 0:
             driver_size = max(int(self.cols / local_array_size), 1)
-        except AttributeError:
-            local_array_size = 0
+        else:
             # Defautl to FO4
             driver_size = max(int(self.cols / 4), 1)
 

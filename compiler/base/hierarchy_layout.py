@@ -36,6 +36,8 @@ class layout():
         self.name = name
         self.cell_name = cell_name
         
+        self.gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
+        
         self.width = None
         self.height = None
         self.bounding_box = None
@@ -375,7 +377,7 @@ class layout():
         """
         Return a pin list of all pins
         """
-        return self.pin_map.keys()
+        return self.pins
 
     def copy_layout_pin(self, instance, pin_name, new_name=""):
         """

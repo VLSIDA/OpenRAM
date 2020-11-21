@@ -338,8 +338,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.translate_all(array_offset.scale(-1, -1))
 
         # Add extra width on the left and right for the unused WLs
-        self.height = self.dummy_row_insts[1].uy()
         self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
+        self.height = self.dummy_row_insts[1].uy()
 
         self.add_layout_pins()
 

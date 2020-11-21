@@ -14,37 +14,38 @@ from tech import layer_properties as layer_props
 class replica_column(bitcell_base_array):
     """
     Generate a replica bitline column for the replica array.
-    Rows is the total number of rows i the main array.
+    Rows is the total number of rows in the main array.
     rbl is a tuple with the number of left and right replica bitlines.
     Replica bit specifies which replica column this is (to determine where to put the
     replica cell relative to the bottom (including the dummy bit at 0).
     """
 
     def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
-        super().__init__(rows=sum(rbl) + rows + 2, cols=1, column_offset=column_offset, name=name)
+        # Used for pin names and properties
+        self.cell = factory.create(module_type=OPTS.bitcell)
+        # Row size is the number of rows with word lines
+        self.row_size = sum(rbl) + rows
+        # Start of regular word line rows
+        self.row_start = rbl[0] + 1
+        # End of regular word line rows
+        self.row_end = self.row_start + rows
+        if not self.cell.end_caps:
+            self.row_size += 2
+        super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, name=name)
 
         self.rows = rows
         self.left_rbl = rbl[0]
         self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
-        # left, right, regular rows plus top/bottom dummy cells
-        self.total_size = self.left_rbl + rows + self.right_rbl
-
-        # Used for pin names and properties
-        self.cell = factory.create(module_type=OPTS.bitcell)
         
-        # For end caps
-        try:
-            if not self.cell.end_caps:
-                self.total_size += 2
-        except AttributeError:
-            self.total_size += 2
+        # Total size includes the replica rows and column cap rows
+        self.total_size = self.left_rbl + rows + self.right_rbl + 2
 
         self.column_offset = column_offset
 
-        debug.check(replica_bit != 0 and replica_bit != rows,
-                    "Replica bit cannot be the dummy row.")
-        debug.check(replica_bit <= self.left_rbl or replica_bit >= self.total_size - self.right_rbl - 1,
+        debug.check(replica_bit != 0 and replica_bit != self.total_size - 1,
+                    "Replica bit cannot be the dummy/cap row.")
+        debug.check(replica_bit < self.row_start or replica_bit >= self.row_end,
                     "Replica bit cannot be in the regular array.")
         if layer_props.replica_column.even_rows:
             debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
@@ -61,18 +62,20 @@ class replica_column(bitcell_base_array):
         self.create_instances()
 
     def create_layout(self):
-        self.height = self.total_size * self.cell.height
-        self.width = self.cell.width
-
         self.place_instances()
+        
+        self.height = self.cell_inst[-1].uy()
+        self.width = self.cell_inst[0].rx()
+
         self.add_layout_pins()
+
         self.add_boundary()
         self.DRC_LVS()
 
     def add_pins(self):
 
         self.create_all_bitline_names()
-        self.create_all_wordline_names(self.total_size)
+        self.create_all_wordline_names(self.row_size)
 
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
@@ -93,32 +96,32 @@ class replica_column(bitcell_base_array):
         self.add_mod(self.edge_cell)
 
     def create_instances(self):
-        self.cell_inst = {}
+        self.cell_inst = []
 
         for row in range(self.total_size):
             name="rbc_{0}".format(row)
-            # Top/bottom cell are always dummy cells.
-            # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
-            # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
-            if (row > self.left_rbl and row < self.total_size - self.right_rbl - 1):
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-            elif row==self.replica_bit:
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.replica_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-            elif (row == 0 or row == self.total_size - 1):
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.edge_cell)
+            real_row = row
+            if self.cell.end_caps:
+                real_row -= 1
+                
+            # Regular array cells are replica cells
+            # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
+            if (row == 0 or row == self.total_size - 1):
+                self.cell_inst.append(self.add_inst(name=name,
+                                                    mod=self.edge_cell))
                 if self.cell.end_caps:
-                    self.connect_inst(self.get_bitcell_pins_col_cap(row, 0))
+                    self.connect_inst(self.get_bitcell_pins_col_cap(real_row, 0))
                 else:
-                    self.connect_inst(self.get_bitcell_pins(row, 0))
+                    self.connect_inst(self.get_bitcell_pins(real_row, 0))
+            elif (row==self.replica_bit) or (row >= self.row_start and row < self.row_end):
+                self.cell_inst.append(self.add_inst(name=name,
+                                                    mod=self.replica_cell))
+                self.connect_inst(self.get_bitcell_pins(real_row, 0))
             else:
-                self.cell_inst[row]=self.add_inst(name=name,
-                                                  mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(row, 0))
+                # Top/bottom cell are always dummy/cap cells.
+                self.cell_inst.append(self.add_inst(name=name,
+                                                    mod=self.dummy_cell))
+                self.connect_inst(self.get_bitcell_pins(real_row, 0))
 
     def place_instances(self):
         # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
@@ -184,7 +187,7 @@ class replica_column(bitcell_base_array):
                                     height=wl_pin.height())
 
         # Supplies are only connected in the ends
-        for (index, inst) in self.cell_inst.items():
+        for (index, inst) in enumerate(self.cell_inst):
             for pin_name in ["vdd", "gnd"]:
                 if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
                     self.copy_power_pins(inst, pin_name)

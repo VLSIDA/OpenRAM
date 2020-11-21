@@ -73,3 +73,9 @@ class sense_amp(design.design):
     def build_graph(self, graph, inst_name, port_nets):
         """Adds edges based on inputs/outputs. Overrides base class function."""
         self.add_graph_edges(graph, port_nets)
+        
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+        
+        #FIXME: This only applied to bl/br -> dout and not s_en->dout
+        return True     

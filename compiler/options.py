@@ -9,7 +9,6 @@ import optparse
 import getpass
 import os
 
-
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
@@ -61,7 +60,7 @@ class options(optparse.Values):
     rbl_delay_percentage = 0.5
 
     # Allow manual adjustment of the delay chain over automatic
-    use_tech_delay_chain_size = False
+    auto_delay_chain_sizing = False 
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
 
@@ -103,7 +102,7 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options
-    output_extended_config = False
+    output_extended_config = True
 
 
     ###################
@@ -124,7 +123,7 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
-
+    
     # Number of threads to use
     num_threads = 2
 
@@ -161,7 +160,7 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

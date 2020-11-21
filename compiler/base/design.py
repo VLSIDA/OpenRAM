@@ -167,8 +167,8 @@ class design(hierarchy_design):
 
         from tech import layer_indices
         import tech
-        for layer in layer_indices:
-            key = "{}_stack".format(layer)
+        for layer_id in layer_indices:
+            key = "{}_stack".format(layer_id)
 
             # Set the stack as a local helper
             try:
@@ -177,24 +177,24 @@ class design(hierarchy_design):
             except AttributeError:
                 pass
 
-            # Skip computing the pitch for active
-            if layer == "active":
+            # Skip computing the pitch for non-routing layers
+            if layer_id in ["active", "nwell"]:
                 continue
 
             # Add the pitch
             setattr(design,
-                    "{}_pitch".format(layer),
-                    design.compute_pitch(layer, True))
+                    "{}_pitch".format(layer_id),
+                    design.compute_pitch(layer_id, True))
 
             # Add the non-preferrd pitch (which has vias in the "wrong" way)
             setattr(design,
-                    "{}_nonpref_pitch".format(layer),
-                    design.compute_pitch(layer, False))
+                    "{}_nonpref_pitch".format(layer_id),
+                    design.compute_pitch(layer_id, False))
 
         if False:
             from tech import preferred_directions
             print(preferred_directions)
-            from tech import layer, layer_indices
+            from tech import layer_indices
             for name in layer_indices:
                 if name == "active":
                     continue

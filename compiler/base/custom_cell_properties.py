@@ -7,7 +7,10 @@
 #
 
 class _cell:
-    def __init__(self, port_order, port_types, port_map=None, hard_cell=True, boundary_layer="boundary"):
+    def __init__(self, port_order, port_types, port_map=None, body_bias=None, hard_cell=True, boundary_layer="boundary"):
+
+        # Some cells may have body bias (well taps) exposed as ports
+        self._body_bias = body_bias
         
         # Specifies if this is a hard (i.e. GDS) cell
         self._hard_cell = hard_cell
@@ -47,14 +50,24 @@ class _cell:
         return self._port_order
 
     @port_order.setter
-    def port_order(self, x):
-        self._port_order = x
-        # Update ordered name list in the new order
-        self._port_names = [self._port_map[x] for x in self._port_order]
-        # Update ordered type list in the new order
-        self._port_types = [self._port_types_map[x] for x in self._port_order]
-        # Update the index array
-        self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
+    def port_order(self, port_order):
+        # If we are going to redefine more ports (i.e. well biases) don't init stuff
+        old_port_len = len(self._port_order)
+        if old_port_len == len(port_order):
+            self._port_order = port_order
+            # Update ordered name list in the new order
+            self._port_names = [self._port_map[x] for x in self._port_order]
+            # Update ordered type list in the new order
+            self._port_types = [self._port_types_map[x] for x in self._port_order]
+            # Update the index array
+            self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
+        else:
+            # Do the default constructor again except for types stuff which hasn't been set yet
+            self._port_order = port_order
+            self._original_port_order = self._port_order
+            self._port_map = {x: x for x in self._port_order}
+            self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
+            self._port_names = [self._port_map[x] for x in self._port_order]
 
     @property
     def port_indices(self):
@@ -65,15 +78,36 @@ class _cell:
         return self._port_map
     
     @port_map.setter
-    def port_map(self, x):
-        self._port_map = x
+    def port_map(self, port_map):
+        self._port_map = port_map
         # Update ordered name list to use the new names
         self._port_names = [self.port_map[x] for x in self._port_order]
     
     @property
+    def body_bias(self):
+        return self._body_bias
+    
+    @body_bias.setter
+    def body_bias(self, body_bias):
+        # It is assumed it is [nwell, pwell]
+        self._body_bias = body_bias
+        self._port_map['vnb'] = body_bias[0]
+        self._port_types['vnb'] = "POWER"
+        self._port_map['vpb'] = body_bias[1]
+        self._port_types['vpb'] = "GROUND"
+        
+    @property
     def port_types(self):
         return self._port_types
 
+    @port_types.setter
+    def port_types(self, port_types):
+        self._port_types = port_types
+        # Specifies the port directions
+        self._port_types_map = {x: y for (x, y) in zip(self._port_order, self._port_types)}
+        # Update ordered type list
+        self._port_types = [self._port_types_map[x] for x in self._port_order]
+    
     @property
     def boundary_layer(self):
         return self._boundary_layer

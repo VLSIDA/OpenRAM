@@ -234,7 +234,7 @@ class replica_column(bitcell_base_array):
         Excludes all bits except the replica cell (self.replica_bit).
         """
 
-        for row, cell in self.cell_inst.items():
+        for row, cell in enumerate(self.cell_inst):
             if row != self.replica_bit:
                 self.graph_inst_exclude.add(cell)
 

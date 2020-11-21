@@ -34,6 +34,10 @@ class row_cap_array(bitcell_base_array):
 
         self.place_array("dummy_r{0}_c{1}", self.mirror)
         self.add_layout_pins()
+
+        self.height = self.row_size * self.cell.height
+        self.width = self.dummy_cell.width
+        
         self.add_boundary()
         self.DRC_LVS()
 
@@ -48,7 +52,7 @@ class row_cap_array(bitcell_base_array):
         """ Create the module instances used in this design """
         self.cell_inst = {}
         for col in range(self.column_size):
-            for row in range(1, self.row_size - 1):
+            for row in range(0, self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.dummy_cell)
@@ -67,17 +71,13 @@ class row_cap_array(bitcell_base_array):
         return bitcell_pins
 
     def place_array(self, name_template, row_offset=0):
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size * self.cell.height
-        self.width = self.column_size * self.cell.width
-
         xoffset = 0.0
         for col in range(self.column_size):
             yoffset = self.cell.height
             tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
 
-            for row in range(1, self.row_size - 1):
-                tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
+            for row in range(self.row_size):
+                tempy, dir_x = self._adjust_y_offset(yoffset, row + 1, row_offset)
 
                 if dir_x and dir_y:
                     dir_key = "XY"

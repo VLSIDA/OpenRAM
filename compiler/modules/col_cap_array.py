@@ -39,6 +39,10 @@ class col_cap_array(bitcell_base_array):
 
         self.place_array("dummy_r{0}_c{1}", self.mirror)
         self.add_layout_pins()
+
+        self.height = self.dummy_cell.height
+        self.width = self.column_size * self.cell.width
+        
         self.add_boundary()
         self.DRC_LVS()
 

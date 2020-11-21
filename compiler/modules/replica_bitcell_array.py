@@ -6,7 +6,7 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import drc, spice, cell_properties
+from tech import drc, spice
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -313,6 +313,7 @@ class replica_bitcell_array(bitcell_base_array):
     def create_layout(self):
 
         # We will need unused wordlines grounded, so we need to know their layer
+        # and create a space on the left and right for the vias to connect to ground
         pin = self.cell.get_pin(self.cell.get_all_wl_names()[0])
         pin_layer = pin.layer
         self.unused_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
@@ -332,12 +333,13 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
+        # Note that this doesn't include the row/col cap
         array_offset = self.bitcell_offset.scale(1 + len(self.left_rbl), 1 + self.rbl[0])
         self.translate_all(array_offset.scale(-1, -1))
 
         # Add extra width on the left and right for the unused WLs
         self.height = self.dummy_row_insts[1].uy()
-        self.width = self.dummy_col_insts[1].rx()
+        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
 
         self.add_layout_pins()
 
@@ -371,19 +373,11 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Grow from left to right, toward the array
         for bit, port in enumerate(self.left_rbl):
-            if not self.cell.end_caps:
-                offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1) + self.unused_offset
-            else:
-                offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - (self.col_end_offset.y/self.cell.height)) + self.unused_offset
-
+            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1) + self.unused_offset
             self.replica_col_insts[bit].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit, port in enumerate(self.right_rbl):
-            if not self.cell.end_caps:
-                offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - 1)
-            else:
-                offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - (self.col_end_offset.y/self.cell.height))
-
+            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - 1)
             self.replica_col_insts[self.rbl[0] + bit].place(offset)
 
         # Replica dummy rows

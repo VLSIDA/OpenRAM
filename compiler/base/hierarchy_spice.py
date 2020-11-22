@@ -48,7 +48,7 @@ class spice():
         else:
             self.lvs_file = self.sp_file
         
-        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = []
         # Holds the pins for this module (in order)

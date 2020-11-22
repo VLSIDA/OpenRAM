@@ -208,12 +208,18 @@ class cell_properties():
         self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])
 
+        self._col_cap_1port = _bitcell(["bl", "br", "vdd"],
+                                       ["OUTPUT", "OUTPUT", "POWER"])
+
+        self._row_cap_1port = _bitcell(["wl", "gnd"],
+                                       ["INPUT", "POWER", "GROUND"])
+
         self._col_cap_2port = _bitcell(["bl0", "br0", "bl1", "br1", "vdd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "POWER"])
 
         self._row_cap_2port = _bitcell(["wl0", "wl1", "gnd"],
                                        ["INPUT", "INPUT", "POWER", "GROUND"])
-
+        
     @property
     def ptx(self):
         return self._ptx
@@ -258,6 +264,14 @@ class cell_properties():
     def bitcell_2port(self):
         return self._bitcell_2port
 
+    @property
+    def col_cap_1port(self):
+        return self._col_cap_1port
+
+    @property
+    def row_cap_1port(self):
+        return self._row_cap_1port
+    
     @property
     def col_cap_2port(self):
         return self._col_cap_2port

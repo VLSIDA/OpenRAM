@@ -26,9 +26,7 @@ class bitcell_base(design.design):
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror
             self.end_caps = prop.end_caps
-
-        self.supplies = ["vdd", "gnd"]
-        
+          
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained
@@ -172,3 +170,36 @@ class bitcell_base(design.design):
 
         """
         return
+    
+    def get_all_wl_names(self):
+        """ Creates a list of all wordline pin names """
+        row_pins = ["wl"]
+        return row_pins
+
+    def get_all_bitline_names(self):
+        """ Creates a list of all bitline pin names (both bl and br) """
+        return ["bl", "br"]
+
+    def get_all_bl_names(self):
+        """ Creates a list of all bl pins names """
+        return ["bl"]
+
+    def get_all_br_names(self):
+        """ Creates a list of all br pins names """
+        return ["br"]
+
+    def get_bl_name(self, port=0):
+        """Get bl name"""
+        debug.check(port == 0, "One port for bitcell only.")
+        return "bl"
+
+    def get_br_name(self, port=0):
+        """Get bl name"""
+        debug.check(port == 0, "One port for bitcell only.")
+        return "br"
+
+    def get_wl_name(self, port=0):
+        """Get wl name"""
+        debug.check(port == 0, "One port for bitcell only.")
+        return "wl"
+

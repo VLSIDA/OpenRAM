@@ -95,7 +95,7 @@ class bitcell_base(design.design):
         labels for pex simulation.
         """
         # If we generated the bitcell, we already know where Q and Q_bar are
-        if OPTS.bitcell is not "pbitcell":
+        if OPTS.bitcell != "pbitcell":
             self.storage_net_offsets = []
             for i in range(len(self.get_storage_net_names())):
                 for text in self.gds.getTexts(layer["m1"]):
@@ -104,7 +104,6 @@ class bitcell_base(design.design):
 
             for i in range(len(self.storage_net_offsets)):
                 self.storage_net_offsets[i]  = tuple([self.gds.info["units"][0] * x for x in self.storage_net_offsets[i]])
-
 
         return(self.storage_net_offsets)
 
@@ -150,7 +149,7 @@ class bitcell_base(design.design):
         of the bitcell. This is useful for making sense of offsets outside
         of the bitcell.
         """
-        if OPTS.bitcell is not "pbitcell":
+        if OPTS.bitcell != "pbitcell":
             normalized_storage_net_offset = self.get_storage_net_offset()
 
         else:
@@ -160,12 +159,12 @@ class bitcell_base(design.design):
             Q_bar_x = net_offset[1][0] - self.leftmost_xpos
             Q_bar_y = net_offset[1][1] - self.botmost_ypos
 
-            normalized_storage_net_offset = [[Q_x,Q_y],[Q_bar_x,Q_bar_y]]
+            normalized_storage_net_offset = [[Q_x, Q_y], [Q_bar_x, Q_bar_y]]
 
         return normalized_storage_net_offset
 
     def get_normalized_bitline_offset(self):
-            return self.get_bitline_offset()
+        return self.get_bitline_offset()
 
     def build_graph(self, graph, inst_name, port_nets):
         """

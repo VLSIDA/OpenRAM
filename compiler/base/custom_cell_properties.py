@@ -211,6 +211,13 @@ class cell_properties():
         self._col_cap_1port = _bitcell(["bl", "br", "vdd"],
                                        ["OUTPUT", "OUTPUT", "POWER"])
 
+        self._col_cap_1port_bitcell = _cell(["bl", "br", "vdd", "gnd"],
+                                            ["OUTPUT", "OUTPUT", "POWER", "GROUND"])
+
+        self._col_cap_1port_strap = _cell(["vdd", "gnd"],
+                                          ["POWER", "GROUND"])
+
+
         self._row_cap_1port = _bitcell(["wl", "gnd"],
                                        ["INPUT", "POWER", "GROUND"])
 
@@ -267,6 +274,14 @@ class cell_properties():
     @property
     def col_cap_1port(self):
         return self._col_cap_1port
+
+    @property
+    def col_cap_1port_bitcell(self):
+        return self._col_cap_1port_bitcell
+
+    @property
+    def col_cap_1port_strap(self):
+        return self._col_cap_1port_strap
 
     @property
     def row_cap_1port(self):

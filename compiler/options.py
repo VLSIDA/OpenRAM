@@ -162,7 +162,7 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4" # Not available right now
+    nand4_dec = "pnand4"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

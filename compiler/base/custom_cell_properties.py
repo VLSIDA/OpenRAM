@@ -15,7 +15,7 @@ class cell:
         # Specifies if this is a hard (i.e. GDS) cell
         self._hard_cell = hard_cell
         self._boundary_layer = boundary_layer
-        
+
         # Specifies the port directions
         self._port_types_map = {x: y for (x, y) in zip(port_order, port_types)}
         
@@ -23,7 +23,8 @@ class cell:
         # by default it is 1:1
         if not port_map:
             self._port_map = {x: x for x in port_order}
-
+        else:
+            self._port_map = port_map
         # Update mapping of names
         self._original_port_order = port_order
         self._port_order = port_order
@@ -81,8 +82,8 @@ class cell:
     def port_map(self, port_map):
         self._port_map = port_map
         # Update ordered name list to use the new names
-        self._port_names = [self.port_map[x] for x in self._port_order]
-    
+        self._port_names = [self._port_map[x] for x in self._port_order]
+        
     @property
     def body_bias(self):
         return self._body_bias

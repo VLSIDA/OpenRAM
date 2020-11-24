@@ -220,8 +220,8 @@ class cell_properties():
         self._col_cap_1port_strap_ground = _cell(["gnd"],
                                                  ["GROUND"])
 
-        self._row_cap_1port_cell = _cell(['vdd]'],
-                                         ['POWRER'])
+        self._row_cap_1port_cell = _cell(['vdd'],
+                                         ['POWER'])
 
         self._row_cap_1port = _bitcell(["wl", "gnd"],
                                        ["INPUT", "POWER", "GROUND"])

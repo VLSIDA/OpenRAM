@@ -169,7 +169,7 @@ The default for openram.py is specified in the configuration file.
 
 # Porting to a New Technology
 
-If you want to support a enw technology, you will need to create:
+If you want to support a new technology, you will need to create:
 + a setup script for each technology you want to use
 + a technology directory for each technology with the base cells 
 

@@ -35,8 +35,8 @@ class row_cap_array(bitcell_base_array):
         self.place_array("dummy_r{0}_c{1}", self.mirror)
         self.add_layout_pins()
 
-        self.height = self.row_size * self.cell.height
-        self.width = self.dummy_cell.width
+        self.width = max([x.rx() for x in self.insts])
+        self.height = max([x.uy() for x in self.insts])
         
         self.add_boundary()
         self.DRC_LVS()

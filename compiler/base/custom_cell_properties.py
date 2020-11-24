@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 
-class _cell:
+class cell:
     def __init__(self, port_order, port_types, port_map=None, body_bias=None, hard_cell=True, boundary_layer="boundary"):
 
         # Some cells may have body bias (well taps) exposed as ports
@@ -142,7 +142,7 @@ class _pgate:
         self.add_implants = add_implants
 
 
-class _bitcell(_cell):
+class bitcell(cell):
     def __init__(self, port_order, port_types, port_map=None, storage_nets=["Q", "Q_bar"], mirror=None, end_caps=False):
         super().__init__(port_order, port_types, port_map)
 
@@ -181,55 +181,43 @@ class cell_properties():
 
         self._pgate = _pgate(add_implants=False)
 
-        self._inv_dec = _cell(["A", "Z", "vdd", "gnd"],
+        self._inv_dec = cell(["A", "Z", "vdd", "gnd"],
                               ["INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._nand2_dec = _cell(["A", "B", "Z", "vdd", "gnd"],
+        self._nand2_dec = cell(["A", "B", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._nand3_dec = _cell(["A", "B", "C", "Z", "vdd", "gnd"],
+        self._nand3_dec = cell(["A", "B", "C", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._nand4_dec = _cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
+        self._nand4_dec = cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
         
-        self._dff = _cell(["D", "Q", "clk", "vdd", "gnd"],
+        self._dff = cell(["D", "Q", "clk", "vdd", "gnd"],
                           ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._write_driver = _cell(['din', 'bl', 'br', 'en', 'vdd', 'gnd'],
+        self._write_driver = cell(['din', 'bl', 'br', 'en', 'vdd', 'gnd'],
                                    ["INPUT", "OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._sense_amp = _cell(['bl', 'br', 'dout', 'en', 'vdd', 'gnd'],
+        self._sense_amp = cell(['bl', 'br', 'dout', 'en', 'vdd', 'gnd'],
                                 ["INPUT", "INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._bitcell_1port = _bitcell(["bl", "br", "wl", "vdd", "gnd"],
+        self._bitcell_1port = bitcell(["bl", "br", "wl", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
-        self._bitcell_2port = _bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
+        self._bitcell_2port = bitcell(["bl0", "br0", "bl1", "br1", "wl0", "wl1", "vdd", "gnd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "POWER", "GROUND"])
 
-        self._col_cap_1port = _bitcell(["bl", "br", "vdd"],
+        self._col_cap_1port = bitcell(["bl", "br", "vdd"],
                                        ["OUTPUT", "OUTPUT", "POWER"])
 
-        self._col_cap_1port_bitcell = _cell(["bl", "br", "vdd", "gnd"],
-                                            ["OUTPUT", "OUTPUT", "POWER", "GROUND"])
-
-        self._col_cap_1port_strap_power = _cell(["vdd"],
-                                                ["POWER"])
-
-        self._col_cap_1port_strap_ground = _cell(["gnd"],
-                                                 ["GROUND"])
-
-        self._row_cap_1port_cell = _cell(['vdd'],
-                                         ['POWER'])
-
-        self._row_cap_1port = _bitcell(["wl", "gnd"],
+        self._row_cap_1port = bitcell(["wl", "gnd"],
                                        ["INPUT", "POWER", "GROUND"])
 
-        self._col_cap_2port = _bitcell(["bl0", "br0", "bl1", "br1", "vdd"],
+        self._col_cap_2port = bitcell(["bl0", "br0", "bl1", "br1", "vdd"],
                                        ["OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "POWER"])
 
-        self._row_cap_2port = _bitcell(["wl0", "wl1", "gnd"],
+        self._row_cap_2port = bitcell(["wl0", "wl1", "gnd"],
                                        ["INPUT", "INPUT", "POWER", "GROUND"])
         
     @property
@@ -279,22 +267,6 @@ class cell_properties():
     @property
     def col_cap_1port(self):
         return self._col_cap_1port
-
-    @property
-    def col_cap_1port_bitcell(self):
-        return self._col_cap_1port_bitcell
-
-    @property
-    def col_cap_1port_strap_power(self):
-        return self._col_cap_1port_strap_power
-
-    @property
-    def col_cap_1port_strap_ground(self):
-        return self._col_cap_1port_strap_ground
-
-    @property
-    def row_cap_1port_cell(self):
-        return self._row_cap_1port_cell
 
     @property
     def row_cap_1port(self):

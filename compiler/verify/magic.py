@@ -81,13 +81,18 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
+    f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
+    f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write('\n')
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds flatten true\n")
     f.write("gds readonly true\n")
     f.write("gds read {}\n".format(gds_name))
+    f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))
+    f.write('puts "Finished loading cell {}"\n'.format(cell_name))
     # Flatten the cell to get rid of DRCs spanning multiple layers
     # (e.g. with routes)
     #f.write("flatten {}_new\n".format(cell_name))
@@ -98,8 +103,11 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("writeall force\n")
     f.write("select top cell\n")
     f.write("expand\n")
+    f.write('puts "Finished expanding"\n')
     f.write("drc check\n")
+    f.write('puts "Finished drc check"\n')
     f.write("drc catchup\n")
+    f.write('puts "Finished drc catchup"\n')
     f.write("drc count total\n")
     f.write("drc count\n")
     if not sp_name:
@@ -116,6 +124,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
     f.write(pre + "extract\n")
+    f.write('puts "Finished extract"\n')
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
     # lvs exists in 8.2.79, but be backword compatible for now
@@ -134,8 +143,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # but they all seem compatible enough.
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
+    f.write('puts "Finished ext2spice"\n')
     f.write("quit -noprompt\n")
     f.write("EOF\n")
+    f.write("magic_retcode=$?\n")
+    f.write('echo "$(date): Finished ($magic_retcode) DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write("exit $magic_retcode\n")
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
@@ -210,12 +223,17 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "/run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
+    f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
+    f.write('echo "$(date): Starting LVS using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write("{} -noconsole << EOF\n".format(OPTS.lvs_exe[1]))
     # f.write("readnet spice {0}.spice\n".format(cell_name))
     # f.write("readnet spice {0}\n".format(sp_name))
     f.write("lvs {{{0}.spice {0}}} {{{1} {0}}} {2} {0}.lvs.report -full -json\n".format(cell_name, sp_name, setup_file))
     f.write("quit\n")
     f.write("EOF\n")
+    f.write("magic_retcode=$?\n")
+    f.write('echo "$(date): Finished ($magic_retcode) LVS using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write("exit $magic_retcode\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
@@ -408,7 +426,9 @@ def write_script_pex_rule(gds_name, cell_name, sp_name, output):
     run_file = OPTS.openram_temp + "run_pex.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    f.write("{} -dnull -noconsole << eof\n".format(OPTS.drc_exe[1]))
+    f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
+    f.write('echo "$(date): Starting PEX using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     f.write("gds read {}\n".format(gds_name))
@@ -434,8 +454,11 @@ def write_script_pex_rule(gds_name, cell_name, sp_name, output):
     f.write("ext2spice extresist on\n")
     f.write("ext2spice {}\n".format(cell_name))
     f.write("quit -noprompt\n")
-    f.write("eof\n")
+    f.write("EOF\n")
+    f.write("magic_retcode=$?\n")
     f.write("mv {0}.spice {1}\n".format(cell_name, output))
+    f.write('echo "$(date): Finished PEX using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write("exit $magic_retcode\n")
 
     f.close()
     os.system("chmod u+x {}".format(run_file))

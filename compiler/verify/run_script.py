@@ -19,8 +19,7 @@ from globals import OPTS
 def run_script(cell_name, script="lvs"):
     """ Run script and create output files. """
 
-    # FIXME: Set this value based on options somewhere
-    echo_cmd_output = True
+    echo_cmd_output = OPTS.verbose_level > 1
 
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)
@@ -62,7 +61,7 @@ def run_script(cell_name, script="lvs"):
     p.wait()
 
     # Kill the tail commands if they haven't finished.
-    if cmd_output:
+    if echo_cmd_output:
         if tailo.poll() != None:
             tailo.kill()
         tailo.wait()

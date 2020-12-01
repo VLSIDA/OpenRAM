@@ -127,8 +127,6 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    PDK_DIR=os.environ.get("PDK_DIR")
-    f.write("export PDK_DIR={}\n".format(PDK_DIR))
     cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
                                                       output_path)
     f.write(cmd)

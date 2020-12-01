@@ -268,9 +268,11 @@ class hierarchical_predecode(design.design):
                                             height=via.mod.second_layer_height,
                                             width=via.mod.second_layer_width)
 
-            if layer_props.hierarchical_predecode.vertical_supply:
-                below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height / 2))
-                self.add_path(self.bus_layer, [rail_pos, below_rail], width=self.li_width + self.m1_enclose_mcon * 2)
+            # This is a hack to fix via-to-via spacing issues, but it is currently
+            # causing its own DRC problems.
+            # if layer_props.hierarchical_predecode.vertical_supply:
+            #     below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height / 2))
+            #     self.add_path(self.bus_layer, [rail_pos, below_rail], width=self.li_width + self.m1_enclose_mcon * 2)
 
     def route_and_to_rails(self):
         # This 2D array defines the connection mapping

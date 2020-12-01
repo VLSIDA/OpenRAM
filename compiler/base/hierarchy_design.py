@@ -8,9 +8,7 @@
 import hierarchy_layout
 import hierarchy_spice
 import debug
-import os
 from globals import OPTS
-import tech
 
 
 class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
@@ -72,10 +70,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                             "LVS failed for {0} with {1} errors(s)".format(self.cell_name,
                                                                            self.lvs_errors))
 
-            if not OPTS.keep_temp:
-                os.remove(tempspice)
-                os.remove(tempgds)
-
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
         import verify
@@ -96,9 +90,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
                         "DRC failed for {0} with {1} error(s)".format(self.cell_name,
                                                                       num_errors))
 
-            if not OPTS.keep_temp:
-                os.remove(tempgds)
-
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
         import verify
@@ -118,9 +109,6 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             debug.check(num_errors == 0,
                         "LVS failed for {0} with {1} error(s)".format(self.cell_name,
                                                                       num_errors))
-            if not OPTS.keep_temp:
-                os.remove(tempspice)
-                os.remove(tempgds)
 
     def init_graph_params(self):
         """

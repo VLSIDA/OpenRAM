@@ -93,12 +93,6 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))
     f.write('puts "Finished loading cell {}"\n'.format(cell_name))
-    # Flatten the cell to get rid of DRCs spanning multiple layers
-    # (e.g. with routes)
-    # f.write("flatten {}_new\n".format(cell_name))
-    # f.write("load {}_new\n".format(cell_name))
-    # f.write("cellname rename {0}_new {0}\n".format(cell_name))
-    # f.write("load {}\n".format(cell_name))
     f.write("cellname delete \\(UNNAMED\\)\n")
     f.write("writeall force\n")
     f.write("select top cell\n")

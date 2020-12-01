@@ -19,7 +19,7 @@ from globals import OPTS
 def run_script(cell_name, script="lvs"):
     """ Run script and create output files. """
 
-    echo_cmd_output = OPTS.verbose_level > 1
+    echo_cmd_output = OPTS.verbose_level > 0 and not OPTS.is_unit_test
 
     cwd = os.getcwd()
     os.chdir(OPTS.openram_temp)

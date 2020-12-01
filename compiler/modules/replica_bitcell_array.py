@@ -121,17 +121,17 @@ class replica_bitcell_array(bitcell_base_array):
                 # the array.
                 # These go from the top (where the bitcell array starts ) down
                 replica_bit = self.rbl[0] - port
+                column_offset = self.rbl[0]
+
             elif port in self.right_rbl:
 
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the bottom up
                 replica_bit = self.rbl[0] + self.row_size + port
+                column_offset = self.rbl[0] + self.column_size + 1
             else:
                 continue
-
-            # If we have an odd numer on the bottom
-            column_offset = self.rbl[0] + 1
 
             self.replica_columns[port] = factory.create(module_type="replica_column",
                                                         rows=self.row_size,

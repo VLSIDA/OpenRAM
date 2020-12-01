@@ -729,7 +729,6 @@ class bank(design.design):
                               inst2_bl_name=inst2_bl_name,
                               inst2_br_name=inst2_br_name)
 
-
         # Connect the replica bitlines
         for (array_name, data_name) in zip(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)], ["rbl_bl", "rbl_br"]):
             self.connect_bitline(inst1, inst2, array_name, data_name)
@@ -876,14 +875,13 @@ class bank(design.design):
             mid1 = driver_wl_pos.scale(0, 1) + vector(0.5 * port_address_pos + 0.5 * bitcell_array_pos, 0)
             mid2 = mid1.scale(1, 0) + bitcell_wl_pos.scale(0, 1)
             if driver_wl_pin.layer != bitcell_wl_pin.layer:
-                self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1, mid2])
+                self.add_path(driver_wl_pin.layer, [driver_wl_pos, mid1])
                 self.add_via_stack_center(from_layer=driver_wl_pin.layer,
                                           to_layer=bitcell_wl_pin.layer,
-                                          offset=mid2)
-                self.add_path(bitcell_wl_pin.layer, [mid2, bitcell_wl_pos])
+                                          offset=mid1)
+                self.add_path(bitcell_wl_pin.layer, [mid1, mid2, bitcell_wl_pos])
             else:
                 self.add_path(bitcell_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
-
 
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """

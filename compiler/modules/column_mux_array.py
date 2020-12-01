@@ -34,17 +34,8 @@ class column_mux_array(design.design):
         self.column_offset = column_offset
 
         self.sel_layer = layer_props.column_mux_array.select_layer
-        self.sel_pitch = getattr(self, layer_props.column_mux_array.select_pitch)
+        self.sel_pitch = getattr(self, self.sel_layer + "_pitch")
         self.bitline_layer = layer_props.column_mux_array.bitline_layer
-
-        # if OPTS.tech_name == "sky130":
-        #     self.sel_layer = "m3"
-        #     self.sel_pitch = self.m3_pitch
-        #     self.bitline_layer = "m1"
-        # else:
-        #     self.sel_layer = "m1"
-        #     self.sel_pitch = self.m2_pitch
-        #     self.bitline_layer = "m2"
 
         if preferred_directions[self.sel_layer] == "V":
             self.via_directions = ("H", "H")

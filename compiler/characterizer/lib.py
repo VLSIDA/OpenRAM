@@ -11,6 +11,7 @@ import math
 import datetime
 from .setup_hold import *
 from .delay import *
+from .elmore import *
 from .charutils import *
 import tech
 import numpy as np
@@ -582,11 +583,12 @@ class lib:
 
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
-        self.d = delay(self.sram, self.sp_file, self.corner)
         if self.use_model:
+            self.d = elmore(self.sram, self.sp_file, self.corner)
             char_results = self.d.analytical_delay(self.slews,self.loads)
             self.char_sram_results, self.char_port_results = char_results
         else:
+            self.d = delay(self.sram, self.sp_file, self.corner)
             if (self.sram.num_spare_rows == 0):
                 probe_address = "1" * self.sram.addr_size
             else:

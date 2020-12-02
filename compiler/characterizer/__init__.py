@@ -12,11 +12,13 @@ from globals import OPTS,find_exe,get_tool
 from .lib import *
 from .delay import *
 from .elmore import *
+from .linear_regression import *
 from .setup_hold import *
 from .functional import *
 from .simulation import *
 from .measurements import *
 from .model_check import *
+from .analytical_util import *
 
 debug.info(1,"Initializing characterizer...")
 OPTS.spice_exe = ""

@@ -1,10 +1,10 @@
-import diversipy as dp
+#import diversipy as dp
 import csv
 import math
 import numpy as np
 import os
 
-def get_data_names(self, file_name):
+def get_data_names(file_name):
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
@@ -13,7 +13,7 @@ def get_data_names(self, file_name):
             # Return names from first row
             return row[0].split(',')
     
-def get_data(self, file_name):
+def get_data(file_name):
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
@@ -36,12 +36,12 @@ def get_data(self, file_name):
             #print(data)
     return input_list
  
-def apply_samples_to_data(self, all_data, algo_samples):    
+def apply_samples_to_data(all_data, algo_samples):    
     # Take samples from algorithm and match them to samples in data
     data_samples, unused_data = [], []
     sample_positions = set()
     for sample in algo_samples:
-        sample_positions.add(self.find_sample_position_with_min_error(all_data, sample))
+        sample_positions.add(find_sample_position_with_min_error(all_data, sample))
         
     for i in range(len(all_data)):
         if i in sample_positions:
@@ -51,19 +51,19 @@ def apply_samples_to_data(self, all_data, algo_samples):
             
     return data_samples, unused_data
     
-def find_sample_position_with_min_error(self, data, sampled_vals):
+def find_sample_position_with_min_error(data, sampled_vals):
     min_error = 0
     sample_pos = 0
     count = 0
     for data_slice in data:
-        error = self.squared_error(data_slice, sampled_vals)
+        error = squared_error(data_slice, sampled_vals)
         if min_error == 0 or error < min_error:
             min_error = error
             sample_pos = count
         count += 1
     return sample_pos
     
-def squared_error(self, list_a, list_b):
+def squared_error(list_a, list_b):
     #print('a:',list_a, 'b:', list_b)
     error_sum = 0;
     for a,b in zip(list_a, list_b):
@@ -71,7 +71,7 @@ def squared_error(self, list_a, list_b):
     return error_sum    
     
 
-def get_max_min_from_datasets(self, dir):
+def get_max_min_from_datasets(dir):
     if not os.path.isdir(dir):
         print("Input Directory not found:",dir)
         return [], [], []
@@ -80,7 +80,7 @@ def get_max_min_from_datasets(self, dir):
     data_files = [f for f in os.listdir(dir) if os.path.isfile(os.path.join(dir, f))]
     maxs,mins,sums,total_count = [],[],[],0
     for file in data_files:
-        data = self.get_data(os.path.join(dir, file))
+        data = get_data(os.path.join(dir, file))
         # Get max, min, sum, and count from every file
         data_max, data_min, data_sum, count = [],[],[], 0
         for feature_list in data:
@@ -102,11 +102,11 @@ def get_max_min_from_datasets(self, dir):
     avgs = [s/total_count for s in sums]
     return maxs,mins,avgs
     
-def get_data_and_scale(self, file_name, sample_dir):
-    maxs,mins,avgs = self.get_max_min_from_datasets(sample_dir)
+def get_data_and_scale(file_name, sample_dir):
+    maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
     
     # Get data
-    all_data = self.get_data(file_name)
+    all_data = get_data(file_name)
     
     # Scale data from file
     self_scaled_data = [[] for _ in range(len(all_data[0]))]
@@ -117,7 +117,7 @@ def get_data_and_scale(self, file_name, sample_dir):
     
     return np.asarray(self_scaled_data)
     
-def rescale_data(self, data, old_maxs, old_mins, new_maxs, new_mins):
+def rescale_data(data, old_maxs, old_mins, new_maxs, new_mins):
     # unscale from old values, rescale by new values
     data_new_scaling = []
     for data_row in data:
@@ -130,21 +130,22 @@ def rescale_data(self, data, old_maxs, old_mins, new_maxs, new_mins):
 
     return data_new_scaling    
     
-def sample_from_file(self, num_samples, file_name, sample_dir=None):
+def sample_from_file(num_samples, file_name, sample_dir=None):
     if sample_dir:
-        maxs,mins,avgs = self.get_max_min_from_datasets(sample_dir)
+        maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
     else:
         maxs,mins,avgs = [], [], []
         
     # Get data
-    all_data = self.get_data(file_name)  
+    all_data = get_data(file_name)  
 
     # Get algorithms sample points, assuming hypercube for now
     num_labels = 1
     inp_dims = len(all_data) - num_labels
     #samples = dp.hycusampling.lhd_matrix(num_samples, inp_dims)/num_samples
     #samples = dp.hycusampling.halton(num_samples, inp_dims)
-    samples = dp.hycusampling.random_uniform(num_samples, inp_dims)
+    #samples = dp.hycusampling.random_uniform(num_samples, inp_dims)
+    samples = None
 
 
     # Scale data from file
@@ -158,19 +159,19 @@ def sample_from_file(self, num_samples, file_name, sample_dir=None):
         for i in range(len(feature_list)):
             self_scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
     # Apply algorithm sampling points to available data
-    sampled_data, unused_data = self.apply_samples_to_data(self_scaled_data,samples)
+    sampled_data, unused_data = apply_samples_to_data(self_scaled_data,samples)
     #print(sampled_data)
 
     #unscale values and rescale using all available data (both sampled and unused points rescaled)
     if len(maxs)!=0 and len(mins)!=0:
-        sampled_data = self.rescale_data(sampled_data, self_maxs,self_mins, maxs, mins)
-        unused_new_scaling = self.rescale_data(unused_data, self_maxs,self_mins, maxs, mins)
+        sampled_data = rescale_data(sampled_data, self_maxs,self_mins, maxs, mins)
+        unused_new_scaling = rescale_data(unused_data, self_maxs,self_mins, maxs, mins)
         
     return np.asarray(sampled_data), np.asarray(unused_new_scaling)
 
-def unscale_data(self, data, ref_dir, pos=None):
+def unscale_data(data, ref_dir, pos=None):
     if ref_dir:
-        maxs,mins,avgs = self.get_max_min_from_datasets(ref_dir)
+        maxs,mins,avgs = get_max_min_from_datasets(ref_dir)
     else:
         print("Must provide reference data to unscale")
         return None
@@ -190,7 +191,7 @@ def unscale_data(self, data, ref_dir, pos=None):
 
     return unscaled_data
     
-def abs_error(self, labels, preds):
+def abs_error(labels, preds):
     total_error = 0
     for label_i, pred_i in zip(labels, preds):
         cur_error = abs(label_i[0]-pred_i[0])/label_i[0]
@@ -198,14 +199,14 @@ def abs_error(self, labels, preds):
         total_error += cur_error
     return total_error/len(labels)
 
-def max_error(self, labels, preds):
+def max_error(labels, preds):
     mx_error = 0
     for label_i, pred_i in zip(labels, preds):
         cur_error = abs(label_i[0]-pred_i[0])/label_i[0]
         mx_error = max(cur_error, mx_error)
     return mx_error
     
-def min_error(self, labels, preds):
+def min_error(labels, preds):
     mn_error = 1
     for label_i, pred_i in zip(labels, preds):
         cur_error = abs(label_i[0]-pred_i[0])/label_i[0]

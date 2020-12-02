@@ -13,6 +13,7 @@ from .setup_hold import *
 from .delay import *
 from .elmore import *
 from .charutils import *
+from .linear_regression import *
 import tech
 import numpy as np
 from globals import OPTS
@@ -584,9 +585,13 @@ class lib:
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
         if self.use_model:
-            self.d = elmore(self.sram, self.sp_file, self.corner)
-            char_results = self.d.analytical_delay(self.slews,self.loads)
-            self.char_sram_results, self.char_port_results = char_results
+            #FIXME: ML models only designed for delay. Cannot produce all values for Lib
+            d = linear_regression()
+            char_results = d.get_prediction()
+        
+            #self.d = elmore(self.sram, self.sp_file, self.corner)
+            # char_results = self.d.analytical_delay(self.slews,self.loads)
+            # self.char_sram_results, self.char_port_results = char_results
         else:
             self.d = delay(self.sram, self.sp_file, self.corner)
             if (self.sram.num_spare_rows == 0):

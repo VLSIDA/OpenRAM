@@ -91,7 +91,7 @@ class port_address(design.design):
             rbl_b_pin = self.rbl_driver_inst.get_pin("B")
             rbl_loc = rbl_b_pin.center() - vector(3 * self.m1_pitch, 0)
             self.add_path(rbl_b_pin.layer, [rbl_b_pin.center(), rbl_loc])
-            self.add_power_pin("vdd", rbl_loc)
+            self.add_power_pin("vdd", rbl_loc, start_layer=rbl_b_pin.layer)
 
     def route_pins(self):
         for row in range(self.addr_size):

@@ -353,6 +353,21 @@ def end_openram():
         verify.print_lvs_stats()
         verify.print_pex_stats()
 
+        
+def purge_temp():
+    """ Remove the temp directory. """
+    debug.info(1,
+               "Purging temp directory: {}".format(OPTS.openram_temp))
+    # This annoyingly means you have to re-cd into
+    # the directory each debug iteration
+    # shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
+    contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
+    for i in contents:
+        if os.path.isfile(i) or os.path.islink(i):
+            os.remove(i)
+        else:
+            shutil.rmtree(i)
+    
 
 def cleanup_paths():
     """
@@ -364,19 +379,9 @@ def cleanup_paths():
                    "Preserving temp directory: {}".format(OPTS.openram_temp))
         return
     elif os.path.exists(OPTS.openram_temp):
-        debug.info(1,
-                   "Purging temp directory: {}".format(OPTS.openram_temp))
-        # This annoyingly means you have to re-cd into
-        # the directory each debug iteration
-        # shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
-        contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
-        for i in contents:
-            if os.path.isfile(i) or os.path.islink(i):
-                os.remove(i)
-            else:
-                shutil.rmtree(i)
+        purge_temp()
 
-
+        
 def setup_paths():
     """ Set up the non-tech related paths. """
     debug.info(2, "Setting up paths...")
@@ -405,7 +410,7 @@ def setup_paths():
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-
+    
 def is_exe(fpath):
     """ Return true if the given is an executable file that exists. """
     return os.path.exists(fpath) and os.access(fpath, os.X_OK)
@@ -427,15 +432,17 @@ def find_exe(check_exe):
 
 def init_paths():
     """ Create the temp and output directory if it doesn't exist """
-
-    # make the directory if it doesn't exist
-    try:
-        debug.info(1,
-                   "Creating temp directory: {}".format(OPTS.openram_temp))
-        os.makedirs(OPTS.openram_temp, 0o750)
-    except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
-            os.chmod(OPTS.openram_temp, 0o750)
+    if os.path.exists(OPTS.openram_temp):
+        purge_temp()
+    else:
+        # make the directory if it doesn't exist
+        try:
+            debug.info(1,
+                       "Creating temp directory: {}".format(OPTS.openram_temp))
+            os.makedirs(OPTS.openram_temp, 0o750)
+        except OSError as e:
+            if e.errno == 17:  # errno.EEXIST
+                os.chmod(OPTS.openram_temp, 0o750)
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

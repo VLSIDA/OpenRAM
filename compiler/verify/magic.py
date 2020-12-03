@@ -89,6 +89,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("gds warning default\n")
     f.write("gds flatten true\n")
     f.write("gds readonly true\n")
+    f.write("gds ordering true\n")
     f.write("gds read {}\n".format(gds_name))
     f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))

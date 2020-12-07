@@ -585,11 +585,14 @@ class lib:
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
         if self.use_model:
+            import math
             #FIXME: ML models only designed for delay. Cannot produce all values for Lib
             d = linear_regression()
-            model_inputs = [OPTS.num_words, 
+            temp_wpr = 2.0 #OPTS not working right now
+            log_num_words = math.log(OPTS.num_words, 2)
+            model_inputs = [log_num_words, 
                             OPTS.word_size, 
-                            OPTS.words_per_row, 
+                            temp_wpr, 
                             self.sram.width * self.sram.height]
             char_results = d.get_prediction(model_inputs)
         

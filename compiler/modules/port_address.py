@@ -8,7 +8,7 @@ import debug
 import design
 from sram_factory import factory
 from vector import vector
-from tech import layer
+from tech import layer, drc
 from globals import OPTS
 from tech import layer_properties as layer_props
 
@@ -86,6 +86,13 @@ class port_address(design.design):
             else:
                 self.add_power_pin("vdd", rbl_vdd_pin.lc())
 
+        # Also connect the B input of the RBL and_dec to vdd
+        if OPTS.local_array_size == 0:
+            rbl_b_pin = self.rbl_driver_inst.get_pin("B")
+            rbl_loc = rbl_b_pin.center() - vector(3 * self.m1_pitch, 0)
+            self.add_path(rbl_b_pin.layer, [rbl_b_pin.center(), rbl_loc])
+            self.add_power_pin("vdd", rbl_loc, start_layer=rbl_b_pin.layer)
+
     def route_pins(self):
         for row in range(self.addr_size):
             decoder_name = "addr_{}".format(row)
@@ -157,11 +164,13 @@ class port_address(design.design):
         b = factory.create(module_type=OPTS.bitcell)
 
         if local_array_size > 0:
+            # The local wordline driver will change the polarity
             self.rbl_driver = factory.create(module_type="inv_dec",
                                              size=driver_size,
                                              height=b.height)
         else:
-            self.rbl_driver = factory.create(module_type="buf_dec",
+            # There is no local wordline driver
+            self.rbl_driver = factory.create(module_type="and2_dec",
                                              size=driver_size,
                                              height=b.height)
 
@@ -189,6 +198,8 @@ class port_address(design.design):
 
         temp = []
         temp.append("wl_en")
+        if OPTS.local_array_size == 0:
+            temp.append("vdd")
         temp.append("rbl_wl")
         temp.append("vdd")
         temp.append("gnd")
@@ -221,7 +232,10 @@ class port_address(design.design):
         wordline_driver_array_offset = vector(self.row_decoder_inst.rx(), 0)
         self.wordline_driver_array_inst.place(wordline_driver_array_offset)
 
-        x_offset = self.wordline_driver_array_inst.rx() - self.rbl_driver.width - self.m1_pitch
+        # The wordline driver also had an extra gap on the right, so use this offset
+        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
+        x_offset = self.wordline_driver_array_inst.rx() - well_gap - self.rbl_driver.width
+        
         if self.port == 0:
             rbl_driver_offset = vector(x_offset,
                                        0)

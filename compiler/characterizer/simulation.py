@@ -444,6 +444,10 @@ class simulation():
         pin_names.append("{0}".format("gnd"))
         return pin_names
 
+    def get_column_addr(self):
+        """Returns column address of probe bit"""
+        return self.probe_address[:self.sram.col_addr_size]
+
     def add_graph_exclusions(self):
         """
         Exclude portions of SRAM from timing graph which are not relevant
@@ -475,11 +479,12 @@ class simulation():
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
 
             debug.info(2, "s_en name = {}".format(self.sen_name))
-
+            
+            column_addr = self.get_column_addr()
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
-            port_pos = -1 - len(str(self.probe_data)) - len(str(port))
+            port_pos = -1 - len(str(column_addr)) - len(str(port))
 
-            if bl_name_port.endswith(str(port) + "_" + str(self.probe_data)):
+            if bl_name_port.endswith(str(port) + "_" + str(column_addr)):
                 self.bl_name = bl_name_port[:port_pos] + "{}" + bl_name_port[port_pos + len(str(port)):]
             elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
                 self.bl_name = bl_name_port
@@ -487,7 +492,7 @@ class simulation():
                 self.bl_name = bl_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
 
-            if br_name_port.endswith(str(port) + "_" + str(self.probe_data)):
+            if br_name_port.endswith(str(port) + "_" + str(column_addr)):
                 self.br_name = br_name_port[:port_pos] + "{}" + br_name_port[port_pos + len(str(port)):]
             elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
                 self.br_name = br_name_port

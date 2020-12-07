@@ -146,3 +146,8 @@ class pand2(pgate.pgate):
                                             offset=pin.center(),
                                             width=pin.width(),
                                             height=pin.height())
+    
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+        
+        return True

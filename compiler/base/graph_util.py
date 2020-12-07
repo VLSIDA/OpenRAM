@@ -117,6 +117,14 @@ class timing_graph():
             cur_slew = delays[-1].slew
 
         return delays
+        
+    def get_edge_mods(self, path):
+        """Return all edge mods associated with path"""
+        
+        if len(path) == 0:
+            return []
+            
+        return [self.edge_mods[(path[i], path[i+1])] for i in range(len(path)-1)]    
 
     def __str__(self):
         """ override print function output """

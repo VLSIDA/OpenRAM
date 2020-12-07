@@ -600,7 +600,7 @@ class VlsiLayout:
 
         shapes = self.getAllShapes(lpp)
         if len(shapes) != 1:
-            debug.warning("More than one boundary found in cell: {}".format(structure))
+            debug.warning("More than one or no boundaries found in cell: {}".format(structure))
         debug.check(len(shapes) != 0,
                     "Error: "+str(structure)+".cell_size information not found yet")
         max_boundary = None

@@ -337,3 +337,8 @@ class pinv(pgate.pgate):
         Overrides base class function.
         """
         self.add_graph_edges(graph, port_nets)
+        
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+        
+        return False    

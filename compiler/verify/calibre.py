@@ -103,10 +103,10 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
         'cmnTranscriptEchoToFile': 1,
         'lvsRecognizeGates': 'NONE',
     }
-        # FIXME: Remove when vdd/gnd connected
-        #'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
-        # FIXME: Remove when vdd/gnd connected
-        #'lvsAbortOnSupplyError' : 0
+    #  FIXME: Remove when vdd/gnd connected
+    # 'cmnVConnectNamesState' : 'ALL', #connects all nets with the same namee
+    #  FIXME: Remove when vdd/gnd connected
+    # 'lvsAbortOnSupplyError' : 0
 
     if not final_verification or not OPTS.route_supplies:
         lvs_runset['cmnVConnectReport']=1
@@ -114,8 +114,6 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
         lvs_runset['cmnVConnectNames']='vdd gnd'
     else:
         lvs_runset['lvsAbortOnSupplyError']=1
-
-
 
     # write the runset file
     f = open(output_path + "lvs_runset", "w")
@@ -127,8 +125,6 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    PDK_DIR=os.environ.get("PDK_DIR")
-    f.write("export PDK_DIR={}\n".format(PDK_DIR))
     cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
                                                       output_path)
     f.write(cmd)

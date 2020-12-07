@@ -13,7 +13,6 @@ from sram_factory import factory
 import contact
 import logical_effort
 from globals import OPTS
-from pgate import pgate
 from tech import cell_properties as cell_props
 
 
@@ -151,14 +150,14 @@ class ptx(design.design):
         self.spice.append("\n* spice ptx " + self.spice_device)
 
         if cell_props.ptx.model_is_subckt and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
-            # sky130 requires mult parameter too
-            # self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format(spice[self.tx_type],
+            # sky130 requires mult parameter too. It is not the same as m, but I don't understand it.
+            # self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2} l={3} mult=1".format(spice[self.tx_type],
             #                                                                        self.mults,
             #                                                                        self.tx_width,
             #                                                                        drc("minwidth_poly"))
             # TEMP FIX: Use old device names if using Calibre.
             
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult={1}".format("nshort" if self.tx_type == "nmos" else "pshort",
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult=1".format("nshort" if self.tx_type == "nmos" else "pshort",
                                                                                    self.mults,
                                                                                    self.tx_width,
                                                                                    drc("minwidth_poly"))
@@ -549,3 +548,7 @@ class ptx(design.design):
         """
         self.add_graph_edges(graph, port_nets)
 
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+        
+        return True

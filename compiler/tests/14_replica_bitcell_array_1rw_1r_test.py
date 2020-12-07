@@ -25,14 +25,14 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 non-replica array for cell_1rw_1r")
+        debug.info(2, "Testing 4x4 non-replica array for dp cell")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
                            rbl=[1, 1])
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 left replica array for cell_1rw_1r")
+        debug.info(2, "Testing 4x4 left replica array for dp cell")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
@@ -40,7 +40,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
                            left_rbl=[0])
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 array left and right replica for cell_1rw_1r")
+        debug.info(2, "Testing 4x4 array left and right replica for dp cell")
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
@@ -52,7 +52,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
 
         # Sky 130 has restrictions on the symmetries
         if OPTS.tech_name != "sky130":
-            debug.info(2, "Testing 4x4 array right only replica for cell_1rw_1r")
+            debug.info(2, "Testing 4x4 array right only replica for dp cell")
             a = factory.create(module_type="replica_bitcell_array",
                                cols=4,
                                rows=4,

@@ -587,7 +587,11 @@ class lib:
         if self.use_model:
             #FIXME: ML models only designed for delay. Cannot produce all values for Lib
             d = linear_regression()
-            char_results = d.get_prediction()
+            model_inputs = [OPTS.num_words, 
+                            OPTS.word_size, 
+                            OPTS.words_per_row, 
+                            self.sram.width * self.sram.height]
+            char_results = d.get_prediction(model_inputs)
         
             #self.d = elmore(self.sram, self.sp_file, self.corner)
             # char_results = self.d.analytical_delay(self.slews,self.loads)

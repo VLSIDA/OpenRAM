@@ -19,13 +19,18 @@ data_dir = tech_path+'/'+OPTS.tech_name+relative_data_path
 
 class linear_regression():
 
-    def get_prediction(self):
+    def __init__(self):
+        self.model = None
+
+    def get_prediction(self, model_inputs):
 
         train_sets = []
         test_sets = []     
                
         file_path = data_dir +'/'+data_filename
-        num_points_train = 5
+        num_points_train = 7
+
+        samples = get_scaled_data(file_path, data_dir)
 
         non_ip_samples, unused_samples = sample_from_file(num_points_train, file_path, data_dir)
         nip_features_subset, nip_labels_subset = non_ip_samples[:, :-1], non_ip_samples[:,-1:]
@@ -46,7 +51,7 @@ class linear_regression():
                 new_error = self.run_model(train_x, train_y, test_x, test_y, data_dir)
                 debug.info(1, "Model Error: {}".format(new_error))
 
-    def run_model(x,y,test_x,test_y, reference_dir):
+    def train_model(self, x,y,test_x,test_y, reference_dir):
         model = LinearRegression()
         model.fit(x, y)
 
@@ -56,9 +61,9 @@ class linear_regression():
         unscaled_labels = unscale_data(test_y.tolist(), reference_dir)
         unscaled_preds = unscale_data(pred.tolist(), reference_dir)
         unscaled_labels, unscaled_preds = (list(t) for t in zip(*sorted(zip(unscaled_labels, unscaled_preds))))
-        avg_error = abs_error(unscaled_labels, unscaled_preds)
-        max_error = max_error(unscaled_labels, unscaled_preds)
-        min_error = min_error(unscaled_labels, unscaled_preds)
+        avg_err = abs_error(unscaled_labels, unscaled_preds)
+        max_err = max_error(unscaled_labels, unscaled_preds)
+        min_err = min_error(unscaled_labels, unscaled_preds)
 
-        errors = {"avg_error": avg_error, "max_error":max_error, "min_error":min_error}    
+        errors = {"avg_error": avg_err, "max_error":max_err, "min_error":min_err}    
         return errors

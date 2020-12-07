@@ -1,4 +1,12 @@
-#import diversipy as dp
+#
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
+
+import debug
+
 import csv
 import math
 import numpy as np
@@ -131,6 +139,11 @@ def rescale_data(data, old_maxs, old_mins, new_maxs, new_mins):
     return data_new_scaling    
     
 def sample_from_file(num_samples, file_name, sample_dir=None):
+    """
+    Get a portion of the data from CSV file and scale it based on max/min of dataset.
+    Duplicate samples are trimmed.
+    """
+    
     if sample_dir:
         maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
     else:
@@ -142,10 +155,7 @@ def sample_from_file(num_samples, file_name, sample_dir=None):
     # Get algorithms sample points, assuming hypercube for now
     num_labels = 1
     inp_dims = len(all_data) - num_labels
-    #samples = dp.hycusampling.lhd_matrix(num_samples, inp_dims)/num_samples
-    #samples = dp.hycusampling.halton(num_samples, inp_dims)
-    #samples = dp.hycusampling.random_uniform(num_samples, inp_dims)
-    samples = None
+    samples = np.random.rand(num_samples, inp_dims)
 
 
     # Scale data from file
@@ -168,6 +178,30 @@ def sample_from_file(num_samples, file_name, sample_dir=None):
         unused_new_scaling = rescale_data(unused_data, self_maxs,self_mins, maxs, mins)
         
     return np.asarray(sampled_data), np.asarray(unused_new_scaling)
+
+def get_scaled_data(file_name, sample_dir=None):
+    """Get data from CSV file and scale it based on max/min of dataset"""
+
+    if sample_dir:
+        maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
+    else:
+        maxs,mins,avgs = [], [], []
+        
+    # Get data
+    all_data = get_data(file_name)  
+    
+    # Data is scaled by max/min and data format is changed to points vs feature lists
+    self_scaled_data = [[] for _ in range(len(all_data[0]))]
+    self_maxs,self_mins = [],[]
+    for feature_list in all_data:
+        max_val = max(feature_list)
+        self_maxs.append(max_val)
+        min_val = min(feature_list)
+        self_mins.append(min_val)
+        for i in range(len(feature_list)):
+            self_scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
+
+    return np.asarray(self_scaled_data)
 
 def unscale_data(data, ref_dir, pos=None):
     if ref_dir:

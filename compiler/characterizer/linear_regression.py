@@ -28,42 +28,30 @@ class linear_regression():
         test_sets = []     
                
         file_path = data_dir +'/'+data_filename
-        num_points_train = 7
+        scaled_inputs = np.asarray(scale_input_datapoint(model_inputs, data_dir))
 
-        samples = get_scaled_data(file_path, data_dir)
+        features, labels = get_scaled_data(file_path, data_dir)
+        self.train_model(features, labels)
+        scaled_pred = model_prediction(model_inputs)
+        pred = unscale_data(scaled_pred.tolist(), data_dir)
+        debug.info(1,"Unscaled Prediction = {}".format(pred))
+        return pred
 
-        non_ip_samples, unused_samples = sample_from_file(num_points_train, file_path, data_dir)
-        nip_features_subset, nip_labels_subset = non_ip_samples[:, :-1], non_ip_samples[:,-1:]
-        nip_test_feature_subset, nip_test_labels_subset = unused_samples[:, :-1], unused_samples[:,-1:]
-
-        train_sets = [(nip_features_subset, nip_labels_subset)]
-        test_sets = [(nip_test_feature_subset, nip_test_labels_subset)]
-
-        runs_per_model = 1
-
-        for train_tuple, test_tuple in zip(train_sets, test_sets):
-            train_x, train_y = train_tuple
-            test_x, test_y = test_tuple
-
-            errors = {}
-            min_train_set = None
-            for _ in range(runs_per_model):
-                new_error = self.run_model(train_x, train_y, test_x, test_y, data_dir)
-                debug.info(1, "Model Error: {}".format(new_error))
-
-    def train_model(self, x,y,test_x,test_y, reference_dir):
-        model = LinearRegression()
-        model.fit(x, y)
-
-        pred = model.predict(test_x)
-
-        #print(pred)
-        unscaled_labels = unscale_data(test_y.tolist(), reference_dir)
-        unscaled_preds = unscale_data(pred.tolist(), reference_dir)
-        unscaled_labels, unscaled_preds = (list(t) for t in zip(*sorted(zip(unscaled_labels, unscaled_preds))))
-        avg_err = abs_error(unscaled_labels, unscaled_preds)
-        max_err = max_error(unscaled_labels, unscaled_preds)
-        min_err = min_error(unscaled_labels, unscaled_preds)
-
-        errors = {"avg_error": avg_err, "max_error":max_err, "min_error":min_err}    
-        return errors
+    def train_model(self, features, labels):
+        """
+        Supervised training of model.
+        """
+        
+        self.model = LinearRegression()
+        self.model.fit(features, labels)
+        
+    def model_prediction(self, features):    
+        """
+        Have the model perform a prediction and unscale the prediction
+        as the model is trained with scaled values.
+        """
+        
+        pred = self.model.predict(features)
+        debug.info(1, "pred={}".format(pred))
+        return pred
+        

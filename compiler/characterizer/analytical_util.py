@@ -191,17 +191,39 @@ def get_scaled_data(file_name, sample_dir=None):
     all_data = get_data(file_name)  
     
     # Data is scaled by max/min and data format is changed to points vs feature lists
-    self_scaled_data = [[] for _ in range(len(all_data[0]))]
-    self_maxs,self_mins = [],[]
-    for feature_list in all_data:
-        max_val = max(feature_list)
-        self_maxs.append(max_val)
-        min_val = min(feature_list)
-        self_mins.append(min_val)
-        for i in range(len(feature_list)):
-            self_scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
+    self_scaled_data = scale_data_and_transform(all_data)
 
-    return np.asarray(self_scaled_data)
+    samples = np.asarray(self_scaled_data)
+    features, labels = samples[:, :-1], samples[:,-1:]
+    return features, labels
+
+def scale_data_and_transform(data):
+    """
+    Assume data is a list of features, change to a list of points and max/min scale
+    """
+    
+    scaled_data = [[] for _ in range(len(data[0]))]
+    for feature_list in data:
+        max_val = max(feature_list)
+        min_val = min(feature_list)
+        for i in range(len(feature_list)):
+            scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
+    return scaled_data
+    
+def scale_input_datapoint(point, data_dir):    
+    """
+    Input data has no output and needs to be scaled like the model inputs during
+    training.
+    """
+    maxs, mins, avgs = get_max_min_from_datasets(data_dir)
+    debug.info(1, "maxs={}".format(maxs))
+    debug.info(1, "mins={}".format(mins))
+    debug.info(1, "point={}".format(point))
+
+    scaled_point = []
+    for feature, mx, mn in zip(point, maxs, mins):
+        scaled_point.append((feature-mn)/(mx-mn))
+    return scaled_point
 
 def unscale_data(data, ref_dir, pos=None):
     if ref_dir:

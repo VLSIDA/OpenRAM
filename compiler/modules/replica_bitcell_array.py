@@ -390,7 +390,6 @@ class replica_bitcell_array(bitcell_base_array):
         # These grow up, away from the array
         for bit in range(self.rbl[1]):
             dummy_offset = self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul()
-            import pdb; pdb.set_trace()
             self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=dummy_offset,
                                                                   mirror="MX" if (self.row_size + bit) % 2 else "R0")
 

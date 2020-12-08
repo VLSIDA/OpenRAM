@@ -295,6 +295,14 @@ def read_config(config_file, is_unit_test=True):
     dir_name = os.path.dirname(config_file)
     module_name = os.path.basename(config_file)
 
+    # Check that the module name adheres to Python's module naming conventions.
+    # This will assist the user in interpreting subsequent errors in loading
+    # the module. Valid Python module naming is described here:
+    #   https://docs.python.org/3/reference/simple_stmts.html#the-import-statement
+    if not module_name.isidentifier():
+        debug.error("Configuration file name is not a valid Python module name: "
+                    "{0}. It should be a valid identifier.".format(module_name))
+
     # Prepend the path to avoid if we are using the example config
     sys.path.insert(0, dir_name)
     # Import the configuration file of which modules to use

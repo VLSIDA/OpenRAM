@@ -81,7 +81,7 @@ We have included the most recent SCN4M_SUBM design rules from [Qflow].
 
 ## Docker Image
 
-**WARNING! Some OpenRAM dependency tools installed in the Docker image are out-of-date.**
+> :warning: **WARNING!** Some OpenRAM dependency tools installed in the Docker image are out-of-date.
 
 We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
 available that has all tools installed for the [SCMOS] process. It is
@@ -142,6 +142,11 @@ python3 $OPENRAM_HOME/openram.py myconfig
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
 
+> :warning: **WARNING!** Config files are imported as Python modules, which
+must adhere to the [requirements for naming Python
+modules](https://docs.python.org/3/reference/simple_stmts.html#the-import-statement).
+In particular, you cannot use a period or any special characters other than an
+underscore. Try using 'p' instead of a period. 
 
 # Unit Tests
 

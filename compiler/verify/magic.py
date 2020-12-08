@@ -153,7 +153,6 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         from tech import blackbox_cells
     except ImportError:
         blackbox_cells = []
-    import pdb; pdb.set_trace()
     for cell_name in blackbox_cells:
         mag_file = OPTS.openram_tech + "maglef_lib/" + cell_name + ".mag"
         debug.check(os.path.isfile(mag_file), "Could not find blackbox cell {}".format(mag_file))

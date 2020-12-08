@@ -79,7 +79,8 @@ class Gds2reader:
         recordLength = struct.unpack(">h",recordLengthAscii)  #gives us a tuple with a short int inside
         offset_int = int(recordLength[0])  # extract length
         offset += offset_int  # count offset
-	#print(offset)  #print out the record numbers for de-bugging
+        if(self.debugToTerminal==1):        
+            print("Offset: " + str(offset))  #print out the record numbers for de-bugging
         record = self.fileHandle.read(recordLength[0]-2) #read the rest of it (first 2 bytes were already read)
         return record
 
@@ -176,7 +177,7 @@ class Gds2reader:
     def readBoundary(self):
         ##reads in a boundary type structure = a filled polygon
         if(self.debugToTerminal==1):
-            print("\t\t\tBeginBoundary")
+            print("\t\tBeginBoundary")
         thisBoundary=GdsBoundary()
         while 1:
             record = self.readNextRecord()
@@ -214,13 +215,13 @@ class Gds2reader:
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
                 if(self.debugToTerminal==1):
-                    print("\t\t\tEndBoundary")
+                    print("\t\tEndBoundary")
                 break;
         return thisBoundary
 
     def readPath(self):  #reads in a path structure
         if(self.debugToTerminal==1):
-            print("\t\t\tBeginPath")
+            print("\t\tBeginPath")
 
         thisPath=GdsPath()
         while 1:
@@ -274,7 +275,7 @@ class Gds2reader:
                         print("\t\t\tXY Point: "+str(x)+","+str(y))
             elif(idBits==b'\x11\x00'):  #End Of Element
                 if(self.debugToTerminal==1):
-                    print("\t\t\tEndPath")
+                    print("\t\tEndPath")
                 break;
         return thisPath
 

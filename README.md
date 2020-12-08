@@ -79,25 +79,6 @@ You may get the entire [FreePDK45 PDK here][FreePDK45].
 If you are using [SCMOS], you should install [Magic] and [Netgen].
 We have included the most recent SCN4M_SUBM design rules from [Qflow].
 
-## Docker Image
-
-**WARNING! Some OpenRAM dependency tools installed in the Docker image are out-of-date.**
-
-We have a pre-configured Ubuntu [Docker](https://www.docker.com/) image
-available that has all tools installed for the [SCMOS] process. It is
-available at [docker hub](https://hub.docker.com/r/vlsida/openram-ubuntu).
-Please see 
-[our README.md](https://github.com/VLSIDA/openram-docker-images/blob/master/README.md)
-for information on how to use this docker image.
-
-## Vagrant Image
-
-We have a pre-configured Ubuntu [Vagrant](https://www.vagrantup.com/) image
-available that has all tools installed for the [SCMOS] process. 
-Please see 
-[our README.md](https://github.com/VLSIDA/openram-vagrant-image/blob/master/README.md)
-for information on how to use this image.
-
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line 
@@ -141,7 +122,6 @@ python3 $OPENRAM_HOME/openram.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
-
 
 # Unit Tests
 

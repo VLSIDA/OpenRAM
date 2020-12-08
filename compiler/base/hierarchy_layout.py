@@ -976,7 +976,7 @@ class layout():
         (horizontal_layer, via_layer, vertical_layer) = layer_stack
         if horizontal:
             route_layer = vertical_layer
-            bys_layer = horizontal_layer
+            bus_layer = horizontal_layer
         else:
             route_layer = horizontal_layer
             bus_layer = vertical_layer

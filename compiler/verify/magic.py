@@ -78,33 +78,28 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
     
-    run_file = output_path + "run_drc.sh"
+    run_file = output_path + "run_ext.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
-    f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write('echo "$(date): Starting GDS to MAG using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write('\n')
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
+    # Do not run DRC for extraction/conversion
+    f.write("drc off\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    f.write("gds flatten true\n")
+    f.write("#gds flatten true\n")
     f.write("gds readonly true\n")
-    f.write("gds ordering true\n")
+    f.write("#gds ordering true\n")
     f.write("gds read {}\n".format(gds_name))
     f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))
     f.write('puts "Finished loading cell {}"\n'.format(cell_name))
     f.write("cellname delete \\(UNNAMED\\)\n")
     f.write("writeall force\n")
-    f.write("select top cell\n")
-    f.write("expand\n")
-    f.write('puts "Finished expanding"\n')
-    f.write("drc check\n")
-    f.write('puts "Finished drc check"\n')
-    f.write("drc catchup\n")
-    f.write('puts "Finished drc catchup"\n')
-    f.write("drc count total\n")
-    f.write("drc count\n")
+    
+    # Extract
     if not sp_name:
         f.write("port makeall\n")
     else:
@@ -139,6 +134,47 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write('puts "Finished ext2spice"\n')
+    
+    f.write("quit -noprompt\n")
+    f.write("EOF\n")
+    f.write("magic_retcode=$?\n")
+    f.write('echo "$(date): Finished ($magic_retcode) GDS to MAG using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write("exit $magic_retcode\n")
+
+    f.close()
+    os.system("chmod u+x {}".format(run_file))
+
+    run_file = output_path + "run_drc.sh"
+    f = open(run_file, "w")
+    f.write("#!/bin/sh\n")
+    f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
+    # Copy the bitcell mag files if they exist
+    try:
+        from tech import blackbox_cells
+    except ImportError:
+        blackbox_cells = []
+    import pdb; pdb.set_trace()
+    for cell_name in blackbox_cells:
+        mag_file = OPTS.openram_tech + "maglef_lib/" + cell_name + ".mag"
+        debug.check(os.path.isfile(mag_file), "Could not find blackbox cell {}".format(mag_file))
+        f.write('cp {0} {1}\n'.format(mag_file, OPTS.openram_temp))
+        
+    f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
+    f.write('\n')
+    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
+    f.write("load {} -dereference\n".format(cell_name))
+    f.write('puts "Finished loading cell {}"\n'.format(cell_name))
+    f.write("cellname delete \\(UNNAMED\\)\n")
+    f.write("writeall force\n")
+    f.write("select top cell\n")
+    f.write("expand\n")
+    f.write('puts "Finished expanding"\n')
+    f.write("drc check\n")
+    f.write('puts "Finished drc check"\n')
+    f.write("drc catchup\n")
+    f.write('puts "Finished drc catchup"\n')
+    f.write("drc count total\n")
+    f.write("drc count\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
     f.write("magic_retcode=$?\n")
@@ -147,7 +183,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
-
+    
 
 def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
@@ -160,7 +196,9 @@ def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=
         shutil.copy(gds_name, OPTS.openram_temp)
 
     write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp, sp_name=sp_name)
-
+    
+    (outfile, errfile, resultsfile) = run_script(cell_name, "ext")
+    
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # Check the result for these lines in the summary:

@@ -600,7 +600,7 @@ class lib:
                             OPTS.word_size, 
                             OPTS.words_per_row, 
                             self.sram.width * self.sram.height]
-            char_results = m.get_prediction(model_inputs)
+            char_results = m.get_predictions(model_inputs)
         
             #self.d = elmore(self.sram, self.sp_file, self.corner)
             # char_results = self.d.analytical_delay(self.slews,self.loads)

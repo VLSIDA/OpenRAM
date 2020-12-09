@@ -13,42 +13,48 @@ from globals import OPTS
 import debug
 
 relative_data_path = "/sim_data"
-data_filename = "data.csv"
+delay_data_filename = "data.csv"
+power_data_filename = "power_data.csv"
 tech_path = os.environ.get('OPENRAM_TECH')
 data_dir = tech_path+'/'+OPTS.tech_name+relative_data_path
 
 class linear_regression():
 
     def __init__(self):
-        self.model = None
+        self.delay_model = None
+        self.power_model = None
 
-    def get_prediction(self, model_inputs): 
+    def get_predictions(self, model_inputs): 
                
-        file_path = data_dir +'/'+data_filename
-        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, file_path)])
+        delay_file_path = data_dir +'/'+delay_data_filename
+        power_file_path = data_dir +'/'+power_data_filename
+        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, delay_file_path)])
 
-        features, labels = get_scaled_data(file_path)
-        self.train_model(features, labels)
-        scaled_pred = self.model_prediction(scaled_inputs)
-        pred = unscale_data(scaled_pred.tolist(), file_path)
-        debug.info(1,"Unscaled Prediction = {}".format(pred))
-        return pred
+        predictions = []
+        for path, model in zip([delay_file_path, power_file_path], [self.delay_model, self.power_model]):
+            features, labels = get_scaled_data(path)
+            model = self.generate_model(features, labels)
+            scaled_pred = self.model_prediction(model, scaled_inputs)
+            pred = unscale_data(scaled_pred.tolist(), path)
+            debug.info(1,"Unscaled Prediction = {}".format(pred))
+            predictions.append(pred)
+        return predictions
 
-    def train_model(self, features, labels):
+    def generate_model(self, features, labels):
         """
         Supervised training of model.
         """
         
-        self.model = LinearRegression()
-        self.model.fit(features, labels)
+        model = LinearRegression()
+        model.fit(features, labels)
+        return model
         
-    def model_prediction(self, features):    
+    def model_prediction(self, model, features):    
         """
         Have the model perform a prediction and unscale the prediction
         as the model is trained with scaled values.
         """
         
-        pred = self.model.predict(features)
-        debug.info(1, "pred={}".format(pred))
+        pred = model.predict(features)
         return pred
         

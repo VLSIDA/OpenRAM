@@ -103,7 +103,9 @@ class options(optparse.Values):
     use_pex = False
     # Output config with all options
     output_extended_config = True
-
+    # Determines which analytical model to use.
+    # Available Models: elmore, linear_regression
+    model_name = "linear_regression"
 
     ###################
     # Tool options
@@ -152,8 +154,6 @@ class options(optparse.Values):
     bitcell = "bitcell"
     buf_dec = "pbuf"
     column_mux_array = "column_mux_array"
-    col_cap = "col_cap"
-    col_cap_array = "col_cap_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
@@ -162,12 +162,10 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"
-    row_cap = "row_cap"
-    row_cap_array = "row_cap_array"
     sense_amp_array = "sense_amp_array"
     sense_amp = "sense_amp"
     tri_gate_array = "tri_gate_array"

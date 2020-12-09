@@ -11,9 +11,7 @@ import math
 import datetime
 from .setup_hold import *
 from .delay import *
-from .elmore import *
 from .charutils import *
-from .linear_regression import *
 import tech
 import numpy as np
 from globals import OPTS
@@ -585,16 +583,24 @@ class lib:
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
         if self.use_model:
+            model_name_lc = OPTS.model_name.lower()
+            if model_name_lc == "linear_regression":
+                from .linear_regression import linear_regression as model
+            elif model_name_lc == "elmore":
+                from .elmore import elmore as model
+            else:
+                debug.error("{} model not recognized. See options.py for available models.".format(OPTS.model_name))
             import math
             #FIXME: ML models only designed for delay. Cannot produce all values for Lib
-            d = linear_regression()
-            temp_wpr = 2.0 #OPTS not working right now
+            m = model()
+            #temp_wpr = 2.0 #OPTS not working right now
             log_num_words = math.log(OPTS.num_words, 2)
+            debug.info(1, "OPTS.words_per_row={}".format(OPTS.words_per_row))
             model_inputs = [log_num_words, 
                             OPTS.word_size, 
-                            temp_wpr, 
+                            OPTS.words_per_row, 
                             self.sram.width * self.sram.height]
-            char_results = d.get_prediction(model_inputs)
+            char_results = m.get_prediction(model_inputs)
         
             #self.d = elmore(self.sram, self.sp_file, self.corner)
             # char_results = self.d.analytical_delay(self.slews,self.loads)

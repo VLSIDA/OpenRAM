@@ -1,26 +1,25 @@
 from .gdsPrimitives import *
 from datetime import *
-#from mpmath import matrix
-#from numpy import matrix
 import numpy as np
-#import gdsPrimitives
+import math
 import debug
+
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""
 
-    def __init__(self, name=None, units=(0.001,1e-9), libraryName = "DEFAULT.DB", gdsVersion=5):
-        #keep a list of all the structures in this layout
+    def __init__(self, name=None, units=(0.001,1e-9), libraryName="DEFAULT.DB", gdsVersion=5):
+        # keep a list of all the structures in this layout
         self.units = units
-        #print(units)
+        # print(units)
         modDate = datetime.now()
         self.structures=dict()
         self.layerNumbersInUse = []
         self.debug = False
         if name:
-            #take the root structure and copy it to a new structure with the new name
+            # take the root structure and copy it to a new structure with the new name
             self.rootStructureName=self.padText(name)
-            #create the ROOT structure
+            # create the ROOT structure
             self.structures[self.rootStructureName] = GdsStructure()
             self.structures[self.rootStructureName].name = name
             self.structures[self.rootStructureName].createDate = (modDate.year,
@@ -36,7 +35,7 @@ class VlsiLayout:
                                                                modDate.minute,
                                                                modDate.second)
 
-        self.info = dict()  #information gathered from the GDSII header
+        self.info = dict()  # information gathered from the GDSII header
         self.info['units']=self.units
         self.info['dates']=(modDate.year,
                             modDate.month,
@@ -53,12 +52,13 @@ class VlsiLayout:
         self.info['libraryName']=libraryName
         self.info['gdsVersion']=gdsVersion
 
-        self.xyTree = [] #This will contain a list of all structure names
-                        #expanded to include srefs / arefs separately.
-                        #each structure will have an X,Y,offset, and rotate associated
-                        #with it.  Populate via traverseTheHierarchy method.
+        # This will contain a list of all structure names
+        # expanded to include srefs / arefs separately.
+        # each structure will have an X,Y,offset, and rotate associated
+        # with it.  Populate via traverseTheHierarchy method.
+        self.xyTree = []
 
-        #temp variables used in delegate functions
+        # temp variables used in delegate functions
         self.tempCoordinates=None
         self.tempPassFail = True
 
@@ -68,12 +68,12 @@ class VlsiLayout:
         self.pins = {}
 
     def rotatedCoordinates(self,coordinatesToRotate,rotateAngle):
-        #helper method to rotate a list of coordinates
+        # helper method to rotate a list of coordinates
         angle=math.radians(float(0))
         if(rotateAngle):
             angle = math.radians(float(rotateAngle))
 
-        coordinatesRotate = []    #this will hold the rotated values
+        coordinatesRotate = []    # this will hold the rotated values
         for coordinate in coordinatesToRotate:
             # This is the CCW rotation matrix
             newX = coordinate[0]*math.cos(angle) - coordinate[1]*math.sin(angle)
@@ -82,53 +82,51 @@ class VlsiLayout:
         return coordinatesRotate
 
     def rename(self,newName):
-        #take the root structure and copy it to a new structure with the new name
+        # take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
         self.structures[newName].name = self.padText(newName)
-        #and delete the old root
+        # and delete the old root
         del self.structures[self.rootStructureName]
         self.rootStructureName = newName
-        #repopulate the 2d map so drawing occurs correctly
+        # repopulate the 2d map so drawing occurs correctly
         del self.xyTree[:]
         self.populateCoordinateMap()
 
     def newLayout(self,newName):
-        #if (newName == "" | newName == 0):
-        #   print("ERROR: vlsiLayout.py:newLayout  newName is null")
+        # if (newName == "" | newName == 0):
+        #    print("ERROR: vlsiLayout.py:newLayout  newName is null")
 
-        #make sure the newName is a multiple of 2 characters
-        #if(len(newName)%2 == 1):
-            #pad with a zero
-            #newName = newName + '\x00'
-        #take the root structure and copy it to a new structure with the new name
-        #self.structures[newName] = self.structures[self.rootStructureName]
+        # make sure the newName is a multiple of 2 characters
+        # if(len(newName)%2 == 1):
+            # pad with a zero
+            # newName = newName + '\x00'
+        # take the root structure and copy it to a new structure with the new name
+        # self.structures[newName] = self.structures[self.rootStructureName]
 
         modDate = datetime.now()
 
         self.structures[newName] = GdsStructure()
         self.structures[newName].name = newName
 
-
-
         self.rootStructureName = newName
 
         self.rootStructureName=newName
 
-        #create the ROOT structure
+        # create the ROOT structure
         self.structures[self.rootStructureName] = GdsStructure()
-        #self.structures[self.rootStructureName].name = name
+        # self.structures[self.rootStructureName].name = name
         self.structures[self.rootStructureName].createDate = (modDate.year,
-                                                                  modDate.month,
-                                                                  modDate.day,
-                                                                  modDate.hour,
-                                                                  modDate.minute,
-                                                                  modDate.second)
+                                                              modDate.month,
+                                                              modDate.day,
+                                                              modDate.hour,
+                                                              modDate.minute,
+                                                              modDate.second)
         self.structures[self.rootStructureName].modDate = (modDate.year,
-                                                               modDate.month,
-                                                               modDate.day,
-                                                               modDate.hour,
-                                                               modDate.minute,
-                                                               modDate.second)
+                                                           modDate.month,
+                                                           modDate.day,
+                                                           modDate.hour,
+                                                           modDate.minute,
+                                                           modDate.second)
 
 
         #repopulate the 2d map so drawing occurs correctly
@@ -155,47 +153,50 @@ class VlsiLayout:
         debug.check(len(structureNames)==1,"Multiple possible root structures in the layout: {}".format(str(structureNames)))
         self.rootStructureName = structureNames[0]
 
-
-    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None,
-                             transformPath = [], rotateAngle = 0, transFlags = [0,0,0], coordinates = (0,0)):
-        #since this is a recursive function, must deal with the default
-        #parameters explicitly
+    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction=None,
+                             transformPath=[], rotateAngle=0, transFlags=[0, 0, 0], coordinates=(0, 0)):
+        # since this is a recursive function, must deal with the default
+        # parameters explicitly
         if startingStructureName == None:
             startingStructureName = self.rootStructureName
 
-        #set up the rotation matrix
+        # set up the rotation matrix
         if(rotateAngle == None or rotateAngle == ""):
             angle = 0
         else:
             # MRG: Added negative to make CCW rotate 8/29/18
             angle = math.radians(float(rotateAngle))
-        mRotate = np.array([[math.cos(angle),-math.sin(angle),0.0],
-                          [math.sin(angle),math.cos(angle),0.0],
-                          [0.0,0.0,1.0]])
-        #set up the translation matrix
+        mRotate = np.array([[math.cos(angle), -math.sin(angle), 0.0],
+                            [math.sin(angle), math.cos(angle), 0.0],
+                            [0.0, 0.0, 1.0]])
+        # set up the translation matrix
         translateX = float(coordinates[0])
         translateY = float(coordinates[1])
-        mTranslate = np.array([[1.0,0.0,translateX],[0.0,1.0,translateY],[0.0,0.0,1.0]])
-        #set up the scale matrix (handles mirror X)
+        mTranslate = np.array([[1.0, 0.0, translateX],
+                               [0.0, 1.0, translateY],
+                               [0.0, 0.0, 1.0]])
+        # set up the scale matrix (handles mirror X)
         scaleX = 1.0
-        if(transFlags[0]):
+        if (transFlags[0]):
             scaleY = -1.0
         else:
             scaleY = 1.0
-        mScale = np.array([[scaleX,0.0,0.0],[0.0,scaleY,0.0],[0.0,0.0,1.0]])
-        #we need to keep track of all transforms in the hierarchy
-        #when we add an element to the xy tree, we apply all transforms from the bottom up
+        mScale = np.array([[scaleX, 0.0, 0.0],
+                           [0.0, scaleY, 0.0],
+                           [0.0, 0.0, 1.0]])
+        # we need to keep track of all transforms in the hierarchy
+        # when we add an element to the xy tree, we apply all transforms from the bottom up
         transformPath.append((mRotate,mScale,mTranslate))
         if delegateFunction != None:
             delegateFunction(startingStructureName, transformPath)
-        #starting with a particular structure, we will recursively traverse the tree
-        #********might have to set the recursion level deeper for big layouts!
+        # starting with a particular structure, we will recursively traverse the tree
+        # ********might have to set the recursion level deeper for big layouts!
         try:
             if(len(self.structures[startingStructureName].srefs)>0): #does this structure reference any others?
-                #if so, go through each and call this function again
-                #if not, return back to the caller (caller can be this function)
+                # if so, go through each and call this function again
+                # if not, return back to the caller (caller can be this function)
                 for sref in self.structures[startingStructureName].srefs:
-                    #here, we are going to modify the sref coordinates based on the parent objects rotation
+                    # here, we are going to modify the sref coordinates based on the parent objects rotation
                     self.traverseTheHierarchy(startingStructureName = sref.sName,
                                               delegateFunction = delegateFunction,
                                               transformPath = transformPath,
@@ -205,8 +206,8 @@ class VlsiLayout:
         except KeyError:
             debug.error("Could not find structure {} in GDS file.".format(startingStructureName),-1)
 
-            #MUST HANDLE AREFs HERE AS WELL
-        #when we return, drop the last transform from the transformPath
+            # MUST HANDLE AREFs HERE AS WELL
+        # when we return, drop the last transform from the transformPath
         del transformPath[-1]
         return
 
@@ -217,7 +218,6 @@ class VlsiLayout:
 
         for layerNumber in self.layerNumbersInUse:
             self.processLabelPins((layerNumber, None))
-
 
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
@@ -280,8 +280,6 @@ class VlsiLayout:
             if ((newRoot not in self.structures) & create):
                 self.newLayout(newRoot)
             self.rootStructureName = newRoot
-
-
 
     def addInstance(self,layoutToAdd,nameOfLayout=0,offsetInMicrons=(0,0),mirror=None,rotate=None):
         """
@@ -406,7 +404,7 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths.append(pathToAdd)
 
-    def addText(self, text, layerNumber=0, purposeNumber=0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
+    def addText(self, text, layerNumber=0, purposeNumber=0, offsetInMicrons=(0,0), magnification=None, rotate=None):
         offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
@@ -415,7 +413,8 @@ class VlsiLayout:
         textToAdd.transFlags = [0,0,0]
         textToAdd.textString = self.padText(text)
         #textToAdd.transFlags[1] = 1
-        textToAdd.magFactor = magnification
+        if magnification:
+            textToAdd.magFactor = magnification
         if rotate:
             #textToAdd.transFlags[2] = 1
             textToAdd.rotateAngle = rotate

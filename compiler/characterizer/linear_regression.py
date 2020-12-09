@@ -25,12 +25,12 @@ class linear_regression():
     def get_prediction(self, model_inputs): 
                
         file_path = data_dir +'/'+data_filename
-        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, data_dir)])
+        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, file_path)])
 
-        features, labels = get_scaled_data(file_path, data_dir)
+        features, labels = get_scaled_data(file_path)
         self.train_model(features, labels)
         scaled_pred = self.model_prediction(scaled_inputs)
-        pred = unscale_data(scaled_pred.tolist(), data_dir)
+        pred = unscale_data(scaled_pred.tolist(), file_path)
         debug.info(1,"Unscaled Prediction = {}".format(pred))
         return pred
 

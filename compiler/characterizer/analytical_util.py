@@ -110,6 +110,24 @@ def get_max_min_from_datasets(dir):
     avgs = [s/total_count for s in sums]
     return maxs,mins,avgs
     
+def get_max_min_from_file(path):
+    if not os.path.isfile(path):
+        debug.warning("Input file not found: {}".format(path))
+        return [], [], []
+    
+
+    data = get_data(path)
+    # Get max, min, sum, and count from every file
+    data_max, data_min, data_sum, count = [],[],[], 0
+    for feature_list in data:
+        data_max.append(max(feature_list))
+        data_min.append(min(feature_list))
+        data_sum.append(sum(feature_list))
+        count = len(feature_list)
+
+    avgs = [s/count for s in data_sum]
+    return data_max, data_min, avgs    
+    
 def get_data_and_scale(file_name, sample_dir):
     maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
     
@@ -179,11 +197,11 @@ def sample_from_file(num_samples, file_name, sample_dir=None):
         
     return np.asarray(sampled_data), np.asarray(unused_new_scaling)
 
-def get_scaled_data(file_name, sample_dir=None):
+def get_scaled_data(file_name):
     """Get data from CSV file and scale it based on max/min of dataset"""
 
-    if sample_dir:
-        maxs,mins,avgs = get_max_min_from_datasets(sample_dir)
+    if file_name:
+        maxs,mins,avgs = get_max_min_from_file(file_name)
     else:
         maxs,mins,avgs = [], [], []
         
@@ -210,12 +228,12 @@ def scale_data_and_transform(data):
             scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
     return scaled_data
     
-def scale_input_datapoint(point, data_dir):    
+def scale_input_datapoint(point, file_path):    
     """
     Input data has no output and needs to be scaled like the model inputs during
     training.
     """
-    maxs, mins, avgs = get_max_min_from_datasets(data_dir)
+    maxs, mins, avgs = get_max_min_from_file(file_path)
     debug.info(1, "maxs={}".format(maxs))
     debug.info(1, "mins={}".format(mins))
     debug.info(1, "point={}".format(point))
@@ -225,9 +243,9 @@ def scale_input_datapoint(point, data_dir):
         scaled_point.append((feature-mn)/(mx-mn))
     return scaled_point
 
-def unscale_data(data, ref_dir, pos=None):
-    if ref_dir:
-        maxs,mins,avgs = get_max_min_from_datasets(ref_dir)
+def unscale_data(data, file_path, pos=None):
+    if file_path:
+        maxs,mins,avgs = get_max_min_from_file(file_path)
     else:
         print("Must provide reference data to unscale")
         return None

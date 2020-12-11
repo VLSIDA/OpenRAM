@@ -21,8 +21,8 @@ class openram_test(unittest.TestCase):
 
         self.reset()
 
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, w.name)
-        w.gds_write(tempgds)
+        tempgds = "{}.gds".format(w.name)
+        w.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
         import verify
 
         result=verify.run_drc(w.name, tempgds, None)
@@ -36,13 +36,13 @@ class openram_test(unittest.TestCase):
 
         self.reset()
 
-        tempspice = "{0}{1}.sp".format(OPTS.openram_temp, a.name)
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, a.name)
+        tempspice = "{}.sp".format(a.name)
+        tempgds = "{}.gds".format(a.name)
 
-        a.lvs_write(tempspice)
+        a.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
         # cannot write gds in netlist_only mode
         if not OPTS.netlist_only:
-            a.gds_write(tempgds)
+            a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
 
             import verify
             # Run both DRC and LVS even if DRC might fail
@@ -80,15 +80,13 @@ class openram_test(unittest.TestCase):
             self.cleanup()
 
     def run_pex(self, a, output=None):
-        if output == None:
-            output = OPTS.openram_temp + a.name + ".pex.netlist"
-        tempspice = "{0}{1}.sp".format(OPTS.openram_temp, a.name)
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, a.name)
+        tempspice = "{}.sp".format(a.name)
+        tempgds = "{}.gds".format(a.name)
 
-        a.gds_write(tempgds)
+        a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
 
         import verify
-        result=verify.run_pex(a.name, tempgds, tempspice, output=output, final_verification=False)
+        result=verify.run_pex(a.name, tempgds, tempspice, final_verification=False)
         if result != 0:
             self.fail("PEX ERROR: {}".format(a.name))
         return output

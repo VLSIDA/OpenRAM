@@ -153,10 +153,10 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         from tech import blackbox_cells
     except ImportError:
         blackbox_cells = []
-    for cell_name in blackbox_cells:
-        mag_file = OPTS.openram_tech + "maglef_lib/" + cell_name + ".mag"
+    for blackbox_cell_name in blackbox_cells:
+        mag_file = OPTS.openram_tech + "maglef_lib/" + blackbox_cell_name + ".mag"
         debug.check(os.path.isfile(mag_file), "Could not find blackbox cell {}".format(mag_file))
-        f.write('cp {0} {1}\n'.format(mag_file, OPTS.openram_temp))
+        f.write('cp {0} .\n'.format(mag_file))
         
     f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write('\n')
@@ -164,10 +164,10 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("load {} -dereference\n".format(cell_name))
     f.write('puts "Finished loading cell {}"\n'.format(cell_name))
     f.write("cellname delete \\(UNNAMED\\)\n")
-    f.write("writeall force\n")
     f.write("select top cell\n")
     f.write("expand\n")
     f.write('puts "Finished expanding"\n')
+    f.write("drc euclidean on\n")
     f.write("drc check\n")
     f.write('puts "Finished drc check"\n')
     f.write("drc catchup\n")

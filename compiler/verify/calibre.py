@@ -63,8 +63,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification=False, out
     run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -drc {1}drc_runset -batch".format(OPTS.drc_exe[1],
-                                                      output_path)
+    cmd = "{0} -gui -drc drc_runset -batch".format(OPTS.drc_exe[1])
+
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -125,8 +125,8 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
-                                                      output_path)
+    cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
+                         
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -178,8 +178,8 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
     run_file = output_path + "run_pex.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -pex {1}pex_runset -batch".format(OPTS.pex_exe[1],
-                                                      OPTS.openram_temp)
+    cmd = "{0} -gui -pex pex_runset -batch".format(OPTS.pex_exe[1])
+    
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -204,12 +204,9 @@ def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=Fals
     else:
         # Copy file to local dir if it isn't already
         if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-            shutil.copy(gds_name, OPTS.openram_temp)
+            shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
 
     drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
-
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 

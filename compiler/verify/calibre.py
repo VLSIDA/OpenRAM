@@ -195,17 +195,6 @@ def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=Fals
     global num_drc_runs
     num_drc_runs += 1
 
-    # Filter the layouts through magic as a GDS filter for nsdm/psdm/nwell merging
-    # Disabled for now
-    if False and OPTS.tech_name == "sky130":
-        shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
-        from magic import filter_gds
-        filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")
-    else:
-        # Copy file to local dir if it isn't already
-        if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-            shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
-
     drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
@@ -247,12 +236,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     num_lvs_runs += 1
 
     lvs_runset = write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
-
-    # Copy file to local dir if it isn't already
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp)
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-        shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -334,12 +317,6 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
     num_pex_runs += 1
 
     write_pex_script(cell_name, True, output, final_verification, OPTS.openram_temp)
-
-    # Copy file to local dir if it isn't already
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp)
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-        shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 

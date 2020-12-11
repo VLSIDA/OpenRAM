@@ -190,10 +190,6 @@ def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=
     global num_drc_runs
     num_drc_runs += 1
 
-    # Copy file to local dir if it isn't already
-    if os.path.dirname(gds_name)!=OPTS.openram_temp.rstrip('/'):
-        shutil.copy(gds_name, OPTS.openram_temp)
-
     write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp, sp_name=sp_name)
     
     (outfile, errfile, resultsfile) = run_script(cell_name, "ext")
@@ -281,12 +277,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=
     if not output_path:
         output_path = OPTS.openram_temp
     
-    # Copy file to local dir if it isn't already
-    if os.path.dirname(gds_name) != output_path.rstrip('/'):
-        shutil.copy(gds_name, output_path)
-    if os.path.dirname(sp_name) != output_path.rstrip('/'):
-        shutil.copy(sp_name, output_path)
-
     write_lvs_script(cell_name, gds_name, sp_name, final_verification)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")

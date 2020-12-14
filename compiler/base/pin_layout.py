@@ -393,15 +393,13 @@ class pin_layout:
                              width=self.width(),
                              height=self.height(),
                              center=False)
-        # Add the tet in the middle of the pin.
+        # Add the text in the middle of the pin.
         # This fixes some pin label offsetting when GDS gets
         # imported into Magic.
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
                           purposeNumber=label_purpose,
-                          offsetInMicrons=self.center(),
-                          magnification=GDS["zoom"],
-                          rotate=None)
+                          offsetInMicrons=self.center())
 
     def compute_overlap(self, other):
         """ Calculate the rectangular overlap of two rectangles. """

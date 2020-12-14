@@ -446,7 +446,7 @@ class path(geometry):
 class label(geometry):
     """Represents a text label"""
 
-    def __init__(self, text, lpp, offset, zoom=-1):
+    def __init__(self, text, lpp, offset, zoom=None):
         """Initializes a text label for specified layer"""
         super().__init__()
         self.name = "label"
@@ -455,8 +455,11 @@ class label(geometry):
         self.layerPurpose = lpp[1]
         self.offset = vector(offset).snap_to_grid()
 
-        if zoom<0:
-            self.zoom = tech.GDS["zoom"]
+        if not zoom:
+            try:
+                self.zoom = tech.GDS["zoom"]
+            except:
+                self.zoom = None
         else:
             self.zoom = zoom
 

@@ -30,7 +30,7 @@ class elmore(simulation):
         self.create_signal_names()
         self.add_graph_exclusions()
     
-    def analytical_delay(self, slews, loads):
+    def get_lib_values(self, slews, loads):
         """
         Return the analytical model results for the SRAM.
         """

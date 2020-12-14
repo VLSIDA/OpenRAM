@@ -591,20 +591,10 @@ class lib:
             else:
                 debug.error("{} model not recognized. See options.py for available models.".format(OPTS.model_name))
             import math
-            #FIXME: ML models only designed for delay. Cannot produce all values for Lib
-            m = model()
-            #temp_wpr = 2.0 #OPTS not working right now
-            log_num_words = math.log(OPTS.num_words, 2)
-            debug.info(1, "OPTS.words_per_row={}".format(OPTS.words_per_row))
-            model_inputs = [log_num_words, 
-                            OPTS.word_size, 
-                            OPTS.words_per_row, 
-                            self.sram.width * self.sram.height]
-            char_results = m.get_predictions(model_inputs)
-        
-            #self.d = elmore(self.sram, self.sp_file, self.corner)
-            # char_results = self.d.analytical_delay(self.slews,self.loads)
-            # self.char_sram_results, self.char_port_results = char_results
+
+            m = model(self.sram, self.sp_file, self.corner)
+            char_results = m.get_lib_values(self.slews,self.loads)
+
         else:
             self.d = delay(self.sram, self.sp_file, self.corner)
             if (self.sram.num_spare_rows == 0):
@@ -613,7 +603,7 @@ class lib:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-            self.char_sram_results, self.char_port_results = char_results
+        self.char_sram_results, self.char_port_results = char_results
 
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """

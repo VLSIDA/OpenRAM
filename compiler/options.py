@@ -105,7 +105,7 @@ class options(optparse.Values):
     output_extended_config = True
     # Determines which analytical model to use.
     # Available Models: elmore, linear_regression
-    model_name = "linear_regression"
+    model_name = "elmore"
 
     ###################
     # Tool options

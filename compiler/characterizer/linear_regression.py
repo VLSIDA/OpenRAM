@@ -61,30 +61,25 @@ class linear_regression(simulation):
         max_delay = 0.0
         for slew in slews:
             for load in loads:
-                # Calculate delay based on slew and load
-                debug.info(1,
-                           '{}, {}, {}, {}'.format(slew,
-                                                   load,
-                                                   total_delay.delay / 1e3,
-                                                   total_delay.slew / 1e3))
 
                 # Delay is only calculated on a single port and replicated for now.
                 for port in self.all_ports:
                     for mname in self.delay_meas_names + self.power_meas_names:
                         #FIXME: fix magic for indexing the data
+                        #FIXME: model output is double list. Simply this
                         if "power" in mname:
-                            port_data[port][mname].append(sram_vals[1])
+                            port_data[port][mname].append(sram_vals[1][0][0])
                         elif "delay" in mname and port in self.read_ports:
-                            port_data[port][mname].append(sram_vals[0])
+                            port_data[port][mname].append(sram_vals[0][0][0])
                         elif "slew" in mname and port in self.read_ports:
-                            port_data[port][mname].append(sram_vals[3])
+                            port_data[port][mname].append(sram_vals[3][0][0])
                         else:
                             debug.error("Measurement name not recognized: {}".format(mname), 1)
 
         # Estimate the period as double the delay with margin
         period_margin = 0.1
-        sram_data = {"min_period": sram_vals[0] * 2,
-                     "leakage_power": sram_vals[2]}
+        sram_data = {"min_period": sram_vals[0][0][0] * 2,
+                     "leakage_power": sram_vals[2][0][0]}
 
         debug.info(2, "SRAM Data:\n{}".format(sram_data))
         debug.info(2, "Port Data:\n{}".format(port_data))

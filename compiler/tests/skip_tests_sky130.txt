@@ -3,7 +3,6 @@
 04_precharge_pbitcell_test.py
 04_replica_pbitcell_test.py
 04_column_mux_pbitcell_test.py
-05_bitcell_1rw_1r_array_test.py
 05_bitcell_array_test.py
 05_dummy_array_test.py
 05_pbitcell_array_test.py

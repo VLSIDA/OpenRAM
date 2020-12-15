@@ -173,7 +173,6 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("drc catchup\n")
     f.write('puts "Finished drc catchup"\n')
     f.write("drc count total\n")
-    f.write("drc count\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
     f.write("magic_retcode=$?\n")

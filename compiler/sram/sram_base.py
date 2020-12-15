@@ -207,9 +207,10 @@ class sram_base(design, verilog, lef):
                           ur=vector(self.width, self.height))
 
         start_time = datetime.datetime.now()
-        # We only enable final verification if we have routed the design
-        self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
         if not OPTS.is_unit_test:
+            # We only enable final verification if we have routed the design
+            # Only run this if not a unit test, because unit test will also verify it.
+            self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
             print_time("Verification", datetime.datetime.now(), start_time)
 
     def create_modules(self):

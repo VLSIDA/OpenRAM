@@ -29,12 +29,6 @@ class linear_regression(simulation):
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
         self.set_corner(corner)
-        self.create_signal_names()
-        self.add_graph_exclusions()
-        self.delay_model = None
-        self.slew_model = None
-        self.power_model = None
-        self.leakage_model = None
 
     def get_lib_values(self, slews, loads):
         """

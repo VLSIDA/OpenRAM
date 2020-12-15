@@ -498,7 +498,7 @@ class layout():
                        offset=offset + vector(0.5 * width,
                                               0.5 * height))
 
-    def add_label(self, text, layer, offset=[0, 0], zoom=-1):
+    def add_label(self, text, layer, offset=[0, 0], zoom=None):
         """Adds a text label on the given layer,offset, and zoom level"""
         debug.info(5, "add label " + str(text) + " " + layer + " " + str(offset))
         lpp = techlayer[layer]

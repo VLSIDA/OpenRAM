@@ -414,8 +414,11 @@ class sram_1bank(sram_base):
                                              layer_stack=self.m1_stack,
                                              parent=self)
             if add_routes:
-                self.add_inst(cr.name, cr)
-                self.connect_inst([])
+                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # with no active devices.
+                # self.add_inst(cr.name, cr)
+                # self.connect_inst([])
+                self.add_flat_inst(cr.name, cr)                
             else:
                 self.col_addr_bus_size[port] = cr.height
 

@@ -236,12 +236,25 @@ class layout():
         # This is commented out for runtime reasons
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
-
+    
     def get_inst(self, name):
         """ Retrieve an instance by name """
         for inst in self.insts:
             if inst.name == name:
                 return inst
+        return None
+
+    def add_flat_inst(self, name, mod, offset=[0, 0]):
+        """ Copies all of the items in instance into this module """
+        for item in mod.objs:
+            item.offset += offset
+            self.objs.append(item)
+        for item in mod.insts:
+            item.offset += offset
+            self.insts.append(item)
+            debug.check(len(item.mod.pins) == 0, "Cannot add flat instance with subinstances.")
+            self.connect_inst([])
+        debug.info(3, "adding flat instance {}".format(name))
         return None
 
     def add_rect(self, layer, offset, width=None, height=None):
@@ -1078,18 +1091,24 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
-        self.add_inst(cr.name, cr)
-        self.connect_inst([])
-
+        # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+        # with no active devices.
+        # self.add_inst(cr.name, cr)
+        # self.connect_inst([])
+        self.add_flat_inst(cr.name, cr)
+        
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
         """
         Wrapper to create a horizontal channel route
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
-        self.add_inst(cr.name, cr)
-        self.connect_inst([])
-
+        # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+        # with no active devices.
+        # self.add_inst(cr.name, cr)
+        # self.connect_inst([])
+        self.add_flat_inst(cr.name, cr)
+        
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:

@@ -402,28 +402,6 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
 
-            if port == 0:
-                offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                                - self.data_bus_size[port] + 2 * self.m1_pitch)
-            else:
-                offset = vector(0,
-                                self.bank.height + 2 * self.m1_space)
-
-            cr = channel_route.channel_route(netlist=route_map,
-                                             offset=offset,
-                                             layer_stack=self.m1_stack,
-                                             parent=self)
-            if add_routes:
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
-                # with no active devices.
-                # self.add_inst(cr.name, cr)
-                # self.connect_inst([])
-                self.add_flat_inst(cr.name, cr)                
-            else:
-                self.col_addr_bus_size[port] = cr.height
-
-        route_map = []
-
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
@@ -473,8 +451,11 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst(cr.name, cr)
-                    self.connect_inst([])
+                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # with no active devices.
+                    # self.add_inst(cr.name, cr)
+                    # self.connect_inst([])
+                    self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
@@ -485,8 +466,11 @@ class sram_1bank(sram_base):
                                                  layer_stack=layer_stack,
                                                  parent=self)
                 if add_routes:
-                    self.add_inst(cr.name, cr)
-                    self.connect_inst([])
+                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # with no active devices.
+                    # self.add_inst(cr.name, cr)
+                    # self.connect_inst([])
+                    self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 

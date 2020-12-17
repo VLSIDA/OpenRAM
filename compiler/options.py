@@ -82,6 +82,8 @@ class options(optparse.Values):
     verbose_level = 0
     # Drop to pdb on failure?
     debug = False
+    # Only use corners in config file. Disables generated corners
+    only_use_config_corners = False
     
 
     ###################

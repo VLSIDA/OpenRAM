@@ -865,7 +865,7 @@ class router(router_tech):
         debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
 
         pin_in_tracks = self.pin_groups[pin_name][index].grids
-        debug.info(2, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+        debug.info(3, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
 
     def add_pin_component_target_except(self, pin_name, index):
@@ -1012,12 +1012,9 @@ class router(router_tech):
 
             path_set = grid_utils.flatten_set(path)
             self.path_blockages.append(path_set)
+            return True
         else:
-            self.write_debug_gds("failed_route.gds")
-            # clean up so we can try a reroute
-            self.rg.reinit()
             return False
-        return True
 
     def annotate_pin_and_tracks(self, pin, tracks):
         """"

@@ -445,7 +445,7 @@ class sram_1bank(sram_base):
 
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                                - self.data_bus_size[port] + 2 * self.m1_pitch)
+                                - self.data_bus_size[port] + 2 * self.m3_pitch)
                 cr = channel_route.channel_route(netlist=route_map,
                                                  offset=offset,
                                                  layer_stack=layer_stack,
@@ -460,7 +460,7 @@ class sram_1bank(sram_base):
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
                 offset = vector(0,
-                                self.bank.height + 2 * self.m1_space)
+                                self.bank.height + self.m3_pitch)
                 cr = channel_route.channel_route(netlist=route_map,
                                                  offset=offset,
                                                  layer_stack=layer_stack,

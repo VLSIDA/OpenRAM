@@ -170,43 +170,28 @@ class supply_tree_router(router):
 
     def route_signal(self, pin_name, src_idx, dest_idx):
         
-        debug.info(2, "Routing {0} to {1} on pin {2}".format(src_idx, dest_idx, pin_name))
-        
-        # Clear everything in the routing grid.
-        self.rg.reinit()
-
-        # This is inefficient since it is non-incremental, but it was
-        # easier to debug.
-        self.prepare_blockages(pin_name)
-
-        # Add the single component of the pin as the source
-        # which unmarks it as a blockage too
-        self.add_pin_component_source(pin_name, src_idx)
-
-        # Marks all pin components except index as target
-        self.add_pin_component_target(pin_name, dest_idx)
+        for detour_scale in [5 * pow(2, x) for x in range(5)]:
+            debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
             
-        # Add the prevous paths as a target too
-        #self.add_path_target(self.paths)
+            # Clear everything in the routing grid.
+            self.rg.reinit()
 
-        # print("SOURCE: ")
-        # for k,v in self.rg.map.items():
-        #     if v.source:
-        #         print(k)
-        
-        # print("TARGET: ")
-        # for k,v in self.rg.map.items():
-        #     if v.target:
-        #         print(k)
+            # This is inefficient since it is non-incremental, but it was
+            # easier to debug.
+            self.prepare_blockages(pin_name)
 
-        # Actually run the A* router
-        if not self.run_router(detour_scale=5):
-            self.write_debug_gds("debug_route.gds", True)
+            # Add the single component of the pin as the source
+            # which unmarks it as a blockage too
+            self.add_pin_component_source(pin_name, src_idx)
 
-        # if index==3 and pin_name=="vdd":
-        #    self.write_debug_gds("route.gds",False)
+            # Marks all pin components except index as target
+            self.add_pin_component_target(pin_name, dest_idx)
+            
+            # Actually run the A* router
+            if self.run_router(detour_scale=detour_scale):
+                return
 
-
+        self.write_debug_gds("debug_route.gds", True)
 
 
 

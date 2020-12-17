@@ -138,12 +138,11 @@ class write_mask_and_array(design.design):
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer="m3",
                                       offset=en_pos)
-
-            for supply in ["gnd", "vdd"]:
-                supply_pin=self.and2_insts[i].get_pin(supply)
-                self.add_power_pin(supply, supply_pin.center(), start_layer=supply_pin.layer)
-
+            
         for supply in ["gnd", "vdd"]:
             supply_pin_left = self.and2_insts[0].get_pin(supply)
             supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
             self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
+            self.add_power_pin(supply, supply_pin_left.center(), start_layer=supply_pin_left.layer)
+            self.add_power_pin(supply, supply_pin_right.center(), start_layer=supply_pin_right.layer)
+

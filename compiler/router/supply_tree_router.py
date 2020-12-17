@@ -5,20 +5,14 @@
 #(acting for and on behalf of Oklahoma State University)
 #All rights reserved.
 #
-import gdsMill
-import tech
-import math
 import debug
-from globals import OPTS,print_time
-from contact import contact
-from pin_group import pin_group
-from pin_layout import pin_layout
-from vector3d import vector3d
+from globals import print_time
 from router import router
-from direction import direction
 from datetime import datetime
-import grid
 import grid_utils
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import minimum_spanning_tree
+
 
 class supply_tree_router(router):
     """
@@ -35,7 +29,6 @@ class supply_tree_router(router):
         self.rail_track_width = 3
 
         router.__init__(self, layers, design, gds_filename, self.rail_track_width)
-
 
     def create_routing_grid(self):
         """
@@ -133,7 +126,6 @@ class supply_tree_router(router):
         self.set_blockages(blockage_grids,False)
 
 
-
     def route_pins(self, pin_name):
         """
         This will route each of the remaining pin components to the other pins.
@@ -144,48 +136,73 @@ class supply_tree_router(router):
         debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
                                                                                    remaining_components))
 
-        for index,pg in enumerate(self.pin_groups[pin_name]):
-            if pg.is_routed():
-                continue
+        # Create full graph
+        pin_size = len(self.pin_groups[pin_name])
+        adj_matrix = [[0] * pin_size for i in range(pin_size)]
 
-            debug.info(1,"Routing component {0} {1}".format(pin_name, index))
+        for index1,pg1 in enumerate(self.pin_groups[pin_name]):
+            for index2,pg2 in enumerate(self.pin_groups[pin_name]):
+                if index1>=index2:
+                    continue
+                dist = int(grid_utils.distance_set(list(pg1.grids)[0], pg2.grids))
+                adj_matrix[index1][index2] = dist
 
-            # Clear everything in the routing grid.
-            self.rg.reinit()
+        # Find MST
+        X = csr_matrix(adj_matrix)
+        Tcsr = minimum_spanning_tree(X)
+        mst = Tcsr.toarray().astype(int)
+        connections = []
+        for x in range(pin_size):
+            for y in range(pin_size):
+                if x >= y:
+                    continue
+                if mst[x][y]>0:
+                    connections.append((x, y))
+        
+        # Route MST components
+        for (src, dest) in connections:
+            self.route_signal(pin_name, src, dest)
+                
+        #self.write_debug_gds("final.gds", True)
+        #return 
 
-            # This is inefficient since it is non-incremental, but it was
-            # easier to debug.
-            self.prepare_blockages(pin_name)
+    def route_signal(self, pin_name, src_idx, dest_idx):
+        
+        debug.info(2, "Routing {0} to {1} on pin {2}".format(src_idx, dest_idx, pin_name))
+        
+        # Clear everything in the routing grid.
+        self.rg.reinit()
 
-            # Add the single component of the pin as the source
-            # which unmarks it as a blockage too
-            self.add_pin_component_source(pin_name,index)
+        # This is inefficient since it is non-incremental, but it was
+        # easier to debug.
+        self.prepare_blockages(pin_name)
 
-            # Marks all pin components except index as target
-            self.add_pin_component_target_except(pin_name,index)
-            # Add the prevous paths as a target too
-            self.add_path_target(self.paths)
+        # Add the single component of the pin as the source
+        # which unmarks it as a blockage too
+        self.add_pin_component_source(pin_name, src_idx)
 
-            print("SOURCE: ")
-            for k,v in self.rg.map.items():
-                if v.source:
-                    print(k)
+        # Marks all pin components except index as target
+        self.add_pin_component_target(pin_name, dest_idx)
+            
+        # Add the prevous paths as a target too
+        #self.add_path_target(self.paths)
 
-            print("TARGET: ")
-            for k,v in self.rg.map.items():
-                if v.target:
-                    print(k)
+        # print("SOURCE: ")
+        # for k,v in self.rg.map.items():
+        #     if v.source:
+        #         print(k)
+        
+        # print("TARGET: ")
+        # for k,v in self.rg.map.items():
+        #     if v.target:
+        #         print(k)
 
-            import pdb; pdb.set_trace()
-            if index==1:
-                self.write_debug_gds("debug{}.gds".format(pin_name),False)
+        # Actually run the A* router
+        if not self.run_router(detour_scale=5):
+            self.write_debug_gds("debug_route.gds", True)
 
-            # Actually run the A* router
-            if not self.run_router(detour_scale=5):
-                self.write_debug_gds("debug_route.gds",True)
-
-            #if index==3 and pin_name=="vdd":
-            #    self.write_debug_gds("route.gds",False)
+        # if index==3 and pin_name=="vdd":
+        #    self.write_debug_gds("route.gds",False)
 
 
 

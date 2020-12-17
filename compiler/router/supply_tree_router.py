@@ -133,8 +133,8 @@ class supply_tree_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
-                                                                                   remaining_components))
+        debug.info(1,"Routing {0} with {1} pin components to connect.".format(pin_name,
+                                                                              remaining_components))
 
         # Create full graph
         pin_size = len(self.pin_groups[pin_name])
@@ -158,6 +158,8 @@ class supply_tree_router(router):
                     continue
                 if mst[x][y]>0:
                     connections.append((x, y))
+
+        debug.info(1,"MST has {0} segments.".format(len(connections)))
         
         # Route MST components
         for (src, dest) in connections:

@@ -1362,8 +1362,9 @@ class delay(simulation):
                         else:
                             debug.error("Measurement name not recognized: {}".format(mname), 1)
 
-        # Estimate the period as double the delay with margin
-        period_margin = 0.1
+        # Margin for error in period. Calculated by averaging required margin for a small and large 
+        # memory. FIXME: margin is quite large, should be looked into.
+        period_margin = 1.85
         sram_data = {"min_period": (max_delay / 1e3) * 2 * period_margin,
                      "leakage_power": power.leakage}
 

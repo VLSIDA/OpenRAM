@@ -91,7 +91,6 @@ def find_sample_position_with_min_error(data, sampled_vals):
     return sample_pos
     
 def squared_error(list_a, list_b):
-    #print('a:',list_a, 'b:', list_b)
     error_sum = 0;
     for a,b in zip(list_a, list_b):
         error_sum+=(a-b)**2
@@ -207,7 +206,6 @@ def sample_from_file(num_samples, file_name, sample_dir=None):
             self_scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
     # Apply algorithm sampling points to available data
     sampled_data, unused_data = apply_samples_to_data(self_scaled_data,samples)
-    #print(sampled_data)
 
     #unscale values and rescale using all available data (both sampled and unused points rescaled)
     if len(maxs)!=0 and len(mins)!=0:
@@ -229,10 +227,7 @@ def get_scaled_data(file_name):
     
     # Data is scaled by max/min and data format is changed to points vs feature lists
     self_scaled_data = scale_data_and_transform(all_data)
-    
-    print(self_scaled_data)
     samples = np.asarray(self_scaled_data)
-    print(samples)
     features, labels = samples[:, :-1], samples[:,-1:]
     return features, labels
 
@@ -245,11 +240,11 @@ def scale_data_and_transform(data):
     for feature_list in data:
         max_val = max(feature_list)
         min_val = min(feature_list)
-        
-        if max_val == min_val:
-            scaled_data[i] = [0.0 for _ in range(len(feature_list))]
-        else:
-            for i in range(len(feature_list)):
+
+        for i in range(len(feature_list)):
+            if max_val == min_val:
+                scaled_data[i].append(0.0)
+            else:
                 scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
     return scaled_data
     
@@ -265,14 +260,17 @@ def scale_input_datapoint(point, file_path):
 
     scaled_point = []
     for feature, mx, mn in zip(point, maxs, mins):
-        scaled_point.append((feature-mn)/(mx-mn))
+        if mx == mn:
+            scaled_point.append(0.0)
+        else:
+            scaled_point.append((feature-mn)/(mx-mn))
     return scaled_point
 
 def unscale_data(data, file_path, pos=None):
     if file_path:
         maxs,mins,avgs = get_max_min_from_file(file_path)
     else:
-        print("Must provide reference data to unscale")
+        debug.error("Must provide reference data to unscale")
         return None
         
     # Hard coded to only convert the last max/min (i.e. the label of the data) 
@@ -294,7 +292,6 @@ def abs_error(labels, preds):
     total_error = 0
     for label_i, pred_i in zip(labels, preds):
         cur_error = abs(label_i[0]-pred_i[0])/label_i[0]
-       # print(cur_error)
         total_error += cur_error
     return total_error/len(labels)
 

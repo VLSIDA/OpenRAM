@@ -40,7 +40,10 @@ class linear_regression(simulation):
         model_inputs = [log_num_words, 
                         OPTS.word_size, 
                         OPTS.words_per_row, 
-                        self.sram.width * self.sram.height]  
+                        self.sram.width * self.sram.height,
+                        process_transform[self.process], 
+                        self.vdd_voltage, 
+                        self.temperature]  
             
         # List returned with value order being delay, power, leakage, slew
         # FIXME: make order less hard coded

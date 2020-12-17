@@ -12,7 +12,13 @@ import math
 import numpy as np
 import os
 
+process_transform = {'SS':0.0, 'TT': 0.5, 'FF':1.0}
+
 def get_data_names(file_name):
+    """
+    Returns just the data names in the first row of the CSV
+    """
+    
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
@@ -22,26 +28,39 @@ def get_data_names(file_name):
             return row[0].split(',')
     
 def get_data(file_name):
+    """
+    Returns data in CSV as lists of features
+    """
+    
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
         for row in csv_reader:
-            #data = [int(csv_str) for csv_str in ', '.join(row)]
             row_iter += 1
             if row_iter == 1:
                 feature_names = row[0].split(',')
                 input_list = [[] for _ in feature_names]
                 scaled_list = [[] for _ in feature_names]
-                #label_list = []
+                
+                try:
+                    process_ind = feature_names.index('process')
+                except:
+                    debug.error('Process not included as a feature.')
                 continue
-            #print(row[0])
-            data = [float(csv_str) for csv_str in row[0].split(',')]
+
+            data = []
+            split_str = row[0].split(',')
+            for i in range(len(split_str)):
+                if i == process_ind:
+                    data.append(process_transform[split_str[i]])
+                else:
+                    data.append(float(split_str[i]))
+
             data[0] = math.log(data[0], 2)
-            #input_list.append(data)
+
             for i in range(len(data)):
                 input_list[i].append(data[i])
-            #label_list.append([data[-1]])
-            #print(data)
+    
     return input_list
  
 def apply_samples_to_data(all_data, algo_samples):    
@@ -81,7 +100,7 @@ def squared_error(list_a, list_b):
 
 def get_max_min_from_datasets(dir):
     if not os.path.isdir(dir):
-        print("Input Directory not found:",dir)
+        debug.warning("Input Directory not found:{}".format(dir))
         return [], [], []
     
     # Assuming all files are CSV
@@ -210,8 +229,10 @@ def get_scaled_data(file_name):
     
     # Data is scaled by max/min and data format is changed to points vs feature lists
     self_scaled_data = scale_data_and_transform(all_data)
-
+    
+    print(self_scaled_data)
     samples = np.asarray(self_scaled_data)
+    print(samples)
     features, labels = samples[:, :-1], samples[:,-1:]
     return features, labels
 
@@ -224,8 +245,12 @@ def scale_data_and_transform(data):
     for feature_list in data:
         max_val = max(feature_list)
         min_val = min(feature_list)
-        for i in range(len(feature_list)):
-            scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
+        
+        if max_val == min_val:
+            scaled_data[i] = [0.0 for _ in range(len(feature_list))]
+        else:
+            for i in range(len(feature_list)):
+                scaled_data[i].append((feature_list[i]-min_val)/(max_val-min_val))
     return scaled_data
     
 def scale_input_datapoint(point, file_path):    

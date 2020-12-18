@@ -1152,7 +1152,20 @@ class router(router_tech):
                                            width=pin.width(),
                                            height=pin.height())
 
+    def get_pin(self, pin_name):
+        """ Return the lowest, leftest pin group """
+        keep_pin = None
+        for index,pg in enumerate(self.pin_groups[pin_name]):
+            for pin in pg.enclosures:
+                if not keep_pin:
+                    keep_pin = pin
+                else:
+                    if pin.lx() <= keep_pin.lx() and pin.by() <= keep_pin.by():
+                        keep_pin = pin
+                        
+        return keep_pin
 
+    
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):
     """

@@ -221,9 +221,9 @@ class sram_base(design, verilog, lef):
 
         # Copy the pins to the top level
         # This will either be used to route or left unconnected.
-        for inst in self.insts:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+        for pin_name in ["vdd", "gnd"]:
+            for inst in self.insts:
+                self.copy_power_pins(inst, pin_name)
 
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
@@ -244,6 +244,16 @@ class sram_base(design, verilog, lef):
             
         rtr=router(grid_stack, self)
         rtr.route()
+
+        vdd_pin = rtr.get_pin("vdd")
+        gnd_pin = rtr.get_pin("gnd")
+        for pin_name, pin in [("vdd", vdd_pin), ("gnd", gnd_pin)]:
+            self.remove_layout_pin(pin_name)
+            self.add_layout_pin(pin_name,
+                                pin.layer,
+                                pin.ll(),
+                                pin.width(),
+                                pin.height())
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

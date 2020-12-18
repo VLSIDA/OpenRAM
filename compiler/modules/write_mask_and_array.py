@@ -97,7 +97,7 @@ class write_mask_and_array(design.design):
             for i in range(self.columns):
                 self.offsets.append((i + self.write_size - 1) * self.driver_spacing)
 
-        self.width = self.columns * self.bitcell.width
+        self.width = self.offsets[-1] + self.bitcell.width
         self.height = self.and2.height
 
         write_bits = self.columns / self.num_wmasks

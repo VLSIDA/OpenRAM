@@ -125,7 +125,6 @@ class signal_grid(grid):
                     #else:
                     #    print("Cost bounded")
 
-        debug.warning("Unable to route path. Expand the detour_scale to allow detours.")
         return (None,None)
 
     def expand_dirs(self,curpath):

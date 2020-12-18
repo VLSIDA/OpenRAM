@@ -865,7 +865,7 @@ class router(router_tech):
         debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
 
         pin_in_tracks = self.pin_groups[pin_name][index].grids
-        debug.info(2, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+        debug.info(3, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
 
     def add_pin_component_target_except(self, pin_name, index):
@@ -1000,8 +1000,7 @@ class router(router_tech):
         # Double check source and taget are not same node, if so, we are done!
         for k, v in self.rg.map.items():
             if v.source and v.target:
-                debug.error("Grid cell is source and target! {}".format(k))
-                return False
+                return True
 
         # returns the path in tracks
         (path, cost) = self.rg.route(detour_scale)
@@ -1013,12 +1012,9 @@ class router(router_tech):
 
             path_set = grid_utils.flatten_set(path)
             self.path_blockages.append(path_set)
+            return True
         else:
-            self.write_debug_gds("failed_route.gds")
-            # clean up so we can try a reroute
-            self.rg.reinit()
             return False
-        return True
 
     def annotate_pin_and_tracks(self, pin, tracks):
         """"
@@ -1156,7 +1152,20 @@ class router(router_tech):
                                            width=pin.width(),
                                            height=pin.height())
 
+    def get_pin(self, pin_name):
+        """ Return the lowest, leftest pin group """
+        keep_pin = None
+        for index,pg in enumerate(self.pin_groups[pin_name]):
+            for pin in pg.enclosures:
+                if not keep_pin:
+                    keep_pin = pin
+                else:
+                    if pin.lx() <= keep_pin.lx() and pin.by() <= keep_pin.by():
+                        keep_pin = pin
+                        
+        return keep_pin
 
+    
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):
     """

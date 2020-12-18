@@ -89,7 +89,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("drc off\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    f.write("#gds flatten true\n")
+    f.write("gds flatten true\n")
     f.write("gds readonly true\n")
     f.write("#gds ordering true\n")
     f.write("gds read {}\n".format(gds_name))

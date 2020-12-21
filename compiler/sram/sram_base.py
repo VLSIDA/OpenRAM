@@ -245,10 +245,19 @@ class sram_base(design, verilog, lef):
         rtr=router(grid_stack, self)
         rtr.route()
 
-        vdd_pin = rtr.get_pin("vdd")
-        gnd_pin = rtr.get_pin("gnd")
-        for pin_name, pin in [("vdd", vdd_pin), ("gnd", gnd_pin)]:
+        # Find the lowest leftest pin for vdd and gnd
+        for pin_name in ["vdd", "gnd"]:
+            # Copy the pin shape to rectangles
+            for pin in self.get_pins(pin_name):
+                self.add_rect(pin.layer,
+                              pin.ll(),
+                              pin.width(),
+                              pin.height())
+            # Remove the pins
             self.remove_layout_pin(pin_name)
+
+            pin = rtr.get_pin(pin_name)
+            
             self.add_layout_pin(pin_name,
                                 pin.layer,
                                 pin.ll(),

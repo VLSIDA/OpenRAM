@@ -5,14 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import gdsMill
-import tech
-from contact import contact
-import math
 import debug
-from pin_layout import pin_layout
-from globals import OPTS
 from router import router
+
 
 class signal_router(router):
     """
@@ -27,7 +22,6 @@ class signal_router(router):
         """
         router.__init__(self, layers, design, gds_filename)
 
-
     def create_routing_grid(self):
         """
         Create a sprase routing grid with A* expansion functions.
@@ -35,11 +29,10 @@ class signal_router(router):
         # We will add a halo around the boundary
         # of this many tracks
         size = self.ur - self.ll
-        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
+        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
 
         import signal_grid
-        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.track_width)
-
+        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, src, dest, detour_scale=5):
         """
@@ -47,13 +40,13 @@ class signal_router(router):
         the simplified rectilinear path. Cost factor is how sub-optimal to explore for a feasible route.
         This is used to speed up the routing when there is not much detouring needed.
         """
-        debug.info(1,"Running signal router from {0} to {1}...".format(src,dest))
+        debug.info(1, "Running signal router from {0} to {1}...".format(src, dest))
 
         self.pins[src] = []
         self.pins[dest] = []
 
         # Clear the pins if we have previously routed
-        if (hasattr(self,'rg')):
+        if (hasattr(self, 'rg')):
             self.clear_pins()
         else:
             # Creat a routing grid over the entire area
@@ -67,8 +60,8 @@ class signal_router(router):
         # Block everything
         self.prepare_blockages()
         # Clear the pins we are routing
-        self.set_blockages(self.pin_components[src],False)
-        self.set_blockages(self.pin_components[dest],False)
+        self.set_blockages(self.pin_components[src], False)
+        self.set_blockages(self.pin_components[dest], False)
 
         # Now add the src/tgt if they are not blocked by other shapes
         self.add_source(src)

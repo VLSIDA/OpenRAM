@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import debug
 from globals import print_time
@@ -26,9 +26,9 @@ class supply_tree_router(router):
         either the gds file name or the design itself (by saving to a gds file).
         """
         # Power rail width in minimum wire widths
-        self.rail_track_width = 3
+        self.route_track_width = 3
 
-        router.__init__(self, layers, design, gds_filename, self.rail_track_width)
+        router.__init__(self, layers, design, gds_filename, self.route_track_width)
 
     def create_routing_grid(self):
         """
@@ -37,8 +37,8 @@ class supply_tree_router(router):
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
 
-        import supply_grid
-        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
+        import signal_grid
+        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -85,15 +85,6 @@ class supply_tree_router(router):
 
         return True
 
-
-    def check_all_routed(self, pin_name):
-        """
-        Check that all pin groups are routed.
-        """
-        for pg in self.pin_groups[pin_name]:
-            if not pg.is_routed():
-                return False
-
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.
@@ -125,7 +116,6 @@ class supply_tree_router(router):
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
         self.set_blockages(blockage_grids,False)
 
-
     def route_pins(self, pin_name):
         """
         This will route each of the remaining pin components to the other pins.
@@ -137,6 +127,7 @@ class supply_tree_router(router):
                                                                               remaining_components))
 
         # Create full graph
+        debug.info(2,"Creating adjacency matrix")
         pin_size = len(self.pin_groups[pin_name])
         adj_matrix = [[0] * pin_size for i in range(pin_size)]
 
@@ -148,6 +139,7 @@ class supply_tree_router(router):
                 adj_matrix[index1][index2] = dist
 
         # Find MST
+        debug.info(2,"Finding MinimumSpanning Tree")
         X = csr_matrix(adj_matrix)
         Tcsr = minimum_spanning_tree(X)
         mst = Tcsr.toarray().astype(int)

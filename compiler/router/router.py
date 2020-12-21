@@ -27,13 +27,14 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, rail_track_width=1):
+    def __init__(self, layers, design, gds_filename=None, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
         considered.
         """
-        router_tech.__init__(self, layers, rail_track_width)
+        
+        router_tech.__init__(self, layers, route_track_width)
 
         self.cell = design
 
@@ -1165,6 +1166,14 @@ class router(router_tech):
                         
         return keep_pin
 
+    def check_all_routed(self, pin_name):
+        """
+        Check that all pin groups are routed.
+        """
+        for pg in self.pin_groups[pin_name]:
+            if not pg.is_routed():
+                return False
+    
     
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):

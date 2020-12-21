@@ -28,9 +28,9 @@ class supply_grid_router(router):
         start_time = datetime.now()
 
         # Power rail width in minimum wire widths
-        self.rail_track_width = 3
+        self.route_track_width = 3
 
-        router.__init__(self, layers, design, gds_filename, self.rail_track_width)
+        router.__init__(self, layers, design, gds_filename, self.route_track_width)
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -47,7 +47,7 @@ class supply_grid_router(router):
         debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
 
         import supply_grid
-        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
+        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -103,14 +103,6 @@ class supply_grid_router(router):
             return False
 
         return True
-
-    def check_all_routed(self, pin_name):
-        """
-        Check that all pin groups are routed.
-        """
-        for pg in self.pin_groups[pin_name]:
-            if not pg.is_routed():
-                return False
 
     def route_simple_overlaps(self, pin_name):
         """
@@ -317,7 +309,7 @@ class supply_grid_router(router):
         data structure. Return whether it was added or not.
         """
         # We must have at least 2 tracks to drop plus 2 tracks for a via
-        if len(wave_path) >= 4 * self.rail_track_width:
+        if len(wave_path) >= 4 * self.route_track_width:
             grid_set = wave_path.get_grids()
             self.supply_rails[name].append(grid_set)
             return True

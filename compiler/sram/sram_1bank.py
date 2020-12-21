@@ -5,7 +5,6 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from vector import vector
 from sram_base import sram_base
 from contact import m2_via
@@ -102,12 +101,17 @@ class sram_1bank(sram_base):
 
         # Place with an initial wide channel (from above)
         self.place_dffs()
+        
         # Route the channel and set to the new data bus size
+        # We need to temporarily add some pins for the x offsets
+        # but we'll remove them so that they have the right y
+        # offsets after the DFF placement.
+        self.add_layout_pins()
         self.route_dffs(add_routes=False)
+        self.remove_layout_pins()
+        
         # Re-place with the new channel size
         self.place_dffs()
-        # Now route the channel
-        self.route_dffs()
 
     def place_row_addr_dffs(self):
         """
@@ -298,15 +302,20 @@ class sram_1bank(sram_base):
                                              "din{0}[{1}]".format(port, bit))
 
             # Data output pins go to BOTTOM/TOP
-            if port in self.readwrite_ports and OPTS.perimeter_pins:
+            if port in self.readwrite_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    # This should be routed next to the din pin
-                    p = din_ports[bit]
-                    self.add_layout_pin_rect_center(text="dout{0}[{1}]".format(port, bit),
-                                                    layer=p.layer,
-                                                    offset=p.center() + vector(self.m3_pitch, 0),
-                                                    width=p.width(),
-                                                    height=p.height())
+                    if OPTS.perimeter_pins:                    
+                        # This should be routed next to the din pin
+                        p = din_ports[bit]
+                        self.add_layout_pin_rect_center(text="dout{0}[{1}]".format(port, bit),
+                                                        layer=p.layer,
+                                                        offset=p.center() + vector(self.m3_pitch, 0),
+                                                        width=p.width(),
+                                                        height=p.height())
+                    else:
+                        self.copy_layout_pin(self.bank_inst,
+                                             "dout{0}_{1}".format(port, bit),
+                                             "dout{0}[{1}]".format(port, bit))
             elif port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
                     if OPTS.perimeter_pins:
@@ -384,6 +393,8 @@ class sram_1bank(sram_base):
 
         self.route_row_addr_dff()
 
+        self.route_dffs()
+        
     def route_dffs(self, add_routes=True):
 
         for port in self.all_ports:

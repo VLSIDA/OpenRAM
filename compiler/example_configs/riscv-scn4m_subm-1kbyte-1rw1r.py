@@ -11,7 +11,7 @@ nominal_corner_only = True
 
 route_supplies = True
 check_lvsdrc = True
-perimeter_pins = True
+perimeter_pins = False
 #netlist_only = True
 #analytical_delay = False
 output_name = "sram_{0}rw{1}r{2}w_{3}_{4}_{5}".format(num_rw_ports,

@@ -87,6 +87,17 @@ class sram():
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
+        # Save the spice file
+        start_time = datetime.datetime.now()
+        spname = OPTS.output_path + self.s.name + ".sp"
+        debug.print_raw("SP: Writing to {0}".format(spname))
+        self.sp_write(spname)
+        functional(self.s,
+                   os.path.basename(spname),
+                   cycles=200,
+                   output_path=OPTS.output_path)
+        print_time("Spice writing", datetime.datetime.now(), start_time)
+
         if not OPTS.netlist_only:
             # Write the layout
             start_time = datetime.datetime.now()
@@ -106,17 +117,6 @@ class sram():
             debug.print_raw("LEF: Writing to {0}".format(lefname))
             self.lef_write(lefname)
             print_time("LEF", datetime.datetime.now(), start_time)
-
-        # Save the spice file
-        start_time = datetime.datetime.now()
-        spname = OPTS.output_path + self.s.name + ".sp"
-        debug.print_raw("SP: Writing to {0}".format(spname))
-        self.sp_write(spname)
-        functional(self.s,
-                   os.path.basename(spname),
-                   cycles=200,
-                   output_path=OPTS.output_path)
-        print_time("Spice writing", datetime.datetime.now(), start_time)
 
         # Save the LVS file
         start_time = datetime.datetime.now()

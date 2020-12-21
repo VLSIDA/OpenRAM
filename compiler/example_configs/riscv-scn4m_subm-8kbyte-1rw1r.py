@@ -11,8 +11,8 @@ num_w_ports = 0
 tech_name = "scn4m_subm"
 nominal_corner_only = True
 
-route_supplies = False
-check_lvsdrc = False
+route_supplies = "tree"
+check_lvsdrc = True
 perimeter_pins = False
 #netlist_only = True
 #analytical_delay = False

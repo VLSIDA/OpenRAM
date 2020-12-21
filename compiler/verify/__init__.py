@@ -23,7 +23,6 @@ from tech import lvs_name
 from tech import pex_name
 
 debug.info(1, "Initializing verify...")
-
 if not OPTS.check_lvsdrc:
     debug.info(1, "LVS/DRC/PEX disabled.")
     OPTS.drc_exe = None

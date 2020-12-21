@@ -467,6 +467,12 @@ class layout():
         """
         self.pin_map[text] = set()
 
+    def remove_layout_pins(self):
+        """
+        Delete all the layout pins
+        """
+        self.pin_map = {}
+
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
         Create a labeled pin

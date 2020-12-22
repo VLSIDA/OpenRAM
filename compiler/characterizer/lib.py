@@ -813,6 +813,6 @@ class lib:
 
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
 
-
+        datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
         datasheet.write("END\n")
         datasheet.close()

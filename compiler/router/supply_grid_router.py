@@ -74,6 +74,7 @@ class supply_grid_router(router):
         start_time = datetime.now()
         # Block everything
         self.prepare_blockages(self.gnd_name)
+        
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 

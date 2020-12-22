@@ -1197,6 +1197,18 @@ class layout():
             elif add_vias:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
 
+    def add_io_pin(self, instance, pin_name, new_name=""):
+        """
+        Add a signle input or output pin up to metal 3.
+        """
+        pin = instance.get_pin(pin_name)
+
+        if new_name == "":
+            new_name = pin_name
+
+        # Just use the power pin function for now to save code
+        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=pin.layer)
+
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at

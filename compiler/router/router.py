@@ -286,7 +286,7 @@ class router(router_tech):
         If so, reduce the pin group grid to not include the adjacent grid.
         Try to do this intelligently to keep th pins enclosed.
         """
-        debug.info(1,
+        debug.info(2,
                    "Comparing {0} and {1} adjacency".format(pin_name1,
                                                             pin_name2))
         removed_grids = 0
@@ -302,7 +302,7 @@ class router(router_tech):
                                                                        adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
 
-        debug.info(1, "Removed {} adjacent grids.".format(removed_grids))
+        debug.info(2, "Removed {} adjacent grids.".format(removed_grids))
 
     def remove_adjacent_grid(self, pg1, pg2, adj_grids):
         """
@@ -348,6 +348,10 @@ class router(router_tech):
                                                                               smaller))
                     smaller.grids.remove(adj)
 
+    def set_supply_rail_blocked(self, value):
+        # This is just a virtual function
+        pass
+    
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.
@@ -363,7 +367,11 @@ class router(router_tech):
 
         # Block all of the supply rails
         # (some will be unblocked if they're a target)
-        self.set_supply_rail_blocked(True)
+        try:
+            self.set_supply_rail_blocked(True)
+        except AttributeError:
+            # If function doesn't exist, it isn't a supply router
+            pass
 
         # Block all of the pin components
         # (some will be unblocked if they're a source/target)
@@ -798,7 +806,7 @@ class router(router_tech):
         """
         Convert the pin groups into pin tracks and blockage tracks.
         """
-        debug.info(1, "Converting pins for {}.".format(pin_name))
+        debug.info(2, "Converting pins for {}.".format(pin_name))
         for pg in self.pin_groups[pin_name]:
             pg.convert_pin()
 
@@ -809,7 +817,7 @@ class router(router_tech):
         that are blocked by other shapes.
         """
         for pin_name in self.pin_groups:
-            debug.info(1, "Enclosing pins for {}".format(pin_name))
+            debug.info(2, "Enclosing pins for {}".format(pin_name))
             for pg in self.pin_groups[pin_name]:
                 pg.enclose_pin()
                 pg.add_enclosure(self.cell)
@@ -830,6 +838,12 @@ class router(router_tech):
         for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_target(pin_name, i)
 
+    def add_perimeter_target(self, side="all"):
+        """
+        This will mark all the cells on the perimeter of the original layout as a target.
+        """
+        self.rg.add_perimeter_target(side=side)
+    
     def num_pin_components(self, pin_name):
         """
         This returns how many disconnected pin components there are.
@@ -902,7 +916,7 @@ class router(router_tech):
         #     self.write_debug_gds()
 
         # First, simplify the path for
-        # debug.info(1, str(self.path))
+        # debug.info(3, str(self.path))
         contracted_path = self.contract_path(path)
         debug.info(3, "Contracted path: " + str(contracted_path))
 

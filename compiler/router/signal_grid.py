@@ -49,8 +49,6 @@ class signal_grid(grid):
         We will use an A* search, so this cost must be pessimistic.
         Cost so far will be the length of the path.
         """
-        #debug.info(3, "Initializing queue.")
-
         # Counter is used to not require data comparison in Python 3.x
         # Items will be returned in order they are added during cost ties
         self.counter = 0

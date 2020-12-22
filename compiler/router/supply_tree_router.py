@@ -85,37 +85,6 @@ class supply_tree_router(router):
 
         return True
 
-    def prepare_blockages(self, pin_name):
-        """
-        Reset and add all of the blockages in the design.
-        Names is a list of pins to add as a blockage.
-        """
-        debug.info(3,"Preparing blockages.")
-
-        # Start fresh. Not the best for run-time, but simpler.
-        self.clear_blockages()
-        # This adds the initial blockges of the design
-        #print("BLOCKING:",self.blocked_grids)
-        self.set_blockages(self.blocked_grids,True)
-
-        # Block all of the pin components (some will be unblocked if they're a source/target)
-        # Also block the previous routes
-        for name in self.pin_groups:
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
-            self.set_blockages(blockage_grids,True)
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
-            self.set_blockages(blockage_grids,True)
-
-        # FIXME: These duplicate a bit of work
-        # These are the paths that have already been routed.
-        self.set_blockages(self.path_blockages)
-
-        # Don't mark the other components as targets since we want to route
-        # directly to a rail, but unblock all the source components so we can
-        # route over them
-        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
-        self.set_blockages(blockage_grids,False)
-
     def route_pins(self, pin_name):
         """
         This will route each of the remaining pin components to the other pins.
@@ -187,3 +156,14 @@ class supply_tree_router(router):
 
 
 
+    def add_io_pin(self, instance, pin_name, new_name=""):
+        """
+        Add a signle input or output pin up to metal 3.
+        """
+        pin = instance.get_pins(pin_name)
+
+        if new_name == "":
+            new_name = pin_name
+
+        # Just use the power pin function for now to save code
+        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=pin.layer)

@@ -190,7 +190,7 @@ class sram_base(design, verilog, lef):
 
         start_time = datetime.datetime.now()
         self.route_layout()
-        self.route_supplies()
+
         if not OPTS.is_unit_test:
             print_time("Routing", datetime.datetime.now(), start_time)
 

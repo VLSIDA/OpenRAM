@@ -1022,11 +1022,10 @@ class router(router_tech):
         if path:
             debug.info(2, "Found path: cost={0} {1}".format(cost, str(path)))
 
-            self.paths.append(path)
+            self.paths.append(grid_utils.flatten_set(path))
             self.add_route(path)
 
-            path_set = grid_utils.flatten_set(path)
-            self.path_blockages.append(path_set)
+            self.path_blockages.append(self.paths[-1])
             return True
         else:
             return False
@@ -1133,7 +1132,7 @@ class router(router_tech):
         show_all_grids = True
 
         if show_all_grids:
-            self.rg.add_all_grids()
+            #self.rg.add_all_grids()
             for g in self.rg.map:
                 self.annotate_grid(g)
 
@@ -1167,6 +1166,14 @@ class router(router_tech):
                                            width=pin.width(),
                                            height=pin.height())
 
+    def get_perimeter_pin(self):
+        """ Return the shape of the last routed path that was on the perimeter """
+        for v in self.paths[-1]:
+            if self.rg.is_target(v):
+                return self.convert_track_to_pin(v)
+            
+        return None
+            
     def get_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
         keep_pin = None

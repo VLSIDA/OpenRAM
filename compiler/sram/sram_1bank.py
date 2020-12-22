@@ -8,7 +8,6 @@
 from vector import vector
 from sram_base import sram_base
 from contact import m2_via
-from globals import OPTS
 import channel_route
 
 
@@ -106,7 +105,7 @@ class sram_1bank(sram_base):
         # We need to temporarily add some pins for the x offsets
         # but we'll remove them so that they have the right y
         # offsets after the DFF placement.
-        self.add_layout_pins()
+        self.add_layout_pins(exit_route=False)
         self.route_dffs(add_routes=False)
         self.remove_layout_pins()
         
@@ -245,7 +244,7 @@ class sram_1bank(sram_base):
             self.data_pos[port] = vector(x_offset, y_offset)
             self.spare_wen_pos[port] = vector(x_offset, y_offset)
 
-    def add_layout_pins(self):
+    def add_layout_pins(self, exit_route=True):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -312,13 +311,15 @@ class sram_1bank(sram_base):
                                     "spare_wen{0}[{1}]".format(port, bit))
                     all_pins.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
 
-        if OPTS.perimeter_pins:
+        if exit_route:
             from signal_exit_router import signal_exit_router as router
             rtr=router(self.m3_stack, self)
-            rtr.route(all_pins)
+            rtr.exit_route(all_pins)
 
     def route_layout(self):
         """ Route a single bank SRAM """
+
+        self.route_supplies()
 
         self.add_layout_pins()
 
@@ -329,6 +330,7 @@ class sram_1bank(sram_base):
         self.route_row_addr_dff()
 
         self.route_dffs()
+
         
     def route_dffs(self, add_routes=True):
 
@@ -363,16 +365,6 @@ class sram_1bank(sram_base):
             bank_names = ["din{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
-
-        if port in self.readwrite_ports and OPTS.perimeter_pins:
-            # outputs from sense amp
-            # These are the output pins which had their pin placed on the perimeter, so route from the
-            # sense amp which should not align with write driver input
-            sram_names = ["dout{0}[{1}]".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
-            sram_pins = [self.get_pin(x) for x in sram_names]
-            bank_names = ["dout{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            route_map.extend(list(zip(bank_pins, sram_pins)))
 
         # spare wen dff
         if self.num_spare_cols > 0 and port in self.write_ports:

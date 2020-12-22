@@ -12,7 +12,7 @@ from datetime import datetime
 import grid_utils
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-
+from signal_grid import signal_grid
 
 class supply_tree_router(router):
     """
@@ -36,9 +36,7 @@ class supply_tree_router(router):
         """
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
-
-        import signal_grid
-        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.route_track_width)
+        self.rg = signal_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """

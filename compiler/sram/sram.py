@@ -104,11 +104,12 @@ class sram():
             gdsname = OPTS.output_path + self.s.name + ".gds"
             debug.print_raw("GDS: Writing to {0}".format(gdsname))
             self.gds_write(gdsname)
-            verify.write_drc_script(cell_name=self.s.name,
-                                    gds_name=os.path.basename(gdsname),
-                                    extract=True,
-                                    final_verification=True,
-                                    output_path=OPTS.output_path)
+            if OPTS.check_lvsdrc:
+                verify.write_drc_script(cell_name=self.s.name,
+                                        gds_name=os.path.basename(gdsname),
+                                        extract=True,
+                                        final_verification=True,
+                                        output_path=OPTS.output_path)
             print_time("GDS", datetime.datetime.now(), start_time)
 
             # Create a LEF physical model
@@ -123,7 +124,7 @@ class sram():
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
         self.lvs_write(lvsname)
-        if not OPTS.netlist_only:
+        if not OPTS.netlist_only and OPTS.check_lvsdrc:
             verify.write_lvs_script(cell_name=self.s.name,
                                     gds_name=os.path.basename(gdsname),
                                     sp_name=os.path.basename(lvsname),

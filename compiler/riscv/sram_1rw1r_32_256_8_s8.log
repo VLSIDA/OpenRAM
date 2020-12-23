@@ -1,7 +1,0 @@
-[globals/init_openram]: Initializing OpenRAM...
-[globals/setup_paths]: Setting up paths...
-[globals/setup_paths]: Temporary files saved in /home/jesse/output/
-[globals/read_config]: Configuration file is /home/jesse/skywater-tech/riscv_1k_s8.py
-[globals/read_config]: Output saved in /home/jesse/openram/compiler/riscv/
-[globals/import_tech]: Importing technology: s8
-[globals/import_tech]: Adding technology path: /home/jesse/openram/technology

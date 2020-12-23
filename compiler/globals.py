@@ -19,7 +19,7 @@ import re
 import copy
 import importlib
 
-VERSION = "1.1.12"
+VERSION = "1.1.13"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 

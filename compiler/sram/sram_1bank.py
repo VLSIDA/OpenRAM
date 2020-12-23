@@ -10,6 +10,7 @@ from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
 from signal_escape_router import signal_escape_router as router
+from globals import OPTS
 
 
 class sram_1bank(sram_base):
@@ -106,7 +107,7 @@ class sram_1bank(sram_base):
         # We need to temporarily add some pins for the x offsets
         # but we'll remove them so that they have the right y
         # offsets after the DFF placement.
-        self.add_layout_pins(escape_route=False, add_vias=False)
+        self.add_layout_pins(add_vias=False)
         self.route_dffs(add_routes=False)
         self.remove_layout_pins()
         
@@ -245,12 +246,13 @@ class sram_1bank(sram_base):
             self.data_pos[port] = vector(x_offset, y_offset)
             self.spare_wen_pos[port] = vector(x_offset, y_offset)
 
-    def add_layout_pins(self, escape_route=True, add_vias=True):
+    def route_escape_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
+
         # List of pin to new pin name
-        all_pins = []
+        pins_to_route = []
         for port in self.all_ports:
             # Depending on the port, use the bottom/top or left/right sides
             # Port 0 is left/bottom
@@ -258,6 +260,46 @@ class sram_1bank(sram_base):
             bottom_or_top = "bottom" if port==0 else "top"
             left_or_right = "left" if port==0 else "right"
 
+            # Connect the control pins as inputs
+            for signal in self.control_logic_inputs[port]:
+                if signal.startswith("rbl"):
+                    continue
+                if signal=="clk":
+                    pins_to_route.append(("{0}{1}".format(signal, port), bottom_or_top))
+                else:
+                    pins_to_route.append(("{0}{1}".format(signal, port), left_or_right))
+                    
+            if port in self.write_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    pins_to_route.append(("din{0}[{1}]".format(port, bit), bottom_or_top))
+
+            if port in self.readwrite_ports or port in self.read_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    pins_to_route.append(("dout{0}[{1}]".format(port, bit), bottom_or_top))
+
+            for bit in range(self.col_addr_size):
+                pins_to_route.append(("addr{0}[{1}]".format(port, bit), bottom_or_top))
+
+            for bit in range(self.row_addr_size):
+                pins_to_route.append(("addr{0}[{1}]".format(port, bit + self.col_addr_size), left_or_right))
+
+            if port in self.write_ports:
+                if self.write_size:
+                    for bit in range(self.num_wmasks):
+                        pins_to_route.append(("wmask{0}[{1}]".format(port, bit), bottom_or_top))
+
+            if port in self.write_ports:
+                for bit in range(self.num_spare_cols):
+                    pins_to_route.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
+
+        rtr=router(self.m3_stack, self)
+        rtr.escape_route(pins_to_route)
+
+    def add_layout_pins(self, add_vias=True):
+        """
+        Add the top-level pins for a single bank SRAM with control.
+        """
+        for port in self.all_ports:
             # Hack: If we are escape routing, set the pin layer to
             # None so that we will start from the pin layer
             # Otherwise, set it as the pin layer so that no vias are added.
@@ -276,10 +318,6 @@ class sram_1bank(sram_base):
                                 signal,
                                 signal + "{}".format(port),
                                 start_layer=pin_layer)
-                if signal=="clk":
-                    all_pins.append(("{0}{1}".format(signal, port), bottom_or_top))
-                else:
-                    all_pins.append(("{0}{1}".format(signal, port), left_or_right))
                     
             if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
@@ -287,7 +325,6 @@ class sram_1bank(sram_base):
                                     "din_{}".format(bit),
                                     "din{0}[{1}]".format(port, bit),
                                     start_layer=pin_layer)
-                    all_pins.append(("din{0}[{1}]".format(port, bit), bottom_or_top))
 
             if port in self.readwrite_ports or port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
@@ -295,7 +332,6 @@ class sram_1bank(sram_base):
                                     "dout{0}_{1}".format(port, bit),
                                     "dout{0}[{1}]".format(port, bit),
                                     start_layer=pin_layer)
-                    all_pins.append(("dout{0}[{1}]".format(port, bit), bottom_or_top))
 
             for bit in range(self.col_addr_size):
                 self.add_io_pin(self.col_addr_dff_insts[port],
@@ -303,14 +339,11 @@ class sram_1bank(sram_base):
                                 "addr{0}[{1}]".format(port, bit),
                                 start_layer=pin_layer)
 
-                all_pins.append(("addr{0}[{1}]".format(port, bit), bottom_or_top))
-
             for bit in range(self.row_addr_size):
                 self.add_io_pin(self.row_addr_dff_insts[port],
                                 "din_{}".format(bit),
                                 "addr{0}[{1}]".format(port, bit + self.col_addr_size),
                                 start_layer=pin_layer)
-                all_pins.append(("addr{0}[{1}]".format(port, bit + self.col_addr_size), left_or_right))
 
             if port in self.write_ports:
                 if self.write_size:
@@ -319,7 +352,6 @@ class sram_1bank(sram_base):
                                         "din_{}".format(bit),
                                         "wmask{0}[{1}]".format(port, bit),
                                         start_layer=pin_layer)                                        
-                        all_pins.append(("wmask{0}[{1}]".format(port, bit), bottom_or_top))
 
             if port in self.write_ports:
                 for bit in range(self.num_spare_cols):
@@ -327,12 +359,7 @@ class sram_1bank(sram_base):
                                     "din_{}".format(bit),
                                     "spare_wen{0}[{1}]".format(port, bit),
                                     start_layer=pin_layer)                                    
-                    all_pins.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
-
-        if escape_route:
-            rtr=router(self.m3_stack, self)
-            rtr.escape_route(all_pins)
-
+            
     def route_layout(self):
         """ Route a single bank SRAM """
 
@@ -344,9 +371,17 @@ class sram_1bank(sram_base):
 
         self.route_dffs()
 
+        # We add the vias to M3 before routing supplies because
+        # they might create some blockages
+        self.add_layout_pins()
+
+        # Route the supplies first since the MST is not blockage aware
+        # and signals can route to anywhere on sides (it is flexible)
         self.route_supplies()
 
-        self.add_layout_pins()
+        # Route the pins to the perimeter
+        if OPTS.perimeter_pins:
+            self.route_escape_pins()
         
     def route_dffs(self, add_routes=True):
 

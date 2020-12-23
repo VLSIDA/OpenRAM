@@ -28,7 +28,7 @@ class supply_grid_router(router):
         start_time = datetime.now()
 
         # Power rail width in minimum wire widths
-        self.route_track_width = 3
+        self.route_track_width = 2
 
         router.__init__(self, layers, design, gds_filename, self.route_track_width)
 

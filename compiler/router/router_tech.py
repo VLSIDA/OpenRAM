@@ -28,8 +28,8 @@ class router_tech:
             self.horiz_layer_name = self.vert_layer_name = self.layers[0]
             self.horiz_lpp = self.vert_lpp = layer[self.layers[0]]
 
-            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
-            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
+            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_layer_width_space(1)
+            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_layer_width_space(0)
 
             self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
             self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
@@ -60,8 +60,8 @@ class router_tech:
             self.horiz_lpp = layer[self.horiz_layer_name]
             self.vert_lpp = layer[self.vert_layer_name]
 
-            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
-            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
+            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_layer_width_space(1)
+            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_layer_width_space(0)
 
             # For supplies, we will make the wire wider than the vias
             self.vert_layer_minwidth = max(self.vert_layer_minwidth, max_via_size)
@@ -72,11 +72,11 @@ class router_tech:
 
         # We'll keep horizontal and vertical tracks the same for simplicity.
         self.track_width = max(self.horiz_track_width, self.vert_track_width)
-        debug.info(1, "Track width: {:.3f}".format(self.track_width))
+        debug.info(1, "Minimum track width: {:.3f}".format(self.track_width))
         self.track_space = max(self.horiz_layer_spacing, self.vert_layer_spacing)
-        debug.info(1, "Track space: {:.3f}".format(self.track_space))
+        debug.info(1, "Minimum track space: {:.3f}".format(self.track_space))
         self.track_wire = self.track_width - self.track_space
-        debug.info(1, "Track wire width: {:.3f}".format(self.track_wire))
+        debug.info(1, "Minimum track wire width: {:.3f}".format(self.track_wire))
 
         self.track_widths = vector([self.track_width] * 2)
         self.track_factor = vector([1/self.track_width] * 2)
@@ -109,7 +109,7 @@ class router_tech:
         else:
             debug.error("Invalid zindex {}".format(zindex), -1)
 
-    def get_supply_layer_width_space(self, zindex):
+    def get_layer_width_space(self, zindex):
         """
         These are the width and spacing of a supply layer given a supply rail
         of the given number of min wire widths.

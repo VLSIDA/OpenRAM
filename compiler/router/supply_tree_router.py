@@ -27,7 +27,7 @@ class supply_tree_router(router):
         either the gds file name or the design itself (by saving to a gds file).
         """
         # Power rail width in minimum wire widths
-        self.route_track_width = 3
+        self.route_track_width = 2
 
         router.__init__(self, layers, design, gds_filename, self.route_track_width)
 
@@ -74,7 +74,7 @@ class supply_tree_router(router):
         self.route_pins(gnd_name)
         print_time("Maze routing supplies",datetime.now(), start_time, 3)
 
-        #self.write_debug_gds("final.gds",False)
+        # self.write_debug_gds("final_tree_router.gds",False)
 
         # Did we route everything??
         if not self.check_all_routed(vdd_name):

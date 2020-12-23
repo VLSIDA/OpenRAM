@@ -1132,7 +1132,7 @@ class router(router_tech):
         show_all_grids = True
 
         if show_all_grids:
-            #self.rg.add_all_grids()
+            # self.rg.add_all_grids()
             for g in self.rg.map:
                 self.annotate_grid(g)
 

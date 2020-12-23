@@ -119,8 +119,6 @@ class supply_tree_router(router):
                 if mst[x][y]>0:
                     connections.append((x, y))
 
-        debug.info(1,"MST has {0} segments.".format(len(connections)))
-        
         # Route MST components
         for (src, dest) in connections:
             self.route_signal(pin_name, src, dest)

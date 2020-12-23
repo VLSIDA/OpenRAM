@@ -11,9 +11,6 @@ num_words = 16
 
 tech_name = OPTS.tech_name
 
-perimeter_pins = True
-
 nominal_corner_only = True
-route_supplies = "tree"
 check_lvsdrc = True
 

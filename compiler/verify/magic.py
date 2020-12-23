@@ -68,7 +68,6 @@ num_pex_runs = 0
 
 def write_drc_script(cell_name, gds_name, extract, final_verification, output_path, sp_name=None):
     """ Write a magic script to perform DRC and optionally extraction. """
-
     global OPTS
 
     # Copy .magicrc file into the output directory

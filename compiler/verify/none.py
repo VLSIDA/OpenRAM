@@ -17,8 +17,8 @@ lvs_warned = False
 pex_warned = False
 
 
-def write_drc_script(cell_name, gds_name, extract, final_verification=False, output_path=None):
-    pass
+def write_drc_script(cell_name, gds_name, extract, final_verification=False, output_path=None, sp_name=None):
+    debug.error("Cannot write DRC script for unknown tool", -1)
 
 
 def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=False, output_path=None):

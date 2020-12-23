@@ -92,7 +92,7 @@ class options(optparse.Values):
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
     # Whether we should do the final power routing
-    route_supplies = False
+    route_supplies = "tree"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
@@ -141,7 +141,7 @@ class options(optparse.Values):
     # run (doesn't purge on errors, anyhow)
 
     # Route the input/output pins to the perimeter
-    perimeter_pins = False
+    perimeter_pins = True
 
     keep_temp = False
 

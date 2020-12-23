@@ -582,9 +582,8 @@ def report_status():
     debug.print_raw("Technology: {0}".format(OPTS.tech_name))
     total_size = OPTS.word_size*OPTS.num_words*OPTS.num_banks
     debug.print_raw("Total size: {} bits".format(total_size))
-    if total_size >= 2**14:
-        debug.warning("Requesting such a large memory size ({0}) will have a large run-time. ".format(total_size) +
-                      "Consider using multiple smaller banks.")
+    if total_size >= 2**14 and not OPTS.analytical_delay:
+        debug.warning("Characterizing large memories ({0}) will have a large run-time. ".format(total_size))
     debug.print_raw("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                                     OPTS.num_words,
                                                                     OPTS.num_banks))

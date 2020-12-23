@@ -5,12 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from vector3d import vector3d
-from grid import grid
 from signal_grid import signal_grid
 from grid_path import grid_path
-from direction import direction
 
 
 class supply_grid(signal_grid):
@@ -27,12 +23,13 @@ class supply_grid(signal_grid):
 
     def reinit(self):
         """ Reinitialize everything for a new route. """
+        
         self.source = set()
         self.target = set()
+        
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()
-
 
     def find_start_wave(self, wave, direct):
         """
@@ -46,8 +43,8 @@ class supply_grid(signal_grid):
             return None
 
         while wave and self.is_wave_blocked(wave):
-            wf=grid_path(wave)
-            wave=wf.neighbor(direct)
+            wf = grid_path(wave)
+            wave = wf.neighbor(direct)
             # Bail out if we couldn't increment futher
             if wave[0].x > self.ur.x or wave[-1].y > self.ur.y:
                 return None
@@ -56,7 +53,6 @@ class supply_grid(signal_grid):
                 return wave
 
         return wave
-
 
     def is_wave_blocked(self, wave):
         """
@@ -67,7 +63,6 @@ class supply_grid(signal_grid):
                 return True
         else:
             return False
-
 
     def probe(self, wave, direct):
         """

@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from vector import vector
 from sram_base import sram_base
 from contact import m2_via
+from channel_route import channel_route
+from signal_escape_router import signal_escape_router as router
 from globals import OPTS
-import channel_route
 
 
 class sram_1bank(sram_base):
@@ -102,12 +102,17 @@ class sram_1bank(sram_base):
 
         # Place with an initial wide channel (from above)
         self.place_dffs()
+        
         # Route the channel and set to the new data bus size
+        # We need to temporarily add some pins for the x offsets
+        # but we'll remove them so that they have the right y
+        # offsets after the DFF placement.
+        self.add_layout_pins(add_vias=False)
         self.route_dffs(add_routes=False)
+        self.remove_layout_pins()
+        
         # Re-place with the new channel size
         self.place_dffs()
-        # Now route the channel
-        self.route_dffs()
 
     def place_row_addr_dffs(self):
         """
@@ -241,14 +246,13 @@ class sram_1bank(sram_base):
             self.data_pos[port] = vector(x_offset, y_offset)
             self.spare_wen_pos[port] = vector(x_offset, y_offset)
 
-    def add_layout_pins(self):
+    def route_escape_pins(self):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
-        highest_coord = self.find_highest_coords()
-        lowest_coord = self.find_lowest_coords()
-        bbox = [lowest_coord, highest_coord]
 
+        # List of pin to new pin name
+        pins_to_route = []
         for port in self.all_ports:
             # Depending on the port, use the bottom/top or left/right sides
             # Port 0 is left/bottom
@@ -258,125 +262,106 @@ class sram_1bank(sram_base):
 
             # Connect the control pins as inputs
             for signal in self.control_logic_inputs[port]:
-                if signal == "clk":
-                    continue
                 if signal.startswith("rbl"):
                     continue
-                if OPTS.perimeter_pins:
-                    self.add_perimeter_pin(name=signal + "{}".format(port),
-                                           pin=self.control_logic_insts[port].get_pin(signal),
-                                           side=left_or_right,
-                                           bbox=bbox)
+                if signal=="clk":
+                    pins_to_route.append(("{0}{1}".format(signal, port), bottom_or_top))
                 else:
-                    self.copy_layout_pin(self.control_logic_insts[port],
-                                         signal,
-                                         signal + "{}".format(port))
-
-            if OPTS.perimeter_pins:
-                self.add_perimeter_pin(name="clk{}".format(port),
-                                       pin=self.control_logic_insts[port].get_pin("clk"),
-                                       side=bottom_or_top,
-                                       bbox=bbox)
-            else:
-                self.copy_layout_pin(self.control_logic_insts[port],
-                                     "clk",
-                                     "clk{}".format(port))
-
-            # Data input pins go to BOTTOM/TOP
-            din_ports = []
+                    pins_to_route.append(("{0}{1}".format(signal, port), left_or_right))
+                    
             if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    if OPTS.perimeter_pins:
-                        p = self.add_perimeter_pin(name="din{0}[{1}]".format(port, bit),
-                                                   pin=self.data_dff_insts[port].get_pin("din_{0}".format(bit)),
-                                                   side=bottom_or_top,
-                                                   bbox=bbox)
-                        din_ports.append(p)
-                    else:
-                        self.copy_layout_pin(self.data_dff_insts[port],
-                                             "din_{}".format(bit),
-                                             "din{0}[{1}]".format(port, bit))
+                    pins_to_route.append(("din{0}[{1}]".format(port, bit), bottom_or_top))
 
-            # Data output pins go to BOTTOM/TOP
-            if port in self.readwrite_ports and OPTS.perimeter_pins:
+            if port in self.readwrite_ports or port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    # This should be routed next to the din pin
-                    p = din_ports[bit]
-                    self.add_layout_pin_rect_center(text="dout{0}[{1}]".format(port, bit),
-                                                    layer=p.layer,
-                                                    offset=p.center() + vector(self.m3_pitch, 0),
-                                                    width=p.width(),
-                                                    height=p.height())
-            elif port in self.read_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
-                    if OPTS.perimeter_pins:
-                        # This should have a clear route to the perimeter if there are no din routes
-                        self.add_perimeter_pin(name="dout{0}[{1}]".format(port, bit),
-                                               pin=self.bank_inst.get_pin("dout{0}_{1}".format(port, bit)),
-                                               side=bottom_or_top,
-                                               bbox=bbox)
-                    else:
-                        self.copy_layout_pin(self.bank_inst,
-                                             "dout{0}_{1}".format(port, bit),
-                                             "dout{0}[{1}]".format(port, bit))
+                    pins_to_route.append(("dout{0}[{1}]".format(port, bit), bottom_or_top))
 
-
-
-            # Lower address bits go to BOTTOM/TOP
             for bit in range(self.col_addr_size):
-                if OPTS.perimeter_pins:
-                    self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit),
-                                           pin=self.col_addr_dff_insts[port].get_pin("din_{}".format(bit)),
-                                           side=bottom_or_top,
-                                           bbox=bbox)
-                else:
-                    self.copy_layout_pin(self.col_addr_dff_insts[port],
-                                         "din_{}".format(bit),
-                                         "addr{0}[{1}]".format(port, bit))
+                pins_to_route.append(("addr{0}[{1}]".format(port, bit), bottom_or_top))
 
-            # Upper address bits go to LEFT/RIGHT
             for bit in range(self.row_addr_size):
-                if OPTS.perimeter_pins:
-                    self.add_perimeter_pin(name="addr{0}[{1}]".format(port, bit + self.col_addr_size),
-                                           pin=self.row_addr_dff_insts[port].get_pin("din_{}".format(bit)),
-                                           side=left_or_right,
-                                           bbox=bbox)
-                else:
-                    self.copy_layout_pin(self.row_addr_dff_insts[port],
-                                         "din_{}".format(bit),
-                                         "addr{0}[{1}]".format(port, bit + self.col_addr_size))
+                pins_to_route.append(("addr{0}[{1}]".format(port, bit + self.col_addr_size), left_or_right))
 
-            # Write mask pins go to BOTTOM/TOP
             if port in self.write_ports:
                 if self.write_size:
                     for bit in range(self.num_wmasks):
-                        if OPTS.perimeter_pins:
-                            self.add_perimeter_pin(name="wmask{0}[{1}]".format(port, bit),
-                                                   pin=self.wmask_dff_insts[port].get_pin("din_{}".format(bit)),
-                                                   side=bottom_or_top,
-                                                   bbox=bbox)
-                        else:
-                            self.copy_layout_pin(self.wmask_dff_insts[port],
-                                                 "din_{}".format(bit),
-                                                 "wmask{0}[{1}]".format(port, bit))
+                        pins_to_route.append(("wmask{0}[{1}]".format(port, bit), bottom_or_top))
 
-            # Spare wen pins go to BOTTOM/TOP
             if port in self.write_ports:
                 for bit in range(self.num_spare_cols):
-                    if OPTS.perimeter_pins:
-                        self.add_perimeter_pin(name="spare_wen{0}[{1}]".format(port, bit),
-                                               pin=self.spare_wen_dff_insts[port].get_pin("din_{}".format(bit)),
-                                               side=left_or_right,
-                                               bbox=bbox)
-                    else:
-                        self.copy_layout_pin(self.spare_wen_dff_insts[port],
-                                             "din_{}".format(bit),
-                                             "spare_wen{0}[{1}]".format(port, bit))
+                    pins_to_route.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
 
+        rtr=router(self.m3_stack, self)
+        rtr.escape_route(pins_to_route)
+
+    def add_layout_pins(self, add_vias=True):
+        """
+        Add the top-level pins for a single bank SRAM with control.
+        """
+        for port in self.all_ports:
+            # Hack: If we are escape routing, set the pin layer to
+            # None so that we will start from the pin layer
+            # Otherwise, set it as the pin layer so that no vias are added.
+            # Otherwise, when we remove pins to move the dff array dynamically,
+            # we will leave some remaining vias when the pin locations change.
+            if add_vias:
+                pin_layer = None
+            else:
+                pin_layer = self.pwr_grid_layer
+
+            # Connect the control pins as inputs
+            for signal in self.control_logic_inputs[port]:
+                if signal.startswith("rbl"):
+                    continue
+                self.add_io_pin(self.control_logic_insts[port],
+                                signal,
+                                signal + "{}".format(port),
+                                start_layer=pin_layer)
+                    
+            if port in self.write_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    self.add_io_pin(self.data_dff_insts[port],
+                                    "din_{}".format(bit),
+                                    "din{0}[{1}]".format(port, bit),
+                                    start_layer=pin_layer)
+
+            if port in self.readwrite_ports or port in self.read_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    self.add_io_pin(self.bank_inst,
+                                    "dout{0}_{1}".format(port, bit),
+                                    "dout{0}[{1}]".format(port, bit),
+                                    start_layer=pin_layer)
+
+            for bit in range(self.col_addr_size):
+                self.add_io_pin(self.col_addr_dff_insts[port],
+                                "din_{}".format(bit),
+                                "addr{0}[{1}]".format(port, bit),
+                                start_layer=pin_layer)
+
+            for bit in range(self.row_addr_size):
+                self.add_io_pin(self.row_addr_dff_insts[port],
+                                "din_{}".format(bit),
+                                "addr{0}[{1}]".format(port, bit + self.col_addr_size),
+                                start_layer=pin_layer)
+
+            if port in self.write_ports:
+                if self.write_size:
+                    for bit in range(self.num_wmasks):
+                        self.add_io_pin(self.wmask_dff_insts[port],
+                                        "din_{}".format(bit),
+                                        "wmask{0}[{1}]".format(port, bit),
+                                        start_layer=pin_layer)                                        
+
+            if port in self.write_ports:
+                for bit in range(self.num_spare_cols):
+                    self.add_io_pin(self.spare_wen_dff_insts[port],
+                                    "din_{}".format(bit),
+                                    "spare_wen{0}[{1}]".format(port, bit),
+                                    start_layer=pin_layer)                                    
+            
     def route_layout(self):
         """ Route a single bank SRAM """
-
-        self.add_layout_pins()
 
         self.route_clk()
 
@@ -384,6 +369,20 @@ class sram_1bank(sram_base):
 
         self.route_row_addr_dff()
 
+        self.route_dffs()
+
+        # We add the vias to M3 before routing supplies because
+        # they might create some blockages
+        self.add_layout_pins()
+
+        # Route the supplies first since the MST is not blockage aware
+        # and signals can route to anywhere on sides (it is flexible)
+        self.route_supplies()
+
+        # Route the pins to the perimeter
+        if OPTS.perimeter_pins:
+            self.route_escape_pins()
+        
     def route_dffs(self, add_routes=True):
 
         for port in self.all_ports:
@@ -418,16 +417,6 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
 
-        if port in self.readwrite_ports and OPTS.perimeter_pins:
-            # outputs from sense amp
-            # These are the output pins which had their pin placed on the perimeter, so route from the
-            # sense amp which should not align with write driver input
-            sram_names = ["dout{0}[{1}]".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
-            sram_pins = [self.get_pin(x) for x in sram_names]
-            bank_names = ["dout{0}_{1}".format(port, x) for x in range(self.word_size + self.num_spare_cols)]
-            bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
-            route_map.extend(list(zip(bank_pins, sram_pins)))
-
         # spare wen dff
         if self.num_spare_cols > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_spare_cols)]
@@ -446,10 +435,10 @@ class sram_1bank(sram_base):
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 - self.data_bus_size[port] + 2 * self.m3_pitch)
-                cr = channel_route.channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=layer_stack,
-                                                 parent=self)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
@@ -461,10 +450,10 @@ class sram_1bank(sram_base):
             else:
                 offset = vector(0,
                                 self.bank.height + self.m3_pitch)
-                cr = channel_route.channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=layer_stack,
-                                                 parent=self)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.

@@ -5,12 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from vector3d import vector3d
 from itertools import tee
 from grid import grid
-from grid_cell import grid_cell
 from direction import direction
+
 
 class grid_path:
     """
@@ -29,8 +28,7 @@ class grid_path:
             self.pathlist = []
 
     def __str__(self):
-        #import pprint
-        p = str(self.pathlist) #pprint.pformat(self.pathlist)
+        p = str(self.pathlist)
         if self.name != "":
             return (str(self.name) + " : " + p)
         return p
@@ -188,11 +186,9 @@ class grid_path:
 
         return newwave
 
-
     def set_layer(self, zindex):
         new_pathlist = [vector3d(item.x, item.y, zindex) for wave in self.pathlist for item in wave]
         self.pathlist = new_pathlist
-
 
     def overlap(self, other):
         """

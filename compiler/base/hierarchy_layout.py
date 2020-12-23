@@ -467,6 +467,23 @@ class layout():
         """
         self.pin_map[text] = set()
 
+    def remove_layout_pins(self):
+        """
+        Delete all the layout pins
+        """
+        self.pin_map = {}
+
+    def replace_layout_pin(self, text, pin):
+        """
+        Remove the old pin and replace with a new one
+        """
+        self.remove_layout_pin(text)
+        self.add_layout_pin(text=text,
+                            layer=pin.layer,
+                            offset=pin.ll(),
+                            width=pin.width(),
+                            height=pin.height())
+        
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
         Create a labeled pin
@@ -1190,6 +1207,21 @@ class layout():
 
             elif add_vias:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+
+    def add_io_pin(self, instance, pin_name, new_name="", start_layer=None):
+        """
+        Add a signle input or output pin up to metal 3.
+        """
+        pin = instance.get_pin(pin_name)
+
+        if new_name == "":
+            new_name = pin_name
+
+        if not start_layer:
+            start_layer = pin.layer
+            
+        # Just use the power pin function for now to save code
+        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=start_layer)
 
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """

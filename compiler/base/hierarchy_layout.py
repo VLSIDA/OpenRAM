@@ -477,6 +477,7 @@ class layout():
         """
         Remove the old pin and replace with a new one
         """
+        import pdb; pdb.set_trace()
         self.remove_layout_pin(text)
         self.add_layout_pin(text=text,
                             layer=pin.layer,

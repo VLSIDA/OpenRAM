@@ -14,6 +14,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
 from signal_grid import signal_grid
 
+
 class supply_tree_router(router):
     """
     A router class to read an obstruction map from a gds and

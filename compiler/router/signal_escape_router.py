@@ -11,7 +11,8 @@ from router import router
 from datetime import datetime
 from supply_grid import supply_grid
 
-class signal_exit_router(router):
+
+class signal_escape_router(router):
     """
     A router that routes signals to perimeter and makes pins.
     """
@@ -31,7 +32,7 @@ class signal_exit_router(router):
         debug.info(1,"Size: {0} x {1}".format(size.x, size.y))
         self.rg = supply_grid(self.ll, self.ur, self.track_width)
 
-    def exit_route(self, pin_list):
+    def escape_route(self, pin_list):
         """
         Takes a list of tuples (name, side) and routes them. After routing,
         it removes the old pin and places a new one on the perimeter.

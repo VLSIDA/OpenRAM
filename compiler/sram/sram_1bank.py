@@ -8,7 +8,8 @@
 from vector import vector
 from sram_base import sram_base
 from contact import m2_via
-import channel_route
+from channel_route import channel_route
+from signal_escape_router import signal_escape_router as router
 
 
 class sram_1bank(sram_base):
@@ -105,7 +106,7 @@ class sram_1bank(sram_base):
         # We need to temporarily add some pins for the x offsets
         # but we'll remove them so that they have the right y
         # offsets after the DFF placement.
-        self.add_layout_pins(exit_route=False)
+        self.add_layout_pins(escape_route=False)
         self.route_dffs(add_routes=False)
         self.remove_layout_pins()
         
@@ -244,7 +245,7 @@ class sram_1bank(sram_base):
             self.data_pos[port] = vector(x_offset, y_offset)
             self.spare_wen_pos[port] = vector(x_offset, y_offset)
 
-    def add_layout_pins(self, exit_route=True):
+    def add_layout_pins(self, escape_route=True):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -311,17 +312,12 @@ class sram_1bank(sram_base):
                                     "spare_wen{0}[{1}]".format(port, bit))
                     all_pins.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
 
-        if exit_route:
-            from signal_exit_router import signal_exit_router as router
+        if escape_route:
             rtr=router(self.m3_stack, self)
-            rtr.exit_route(all_pins)
+            rtr.escape_route(all_pins)
 
     def route_layout(self):
         """ Route a single bank SRAM """
-
-        self.route_supplies()
-
-        self.add_layout_pins()
 
         self.route_clk()
 
@@ -331,6 +327,9 @@ class sram_1bank(sram_base):
 
         self.route_dffs()
 
+        self.route_supplies()
+
+        self.add_layout_pins()
         
     def route_dffs(self, add_routes=True):
 
@@ -384,10 +383,10 @@ class sram_1bank(sram_base):
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 - self.data_bus_size[port] + 2 * self.m3_pitch)
-                cr = channel_route.channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=layer_stack,
-                                                 parent=self)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
@@ -399,10 +398,10 @@ class sram_1bank(sram_base):
             else:
                 offset = vector(0,
                                 self.bank.height + self.m3_pitch)
-                cr = channel_route.channel_route(netlist=route_map,
-                                                 offset=offset,
-                                                 layer_stack=layer_stack,
-                                                 parent=self)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.

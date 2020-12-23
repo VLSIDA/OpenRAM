@@ -20,8 +20,8 @@ data_fnames = ["delay_data.csv",
                "power_data.csv",
                "leakage_data.csv",
                "slew_data.csv"]
-tech_path = os.environ.get('OPENRAM_TECH')
-data_dir = tech_path+'/'+OPTS.tech_name+relative_data_path
+               
+data_dir = OPTS.openram_tech+relative_data_path
 data_paths = [data_dir +'/'+fname for fname in data_fnames]
 
 class linear_regression(simulation):

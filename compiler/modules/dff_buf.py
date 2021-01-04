@@ -108,7 +108,10 @@ class dff_buf(design.design):
             well_spacing = max(well_spacing, self.pwell_to_nwell)
         except AttributeError:
             pass
-        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing + self.well_extend_active, 0))
+
+        well_spacing += self.well_extend_active
+        
+        self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing, 0))
 
         # Add INV2 to the right
         self.inv2_inst.place(vector(self.inv1_inst.rx(), 0))

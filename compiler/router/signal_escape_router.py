@@ -65,7 +65,7 @@ class signal_escape_router(router):
     def route_signal(self, pin_name, side):
         
         for detour_scale in [5 * pow(2, x) for x in range(5)]:
-            debug.info(1, "Exit routing {0} with scale {1}".format(pin_name, detour_scale))
+            debug.info(1, "Escape routing {0} with scale {1}".format(pin_name, detour_scale))
             
             # Clear everything in the routing grid.
             self.rg.reinit()

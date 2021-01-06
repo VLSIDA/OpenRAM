@@ -9,7 +9,7 @@ import debug
 from globals import print_time
 from router import router
 from datetime import datetime
-from supply_grid import supply_grid
+from signal_grid import signal_grid
 
 
 class signal_escape_router(router):
@@ -30,22 +30,15 @@ class signal_escape_router(router):
         """
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x, size.y))
-        self.rg = supply_grid(self.ll, self.ur, self.track_width)
+        self.rg = signal_grid(self.ll, self.ur, self.track_width)
 
-    def escape_route(self, pin_list):
+    def escape_route(self, pin_names):
         """
         Takes a list of tuples (name, side) and routes them. After routing,
         it removes the old pin and places a new one on the perimeter.
         """
-        pin_names = [x[0] for x in pin_list]
-        
-        # Clear the pins if we have previously routed
-        if (hasattr(self,'rg')):
-            self.clear_pins()
-        else:
-            self.create_routing_grid()
+        self.create_routing_grid()
 
-        # Get the pin shapes
         start_time = datetime.now()
         self.find_pins_and_blockages(pin_names)
         print_time("Finding pins and blockages",datetime.now(), start_time, 3)
@@ -53,8 +46,8 @@ class signal_escape_router(router):
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
-        for pin_name, side in pin_list:
-            self.route_signal(pin_name, side)
+        for pin_name in pin_names:
+            self.route_signal(pin_name)
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
@@ -62,7 +55,7 @@ class signal_escape_router(router):
         
         return True
 
-    def route_signal(self, pin_name, side):
+    def route_signal(self, pin_name, side="all"):
         
         for detour_scale in [5 * pow(2, x) for x in range(5)]:
             debug.info(1, "Escape routing {0} with scale {1}".format(pin_name, detour_scale))

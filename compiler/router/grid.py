@@ -78,81 +78,78 @@ class grid:
         for k in self.map:
             self.map[k].blocked=False
 
-    def set_source(self, n, value=True):
+    def clear_source(self):
+        for k in self.map:
+            self.map[k].source=False
+        self.source = set()
+
+    def set_source(self, n):
         if not isinstance(n, vector3d):
             for item in n:
-                self.set_source(item, value)
+                self.set_source(item)
         else:
             self.add_map(n)
-            self.map[n].source=value
+            self.map[n].source=True
             self.source.add(n)
 
-    def set_target(self, n, value=True):
+    def clear_target(self):
+        for k in self.map:
+            self.map[k].target=False
+        self.target = set()
+        
+    def set_target(self, n):
         if not isinstance(n, vector3d):
             for item in n:
-                self.set_target(item, value)
+                self.set_target(item)
         else:
             self.add_map(n)
-            self.map[n].target=value
+            self.map[n].target=True
             self.target.add(n)
 
-    def add_source(self, track_list, value=True):
+    def add_source(self, track_list):
         debug.info(3, "Adding source list={0}".format(str(track_list)))
         for n in track_list:
             debug.info(4, "Adding source ={0}".format(str(n)))
-            self.set_source(n, value)
-            self.set_blocked(n, False)
+            self.set_source(n)
+            # self.set_blocked(n, False)
 
-    def add_target(self, track_list, value=True):
+    def add_target(self, track_list):
         debug.info(3, "Adding target list={0}".format(str(track_list)))
         for n in track_list:
             debug.info(4, "Adding target ={0}".format(str(n)))
-            self.set_target(n, value)
-            self.set_blocked(n, False)
+            self.set_target(n)
+            # self.set_blocked(n, False)
 
-    def add_perimeter_target(self, side="all", value=True):
+    def add_perimeter_target(self, side="all"):
         debug.info(3, "Adding perimeter target")
 
+        perimeter_list = []
         # Add the left/right columns
         if side=="all" or side=="left":
             x = self.ll.x
             for y in range(self.ll.y, self.ur.y, 1):
-                n = vector3d(x, y, 0)
-                self.set_target(n, value)
-                self.set_blocked(n, False)
-                n = vector3d(x, y, 1)                
-                self.set_target(n, value)
-                self.set_blocked(n, False)
+                perimeter_list.append(vector3d(x, y, 0))
+                perimeter_list.append(vector3d(x, y, 1))
                 
         if side=="all" or side=="right":
             x = self.ur.x
             for y in range(self.ll.y, self.ur.y, 1):
-                n = vector3d(x, y, 0)
-                self.set_target(n, value)
-                self.set_blocked(n, False)
-                n = vector3d(x, y, 1)                
-                self.set_target(n, value)
-                self.set_blocked(n, False)
+                perimeter_list.append(vector3d(x, y, 0))
+                perimeter_list.append(vector3d(x, y, 1))
 
         if side=="all" or side=="bottom":
             y = self.ll.y
             for x in range(self.ll.x, self.ur.x, 1):
-                n = vector3d(x, y, 0)
-                self.set_target(n, value)
-                self.set_blocked(n, False)
-                n = vector3d(x, y, 1)                
-                self.set_target(n, value)
-                self.set_blocked(n, False)
+                perimeter_list.append(vector3d(x, y, 0))
+                perimeter_list.append(vector3d(x, y, 1))
 
         if side=="all" or side=="top":
             y = self.ur.y
             for x in range(self.ll.x, self.ur.x, 1):
-                n = vector3d(x, y, 0)
-                self.set_target(n, value)
-                self.set_blocked(n, False)
-                n = vector3d(x, y, 1)                
-                self.set_target(n, value)
-                self.set_blocked(n, False)
+                perimeter_list.append(vector3d(x, y, 0))
+                perimeter_list.append(vector3d(x, y, 1))
+
+        self.set_target(perimeter_list)
                 
     def is_target(self, point):
         """

@@ -355,7 +355,7 @@ class router(router_tech):
         # Start fresh. Not the best for run-time, but simpler.
         self.clear_blockages()
         # This adds the initial blockges of the design
-        #print("BLOCKING:", self.blocked_grids)
+        # print("BLOCKING:", self.blocked_grids)
         self.set_blockages(self.blocked_grids, True)
 
         # Block all of the supply rails
@@ -382,8 +382,9 @@ class router(router_tech):
         # Don't mark the other components as targets since we want to route
         # directly to a rail, but unblock all the source components so we can
         # route over them
-        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
-        self.set_blockages(blockage_grids, False)
+        # 1/6/21: This would cause things that looked like loops in the supply tree router
+        # blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
+        # self.set_blockages(blockage_grids, False)
 
     def convert_shape_to_units(self, shape):
         """

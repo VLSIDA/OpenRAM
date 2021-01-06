@@ -90,6 +90,7 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].source=True
+            self.map[n].blocked=False
             self.source.add(n)
 
     def clear_target(self):
@@ -104,8 +105,9 @@ class grid:
         else:
             self.add_map(n)
             self.map[n].target=True
+            self.map[n].blocked=False
             self.target.add(n)
-
+            
     def add_source(self, track_list):
         debug.info(3, "Adding source list={0}".format(str(track_list)))
         for n in track_list:

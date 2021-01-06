@@ -27,13 +27,14 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, rail_track_width=1):
+    def __init__(self, layers, design, gds_filename=None, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
         considered.
         """
-        router_tech.__init__(self, layers, rail_track_width)
+        
+        router_tech.__init__(self, layers, route_track_width)
 
         self.cell = design
 
@@ -285,7 +286,7 @@ class router(router_tech):
         If so, reduce the pin group grid to not include the adjacent grid.
         Try to do this intelligently to keep th pins enclosed.
         """
-        debug.info(1,
+        debug.info(2,
                    "Comparing {0} and {1} adjacency".format(pin_name1,
                                                             pin_name2))
         removed_grids = 0
@@ -301,7 +302,7 @@ class router(router_tech):
                                                                        adj_grids))
                     self.remove_adjacent_grid(pg1, pg2, adj_grids)
 
-        debug.info(1, "Removed {} adjacent grids.".format(removed_grids))
+        debug.info(2, "Removed {} adjacent grids.".format(removed_grids))
 
     def remove_adjacent_grid(self, pg1, pg2, adj_grids):
         """
@@ -347,6 +348,10 @@ class router(router_tech):
                                                                               smaller))
                     smaller.grids.remove(adj)
 
+    def set_supply_rail_blocked(self, value):
+        # This is just a virtual function
+        pass
+    
     def prepare_blockages(self, pin_name):
         """
         Reset and add all of the blockages in the design.
@@ -362,7 +367,11 @@ class router(router_tech):
 
         # Block all of the supply rails
         # (some will be unblocked if they're a target)
-        self.set_supply_rail_blocked(True)
+        try:
+            self.set_supply_rail_blocked(True)
+        except AttributeError:
+            # If function doesn't exist, it isn't a supply router
+            pass
 
         # Block all of the pin components
         # (some will be unblocked if they're a source/target)
@@ -797,7 +806,7 @@ class router(router_tech):
         """
         Convert the pin groups into pin tracks and blockage tracks.
         """
-        debug.info(1, "Converting pins for {}.".format(pin_name))
+        debug.info(2, "Converting pins for {}.".format(pin_name))
         for pg in self.pin_groups[pin_name]:
             pg.convert_pin()
 
@@ -808,7 +817,7 @@ class router(router_tech):
         that are blocked by other shapes.
         """
         for pin_name in self.pin_groups:
-            debug.info(1, "Enclosing pins for {}".format(pin_name))
+            debug.info(2, "Enclosing pins for {}".format(pin_name))
             for pg in self.pin_groups[pin_name]:
                 pg.enclose_pin()
                 pg.add_enclosure(self.cell)
@@ -829,6 +838,12 @@ class router(router_tech):
         for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_target(pin_name, i)
 
+    def add_perimeter_target(self, side="all"):
+        """
+        This will mark all the cells on the perimeter of the original layout as a target.
+        """
+        self.rg.add_perimeter_target(side=side)
+    
     def num_pin_components(self, pin_name):
         """
         This returns how many disconnected pin components there are.
@@ -865,7 +880,7 @@ class router(router_tech):
         debug.check(index<self.num_pin_components(pin_name),"Pin component index too large.")
 
         pin_in_tracks = self.pin_groups[pin_name][index].grids
-        debug.info(2, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
+        debug.info(3, "Set target: " + str(pin_name) + " " + str(pin_in_tracks))
         self.rg.add_target(pin_in_tracks)
 
     def add_pin_component_target_except(self, pin_name, index):
@@ -901,7 +916,7 @@ class router(router_tech):
         #     self.write_debug_gds()
 
         # First, simplify the path for
-        # debug.info(1, str(self.path))
+        # debug.info(3, str(self.path))
         contracted_path = self.contract_path(path)
         debug.info(3, "Contracted path: " + str(contracted_path))
 
@@ -1000,25 +1015,20 @@ class router(router_tech):
         # Double check source and taget are not same node, if so, we are done!
         for k, v in self.rg.map.items():
             if v.source and v.target:
-                debug.error("Grid cell is source and target! {}".format(k))
-                return False
+                return True
 
         # returns the path in tracks
         (path, cost) = self.rg.route(detour_scale)
         if path:
             debug.info(2, "Found path: cost={0} {1}".format(cost, str(path)))
 
-            self.paths.append(path)
+            self.paths.append(grid_utils.flatten_set(path))
             self.add_route(path)
 
-            path_set = grid_utils.flatten_set(path)
-            self.path_blockages.append(path_set)
+            self.path_blockages.append(self.paths[-1])
+            return True
         else:
-            self.write_debug_gds("failed_route.gds")
-            # clean up so we can try a reroute
-            self.rg.reinit()
             return False
-        return True
 
     def annotate_pin_and_tracks(self, pin, tracks):
         """"
@@ -1122,7 +1132,7 @@ class router(router_tech):
         show_all_grids = True
 
         if show_all_grids:
-            self.rg.add_all_grids()
+            # self.rg.add_all_grids()
             for g in self.rg.map:
                 self.annotate_grid(g)
 
@@ -1156,7 +1166,36 @@ class router(router_tech):
                                            width=pin.width(),
                                            height=pin.height())
 
+    def get_perimeter_pin(self):
+        """ Return the shape of the last routed path that was on the perimeter """
+        for v in self.paths[-1]:
+            if self.rg.is_target(v):
+                return self.convert_track_to_pin(v)
+            
+        return None
+            
+    def get_pin(self, pin_name):
+        """ Return the lowest, leftest pin group """
+        keep_pin = None
+        for index,pg in enumerate(self.pin_groups[pin_name]):
+            for pin in pg.enclosures:
+                if not keep_pin:
+                    keep_pin = pin
+                else:
+                    if pin.lx() <= keep_pin.lx() and pin.by() <= keep_pin.by():
+                        keep_pin = pin
+                        
+        return keep_pin
 
+    def check_all_routed(self, pin_name):
+        """
+        Check that all pin groups are routed.
+        """
+        for pg in self.pin_groups[pin_name]:
+            if not pg.is_routed():
+                return False
+    
+    
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):
     """

@@ -19,7 +19,7 @@ import re
 import copy
 import importlib
 
-VERSION = "1.1.7"
+VERSION = "1.1.9"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -294,6 +294,14 @@ def read_config(config_file, is_unit_test=True):
     # so we can import things in the other directory
     dir_name = os.path.dirname(config_file)
     module_name = os.path.basename(config_file)
+
+    # Check that the module name adheres to Python's module naming conventions.
+    # This will assist the user in interpreting subsequent errors in loading
+    # the module. Valid Python module naming is described here:
+    #   https://docs.python.org/3/reference/simple_stmts.html#the-import-statement
+    if not module_name.isidentifier():
+        debug.error("Configuration file name is not a valid Python module name: "
+                    "{0}. It should be a valid identifier.".format(module_name))
 
     # Prepend the path to avoid if we are using the example config
     sys.path.insert(0, dir_name)
@@ -574,9 +582,8 @@ def report_status():
     debug.print_raw("Technology: {0}".format(OPTS.tech_name))
     total_size = OPTS.word_size*OPTS.num_words*OPTS.num_banks
     debug.print_raw("Total size: {} bits".format(total_size))
-    if total_size >= 2**14:
-        debug.warning("Requesting such a large memory size ({0}) will have a large run-time. ".format(total_size) +
-                      "Consider using multiple smaller banks.")
+    if total_size >= 2**14 and not OPTS.analytical_delay:
+        debug.warning("Characterizing large memories ({0}) will have a large run-time. ".format(total_size))
     debug.print_raw("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                                     OPTS.num_words,
                                                                     OPTS.num_banks))

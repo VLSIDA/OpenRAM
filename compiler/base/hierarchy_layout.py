@@ -236,12 +236,25 @@ class layout():
         # This is commented out for runtime reasons
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
-
+    
     def get_inst(self, name):
         """ Retrieve an instance by name """
         for inst in self.insts:
             if inst.name == name:
                 return inst
+        return None
+
+    def add_flat_inst(self, name, mod, offset=[0, 0]):
+        """ Copies all of the items in instance into this module """
+        for item in mod.objs:
+            item.offset += offset
+            self.objs.append(item)
+        for item in mod.insts:
+            item.offset += offset
+            self.insts.append(item)
+            debug.check(len(item.mod.pins) == 0, "Cannot add flat instance with subinstances.")
+            self.connect_inst([])
+        debug.info(3, "adding flat instance {}".format(name))
         return None
 
     def add_rect(self, layer, offset, width=None, height=None):
@@ -454,6 +467,23 @@ class layout():
         """
         self.pin_map[text] = set()
 
+    def remove_layout_pins(self):
+        """
+        Delete all the layout pins
+        """
+        self.pin_map = {}
+
+    def replace_layout_pin(self, text, pin):
+        """
+        Remove the old pin and replace with a new one
+        """
+        self.remove_layout_pin(text)
+        self.add_layout_pin(text=text,
+                            layer=pin.layer,
+                            offset=pin.ll(),
+                            width=pin.width(),
+                            height=pin.height())
+        
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
         Create a labeled pin
@@ -498,7 +528,7 @@ class layout():
                        offset=offset + vector(0.5 * width,
                                               0.5 * height))
 
-    def add_label(self, text, layer, offset=[0, 0], zoom=-1):
+    def add_label(self, text, layer, offset=[0, 0], zoom=None):
         """Adds a text label on the given layer,offset, and zoom level"""
         debug.info(5, "add label " + str(text) + " " + layer + " " + str(offset))
         lpp = techlayer[layer]
@@ -976,7 +1006,7 @@ class layout():
         (horizontal_layer, via_layer, vertical_layer) = layer_stack
         if horizontal:
             route_layer = vertical_layer
-            bys_layer = horizontal_layer
+            bus_layer = horizontal_layer
         else:
             route_layer = horizontal_layer
             bus_layer = vertical_layer
@@ -1078,18 +1108,24 @@ class layout():
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
-        self.add_inst(cr.name, cr)
-        self.connect_inst([])
-
+        # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+        # with no active devices.
+        # self.add_inst(cr.name, cr)
+        # self.connect_inst([])
+        self.add_flat_inst(cr.name, cr)
+        
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
         """
         Wrapper to create a horizontal channel route
         """
         import channel_route
         cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
-        self.add_inst(cr.name, cr)
-        self.connect_inst([])
-
+        # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+        # with no active devices.
+        # self.add_inst(cr.name, cr)
+        # self.connect_inst([])
+        self.add_flat_inst(cr.name, cr)
+        
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:
@@ -1171,6 +1207,21 @@ class layout():
 
             elif add_vias:
                 self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+
+    def add_io_pin(self, instance, pin_name, new_name="", start_layer=None):
+        """
+        Add a signle input or output pin up to metal 3.
+        """
+        pin = instance.get_pin(pin_name)
+
+        if new_name == "":
+            new_name = pin_name
+
+        if not start_layer:
+            start_layer = pin.layer
+            
+        # Just use the power pin function for now to save code
+        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=start_layer)
 
     def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
         """

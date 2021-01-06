@@ -9,7 +9,6 @@
 Some utility functions for sets of grid cells.
 """
 
-import debug
 import math
 from direction import direction
 from vector3d import vector3d
@@ -44,6 +43,7 @@ def get_upper_right(curset):
             ur = p
     return ur
 
+
 def get_lower_left(curset):
     ll = None
     for p in curset:
@@ -51,7 +51,8 @@ def get_lower_left(curset):
             ll = p
     return ll
 
-def get_border( curset, direct):
+
+def get_border(curset, direct):
     """
     Return the furthest cell(s) in a given direction.
     """
@@ -86,6 +87,7 @@ def get_border( curset, direct):
     newset = set(maxc)
     return newset
 
+
 def expand_border(curset, direct):
     """
     Expand the current set of sells in a given direction.
@@ -94,6 +96,7 @@ def expand_border(curset, direct):
     border_set = get_border(curset, direct)
     next_border_set = increment_set(border_set, direct)
     return next_border_set
+
 
 def expand_borders(curset):
     """
@@ -105,6 +108,7 @@ def expand_borders(curset):
     west_set=expand_border(curset,direction.WEST)
 
     return(north_set, east_set, south_set, west_set)
+
 
 def inflate_cell(cell, distance):
     """
@@ -122,6 +126,7 @@ def inflate_cell(cell, distance):
 
     return newset
 
+
 def inflate_set(curset, distance):
     """
     Expand the set in all directions by the given number of grids.
@@ -136,6 +141,7 @@ def inflate_set(curset, distance):
     # Recurse with less depth
     return inflate_set(newset,distance-1)
 
+
 def flatten_set(curset):
     """
     Flatten until we have a set of vector3d objects.
@@ -147,7 +153,6 @@ def flatten_set(curset):
         else:
             newset.update(flatten_set(c))
     return newset
-
 
 
 def distance_set(coord, curset):

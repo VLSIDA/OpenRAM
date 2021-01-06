@@ -66,7 +66,9 @@ class model_delay_test(openram_test):
 
         # Only compare the delays
         spice_delays = {key:value for key, value in spice_data.items() if 'delay' in key}
+        spice_delays['min_period'] = spice_data['min_period']
         model_delays = {key:value for key, value in model_data.items() if 'delay' in key}
+        model_delays['min_period'] = model_data['min_period']
         debug.info(1,"Spice Delays={}".format(spice_delays))
         debug.info(1,"Model Delays={}".format(model_delays))
 

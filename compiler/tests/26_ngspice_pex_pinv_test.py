@@ -16,7 +16,7 @@ import globals
 from globals import OPTS
 import debug
 
-
+@unittest.skip("SKIPPING 26_ngspice_pex_pinv_test")
 class ngspice_pex_pinv_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -37,10 +37,10 @@ class ngspice_pex_pinv_test(openram_test):
         OPTS.keep_temp = True # force set keep to true to save the sp file
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)
-        tx.gds_write(tempgds)
-        tempsp = "{0}{1}.sp".format(OPTS.openram_temp, tx.name)
-        tx.sp_write(tempsp)
+        tempgds = "{}.gds".format(tx.name)
+        tx.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
+        tempsp = "{}.sp".format(tx.name)
+        tx.sp_write("{0}{1}".format(OPTS.openram_temp, tempsp))
 
         # make sure that the library simulation is successful
         sp_delay = self.simulate_delay(test_module=tempsp,
@@ -72,12 +72,17 @@ class ngspice_pex_pinv_test(openram_test):
 
     def simulate_delay(self, test_module, top_level_name):
         from charutils import parse_spice_list
+        cwd = os.getcwd()
+        os.chdir(OPTS.openram_temp)
+
         # setup simulation
-        sim_file = OPTS.openram_temp + "stim.sp"
+        sim_file = "stim.sp"
         log_file_name = "timing"
         test_sim = self.write_simulation(sim_file, test_module, top_level_name)
         test_sim.run_sim("stim.sp")
         delay = parse_spice_list(log_file_name, "pinv_delay")
+        
+        os.chdir(cwd)        
         return delay
 
     def write_simulation(self, sim_file, cir_file, top_module_name):
@@ -89,6 +94,7 @@ class ngspice_pex_pinv_test(openram_test):
         simulation = stimuli(sim_file, corner)
 
         # library files
+        import pdb; pdb.set_trace()
         simulation.write_include(cir_file)
 
         # supply voltages

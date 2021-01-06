@@ -190,13 +190,13 @@ class sram_base(design, verilog, lef):
 
         start_time = datetime.datetime.now()
         self.route_layout()
-        self.route_supplies()
+
         if not OPTS.is_unit_test:
             print_time("Routing", datetime.datetime.now(), start_time)
 
         self.add_lvs_correspondence_points()
 
-        self.offset_all_coordinates()
+        #self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
@@ -207,9 +207,10 @@ class sram_base(design, verilog, lef):
                           ur=vector(self.width, self.height))
 
         start_time = datetime.datetime.now()
-        # We only enable final verification if we have routed the design
-        self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
         if not OPTS.is_unit_test:
+            # We only enable final verification if we have routed the design
+            # Only run this if not a unit test, because unit test will also verify it.
+            self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
             print_time("Verification", datetime.datetime.now(), start_time)
 
     def create_modules(self):
@@ -220,30 +221,48 @@ class sram_base(design, verilog, lef):
 
         # Copy the pins to the top level
         # This will either be used to route or left unconnected.
-        for inst in self.insts:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+        for pin_name in ["vdd", "gnd"]:
+            for inst in self.insts:
+                self.copy_power_pins(inst, pin_name)
 
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
 
-        grid_stack = set()
         try:
             from tech import power_grid
             grid_stack = power_grid
         except ImportError:
             # if no power_grid is specified by tech we use sensible defaults
-            import tech
-            if "m4" in tech.layer:
-                # Route a M3/M4 grid
-                grid_stack = self.m3_stack
-            elif "m3" in tech.layer:
-                grid_stack =("m3",)
+            # Route a M3/M4 grid
+            grid_stack = self.m3_stack
 
-        from supply_grid_router import supply_grid_router as router
+        if OPTS.route_supplies == "grid":
+            from supply_grid_router import supply_grid_router as router
+        elif OPTS.route_supplies:
+            from supply_tree_router import supply_tree_router as router
+            
         rtr=router(grid_stack, self)
         rtr.route()
+
+        # Find the lowest leftest pin for vdd and gnd
+        for pin_name in ["vdd", "gnd"]:
+            # Copy the pin shape to rectangles
+            for pin in self.get_pins(pin_name):
+                self.add_rect(pin.layer,
+                              pin.ll(),
+                              pin.width(),
+                              pin.height())
+            # Remove the pins
+            self.remove_layout_pin(pin_name)
+
+            pin = rtr.get_pin(pin_name)
+            
+            self.add_layout_pin(pin_name,
+                                pin.layer,
+                                pin.ll(),
+                                pin.width(),
+                                pin.height())
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

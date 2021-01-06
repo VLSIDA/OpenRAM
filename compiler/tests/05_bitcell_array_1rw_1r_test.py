@@ -27,8 +27,8 @@ class bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 array for cell_1rw_1r")
-        a = factory.create(module_type="bitcell_array", cols=4, rows=4)
+        debug.info(2, "Testing 2x2 array for cell_2port")
+        a = factory.create(module_type="bitcell_array", cols=2, rows=2)
         self.local_check(a)
 
         globals.end_openram()

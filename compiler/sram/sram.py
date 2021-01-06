@@ -87,26 +87,6 @@ class sram():
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
-        if not OPTS.netlist_only:
-            # Write the layout
-            start_time = datetime.datetime.now()
-            gdsname = OPTS.output_path + self.s.name + ".gds"
-            debug.print_raw("GDS: Writing to {0}".format(gdsname))
-            self.gds_write(gdsname)
-            verify.write_drc_script(cell_name=self.s.name,
-                                    gds_name=os.path.basename(gdsname),
-                                    extract=True,
-                                    final_verification=True,
-                                    output_path=OPTS.output_path)
-            print_time("GDS", datetime.datetime.now(), start_time)
-
-            # Create a LEF physical model
-            start_time = datetime.datetime.now()
-            lefname = OPTS.output_path + self.s.name + ".lef"
-            debug.print_raw("LEF: Writing to {0}".format(lefname))
-            self.lef_write(lefname)
-            print_time("LEF", datetime.datetime.now(), start_time)
-
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
@@ -118,12 +98,33 @@ class sram():
                    output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
+        if not OPTS.netlist_only:
+            # Write the layout
+            start_time = datetime.datetime.now()
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            debug.print_raw("GDS: Writing to {0}".format(gdsname))
+            self.gds_write(gdsname)
+            if OPTS.check_lvsdrc:
+                verify.write_drc_script(cell_name=self.s.name,
+                                        gds_name=os.path.basename(gdsname),
+                                        extract=True,
+                                        final_verification=True,
+                                        output_path=OPTS.output_path)
+            print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            debug.print_raw("LEF: Writing to {0}".format(lefname))
+            self.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
+
         # Save the LVS file
         start_time = datetime.datetime.now()
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
         self.lvs_write(lvsname)
-        if not OPTS.netlist_only:
+        if not OPTS.netlist_only and OPTS.check_lvsdrc:
             verify.write_lvs_script(cell_name=self.s.name,
                                     gds_name=os.path.basename(gdsname),
                                     sp_name=os.path.basename(lvsname),

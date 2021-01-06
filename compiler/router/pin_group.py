@@ -493,7 +493,6 @@ class pin_group:
                 debug.error("Could not find a connector for {} with {}".format(self.pins,
                                                                                self.enclosures))
                 self.router.write_debug_gds("no_connector.gds")
-                import pdb; pdb.set_trace()
             self.enclosures.append(connector)
 
         # At this point, the pins are overlapping,

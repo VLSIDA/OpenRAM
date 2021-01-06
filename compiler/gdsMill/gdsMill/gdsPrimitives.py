@@ -1,4 +1,4 @@
-import math
+
 
 class GdsStructure:
     """Class represent a GDS Structure Object"""
@@ -15,6 +15,7 @@ class GdsStructure:
         self.nodes=[]
         self.boxes=[]
 
+        
 class GdsBoundary:
     """Class represent a GDS Boundary Object"""
     def __init__(self):
@@ -24,6 +25,7 @@ class GdsBoundary:
         self.purposeLayer=0
         self.coordinates=""
 
+        
 class GdsPath:
     """Class represent a GDS Path Object"""
     def __init__(self):
@@ -112,6 +114,7 @@ class GdsPath:
             lastY = y
         return boundaryEquivalent
 
+    
 class GdsSref:
     """Class represent a GDS structure reference Object"""
     def __init__(self):
@@ -123,6 +126,7 @@ class GdsSref:
         self.rotateAngle=""
         self.coordinates=""
 
+        
 class GdsAref:
     """Class represent a GDS array reference Object"""
     def __init__(self):
@@ -134,6 +138,7 @@ class GdsAref:
         self.rotateAngle=""
         self.coordinates=""
 
+        
 class GdsText:
     """Class represent a GDS text Object"""
     def __init__(self):
@@ -150,6 +155,7 @@ class GdsText:
         self.coordinates=""
         self.textString = ""
 
+        
 class GdsNode:
     """Class represent a GDS Node Object"""
     def __init__(self):
@@ -159,6 +165,7 @@ class GdsNode:
         self.nodeType=""
         self.coordinates=""
 
+        
 class GdsBox:
     """Class represent a GDS Box Object"""
     def __init__(self):

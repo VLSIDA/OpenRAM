@@ -63,8 +63,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification=False, out
     run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -drc {1}drc_runset -batch".format(OPTS.drc_exe[1],
-                                                      output_path)
+    cmd = "{0} -gui -drc drc_runset -batch".format(OPTS.drc_exe[1])
+
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -125,8 +125,8 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -lvs {1}lvs_runset -batch".format(OPTS.lvs_exe[1],
-                                                      output_path)
+    cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
+                         
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -178,8 +178,8 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
     run_file = output_path + "run_pex.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -pex {1}pex_runset -batch".format(OPTS.pex_exe[1],
-                                                      OPTS.openram_temp)
+    cmd = "{0} -gui -pex pex_runset -batch".format(OPTS.pex_exe[1])
+    
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -195,21 +195,7 @@ def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=Fals
     global num_drc_runs
     num_drc_runs += 1
 
-    # Filter the layouts through magic as a GDS filter for nsdm/psdm/nwell merging
-    # Disabled for now
-    if False and OPTS.tech_name == "sky130":
-        shutil.copy(gds_name, OPTS.openram_temp + "temp.gds")
-        from magic import filter_gds
-        filter_gds(cell_name, OPTS.openram_temp + "temp.gds", OPTS.openram_temp + cell_name + ".gds")
-    else:
-        # Copy file to local dir if it isn't already
-        if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-            shutil.copy(gds_name, OPTS.openram_temp)
-
     drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
-
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp + os.path.basename(gds_name))
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
@@ -250,12 +236,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     num_lvs_runs += 1
 
     lvs_runset = write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
-
-    # Copy file to local dir if it isn't already
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp)
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-        shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -337,12 +317,6 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
     num_pex_runs += 1
 
     write_pex_script(cell_name, True, output, final_verification, OPTS.openram_temp)
-
-    # Copy file to local dir if it isn't already
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-        shutil.copy(gds_name, OPTS.openram_temp)
-    if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-        shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 

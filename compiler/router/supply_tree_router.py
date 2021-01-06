@@ -1,24 +1,19 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-import gdsMill
-import tech
-import math
 import debug
-from globals import OPTS,print_time
-from contact import contact
-from pin_group import pin_group
-from pin_layout import pin_layout
-from vector3d import vector3d
+from globals import print_time
 from router import router
-from direction import direction
 from datetime import datetime
-import grid
 import grid_utils
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import minimum_spanning_tree
+from signal_grid import signal_grid
+
 
 class supply_tree_router(router):
     """
@@ -32,10 +27,9 @@ class supply_tree_router(router):
         either the gds file name or the design itself (by saving to a gds file).
         """
         # Power rail width in minimum wire widths
-        self.rail_track_width = 3
+        self.route_track_width = 2
 
-        router.__init__(self, layers, design, gds_filename, self.rail_track_width)
-
+        router.__init__(self, layers, design, gds_filename, self.route_track_width)
 
     def create_routing_grid(self):
         """
@@ -43,9 +37,7 @@ class supply_tree_router(router):
         """
         size = self.ur - self.ll
         debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
-
-        import supply_grid
-        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.track_width)
+        self.rg = signal_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -82,7 +74,7 @@ class supply_tree_router(router):
         self.route_pins(gnd_name)
         print_time("Maze routing supplies",datetime.now(), start_time, 3)
 
-        #self.write_debug_gds("final.gds",False)
+        # self.write_debug_gds("final_tree_router.gds",False)
 
         # Did we route everything??
         if not self.check_all_routed(vdd_name):
@@ -92,48 +84,6 @@ class supply_tree_router(router):
 
         return True
 
-
-    def check_all_routed(self, pin_name):
-        """
-        Check that all pin groups are routed.
-        """
-        for pg in self.pin_groups[pin_name]:
-            if not pg.is_routed():
-                return False
-
-    def prepare_blockages(self, pin_name):
-        """
-        Reset and add all of the blockages in the design.
-        Names is a list of pins to add as a blockage.
-        """
-        debug.info(3,"Preparing blockages.")
-
-        # Start fresh. Not the best for run-time, but simpler.
-        self.clear_blockages()
-        # This adds the initial blockges of the design
-        #print("BLOCKING:",self.blocked_grids)
-        self.set_blockages(self.blocked_grids,True)
-
-        # Block all of the pin components (some will be unblocked if they're a source/target)
-        # Also block the previous routes
-        for name in self.pin_groups:
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
-            self.set_blockages(blockage_grids,True)
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
-            self.set_blockages(blockage_grids,True)
-
-        # FIXME: These duplicate a bit of work
-        # These are the paths that have already been routed.
-        self.set_blockages(self.path_blockages)
-
-        # Don't mark the other components as targets since we want to route
-        # directly to a rail, but unblock all the source components so we can
-        # route over them
-        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
-        self.set_blockages(blockage_grids,False)
-
-
-
     def route_pins(self, pin_name):
         """
         This will route each of the remaining pin components to the other pins.
@@ -141,15 +91,46 @@ class supply_tree_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Maze routing {0} with {1} pin components to connect.".format(pin_name,
-                                                                                   remaining_components))
+        debug.info(1,"Routing {0} with {1} pin components to connect.".format(pin_name,
+                                                                              remaining_components))
 
-        for index,pg in enumerate(self.pin_groups[pin_name]):
-            if pg.is_routed():
-                continue
+        # Create full graph
+        debug.info(2,"Creating adjacency matrix")
+        pin_size = len(self.pin_groups[pin_name])
+        adj_matrix = [[0] * pin_size for i in range(pin_size)]
 
-            debug.info(1,"Routing component {0} {1}".format(pin_name, index))
+        for index1,pg1 in enumerate(self.pin_groups[pin_name]):
+            for index2,pg2 in enumerate(self.pin_groups[pin_name]):
+                if index1>=index2:
+                    continue
+                dist = int(grid_utils.distance_set(list(pg1.grids)[0], pg2.grids))
+                adj_matrix[index1][index2] = dist
 
+        # Find MST
+        debug.info(2,"Finding MinimumSpanning Tree")
+        X = csr_matrix(adj_matrix)
+        Tcsr = minimum_spanning_tree(X)
+        mst = Tcsr.toarray().astype(int)
+        connections = []
+        for x in range(pin_size):
+            for y in range(pin_size):
+                if x >= y:
+                    continue
+                if mst[x][y]>0:
+                    connections.append((x, y))
+
+        # Route MST components
+        for (src, dest) in connections:
+            self.route_signal(pin_name, src, dest)
+                
+        #self.write_debug_gds("final.gds", True)
+        #return 
+
+    def route_signal(self, pin_name, src_idx, dest_idx):
+        
+        for detour_scale in [5 * pow(2, x) for x in range(5)]:
+            debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
+            
             # Clear everything in the routing grid.
             self.rg.reinit()
 
@@ -159,35 +140,27 @@ class supply_tree_router(router):
 
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
-            self.add_pin_component_source(pin_name,index)
+            self.add_pin_component_source(pin_name, src_idx)
 
             # Marks all pin components except index as target
-            self.add_pin_component_target_except(pin_name,index)
-            # Add the prevous paths as a target too
-            self.add_path_target(self.paths)
-
-            print("SOURCE: ")
-            for k,v in self.rg.map.items():
-                if v.source:
-                    print(k)
-
-            print("TARGET: ")
-            for k,v in self.rg.map.items():
-                if v.target:
-                    print(k)
-
-            import pdb; pdb.set_trace()
-            if index==1:
-                self.write_debug_gds("debug{}.gds".format(pin_name),False)
-
+            self.add_pin_component_target(pin_name, dest_idx)
+            
             # Actually run the A* router
-            if not self.run_router(detour_scale=5):
-                self.write_debug_gds("debug_route.gds",True)
+            if self.run_router(detour_scale=detour_scale):
+                return
 
-            #if index==3 and pin_name=="vdd":
-            #    self.write_debug_gds("route.gds",False)
-
+        self.write_debug_gds("debug_route.gds", True)
 
 
 
+    def add_io_pin(self, instance, pin_name, new_name=""):
+        """
+        Add a signle input or output pin up to metal 3.
+        """
+        pin = instance.get_pins(pin_name)
 
+        if new_name == "":
+            new_name = pin_name
+
+        # Just use the power pin function for now to save code
+        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=pin.layer)

@@ -391,19 +391,17 @@ class replica_bitcell_array(bitcell_base_array):
         for bit in range(self.rbl[1]):
             dummy_offset = self.bitcell_offset.scale(0, bit + bit % 2) + self.bitcell_array_inst.ul()
             self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=dummy_offset,
-                                                                  mirror="MX" if bit % 2 else "R0")
+                                                                  mirror="MX" if (self.row_size + bit) % 2 else "R0")
 
     def add_end_caps(self):
         """ Add dummy cells or end caps around the array """
 
-        # FIXME: These depend on the array size itself
-        # Far top dummy row (first row above array is NOT flipped)
-        flip_dummy = self.rbl[1] % 2
+        # Far top dummy row (first row above array is NOT flipped if even number of rows)
+        flip_dummy = (self.row_size + self.rbl[1]) % 2
         dummy_row_offset = self.bitcell_offset.scale(0, self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
         self.dummy_row_insts[1].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
         
-        # FIXME: These depend on the array size itself
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.rbl[0] + 1) % 2
         dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy) + self.unused_offset
@@ -422,9 +420,8 @@ class replica_bitcell_array(bitcell_base_array):
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        #All wordlines
-        #Main array wl and bl/br
-
+        # All wordlines
+        # Main array wl and bl/br
         for pin_name in self.all_wordline_names:
             pin_list = self.bitcell_array_inst.get_pins(pin_name)
             for pin in pin_list:

@@ -12,6 +12,5 @@ num_words = 16
 tech_name = OPTS.tech_name
 
 nominal_corner_only = True
-route_supplies = True
 check_lvsdrc = True
 

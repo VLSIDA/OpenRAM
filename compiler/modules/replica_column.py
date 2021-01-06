@@ -180,7 +180,7 @@ class replica_column(bitcell_base_array):
         for port in self.all_ports:
             for row in range(row_range_min, row_range_max):
                 wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
-                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row - row_range_min),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,

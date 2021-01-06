@@ -17,6 +17,7 @@ from globals import OPTS
 import debug
 
 
+@unittest.skip("SKIPPING 26_hspice_pex_pinv_test")
 class hspice_pex_pinv_test(openram_test):
 
     def runTest(self):
@@ -39,10 +40,10 @@ class hspice_pex_pinv_test(openram_test):
         OPTS.keep_temp =  True
         debug.info(2, "Checking 1x size inverter")
         tx = pinv.pinv(name="pinv", size=1)
-        tempgds = "{0}{1}.gds".format(OPTS.openram_temp, tx.name)
-        tx.gds_write(tempgds)
-        tempsp = "{0}{1}.sp".format(OPTS.openram_temp, tx.name)
-        tx.sp_write(tempsp)
+        tempgds = "{}.gds".format(tx.name)
+        tx.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
+        tempsp = "{}.sp".format(tx.name)
+        tx.sp_write("{0}{1}".format(OPTS.openram_temp, tempsp))
 
         # make sure that the library simulation is successful
         sp_delay = self.simulate_delay(test_module=tempsp,
@@ -74,7 +75,7 @@ class hspice_pex_pinv_test(openram_test):
     def simulate_delay(self, test_module, top_level_name):
         from charutils import parse_spice_list
         # setup simulation
-        sim_file = OPTS.openram_temp + "stim.sp"
+        sim_file = "stim.sp"
         log_file_name = "timing"
         test_sim = self.write_simulation(sim_file, test_module, top_level_name)
         test_sim.run_sim("stim.sp")
@@ -86,7 +87,7 @@ class hspice_pex_pinv_test(openram_test):
         import tech
         from characterizer import measurements, stimuli
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        sim_file = open(sim_file, "w")
+        sim_file = open(OPTS.openram_temp + sim_file, "w")
         simulation = stimuli(sim_file, corner)
 
         # library files

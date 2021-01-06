@@ -11,7 +11,7 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
-from tech import layer
+
 
 class write_mask_and_array(design.design):
     """
@@ -95,9 +95,9 @@ class write_mask_and_array(design.design):
         if not self.offsets:
             self.offsets = []
             for i in range(self.columns):
-                self.offsets.append(i * self.driver_spacing)
+                self.offsets.append((i + self.write_size - 1) * self.driver_spacing)
 
-        self.width = self.offsets[-1] + self.driver_spacing
+        self.width = self.offsets[-1] + self.bitcell.width
         self.height = self.and2.height
 
         write_bits = self.columns / self.num_wmasks
@@ -138,12 +138,13 @@ class write_mask_and_array(design.design):
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer="m3",
                                       offset=en_pos)
-
-            for supply in ["gnd", "vdd"]:
-                supply_pin=self.and2_insts[i].get_pin(supply)
-                self.add_power_pin(supply, supply_pin.center(), start_layer=supply_pin.layer)
-
+            
         for supply in ["gnd", "vdd"]:
-            supply_pin_left = self.and2_insts[0].get_pin(supply)
-            supply_pin_right = self.and2_insts[self.num_wmasks - 1].get_pin(supply)
-            self.add_path(supply_pin_left.layer, [supply_pin_left.lc(), supply_pin_right.rc()])
+            supply_pin = self.and2_insts[0].get_pin(supply)
+            supply_pin_yoffset = supply_pin.cy()
+            left_loc = vector(0, supply_pin_yoffset)
+            right_loc = vector(self.width, supply_pin_yoffset)
+            self.add_path(supply_pin.layer, [left_loc, right_loc])
+            self.add_power_pin(supply, left_loc, start_layer=supply_pin.layer)
+            self.add_power_pin(supply, right_loc, start_layer=supply_pin.layer)
+

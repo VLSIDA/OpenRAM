@@ -53,21 +53,27 @@ class openram_back_end_test(openram_test):
         else:
             exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
-        cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                          out_file,
-                                                                          out_path,
-                                                                          options,
-                                                                          config_name,
-                                                                          out_path)
+        cmd = "{0} -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
+                                                                       out_file,
+                                                                       out_path,
+                                                                       options,
+                                                                       config_name,
+                                                                       out_path)
         debug.info(1, cmd)
         os.system(cmd)
 
         # assert an error until we actually check a resul
-        for extension in ["gds", "v", "lef", "sp"]:
-            filename = "{0}/{1}.{2}".format(out_path, out_file, extension)
+        for extension in ["gds", "v", "lef", "sp", "lvs.sp"]:
+            filename = "{0}{1}.{2}".format(out_path, out_file, extension)
             debug.info(1, "Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename), True)
 
+        # check if the auxiliary scripts were created
+        for out_file in ["run_drc.sh", "run_lvs.sh"]:
+            filename = "{0}{1}".format(out_path, out_file)
+            debug.info(1, "Checking for file: " + filename)
+            self.assertEqual(os.path.exists(filename), True)
+            
         # Make sure there is any .lib file
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))
@@ -79,7 +85,7 @@ class openram_back_end_test(openram_test):
             self.assertTrue(len(datasheets)>0)
 
         # grep any errors from the output
-        output_log = open("{0}/output.log".format(out_path), "r")
+        output_log = open("{0}output.log".format(out_path), "r")
         output = output_log.read()
         output_log.close()
         self.assertEqual(len(re.findall('ERROR', output)), 0)

@@ -106,7 +106,7 @@ class options(optparse.Values):
     # Output config with all options
     output_extended_config = False
     # Output temporary file used to format HTML page
-    output_datasheet_info = True
+    output_datasheet_info = False
     # Determines which analytical model to use.
     # Available Models: elmore, linear_regression
     model_name = "elmore"

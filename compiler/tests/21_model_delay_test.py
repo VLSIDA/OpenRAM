@@ -30,6 +30,7 @@ class model_delay_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import delay
+        from characterizer import elmore
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
@@ -48,7 +49,9 @@ class model_delay_test(openram_test):
         debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        
         d = delay(s.s, tempspice, corner)
+        m = elmore(s.s, tempspice, corner)
         import tech
         loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
@@ -58,7 +61,7 @@ class model_delay_test(openram_test):
         spice_data.update(port_data[0])
 
         # Run analytical characterization
-        model_data, port_data = d.analytical_delay(slews, loads)
+        model_data, port_data = m.get_lib_values(slews, loads)
         model_data.update(port_data[0])
 
         # Only compare the delays

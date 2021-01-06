@@ -6,10 +6,11 @@
 # All rights reserved.
 #
 
+import itertools
+import math
 import gdsMill
 from tech import drc, GDS
 from tech import layer as techlayer
-import math
 import debug
 from router_tech import router_tech
 from pin_layout import pin_layout
@@ -189,7 +190,6 @@ class router(router_tech):
         #     self.combine_adjacent_pins(pin)
         # print_time("Combining adjacent pins",datetime.now(), start_time, 4)
 
-
         # Separate any adjacent grids of differing net names
         # that overlap
         # Must be done before enclosing pins
@@ -266,18 +266,10 @@ class router(router_tech):
         This will try to separate all grid pins by the supplied
         number of separation tracks (default is to prevent adjacency).
         """
-        # Commented out to debug with SCMOS
-        # if separation==0:
-        #     return
-
         pin_names = self.pin_groups.keys()
-        for i, pin_name1 in enumerate(pin_names):
-            for j, pin_name2 in enumerate(pin_names):
-                if i == j:
-                    continue
-                if i > j:
-                    return
-                self.separate_adjacent_pin(pin_name1, pin_name2, separation)
+
+        for (pin_name1, pin_name2) in itertools.combinations(pin_names, 2):
+            self.separate_adjacent_pin(pin_name1, pin_name2, separation)
 
     def separate_adjacent_pin(self, pin_name1, pin_name2, separation):
         """
@@ -290,6 +282,7 @@ class router(router_tech):
                    "Comparing {0} and {1} adjacency".format(pin_name1,
                                                             pin_name2))
         removed_grids = 0
+
         for index1, pg1 in enumerate(self.pin_groups[pin_name1]):
             for index2, pg2 in enumerate(self.pin_groups[pin_name2]):
                 adj_grids = pg1.adjacent_grids(pg2, separation)
@@ -1039,18 +1032,18 @@ class router(router_tech):
             (ll, ur) = self.convert_track_to_shape(coord)
             self.cell.add_rect(layer="text",
                                offset=ll,
-                               width=ur[0]-ll[0],
-                               height=ur[1]-ll[1])
-            (ll, ur) = self.convert_track_to_pin(coord).rect
-            self.cell.add_rect(layer="boundary",
-                               offset=ll,
-                               width=ur[0]-ll[0],
-                               height=ur[1]-ll[1])
+                               width=ur[0] - ll[0],
+                               height=ur[1] - ll[1])
+            # (ll, ur) = self.convert_track_to_pin(coord).rect
+            # self.cell.add_rect(layer="boundary",
+            #                    offset=ll,
+            #                    width=ur[0] - ll[0],
+            #                    height=ur[1] - ll[1])
             (ll, ur) = pin.rect
             self.cell.add_rect(layer="text",
                                offset=ll,
-                               width=ur[0]-ll[0],
-                               height=ur[1]-ll[1])
+                               width=ur[0] - ll[0],
+                               height=ur[1] - ll[1])
 
     def write_debug_gds(self, gds_name="debug_route.gds", stop_program=True):
         """
@@ -1058,9 +1051,9 @@ class router(router_tech):
         search information annotated on it.
         """
         debug.info(0, "Writing annotated router gds file to {}".format(gds_name))
-        self.del_router_info()
         self.add_router_info()
         self.cell.gds_write(gds_name)
+        self.del_router_info()
 
         if stop_program:
             import sys
@@ -1071,17 +1064,17 @@ class router(router_tech):
         Display grid information in the GDS file for a single grid cell.
         """
         shape = self.convert_track_to_shape(g)
-        partial_track = vector(0,self.track_width/6.0)
+        partial_track = vector(0, self.track_width / 6.0)
         self.cell.add_rect(layer="text",
                            offset=shape[0],
-                           width=shape[1].x-shape[0].x,
-                           height=shape[1].y-shape[0].y)
+                           width=shape[1].x - shape[0].x,
+                           height=shape[1].y - shape[0].y)
         t = self.rg.map[g].get_type()
 
         # midpoint offset
-        off = vector((shape[1].x+shape[0].x)/2,
-                   (shape[1].y+shape[0].y)/2)
-        if t != None:
+        off = vector((shape[1].x + shape[0].x) / 2,
+                     (shape[1].y + shape[0].y) / 2)
+        if t:
             if g[2] == 1:
                 # Upper layer is upper right label
                 type_off = off + partial_track
@@ -1107,16 +1100,15 @@ class router(router_tech):
 
         self.cell.add_label(text="{0},{1}".format(g[0], g[1]),
                             layer="text",
-                            offset=shape[0],
-                            zoom=0.05)
-
+                            offset=shape[0])
+             
     def del_router_info(self):
         """
         Erase all of the comments on the current level.
         """
         debug.info(0, "Erasing router info")
-        layer_num = techlayer["text"]
-        self.cell.objs = [x for x in self.cell.objs if x.layerNumber != layer_num]
+        lpp = techlayer["text"]
+        self.cell.objs = [x for x in self.cell.objs if x.lpp != lpp]
 
     def add_router_info(self):
         """
@@ -1132,7 +1124,6 @@ class router(router_tech):
         show_all_grids = True
 
         if show_all_grids:
-            # self.rg.add_all_grids()
             for g in self.rg.map:
                 self.annotate_grid(g)
 
@@ -1143,8 +1134,8 @@ class router(router_tech):
                 (ll, ur) = blockage.inflate()
                 self.cell.add_rect(layer="text",
                                    offset=ll,
-                                   width=ur.x-ll.x,
-                                   height=ur.y-ll.y)
+                                   width=ur.x - ll.x,
+                                   height=ur.y - ll.y)
         if show_blockage_grids:
             self.set_blockages(self.blocked_grids, True)
             for g in self.rg.map:

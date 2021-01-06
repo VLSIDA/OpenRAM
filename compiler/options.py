@@ -104,7 +104,9 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options
-    output_extended_config = True
+    output_extended_config = False
+    # Output temporary file used to format HTML page
+    output_datasheet_info = True
     # Determines which analytical model to use.
     # Available Models: elmore, linear_regression
     model_name = "elmore"

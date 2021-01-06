@@ -645,8 +645,11 @@ class lib:
                 if len(git_id) != 40:
                     debug.warning("Failed to retrieve git id")
                     git_id = 'Failed to retruieve'
-
-        datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
+        if OPTS.output_datasheet_info:
+            datasheet_path = OPTS.output_path
+        else:
+            datasheet_path = OPTS.openram_temp
+        datasheet = open(datasheet_path +'/datasheet.info', 'a+')
 
         current_time = datetime.date.today()
         # write static information to be parser later

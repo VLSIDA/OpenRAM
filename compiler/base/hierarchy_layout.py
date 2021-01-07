@@ -473,11 +473,25 @@ class layout():
         """
         self.pin_map = {}
 
+    def copy_layout_pin_shapes(self, text):
+        """
+        Copy the shapes of the layout pins as objects.
+        """
+        for s in self.pin_map[text]:
+            self.add_rect(layer=s.layer,
+                          offset=s.ll(),
+                          width=s.width(),
+                          height=s.height())
+        
     def replace_layout_pin(self, text, pin):
         """
         Remove the old pin and replace with a new one
         """
+        # Keep the shapes as they were used to connect to the router pins
+        self.copy_layout_pin_shapes(text)
+        # Remove the shapes as actual pins
         self.remove_layout_pin(text)
+        # Add the new pin
         self.add_layout_pin(text=text,
                             layer=pin.layer,
                             offset=pin.ll(),

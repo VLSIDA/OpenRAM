@@ -34,7 +34,6 @@ class grid_cell:
         if self.min_cost > 0:
             return self.min_cost
 
-
     def get_type(self):
         type_string = ""
 
@@ -50,7 +49,5 @@ class grid_cell:
         if self.path:
             type_string += "P"
 
-        if type_string != "":
-            return type_string
+        return type_string
 
-        return None

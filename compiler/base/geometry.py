@@ -23,10 +23,14 @@ class geometry:
     A specific path, shape, or text geometry. Base class for shared
     items.
     """
-    def __init__(self):
+    def __init__(self, lpp=None):
         """ By default, everything has no size. """
         self.width = 0
         self.height = 0
+        if lpp:
+            self.lpp = lpp
+            self.layerNumber = lpp[0]
+            self.layerPurpose = lpp[1]
 
     def __str__(self):
         """ override print function output """
@@ -410,10 +414,8 @@ class path(geometry):
 
     def __init__(self, lpp, coordinates, path_width):
         """Initializes a path for the specified layer"""
-        super().__init__()
+        super().__init__(lpp)
         self.name = "path"
-        self.layerNumber = lpp[0]
-        self.layerPurpose = lpp[1]
         self.coordinates = map(lambda x: [x[0], x[1]], coordinates)
         self.coordinates = vector(self.coordinates).snap_to_grid()
         self.path_width = path_width
@@ -448,11 +450,9 @@ class label(geometry):
 
     def __init__(self, text, lpp, offset, zoom=None):
         """Initializes a text label for specified layer"""
-        super().__init__()
+        super().__init__(lpp)
         self.name = "label"
         self.text = text
-        self.layerNumber = lpp[0]
-        self.layerPurpose = lpp[1]
         self.offset = vector(offset).snap_to_grid()
 
         if not zoom:
@@ -495,10 +495,8 @@ class rectangle(geometry):
 
     def __init__(self, lpp, offset, width, height):
         """Initializes a rectangular shape for specified layer"""
-        super().__init__()
+        super().__init__(lpp)
         self.name = "rect"
-        self.layerNumber = lpp[0]
-        self.layerPurpose = lpp[1]
         self.offset = vector(offset).snap_to_grid()
         self.size = vector(width, height).snap_to_grid()
         self.width = round_to_grid(self.size.x)

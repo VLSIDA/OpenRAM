@@ -23,9 +23,6 @@ class signal_grid(grid):
         """ Create a routing map of width x height cells and 2 in the z-axis. """
         grid.__init__(self, ll, ur, track_factor)
 
-        # priority queue for the maze routing
-        self.q = []
-
     def reinit(self):
         """ Reinitialize everything for a new route. """
 
@@ -33,14 +30,8 @@ class signal_grid(grid):
         for p in self.map.values():
             p.reset()
 
-        # clear source and target pins
-        self.source = set()
-        self.target = set()
-
-        # Clear the queue
-        while len(self.q) > 0:
-            heappop(self.q)
-        self.counter = 0
+        self.clear_source()
+        self.clear_target()
 
     def init_queue(self):
         """
@@ -51,12 +42,13 @@ class signal_grid(grid):
         """
         # Counter is used to not require data comparison in Python 3.x
         # Items will be returned in order they are added during cost ties
+        self.q = []
         self.counter = 0
         for s in self.source:
             cost = self.cost_to_target(s)
             debug.info(3, "Init: cost=" + str(cost) + " " + str([s]))
             heappush(self.q, (cost, self.counter, grid_path([vector3d(s)])))
-            self.counter+=1
+            self.counter += 1
 
     def route(self, detour_scale):
         """
@@ -72,11 +64,7 @@ class signal_grid(grid):
         # Check if something in the queue is already a source and a target!
         for s in self.source:
             if self.is_target(s):
-                return((grid_path([vector3d(s)]),0))
-
-        # Make sure the queue is empty if we run another route
-        while len(self.q)>0:
-            heappop(self.q)
+                return((grid_path([vector3d(s)]), 0))
 
         # Put the source items into the queue
         self.init_queue()

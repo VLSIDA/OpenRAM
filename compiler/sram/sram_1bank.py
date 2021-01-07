@@ -254,43 +254,37 @@ class sram_1bank(sram_base):
         # List of pin to new pin name
         pins_to_route = []
         for port in self.all_ports:
-            # Depending on the port, use the bottom/top or left/right sides
-            # Port 0 is left/bottom
-            # Port 1 is right/top
-            bottom_or_top = "bottom" if port==0 else "top"
-            left_or_right = "left" if port==0 else "right"
-
             # Connect the control pins as inputs
             for signal in self.control_logic_inputs[port]:
                 if signal.startswith("rbl"):
                     continue
                 if signal=="clk":
-                    pins_to_route.append(("{0}{1}".format(signal, port), bottom_or_top))
+                    pins_to_route.append("{0}{1}".format(signal, port))
                 else:
-                    pins_to_route.append(("{0}{1}".format(signal, port), left_or_right))
+                    pins_to_route.append("{0}{1}".format(signal, port))
                     
             if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    pins_to_route.append(("din{0}[{1}]".format(port, bit), bottom_or_top))
+                    pins_to_route.append("din{0}[{1}]".format(port, bit))
 
             if port in self.readwrite_ports or port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
-                    pins_to_route.append(("dout{0}[{1}]".format(port, bit), bottom_or_top))
+                    pins_to_route.append("dout{0}[{1}]".format(port, bit))
 
             for bit in range(self.col_addr_size):
-                pins_to_route.append(("addr{0}[{1}]".format(port, bit), bottom_or_top))
+                pins_to_route.append("addr{0}[{1}]".format(port, bit))
 
             for bit in range(self.row_addr_size):
-                pins_to_route.append(("addr{0}[{1}]".format(port, bit + self.col_addr_size), left_or_right))
+                pins_to_route.append("addr{0}[{1}]".format(port, bit + self.col_addr_size))
 
             if port in self.write_ports:
                 if self.write_size:
                     for bit in range(self.num_wmasks):
-                        pins_to_route.append(("wmask{0}[{1}]".format(port, bit), bottom_or_top))
+                        pins_to_route.append("wmask{0}[{1}]".format(port, bit))
 
             if port in self.write_ports:
                 for bit in range(self.num_spare_cols):
-                    pins_to_route.append(("spare_wen{0}[{1}]".format(port, bit), bottom_or_top))
+                    pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
         rtr=router(self.m3_stack, self)
         rtr.escape_route(pins_to_route)

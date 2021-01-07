@@ -88,9 +88,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("drc off\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
-    f.write("gds flatten true\n")
-    f.write("gds readonly true\n")
+    # These two options are temporarily disabled until Tim fixes a bug in magic related
+    # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
+    # they appear to be disconnected. 
+    f.write("#gds flatten true\n")
     f.write("#gds ordering true\n")
+    f.write("gds readonly true\n")
     f.write("gds read {}\n".format(gds_name))
     f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))

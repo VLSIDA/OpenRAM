@@ -32,6 +32,16 @@ class signal_escape_router(router):
         debug.info(1,"Size: {0} x {1}".format(size.x, size.y))
         self.rg = signal_grid(self.ll, self.ur, self.track_width)
 
+    def perimeter_dist(self, pin_name):
+        """
+        Return the shortest Manhattan distance to the bounding box perimeter.
+        """
+        loc = self.cell.get_pin(pin_name).center()
+        x_dist = min(loc.x - self.ll.x, self.ur.x - loc.x)
+        y_dist = min(loc.y - self.ll.y, self.ur.y - loc.y)
+
+        return min(x_dist, y_dist)
+    
     def escape_route(self, pin_names):
         """
         Takes a list of tuples (name, side) and routes them. After routing,
@@ -43,10 +53,14 @@ class signal_escape_router(router):
         self.find_pins_and_blockages(pin_names)
         print_time("Finding pins and blockages",datetime.now(), start_time, 3)
 
+        # Order the routes by closest to the perimeter first
+        # This prevents some pins near the perimeter from being blocked by other pins
+        ordered_pin_names = sorted(pin_names, key=lambda x: self.perimeter_dist(x))
+        
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
-        for pin_name in pin_names:
+        for pin_name in ordered_pin_names:
             self.route_signal(pin_name)
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)

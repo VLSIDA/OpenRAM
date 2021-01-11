@@ -61,12 +61,6 @@ class supply_tree_router(router):
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages",datetime.now(), start_time, 3)
 
-        # Add the supply rails in a mesh network and connect H/V with vias
-        start_time = datetime.now()
-        # Block everything
-        self.prepare_blockages(self.gnd_name)
-        self.prepare_blockages(self.vdd_name)
-
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
@@ -136,7 +130,8 @@ class supply_tree_router(router):
 
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
-            self.prepare_blockages(pin_name)
+            self.prepare_blockages()
+            self.clear_blockages(pin_name)
 
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too

@@ -62,6 +62,8 @@ class signal_escape_router(router):
         start_time = datetime.now()
         for pin_name in ordered_pin_names:
             self.route_signal(pin_name)
+            #if pin_name == "dout1[1]":
+            #    self.write_debug_gds("postroute.gds", False)
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
@@ -79,7 +81,8 @@ class signal_escape_router(router):
 
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
-            self.prepare_blockages(pin_name)
+            self.prepare_blockages()
+            self.clear_blockages(pin_name)
 
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
@@ -87,6 +90,9 @@ class signal_escape_router(router):
 
             # Marks the grid cells all along the perimeter as a target
             self.add_perimeter_target(side)
+            
+            #if pin_name == "dout1[1]":
+            #    self.write_debug_gds("preroute.gds", False)
             
             # Actually run the A* router
             if self.run_router(detour_scale=detour_scale):

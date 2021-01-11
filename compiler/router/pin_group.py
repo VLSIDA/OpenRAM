@@ -41,10 +41,7 @@ class pin_group:
         # or could not be part of the pin
         self.secondary_grids = set()
 
-        # The corresponding set of partially blocked grids for each pin group.
-        # These are blockages for other nets but unblocked
-        # for routing this group. These are also blockages if we
-        # used a simple enclosure to route to a rail.
+        # The set of blocked grids due to this pin
         self.blockages = set()
 
         # This is a set of pin_layout shapes to cover the grids
@@ -421,16 +418,16 @@ class pin_group:
         while True:
             next_cell = row[-1] + offset1
             # Can't move if not in the pin shape
-            if next_cell in self.grids and next_cell not in self.router.blocked_grids:
+            if next_cell in self.grids and next_cell not in self.router.get_blocked_grids():
                 row.append(next_cell)
             else:
                 break
         # Move in dir2 while we can
         while True:
-            next_row = [x+offset2 for x in row]
+            next_row = [x + offset2 for x in row]
             for cell in next_row:
                 # Can't move if any cell is not in the pin shape
-                if cell not in self.grids or cell in self.router.blocked_grids:
+                if cell not in self.grids or cell in self.router.get_blocked_grids():
                     break
             else:
                 row = next_row
@@ -606,9 +603,10 @@ class pin_group:
         The secondary set of grids are "optional" pin shapes that
         should be either blocked or part of the pin.
         """
+        # Set of tracks that overlap a pin
         pin_set = set()
+        # Set of track adjacent to or paritally overlap a pin (not full DRC connection)
         partial_set = set()
-        blockage_set = set()
 
         for pin in self.pins:
             debug.info(4, "  Converting {0}".format(pin))
@@ -621,25 +619,20 @@ class pin_group:
             # Blockages will be a super-set of pins since
             # it uses the inflated pin shape.
             blockage_in_tracks = self.router.convert_blockage(pin)
-            blockage_set.update(blockage_in_tracks)
+            self.blockages.update(blockage_in_tracks)
 
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already
-        shared_set = pin_set & self.router.blocked_grids
+        shared_set = pin_set & self.router.get_blocked_grids()
         if len(shared_set) > 0:
             debug.info(4, "Removing pins {}".format(shared_set))
         pin_set.difference_update(shared_set)
-        shared_set = partial_set & self.router.blocked_grids
+        shared_set = partial_set & self.router.get_blocked_grids()
         if len(shared_set) > 0:
             debug.info(4, "Removing pins {}".format(shared_set))
-        partial_set.difference_update(shared_set)
-        shared_set = blockage_set & self.router.blocked_grids
-        if len(shared_set) > 0:
-            debug.info(4, "Removing blocks {}".format(shared_set))
-        blockage_set.difference_update(shared_set)
 
         # At least one of the groups must have some valid tracks
-        if (len(pin_set) == 0 and len(partial_set) == 0 and len(blockage_set) == 0):
+        if (len(pin_set) == 0 and len(partial_set) == 0):
             # debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
 
             for pin in self.pins:
@@ -656,8 +649,11 @@ class pin_group:
                                                                         self.pins))
                 self.router.write_debug_gds("blocked_pin.gds")
 
-        # Consider all the grids that would be blocked
-        self.grids = pin_set | partial_set
+        # Consider the fully connected set first and if not the partial set
+        if len(pin_set) > 0:
+            self.grids = pin_set
+        else:
+            self.grids = partial_set
         if len(self.grids) < 0:
             debug.error("Did not find any unblocked grids: {}".format(str(self.pins)))
             self.router.write_debug_gds("blocked_pin.gds")

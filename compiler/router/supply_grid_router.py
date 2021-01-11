@@ -73,13 +73,16 @@ class supply_grid_router(router):
         # Add the supply rails in a mesh network and connect H/V with vias
         start_time = datetime.now()
         # Block everything
-        self.prepare_blockages(self.gnd_name)
+        self.prepare_blockages()
+        self.clear_blockages(self.gnd_name)
+        
         
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 
         # Block everything
-        self.prepare_blockages(self.vdd_name)
+        self.prepare_blockages()
+        self.clear_blockages(self.vdd_name)        
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)

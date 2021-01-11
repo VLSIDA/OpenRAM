@@ -144,14 +144,12 @@ class supply_tree_router(router):
 
             # Marks all pin components except index as target
             self.add_pin_component_target(pin_name, dest_idx)
-            
+
             # Actually run the A* router
             if self.run_router(detour_scale=detour_scale):
                 return
 
         self.write_debug_gds("debug_route.gds", True)
-
-
 
     def add_io_pin(self, instance, pin_name, new_name=""):
         """

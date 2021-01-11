@@ -693,7 +693,8 @@ class lib:
 
         self.write_power_datasheet(datasheet)
 
-        datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
+        self.write_model_params(datasheet)
+        
         datasheet.write("END\n")
         datasheet.close()
 
@@ -804,3 +805,29 @@ class lib:
             control_str += ' & csb{0}'.format(i)
 
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
+        
+    def write_model_params(self, datasheet):
+        """Write values which will be used in the analytical model as inputs"""
+        datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
+        datasheet.write("{0},{1},".format('slews', list(self.slews)))
+        datasheet.write("{0},{1},".format('loads', list(self.loads)))
+        
+        for port in self.read_ports:
+            datasheet.write("{0},{1},".format('cell_rise_{}'.format(port), self.char_port_results[port]["delay_lh"]))
+            datasheet.write("{0},{1},".format('cell_fall_{}'.format(port), self.char_port_results[port]["delay_hl"]))
+            datasheet.write("{0},{1},".format('rise_transition_{}'.format(port), self.char_port_results[port]["slew_lh"]))
+            datasheet.write("{0},{1},".format('fall_transition_{}'.format(port), self.char_port_results[port]["slew_hl"]))
+        
+        for port in self.write_ports:
+            write1_power = np.mean(self.char_port_results[port]["write1_power"])
+            write0_power = np.mean(self.char_port_results[port]["write0_power"])
+            datasheet.write("{0},{1},".format('write_rise_power_{}'.format(port), write1_power))
+            datasheet.write("{0},{1},".format('read_fall_power_{}'.format(port), write0_power))
+        
+        for port in self.read_ports:
+            read1_power = np.mean(self.char_port_results[port]["read1_power"])
+            read0_power = np.mean(self.char_port_results[port]["read0_power"])
+            datasheet.write("{0},{1},".format('read_rise_power_{}'.format(port), read1_power))
+            datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), read0_power))
+        
+        

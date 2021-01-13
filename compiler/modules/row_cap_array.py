@@ -113,5 +113,5 @@ class row_cap_array(bitcell_base_array):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(pin)
+                        self.copy_power_pin(pin)
 

@@ -121,28 +121,36 @@ class supply_tree_router(router):
         #return 
 
     def route_signal(self, pin_name, src_idx, dest_idx):
-        
-        for detour_scale in [5 * pow(2, x) for x in range(5)]:
-            debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
+
+        # First pass, try to route normally
+        # Second pass, clear prior pin blockages so that you can route over other metal
+        # of the same supply. Otherwise, this can create a lot of circular routes due to accidental overlaps.
+        for unblock_routes in [False, True]:
+            for detour_scale in [5 * pow(2, x) for x in range(5)]:
+                debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
             
-            # Clear everything in the routing grid.
-            self.rg.reinit()
+                # Clear everything in the routing grid.
+                self.rg.reinit()
 
-            # This is inefficient since it is non-incremental, but it was
-            # easier to debug.
-            self.prepare_blockages()
-            self.clear_blockages(pin_name)
+                # This is inefficient since it is non-incremental, but it was
+                # easier to debug.
+                self.prepare_blockages()
+                if unblock_routes:
+                    self.set_blockages(self.path_blockages, False)
 
-            # Add the single component of the pin as the source
-            # which unmarks it as a blockage too
-            self.add_pin_component_source(pin_name, src_idx)
+                # Add the single component of the pin as the source
+                # which unmarks it as a blockage too
+                self.add_pin_component_source(pin_name, src_idx)
 
-            # Marks all pin components except index as target
-            self.add_pin_component_target(pin_name, dest_idx)
+                # Marks all pin components except index as target
+                self.add_pin_component_target(pin_name, dest_idx)
 
-            # Actually run the A* router
-            if self.run_router(detour_scale=detour_scale):
-                return
+                # Actually run the A* router
+                if self.run_router(detour_scale=detour_scale):
+                    return
+
+            debug.warning("Unblocking supply self blockages to improve access (may cause DRC errors):\n{0}\n{1})".format(pin_name,
+                                                                                                                         self.pin_groups[pin_name][src_idx].pins))
 
         self.write_debug_gds("debug_route.gds", True)
 

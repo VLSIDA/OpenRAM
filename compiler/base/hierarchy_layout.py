@@ -1237,22 +1237,31 @@ class layout():
         self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
 
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
+
+        # Hack for min area
+        if OPTS.tech_name == "sky130" and self.is_top_level:
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            width = round_to_grid(sqrt(min_area))
+            height = round_to_grid(min_area / width)
+        else:
+            width = None
+            height = None
+
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
-                                            offset=loc)
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
         else:
             via = self.add_via_stack_center(from_layer=start_layer,
                                             to_layer=self.pwr_grid_layer,
                                             offset=loc,
                                             directions=directions)
 
-            # Hack for min area
-            if OPTS.tech_name == "sky130" and self.is_top_level:
-                width = round_to_grid(sqrt(drc["minarea_m3"]))
-                height = round_to_grid(drc["minarea_m3"] / width)
-            else:
+            if not width:
                 width = via.width
+            if not height:
                 height = via.height
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
@@ -1270,22 +1279,30 @@ class layout():
         if not loc:
             loc = pin.center()
             
+        # Hack for min area
+        if OPTS.tech_name == "sky130" and self.is_top_level:
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            width = round_to_grid(sqrt(min_area))
+            height = round_to_grid(min_area / width)
+        else:
+            width = None
+            height = None
+            
         if pin.layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=pin.name,
                                             layer=self.pwr_grid_layer,
-                                            offset=loc)
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
         else:
             via = self.add_via_stack_center(from_layer=pin.layer,
                                             to_layer=self.pwr_grid_layer,
                                             offset=loc,
                                             directions=directions)
 
-            # Hack for min area
-            if OPTS.tech_name == "sky130" and self.is_top_level:
-                width = round_to_grid(sqrt(drc["minarea_m3"]))
-                height = round_to_grid(drc["minarea_m3"] / width)
-            else:
+            if not width:
                 width = via.width
+            if not height:
                 height = via.height
             self.add_layout_pin_rect_center(text=pin.name,
                                             layer=self.pwr_grid_layer,

@@ -11,6 +11,7 @@ from contact import m2_via
 from channel_route import channel_route
 from signal_escape_router import signal_escape_router as router
 from globals import OPTS
+import debug
 
 
 class sram_1bank(sram_base):
@@ -436,9 +437,9 @@ class sram_1bank(sram_base):
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
-                    # self.add_inst(cr.name, cr)
-                    # self.connect_inst([])
-                    self.add_flat_inst(cr.name, cr)
+                    self.add_inst(cr.name, cr)
+                    self.connect_inst([])
+                    #self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
@@ -451,9 +452,9 @@ class sram_1bank(sram_base):
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
-                    # self.add_inst(cr.name, cr)
-                    # self.connect_inst([])
-                    self.add_flat_inst(cr.name, cr)
+                    self.add_inst(cr.name, cr)
+                    self.connect_inst([])
+                    #self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 

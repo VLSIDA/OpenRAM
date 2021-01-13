@@ -422,11 +422,7 @@ class router(router_tech):
         """
         This function clears a given pin and all of its components from being blockages.
         """
-        # This should be a superset of the grids...
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.blockages}
-        self.set_blockages(blockage_grids, False)
-        # But do the grids just in case
-        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
         self.set_blockages(blockage_grids, False)
         
     def clear_all_blockages(self):

@@ -130,12 +130,11 @@ class dff_inv_array(design.design):
             for col in range(self.columns):
                 # Adds power pin on left of row
                 vdd_pin=self.dff_insts[row,col].get_pin("vdd")
-                self.add_power_pin("vdd", vdd_pin.lc())
+                self.add_power_pin(vdd_pin, loc=vdd_pin.lc())
 
                 # Adds gnd pin on left of row
                 gnd_pin=self.dff_insts[row,col].get_pin("gnd")
-                self.add_power_pin("gnd", gnd_pin.lc())
-
+                self.add_power_pin(gnd_pin, loc=gnd_pin.lc())
 
         for row in range(self.rows):
             for col in range(self.columns):

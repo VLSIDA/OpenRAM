@@ -177,14 +177,10 @@ class delay_chain(design.design):
             load_list = self.load_inst_map[inst]
             for pin_name in ["vdd", "gnd"]:
                 pin = load_list[0].get_pin(pin_name)
-                self.add_power_pin(pin_name,
-                                   pin.rc() - vector(self.m1_pitch, 0),
-                                   start_layer=pin.layer)
+                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
                 pin = load_list[-2].get_pin(pin_name)
-                self.add_power_pin(pin_name,
-                                   pin.rc() - vector(self.m1_pitch, 0),
-                                   start_layer=pin.layer)
+                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
     def add_layout_pins(self):
 

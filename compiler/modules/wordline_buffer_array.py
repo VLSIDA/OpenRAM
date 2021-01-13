@@ -96,7 +96,7 @@ class wordline_buffer_array(design.design):
                     # Add pins in two locations
                     for xoffset in xoffset_list:
                         pin_pos = vector(xoffset, supply_pin.cy())
-                        self.add_power_pin(name, pin_pos)
+                        self.copy_power_pin(supply_pin, loc=pin_pos)
 
     def create_drivers(self):
         self.wld_inst = []

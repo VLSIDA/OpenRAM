@@ -113,7 +113,5 @@ class row_cap_array(bitcell_base_array):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(name=pin_name,
-                                           loc=pin.center(),
-                                           start_layer=pin.layer)
+                        self.add_power_pin(pin)
 

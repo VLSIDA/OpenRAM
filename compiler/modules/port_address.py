@@ -82,9 +82,9 @@ class port_address(design.design):
 
         for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
             if layer_props.port_address.supply_offset:
-                self.add_power_pin("vdd", rbl_vdd_pin.center())
+                self.copy_power_pin(rbl_vdd_pin)
             else:
-                self.add_power_pin("vdd", rbl_vdd_pin.lc())
+                self.copy_power_pin(rbl_vdd_pin, loc=rbl_vdd_pin.lc())
 
         # Also connect the B input of the RBL and_dec to vdd
         if OPTS.local_array_size == 0:

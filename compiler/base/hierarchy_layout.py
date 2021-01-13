@@ -56,6 +56,8 @@ class layout():
         self.visited = []
         # Flag for library cells
         self.is_library_cell = False
+        # Flag for top level (used for min area metal pins etc.)
+        self.is_top_level = False
         
         self.gds_read()
 
@@ -1220,30 +1222,21 @@ class layout():
                                     pin.height())
 
             elif add_vias:
-                self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+                self.add_power_pin(pin)
 
-    def add_io_pin(self, instance, pin_name, new_name="", start_layer=None):
+    def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
         Add a signle input or output pin up to metal 3.
         """
         pin = instance.get_pin(pin_name)
 
-        if new_name == "":
-            new_name = pin_name
-
         if not start_layer:
             start_layer = pin.layer
-            
+
         # Just use the power pin function for now to save code
-        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=start_layer)
+        self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
 
-    def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
-        """
-        Add a single power pin from the lowest power_grid layer down to M1 (or li) at
-        the given center location. The starting layer is specified to determine
-        which vias are needed.
-        """
-
+    def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         if start_layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=name,
                                             layer=self.pwr_grid_layer,
@@ -1251,18 +1244,50 @@ class layout():
         else:
             via = self.add_via_stack_center(from_layer=start_layer,
                                             to_layer=self.pwr_grid_layer,
-                                            size=size,
                                             offset=loc,
                                             directions=directions)
 
             # Hack for min area
-            if OPTS.tech_name == "sky130":
+            if OPTS.tech_name == "sky130" and self.is_top_level:
                 width = round_to_grid(sqrt(drc["minarea_m3"]))
                 height = round_to_grid(drc["minarea_m3"] / width)
             else:
                 width = via.width
                 height = via.height
             self.add_layout_pin_rect_center(text=name,
+                                            layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
+
+    def copy_power_pin(self, pin, loc=None, directions=None):
+        """
+        Add a single power pin from the lowest power_grid layer down to M1 (or li) at
+        the given center location. The starting layer is specified to determine
+        which vias are needed.
+        """
+
+        if not loc:
+            loc = pin.center()
+            
+        if pin.layer == self.pwr_grid_layer:
+            self.add_layout_pin_rect_center(text=pin.name,
+                                            layer=self.pwr_grid_layer,
+                                            offset=loc)
+        else:
+            via = self.add_via_stack_center(from_layer=pin.layer,
+                                            to_layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            directions=directions)
+
+            # Hack for min area
+            if OPTS.tech_name == "sky130" and self.is_top_level:
+                width = round_to_grid(sqrt(drc["minarea_m3"]))
+                height = round_to_grid(drc["minarea_m3"] / width)
+            else:
+                width = via.width
+                height = via.height
+            self.add_layout_pin_rect_center(text=pin.name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,

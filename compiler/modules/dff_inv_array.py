@@ -7,11 +7,10 @@
 #
 import debug
 import design
-from tech import drc
-from math import log
 from vector import vector
 from globals import OPTS
-import dff_inv
+from sram_factory import factory
+
 
 class dff_inv_array(design.design):
     """

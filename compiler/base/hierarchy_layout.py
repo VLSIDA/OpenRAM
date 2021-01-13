@@ -56,8 +56,6 @@ class layout():
         self.visited = []
         # Flag for library cells
         self.is_library_cell = False
-        # Flag for top level (used for min area metal pins etc.)
-        self.is_top_level = False
         
         self.gds_read()
 
@@ -1222,7 +1220,7 @@ class layout():
                                     pin.height())
 
             elif add_vias:
-                self.add_power_pin(pin)
+                self.copy_power_pin(pin)
 
     def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
@@ -1239,7 +1237,7 @@ class layout():
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
 
         # Hack for min area
-        if OPTS.tech_name == "sky130" and self.is_top_level:
+        if OPTS.tech_name == "sky130":
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
@@ -1280,7 +1278,7 @@ class layout():
             loc = pin.center()
             
         # Hack for min area
-        if OPTS.tech_name == "sky130" and self.is_top_level:
+        if OPTS.tech_name == "sky130":
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)

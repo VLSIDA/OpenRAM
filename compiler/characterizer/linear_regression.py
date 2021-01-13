@@ -16,10 +16,15 @@ from sklearn.linear_model import LinearRegression
 import math
 
 relative_data_path = "/sim_data"
-data_fnames = ["delay_data.csv",
-               "power_data.csv",
-               "leakage_data.csv",
-               "slew_data.csv"]
+data_fnames = ["rise_delay.csv",
+               "fall_delay.csv",
+               "rise_slew.csv",
+               "fall_slew.csv",
+               "write1_power.csv",
+               "write0_power.csv",
+               "read1_power.csv",
+               "read0_power.csv",
+               "leakage_data.csv"]
                
 data_dir = OPTS.openram_tech+relative_data_path
 data_paths = [data_dir +'/'+fname for fname in data_fnames]
@@ -44,13 +49,9 @@ class linear_regression(simulation):
                         process_transform[self.process], 
                         self.vdd_voltage, 
                         self.temperature]  
-            
-        # List returned with value order being delay, power, leakage, slew
-        # FIXME: make order less hard coded
-        sram_vals = self.get_predictions(model_inputs)
 
         self.create_measurement_names()
-
+        models = self.train_models()
 
         # Set delay/power for slews and loads
         port_data = self.get_empty_measure_data_dict()
@@ -58,32 +59,39 @@ class linear_regression(simulation):
         max_delay = 0.0
         for slew in slews:
             for load in loads:
-
+                # List returned with value order being delay, power, leakage, slew
+                # FIXME: make order less hard coded
+                sram_vals = self.get_predictions(model_inputs+[slew, load], models)
                 # Delay is only calculated on a single port and replicated for now.
                 for port in self.all_ports:
-                    for mname in self.delay_meas_names + self.power_meas_names:
-                        #FIXME: fix magic for indexing the data
-                        #FIXME: model output is double list. Simply this
-                        if "power" in mname:
-                            port_data[port][mname].append(sram_vals[1][0][0])
-                        elif "delay" in mname and port in self.read_ports:
-                            port_data[port][mname].append(sram_vals[0][0][0])
-                        elif "slew" in mname and port in self.read_ports:
-                            port_data[port][mname].append(sram_vals[3][0][0])
-                        else:
-                            debug.error("Measurement name not recognized: {}".format(mname), 1)
+                    port_data[port]['delay_lh'].append(sram_vals[0][0][0])
+                    port_data[port]['delay_hl'].append(sram_vals[1][0][0])
+                    port_data[port]['slew_lh'].append(sram_vals[2][0][0])
+                    port_data[port]['slew_hl'].append(sram_vals[3][0][0])
+                    
+                    port_data[port]['write1_power'].append(sram_vals[4][0][0])
+                    port_data[port]['write0_power'].append(sram_vals[5][0][0])
+                    port_data[port]['read1_power'].append(sram_vals[6][0][0])
+                    port_data[port]['read0_power'].append(sram_vals[7][0][0])
+                    
+                    # Disabled power not modeled. Copied from other power predictions
+                    port_data[port]['disabled_write1_power'].append(sram_vals[4][0][0])
+                    port_data[port]['disabled_write0_power'].append(sram_vals[5][0][0])
+                    port_data[port]['disabled_read1_power'].append(sram_vals[6][0][0])
+                    port_data[port]['disabled_read0_power'].append(sram_vals[7][0][0])
+                        
 
         # Estimate the period as double the delay with margin
         period_margin = 0.1
         sram_data = {"min_period": sram_vals[0][0][0] * 2,
-                     "leakage_power": sram_vals[2][0][0]}
+                     "leakage_power": sram_vals[8][0][0]}
 
         debug.info(2, "SRAM Data:\n{}".format(sram_data))
         debug.info(2, "Port Data:\n{}".format(port_data))
 
         return (sram_data, port_data)
 
-    def get_predictions(self, model_inputs): 
+    def get_predictions(self, model_inputs, models): 
         """
         Generate a model and prediction for LIB output
         """
@@ -91,14 +99,25 @@ class linear_regression(simulation):
         scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, data_paths[0])])
 
         predictions = []
-        for path in data_paths:
+        for m, path in zip(models, data_paths):
             features, labels = get_scaled_data(path)
-            model = self.generate_model(features, labels)
-            scaled_pred = self.model_prediction(model, scaled_inputs)
+            scaled_pred = self.model_prediction(m, scaled_inputs)
             pred = unscale_data(scaled_pred.tolist(), path)
             debug.info(1,"Unscaled Prediction = {}".format(pred))
             predictions.append(pred)
         return predictions
+
+    def train_models(self):
+        """
+        Generate and return models
+        """
+        models = []
+        for path in data_paths:
+            features, labels = get_scaled_data(path)
+            model = self.generate_model(features, labels)
+            models.append(model)
+        return models
+
 
     def generate_model(self, features, labels):
         """

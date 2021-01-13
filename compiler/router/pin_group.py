@@ -650,10 +650,13 @@ class pin_group:
                 self.router.write_debug_gds("blocked_pin.gds")
 
         # Consider the fully connected set first and if not the partial set
-        if len(pin_set) > 0:
-            self.grids = pin_set
-        else:
-            self.grids = partial_set
+        # if len(pin_set) > 0:
+        #     self.grids = pin_set
+        # else:
+        #     self.grids = partial_set
+        # Just using the full set simplifies the enclosures, otherwise
+        # we get some pin enclose DRC errors due to off grid pins
+        self.grids = pin_set | partial_set
         if len(self.grids) < 0:
             debug.error("Did not find any unblocked grids: {}".format(str(self.pins)))
             self.router.write_debug_gds("blocked_pin.gds")

@@ -8,6 +8,7 @@
 from direction import direction
 from pin_layout import pin_layout
 from vector import vector
+from vector3d import vector3d
 import debug
 
 
@@ -619,18 +620,16 @@ class pin_group:
             # Blockages will be a super-set of pins since
             # it uses the inflated pin shape.
             blockage_in_tracks = self.router.convert_blockage(pin)
-            self.blockages.update(blockage_in_tracks)
-
+            # Must include the pins here too because these are computed in a different
+            # way than blockages.
+            self.blockages.update(sufficient | insufficient | blockage_in_tracks)
+            
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already
-        shared_set = pin_set & self.router.get_blocked_grids()
-        if len(shared_set) > 0:
-            debug.info(4, "Removing pins {}".format(shared_set))
-        pin_set.difference_update(shared_set)
-        shared_set = partial_set & self.router.get_blocked_grids()
-        if len(shared_set) > 0:
-            debug.info(4, "Removing pins {}".format(shared_set))
-
+        blocked_grids = self.router.get_blocked_grids()
+        pin_set.difference_update(blocked_grids)
+        partial_set.difference_update(blocked_grids)
+        
         # At least one of the groups must have some valid tracks
         if (len(pin_set) == 0 and len(partial_set) == 0):
             # debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))
@@ -641,9 +640,13 @@ class pin_group:
                 (sufficient, insufficient) = self.router.convert_pin_to_tracks(self.name,
                                                                                pin,
                                                                                expansion=1)
+
+                # This time, don't remove blockages in the hopes that it might be ok.
+                # Could cause DRC problems!
                 pin_set.update(sufficient)
                 partial_set.update(insufficient)
 
+            # If it's still empty, we must bail.
             if len(pin_set) == 0 and len(partial_set) == 0:
                 debug.error("Unable to find unblocked pin {} {}".format(self.name,
                                                                         self.pins))

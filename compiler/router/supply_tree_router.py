@@ -13,7 +13,7 @@ import grid_utils
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
 from signal_grid import signal_grid
-
+from vector3d import vector3d
 
 class supply_tree_router(router):
     """
@@ -116,6 +116,10 @@ class supply_tree_router(router):
         # Route MST components
         for (src, dest) in connections:
             self.route_signal(pin_name, src, dest)
+            # if pin_name == "gnd":
+            #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
+            #     print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
+            #     self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)            
                 
         #self.write_debug_gds("final.gds", True)
         #return 
@@ -136,6 +140,9 @@ class supply_tree_router(router):
                 # easier to debug.
                 self.prepare_blockages()
                 if unblock_routes:
+                    msg = "Unblocking supply self blockages to improve access (may cause DRC errors):\n{0}\n{1})"
+                    debug.warning(msg.format(pin_name,
+                                             self.pin_groups[pin_name][src_idx].pins))
                     self.set_blockages(self.path_blockages, False)
 
                 # Add the single component of the pin as the source
@@ -148,9 +155,6 @@ class supply_tree_router(router):
                 # Actually run the A* router
                 if self.run_router(detour_scale=detour_scale):
                     return
-
-            debug.warning("Unblocking supply self blockages to improve access (may cause DRC errors):\n{0}\n{1})".format(pin_name,
-                                                                                                                         self.pin_groups[pin_name][src_idx].pins))
 
         self.write_debug_gds("debug_route.gds", True)
 

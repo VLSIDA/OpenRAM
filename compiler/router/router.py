@@ -356,7 +356,9 @@ class router(router_tech):
 
         # Start fresh. Not the best for run-time, but simpler.
         self.clear_all_blockages()
+        
         # This adds the initial blockges of the design
+        # which includes all blockages due to non-pin shapes
         # print("BLOCKING:", self.blocked_grids)
         self.set_blockages(self.blocked_grids, True)
 
@@ -368,19 +370,16 @@ class router(router_tech):
             # If function doesn't exist, it isn't a supply router
             pass
 
-        # Block all of the pin components
-        # (some will be unblocked if they're a source/target)
-        # Also block the previous routes
+        # Now go and block all of the blockages due to pin shapes.
+        # Some of these will get unblocked later if they are the source/target.
         for name in self.pin_groups:
             # This should be a superset of the grids...
             blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
             self.set_blockages(blockage_grids, True)
-            # But do the grids just in case
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
-            self.set_blockages(blockage_grids, True)
 
-        # FIXME: These duplicate a bit of work
-        # These are the paths that have already been routed.
+        # If we have paths that were recently routed, add them as blockages as well.
+        # We might later do rip-up and reroute so they might not be metal shapes in the design yet.
+        # Also, this prevents having to reload an entire GDS and find the blockage shapes.
         self.set_blockages(self.path_blockages)
 
     def convert_shape_to_units(self, shape):
@@ -468,7 +467,9 @@ class router(router_tech):
         """ 
         Return the blocked grids with their flag set
         """
-        return set([x for x in self.blocked_grids if self.rg.is_blocked(x)])
+        #return set([x for x in self.blocked_grids if self.rg.is_blocked(x)])
+        # These are all the non-pin blockages
+        return self.blocked_grids
 
     def retrieve_blockages(self, lpp):
         """
@@ -483,7 +484,10 @@ class router(router_tech):
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),
                                  rect,
                                  lpp)
-            self.blockages.append(new_pin)
+            # If there is a rectangle that is the same in the pins,
+            # it isn't a blockage!
+            if new_pin not in self.all_pins:
+                self.blockages.append(new_pin)
 
     def convert_point_to_units(self, p):
         """
@@ -1031,7 +1035,6 @@ class router(router_tech):
 
             self.paths.append(grid_utils.flatten_set(path))
             self.add_route(path)
-
             self.path_blockages.append(self.paths[-1])
             return True
         else:
@@ -1120,7 +1123,7 @@ class router(router_tech):
         """
         Erase all of the comments on the current level.
         """
-        debug.info(0, "Erasing router info")
+        debug.info(2, "Erasing router info")
         lpp = techlayer["text"]
         self.cell.objs = [x for x in self.cell.objs if x.lpp != lpp]
 
@@ -1130,7 +1133,7 @@ class router(router_tech):
         the boundary layer for debugging purposes. This can only be
         called once or the labels will overlap.
         """
-        debug.info(0, "Adding router info")
+        debug.info(2, "Adding router info")
 
         show_blockages = False
         show_blockage_grids = False

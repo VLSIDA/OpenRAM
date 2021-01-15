@@ -15,24 +15,12 @@ class signal_router(router):
     route on a given layer. This is limited to two layer routes.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, gds_filename=None, bbox=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, layers, design, gds_filename)
-
-    def create_routing_grid(self):
-        """
-        Create a sprase routing grid with A* expansion functions.
-        """
-        # We will add a halo around the boundary
-        # of this many tracks
-        size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
-
-        import signal_grid
-        self.rg = signal_grid.signal_grid(self.ll, self.ur, self.route_track_width)
+        router.__init__(self, layers, design, gds_filename, bbox)
 
     def route(self, src, dest, detour_scale=5):
         """
@@ -52,7 +40,7 @@ class signal_router(router):
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
-            self.create_routing_grid()
+            self.create_routing_grid(signal_grid)
 
         # Get the pin shapes
         self.find_pins_and_blockages([src, dest])

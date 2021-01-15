@@ -9,7 +9,6 @@ from vector import vector
 from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
-from signal_escape_router import signal_escape_router as router
 from globals import OPTS
 
 
@@ -246,49 +245,6 @@ class sram_1bank(sram_base):
             self.data_pos[port] = vector(x_offset, y_offset)
             self.spare_wen_pos[port] = vector(x_offset, y_offset)
 
-    def route_escape_pins(self):
-        """
-        Add the top-level pins for a single bank SRAM with control.
-        """
-
-        # List of pin to new pin name
-        pins_to_route = []
-        for port in self.all_ports:
-            # Connect the control pins as inputs
-            for signal in self.control_logic_inputs[port]:
-                if signal.startswith("rbl"):
-                    continue
-                if signal=="clk":
-                    pins_to_route.append("{0}{1}".format(signal, port))
-                else:
-                    pins_to_route.append("{0}{1}".format(signal, port))
-                    
-            if port in self.write_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
-                    pins_to_route.append("din{0}[{1}]".format(port, bit))
-
-            if port in self.readwrite_ports or port in self.read_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
-                    pins_to_route.append("dout{0}[{1}]".format(port, bit))
-
-            for bit in range(self.col_addr_size):
-                pins_to_route.append("addr{0}[{1}]".format(port, bit))
-
-            for bit in range(self.row_addr_size):
-                pins_to_route.append("addr{0}[{1}]".format(port, bit + self.col_addr_size))
-
-            if port in self.write_ports:
-                if self.write_size:
-                    for bit in range(self.num_wmasks):
-                        pins_to_route.append("wmask{0}[{1}]".format(port, bit))
-
-            if port in self.write_ports:
-                for bit in range(self.num_spare_cols):
-                    pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
-
-        rtr=router(self.m3_stack, self)
-        rtr.escape_route(pins_to_route)
-
     def add_layout_pins(self, add_vias=True):
         """
         Add the top-level pins for a single bank SRAM with control.
@@ -436,9 +392,9 @@ class sram_1bank(sram_base):
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
-                    # self.add_inst(cr.name, cr)
-                    # self.connect_inst([])
-                    self.add_flat_inst(cr.name, cr)
+                    self.add_inst(cr.name, cr)
+                    self.connect_inst([])
+                    #self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
@@ -451,9 +407,9 @@ class sram_1bank(sram_base):
                 if add_routes:
                     # This causes problem in magic since it sometimes cannot extract connectivity of isntances
                     # with no active devices.
-                    # self.add_inst(cr.name, cr)
-                    # self.connect_inst([])
-                    self.add_flat_inst(cr.name, cr)
+                    self.add_inst(cr.name, cr)
+                    self.connect_inst([])
+                    #self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 

@@ -13,7 +13,7 @@ import grid_utils
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
 from signal_grid import signal_grid
-from vector3d import vector3d
+
 
 class supply_tree_router(router):
     """
@@ -21,23 +21,17 @@ class supply_tree_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, gds_filename=None, bbox=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
         # Power rail width in minimum wire widths
-        self.route_track_width = 2
+        # This is set to match the signal router so that the grids are aligned
+        # for prettier routes.
+        self.route_track_width = 1
 
-        router.__init__(self, layers, design, gds_filename, self.route_track_width)
-
-    def create_routing_grid(self):
-        """
-        Create a sprase routing grid with A* expansion functions.
-        """
-        size = self.ur - self.ll
-        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
-        self.rg = signal_grid(self.ll, self.ur, self.route_track_width)
+        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -54,7 +48,7 @@ class supply_tree_router(router):
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
-            self.create_routing_grid()
+            self.create_routing_grid(signal_grid)
 
         # Get the pin shapes
         start_time = datetime.now()
@@ -122,7 +116,7 @@ class supply_tree_router(router):
             #     self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)            
                 
         #self.write_debug_gds("final.gds", True)
-        #return 
+        #return
 
     def route_signal(self, pin_name, src_idx, dest_idx):
 

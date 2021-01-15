@@ -36,7 +36,7 @@ class grid:
         # The bounds are in grids for this
         # This is really lower left bottom layer and upper right top layer in 3D.
         self.ll = vector3d(ll.x, ll.y, 0).scale(self.track_factor).round()
-        self.ur = vector3d(ur.x, ur.y, 1).scale(self.track_factor).round()
+        self.ur = vector3d(ur.x, ur.y, 0).scale(self.track_factor).round()
 
         # let's leave the map sparse, cells are created on demand to reduce memory
         self.map={}
@@ -124,7 +124,7 @@ class grid:
 
     def add_perimeter_target(self, side="all"):
         debug.info(3, "Adding perimeter target")
-
+        print(self.ll, self.ur)
         perimeter_list = []
         # Add the left/right columns
         if side=="all" or side=="left":

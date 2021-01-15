@@ -28,7 +28,7 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, route_track_width=1):
+    def __init__(self, layers, design, gds_filename=None, bbox=None, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
@@ -83,12 +83,35 @@ class router(router_tech):
         # A list of path blockages (they might be expanded for wide metal DRC)
         self.path_blockages = []
 
-        # The boundary will determine the limits to the size
-        # of the routing grid
-        self.boundary = self.layout.measureBoundary(self.top_name)
-        # These must be un-indexed to get rid of the matrix type
-        self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-        self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+        self.init_bbox(bbox)
+
+    def init_bbox(self, bbox=None):
+        """
+        Initialize the ll,ur values with the paramter or using the layout boundary.
+        """
+        if not bbox:
+            # The boundary will determine the limits to the size
+            # of the routing grid
+            self.boundary = self.layout.measureBoundary(self.top_name)
+            # These must be un-indexed to get rid of the matrix type
+            self.ll = vector(self.boundary[0][0], self.boundary[0][1])
+            self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+        else:
+            self.ll, self.ur = bbox
+
+        self.bbox = (self.ll, self.ur)
+        size = self.ur - self.ll
+        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
+        
+    def get_bbox(self):
+        return self.bbox
+    
+    def create_routing_grid(self, router_type, bbox=None):
+        """
+        Create a sprase routing grid with A* expansion functions.
+        """
+        self.init_bbox(bbox)
+        self.rg = router_type(self.ll, self.ur, self.track_width)
 
     def clear_pins(self):
         """

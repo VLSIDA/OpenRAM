@@ -264,6 +264,50 @@ class sram_base(design, verilog, lef):
                                 pin.width(),
                                 pin.height())
 
+    def route_escape_pins(self):
+        """
+        Add the top-level pins for a single bank SRAM with control.
+        """
+
+        # List of pin to new pin name
+        pins_to_route = []
+        for port in self.all_ports:
+            # Connect the control pins as inputs
+            for signal in self.control_logic_inputs[port]:
+                if signal.startswith("rbl"):
+                    continue
+                if signal=="clk":
+                    pins_to_route.append("{0}{1}".format(signal, port))
+                else:
+                    pins_to_route.append("{0}{1}".format(signal, port))
+                    
+            if port in self.write_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    pins_to_route.append("din{0}[{1}]".format(port, bit))
+
+            if port in self.readwrite_ports or port in self.read_ports:
+                for bit in range(self.word_size + self.num_spare_cols):
+                    pins_to_route.append("dout{0}[{1}]".format(port, bit))
+
+            for bit in range(self.col_addr_size):
+                pins_to_route.append("addr{0}[{1}]".format(port, bit))
+
+            for bit in range(self.row_addr_size):
+                pins_to_route.append("addr{0}[{1}]".format(port, bit + self.col_addr_size))
+
+            if port in self.write_ports:
+                if self.write_size:
+                    for bit in range(self.num_wmasks):
+                        pins_to_route.append("wmask{0}[{1}]".format(port, bit))
+
+            if port in self.write_ports:
+                for bit in range(self.num_spare_cols):
+                    pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
+
+        from signal_escape_router import signal_escape_router as router
+        rtr=router(self.m3_stack, self)
+        rtr.escape_route(pins_to_route)
+
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
 

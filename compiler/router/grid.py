@@ -124,7 +124,7 @@ class grid:
 
     def add_perimeter_target(self, side="all"):
         debug.info(3, "Adding perimeter target")
-        print(self.ll, self.ur)
+
         perimeter_list = []
         # Add the left/right columns
         if side=="all" or side=="left":

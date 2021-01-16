@@ -131,7 +131,10 @@ class pinv_dec(pinv.pinv):
         self.nmos_inst.place(self.nmos_pos,
                              rotate=270)
         # place PMOS so it is half a poly spacing down from the top
-        xoffset = self.nmos_inst.rx() + 2 * self.poly_extend_active + 2 * self.well_extend_active + drc("pwell_to_nwell")
+        well_offsets = 2 * self.poly_extend_active + 2 * self.well_extend_active + drc("pwell_to_nwell")
+        # This is to provide spacing for the vdd rails
+        metal_offsets = 2 * self.m3_pitch
+        xoffset = self.nmos_inst.rx() + max(well_offsets, metal_offsets)
         self.pmos_pos = vector(xoffset, y_offset)
         self.pmos_inst.place(self.pmos_pos,
                              rotate=270)

@@ -208,10 +208,8 @@ class write_driver_array(design.design):
             for n in ["vdd", "gnd"]:
                 pin_list = self.driver_insts[i].get_pins(n)
                 for pin in pin_list:
-                    self.add_power_pin(name=n,
-                                       loc=pin.center(),
-                                       directions=("V", "V"),
-                                       start_layer=pin.layer)
+                    self.copy_power_pin(pin, directions=("V", "V"))
+
         if self.write_size:
             for bit in range(self.num_wmasks):
                 inst = self.driver_insts[bit * self.write_size]

@@ -615,9 +615,7 @@ class bank(design.design):
                 for pin_name in ["vdd", "gnd"]:
                     pin_list = inst.get_pins(pin_name)
                     for pin in pin_list:
-                        self.add_power_pin(pin_name,
-                                           pin.center(),
-                                           start_layer=pin.layer)
+                        self.copy_power_pin(pin, pin.center())
 
     def route_bank_select(self, port):
         """ Route the bank select logic. """

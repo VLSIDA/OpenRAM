@@ -17,20 +17,12 @@ class signal_escape_router(router):
     A router that routes signals to perimeter and makes pins.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, bbox=None, gds_filename=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, layers, design, gds_filename, 1)
-
-    def create_routing_grid(self):
-        """
-        Create a sprase routing grid with A* expansion functions.
-        """
-        size = self.ur - self.ll
-        debug.info(1,"Size: {0} x {1}".format(size.x, size.y))
-        self.rg = signal_grid(self.ll, self.ur, self.track_width)
+        router.__init__(self, layers, design, gds_filename, bbox)
 
     def perimeter_dist(self, pin_name):
         """
@@ -47,7 +39,7 @@ class signal_escape_router(router):
         Takes a list of tuples (name, side) and routes them. After routing,
         it removes the old pin and places a new one on the perimeter.
         """
-        self.create_routing_grid()
+        self.create_routing_grid(signal_grid)
 
         start_time = datetime.now()
         self.find_pins_and_blockages(pin_names)
@@ -62,6 +54,8 @@ class signal_escape_router(router):
         start_time = datetime.now()
         for pin_name in ordered_pin_names:
             self.route_signal(pin_name)
+            #if pin_name == "dout1[1]":
+            #    self.write_debug_gds("postroute.gds", False)
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
@@ -79,7 +73,8 @@ class signal_escape_router(router):
 
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
-            self.prepare_blockages(pin_name)
+            self.prepare_blockages()
+            self.clear_blockages(pin_name)
 
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
@@ -88,12 +83,20 @@ class signal_escape_router(router):
             # Marks the grid cells all along the perimeter as a target
             self.add_perimeter_target(side)
             
+            # if pin_name == "dout0[3]":
+            #     self.write_debug_gds("pre_route.gds", False)
+            #     breakpoint()
+            
             # Actually run the A* router
             if self.run_router(detour_scale=detour_scale):
                 new_pin = self.get_perimeter_pin()
                 self.cell.replace_layout_pin(pin_name, new_pin)
                 return
 
+            # if pin_name == "dout0[3]":
+            #     self.write_debug_gds("pre_route.gds", False)
+            #     breakpoint()
+                
         self.write_debug_gds("debug_route.gds", True)
 
 

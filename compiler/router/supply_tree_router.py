@@ -21,23 +21,17 @@ class supply_tree_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, gds_filename=None, bbox=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
         # Power rail width in minimum wire widths
-        self.route_track_width = 2
+        # This is set to match the signal router so that the grids are aligned
+        # for prettier routes.
+        self.route_track_width = 1
 
-        router.__init__(self, layers, design, gds_filename, self.route_track_width)
-
-    def create_routing_grid(self):
-        """
-        Create a sprase routing grid with A* expansion functions.
-        """
-        size = self.ur - self.ll
-        debug.info(1,"Size: {0} x {1}".format(size.x,size.y))
-        self.rg = signal_grid(self.ll, self.ur, self.route_track_width)
+        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -54,18 +48,12 @@ class supply_tree_router(router):
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
-            self.create_routing_grid()
+            self.create_routing_grid(signal_grid)
 
         # Get the pin shapes
         start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages",datetime.now(), start_time, 3)
-
-        # Add the supply rails in a mesh network and connect H/V with vias
-        start_time = datetime.now()
-        # Block everything
-        self.prepare_blockages(self.gnd_name)
-        self.prepare_blockages(self.vdd_name)
 
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
@@ -122,32 +110,45 @@ class supply_tree_router(router):
         # Route MST components
         for (src, dest) in connections:
             self.route_signal(pin_name, src, dest)
+            # if pin_name == "gnd":
+            #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
+            #     print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
+            #     self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)            
                 
         #self.write_debug_gds("final.gds", True)
-        #return 
+        #return
 
     def route_signal(self, pin_name, src_idx, dest_idx):
-        
-        for detour_scale in [5 * pow(2, x) for x in range(5)]:
-            debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
+
+        # First pass, try to route normally
+        # Second pass, clear prior pin blockages so that you can route over other metal
+        # of the same supply. Otherwise, this can create a lot of circular routes due to accidental overlaps.
+        for unblock_routes in [False, True]:
+            for detour_scale in [5 * pow(2, x) for x in range(5)]:
+                debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
             
-            # Clear everything in the routing grid.
-            self.rg.reinit()
+                # Clear everything in the routing grid.
+                self.rg.reinit()
 
-            # This is inefficient since it is non-incremental, but it was
-            # easier to debug.
-            self.prepare_blockages(pin_name)
+                # This is inefficient since it is non-incremental, but it was
+                # easier to debug.
+                self.prepare_blockages()
+                if unblock_routes:
+                    msg = "Unblocking supply self blockages to improve access (may cause DRC errors):\n{0}\n{1})"
+                    debug.warning(msg.format(pin_name,
+                                             self.pin_groups[pin_name][src_idx].pins))
+                    self.set_blockages(self.path_blockages, False)
 
-            # Add the single component of the pin as the source
-            # which unmarks it as a blockage too
-            self.add_pin_component_source(pin_name, src_idx)
+                # Add the single component of the pin as the source
+                # which unmarks it as a blockage too
+                self.add_pin_component_source(pin_name, src_idx)
 
-            # Marks all pin components except index as target
-            self.add_pin_component_target(pin_name, dest_idx)
+                # Marks all pin components except index as target
+                self.add_pin_component_target(pin_name, dest_idx)
 
-            # Actually run the A* router
-            if self.run_router(detour_scale=detour_scale):
-                return
+                # Actually run the A* router
+                if self.run_router(detour_scale=detour_scale):
+                    return
 
         self.write_debug_gds("debug_route.gds", True)
 

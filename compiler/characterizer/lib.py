@@ -224,10 +224,6 @@ class lib:
         self.lib.write("    slew_lower_threshold_pct_rise  :  10.0 ;\n")
         self.lib.write("    slew_upper_threshold_pct_rise  :  90.0 ;\n\n")
 
-        self.lib.write("    nom_voltage : {};\n".format(tech.spice["nom_supply_voltage"]))
-        self.lib.write("    nom_temperature : {};\n".format(tech.spice["nom_temperature"]))
-        self.lib.write("    nom_process : {};\n".format(1.0))
-
         self.lib.write("    default_cell_leakage_power    : 0.0 ;\n")
         self.lib.write("    default_leakage_power_density : 0.0 ;\n")
         self.lib.write("    default_input_pin_cap    : 1.0 ;\n")
@@ -238,7 +234,7 @@ class lib:
         self.lib.write("    default_max_fanout   : 4.0 ;\n")
         self.lib.write("    default_connection_class : universal ;\n\n")
 
-        self.lib.write("    voltage_map ( VDD, {} );\n".format(tech.spice["nom_supply_voltage"]))
+        self.lib.write("    voltage_map ( VDD, {} );\n".format(self.voltage))
         self.lib.write("    voltage_map ( GND, 0 );\n\n")
 
     def create_list(self,values):

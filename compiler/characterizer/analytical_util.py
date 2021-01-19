@@ -254,9 +254,9 @@ def scale_input_datapoint(point, file_path):
     training.
     """
     maxs, mins, avgs = get_max_min_from_file(file_path)
-    debug.info(1, "maxs={}".format(maxs))
-    debug.info(1, "mins={}".format(mins))
-    debug.info(1, "point={}".format(point))
+    debug.info(3, "maxs={}".format(maxs))
+    debug.info(3, "mins={}".format(mins))
+    debug.info(3, "point={}".format(point))
 
     scaled_point = []
     for feature, mx, mn in zip(point, maxs, mins):

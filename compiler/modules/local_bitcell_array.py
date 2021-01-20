@@ -186,9 +186,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
                 for pin in pin_list:
-                    self.add_power_pin(name=pin_name,
-                                       loc=pin.center(),
-                                       start_layer=pin.layer)
+                    self.copy_power_pin(pin)
 
     def route(self):
 

@@ -23,7 +23,6 @@ class sram_1bank_2mux_global_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
         OPTS.local_array_size = 8
-        OPTS.route_supplies = False
         c = sram_config(word_size=8,
                         num_words=32,
                         num_banks=1)

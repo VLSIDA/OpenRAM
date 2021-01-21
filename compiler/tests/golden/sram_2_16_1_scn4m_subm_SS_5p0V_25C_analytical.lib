@@ -22,6 +22,9 @@ library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     slew_lower_threshold_pct_rise  :  10.0 ;
     slew_upper_threshold_pct_rise  :  90.0 ;
 
+    nom_voltage : 5.0;
+    nom_temperature : 25;
+    nom_process : 1.0;
     default_cell_leakage_power    : 0.0 ;
     default_leakage_power_density : 0.0 ;
     default_input_pin_cap    : 1.0 ;

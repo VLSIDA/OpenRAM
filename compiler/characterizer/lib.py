@@ -224,6 +224,9 @@ class lib:
         self.lib.write("    slew_lower_threshold_pct_rise  :  10.0 ;\n")
         self.lib.write("    slew_upper_threshold_pct_rise  :  90.0 ;\n\n")
 
+        self.lib.write("    nom_voltage : {};\n".format(self.voltage))
+        self.lib.write("    nom_temperature : {};\n".format(self.temperature))
+        self.lib.write("    nom_process : 1.0;\n")
         self.lib.write("    default_cell_leakage_power    : 0.0 ;\n")
         self.lib.write("    default_leakage_power_density : 0.0 ;\n")
         self.lib.write("    default_input_pin_cap    : 1.0 ;\n")

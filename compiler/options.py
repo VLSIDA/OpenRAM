@@ -84,7 +84,8 @@ class options(optparse.Values):
     debug = False
     # Only use corners in config file. Disables generated corners
     only_use_config_corners = False
-    
+    # A list of PVT tuples and be given and only these will be characterized
+    use_specified_corners = None
 
     ###################
     # Run-time vs accuracy options.

@@ -74,35 +74,38 @@ class lib:
 
         self.corners = []
         self.lib_files = []
-
-        # Nominal corner
-        corner_set = set()
-        if OPTS.only_use_config_corners:
-            if OPTS.nominal_corner_only:
-                debug.warning("Nominal corner only option ignored if use only config corners is set.")
-            # Generate a powerset of input PVT lists
-            for p in self.process_corners:
-                for v in self.supply_voltages:
-                    for t in self.temperatures:
-                        corner_set.add((p, v, t))
-        else:    
-            nom_corner = (nom_process, nom_supply, nom_temperature)
-            corner_set.add(nom_corner)
-            if not OPTS.nominal_corner_only:
-                # Temperature corners
-                corner_set.add((nom_process, nom_supply, min_temperature))
-                corner_set.add((nom_process, nom_supply, max_temperature))
-                # Supply corners
-                corner_set.add((nom_process, min_supply, nom_temperature))
-                corner_set.add((nom_process, max_supply, nom_temperature))
-                # Process corners
-                corner_set.add((min_process, nom_supply, nom_temperature))
-                corner_set.add((max_process, nom_supply, nom_temperature))
-
-        # Enforce that nominal corner is the first to be characterized
-        self.add_corner(*nom_corner)
-        corner_set.remove(nom_corner)
-        for corner_tuple in corner_set:
+        
+        if OPTS.use_specified_corners == None:
+            # Nominal corner
+            corner_tuples = set()
+            if OPTS.only_use_config_corners:
+                if OPTS.nominal_corner_only:
+                    debug.warning("Nominal corner only option ignored if use only config corners is set.")
+                # Generate a powerset of input PVT lists
+                for p in self.process_corners:
+                    for v in self.supply_voltages:
+                        for t in self.temperatures:
+                            corner_tuples.add((p, v, t))
+            else:    
+                nom_corner = (nom_process, nom_supply, nom_temperature)
+                corner_tuples.add(nom_corner)
+                if not OPTS.nominal_corner_only:
+                    # Temperature corners
+                    corner_tuples.add((nom_process, nom_supply, min_temperature))
+                    corner_tuples.add((nom_process, nom_supply, max_temperature))
+                    # Supply corners
+                    corner_tuples.add((nom_process, min_supply, nom_temperature))
+                    corner_tuples.add((nom_process, max_supply, nom_temperature))
+                    # Process corners
+                    corner_tuples.add((min_process, nom_supply, nom_temperature))
+                    corner_tuples.add((max_process, nom_supply, nom_temperature))
+            # Enforce that nominal corner is the first to be characterized
+            self.add_corner(*nom_corner)
+            corner_tuples.remove(nom_corner)
+        else:
+            corner_tuples = OPTS.use_specified_corners
+        
+        for corner_tuple in corner_tuples:
             self.add_corner(*corner_tuple)
 
     def add_corner(self, proc, volt, temp):

@@ -57,6 +57,12 @@ class design(hierarchy_design):
                                                   self.cell_name,
                                                   GDS["unit"])
 
+            # Convert names back to the original names
+            # so that copying will use the new names
+            for pin_name in self.pin_map:
+                for index1, pin in enumerate(self.pin_map[pin_name]):
+                    self.pin_map[pin_name][index1].name = self.get_original_pin_name(pin.name)
+
             self.width = width
             self.height = height
 

@@ -23,7 +23,6 @@ class sram_1bank_2mux_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
-        OPTS.route_supplies = False
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0

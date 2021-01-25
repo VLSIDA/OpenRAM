@@ -824,8 +824,7 @@ class router(router_tech):
                 group_map[gid] = pin_group(name=pin_name,
                                            pin_set=[],
                                            router=self)
-            # We always add it to the first set since they are touching
-            group_map[gid].pins.add(pin)
+            group_map[gid].add_pin(pin)
 
         self.pin_groups[pin_name] = list(group_map.values())
 

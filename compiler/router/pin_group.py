@@ -27,13 +27,13 @@ class pin_group:
         # Flag for when it is enclosed
         self.enclosed = False
 
-        # Remove any redundant pins (i.e. contained in other pins)
-        irredundant_pin_set = self.remove_redundant_shapes(list(pin_set))
-
         # This is a list because we can have a pin
         # group of disconnected sets of pins
         # and these are represented by separate lists
-        self.pins = set(irredundant_pin_set)
+        self.pins = set(pin_set)
+        # Remove any redundant pins (i.e. contained in other pins)
+        self.remove_redundant_pins()
+
 
         self.router = router
         # These are the corresponding pin grids for each pin group.
@@ -68,6 +68,10 @@ class pin_group:
         total_string += ")"
         return total_string
 
+    def add_pin(self, pin):
+        self.pins.add(pin)
+        self.remove_redundant_pins()
+        
     def __repr__(self):
         """ override repr function output """
         return str(self)
@@ -81,6 +85,13 @@ class pin_group:
     def is_routed(self):
         return self.routed
 
+    def remove_redundant_pins(self):
+        """
+        Remove redundant pin shapes
+        """
+        new_pin_list = self.remove_redundant_shapes(list(self.pins))
+        self.pins = set(new_pin_list)
+
     def remove_redundant_shapes(self, pin_list):
         """
         Remove any pin layout that is contained within another.
@@ -90,7 +101,6 @@ class pin_group:
         if local_debug:
             debug.info(0, "INITIAL: {}".format(pin_list))
 
-        # Make a copy of the list to start
         new_pin_list = pin_list.copy()
 
         remove_indices = set()

@@ -32,8 +32,13 @@ lib_dnames = ["delay_lh",
               "write0_power",
               "read1_power",
               "read0_power",
-              "leakage_power"]             
-data_dir = OPTS.openram_tech+relative_data_path
+              "leakage_power"] 
+# Check if another data dir was specified
+if OPTS.sim_data_path == None:              
+    data_dir = OPTS.openram_tech+relative_data_path
+else:
+    data_dir = OPTS.sim_data_path 
+    
 data_paths = {dname:data_dir +'/'+fname for dname, fname in zip(lib_dnames, data_fnames)}
 
 class regression_model(simulation):

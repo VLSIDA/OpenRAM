@@ -86,6 +86,8 @@ class options(optparse.Values):
     only_use_config_corners = False
     # A list of PVT tuples and be given and only these will be characterized
     use_specified_corners = None
+    # Allows specification of model data
+    sim_data_path = None
 
     ###################
     # Run-time vs accuracy options.

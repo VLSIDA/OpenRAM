@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -36,7 +36,7 @@ class grid:
         # The bounds are in grids for this
         # This is really lower left bottom layer and upper right top layer in 3D.
         self.ll = vector3d(ll.x, ll.y, 0).scale(self.track_factor).round()
-        self.ur = vector3d(ur.x, ur.y, 1).scale(self.track_factor).round()
+        self.ur = vector3d(ur.x, ur.y, 0).scale(self.track_factor).round()
 
         # let's leave the map sparse, cells are created on demand to reduce memory
         self.map={}

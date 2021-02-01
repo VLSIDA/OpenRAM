@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California
+# Copyright (c) 2016-2021 Regents of the University of California
 # All rights reserved.
 #
 from bitcell_base_array import bitcell_base_array
@@ -113,7 +113,5 @@ class row_cap_array(bitcell_base_array):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.add_power_pin(name=pin_name,
-                                           loc=pin.center(),
-                                           start_layer=pin.layer)
+                        self.copy_power_pin(pin)
 

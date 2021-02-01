@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -186,9 +186,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
             for inst in supply_insts:
                 pin_list = inst.get_pins(pin_name)
                 for pin in pin_list:
-                    self.add_power_pin(name=pin_name,
-                                       loc=pin.center(),
-                                       start_layer=pin.layer)
+                    self.copy_power_pin(pin)
 
     def route(self):
 

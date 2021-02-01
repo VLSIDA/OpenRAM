@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -146,16 +146,10 @@ class sense_amp_array(design.design):
             inst = self.local_insts[i]
 
             for gnd_pin in inst.get_pins("gnd"):
-                self.add_power_pin(name="gnd",
-                                   loc=gnd_pin.center(),
-                                   start_layer=gnd_pin.layer,
-                                   directions=("V", "V"))
+                self.copy_power_pin(gnd_pin, directions=("V", "V"))
 
             for vdd_pin in inst.get_pins("vdd"):
-                self.add_power_pin(name="vdd",
-                                   loc=vdd_pin.center(),
-                                   start_layer=vdd_pin.layer,
-                                   directions=("V", "V"))
+                self.copy_power_pin(vdd_pin, directions=("V", "V"))
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())

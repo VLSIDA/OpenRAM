@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -145,6 +145,6 @@ class write_mask_and_array(design.design):
             left_loc = vector(0, supply_pin_yoffset)
             right_loc = vector(self.width, supply_pin_yoffset)
             self.add_path(supply_pin.layer, [left_loc, right_loc])
-            self.add_power_pin(supply, left_loc, start_layer=supply_pin.layer)
-            self.add_power_pin(supply, right_loc, start_layer=supply_pin.layer)
+            self.copy_power_pin(supply_pin, loc=left_loc)
+            self.copy_power_pin(supply_pin, loc=right_loc)
 

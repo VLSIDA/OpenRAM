@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -177,14 +177,10 @@ class delay_chain(design.design):
             load_list = self.load_inst_map[inst]
             for pin_name in ["vdd", "gnd"]:
                 pin = load_list[0].get_pin(pin_name)
-                self.add_power_pin(pin_name,
-                                   pin.rc() - vector(self.m1_pitch, 0),
-                                   start_layer=pin.layer)
+                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
                 pin = load_list[-2].get_pin(pin_name)
-                self.add_power_pin(pin_name,
-                                   pin.rc() - vector(self.m1_pitch, 0),
-                                   start_layer=pin.layer)
+                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
     def add_layout_pins(self):
 

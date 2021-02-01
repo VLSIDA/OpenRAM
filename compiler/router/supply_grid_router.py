@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -11,6 +11,7 @@ from vector3d import vector3d
 from router import router
 from direction import direction
 from datetime import datetime
+from supply_grid import supply_grid
 import grid_utils
 
 
@@ -20,7 +21,7 @@ class supply_grid_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None):
+    def __init__(self, layers, design, gds_filename=None, bbox=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -30,7 +31,7 @@ class supply_grid_router(router):
         # Power rail width in minimum wire widths
         self.route_track_width = 2
 
-        router.__init__(self, layers, design, gds_filename, self.route_track_width)
+        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -38,16 +39,6 @@ class supply_grid_router(router):
         self.supply_rail_tracks = {}
 
         print_time("Init supply router", datetime.now(), start_time, 3)
-
-    def create_routing_grid(self):
-        """
-        Create a sprase routing grid with A* expansion functions.
-        """
-        size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
-
-        import supply_grid
-        self.rg = supply_grid.supply_grid(self.ll, self.ur, self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
@@ -64,7 +55,7 @@ class supply_grid_router(router):
             # Creat a routing grid over the entire area
             # FIXME: This could be created only over the routing region,
             # but this is simplest for now.
-            self.create_routing_grid()
+            self.create_routing_grid(supply_grid)
 
         # Get the pin shapes
         start_time = datetime.now()
@@ -73,13 +64,16 @@ class supply_grid_router(router):
         # Add the supply rails in a mesh network and connect H/V with vias
         start_time = datetime.now()
         # Block everything
-        self.prepare_blockages(self.gnd_name)
+        self.prepare_blockages()
+        self.clear_blockages(self.gnd_name)
+        
         
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 
         # Block everything
-        self.prepare_blockages(self.vdd_name)
+        self.prepare_blockages()
+        self.clear_blockages(self.vdd_name)        
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)

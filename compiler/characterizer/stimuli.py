@@ -312,12 +312,12 @@ class stimuli():
             cmd = "{0} {1} -c {2}xa.cfg -o {2}xa -mt {3}".format(OPTS.spice_exe,
                                                                  temp_stim,
                                                                  OPTS.openram_temp,
-                                                                 OPTS.num_threads)
+                                                                 OPTS.num_sim_threads)
             valid_retcode=0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
             cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
-                                                           OPTS.num_threads,
+                                                           OPTS.num_sim_threads,
                                                            temp_stim,
                                                            OPTS.openram_temp)
             valid_retcode=0
@@ -326,7 +326,7 @@ class stimuli():
             # Measurements can't be made with a raw file set in ngspice
             # -r {2}timing.raw
             ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
-            ng_cfg.write("set num_threads={}\n".format(OPTS.num_threads))
+            ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
             ng_cfg.close()
 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,

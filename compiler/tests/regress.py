@@ -107,9 +107,9 @@ else:
     
 test_result = test_runner.run(final_suite)
     
-import verify
-verify.print_drc_stats()
-verify.print_lvs_stats()
-verify.print_pex_stats()
+# import verify
+# verify.print_drc_stats()
+# verify.print_lvs_stats()
+# verify.print_pex_stats()
 
 sys.exit(not test_result.wasSuccessful())

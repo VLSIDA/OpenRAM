@@ -10,7 +10,7 @@ stages:
 freepdk45:
   stage: test
   script: 
-    - coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t freepdk45
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -j 6 -t freepdk45
   artifacts:
     paths:
       - .coverage.*
@@ -19,7 +19,7 @@ freepdk45:
 scn4m_subm:
   stage: test
   script: 
-    - coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t scn4m_subm
+    - coverage run -p $OPENRAM_HOME/tests/regress.py -j 6 -t scn4m_subm
   artifacts:
     paths:
       - .coverage.*

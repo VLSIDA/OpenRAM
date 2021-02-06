@@ -124,6 +124,7 @@ class lib:
     def characterize_corners(self):
         """ Characterize the list of corners. """
         debug.info(1,"Characterizing corners: " + str(self.corners))
+        is_first_corner = True
         for (self.corner,lib_name) in zip(self.corners,self.lib_files):
             debug.info(1,"Corner: " + str(self.corner))
             (self.process, self.voltage, self.temperature) = self.corner
@@ -132,7 +133,8 @@ class lib:
             self.corner_name = lib_name.replace(self.out_dir,"").replace(".lib","")
             self.characterize()
             self.lib.close()
-            self.parse_info(self.corner,lib_name)
+            self.parse_info(self.corner,lib_name, is_first_corner)
+            is_first_corner = False
 
     def characterize(self):
         """ Characterize the current corner. """
@@ -628,13 +630,17 @@ class lib:
                 self.times = self.sh.analyze(self.slews,self.slews)
 
 
-    def parse_info(self,corner,lib_name):
+    def parse_info(self,corner,lib_name, is_first_corner):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.output_datasheet_info:
             datasheet_path = OPTS.output_path
         else:
             datasheet_path = OPTS.openram_temp
-        datasheet = open(datasheet_path +'/datasheet.info', 'a+')
+        # Open for write and truncate to not conflict with a previous run using the same name
+        if is_first_corner:
+            datasheet = open(datasheet_path +'/datasheet.info', 'w')
+        else:
+            datasheet = open(datasheet_path +'/datasheet.info', 'a+')
         
         self.write_inp_params_datasheet(datasheet, corner, lib_name)
         self.write_signal_from_ports(datasheet,

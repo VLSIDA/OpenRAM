@@ -19,6 +19,7 @@ import re
 import copy
 import importlib
 import getpass
+import subprocess
 
 
 VERSION = "1.1.9"
@@ -161,6 +162,17 @@ def check_versions():
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
     global OPTS
 
+    def cmd_exists(cmd):
+        return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+    if cmd_exists("coverage"):
+        OPTS.coverage_exe = "coverage run -p "
+    elif cmd_exists("python3-coverage"):
+        OPTS.coverage_exe = "python3-coverage run -p "
+    else:
+        OPTS.coverage_exe = ""
+        debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
+        
     try:
         import coverage
         OPTS.coverage = 1

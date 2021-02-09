@@ -46,6 +46,9 @@ class openram_back_end_test(openram_test):
         if OPTS.spice_name:
             options += " -s {}".format(OPTS.spice_name)
 
+        if OPTS.tech_name:
+            options += " -t {}".format(OPTS.tech_name)
+
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")

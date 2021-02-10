@@ -18,10 +18,16 @@ jobs:
          . /home/github-runner/setup-paths.sh 
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
+	 export OPENRAM_TMP="`pwd`/scn4me_subm"
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 32 -t scn4m_subm
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+         name: scn4me_subm Archives
+         path: $OPENRAM_TMP/ 
   freepdk45:
     # Run this second and only if the first passes
-    needs: scn4me_subm
+    needs: setup
     runs-on: self-hosted
     steps:
       - name: FreePDK45 test
@@ -29,7 +35,13 @@ jobs:
          . /home/github-runner/setup-paths.sh 
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
+	 export OPENRAM_TMP="`pwd`/freepdk45"
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 32 -t freepdk45
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+         name: FreePDK45 Archives
+         path: $OPENRAM_TMP/ 
   coverage:
     needs: [scn4me_subm, freepdk45]
     runs-on: self-hosted

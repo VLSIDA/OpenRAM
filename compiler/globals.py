@@ -116,11 +116,6 @@ def parse_args():
     if OPTS.tech_name == "s8":
         OPTS.tech_name = "sky130"
 
-    if OPTS.openram_temp:
-        # If they define the temp directory, we can only use one thread at a time!
-        debug.warning("num_threads forced to 1 due to shared temp directory {}".format(OPTS.openram_temp))
-        OPTS.num_threads = 1
-        
     return (options, args)
 
 
@@ -426,7 +421,7 @@ def setup_paths():
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need
     # to be added: characterizer, verify
-    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    subdirlist = [item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item))]
     for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME, subdir)
         debug.check(os.path.isdir(full_path),
@@ -434,10 +429,10 @@ def setup_paths():
         if "__pycache__" not in full_path:
             sys.path.append("{0}".format(full_path))
 
-    # Use a unique temp directory
-    if not OPTS.openram_temp:
-        OPTS.openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
-                                                                os.getpid())
+    # Use a unique temp subdirectory
+    OPTS.openram_temp += "/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                         os.getpid())
+        
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)

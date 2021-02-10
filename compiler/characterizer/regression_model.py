@@ -57,10 +57,11 @@ class regression_model(simulation):
         model_inputs = [log_num_words, 
                         OPTS.word_size, 
                         OPTS.words_per_row, 
-                        self.sram.width * self.sram.height,
                         process_transform[self.process], 
                         self.vdd_voltage, 
                         self.temperature]  
+                        # Area removed for now
+                        # self.sram.width * self.sram.height,
 
         self.create_measurement_names()
         models = self.train_models()
@@ -92,10 +93,10 @@ class regression_model(simulation):
                     port_data[port]['disabled_read0_power'].append(sram_vals['read0_power'])
                         
                     debug.info(1, '{}, {}, {}, {}, {}'.format(slew, 
-                                                                                 load, 
-                                                                                 port, 
-                                                                                 sram_vals['delay_lh'], 
-                                                                                 sram_vals['slew_lh']))
+                                                              load, 
+                                                              port, 
+                                                              sram_vals['delay_lh'], 
+                                                              sram_vals['slew_lh']))
         # Estimate the period as double the delay with margin
         period_margin = 0.1
         sram_data = {"min_period": sram_vals['delay_lh'] * 2,

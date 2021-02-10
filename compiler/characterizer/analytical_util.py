@@ -35,24 +35,31 @@ def get_data(file_name):
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
+        removed_items = 1
         for row in csv_reader:
             row_iter += 1
             if row_iter == 1:
                 feature_names = row[0].split(',')
-                input_list = [[] for _ in feature_names]
-                scaled_list = [[] for _ in feature_names]
+                input_list = [[] for _ in range(len(feature_names)-removed_items)]
+                scaled_list = [[] for _ in range(len(feature_names)-removed_items)]
+                # Save to remove area
+                area_ind = feature_names.index('area')
                 
                 try:
                     process_ind = feature_names.index('process')
                 except:
                     debug.error('Process not included as a feature.')
                 continue
+                
+                
 
             data = []
             split_str = row[0].split(',')
             for i in range(len(split_str)):
                 if i == process_ind:
                     data.append(process_transform[split_str[i]])
+                elif i == area_ind:
+                    continue
                 else:
                     data.append(float(split_str[i]))
 

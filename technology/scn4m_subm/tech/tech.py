@@ -119,6 +119,8 @@ layer["m4"]         = (31, 0)
 layer["text"]           = (63, 0)
 layer["boundary"]       = (63, 0)
 
+use_purpose = {}
+
 # Layer names for external PDKs
 layer_names = {}
 layer_names["active"]  = "active"

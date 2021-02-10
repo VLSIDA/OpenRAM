@@ -3,7 +3,7 @@ from datetime import *
 import numpy as np
 import math
 import debug
-
+from tech import use_purpose, no_pin_shape
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""
@@ -215,9 +215,13 @@ class VlsiLayout:
         self.deduceHierarchy()
         # self.traverseTheHierarchy()
         self.populateCoordinateMap()
-
+        #only ones with text
         for layerNumber in self.layerNumbersInUse:
-            self.processLabelPins((layerNumber, None))
+            #if layerNumber not in no_pin_shape:
+                if layerNumber in use_purpose:
+                    self.processLabelPins((layerNumber, use_purpose[layerNumber]))
+                else:
+                    self.processLabelPins((layerNumber, None))
 
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
@@ -902,6 +906,16 @@ def sameLPP(lpp1, lpp2):
     """
     if lpp1[1] == None or lpp2[1] == None:
         return lpp1[0] == lpp2[0]
+
+    if isinstance(lpp1[1], list):
+        for i in range(len(lpp1[1])):
+            if lpp1[0] == lpp2[0] and lpp1[1][i] == lpp2[1]:
+                return True
+
+    if isinstance(lpp2[1], list):
+        for i in range(len(lpp2[1])):
+            if lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1][i]:
+                return True
 
     return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
 

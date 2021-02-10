@@ -48,7 +48,10 @@ class design(hierarchy_design):
             self.add_pin_indices(prop.port_indices)
             self.add_pin_names(prop.port_map)
             self.add_pin_types(prop.port_types)
-            
+
+            def debug_writer(self):
+                self.gds_write("/home/jesse/output/direct_rw.gds")
+
             (width, height) = utils.get_libcell_size(self.cell_name,
                                                      GDS["unit"],
                                                      layer[prop.boundary_layer])
@@ -56,7 +59,12 @@ class design(hierarchy_design):
             self.pin_map = utils.get_libcell_pins(self.pins,
                                                   self.cell_name,
                                                   GDS["unit"])
+            import gdsMill
+            reader = self.gds
+            writer = gdsMill.Gds2writer(reader)
+            writer.writeToFile('/home/jesse/output/direct_rw.gds')
 
+            self.gds_write("/home/jesse/output/direct_rw.gds")
             self.width = width
             self.height = height
 

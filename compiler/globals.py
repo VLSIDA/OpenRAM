@@ -117,6 +117,7 @@ def parse_args():
 
     if OPTS.openram_temp:
         # If they define the temp directory, we can only use one thread at a time!
+        debug.warning("num_threads forced to 1 due to shared temp directory {}".format(OPTS.openram_temp))
         OPTS.num_threads = 1
         
     return (options, args)

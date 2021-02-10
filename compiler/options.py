@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -74,15 +74,19 @@ class options(optparse.Values):
         # If user defined the temporary location in their environment, use it
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
     except:
-        # Else use a unique temporary directory
-        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
-                                                           os.getpid())
+        openram_temp = None
+        
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     verbose_level = 0
     # Drop to pdb on failure?
     debug = False
-    
+    # Only use corners in config file. Disables generated corners
+    only_use_config_corners = False
+    # A list of PVT tuples and be given and only these will be characterized
+    use_specified_corners = None
+    # Allows specification of model data
+    sim_data_path = None
 
     ###################
     # Run-time vs accuracy options.
@@ -102,8 +106,12 @@ class options(optparse.Values):
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options
-    output_extended_config = True
-
+    output_extended_config = False
+    # Output temporary file used to format HTML page
+    output_datasheet_info = False
+    # Determines which analytical model to use.
+    # Available Models: elmore, linear_regression
+    model_name = "elmore"
 
     ###################
     # Tool options
@@ -126,6 +134,8 @@ class options(optparse.Values):
     
     # Number of threads to use
     num_threads = 2
+    # Number of threads to use in ngspice/hspice
+    num_sim_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True
@@ -152,8 +162,6 @@ class options(optparse.Values):
     bitcell = "bitcell"
     buf_dec = "pbuf"
     column_mux_array = "column_mux_array"
-    col_cap = "col_cap"
-    col_cap_array = "col_cap_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
     delay_chain = "delay_chain"
@@ -162,12 +170,10 @@ class options(optparse.Values):
     inv_dec = "pinv"
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
-    nand4_dec = "pnand4"
+    nand4_dec = "pnand4" # Not available right now
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"
-    row_cap = "row_cap"
-    row_cap_array = "row_cap_array"
     sense_amp_array = "sense_amp_array"
     sense_amp = "sense_amp"
     tri_gate_array = "tri_gate_array"

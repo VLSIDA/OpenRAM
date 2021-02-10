@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -611,12 +611,7 @@ class hierarchical_decoder(design.design):
                 for i in self.and_inst[:-1]:
                     pins = i.get_pins(n)
                     for pin in pins:
-                        self.add_power_pin(name=n,
-                                           loc=pin.uc(),
-                                           start_layer=pin.layer)
-                        self.add_power_pin(name=n,
-                                           loc=pin.uc(),
-                                           start_layer=pin.layer)
+                        self.copy_power_pin(pin, loc=pin.uc())
 
                 for i in self.pre2x4_inst + self.pre3x8_inst:
                     self.copy_layout_pin(i, n)
@@ -628,9 +623,7 @@ class hierarchical_decoder(design.design):
                     # The nand and inv are the same height rows...
                     supply_pin = self.and_inst[row].get_pin(pin_name)
                     pin_pos = vector(xoffset, supply_pin.cy())
-                    self.add_power_pin(name=pin_name,
-                                       loc=pin_pos,
-                                       start_layer=supply_pin.layer)
+                    self.copy_power_pin(supply_pin, loc=pin_pos)
 
                 # Copy the pins from the predecoders
                 for pre in self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst:

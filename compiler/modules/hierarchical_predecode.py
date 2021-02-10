@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -330,12 +330,7 @@ class hierarchical_predecode(design.design):
                 for i in self.inv_inst[:-1:2] + self.and_inst[:-1:2]:
                     pins = i.get_pins(n)
                     for pin in pins:
-                        self.add_power_pin(name=n,
-                                           loc=pin.uc(),
-                                           start_layer=pin.layer)
-                        self.add_power_pin(name=n,
-                                           loc=pin.uc(),
-                                           start_layer=pin.layer)
+                        self.copy_power_pin(pin, loc=pin.uc())
 
         # In other techs, we are using standard cell decoder cells with horizontal power
         else:
@@ -353,9 +348,7 @@ class hierarchical_predecode(design.design):
                         for xoffset in [self.inv_inst[0].lx() - self.bus_space,
                                         self.and_inst[0].lx() - self.bus_space]:
                             pin_pos = vector(xoffset, and_pin.cy())
-                            self.add_power_pin(name=n,
-                                               loc=pin_pos,
-                                               start_layer=and_pin.layer)
+                            self.copy_power_pin(and_pin, loc=pin_pos)
 
 
 

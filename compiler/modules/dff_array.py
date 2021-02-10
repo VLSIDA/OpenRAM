@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -112,11 +112,11 @@ class dff_array(design.design):
             for col in range(self.columns):
                 # Continous vdd rail along with label.
                 vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                self.add_power_pin("vdd", vdd_pin.center(), start_layer=vdd_pin.layer)
+                self.copy_power_pin(vdd_pin)
 
                 # Continous gnd rail along with label.
                 gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                self.add_power_pin("gnd", gnd_pin.center(), start_layer=gnd_pin.layer)
+                self.copy_power_pin(gnd_pin)
 
         for row in range(self.rows):
             for col in range(self.columns):

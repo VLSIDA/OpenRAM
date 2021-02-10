@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -633,13 +633,16 @@ def parse_characterizer_csv(f, pages):
 class datasheet_gen():
     def datasheet_write(name):
         """writes the datasheet to a file"""
-        in_dir = OPTS.openram_temp
+        if OPTS.output_datasheet_info:
+            datasheet_path = OPTS.output_path
+        else:
+            datasheet_path = OPTS.openram_temp
 
-        if not (os.path.isdir(in_dir)):
-            os.mkdir(in_dir)
+        if not (os.path.isdir(datasheet_path)):
+            os.mkdir(datasheet_path)
 
         datasheets = []
-        parse_characterizer_csv(in_dir + "/datasheet.info", datasheets)
+        parse_characterizer_csv(datasheet_path + "/datasheet.info", datasheets)
 
         for sheets in datasheets:
             with open(name, 'w+') as f:

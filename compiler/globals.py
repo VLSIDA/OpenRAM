@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -18,6 +18,8 @@ import sys
 import re
 import copy
 import importlib
+import getpass
+
 
 VERSION = "1.1.9"
 NAME = "OpenRAM v{}".format(VERSION)
@@ -113,6 +115,10 @@ def parse_args():
     if OPTS.tech_name == "s8":
         OPTS.tech_name = "sky130"
 
+    if OPTS.openram_temp:
+        # If they define the temp directory, we can only use one thread at a time!
+        OPTS.num_threads = 1
+        
     return (options, args)
 
 
@@ -133,8 +139,9 @@ def print_banner():
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
     debug.print_raw("|=========" + dev_info.center(60) + "=========|")
-    temp_info = "Temp dir: {}".format(OPTS.openram_temp)
-    debug.print_raw("|=========" + temp_info.center(60) + "=========|")
+    if OPTS.openram_temp:
+        temp_info = "Temp dir: {}".format(OPTS.openram_temp)
+        debug.print_raw("|=========" + temp_info.center(60) + "=========|")
     debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
     debug.print_raw("|==============================================================================|")
 
@@ -414,6 +421,10 @@ def setup_paths():
         if "__pycache__" not in full_path:
             sys.path.append("{0}".format(full_path))
 
+    # Use a unique temp directory
+    if not OPTS.openram_temp:
+        OPTS.openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                                os.getpid())
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -49,8 +49,6 @@ class design(hierarchy_design):
             self.add_pin_names(prop.port_map)
             self.add_pin_types(prop.port_types)
 
-            def debug_writer(self):
-                self.gds_write("/home/jesse/output/direct_rw.gds")
 
             (width, height) = utils.get_libcell_size(self.cell_name,
                                                      GDS["unit"],
@@ -59,12 +57,13 @@ class design(hierarchy_design):
             self.pin_map = utils.get_libcell_pins(self.pins,
                                                   self.cell_name,
                                                   GDS["unit"])
-            import gdsMill
-            reader = self.gds
-            writer = gdsMill.Gds2writer(reader)
-            writer.writeToFile('/home/jesse/output/direct_rw.gds')
 
-            self.gds_write("/home/jesse/output/direct_rw.gds")
+            # Convert names back to the original names
+            # so that copying will use the new names
+            for pin_name in self.pin_map:
+                for index1, pin in enumerate(self.pin_map[pin_name]):
+                    self.pin_map[pin_name][index1].name = self.get_original_pin_name(pin.name)
+
             self.width = width
             self.height = height
 

@@ -1,17 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import debug
 import design
-from tech import drc
-from math import log
 from vector import vector
 from globals import OPTS
-import dff_inv
+from sram_factory import factory
+
 
 class dff_inv_array(design.design):
     """
@@ -130,12 +129,11 @@ class dff_inv_array(design.design):
             for col in range(self.columns):
                 # Adds power pin on left of row
                 vdd_pin=self.dff_insts[row,col].get_pin("vdd")
-                self.add_power_pin("vdd", vdd_pin.lc())
+                self.add_power_pin(vdd_pin, loc=vdd_pin.lc())
 
                 # Adds gnd pin on left of row
                 gnd_pin=self.dff_insts[row,col].get_pin("gnd")
-                self.add_power_pin("gnd", gnd_pin.lc())
-
+                self.add_power_pin(gnd_pin, loc=gnd_pin.lc())
 
         for row in range(self.rows):
             for col in range(self.columns):

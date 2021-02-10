@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -115,7 +115,7 @@ def bp():
     Usage:
     1) Add a breakpoint anywhere in your code with "import debug; debug.bp()".
     2) Run "python3 -m pdb openram.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
-    3) When pdb starts, run "break debug.py" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
+    3) When pdb starts, run "break debug.bp" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
     4) Then run "cont" to continue.
     5) You can now set additional breakpoints or display commands 
     and whenever you encounter the debug.bp() they won't be "reset".

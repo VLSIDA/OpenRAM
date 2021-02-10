@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -1220,49 +1220,88 @@ class layout():
                                     pin.height())
 
             elif add_vias:
-                self.add_power_pin(name, pin.center(), start_layer=pin.layer)
+                self.copy_power_pin(pin)
 
-    def add_io_pin(self, instance, pin_name, new_name="", start_layer=None):
+    def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
         Add a signle input or output pin up to metal 3.
         """
         pin = instance.get_pin(pin_name)
 
-        if new_name == "":
-            new_name = pin_name
-
         if not start_layer:
             start_layer = pin.layer
-            
-        # Just use the power pin function for now to save code
-        self.add_power_pin(name=new_name, loc=pin.center(), start_layer=start_layer)
 
-    def add_power_pin(self, name, loc, size=[1, 1], directions=None, start_layer="m1"):
+        # Just use the power pin function for now to save code
+        self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
+
+    def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
+        # Hack for min area
+        if OPTS.tech_name == "sky130":
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            width = round_to_grid(sqrt(min_area))
+            height = round_to_grid(min_area / width)
+        else:
+            width = None
+            height = None
+
+        if start_layer == self.pwr_grid_layer:
+            self.add_layout_pin_rect_center(text=name,
+                                            layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
+        else:
+            via = self.add_via_stack_center(from_layer=start_layer,
+                                            to_layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            directions=directions)
+
+            if not width:
+                width = via.width
+            if not height:
+                height = via.height
+            self.add_layout_pin_rect_center(text=name,
+                                            layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
+
+    def copy_power_pin(self, pin, loc=None, directions=None):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
 
-        if start_layer == self.pwr_grid_layer:
-            self.add_layout_pin_rect_center(text=name,
-                                            layer=self.pwr_grid_layer,
-                                            offset=loc)
+        if not loc:
+            loc = pin.center()
+            
+        # Hack for min area
+        if OPTS.tech_name == "sky130":
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            width = round_to_grid(sqrt(min_area))
+            height = round_to_grid(min_area / width)
         else:
-            via = self.add_via_stack_center(from_layer=start_layer,
+            width = None
+            height = None
+            
+        if pin.layer == self.pwr_grid_layer:
+            self.add_layout_pin_rect_center(text=pin.name,
+                                            layer=self.pwr_grid_layer,
+                                            offset=loc,
+                                            width=width,
+                                            height=height)
+        else:
+            via = self.add_via_stack_center(from_layer=pin.layer,
                                             to_layer=self.pwr_grid_layer,
-                                            size=size,
                                             offset=loc,
                                             directions=directions)
 
-            # Hack for min area
-            if OPTS.tech_name == "sky130":
-                width = round_to_grid(sqrt(drc["minarea_m3"]))
-                height = round_to_grid(drc["minarea_m3"] / width)
-            else:
+            if not width:
                 width = via.width
+            if not height:
                 height = via.height
-            self.add_layout_pin_rect_center(text=name,
+            self.add_layout_pin_rect_center(text=pin.name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -74,26 +74,38 @@ class lib:
 
         self.corners = []
         self.lib_files = []
-
-        # Nominal corner
-        corner_set = set()
-        nom_corner = (nom_process, nom_supply, nom_temperature)
-        corner_set.add(nom_corner)
-        if not OPTS.nominal_corner_only:
-            # Temperature corners
-            corner_set.add((nom_process, nom_supply, min_temperature))
-            corner_set.add((nom_process, nom_supply, max_temperature))
-            # Supply corners
-            corner_set.add((nom_process, min_supply, nom_temperature))
-            corner_set.add((nom_process, max_supply, nom_temperature))
-            # Process corners
-            corner_set.add((min_process, nom_supply, nom_temperature))
-            corner_set.add((max_process, nom_supply, nom_temperature))
-
-        # Enforce that nominal corner is the first to be characterized
-        self.add_corner(*nom_corner)
-        corner_set.remove(nom_corner)
-        for corner_tuple in corner_set:
+        
+        if OPTS.use_specified_corners == None:
+            # Nominal corner
+            corner_tuples = set()
+            if OPTS.only_use_config_corners:
+                if OPTS.nominal_corner_only:
+                    debug.warning("Nominal corner only option ignored if use only config corners is set.")
+                # Generate a powerset of input PVT lists
+                for p in self.process_corners:
+                    for v in self.supply_voltages:
+                        for t in self.temperatures:
+                            corner_tuples.add((p, v, t))
+            else:    
+                nom_corner = (nom_process, nom_supply, nom_temperature)
+                corner_tuples.add(nom_corner)
+                if not OPTS.nominal_corner_only:
+                    # Temperature corners
+                    corner_tuples.add((nom_process, nom_supply, min_temperature))
+                    corner_tuples.add((nom_process, nom_supply, max_temperature))
+                    # Supply corners
+                    corner_tuples.add((nom_process, min_supply, nom_temperature))
+                    corner_tuples.add((nom_process, max_supply, nom_temperature))
+                    # Process corners
+                    corner_tuples.add((min_process, nom_supply, nom_temperature))
+                    corner_tuples.add((max_process, nom_supply, nom_temperature))
+            # Enforce that nominal corner is the first to be characterized
+            self.add_corner(*nom_corner)
+            corner_tuples.remove(nom_corner)
+        else:
+            corner_tuples = OPTS.use_specified_corners
+        
+        for corner_tuple in corner_tuples:
             self.add_corner(*corner_tuple)
 
     def add_corner(self, proc, volt, temp):
@@ -582,18 +594,28 @@ class lib:
 
     def compute_delay(self):
         """Compute SRAM delays for current corner"""
-        self.d = delay(self.sram, self.sp_file, self.corner)
         if self.use_model:
-            char_results = self.d.analytical_delay(self.slews,self.loads)
-            self.char_sram_results, self.char_port_results = char_results
+            model_name_lc = OPTS.model_name.lower()
+            if model_name_lc == "linear_regression":
+                from .linear_regression import linear_regression as model
+            elif model_name_lc == "elmore":
+                from .elmore import elmore as model
+            else:
+                debug.error("{} model not recognized. See options.py for available models.".format(OPTS.model_name))
+            import math
+
+            m = model(self.sram, self.sp_file, self.corner)
+            char_results = m.get_lib_values(self.slews,self.loads)
+
         else:
+            self.d = delay(self.sram, self.sp_file, self.corner)
             if (self.sram.num_spare_rows == 0):
                 probe_address = "1" * self.sram.addr_size
             else:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
-            self.char_sram_results, self.char_port_results = char_results
+        self.char_sram_results, self.char_port_results = char_results
 
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
@@ -608,6 +630,79 @@ class lib:
 
     def parse_info(self,corner,lib_name):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
+        if OPTS.output_datasheet_info:
+            datasheet_path = OPTS.output_path
+        else:
+            datasheet_path = OPTS.openram_temp
+        datasheet = open(datasheet_path +'/datasheet.info', 'a+')
+        
+        self.write_inp_params_datasheet(datasheet, corner, lib_name)
+        self.write_signal_from_ports(datasheet,
+                                "din{1}[{0}:0]".format(self.sram.word_size - 1, '{}'), 
+                                self.write_ports, 
+                                "setup_times_LH",
+                                "setup_times_HL", 
+                                "hold_times_LH",
+                                "hold_times_HL")
+                                
+        # self.write_signal_from_ports(datasheet,
+                                # "dout{1}[{0}:0]".format(self.sram.word_size - 1, '{}'), 
+                                # self.read_ports, 
+                                # "delay_lh",
+                                # "delay_hl", 
+                                # "slew_lh",
+                                # "slew_hl")      
+        for port in self.all_ports:
+            #dout timing
+            if port in self.read_ports:
+                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
+                        "dout{1}[{0}:0]".format(self.sram.word_size - 1, port),
+                        min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
+
+                        min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
+                        max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
+                        ))        
+
+        self.write_signal_from_ports(datasheet,
+                                "csb{}", 
+                                self.all_ports, 
+                                "setup_times_LH",
+                                "setup_times_HL", 
+                                "hold_times_LH",
+                                "hold_times_HL")
+                                
+        self.write_signal_from_ports(datasheet,
+                                "addr{1}[{0}:0]".format(self.sram.addr_size - 1, '{}'), 
+                                self.all_ports, 
+                                "setup_times_LH",
+                                "setup_times_HL", 
+                                "hold_times_LH",
+                                "hold_times_HL")                        
+
+        self.write_signal_from_ports(datasheet,
+                                "web{}", 
+                                self.readwrite_ports, 
+                                "setup_times_LH",
+                                "setup_times_HL", 
+                                "hold_times_LH",
+                                "hold_times_HL")  
+
+        self.write_power_datasheet(datasheet)
+
+        self.write_model_params(datasheet)
+        
+        datasheet.write("END\n")
+        datasheet.close()
+
+    def write_inp_params_datasheet(self, datasheet, corner, lib_name):
+    
         if OPTS.is_unit_test:
             git_id = 'FFFFFFFFFFFFFFFFFFFF'
 
@@ -625,11 +720,9 @@ class lib:
                 # check if git id is valid
                 if len(git_id) != 40:
                     debug.warning("Failed to retrieve git id")
-                    git_id = 'Failed to retruieve'
-
-        datasheet = open(OPTS.openram_temp +'/datasheet.info', 'a+')
-
+                    git_id = 'Failed to retrieve'
         current_time = datetime.date.today()
+        
         # write static information to be parser later
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
                         OPTS.output_name,
@@ -657,104 +750,26 @@ class lib:
 
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')
-
-        # write timing information for all ports
-        for port in self.all_ports:
-            #din timings
-            if port in self.write_ports:
-                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "din{1}[{0}:0]".format(self.sram.word_size - 1, port),
-                        min(list(map(round_time,self.times["setup_times_LH"]))),
-                        max(list(map(round_time,self.times["setup_times_LH"]))),
-
-                        min(list(map(round_time,self.times["setup_times_HL"]))),
-                        max(list(map(round_time,self.times["setup_times_HL"]))),
-
-                        min(list(map(round_time,self.times["hold_times_LH"]))),
-                        max(list(map(round_time,self.times["hold_times_LH"]))),
-
-                        min(list(map(round_time,self.times["hold_times_HL"]))),
-                        max(list(map(round_time,self.times["hold_times_HL"])))
-
-                        ))
-
-        for port in self.all_ports:
-            #dout timing
-            if port in self.read_ports:
-                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "dout{1}[{0}:0]".format(self.sram.word_size - 1, port),
-                        min(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
-                        max(list(map(round_time,self.char_port_results[port]["delay_lh"]))),
-
-                        min(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
-                        max(list(map(round_time,self.char_port_results[port]["delay_hl"]))),
-
-                        min(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
-                        max(list(map(round_time,self.char_port_results[port]["slew_lh"]))),
-
-                        min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
-                        max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
-
-
-                        ))
-
-        for port in self.all_ports:
-            #csb timings
+        
+    def write_signal_from_ports(self, datasheet, signal, ports, time_pos_1, time_pos_2, time_pos_3, time_pos_4):    
+        for port in ports:
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "csb{0}".format(port),
-                    min(list(map(round_time,self.times["setup_times_LH"]))),
-                    max(list(map(round_time,self.times["setup_times_LH"]))),
+                    signal.format(port),
+                    min(list(map(round_time,self.times[time_pos_1]))),
+                    max(list(map(round_time,self.times[time_pos_1]))),
 
-                    min(list(map(round_time,self.times["setup_times_HL"]))),
-                    max(list(map(round_time,self.times["setup_times_HL"]))),
+                    min(list(map(round_time,self.times[time_pos_2]))),
+                    max(list(map(round_time,self.times[time_pos_2]))),
 
-                    min(list(map(round_time,self.times["hold_times_LH"]))),
-                    max(list(map(round_time,self.times["hold_times_LH"]))),
+                    min(list(map(round_time,self.times[time_pos_3]))),
+                    max(list(map(round_time,self.times[time_pos_3]))),
 
-                    min(list(map(round_time,self.times["hold_times_HL"]))),
-                    max(list(map(round_time,self.times["hold_times_HL"])))
+                    min(list(map(round_time,self.times[time_pos_4]))),
+                    max(list(map(round_time,self.times[time_pos_4])))
 
                     ))
-
-        for port in self.all_ports:
-            #addr timings
-            datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                    "addr{1}[{0}:0]".format(self.sram.addr_size - 1, port),
-                    min(list(map(round_time,self.times["setup_times_LH"]))),
-                    max(list(map(round_time,self.times["setup_times_LH"]))),
-
-                    min(list(map(round_time,self.times["setup_times_HL"]))),
-                    max(list(map(round_time,self.times["setup_times_HL"]))),
-
-                    min(list(map(round_time,self.times["hold_times_LH"]))),
-                    max(list(map(round_time,self.times["hold_times_LH"]))),
-
-                    min(list(map(round_time,self.times["hold_times_HL"]))),
-                    max(list(map(round_time,self.times["hold_times_HL"])))
-
-                    ))
-
-
-        for port in self.all_ports:
-            if port in self.readwrite_ports:
-
-            #web timings
-                datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
-                        "web{0}".format(port),
-                        min(list(map(round_time,self.times["setup_times_LH"]))),
-                        max(list(map(round_time,self.times["setup_times_LH"]))),
-
-                        min(list(map(round_time,self.times["setup_times_HL"]))),
-                        max(list(map(round_time,self.times["setup_times_HL"]))),
-
-                        min(list(map(round_time,self.times["hold_times_LH"]))),
-                        max(list(map(round_time,self.times["hold_times_LH"]))),
-
-                        min(list(map(round_time,self.times["hold_times_HL"]))),
-                        max(list(map(round_time,self.times["hold_times_HL"])))
-
-                        ))
-
+                    
+    def write_power_datasheet(self, datasheet):        
         # write power information
         for port in self.all_ports:
             name = ''
@@ -793,7 +808,31 @@ class lib:
             control_str += ' & csb{0}'.format(i)
 
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
-
-
-        datasheet.write("END\n")
-        datasheet.close()
+        
+    def write_model_params(self, datasheet):
+        """Write values which will be used in the analytical model as inputs"""
+        datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
+        datasheet.write("{0},{1},".format('slews', list(self.slews)))
+        datasheet.write("{0},{1},".format('loads', list(self.loads)))
+        
+        for port in self.read_ports:
+            datasheet.write("{0},{1},".format('cell_rise_{}'.format(port), self.char_port_results[port]["delay_lh"]))
+            datasheet.write("{0},{1},".format('cell_fall_{}'.format(port), self.char_port_results[port]["delay_hl"]))
+            datasheet.write("{0},{1},".format('rise_transition_{}'.format(port), self.char_port_results[port]["slew_lh"]))
+            datasheet.write("{0},{1},".format('fall_transition_{}'.format(port), self.char_port_results[port]["slew_hl"]))
+        
+        for port in self.write_ports:
+            write1_power = np.mean(self.char_port_results[port]["write1_power"])
+            write0_power = np.mean(self.char_port_results[port]["write0_power"])
+            datasheet.write("{0},{1},".format('write_rise_power_{}'.format(port), write1_power))
+            #FIXME: should be write_fall_power
+            datasheet.write("{0},{1},".format('read_fall_power_{}'.format(port), write0_power))
+        
+        for port in self.read_ports:
+            read1_power = np.mean(self.char_port_results[port]["read1_power"])
+            read0_power = np.mean(self.char_port_results[port]["read0_power"])
+            datasheet.write("{0},{1},".format('read_rise_power_{}'.format(port), read1_power))
+            #FIXME: should be read_fall_power
+            datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), read0_power))
+        
+        

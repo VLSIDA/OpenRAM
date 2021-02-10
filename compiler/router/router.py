@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -28,7 +28,7 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, route_track_width=1):
+    def __init__(self, layers, design, gds_filename=None, bbox=None, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
@@ -69,9 +69,12 @@ class router(router_tech):
 
         # The blockage data structures
         # A list of metal shapes (using the same pin_layout structure)
-        # that are not pins but blockages.
+        # that could be blockages.
+        # This will include the pins above as well.
         self.blockages = []
-        # The corresponding set of blocked grids for above pin shapes
+        # The corresponding set of blocked grids for above blockage pin_layout shapes
+        # It is a cached set of grids that *could* be blocked, but may be unblocked
+        # depending on which pin we are routing.
         self.blocked_grids = set()
 
         # The routed data structures
@@ -80,12 +83,35 @@ class router(router_tech):
         # A list of path blockages (they might be expanded for wide metal DRC)
         self.path_blockages = []
 
-        # The boundary will determine the limits to the size
-        # of the routing grid
-        self.boundary = self.layout.measureBoundary(self.top_name)
-        # These must be un-indexed to get rid of the matrix type
-        self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-        self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+        self.init_bbox(bbox)
+
+    def init_bbox(self, bbox=None):
+        """
+        Initialize the ll,ur values with the paramter or using the layout boundary.
+        """
+        if not bbox:
+            # The boundary will determine the limits to the size
+            # of the routing grid
+            self.boundary = self.layout.measureBoundary(self.top_name)
+            # These must be un-indexed to get rid of the matrix type
+            self.ll = vector(self.boundary[0][0], self.boundary[0][1])
+            self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+        else:
+            self.ll, self.ur = bbox
+
+        self.bbox = (self.ll, self.ur)
+        size = self.ur - self.ll
+        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
+        
+    def get_bbox(self):
+        return self.bbox
+    
+    def create_routing_grid(self, router_type, bbox=None):
+        """
+        Create a sprase routing grid with A* expansion functions.
+        """
+        self.init_bbox(bbox)
+        self.rg = router_type(self.ll, self.ur, self.track_width)
 
     def clear_pins(self):
         """
@@ -345,16 +371,17 @@ class router(router_tech):
         # This is just a virtual function
         pass
     
-    def prepare_blockages(self, pin_name):
+    def prepare_blockages(self):
         """
         Reset and add all of the blockages in the design.
-        Names is a list of pins to add as a blockage.
         """
         debug.info(3, "Preparing blockages.")
 
         # Start fresh. Not the best for run-time, but simpler.
-        self.clear_blockages()
+        self.clear_all_blockages()
+        
         # This adds the initial blockges of the design
+        # which includes all blockages due to non-pin shapes
         # print("BLOCKING:", self.blocked_grids)
         self.set_blockages(self.blocked_grids, True)
 
@@ -366,25 +393,17 @@ class router(router_tech):
             # If function doesn't exist, it isn't a supply router
             pass
 
-        # Block all of the pin components
-        # (some will be unblocked if they're a source/target)
-        # Also block the previous routes
+        # Now go and block all of the blockages due to pin shapes.
+        # Some of these will get unblocked later if they are the source/target.
         for name in self.pin_groups:
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.grids}
-            self.set_blockages(blockage_grids, True)
+            # This should be a superset of the grids...
             blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
             self.set_blockages(blockage_grids, True)
 
-        # FIXME: These duplicate a bit of work
-        # These are the paths that have already been routed.
+        # If we have paths that were recently routed, add them as blockages as well.
+        # We might later do rip-up and reroute so they might not be metal shapes in the design yet.
+        # Also, this prevents having to reload an entire GDS and find the blockage shapes.
         self.set_blockages(self.path_blockages)
-
-        # Don't mark the other components as targets since we want to route
-        # directly to a rail, but unblock all the source components so we can
-        # route over them
-        # 1/6/21: This would cause things that looked like loops in the supply tree router
-        # blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.grids}
-        # self.set_blockages(blockage_grids, False)
 
     def convert_shape_to_units(self, shape):
         """
@@ -421,7 +440,14 @@ class router(router_tech):
             # z direction
             return 2
 
-    def clear_blockages(self):
+    def clear_blockages(self, pin_name):
+        """
+        This function clears a given pin and all of its components from being blockages.
+        """
+        blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.blockages}
+        self.set_blockages(blockage_grids, False)
+        
+    def clear_all_blockages(self):
         """
         Clear all blockages on the grid.
         """
@@ -432,24 +458,24 @@ class router(router_tech):
         """ Flag the blockages in the grid """
         self.rg.set_blocked(blockages, value)
 
-    def get_blockage_tracks(self, ll, ur, z):
-        debug.info(3, "Converting blockage ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
+    def convert_to_tracks(self, ll, ur, z):
+        debug.info(3, "Converting ll={0} ur={1} z={2}".format(str(ll),str(ur),z))
 
-        block_list = []
+        grid_list = []
         for x in range(int(ll[0]), int(ur[0])+1):
             for y in range(int(ll[1]), int(ur[1])+1):
-                block_list.append(vector3d(x, y, z))
+                grid_list.append(vector3d(x, y, z))
 
-        return set(block_list)
+        return set(grid_list)
 
     def convert_blockage(self, blockage):
         """
         Convert a pin layout blockage shape to routing grid tracks.
         """
         # Inflate the blockage by half a spacing rule
-        [ll, ur] = self.convert_blockage_to_tracks(blockage.inflate())
+        [ll, ur] = self.convert_shape_to_tracks(blockage.inflate())
         zlayer = self.get_zindex(blockage.lpp)
-        blockage_tracks = self.get_blockage_tracks(ll, ur, zlayer)
+        blockage_tracks = self.convert_to_tracks(ll, ur, zlayer)
         return blockage_tracks
 
     def convert_blockages(self):
@@ -459,6 +485,14 @@ class router(router_tech):
             debug.info(3, "Converting blockage {}".format(str(blockage)))
             blockage_list = self.convert_blockage(blockage)
             self.blocked_grids.update(blockage_list)
+
+    def get_blocked_grids(self):
+        """ 
+        Return the blocked grids with their flag set
+        """
+        #return set([x for x in self.blocked_grids if self.rg.is_blocked(x)])
+        # These are all the non-pin blockages
+        return self.blocked_grids
 
     def retrieve_blockages(self, lpp):
         """
@@ -473,7 +507,6 @@ class router(router_tech):
             new_pin = pin_layout("blockage{}".format(len(self.blockages)),
                                  rect,
                                  lpp)
-
             # If there is a rectangle that is the same in the pins,
             # it isn't a blockage!
             if new_pin not in self.all_pins:
@@ -492,10 +525,10 @@ class router(router_tech):
         Convert a wave to a set of center points
         """
         return [self.convert_point_to_units(i) for i in wave]
-
-    def convert_blockage_to_tracks(self, shape):
+        
+    def convert_shape_to_tracks(self, shape):
         """
-        Convert a rectangular blockage shape into track units.
+        Convert a rectangular shape into track units.
         """
         (ll, ur) = shape
         ll = snap_to_grid(ll)
@@ -531,8 +564,8 @@ class router(router_tech):
         insufficient_list = set()
 
         zindex = self.get_zindex(pin.lpp)
-        for x in range(int(ll[0]) + expansion, int(ur[0]) + 1 + expansion):
-            for y in range(int(ll[1] + expansion), int(ur[1]) + 1 + expansion):
+        for x in range(int(ll[0]) - expansion, int(ur[0]) + 1 + expansion):
+            for y in range(int(ll[1] - expansion), int(ur[1]) + 1 + expansion):
                 (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin,
                                                                                    vector3d(x,
                                                                                             y,
@@ -791,8 +824,7 @@ class router(router_tech):
                 group_map[gid] = pin_group(name=pin_name,
                                            pin_set=[],
                                            router=self)
-            # We always add it to the first set since they are touching
-            group_map[gid].pins.add(pin)
+            group_map[gid].add_pin(pin)
 
         self.pin_groups[pin_name] = list(group_map.values())
 
@@ -813,6 +845,7 @@ class router(router_tech):
         for pin_name in self.pin_groups:
             debug.info(2, "Enclosing pins for {}".format(pin_name))
             for pg in self.pin_groups[pin_name]:
+                self.clear_blockages(pin_name)
                 pg.enclose_pin()
                 pg.add_enclosure(self.cell)
 
@@ -824,6 +857,9 @@ class router(router_tech):
         for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_source(pin_name, i)
 
+        # Clearing the blockage of this pin requires the inflated pins
+        self.clear_blockages(pin_name)
+
     def add_target(self, pin_name):
         """
         This will mark the grids for all pin components as a target.
@@ -831,6 +867,9 @@ class router(router_tech):
         """
         for i in range(self.num_pin_components(pin_name)):
             self.add_pin_component_target(pin_name, i)
+
+        # Clearing the blockage of this pin requires the inflated pins
+        self.clear_blockages(pin_name)
 
     def add_perimeter_target(self, side="all"):
         """
@@ -1018,7 +1057,6 @@ class router(router_tech):
 
             self.paths.append(grid_utils.flatten_set(path))
             self.add_route(path)
-
             self.path_blockages.append(self.paths[-1])
             return True
         else:
@@ -1107,7 +1145,7 @@ class router(router_tech):
         """
         Erase all of the comments on the current level.
         """
-        debug.info(0, "Erasing router info")
+        debug.info(2, "Erasing router info")
         lpp = techlayer["text"]
         self.cell.objs = [x for x in self.cell.objs if x.lpp != lpp]
 
@@ -1117,7 +1155,7 @@ class router(router_tech):
         the boundary layer for debugging purposes. This can only be
         called once or the labels will overlap.
         """
-        debug.info(0, "Adding router info")
+        debug.info(2, "Adding router info")
 
         show_blockages = False
         show_blockage_grids = False

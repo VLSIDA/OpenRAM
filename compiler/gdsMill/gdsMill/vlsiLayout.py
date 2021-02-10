@@ -3,7 +3,7 @@ from datetime import *
 import numpy as np
 import math
 import debug
-from tech import use_purpose, no_pin_shape
+from tech import use_purpose
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""

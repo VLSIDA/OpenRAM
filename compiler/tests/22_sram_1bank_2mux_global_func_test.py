@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -33,7 +33,6 @@ class sram_1bank_2mux_func_test(openram_test):
         from characterizer import functional
         from sram_config import sram_config
         OPTS.local_array_size = 8
-        OPTS.route_supplies = False
         c = sram_config(word_size=8,
                         num_words=32,
                         num_banks=1)

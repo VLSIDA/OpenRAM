@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -23,7 +23,6 @@ class sram_1bank_2mux_1rw_1r_test(openram_test):
         globals.init_openram(config_file)
         from sram_config import sram_config
 
-        OPTS.route_supplies = False
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0

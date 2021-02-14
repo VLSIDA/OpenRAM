@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -1235,7 +1235,6 @@ class layout():
         self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
 
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
-
         # Hack for min area
         if OPTS.tech_name == "sky130":
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]

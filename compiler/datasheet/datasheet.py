@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -28,7 +28,11 @@ class datasheet():
             # css styling is kept in a seperate file
             self.html += datasheet_css.read()
 
-        with open(OPTS.openram_temp + "/datasheet.info") as info:
+        if OPTS.output_datasheet_info:
+            datasheet_path = OPTS.output_path
+        else:
+            datasheet_path = OPTS.openram_temp    
+        with open(datasheet_path + "/datasheet.info") as info:
             self.html += '<!--'
             for row in info:
                 self.html += row

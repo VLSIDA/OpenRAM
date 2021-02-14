@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -51,21 +51,6 @@ class delay(simulation):
         self.set_corner(corner)
         self.create_signal_names()
         self.add_graph_exclusions()
-
-    def create_measurement_names(self):
-        """ Create measurement names. The names themselves currently define the type of measurement """
-
-        self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
-        self.power_meas_names = ["read0_power",
-                                 "read1_power",
-                                 "write0_power",
-                                 "write1_power",
-                                 "disabled_read0_power",
-                                 "disabled_read1_power",
-                                 "disabled_write0_power",
-                                 "disabled_write1_power"]
-        # self.voltage_when_names = ["volt_bl", "volt_br"]
-        # self.bitline_delay_names = ["delay_bl", "delay_br"]
 
     def create_measurement_objects(self):
         """ Create the measurements used for read and write ports """
@@ -525,7 +510,7 @@ class delay(simulation):
         elif delay_obj.meta_str == sram_op.READ_ONE:
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         else:
-            debug.error("Unrecognised delay Index={}".format(delay_obj.meta_str),1)
+            debug.error("Unrecognized delay Index={}".format(delay_obj.meta_str),1)
 
         # These measurements have there time further delayed to the neg. edge of the clock.
         if delay_obj.meta_add_delay:
@@ -1037,28 +1022,10 @@ class delay(simulation):
         """
         Probe address and data can be set separately to utilize other
         functions in this characterizer besides analyze.
+        Netlist reduced for simulation.
         """
-
-        self.probe_address = probe_address
-        self.probe_data = probe_data
-        self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
-        self.wordline_row = self.get_address_row_number(probe_address)
+        super().set_probe(probe_address, probe_data)
         self.prepare_netlist()
-
-    def get_data_bit_column_number(self, probe_address, probe_data):
-        """Calculates bitline column number of data bit under test using bit position and mux size"""
-
-        if self.sram.col_addr_size>0:
-            col_address = int(probe_address[0:self.sram.col_addr_size], 2)
-        else:
-            col_address = 0
-        bl_column = int(self.sram.words_per_row * probe_data + col_address)
-        return bl_column
-
-    def get_address_row_number(self, probe_address):
-        """Calculates wordline row number of data bit under test using address and column mux size"""
-
-        return int(probe_address[self.sram.col_addr_size:], 2)
 
     def prepare_netlist(self):
         """ Prepare a trimmed netlist and regular netlist. """
@@ -1303,89 +1270,6 @@ class delay(simulation):
             # Add test cycle of read/write port pair. One port could have been used already, but the other has not.
             self.gen_test_cycles_one_port(cur_read_port, cur_write_port)
 
-    def sum_delays(self, delays):
-        """Adds the delays (delay_data objects) so the correct slew is maintained"""
-
-        delay = delays[0]
-        for i in range(1, len(delays)):
-            delay+=delays[i]
-        return delay
-
-    def analytical_delay(self, slews, loads):
-        """
-        Return the analytical model results for the SRAM.
-        """
-        if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
-            debug.warning("In analytical mode, all ports have the timing of the first read port.")
-
-        # Probe set to 0th bit, does not matter for analytical delay.
-        self.set_probe('0' * self.addr_size, 0)
-        self.create_graph()
-        self.set_internal_spice_names()
-        self.create_measurement_names()
-
-        port = self.read_ports[0]
-        self.graph.get_all_paths('{}{}'.format("clk", port),
-                                 '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-
-        # Select the path with the bitline (bl)
-        bl_name, br_name = self.get_bl_name(self.graph.all_paths, port)
-        bl_path = [path for path in self.graph.all_paths if bl_name in path][0]
-
-        # Set delay/power for slews and loads
-        port_data = self.get_empty_measure_data_dict()
-        power = self.analytical_power(slews, loads)
-        debug.info(1, 'Slew, Load, Delay(ns), Slew(ns)')
-        max_delay = 0.0
-        for slew in slews:
-            for load in loads:
-                # Calculate delay based on slew and load
-                path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
-
-                total_delay = self.sum_delays(path_delays)
-                max_delay = max(max_delay, total_delay.delay)
-                debug.info(1,
-                           '{}, {}, {}, {}'.format(slew,
-                                                   load,
-                                                   total_delay.delay / 1e3,
-                                                   total_delay.slew / 1e3))
-
-                # Delay is only calculated on a single port and replicated for now.
-                for port in self.all_ports:
-                    for mname in self.delay_meas_names + self.power_meas_names:
-                        if "power" in mname:
-                            port_data[port][mname].append(power.dynamic)
-                        elif "delay" in mname and port in self.read_ports:
-                            port_data[port][mname].append(total_delay.delay / 1e3)
-                        elif "slew" in mname and port in self.read_ports:
-                            port_data[port][mname].append(total_delay.slew / 1e3)
-                        else:
-                            debug.error("Measurement name not recognized: {}".format(mname), 1)
-
-        # Margin for error in period. Calculated by averaging required margin for a small and large 
-        # memory. FIXME: margin is quite large, should be looked into.
-        period_margin = 1.85
-        sram_data = {"min_period": (max_delay / 1e3) * 2 * period_margin,
-                     "leakage_power": power.leakage}
-
-        debug.info(2, "SRAM Data:\n{}".format(sram_data))
-        debug.info(2, "Port Data:\n{}".format(port_data))
-
-        return (sram_data, port_data)
-
-    def analytical_power(self, slews, loads):
-        """Get the dynamic and leakage power from the SRAM"""
-
-        # slews unused, only last load is used
-        load = loads[-1]
-        power = self.sram.analytical_power(self.corner, load)
-        # convert from nW to mW
-        power.dynamic /= 1e6
-        power.leakage /= 1e6
-        debug.info(1, "Dynamic Power: {0} mW".format(power.dynamic))
-        debug.info(1, "Leakage Power: {0} mW".format(power.leakage))
-        return power
-
     def gen_data(self):
         """ Generates the PWL data inputs for a simulation timing test. """
 
@@ -1412,11 +1296,3 @@ class delay(simulation):
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
             if port in self.readwrite_ports:
                 self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
-
-    def get_empty_measure_data_dict(self):
-        """Make a dict of lists for each type of delay and power measurement to append results to"""
-
-        measure_names = self.delay_meas_names + self.power_meas_names
-        # Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
-        measure_data = [{mname: [] for mname in measure_names} for i in self.all_ports]
-        return measure_data

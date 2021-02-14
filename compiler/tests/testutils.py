@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -315,7 +315,8 @@ def header(filename, technology):
     print("|=========" + technology.center(60) + "=========|")
     print("|=========" + filename.center(60) + "=========|")
     from globals import OPTS
-    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    if OPTS.openram_temp:
+        print("|=========" + OPTS.openram_temp.center(60) + "=========|")
     print("|==============================================================================|")
 
 

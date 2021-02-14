@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -38,6 +38,21 @@ class simulation():
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
+
+    def create_measurement_names(self):
+        """ Create measurement names. The names themselves currently define the type of measurement """
+
+        self.delay_meas_names = ["delay_lh", "delay_hl", "slew_lh", "slew_hl"]
+        self.power_meas_names = ["read0_power",
+                                 "read1_power",
+                                 "write0_power",
+                                 "write1_power",
+                                 "disabled_read0_power",
+                                 "disabled_read1_power",
+                                 "disabled_write0_power",
+                                 "disabled_write1_power"]
+        # self.voltage_when_names = ["volt_bl", "volt_br"]
+        # self.bitline_delay_names = ["delay_bl", "delay_br"]
 
     def set_corner(self, corner):
         """ Set the corner values """
@@ -91,6 +106,32 @@ class simulation():
         # For generating comments in SPICE stimulus
         self.cycle_comments = []
         self.fn_cycle_comments = []
+
+    def set_probe(self, probe_address, probe_data):
+        """
+        Probe address and data can be set separately to utilize other
+        functions in this characterizer besides analyze.
+        """
+
+        self.probe_address = probe_address
+        self.probe_data = probe_data
+        self.bitline_column = self.get_data_bit_column_number(probe_address, probe_data)
+        self.wordline_row = self.get_address_row_number(probe_address)
+
+    def get_data_bit_column_number(self, probe_address, probe_data):
+        """Calculates bitline column number of data bit under test using bit position and mux size"""
+
+        if self.sram.col_addr_size>0:
+            col_address = int(probe_address[0:self.sram.col_addr_size], 2)
+        else:
+            col_address = 0
+        bl_column = int(self.sram.words_per_row * probe_data + col_address)
+        return bl_column
+
+    def get_address_row_number(self, probe_address):
+        """Calculates wordline row number of data bit under test using address and column mux size"""
+
+        return int(probe_address[self.sram.col_addr_size:], 2)
 
     def add_control_one_port(self, port, op):
         """Appends control signals for operation to a given port"""
@@ -544,6 +585,21 @@ class simulation():
             for i in range(len(bl_names)):
                 bl_names[i] = bl_names[i].split('.')[-1]
         return bl_names[0], bl_names[1]
+        
+    def get_empty_measure_data_dict(self):
+        """Make a dict of lists for each type of delay and power measurement to append results to"""
 
+        measure_names = self.delay_meas_names + self.power_meas_names
+        # Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
+        measure_data = [{mname: [] for mname in measure_names} for i in self.all_ports]
+        return measure_data    
+
+    def sum_delays(self, delays):
+        """Adds the delays (delay_data objects) so the correct slew is maintained"""
+
+        delay = delays[0]
+        for i in range(1, len(delays)):
+            delay+=delays[i]
+        return delay
 
 

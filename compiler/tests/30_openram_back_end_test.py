@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -46,12 +46,7 @@ class openram_back_end_test(openram_test):
         if OPTS.spice_name:
             options += " -s {}".format(OPTS.spice_name)
 
-        # Always perform code coverage
-        if OPTS.coverage == 0:
-            debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-            exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
-        else:
-            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
+        exe_name = "{0}{1}/openram.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
         cmd = "{0} -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                        out_file,

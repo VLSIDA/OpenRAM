@@ -43,12 +43,12 @@ The OpenRAM compiler has very few dependencies:
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45])
-+ [Magic] 8.3.27 or higher (for [SCMOS])
-+ [Netgen] 1.5 (for [SCMOS])
++ [Magic] 8.3.130 or newer
++ [Netgen] 1.5.164 or newer
 
 You must set two environment variables: 
 + OPENRAM\_HOME should point to the compiler source directory. 
-+ OPENERAM\_TECH should point to a root technology directory.
++ OPENERAM\_TECH should point to one or more root technology directories (colon separated).
 
 ## Environment
 
@@ -65,11 +65,11 @@ You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
   export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
 ```
 
-We include the tech files necessary for [SCMOS]
-SCN4M_SUBM. The [SCMOS] spice models, however, are generic and should
-be replaced with foundry models.  If you are using [FreePDK45], you
-should also have that set up and have the environment variable point
-to the PDK. For example add this to your .bashrc:
+We include the tech files necessary for [SCMOS] SCN4M_SUBM. The
+[SCMOS] spice models, however, are generic and should be replaced with
+foundry models.  If you are using [FreePDK45], you should also have
+that set up and have the environment variable point to the PDK. For
+example add this to your .bashrc:
 
 ```
   export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
@@ -160,9 +160,9 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
   * dff.gds
   * sense_amp.gds
   * write_driver.gds
-  * cell_6t.gds
-  * replica\_cell\_6t.gds 
-  * dummy\_cell\_6t.gds 
+  * cell_1rw.gds
+  * replica\_cell\_1rw.gds 
+  * dummy\_cell\_1rw.gds 
 * sp_lib folder with all the .sp (premade) library netlists for the above cells.
 * layers.map 
 * A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:

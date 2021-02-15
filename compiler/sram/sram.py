@@ -24,12 +24,6 @@ class sram():
 
         sram_config.set_local_config(self)
                 
-        # FIXME: adjust this to not directly change OPTS.
-        # Word-around to have values relevant to OPTS be displayed if not directly set.
-        OPTS.words_per_row = self.words_per_row
-        debug.info(1, "Changed OPTS wpr={}".format(self.words_per_row))
-        debug.info(1, "OPTS wpr={}".format(OPTS.words_per_row))
-        
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from design import design

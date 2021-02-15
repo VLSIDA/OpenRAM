@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -824,8 +824,7 @@ class router(router_tech):
                 group_map[gid] = pin_group(name=pin_name,
                                            pin_set=[],
                                            router=self)
-            # We always add it to the first set since they are touching
-            group_map[gid].pins.add(pin)
+            group_map[gid].add_pin(pin)
 
         self.pin_groups[pin_name] = list(group_map.values())
 

@@ -74,9 +74,8 @@ class options(optparse.Values):
         # If user defined the temporary location in their environment, use it
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
     except:
-        # Else use a unique temporary directory
-        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
-                                                           os.getpid())
+        openram_temp = "/tmp"
+        
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     verbose_level = 0
@@ -135,6 +134,8 @@ class options(optparse.Values):
     
     # Number of threads to use
     num_threads = 2
+    # Number of threads to use in ngspice/hspice
+    num_sim_threads = 2
 
     # Should we print out the banner at startup
     print_banner = True

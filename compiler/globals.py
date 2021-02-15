@@ -18,6 +18,9 @@ import sys
 import re
 import copy
 import importlib
+import getpass
+import subprocess
+
 
 VERSION = "1.1.9"
 NAME = "OpenRAM v{}".format(VERSION)
@@ -133,8 +136,9 @@ def print_banner():
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
     debug.print_raw("|=========" + dev_info.center(60) + "=========|")
-    temp_info = "Temp dir: {}".format(OPTS.openram_temp)
-    debug.print_raw("|=========" + temp_info.center(60) + "=========|")
+    if OPTS.openram_temp:
+        temp_info = "Temp dir: {}".format(OPTS.openram_temp)
+        debug.print_raw("|=========" + temp_info.center(60) + "=========|")
     debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
     debug.print_raw("|==============================================================================|")
 
@@ -154,6 +158,17 @@ def check_versions():
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
     global OPTS
 
+    def cmd_exists(cmd):
+        return subprocess.call("type " + cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+    if cmd_exists("coverage"):
+        OPTS.coverage_exe = "coverage run -p "
+    elif cmd_exists("python3-coverage"):
+        OPTS.coverage_exe = "python3-coverage run -p "
+    else:
+        OPTS.coverage_exe = ""
+        debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
+        
     try:
         import coverage
         OPTS.coverage = 1
@@ -406,7 +421,7 @@ def setup_paths():
     # Add all of the subdirs to the python path
     # These subdirs are modules and don't need
     # to be added: characterizer, verify
-    subdirlist = [ item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item)) ]
+    subdirlist = [item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item))]
     for subdir in subdirlist:
         full_path = "{0}/{1}".format(OPENRAM_HOME, subdir)
         debug.check(os.path.isdir(full_path),
@@ -414,6 +429,10 @@ def setup_paths():
         if "__pycache__" not in full_path:
             sys.path.append("{0}".format(full_path))
 
+    # Use a unique temp subdirectory
+    OPTS.openram_temp += "/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                         os.getpid())
+        
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)

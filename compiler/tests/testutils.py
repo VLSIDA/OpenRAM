@@ -315,7 +315,8 @@ def header(filename, technology):
     print("|=========" + technology.center(60) + "=========|")
     print("|=========" + filename.center(60) + "=========|")
     from globals import OPTS
-    print("|=========" + OPTS.openram_temp.center(60) + "=========|")
+    if OPTS.openram_temp:
+        print("|=========" + OPTS.openram_temp.center(60) + "=========|")
     print("|==============================================================================|")
 
 

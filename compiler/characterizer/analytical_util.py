@@ -42,9 +42,12 @@ def get_data(file_name):
                 feature_names = row[0].split(',')
                 input_list = [[] for _ in range(len(feature_names)-removed_items)]
                 scaled_list = [[] for _ in range(len(feature_names)-removed_items)]
-                # Save to remove area
-                area_ind = feature_names.index('area')
-                
+                try:
+                    # Save to remove area
+                    area_ind = feature_names.index('area')
+                except ValueError:
+                    area_ind = -1
+                    
                 try:
                     process_ind = feature_names.index('process')
                 except:

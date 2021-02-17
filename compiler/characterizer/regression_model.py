@@ -56,7 +56,8 @@ class regression_model(simulation):
         log_num_words = math.log(OPTS.num_words, 2)
         model_inputs = [log_num_words, 
                         OPTS.word_size, 
-                        OPTS.words_per_row, 
+                        OPTS.words_per_row,
+                        OPTS.local_array_size,
                         process_transform[self.process], 
                         self.vdd_voltage, 
                         self.temperature]  

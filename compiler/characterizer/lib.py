@@ -44,16 +44,32 @@ class lib:
     def prepare_tables(self):
         """ Determine the load/slews if they aren't specified in the config file. """
         # These are the parameters to determine the table sizes
-        self.load_scales = np.array(OPTS.load_scales)
-        self.load = tech.spice["dff_in_cap"]
-        self.loads = self.load_scales * self.load
+        if OPTS.use_specified_load_slew == None:
+            self.load_scales = np.array(OPTS.load_scales)
+            self.load = tech.spice["dff_in_cap"]
+            self.loads = self.load_scales * self.load
+            
+
+            self.slew_scales = np.array(OPTS.slew_scales)
+            self.slew = tech.spice["rise_time"]
+            self.slews = self.slew_scales * self.slew
+            self.load_slews = []
+            for slew in self.slews:
+                for load in self.loads:
+                    self.load_slews.append((load, slew))
+        else:
+            debug.warning("Using the option \"use_specified_load_slew\" will make load slew,data in lib file inaccurate.")
+            self.load_slews = OPTS.use_specified_load_slew
+            self.loads = []
+            self.slews = []
+            for load,slew in self.load_slews:
+                self.loads.append(load)
+                self.slews.append(slew)
+        self.loads = np.array(self.loads)
+        self.slews = np.array(self.slews)
+        debug.info(1, "Slews: {0}".format(self.slews))    
         debug.info(1, "Loads: {0}".format(self.loads))
-
-        self.slew_scales = np.array(OPTS.slew_scales)
-        self.slew = tech.spice["rise_time"]
-        self.slews = self.slew_scales * self.slew
-        debug.info(1, "Slews: {0}".format(self.slews))
-
+        debug.info(1, "self.load_slews : {0}".format(self.load_slews))
     def create_corners(self):
         """ Create corners for characterization. """
         # Get the corners from the options file
@@ -607,7 +623,7 @@ class lib:
             import math
 
             m = model(self.sram, self.sp_file, self.corner)
-            char_results = m.get_lib_values(self.slews,self.loads)
+            char_results = m.get_lib_values(self.load_slews)
 
         else:
             self.d = delay(self.sram, self.sp_file, self.corner)
@@ -616,7 +632,7 @@ class lib:
             else:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
-            char_results = self.d.analyze(probe_address, probe_data, self.slews, self.loads)
+            char_results = self.d.analyze(probe_address, probe_data, self.load_slews)
         self.char_sram_results, self.char_port_results = char_results
 
     def compute_setup_hold(self):
@@ -625,7 +641,7 @@ class lib:
         if not hasattr(self,"sh"):
             self.sh = setup_hold(self.corner)
             if self.use_model:
-                self.times = self.sh.analytical_setuphold(self.slews,self.loads)
+                self.times = self.sh.analytical_setuphold(self.slews,self.slews)
             else:
                 self.times = self.sh.analyze(self.slews,self.slews)
 

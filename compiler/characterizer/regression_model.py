@@ -47,7 +47,7 @@ class regression_model(simulation):
         super().__init__(sram, spfile, corner)
         self.set_corner(corner)
 
-    def get_lib_values(self, slews, loads):
+    def get_lib_values(self, load_slews):
         """
         A model and prediction is created for each output needed for the LIB 
         """
@@ -71,33 +71,32 @@ class regression_model(simulation):
         port_data = self.get_empty_measure_data_dict()
         debug.info(1, 'Slew, Load, Port, Delay(ns), Slew(ns)')
         max_delay = 0.0
-        for slew in slews:
-            for load in loads:
-                # List returned with value order being delay, power, leakage, slew
-                sram_vals = self.get_predictions(model_inputs+[slew, load], models)
-                # Delay is only calculated on a single port and replicated for now.
-                for port in self.all_ports:
-                    port_data[port]['delay_lh'].append(sram_vals['delay_lh'])
-                    port_data[port]['delay_hl'].append(sram_vals['delay_hl'])
-                    port_data[port]['slew_lh'].append(sram_vals['slew_lh'])
-                    port_data[port]['slew_hl'].append(sram_vals['slew_hl'])
+        for load, slew in load_slews:
+            # List returned with value order being delay, power, leakage, slew
+            sram_vals = self.get_predictions(model_inputs+[slew, load], models)
+            # Delay is only calculated on a single port and replicated for now.
+            for port in self.all_ports:
+                port_data[port]['delay_lh'].append(sram_vals['delay_lh'])
+                port_data[port]['delay_hl'].append(sram_vals['delay_hl'])
+                port_data[port]['slew_lh'].append(sram_vals['slew_lh'])
+                port_data[port]['slew_hl'].append(sram_vals['slew_hl'])
+                
+                port_data[port]['write1_power'].append(sram_vals['write1_power'])
+                port_data[port]['write0_power'].append(sram_vals['write0_power'])
+                port_data[port]['read1_power'].append(sram_vals['read1_power'])
+                port_data[port]['read0_power'].append(sram_vals['read0_power'])
+                
+                # Disabled power not modeled. Copied from other power predictions
+                port_data[port]['disabled_write1_power'].append(sram_vals['write1_power'])
+                port_data[port]['disabled_write0_power'].append(sram_vals['write0_power'])
+                port_data[port]['disabled_read1_power'].append(sram_vals['read1_power'])
+                port_data[port]['disabled_read0_power'].append(sram_vals['read0_power'])
                     
-                    port_data[port]['write1_power'].append(sram_vals['write1_power'])
-                    port_data[port]['write0_power'].append(sram_vals['write0_power'])
-                    port_data[port]['read1_power'].append(sram_vals['read1_power'])
-                    port_data[port]['read0_power'].append(sram_vals['read0_power'])
-                    
-                    # Disabled power not modeled. Copied from other power predictions
-                    port_data[port]['disabled_write1_power'].append(sram_vals['write1_power'])
-                    port_data[port]['disabled_write0_power'].append(sram_vals['write0_power'])
-                    port_data[port]['disabled_read1_power'].append(sram_vals['read1_power'])
-                    port_data[port]['disabled_read0_power'].append(sram_vals['read0_power'])
-                        
-                    debug.info(1, '{}, {}, {}, {}, {}'.format(slew, 
-                                                              load, 
-                                                              port, 
-                                                              sram_vals['delay_lh'], 
-                                                              sram_vals['slew_lh']))
+                debug.info(1, '{}, {}, {}, {}, {}'.format(slew, 
+                                                          load, 
+                                                          port, 
+                                                          sram_vals['delay_lh'], 
+                                                          sram_vals['slew_lh']))
         # Estimate the period as double the delay with margin
         period_margin = 0.1
         sram_data = {"min_period": sram_vals['delay_lh'] * 2,

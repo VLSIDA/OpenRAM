@@ -87,6 +87,8 @@ class options(optparse.Values):
     use_specified_corners = None
     # Allows specification of model data
     sim_data_path = None
+    # A list of load/slew tuples
+    use_specified_load_slew = None
 
     ###################
     # Run-time vs accuracy options.

@@ -504,14 +504,21 @@ class router(router_tech):
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
-            new_pin = pin_layout("blockage{}".format(len(self.blockages)),
-                                 rect,
-                                 lpp)
+            new_shape = pin_layout("blockage{}".format(len(self.blockages)),
+                                   rect,
+                                   lpp)
+            
             # If there is a rectangle that is the same in the pins,
             # it isn't a blockage!
-            if new_pin not in self.all_pins:
-                self.blockages.append(new_pin)
+            if new_shape not in self.all_pins and not self.pin_contains(new_shape):
+                self.blockages.append(new_shape)
 
+    def pin_contains(self, shape):
+        for pin in self.all_pins:
+            if pin.contains(shape):
+                return True
+        return False
+        
     def convert_point_to_units(self, p):
         """
         Convert a path set of tracks to center line path.

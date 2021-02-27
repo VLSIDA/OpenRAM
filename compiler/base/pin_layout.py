@@ -399,6 +399,7 @@ class pin_layout:
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
                           purposeNumber=label_purpose,
+                          magnification=GDS["zoom"],
                           offsetInMicrons=self.center())
 
     def compute_overlap(self, other):

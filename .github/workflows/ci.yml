@@ -46,10 +46,10 @@ jobs:
         run: |
          python3-coverage combine
          python3-coverage report
-         python3-coverage html -d coverage_html
+         python3-coverage html -d ${{ github.workspace }}/coverage_html
       - name: Archive coverage
         uses: actions/upload-artifact@v2
         with:
          name: code-coverage-report
-         path: coverage_html/
+         path: ${{ github.workspace }}/coverage_html/
 

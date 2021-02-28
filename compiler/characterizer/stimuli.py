@@ -52,7 +52,7 @@ class stimuli():
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
 
-        if OPTS.use_pex:
+        if OPTS.use_pex and not OPTS.calibre_pex:
             self.inst_pex_model(pins, model_name)
         else:
             self.sf.write("X{0} ".format(model_name))
@@ -282,15 +282,16 @@ class stimuli():
                 self.sf.write(".OPTIONS HIER_DELIM=1 \n")
 
         # create plots for all signals
-        self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
-        if OPTS.verbose_level>0:
-            if OPTS.spice_name in ["hspice", "xa"]:
-                self.sf.write(".probe V(*)\n")
+        if not OPTS.use_pex:   # Don't save all for extracted simulations
+            self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
+            if OPTS.verbose_level>0:
+                if OPTS.spice_name in ["hspice", "xa"]:
+                    self.sf.write(".probe V(*)\n")
+                else:
+                    self.sf.write(".plot V(*)\n")
             else:
-                self.sf.write(".plot V(*)\n")
-        else:
-            self.sf.write("*.probe V(*)\n")
-            self.sf.write("*.plot V(*)\n")
+                self.sf.write("*.probe V(*)\n")
+                self.sf.write("*.plot V(*)\n")
 
         # end the stimulus file
         self.sf.write(".end\n\n")
@@ -349,7 +350,7 @@ class stimuli():
             valid_retcode = 0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
-            cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
+            cmd = "{0} -d -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
                                                            OPTS.num_sim_threads,
                                                            temp_stim,
                                                            OPTS.openram_temp)

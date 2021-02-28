@@ -220,7 +220,7 @@ class delay(simulation):
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
-        if not OPTS.use_pex:
+        if not OPTS.use_pex or OPTS.calibre_pex:
             q_name = cell_name + '.' + str(storage_names[0])
             qbar_name = cell_name + '.' + str(storage_names[1])
         else:
@@ -418,7 +418,9 @@ class delay(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
+        self.load_all_measure_nets()
         self.write_delay_measures()
+        self.write_simulation_saves()
 
         # run until the end of the cycle time
         self.stim.write_control(self.cycle_times[-1] + self.period)
@@ -595,6 +597,69 @@ class delay(simulation):
         for write_port in self.targ_write_ports:
             self.sf.write("* Write ports {}\n".format(write_port))
             self.write_delay_measures_write_port(write_port)
+
+    def load_pex_net(self, net: str):
+        from subprocess import check_output, CalledProcessError
+        prefix = (self.sram_instance_name + ".").lower()
+        if not net.lower().startswith(prefix) or not OPTS.use_pex or not OPTS.calibre_pex:
+            return net
+        original_net = net
+        net = net[len(prefix):]
+        net = net.replace(".", "_").replace("[", "\[").replace("]", "\]")
+        for pattern in ["\sN_{}_[MXmx]\S+_[gsd]".format(net), net]:
+            try:
+                match = check_output(["grep", "-m1", "-o", "-iE", pattern, self.sp_file])
+                return prefix + match.decode().strip()
+            except CalledProcessError:
+                pass
+        return original_net
+
+    def load_all_measure_nets(self):
+        measurement_nets = set()
+        for port, meas in zip(self.targ_read_ports*len(self.read_meas_lists) +
+                              self.targ_write_ports * len(self.write_meas_lists),
+                              self.read_meas_lists + self.write_meas_lists):
+            for measurement in meas:
+                visited = getattr(measurement, 'pex_visited', False)
+                for prop in ["trig_name_no_port", "targ_name_no_port"]:
+                    if hasattr(measurement, prop):
+                        net = getattr(measurement, prop).format(port)
+                        if not visited:
+                            net = self.load_pex_net(net)
+                        setattr(measurement, prop, net)
+                        measurement_nets.add(net)
+                measurement.pex_visited = True
+        self.measurement_nets = measurement_nets
+        return measurement_nets
+
+    def write_simulation_saves(self):
+        for net in self.measurement_nets:
+            self.sf.write(".plot V({0}) \n".format(net))
+        probe_nets = set()
+        sram_name = self.sram_instance_name
+        col = self.bitline_column
+        row = self.wordline_row
+        for port in set(self.targ_read_ports + self.targ_write_ports):
+            probe_nets.add("WEB{}".format(port))
+            probe_nets.add("{}.w_en{}".format(self.sram_instance_name, port))
+            probe_nets.add("{0}.Xbank0.Xport_data{1}.Xwrite_driver_array{1}.Xwrite_driver{2}.en_bar".format(
+                self.sram_instance_name, port, self.bitline_column))
+            probe_nets.add("{}.Xbank0.br_{}_{}".format(self.sram_instance_name, port,
+                                                       self.bitline_column))
+            if not OPTS.use_pex:
+                continue
+            probe_nets.add(
+                "{0}.vdd_Xbank0_Xbitcell_array_xbitcell_array_xbit_r{1}_c{2}".format(sram_name, row, col - 1))
+            probe_nets.add(
+                "{0}.p_en_bar{1}_Xbank0_Xport_data{1}_Xprecharge_array{1}_Xpre_column_{2}".format(sram_name, port, col))
+            probe_nets.add(
+                "{0}.vdd_Xbank0_Xport_data{1}_Xprecharge_array{1}_xpre_column_{2}".format(sram_name, port, col))
+            probe_nets.add("{0}.vdd_Xbank0_Xport_data{1}_Xwrite_driver_array{1}_xwrite_driver{2}".format(sram_name,
+                                                                                                         port, col))
+        probe_nets.update(self.measurement_nets)
+        for net in probe_nets:
+            debug.info(2, "Probe: {}".format(net))
+            self.sf.write(".plot V({}) \n".format(self.load_pex_net(net)))
 
     def write_power_measures(self):
         """

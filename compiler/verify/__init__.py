@@ -72,6 +72,7 @@ elif "magic"==OPTS.pex_exe[0]:
 else:
     debug.warning("Did not find a supported PEX tool."
                   + "Disable DRC/LVS with check_lvsdrc=False to ignore.", 2)
+OPTS.calibre_pex = len(OPTS.pex_exe) > 0 and OPTS.pex_exe[0] == "calibre"
 
 # if OPTS.tech_name == "sky130":
 #     if OPTS.magic_exe and "magic"==OPTS.magic_exe[0]:

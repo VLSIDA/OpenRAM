@@ -21,6 +21,7 @@ import os
 import shutil
 import re
 import debug
+import utils
 from globals import OPTS
 from run_script import run_script
 
@@ -166,6 +167,17 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
         'pexPexReportFile': cell_name + ".pex.report",
         'pexMaskDBFile': cell_name + ".maskdb",
         'cmnFDIDEFLayoutPath': cell_name + ".def",
+        'cmnRunMT': "1",
+        'cmnNumTurbo': "16",
+        'pexPowerNames': "vdd",
+        'pexGroundNames': "gnd",
+        'pexPexGroundName': "1",
+        'pexPexGroundNameValue': "gnd",
+        'pexPexSeparator': "1",
+        'pexPexSeparatorValue': "_",
+        'pexPexNetlistNameSource': 'SOURCENAMES',
+        'pexSVRFCmds': '{SOURCE CASE YES} {LAYOUT CASE YES}',
+        'pexIncludeCmdsType': 'SVRF',
     }
 
     # write the runset file

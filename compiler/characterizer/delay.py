@@ -387,6 +387,9 @@ class delay(simulation):
         self.delay_stim_sp = "delay_stim.sp"
         temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
+
+        if OPTS.spice_name == "spectre":
+            self.sf.write("simulator lang=spice\n")
         self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
                                                                                              self.load,
                                                                                              self.slew))

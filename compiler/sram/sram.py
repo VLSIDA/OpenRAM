@@ -136,7 +136,6 @@ class sram():
         if OPTS.use_pex:
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
-            #todo: bob vanhoof: re-generate the layout so that it now does include the pex labels
             pexname = OPTS.output_path + self.s.name + ".pex.sp"
             spname = OPTS.output_path + self.s.name + ".sp"
             verify.run_pex(self.s.name, gdsname, spname, output=pexname)

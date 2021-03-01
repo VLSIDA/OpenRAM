@@ -236,7 +236,6 @@ class delay(simulation):
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
 
-        #todo: bob vanhoof's modification: hierarchical pex
         if OPTS.use_pex and OPTS.pex_exe[0] != 'calibre':
             bank_num = self.sram.get_bank_num(self.sram.name, bit_row, bit_col)
             q_name = "bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)

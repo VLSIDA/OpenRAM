@@ -125,8 +125,6 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    #PDK_DIR=os.environ.get("PDK_DIR")
-    #f.write("export PDK_DIR={}\n".format(PDK_DIR))
     cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
                          
     f.write(cmd)
@@ -238,9 +236,6 @@ def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=Fals
 
     global num_drc_runs
     num_drc_runs += 1
-    # Copy file to local dir if it isn't already
-    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-    #    hutil.copy(gds_name, OPTS.openram_temp)
 
     drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
 
@@ -283,12 +278,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     num_lvs_runs += 1
 
     lvs_runset = write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
-
-    # Copy file to local dir if it isn't already
-    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-    #    shutil.copy(gds_name, OPTS.openram_temp)
-    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-    #    shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -371,12 +360,6 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
 
     write_pex_script(cell_name, True, output, final_verification, OPTS.openram_temp)
 
-    # Copy file to local dir if it isn't already
-    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
-    #    shutil.copy(gds_name, OPTS.openram_temp)
-    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
-    #    shutil.copy(sp_name, OPTS.openram_temp)
-    
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 
 

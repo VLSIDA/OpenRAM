@@ -201,8 +201,7 @@ class sram_base(design, verilog, lef):
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
-        #todo: bob vanhoof: this now does not automatically propagate the pex labels when the lvs tool is calibre
-        if OPTS.use_pex and not OPTS.lvs_exe[0] == "calibre":
+        if OPTS.use_pex and OPTS.lvs_exe[0] != "calibre":
             debug.info(2,"adding global pex labels")
             self.add_global_pex_labels()
         self.add_boundary(ll=vector(0, 0),

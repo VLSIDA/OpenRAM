@@ -4,13 +4,9 @@
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
 
 Master: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/master)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/master/coverage.svg)
 [![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
 
 Dev: 
-[![Pipeline Status](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/pipeline.svg)](https://github.com/VLSIDA/OpenRAM/commits/dev)
-![Coverage](https://scone.soe.ucsc.edu:8888/mrg/OpenRAM/badges/dev/coverage.svg)
 [![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.

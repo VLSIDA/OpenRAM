@@ -1055,6 +1055,7 @@ class router(router_tech):
         # Double check source and taget are not same node, if so, we are done!
         for k, v in self.rg.map.items():
             if v.source and v.target:
+                self.paths.append([k])
                 return True
 
         # returns the path in tracks

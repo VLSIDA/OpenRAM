@@ -16,7 +16,8 @@ jobs:
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
-         python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t scn4m_subm
+         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
+         $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
@@ -33,26 +34,27 @@ jobs:
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
-         python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t freepdk45
+         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
+	 $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: FreePDK45 Archives
          path: ${{ github.workspace }}/freepdk45_temp/*/
-  coverage_stats:
-    if: ${{ always() }}
-    needs: [scn4me_subm, freepdk45]
-    runs-on: self-hosted
-    steps:
-      - name: Coverage stats
-        run: |
-         python3-coverage combine
-         python3-coverage report
-         python3-coverage html -d ${{ github.workspace }}/coverage_html
-      - name: Archive coverage
-        uses: actions/upload-artifact@v2
-        with:
-         name: code-coverage-report
-         path: ${{ github.workspace }}/coverage_html/
+  # coverage_stats:
+  #   if: ${{ always() }}
+  #   needs: [scn4me_subm, freepdk45]
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Coverage stats
+  #       run: |
+  #        python3-coverage combine
+  #        python3-coverage report
+  #        python3-coverage html -d ${{ github.workspace }}/coverage_html
+  #     - name: Archive coverage
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #        name: code-coverage-report
+  #        path: ${{ github.workspace }}/coverage_html/
 

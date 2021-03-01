@@ -52,7 +52,7 @@ class stimuli():
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
 
-        if OPTS.use_pex:
+        if OPTS.use_pex and OPTS.pex_exe[0] != 'calibre':
             self.inst_pex_model(pins, model_name)
         else:
             self.sf.write("X{0} ".format(model_name))

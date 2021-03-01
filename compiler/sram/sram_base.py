@@ -201,7 +201,8 @@ class sram_base(design, verilog, lef):
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
-        if OPTS.use_pex:
+        if OPTS.use_pex and OPTS.lvs_exe[0] != "calibre":
+            debug.info(2,"adding global pex labels")
             self.add_global_pex_labels()
         self.add_boundary(ll=vector(0, 0),
                           ur=vector(self.width, self.height))

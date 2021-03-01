@@ -8,8 +8,9 @@ jobs:
         run: |
          echo "Cleaning up previous run"
          echo "github.workspace = ${{ github.workspace }}"
-         echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
-         rm -rf "${{ github.workspace }}"
+         rm -rf "${{ github.workspace }}/scn4me_subm_temp"
+         rm -rf "${{ github.workspace }}/freepdk45_temp"
+	 python3-coverage erase
   checkout_code:
     needs: [coverage_cleanup]
     runs-on: self-hosted    
@@ -25,14 +26,14 @@ jobs:
          . /home/github-runner/setup-paths.sh 
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm"
+         export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t scn4m_subm
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: scn4me_subm Archives
-         path: ${{ github.workspace }}/scn4me_subm/*/
+         path: ${{ github.workspace }}/scn4me_subm_temp/*/
   freepdk45:
     needs: [checkout_code]
     runs-on: self-hosted
@@ -42,14 +43,14 @@ jobs:
          . /home/github-runner/setup-paths.sh 
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="${{ github.workspace }}/freepdk45"
+         export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 16 -t freepdk45
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: FreePDK45 Archives
-         path: ${{ github.workspace }}/freepdk45/*/
+         path: ${{ github.workspace }}/freepdk45_temp/*/
   coverage_stats:
     if: ${{ always() }}
     needs: [scn4me_subm, freepdk45]

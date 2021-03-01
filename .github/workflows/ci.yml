@@ -1,15 +1,11 @@
 name: ci
 on: [push]
 jobs:
-  checkout_code:
-    runs-on: self-hosted    
+  scn4me_subm:
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-  scn4me_subm:
-    needs: [checkout_code]
-    runs-on: self-hosted
-    steps:
       - name: SCMOS test
         run: |
          . /home/github-runner/setup-paths.sh 
@@ -25,9 +21,10 @@ jobs:
          name: scn4me_subm Archives
          path: ${{ github.workspace }}/scn4me_subm_temp/*/
   freepdk45:
-    needs: [checkout_code]
     runs-on: self-hosted
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
       - name: FreePDK45 test
         run: |
          . /home/github-runner/setup-paths.sh 

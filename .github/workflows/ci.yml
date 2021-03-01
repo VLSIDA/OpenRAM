@@ -10,12 +10,15 @@ jobs:
 	 echo "github.workspace = ${{ github.workspace }}"
 	 echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
          rm -rf "${{ github.workspace }}"
-  scn4me_subm:
+  checkout_code:
     needs: [coverage_cleanup]
+    runs-on: self-hosted    
+    - name: Checkout code
+        uses: actions/checkout@v1
+  scn4me_subm:
+    needs: [checkout_code]
     runs-on: self-hosted
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v1
       - name: SCMOS test
         run: |
          . /home/github-runner/setup-paths.sh 
@@ -30,11 +33,9 @@ jobs:
          name: scn4me_subm Archives
          path: ${{ github.workspace }}/scn4me_subm/*/
   freepdk45:
-    needs: [coverage_cleanup]  
+    needs: [checkout_code]
     runs-on: self-hosted
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v1
       - name: FreePDK45 test
         run: |
          . /home/github-runner/setup-paths.sh 
@@ -63,7 +64,4 @@ jobs:
         with:
          name: code-coverage-report
          path: ${{ github.workspace }}/coverage_html/
-      - name: Cleanup
-        run: |
-         python3-coverage erase
 

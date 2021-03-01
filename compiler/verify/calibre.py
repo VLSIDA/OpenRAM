@@ -125,6 +125,8 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     run_file = output_path + "run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
+    #PDK_DIR=os.environ.get("PDK_DIR")
+    #f.write("export PDK_DIR={}\n".format(PDK_DIR))
     cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
                          
     f.write(cmd)
@@ -154,38 +156,80 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
 
     from tech import drc
     pex_rules = drc["xrc_rules"]
-    pex_runset = {
-        'pexRulesFile': pex_rules,
-        'pexRunDir': output_path,
-        'pexLayoutPaths': cell_name + ".gds",
-        'pexLayoutPrimary': cell_name,
-        'pexSourcePath': cell_name + ".sp",
-        'pexSourcePrimary': cell_name,
-        'pexReportFile': cell_name + ".pex.report",
-        'pexPexNetlistFile': output,
-        'pexPexReportFile': cell_name + ".pex.report",
-        'pexMaskDBFile': cell_name + ".maskdb",
-        'cmnFDIDEFLayoutPath': cell_name + ".def",
-    }
 
-    # write the runset file
-    f = open(output_path + "pex_runset", "w")
-    for k in sorted(iter(pex_runset.keys())):
-        f.write("*{0}: {1}\n".format(k, pex_runset[k]))
+    # write the rules file
+    f = open(OPTS.openram_temp + "pex_rules", "w")
+    f.write('// Rules file, created by OpenRAM, (c) Bob Vanhoof\n')
+    f.write('\n')
+    f.write('LAYOUT PATH "' + OPTS.openram_temp + cell_name + '.gds"\n')
+    f.write('LAYOUT PRIMARY ' + cell_name + '\n')
+    f.write('LAYOUT SYSTEM GDSII\n')
+    f.write('\n')
+    f.write('SOURCE PATH "' + OPTS.openram_temp + cell_name + '.sp"\n')
+    f.write('SOURCE PRIMARY ' + cell_name +'\n')
+    f.write('SOURCE SYSTEM SPICE\n')
+    f.write('SOURCE CASE YES\n')
+    f.write('\n')
+    f.write('MASK SVDB DIRECTORY "svdb" QUERY XRC\n')
+    f.write('\n')
+    f.write('LVS REPORT "' + OPTS.openram_temp + cell_name + '.pex.report"\n')
+    f.write('LVS REPORT OPTION NONE\n')
+    f.write('LVS FILTER UNUSED OPTION NONE SOURCE\n')
+    f.write('LVS FILTER UNUSED OPTION NONE LAYOUT\n')
+    f.write('LVS POWER NAME vdd\n')
+    f.write('LVS GROUND NAME gnd\n')
+    f.write('LVS RECOGNIZE GATES ALL\n')
+    f.write('LVS CELL SUPPLY YES\n')
+    f.write('LVS PUSH DEVICES SEPARATE PROPERTIES YES\n')
+    f.write('\n')
+    f.write('PEX NETLIST "' + output + '" HSPICE 1 SOURCENAMES GROUND gnd\n')
+    f.write('PEX REDUCE ANALOG NO\n')
+    f.write('PEX NETLIST UPPERCASE KEYWORDS NO\n')
+    f.write('PEX NETLIST VIRTUAL CONNECT YES\n')
+    f.write('PEX NETLIST NOXREF NET NAMES YES\n')
+    f.write('PEX NETLIST MUTUAL RESISTANCE YES\n')
+    f.write('PEX NETLIST EXPORT PORTS YES\n')
+    f.write('PEX PROBE FILE "probe_file"\n')
+    f.write('\n')
+    f.write('VIRTUAL CONNECT COLON NO\n')
+    f.write('VIRTUAL CONNECT REPORT NO\n')
+    f.write('VIRTUAL CONNECT NAME vdd gnd\n')
+    f.write('\n')
+    f.write('DRC ICSTATION YES\n')
+    f.write('\n')
+    f.write('INCLUDE "'+ pex_rules +'"\n')
+    f.close()
+
+    # write probe file
+    #TODO: get from cell name
+    f = open(OPTS.openram_temp + "probe_file", "w")
+    f.write('CELL cell_1rw\n')
+    f.write('  Q     0.100  0.510  11\n')
+    f.write('  Q_bar  0.520  0.510  11\n')
     f.close()
 
     # Create an auxiliary script to run calibre with the runset
     run_file = output_path + "run_pex.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -gui -pex pex_runset -batch".format(OPTS.pex_exe[1])
-    
+    cmd = "{0} -lvs -hier -genhcells -spice svdb/{1}.sp -turbo -hyper cmp {2}".format(OPTS.pex_exe[1],
+                                                      cell_name,
+                                                     'pex_rules')
+    f.write(cmd)
+    f.write("\n")
+    cmd = "sed '/dummy/d' svdb/{0}.hcells | sed '/replica_column/d' | sed '/replica_cell/d' > hcell_file".format(cell_name)
+    f.write(cmd)
+    f.write("\n")
+    cmd = "{0} -xrc -pdb -turbo -xcell hcell_file -full -rc {1}".format(OPTS.pex_exe[1], 'pex_rules')
+    f.write(cmd)
+    f.write("\n")
+    cmd = "{0} -xrc -fmt -full {1}".format(OPTS.pex_exe[1],'pex_rules')
     f.write(cmd)
     f.write("\n")
     f.close()
     os.system("chmod u+x {}".format(run_file))
 
-    return pex_runset
+    return None
 
 
 def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=False):
@@ -194,6 +238,9 @@ def run_drc(cell_name, gds_name, sp_name, extract=False, final_verification=Fals
 
     global num_drc_runs
     num_drc_runs += 1
+    # Copy file to local dir if it isn't already
+    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
+    #    hutil.copy(gds_name, OPTS.openram_temp)
 
     drc_runset = write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp)
 
@@ -236,6 +283,12 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     num_lvs_runs += 1
 
     lvs_runset = write_lvs_script(cell_name, gds_name, sp_name, final_verification, OPTS.openram_temp)
+
+    # Copy file to local dir if it isn't already
+    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
+    #    shutil.copy(gds_name, OPTS.openram_temp)
+    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
+    #    shutil.copy(sp_name, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
 
@@ -318,6 +371,12 @@ def run_pex(cell_name, gds_name, sp_name, output=None, final_verification=False)
 
     write_pex_script(cell_name, True, output, final_verification, OPTS.openram_temp)
 
+    # Copy file to local dir if it isn't already
+    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(gds_name)):
+    #    shutil.copy(gds_name, OPTS.openram_temp)
+    #if not os.path.isfile(OPTS.openram_temp + os.path.basename(sp_name)):
+    #    shutil.copy(sp_name, OPTS.openram_temp)
+    
     (outfile, errfile, resultsfile) = run_script(cell_name, "pex")
 
 

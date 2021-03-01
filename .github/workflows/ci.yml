@@ -29,7 +29,7 @@ jobs:
          name: scn4me_subm Archives
          path: ${{ github.workspace }}/scn4me_subm/*/
   freepdk45:
-    needs: [coverage_cleaup]  
+    needs: [coverage_cleanup]  
     runs-on: self-hosted
     steps:
       - name: Check out repository

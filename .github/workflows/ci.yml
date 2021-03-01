@@ -7,8 +7,11 @@ jobs:
       - name: Coverage cleanup
         run: |
          echo "Cleaning up previous run"
+	 echo ${{ github.workspace }}
+	 ls ${{ github.workspace }}
+	 echo ${{ github.home }}
+	 ls ${{ github.home }}
          rm -rf "${{ github.workspace }}"
-         python3-coverage erase
   scn4me_subm:
     needs: [coverage_cleanup]
     runs-on: self-hosted

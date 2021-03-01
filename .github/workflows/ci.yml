@@ -13,7 +13,8 @@ jobs:
   checkout_code:
     needs: [coverage_cleanup]
     runs-on: self-hosted    
-    - name: Checkout code
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v1
   scn4me_subm:
     needs: [checkout_code]

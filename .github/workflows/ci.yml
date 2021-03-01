@@ -7,8 +7,8 @@ jobs:
       - name: Coverage cleanup
         run: |
          echo "Cleaning up previous run"
-	 echo "github.workspace = ${{ github.workspace }}"
-	 echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
+         echo "github.workspace = ${{ github.workspace }}"
+         echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
          rm -rf "${{ github.workspace }}"
   checkout_code:
     needs: [coverage_cleanup]

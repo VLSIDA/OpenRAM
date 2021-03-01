@@ -7,10 +7,8 @@ jobs:
       - name: Coverage cleanup
         run: |
          echo "Cleaning up previous run"
-	 echo "${{ github.workspace }}"
-	 ls "${{ github.workspace }}"
-	 echo "${{ github.home }}"
-	 ls "${{ github.home }}"
+	 echo "github.workspace = ${{ github.workspace }}"
+	 echo "GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
          rm -rf "${{ github.workspace }}"
   scn4me_subm:
     needs: [coverage_cleanup]

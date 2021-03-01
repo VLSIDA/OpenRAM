@@ -636,7 +636,7 @@ class control_logic(design.design):
         self.w_en_gate_inst = self.add_inst(name="w_en_and",
                                             mod=self.wen_and)
         # Only drive the writes in the second half of the clock cycle during a write operation.
-        self.connect_inst([input_name, "rbl_bl_delay", "gated_clk_bar", "w_en", "vdd", "gnd"])
+        self.connect_inst([input_name, "rbl_bl_delay_bar", "gated_clk_bar", "w_en", "vdd", "gnd"])
 
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
@@ -652,7 +652,7 @@ class control_logic(design.design):
             # No we for write-only reports, so use cs
             input_name = "cs"
 
-        wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay", "gated_clk_bar"])
+        wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay_bar", "gated_clk_bar"])
         self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus)
 
         self.connect_output(self.w_en_gate_inst, "Z", "w_en")

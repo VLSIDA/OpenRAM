@@ -196,12 +196,13 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
 
-        #self.offset_all_coordinates()
+        # self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
         self.height = highest_coord[1]
-        if OPTS.use_pex and not OPTS.calibre_pex:
+        if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
+            debug.info(2, "adding global pex labels")
             self.add_global_pex_labels()
         self.add_boundary(ll=vector(0, 0),
                           ur=vector(self.width, self.height))

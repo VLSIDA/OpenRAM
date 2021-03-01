@@ -10,7 +10,7 @@ jobs:
          rm -rf "${{ github.workspace }}"
          python3-coverage erase
   scn4me_subm:
-    needs: [coverage_cleaup]
+    needs: [coverage_cleanup]
     runs-on: self-hosted
     steps:
       - name: Check out repository

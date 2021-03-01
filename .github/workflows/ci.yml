@@ -1,7 +1,15 @@
 name: ci
 on: [push]
+  coverage_cleanup:
+    if: ${{ always() }}
+    runs-on: self-hosted
+    steps:
+      - name: Coverage cleanup
+        run: |
+         python3-coverage erase
 jobs:
   scn4me_subm:
+    needs: [coverage_cleaup]
     runs-on: self-hosted
     steps:
       - name: Check out repository
@@ -12,14 +20,16 @@ jobs:
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm"
+	 rm -rf $OPENRAM_TMP
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 20 -t scn4m_subm
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: scn4me_subm Archives
-         path: ${{ github.workspace }}/scn4me_subm/
+         path: ${{ github.workspace }}/scn4me_subm/*/
   freepdk45:
+    needs: [coverage_cleaup]  
     runs-on: self-hosted
     steps:
       - name: Check out repository
@@ -30,14 +40,15 @@ jobs:
          export OPENRAM_HOME="`pwd`/compiler"
          export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/freepdk45"
+	 rm -rf $OPENRAM_TMP
          python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 20 -t freepdk45
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: FreePDK45 Archives
-         path: ${{ github.workspace }}/freepdk45/
-  coverage:
+         path: ${{ github.workspace }}/freepdk45/*/
+  coverage_stats:
     if: ${{ always() }}
     needs: [scn4me_subm, freepdk45]
     runs-on: self-hosted
@@ -52,4 +63,7 @@ jobs:
         with:
          name: code-coverage-report
          path: ${{ github.workspace }}/coverage_html/
+      - name: Cleanup
+        run: |
+         python3-coverage erase
 

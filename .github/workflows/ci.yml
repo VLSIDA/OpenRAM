@@ -10,7 +10,7 @@ jobs:
          echo "github.workspace = ${{ github.workspace }}"
          rm -rf "${{ github.workspace }}/scn4me_subm_temp"
          rm -rf "${{ github.workspace }}/freepdk45_temp"
-	 python3-coverage erase
+         python3-coverage erase
   checkout_code:
     needs: [coverage_cleanup]
     runs-on: self-hosted    

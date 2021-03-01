@@ -34,7 +34,6 @@ class pin_group:
         # Remove any redundant pins (i.e. contained in other pins)
         self.remove_redundant_pins()
 
-
         self.router = router
         # These are the corresponding pin grids for each pin group.
         self.grids = set()
@@ -101,13 +100,11 @@ class pin_group:
         if local_debug:
             debug.info(0, "INITIAL: {}".format(pin_list))
 
-        new_pin_list = pin_list.copy()
-
-        remove_indices = set()
+        add_indices = set(range(len(pin_list)))
         # This is n^2, but the number is small
         for index1, pin1 in enumerate(pin_list):
             # If we remove this pin, it can't contain other pins
-            if index1 in remove_indices:
+            if index1 not in add_indices:
                 continue
 
             for index2, pin2 in enumerate(pin_list):
@@ -117,17 +114,15 @@ class pin_group:
                 if index1 == index2:
                     continue
                 # If we already removed it, can't remove it again...
-                if index2 in remove_indices:
+                if index2 not in add_indices:
                     continue
 
                 if pin1.contains(pin2):
                     if local_debug:
                         debug.info(0, "{0} contains {1}".format(pin1, pin2))
-                    remove_indices.add(index2)
+                    add_indices.remove(index2)
 
-        # Remove them in decreasing order to not invalidate the indices
-        for i in sorted(remove_indices, reverse=True):
-            del new_pin_list[i]
+        new_pin_list = [pin_list[x] for x in add_indices]
 
         if local_debug:
             debug.info(0, "FINAL  : {}".format(new_pin_list))
@@ -423,13 +418,15 @@ class pin_group:
         # We may have started with an empty set
         debug.check(len(self.grids) > 0, "Cannot seed an grid empty set.")
 
+        common_blockages = self.router.get_blocked_grids() & self.grids
+        
         # Start with the ll and make the widest row
         row = [ll]
         # Move in dir1 while we can
         while True:
             next_cell = row[-1] + offset1
             # Can't move if not in the pin shape
-            if next_cell in self.grids and next_cell not in self.router.get_blocked_grids():
+            if next_cell in self.grids and next_cell not in common_blockages:
                 row.append(next_cell)
             else:
                 break
@@ -438,7 +435,7 @@ class pin_group:
             next_row = [x + offset2 for x in row]
             for cell in next_row:
                 # Can't move if any cell is not in the pin shape
-                if cell not in self.grids or cell in self.router.get_blocked_grids():
+                if cell not in self.grids or cell in common_blockages:
                     break
             else:
                 row = next_row
@@ -619,6 +616,11 @@ class pin_group:
         # Set of track adjacent to or paritally overlap a pin (not full DRC connection)
         partial_set = set()
 
+        # for pin in self.pins:
+        #     lx = pin.lx()
+        #     ly = pin.by()
+        #     if  lx > 87.9 and lx < 87.99 and ly > 18.56 and ly < 18.6:
+        #         breakpoint()
         for pin in self.pins:
             debug.info(4, "  Converting {0}".format(pin))
             # Determine which tracks the pin overlaps
@@ -632,7 +634,8 @@ class pin_group:
             blockage_in_tracks = self.router.convert_blockage(pin)
             # Must include the pins here too because these are computed in a different
             # way than blockages.
-            self.blockages.update(sufficient | insufficient | blockage_in_tracks)
+            blockages = sufficient | insufficient | blockage_in_tracks
+            self.blockages.update(blockages)
             
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already

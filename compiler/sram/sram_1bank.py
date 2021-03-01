@@ -325,13 +325,13 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
-        # Route the supplies first since the MST is not blockage aware
-        # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
-
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             self.route_escape_pins()
+            
+        # Route the supplies first since the MST is not blockage aware
+        # and signals can route to anywhere on sides (it is flexible)
+        self.route_supplies()
         
     def route_dffs(self, add_routes=True):
 

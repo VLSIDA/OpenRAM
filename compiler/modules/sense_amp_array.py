@@ -146,10 +146,10 @@ class sense_amp_array(design.design):
             inst = self.local_insts[i]
 
             for gnd_pin in inst.get_pins("gnd"):
-                self.copy_power_pin(gnd_pin, directions=("V", "V"))
+                self.copy_power_pin(gnd_pin)
 
             for vdd_pin in inst.get_pins("vdd"):
-                self.copy_power_pin(vdd_pin, directions=("V", "V"))
+                self.copy_power_pin(vdd_pin)
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())

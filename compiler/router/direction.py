@@ -7,6 +7,8 @@
 #
 from enum import Enum
 from vector3d import vector3d
+import debug
+
 
 class direction(Enum):
     NORTH = 1
@@ -20,31 +22,30 @@ class direction(Enum):
     SOUTHEAST = 9
     SOUTHWEST = 10
 
-
     def get_offset(direct):
         """
         Returns the vector offset for a given direction.
         """
         if direct==direction.NORTH:
-            offset = vector3d(0,1,0)
+            offset = vector3d(0, 1, 0)
         elif direct==direction.SOUTH:
-            offset = vector3d(0,-1,0)
+            offset = vector3d(0, -1 ,0)
         elif direct==direction.EAST:
-            offset = vector3d(1,0,0)
+            offset = vector3d(1, 0, 0)
         elif direct==direction.WEST:
-            offset = vector3d(-1,0,0)
+            offset = vector3d(-1, 0, 0)
         elif direct==direction.UP:
-            offset = vector3d(0,0,1)
+            offset = vector3d(0, 0, 1)
         elif direct==direction.DOWN:
-            offset = vector3d(0,0,-1)
+            offset = vector3d(0, 0, -1)
         elif direct==direction.NORTHEAST:
-            offset = vector3d(1,1,0)
+            offset = vector3d(1, 1, 0)
         elif direct==direction.NORTHWEST:
-            offset = vector3d(-1,1,0)
+            offset = vector3d(-1, 1, 0)
         elif direct==direction.SOUTHEAST:
-            offset = vector3d(1,-1,0)
+            offset = vector3d(1, -1, 0)
         elif direct==direction.SOUTHWEST:
-            offset = vector3d(-1,-1,0)
+            offset = vector3d(-1, -1, 0)
         else:
             debug.error("Invalid direction {}".format(direct))
 
@@ -67,8 +68,8 @@ class direction(Enum):
         return [direction.get_offset(d) for d in direction.all_directions()]
 
     def all_neighbors(cell):
-        return [cell+x for x in direction.all_offsets()]
+        return [cell + x for x in direction.all_offsets()]
 
     def cardinal_neighbors(cell):
-        return [cell+x for x in direction.cardinal_offsets()]
+        return [cell + x for x in direction.cardinal_offsets()]
 

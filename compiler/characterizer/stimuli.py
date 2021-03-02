@@ -246,15 +246,14 @@ class stimuli():
             reltol = 0.001 # 0.1%
         timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
 
-        # UIC is needed for ngspice to converge
-
         self.sf.write(".TEMP {}\n".format(self.temperature))
         if OPTS.spice_name == "ngspice":
+            # UIC is needed for ngspice to converge
+            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
         elif OPTS.spice_name == "spectre":
             self.sf.write("simulator lang=spectre\n")
@@ -275,7 +274,7 @@ class stimuli():
                           ' annotate=status maxiters=5 \n'.format("5p", end_time))
             self.sf.write("simulator lang=spice\n")
         else:
-            self.sf.write(".TRAN 5p {0}n \n".format(end_time))
+            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
             if OPTS.spice_name == "hspice":  # for cadence plots
                 self.sf.write(".OPTIONS PSF=1 \n")
@@ -350,7 +349,7 @@ class stimuli():
             valid_retcode = 0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
-            cmd = "{0} -d -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
+            cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
                                                            OPTS.num_sim_threads,
                                                            temp_stim,
                                                            OPTS.openram_temp)

@@ -418,9 +418,9 @@ class delay(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
-        self.load_all_measure_nets()
+        # self.load_all_measure_nets()
         self.write_delay_measures()
-        self.write_simulation_saves()
+        # self.write_simulation_saves()
 
         # run until the end of the cycle time
         self.stim.write_control(self.cycle_times[-1] + self.period)
@@ -616,7 +616,7 @@ class delay(simulation):
 
     def load_all_measure_nets(self):
         measurement_nets = set()
-        for port, meas in zip(self.targ_read_ports*len(self.read_meas_lists) +
+        for port, meas in zip(self.targ_read_ports * len(self.read_meas_lists) +
                               self.targ_write_ports * len(self.write_meas_lists),
                               self.read_meas_lists + self.write_meas_lists):
             for measurement in meas:

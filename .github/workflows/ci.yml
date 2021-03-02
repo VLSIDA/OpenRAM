@@ -19,7 +19,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
          name: scn4me_subm Archives
-         path: ${{ github.workspace }}/scn4me_subm_temp/*/
+         path: ${{ github.workspace }}/scn4me_subm_temp/*/*
   freepdk45:
     runs-on: self-hosted
     steps:
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
          name: FreePDK45 Archives
-         path: ${{ github.workspace }}/freepdk45_temp/*/
+         path: ${{ github.workspace }}/freepdk45_temp/*/*
   # coverage_stats:
   #   if: ${{ always() }}
   #   needs: [scn4me_subm, freepdk45]

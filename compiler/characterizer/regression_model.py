@@ -137,5 +137,16 @@ class regression_model(simulation):
             features, labels = get_scaled_data(dpath)
             model = self.generate_model(features, labels)
             models[dname] = model
+            self.save_model(dname, model)
         return models
+    
+    # Fixme - only will work for sklearn regression models
+    def save_model(self, model_name, model):
+        try:
+            OPTS.model_dict
+        except AttributeError:
+            OPTS.model_dict = {}
+        OPTS.model_dict[model_name+"_coef"] = list(model.coef_[0])
+        debug.info(1,"Coefs of {}:{}".format(model_name,OPTS.model_dict[model_name+"_coef"]))
+        OPTS.model_dict[model_name+"_intercept"] = float(model.intercept_)
         

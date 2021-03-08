@@ -28,10 +28,9 @@ class openram_test(unittest.TestCase):
         result=verify.run_drc(w.name, tempgds, None)
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
-
-        if not OPTS.keep_temp:
+        elif not OPTS.keep_temp:
             self.cleanup()
-
+ 
     def local_check(self, a, final_verification=False):
 
         self.reset()
@@ -74,10 +73,10 @@ class openram_test(unittest.TestCase):
                 # shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("LVS mismatch: {}".format(a.name))
 
+            if lvs_result == 0 and drc_result == 0 and not OPTS.keep_temp:
+                self.cleanup()
         # For debug...
         # import pdb; pdb.set_trace()
-        if not OPTS.keep_temp:
-            self.cleanup()
 
     def run_pex(self, a, output=None):
         tempspice = "{}.sp".format(a.name)
@@ -104,6 +103,7 @@ class openram_test(unittest.TestCase):
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
+        
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files

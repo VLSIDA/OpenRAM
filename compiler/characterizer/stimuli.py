@@ -360,6 +360,8 @@ class stimuli():
             # -r {2}timing.raw
             ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
             ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
+            ng_cfg.write("set ngbehavior=hsa\n")
+            ng_cfg.write("set ng_nomodcheck\n")
             ng_cfg.close()
 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,

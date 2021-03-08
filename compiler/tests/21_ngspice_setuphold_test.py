@@ -12,8 +12,7 @@ import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
-from sram_factory import factory
-import debug
+
 
 class timing_setup_test(openram_test):
 
@@ -29,14 +28,12 @@ class timing_setup_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import setup_hold
-        import sram
         import tech
         slews = [tech.spice["rise_time"]*2]
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         sh = setup_hold(corner)
         data = sh.analyze(slews,slews)
-        #print data
         if OPTS.tech_name == "freepdk45":
             golden_data = {'hold_times_HL': [-0.01586914],
                            'hold_times_LH': [-0.01586914],
@@ -47,6 +44,11 @@ class timing_setup_test(openram_test):
                            'hold_times_LH': [-0.1293945],
                            'setup_times_HL': [0.1757812],
                            'setup_times_LH': [0.1879883]}
+        elif OPTS.tech_name == "sky130":
+            golden_data = {'hold_times_HL': [-0.05615234],
+                           'hold_times_LH': [-0.03173828],
+                           'setup_times_HL': [0.078125],
+                           'setup_times_LH': [0.1025391]}
         else:
             self.assertTrue(False) # other techs fail
 

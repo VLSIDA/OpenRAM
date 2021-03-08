@@ -133,7 +133,7 @@ class options(optparse.Values):
     magic_exe = None
     
     # Number of threads to use
-    num_threads = 2
+    num_threads = 1
     # Number of threads to use in ngspice/hspice
     num_sim_threads = 2
 

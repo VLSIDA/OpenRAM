@@ -13,8 +13,8 @@ class hierarchical_predecode3x8(hierarchical_predecode):
     """
     Pre 3x8 decoder used in hierarchical_decoder.
     """
-    def __init__(self, name, height=None):
-        super().__init__(name, 3, height)
+    def __init__(self, name, column_decoder=False, height=None):
+        super().__init__(name, 3, column_decoder, height)
 
         self.create_netlist()
         if not OPTS.netlist_only:

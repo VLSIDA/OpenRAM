@@ -49,6 +49,9 @@ class openram_back_end_test(openram_test):
         if OPTS.tech_name:
             options += " -t {}".format(OPTS.tech_name)
 
+        if OPTS.num_threads:
+            options += " -j {}".format(OPTS.num_threads)
+
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")

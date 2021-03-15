@@ -72,7 +72,7 @@ class precharge_array(design.design):
         self.DRC_LVS()
 
     def add_modules(self):
-        self.pc_cell = factory.create(module_type="precharge",
+        self.pc_cell = factory.create(module_type=OPTS.precharge,
                                       size=self.size,
                                       bitcell_bl=self.bitcell_bl,
                                       bitcell_br=self.bitcell_br)

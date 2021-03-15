@@ -275,7 +275,7 @@ class port_data(design.design):
         self.br_names = self.bitcell.get_all_br_names()
         self.wl_names = self.bitcell.get_all_wl_names()
         # used for bl/br names
-        self.precharge = factory.create(module_type="precharge",
+        self.precharge = factory.create(module_type=OPTS.precharge,
                                         bitcell_bl=self.bl_names[0],
                                         bitcell_br=self.br_names[0])
 

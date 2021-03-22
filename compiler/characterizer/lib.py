@@ -26,6 +26,7 @@ class lib:
         self.sram = sram
         self.sp_file = sp_file
         self.use_model = use_model
+        self.pred_time = None
         self.set_port_indices()
 
         self.prepare_tables()
@@ -151,7 +152,10 @@ class lib:
             self.corner_name = lib_name.replace(self.out_dir,"").replace(".lib","")
             self.characterize()
             self.lib.close()
-            total_time = time.time()-run_start
+            if self.pred_time == None:
+                total_time = time.time()-run_start
+            else:
+                total_time = self.pred_time
             self.parse_info(self.corner,lib_name, is_first_corner, total_time)
             is_first_corner = False
 
@@ -637,7 +641,9 @@ class lib:
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.load_slews)
         self.char_sram_results, self.char_port_results = char_results
-
+        if 'sim_time' in self.char_sram_results:
+            self.pred_time = self.char_sram_results['sim_time']
+        
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet

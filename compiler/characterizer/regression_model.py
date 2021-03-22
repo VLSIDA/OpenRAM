@@ -22,7 +22,8 @@ data_fnames = ["rise_delay.csv",
                "write0_power.csv",
                "read1_power.csv",
                "read0_power.csv",
-               "leakage_data.csv"]
+               "leakage_data.csv",
+               "sim_time.csv"]
 # Positions must correspond to data_fname list               
 lib_dnames = ["delay_lh",
               "delay_hl",
@@ -32,7 +33,8 @@ lib_dnames = ["delay_lh",
               "write0_power",
               "read1_power",
               "read0_power",
-              "leakage_power"] 
+              "leakage_power",
+              "sim_time"] 
 # Check if another data dir was specified
 if OPTS.sim_data_path == None:              
     data_dir = OPTS.openram_tech+relative_data_path
@@ -100,7 +102,8 @@ class regression_model(simulation):
         # Estimate the period as double the delay with margin
         period_margin = 0.1
         sram_data = {"min_period": sram_vals['delay_lh'] * 2,
-                     "leakage_power": sram_vals["leakage_power"]}
+                     "leakage_power": sram_vals["leakage_power"],
+                     "sim_time":sram_vals["sim_time"]}
 
         debug.info(2, "SRAM Data:\n{}".format(sram_data))
         debug.info(2, "Port Data:\n{}".format(port_data))

@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import os,sys,re
+import time
 import debug
 import math
 import datetime
@@ -142,6 +143,7 @@ class lib:
         debug.info(1,"Characterizing corners: " + str(self.corners))
         is_first_corner = True
         for (self.corner,lib_name) in zip(self.corners,self.lib_files):
+            run_start = time.time()
             debug.info(1,"Corner: " + str(self.corner))
             (self.process, self.voltage, self.temperature) = self.corner
             self.lib = open(lib_name, "w")
@@ -149,7 +151,8 @@ class lib:
             self.corner_name = lib_name.replace(self.out_dir,"").replace(".lib","")
             self.characterize()
             self.lib.close()
-            self.parse_info(self.corner,lib_name, is_first_corner)
+            total_time = time.time()-run_start
+            self.parse_info(self.corner,lib_name, is_first_corner, total_time)
             is_first_corner = False
 
     def characterize(self):
@@ -646,7 +649,7 @@ class lib:
                 self.times = self.sh.analyze(self.slews,self.slews)
 
 
-    def parse_info(self,corner,lib_name, is_first_corner):
+    def parse_info(self,corner,lib_name, is_first_corner, time):
         """ Copies important characterization data to datasheet.info to be added to datasheet """
         if OPTS.output_datasheet_info:
             datasheet_path = OPTS.output_path
@@ -718,7 +721,7 @@ class lib:
 
         self.write_power_datasheet(datasheet)
 
-        self.write_model_params(datasheet)
+        self.write_model_params(datasheet, time)
         
         datasheet.write("END\n")
         datasheet.close()
@@ -831,8 +834,9 @@ class lib:
 
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
         
-    def write_model_params(self, datasheet):
+    def write_model_params(self, datasheet, time):
         """Write values which will be used in the analytical model as inputs"""
+        datasheet.write("{0},{1},".format('sim_time', time))
         datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
         datasheet.write("{0},{1},".format('slews', list(self.slews)))
         datasheet.write("{0},{1},".format('loads', list(self.loads)))

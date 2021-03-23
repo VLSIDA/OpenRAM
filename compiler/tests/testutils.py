@@ -17,6 +17,23 @@ import traceback
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
 
+    def fail(self, msg):
+        import inspect
+        s = inspect.stack()
+        base_filename = os.path.splitext(os.path.basename(s[2].filename))[0]
+        
+        try:
+            OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+        except:
+            debug.error("$OPENRAM_HOME is not properly defined.", 1)
+        
+        import shutil
+        zip_file = "{0}/../{1}_{2}".format(OPENRAM_HOME, base_filename, os.getpid())
+        debug.info(0, "Archiving failed temp files {0} to {1}".format(OPTS.openram_temp, zip_file))
+        shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+        
+        super().fail(msg)
+        
     def local_drc_check(self, w):
 
         self.reset()

@@ -9,17 +9,17 @@ jobs:
       - name: SCMOS test
         run: |
          . /home/github-runner/setup-paths.sh 
-         export OPENRAM_HOME="`pwd`/compiler"
-         export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
          $OPENRAM_HOME/tests/regress.py -j 16 -t scn4m_subm
-      # - name: Archive
-      #   if: ${{ failure() }}
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #    name: scn4me_subm Archives
-      #    path: ${{ github.workspace }}/scn4me_subm_temp/
+      - name: Archive
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+         name: scn4me_subm Archives
+         path: ${{ github.workspace }}/*.zip
   freepdk45:
     runs-on: self-hosted
     steps:
@@ -28,17 +28,17 @@ jobs:
       - name: FreePDK45 test
         run: |
          . /home/github-runner/setup-paths.sh 
-         export OPENRAM_HOME="`pwd`/compiler"
-         export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
          $OPENRAM_HOME/tests/regress.py -j 16 -t freepdk45
-      # - name: Archive
-      #   if: ${{ failure() }}
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #    name: FreePDK45 Archives
-      #    path: ${{ github.workspace }}/freepdk45_temp/
+      - name: Archive
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+         name: FreePDK45 Archives
+         path: ${{ github.workspace }}/*.zip
   # coverage_stats:
   #   if: ${{ always() }}
   #   needs: [scn4me_subm, freepdk45]

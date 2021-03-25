@@ -338,8 +338,6 @@ class control_logic(design.design):
             row += 1
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_wen_row(row)
-            height = self.w_en_gate_inst.uy()
-            control_center_y = self.w_en_gate_inst.uy()
             row += 1
         self.place_pen_row(row)
         row += 1

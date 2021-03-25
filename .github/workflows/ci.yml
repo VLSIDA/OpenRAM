@@ -13,7 +13,7 @@ jobs:
          export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
-         $OPENRAM_HOME/tests/regress.py -j 16 -t scn4m_subm
+         $OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
@@ -32,7 +32,7 @@ jobs:
          export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
-         $OPENRAM_HOME/tests/regress.py -j 16 -t freepdk45
+         $OPENRAM_HOME/tests/regress.py -j 24 -t freepdk45
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2

@@ -12,11 +12,19 @@ from globals import OPTS
 import debug
 import pdb
 import traceback
+import time
 
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
 
+    def setUp(self):
+        self.start_time = time.time()
+
+    def tearDown(self):
+        duration = time.time() - self.start_time
+        print('%s: %.3fs' % (self.id(), duration))
+        
     def fail(self, msg):
         import inspect
         s = inspect.stack()

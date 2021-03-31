@@ -110,7 +110,7 @@ class supply_tree_router(router):
         # Route MST components
         for index, (src, dest) in enumerate(connections):
             if not (index % 100):
-                debug.info(0, "{0} supply segments routed, {1} remaining.".format(index, len(connections) - index))
+                debug.info(1, "{0} supply segments routed, {1} remaining.".format(index, len(connections) - index))
             self.route_signal(pin_name, src, dest)
             # if pin_name == "gnd":
             #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))

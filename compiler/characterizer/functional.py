@@ -439,7 +439,7 @@ class functional(simulation):
                 measure_name = "V{0}_{1}ck{2}".format(dout_port, bit, check)
                 signal_name = "{0}_{1}".format(dout_port, bit)
                 voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
-                    
+
                 self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,
                                                                                 measure_name,
                                                                                 voltage_value,

@@ -246,7 +246,7 @@ class stimuli():
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
+            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear ACCT\n".format(reltol))
         elif OPTS.spice_name == "spectre":
             self.sf.write("simulator lang=spectre\n")
             if OPTS.use_pex:

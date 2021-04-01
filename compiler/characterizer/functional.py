@@ -227,18 +227,18 @@ class functional(simulation):
     def add_read_check(self, word, port):
         """ Add to the check array to ensure a read works. """
         try:
-            self.check
+            self.check_count
         except:
-            self.check = 0
-        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check])
-        self.check += 1
+            self.check_count = 0
+        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check_count])
+        self.check_count += 1
 
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
-        for (word, dout_port, eo_period, check) in self.read_check:
+        for (word, dout_port, eo_period, check_count) in self.read_check:
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
-                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check))
+                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check_count))
                 try:
                     value = float(value)
                     if value > self.v_high:
@@ -260,7 +260,7 @@ class functional(simulation):
 
                     return (0, error)
 
-            self.read_results.append([sp_read_value, dout_port, eo_period, check])
+            self.read_results.append([sp_read_value, dout_port, eo_period, check_count])
         return (1, "SUCCESS")
 
     def check_stim_results(self):
@@ -432,12 +432,21 @@ class functional(simulation):
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
         for (word, dout_port, eo_period, check) in self.read_check:
-            t_intital = eo_period - 0.01 * self.period
+            t_initial = eo_period - 0.01 * self.period
             t_final = eo_period + 0.01 * self.period
-            for bit in range(self.word_size + self.num_spare_cols):
-                self.stim.gen_meas_value(meas_name="V{0}_{1}ck{2}".format(dout_port, bit, check),
-                                         dout="{0}_{1}".format(dout_port, bit),
-                                         t_intital=t_intital,
+            num_bits = self.word_size + self.num_spare_cols
+            for bit in range(num_bits):
+                measure_name = "V{0}_{1}ck{2}".format(dout_port, bit, check)
+                signal_name = "{0}_{1}".format(dout_port, bit)
+                voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
+
+                self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,
+                                                                                measure_name,
+                                                                                voltage_value,
+                                                                                eo_period))
+                self.stim.gen_meas_value(meas_name=measure_name,
+                                         dout=signal_name,
+                                         t_initial=t_initial,
                                          t_final=t_final)
 
         self.stim.write_control(self.cycle_times[-1] + self.period)

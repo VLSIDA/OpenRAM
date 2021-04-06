@@ -148,8 +148,9 @@ class pin_group:
             enclosure = self.router.compute_pin_enclosure(ll, ur, ll.z)
             pin_list.append(enclosure)
 
-        debug.check(len(pin_list) > 0,
-                    "Did not find any enclosures.")
+        if len(pin_list) == 0:
+            debug.error("Did not find any enclosures for {}".format(self.name))
+            self.router.write_debug_gds("pin_enclosure_error.gds")
 
         # Now simplify the enclosure list
         new_pin_list = self.remove_redundant_shapes(pin_list)

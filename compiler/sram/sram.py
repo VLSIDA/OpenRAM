@@ -120,7 +120,7 @@ class sram():
         start_time = datetime.datetime.now()
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
-        self.lvs_write(lvsname)
+        self.sp_write(lvsname, lvs=True)
         if not OPTS.netlist_only and OPTS.check_lvsdrc:
             verify.write_lvs_script(cell_name=self.s.name,
                                     gds_name=os.path.basename(gdsname),

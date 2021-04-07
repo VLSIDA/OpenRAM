@@ -306,7 +306,9 @@ class sram_base(design, verilog, lef):
                     pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
         from signal_escape_router import signal_escape_router as router
-        rtr=router(self.m3_stack, self)
+        rtr=router(layers=self.m3_stack,
+                   design=self,
+                   margin=4 * self.m3_pitch)
         rtr.escape_route(pins_to_route)
 
     def compute_bus_sizes(self):

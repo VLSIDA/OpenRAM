@@ -24,7 +24,8 @@ class psram_1bank_4mux_func_test(openram_test):
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
-
+        OPTS.trim_netlist = False
+        
         OPTS.bitcell = "pbitcell"
         OPTS.replica_bitcell="replica_pbitcell"
         OPTS.dummy_bitcell="dummy_pbitcell"

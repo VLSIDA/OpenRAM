@@ -102,7 +102,7 @@ class options(optparse.Values):
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = False
+    trim_netlist = True
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options

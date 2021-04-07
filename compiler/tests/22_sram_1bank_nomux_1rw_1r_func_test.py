@@ -23,6 +23,8 @@ class psram_1bank_nomux_func_test(openram_test):
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
+
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1

@@ -5,9 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os,sys,re
+import os
 import debug
-import math
 import datetime
 from .setup_hold import *
 from .delay import *
@@ -15,6 +14,7 @@ from .charutils import *
 import tech
 import numpy as np
 from globals import OPTS
+
 
 class lib:
     """ lib file generation."""
@@ -601,7 +601,6 @@ class lib:
                 from .elmore import elmore as model
             else:
                 debug.error("{} model not recognized. See options.py for available models.".format(OPTS.model_name))
-            import math
 
             m = model(self.sram, self.sp_file, self.corner)
             char_results = m.get_lib_values(self.slews,self.loads)

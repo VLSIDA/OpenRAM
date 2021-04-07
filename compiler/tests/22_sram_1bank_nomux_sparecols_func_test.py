@@ -43,10 +43,7 @@ class sram_1bank_nomux_sparecols_func_test(openram_test):
                                                                                c.words_per_row,
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"
-        s.sp_write(tempspice)
-
-        f = functional(s.s, tempspice)
+        f = functional(s.s)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

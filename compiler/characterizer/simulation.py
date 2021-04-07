@@ -27,7 +27,10 @@ class simulation():
             self.num_spare_cols = 0
         else:
             self.num_spare_cols = self.sram.num_spare_cols
-        self.sp_file = spfile
+        if not spfile:
+            self.sp_file = OPTS.openram_temp + "sram.sp"
+        else:
+            self.sp_file = spfile
 
         self.all_ports = self.sram.all_ports
         self.readwrite_ports = self.sram.readwrite_ports

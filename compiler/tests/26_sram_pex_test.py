@@ -45,7 +45,7 @@ class sram_pex_test(openram_test):
         tempspice = self.run_pex(s)
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, tempspice, corner)
+        f = functional(s.s, spfile=tempspice, corner=corner)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

@@ -21,13 +21,17 @@ class functional(simulation):
        for successful SRAM operation.
     """
 
-    def __init__(self, sram, spfile, corner=None, cycles=15, period=None, output_path=None):
+    def __init__(self, sram, spfile=None, corner=None, cycles=15, period=None, output_path=None):
         super().__init__(sram, spfile, corner)
 
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
 
+        if not spfile:
+            # self.sp_file is assigned in base class
+            sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
+            
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
 
@@ -46,7 +50,18 @@ class functional(simulation):
 
         if not self.num_spare_cols:
             self.num_spare_cols = 0
+        if self.num_spare_cols > 0:
+            debug.error("Functional simulation not debugged with spare columns.")
 
+        # FIXME: we need to remember the correct value of the spare columns
+        self.max_value = 2 ** (self.word_size + self.num_spare_cols) - 1
+        # If trim is set, specify the valid addresses
+        self.valid_addresses = set()
+        self.max_address = 2**self.addr_size - 1 + (self.num_spare_rows * self.words_per_row) 
+        if OPTS.trim_netlist:
+            for i in range(self.words_per_row):
+                self.valid_addresses.add(i)
+                self.valid_addresses.add(self.max_address - i)
         self.probe_address, self.probe_data = '0' * self.addr_size, 0
         self.set_corner(corner)
         self.set_spice_constants()
@@ -300,21 +315,16 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        if not self.num_spare_cols:
-            random_value = random.randint(0, (2 ** self.word_size) - 1)
-        else:
-            random_value1 = random.randint(0, (2 ** self.word_size) - 1)
-            random_value2 = random.randint(0, (2 ** self.num_spare_cols) - 1)
-            random_value = random_value1 + random_value2
+        random_value = random.randint(0, self.max_value)
         data_bits = self.convert_to_bin(random_value, False)
         return data_bits
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
-        if self.num_spare_rows==0:
-            random_value = random.randint(0, (2 ** self.addr_size) - 1)
+        if self.valid_addresses:
+            random_value = random.sample(self.valid_addresses, 1)[0]
         else:
-            random_value = random.randint(0, ((2 ** (self.addr_size - 1) - 1)) + (self.num_spare_rows * self.words_per_row))
+            random_value = random.randint(0, self.max_address)
         addr_bits = self.convert_to_bin(random_value, True)
         return addr_bits
 

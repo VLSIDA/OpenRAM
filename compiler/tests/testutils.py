@@ -63,7 +63,7 @@ class openram_test(unittest.TestCase):
         tempspice = "{}.sp".format(a.name)
         tempgds = "{}.gds".format(a.name)
 
-        a.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
+        a.sp_write("{0}{1}".format(OPTS.openram_temp, tempspice), lvs=True)
         # cannot write gds in netlist_only mode
         if not OPTS.netlist_only:
             a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))

@@ -675,7 +675,7 @@ class sram_base(design, verilog, lef):
 
         return insts
 
-    def sp_write(self, sp_name, lvs_netlist=False):
+    def sp_write(self, sp_name, lvs=False, trim=False):
         # Write the entire spice of the object to the file
         ############################################################
         # Spice circuit
@@ -688,6 +688,8 @@ class sram_base(design, verilog, lef):
         sp.write("* Data bits: {}\n".format(self.word_size))
         sp.write("* Banks: {}\n".format(self.num_banks))
         sp.write("* Column mux: {}:1\n".format(self.words_per_row))
+        sp.write("* Trimmed: {}\n".format(trim))
+        sp.write("* LVS: {}\n".format(lvs))
         sp.write("**************************************************\n")
         # This causes unit test mismatch
 
@@ -696,12 +698,9 @@ class sram_base(design, verilog, lef):
         # sp.write(".global {0} {1}\n".format(spice["vdd_name"],
         #                                     spice["gnd_name"]))
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS, lvs_netlist=lvs_netlist)
+        self.sp_write_file(sp, usedMODS, lvs=lvs, trim=trim)
         del usedMODS
         sp.close()
-
-    def lvs_write(self, sp_name):
-        self.sp_write(sp_name, lvs_netlist=True)
 
     def graph_exclude_bits(self, targ_row, targ_col):
         """

@@ -50,11 +50,10 @@ class functional(simulation):
 
         if not self.num_spare_cols:
             self.num_spare_cols = 0
-        if self.num_spare_cols > 0:
-            debug.error("Functional simulation not debugged with spare columns.")
 
-        # FIXME: we need to remember the correct value of the spare columns
-        self.max_value = 2 ** (self.word_size + self.num_spare_cols) - 1
+        self.max_data = 2 ** self.word_size - 1
+        self.max_col_data = 2 ** self.num_spare_cols - 1
+        self.words_per_row_bits = int(math.log(self.words_per_row) / math.log(2))
         # If trim is set, specify the valid addresses
         self.valid_addresses = set()
         self.max_address = 2**self.addr_size - 1 + (self.num_spare_rows * self.words_per_row) 
@@ -81,6 +80,7 @@ class functional(simulation):
         self.num_cycles = cycles
         # This is to have ordered keys for random selection
         self.stored_words = collections.OrderedDict()
+        self.stored_spares = collections.OrderedDict()        
         self.read_check = []
         self.read_results = []
 
@@ -136,10 +136,11 @@ class functional(simulation):
         # 1. Write all the write ports first to seed a bunch of locations.
         for port in self.write_ports:
             addr = self.gen_addr()
-            word = self.gen_data()
+            (word, spare) = self.gen_data()
             comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
-            self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
+            self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
+            self.stored_spares[addr[:-self.words_per_row_bits]] = spare
 
         # All other read-only ports are noops.
         for port in self.read_ports:
@@ -185,27 +186,31 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        word = self.gen_data()
+                        (word, spare) = self.gen_data()
                         comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
+                        self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
+                        self.stored_spares[addr[:-self.words_per_row_bits]] = spare
                         w_addrs.append(addr)
                 elif op == "partial_write":
                     # write only to a word that's been written to
-                    (addr, old_word) = self.get_data()
+                    (addr, old_word, old_spares) = self.get_data()
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        word = self.gen_data()
+                        (word, spare) = self.gen_data()
                         wmask  = self.gen_wmask()
                         new_word = self.gen_masked_data(old_word, word, wmask)
                         comment = self.gen_cycle_comment("partial_write", word, addr, wmask, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word, wmask, port)
+                        self.add_write_one_port(comment, addr, word + spare, wmask, port)
                         self.stored_words[addr] = new_word
+                        self.stored_spares[addr[:-self.words_per_row_bits]] = spare
                         w_addrs.append(addr)
                 else:
                     (addr, word) = random.choice(list(self.stored_words.items()))
+                    spare = self.stored_spares[addr[:-self.words_per_row_bits]]
+                    combined_word = word + spare
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -213,9 +218,9 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
+                        comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                         self.add_read_one_port(comment, addr, port)
-                        self.add_read_check(word, port)
+                        self.add_read_check(combined_word, port)
 
             self.cycle_times.append(self.t_current)
             self.t_current += self.period
@@ -315,9 +320,14 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        random_value = random.randint(0, self.max_value)
-        data_bits = self.convert_to_bin(random_value, False)
-        return data_bits
+        random_value = random.randint(0, self.max_data)
+        data_bits = self.convert_to_bin(random_value, self.word_size)
+        if self.num_spare_cols>0:
+            random_value = random.randint(0, self.max_col_data)
+            spare_bits = self.convert_to_bin(random_value, self.num_spare_cols)
+        else:
+            spare_bits = ""
+        return data_bits, spare_bits
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
@@ -325,7 +335,7 @@ class functional(simulation):
             random_value = random.sample(self.valid_addresses, 1)[0]
         else:
             random_value = random.randint(0, self.max_address)
-        addr_bits = self.convert_to_bin(random_value, True)
+        addr_bits = self.convert_to_bin(random_value, self.addr_size)
         return addr_bits
 
     def get_data(self):
@@ -333,19 +343,13 @@ class functional(simulation):
         # Used for write masks since they should be writing to previously written addresses
         addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
-        return (addr, word)
+        spare = self.stored_spares[addr[:-self.words_per_row_bits]]
+        return (addr, word, spare)
 
-    def convert_to_bin(self, value, is_addr):
-        """ Converts addr & word to usable binary values. """
+    def convert_to_bin(self, value, size):
         new_value = str.replace(bin(value), "0b", "")
-        if(is_addr):
-            expected_value = self.addr_size
-        else:
-            expected_value = self.word_size + self.num_spare_cols
-        for i in range(expected_value - len(new_value)):
+        for i in range(size - len(new_value)):
             new_value = "0" + new_value
-
-        # print("Binary Conversion: {} to {}".format(value, new_value))
         return new_value
 
     def write_functional_stimulus(self):

@@ -14,6 +14,7 @@ from vector import vector
 from globals import OPTS
 from sram_factory import factory
 from tech import cell_properties as cell_props
+from utils import round_to_grid
 
 
 class precharge(design.design):
@@ -229,6 +230,28 @@ class precharge(design.design):
                       offset=vector(0, 0),
                       width=self.width,
                       height=self.height)
+
+        # TSMC18 gate port hack
+        if OPTS.tech_name == "tsmc18":
+            min_area = drc["minarea_{}".format(self.active_stack[0])]
+            height = round_to_grid(self.well_contact.mod.first_layer_width)
+            width = round_to_grid(min_area / height)
+            width_impl = width + 2 * drc("implant_enclose_active")
+            height_impl = height + 2 * drc("implant_enclose_active") # contact.py:250
+            width_well = width + 2 * self.well_contact.mod.well_enclose_active
+            height_well = height + 2 * self.well_contact.mod.well_enclose_active # contact.py:264
+            self.add_rect_center(layer=self.active_stack[0],
+                                 offset=self.well_contact_pos,
+                                 width=width,
+                                 height=height)
+            self.add_rect_center(layer="nimplant",
+                                 offset=self.well_contact_pos,
+                                 width=width_impl,
+                                 height=height_impl)
+            self.add_rect_center(layer="nwell",
+                                 offset=self.well_contact_pos,
+                                 width=width_well,
+                                 height=height_well)
 
     def route_bitlines(self):
         """

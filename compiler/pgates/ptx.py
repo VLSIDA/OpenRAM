@@ -370,11 +370,12 @@ class ptx(design.design):
         # If the implant must enclose the active, shift offset
         # and increase width/height
         enclose_width = self.implant_enclose_active
-        enclose_offset = [enclose_width] * 2
+        enclose_height = max(self.implant_enclose_active, drc("implant_to_channel"))
+        enclose_offset = vector(enclose_width, enclose_height)
         self.implant = self.add_rect(layer="{}implant".format(self.implant_type),
                                      offset=self.active_offset - enclose_offset,
                                      width=self.active_width + 2 * enclose_width,
-                                     height=self.active_height + 2 * enclose_width)
+                                     height=self.active_height + 2 * enclose_height)
 
     def add_well_implant(self):
         """

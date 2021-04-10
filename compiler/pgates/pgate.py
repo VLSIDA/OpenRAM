@@ -12,7 +12,7 @@ import math
 from bisect import bisect_left
 from tech import layer, drc
 from tech import layer_indices
-from tech import layer_stacks
+from tech import layer_stacks, preferred_directions
 from vector import vector
 from globals import OPTS
 from tech import cell_properties as cell_props
@@ -140,7 +140,9 @@ class pgate(design.design):
 
         # TSMC18 gate port hack
         width = via.mod.second_layer_width
-        height = via.mod.second_layer_width
+        height = via.mod.second_layer_height
+        offset = contact_offset
+        # TODO: Put this in a function?
         if OPTS.tech_name == "tsmc18":
             cur_layer = "poly"
             while cur_layer != self.route_layer:
@@ -159,18 +161,25 @@ class pgate(design.design):
                 # print("Putting {}".format(cur_layer))
                 if cur_layer != "poly":
                     min_area = drc["minarea_{}".format(cur_layer)]
+                    min_width = drc["minwidth_{}".format(cur_layer)]
                     width = round_to_grid(math.sqrt(min_area))
                     height = round_to_grid(min_area / width)
-                    self.add_rect_center(layer=self.route_layer,
-                                         offset=contact_offset,
+                    dir = preferred_directions[cur_layer]
+                    # TODO: This is very hackish. We literally just put the rect a little up
+                    # This is caused by the nand3 and 4, whose pitches are a mess
+                    offset = contact_offset
+                    if(dir == "H"):
+                        offset = contact_offset + vector(0.0, -(height - min_width)/2)
+                    self.add_rect_center(layer=cur_layer,
+                                         offset=offset,
                                          width=width,
                                          height=height)
 
         self.add_layout_pin_rect_center(text=name,
                                         layer=self.route_layer,
                                         offset=contact_offset,
-                                        width=width,
-                                        height=height)
+                                        width=via.mod.second_layer_width,
+                                        height=via.mod.second_layer_height)
         # This is to ensure that the contact is
         # connected to the gate
         mid_point = contact_offset.scale(0.5, 1) \

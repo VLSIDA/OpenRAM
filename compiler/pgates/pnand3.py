@@ -13,6 +13,7 @@ import logical_effort
 from sram_factory import factory
 import contact
 from tech import cell_properties as cell_props
+from globals import OPTS
 
 
 class pnand3(pgate.pgate):
@@ -225,6 +226,10 @@ class pnand3(pgate.pgate):
         self.inputA_yoffset = max(active_contact_to_poly_contact,
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
+
+        # TODO: There has to be a better way for this
+        if OPTS.tech_name == "tsmc18":
+            self.inputA_yoffset += self.m1_pitch
 
         apin = self.route_input_gate(self.pmos1_inst,
                                      self.nmos1_inst,

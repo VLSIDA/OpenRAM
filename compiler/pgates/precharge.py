@@ -8,8 +8,10 @@
 import contact
 import design
 import debug
+import math
 from pgate import pgate
 from tech import parameter, drc
+from tech import layer_indices, layer_stacks
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -156,8 +158,8 @@ class precharge(design.design):
         self.upper_pmos1_inst.place(self.upper_pmos1_pos)
 
         # Second pmos to the right of the first
-        upper_pmos2_pos = self.upper_pmos1_pos + overlap_offset
-        self.upper_pmos2_inst.place(upper_pmos2_pos)
+        self.upper_pmos2_pos = self.upper_pmos1_pos + overlap_offset
+        self.upper_pmos2_inst.place(self.upper_pmos2_pos)
 
     def connect_poly(self):
         """
@@ -233,6 +235,7 @@ class precharge(design.design):
 
         # TSMC18 gate port hack
         if OPTS.tech_name == "tsmc18":
+            # Body connection
             min_area = drc["minarea_{}".format(self.active_stack[0])]
             height = round_to_grid(self.well_contact.mod.first_layer_width)
             width = round_to_grid(min_area / height)
@@ -252,6 +255,24 @@ class precharge(design.design):
                                  offset=self.well_contact_pos,
                                  width=width_well,
                                  height=height_well)
+
+            # Span of the whole pimp
+            left = min(self.lower_pmos_position.x,
+                       self.upper_pmos1_pos.x ,
+                       self.upper_pmos2_pos.x) - drc("implant_enclose_active")
+            right = max(self.lower_pmos_position.x + self.pmos.active_width,
+                       self.upper_pmos1_pos.x + self.pmos.active_width,
+                       self.upper_pmos2_pos.x + self.pmos.active_width) + drc("implant_enclose_active")
+            top = max(self.lower_pmos_position.y + self.pmos.active_height,
+                       self.upper_pmos1_pos.y + self.pmos.active_height,
+                       self.upper_pmos2_pos.y + self.pmos.active_height) + drc("implant_enclose_active")
+            bottom = min(self.lower_pmos_position.y,
+                       self.upper_pmos1_pos.y,
+                       self.upper_pmos2_pos.y) - drc("implant_enclose_active")
+            self.add_rect(layer="pimplant",
+                          offset=vector(left, bottom),
+                          width=right - left,
+                          height=top - bottom)
 
     def route_bitlines(self):
         """
@@ -294,6 +315,32 @@ class precharge(design.design):
         self.connect_pmos(self.upper_pmos2_inst.get_pin("D"),
                           self.br_xoffset)
 
+    # Helper function for adding minarea rectangles when via (only for tsmc18 for now)
+    def helper_areas(self, from_layer, to_layer, contact_offset):
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = layer_indices[cur_layer]
+            to_id   = layer_indices[to_layer]
+
+            if from_id < to_id: # grow the stack up
+                search_id = 0
+                next_id = 2
+            else: # grow the stack down
+                search_id = 2
+                next_id = 0
+
+            #vprint("Putting {}".format(cur_layer))
+            min_area = drc["minarea_{}".format(cur_layer)]
+            width = round_to_grid(math.sqrt(min_area))
+            height = round_to_grid(min_area / width)
+            self.add_rect_center(layer=cur_layer,
+                                 offset=contact_offset,
+                                 width=width,
+                                 height=height)
+
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+            cur_layer = curr_stack[next_id]
+
     def add_bitline_contacts(self):
         """
         Adds contacts/via from metal1 to metal2 for bit-lines
@@ -305,6 +352,8 @@ class precharge(design.design):
                                       to_layer=self.bitline_layer,
                                       offset=lower_pin.center(),
                                       directions=("V", "V"))
+            if OPTS.tech_name == "tsmc18":
+                self.helper_areas(lower_pin.layer, self.bitline_layer, lower_pin.center())
 
         # BR
         for upper_pin in [self.upper_pmos1_inst.get_pin("S"), self.upper_pmos2_inst.get_pin("D")]:
@@ -312,6 +361,8 @@ class precharge(design.design):
                                       to_layer=self.bitline_layer,
                                       offset=upper_pin.center(),
                                       directions=("V", "V"))
+            if OPTS.tech_name == "tsmc18":
+                self.helper_areas(lower_pin.layer, self.bitline_layer, upper_pin.center())
 
     def connect_pmos(self, pmos_pin, bit_xoffset):
         """

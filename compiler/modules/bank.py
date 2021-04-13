@@ -235,10 +235,14 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
+        # TODO: In tsmc180, is not 1.25 (dff is 6.72. crosses with the first gnd)
+        mult = 1.25
+        if OPTS.tech_name == "tsmc18":
+            mult = 1.5
         x_offset = self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = 1.25 * self.dff.height + self.column_decoder.height
+            y_offset = mult * self.dff.height + self.column_decoder.height
         else:
             y_offset = 0
         self.column_decoder_offsets[port] = vector(-x_offset, -y_offset)
@@ -279,10 +283,14 @@ class bank(design.design):
         # control logic to allow control signals to easily pass over in M3
         # by placing 1 1/4 a cell pitch down because both power connections and inputs/outputs
         # may be routed in M3 or M4
+        # TODO: In tsmc180, is not 1.25 (dff is 6.72. crosses with the first gnd)
+        mult = 1.25
+        if OPTS.tech_name == "tsmc18":
+            mult = 1.5
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width
-            y_offset = self.bitcell_array_top + 1.25 * self.dff.height + self.column_decoder.height
+            y_offset = self.bitcell_array_top + mult * self.dff.height + self.column_decoder.height
         else:
             y_offset = self.bitcell_array_top
         self.column_decoder_offsets[port] = vector(x_offset, y_offset)

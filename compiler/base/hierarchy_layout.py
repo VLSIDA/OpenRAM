@@ -15,6 +15,7 @@ from tech import layer_indices
 from tech import layer_stacks
 from tech import preferred_directions
 import os
+import sys
 from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
@@ -111,52 +112,44 @@ class layout():
         Finds the lowest set of 2d cartesian coordinates within
         this layout
         """
+        lowestx = lowesty = sys.maxsize
 
         if len(self.objs) > 0:
-            lowestx1 = min(obj.lx() for obj in self.objs if obj.name != "label")
-            lowesty1 = min(obj.by() for obj in self.objs if obj.name != "label")
-        else:
-            lowestx1 = lowesty1 = None
+            lowestx = min(min(obj.lx() for obj in self.objs if obj.name != "label"), lowestx)
+            lowesty = min(min(obj.by() for obj in self.objs if obj.name != "label"), lowesty)
+            
         if len(self.insts) > 0:
-            lowestx2 = min(inst.lx() for inst in self.insts)
-            lowesty2 = min(inst.by() for inst in self.insts)
-        else:
-            lowestx2 = lowesty2 = None
+            lowestx = min(min(inst.lx() for inst in self.insts), lowestx)
+            lowesty = min(min(inst.by() for inst in self.insts), lowesty)
 
-        if lowestx1 == None and lowestx2 == None:
-            return None
-        elif lowestx1 == None:
-            return vector(lowestx2, lowesty2)
-        elif lowestx2 == None:
-            return vector(lowestx1, lowesty1)
-        else:
-            return vector(min(lowestx1, lowestx2), min(lowesty1, lowesty2))
+        if len(self.pin_map) > 0:
+            for pin_set in self.pin_map.values():
+                lowestx = min(min(pin.lx() for pin in pin_set), lowestx)
+                lowesty = min(min(pin.by() for pin in pin_set), lowesty)
+            
+        return vector(lowestx, lowesty)
 
     def find_highest_coords(self):
         """
         Finds the highest set of 2d cartesian coordinates within
         this layout
         """
+        highestx = highesty = -sys.maxsize - 1
+        
         if len(self.objs) > 0:
-            highestx1 = max(obj.rx() for obj in self.objs if obj.name != "label")
-            highesty1 = max(obj.uy() for obj in self.objs if obj.name != "label")
-        else:
-            highestx1 = highesty1 = None
-        if len(self.insts) > 0:
-            highestx2 = max(inst.rx() for inst in self.insts)
-            highesty2 = max(inst.uy() for inst in self.insts)
-        else:
-            highestx2 = highesty2 = None
+            highestx = max(max(obj.rx() for obj in self.objs if obj.name != "label"), highestx)
+            highesty = max(max(obj.uy() for obj in self.objs if obj.name != "label"), highesty)
 
-        if highestx1 == None and highestx2 == None:
-            return None
-        elif highestx1 == None:
-            return vector(highestx2, highesty2)
-        elif highestx2 == None:
-            return vector(highestx1, highesty1)
-        else:
-            return vector(max(highestx1, highestx2),
-                          max(highesty1, highesty2))
+        if len(self.insts) > 0:
+            highestx = max(max(inst.rx() for inst in self.insts), highestx)
+            highesty = max(max(inst.uy() for inst in self.insts), highesty)
+
+        if len(self.pin_map) > 0:
+            for pin_set in self.pin_map.values():
+                highestx = max(max(pin.rx() for pin in pin_set), highestx)
+                highesty = max(max(pin.uy() for pin in pin_set), highesty)
+            
+        return vector(highestx, highesty)
 
     def find_highest_layer_coords(self, layer):
         """

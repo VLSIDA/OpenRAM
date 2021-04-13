@@ -242,10 +242,17 @@ class pgate(design.design):
 
         # To the right a spacing away from the pmos right active edge
         # Also, avoid to do intersection of nimp and pimp
-        # TODO: The pimplant_to_nimplant is new
+        # The pimplant_to_nimplant is new
+        pimp_to_nimp = 0
+        imp_to_active = 0
+        try:
+            pimp_to_nimp = drc("pimplant_to_nimplant")
+            imp_to_active = drc("implant_to_active")
+        except:
+            pass
         contact_xoffset = pmos_pos.x + pmos.active_width \
-                          + max(self.active_space, 2*drc("implant_enclose_active") + drc("pimplant_to_nimplant"),
-                                drc("implant_to_active") + drc("implant_enclose_active"))
+                          + max(self.active_space, 2*drc("implant_enclose_active") + pimp_to_nimp,
+                                imp_to_active + drc("implant_enclose_active"))
 
         # Must be at least an well enclosure of active down
         # from the top of the well
@@ -368,11 +375,18 @@ class pgate(design.design):
         # To the right a spacing away from the nmos right active edge
         # Also, avoid to do intersection of nimp and pimp
         # Also, there should be a distance between channel and implant
-        # TODO: The pimplant_to_nimplant is new. Probably not in other techs
+        # The pimplant_to_nimplant is new.
+        pimp_to_nimp = 0
+        imp_to_active = 0
+        try:
+            pimp_to_nimp = drc("pimplant_to_nimplant")
+            imp_to_active = drc("implant_to_active")
+        except:
+            pass
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + max(self.active_space,
-                                2*drc("implant_enclose_active") + drc("pimplant_to_nimplant"),
-                                drc("implant_to_active") + drc("implant_enclose_active"))
+                                2*drc("implant_enclose_active") + pimp_to_nimp,
+                                imp_to_active + drc("implant_enclose_active"))
         # Must be at least an well enclosure of active up
         # from the bottom of the well
         contact_yoffset = max(nmos_pos.y,

@@ -8,7 +8,7 @@
 import debug
 from tech import GDS, drc
 from vector import vector
-from tech import layer, layer_indices, pin_layer
+from tech import layer, layer_indices
 import math
 
 
@@ -47,6 +47,10 @@ class pin_layout:
                     break
             else:
                 # Iterate also the pin_layer
+                try:
+                    from tech import pin_layer
+                except:
+                    pin_layer = {}
                 for (layer_name, lpp) in pin_layer.items():
                     if not lpp:
                         continue

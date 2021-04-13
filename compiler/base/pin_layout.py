@@ -8,7 +8,7 @@
 import debug
 from tech import GDS, drc
 from vector import vector
-from tech import layer, layer_indices
+from tech import layer, layer_indices, pin_layer
 import math
 
 
@@ -46,8 +46,20 @@ class pin_layout:
                     self._layer = layer_name
                     break
             else:
-                debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
+                # Iterate also the pin_layer
+                for (layer_name, lpp) in pin_layer.items():
+                    if not lpp:
+                        continue
+                    if self.same_lpp(layer_name_pp, lpp):
+                        self._layer = layer_name
+                        break
+                else:
+                    debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
 
+        try:
+            self.lpp_pin = pin_layer[self.layer]
+        except:
+            self.lpp_pin = layer[self.layer]
         self.lpp = layer[self.layer]
         self._recompute_hash()
 
@@ -369,7 +381,8 @@ class pin_layout:
         debug.info(4, "writing pin (" + str(self.layer) + "):"
                    + str(self.width()) + "x"
                    + str(self.height()) + " @ " + str(self.ll()))
-        (layer_num, purpose) = layer[self.layer]
+        (true_layer_num, purpose) = layer[self.layer]
+        layer_num = true_layer_num
         try:
             from tech import pin_purpose
         except ImportError:
@@ -379,14 +392,23 @@ class pin_layout:
         except ImportError:
             label_purpose = purpose
 
-        newLayout.addBox(layerNumber=layer_num,
+        # Here, try to extract the full layer and purpose if it is inside pin_layer
+        try:
+            from tech import pin_layer
+            (layer_num, label_purpose) = pin_layer[self.layer]
+            (layer_num, pin_purpose) = pin_layer[self.layer]
+        except:
+            pass
+
+
+        newLayout.addBox(layerNumber=true_layer_num,
                          purposeNumber=purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
                          height=self.height(),
                          center=False)
         # Draw a second pin shape too
-        if pin_purpose != purpose:
+        if pin_purpose != purpose or layer_num != true_layer_num:
             newLayout.addBox(layerNumber=layer_num,
                              purposeNumber=pin_purpose,
                              offsetInMicrons=self.ll(),

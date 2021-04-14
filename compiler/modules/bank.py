@@ -367,13 +367,6 @@ class bank(design.design):
     def add_modules(self):
         """ Add all the modules using the class loader """
 
-        self.port_address = []
-        for port in self.all_ports:
-            self.port_address.append(factory.create(module_type="port_address",
-                                                    cols=self.num_cols + self.num_spare_cols,
-                                                    rows=self.num_rows,
-                                                    port=port))
-            self.add_mod(self.port_address[port])
 
         local_array_size = OPTS.local_array_size
 
@@ -394,11 +387,22 @@ class bank(design.design):
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
 
+        self.port_address = []
+        for port in self.all_ports:
+            self.port_address.append(factory.create(module_type="port_address",
+                                                    cols=self.bitcell_array.column_size + self.num_spare_cols,
+                                                    rows=self.bitcell_array.row_size,
+                                                    port=port))
+            self.add_mod(self.port_address[port])
+
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
         for port in self.all_ports:
             temp_pre = factory.create(module_type="port_data",
                                       sram_config=self.sram_config,
+                                      dimension_override=True,
+                                      cols=self.bitcell_array.column_size + self.num_spare_cols,
+                                      rows=self.bitcell_array.row_size,
                                       port=port,
                                       bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
@@ -445,10 +449,10 @@ class bank(design.design):
             temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))
             if port in self.read_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
+                for bit in range(int(self.bitcell_array.column_size/self.words_per_row) + self.num_spare_cols):
                     temp.append("dout{0}_{1}".format(port, bit))
             if port in self.write_ports:
-                for bit in range(self.word_size + self.num_spare_cols):
+                for bit in range(int(self.bitcell_array.column_size/self.words_per_row) + self.num_spare_cols):
                     temp.append("din{0}_{1}".format(port, bit))
             # Will be empty if no col addr lines
             sel_names = ["sel{0}_{1}".format(port, x) for x in range(self.num_col_addr_lines)]
@@ -485,7 +489,7 @@ class bank(design.design):
                                                          mod=self.port_address[port])
 
             temp = []
-            for bit in range(self.row_addr_size):
+            for bit in range(ceil(log(self.bitcell_array.row_size, 2))):
                 temp.append("addr{0}_{1}".format(port, bit + self.col_addr_size))
             temp.append("wl_en{}".format(port))
             wordline_names = self.bitcell_array.get_wordline_names(port)

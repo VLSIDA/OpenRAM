@@ -46,12 +46,15 @@ class openram_back_end_test(openram_test):
         if OPTS.spice_name:
             options += " -s {}".format(OPTS.spice_name)
 
+        if OPTS.tech_name:
+            options += " -t {}".format(OPTS.tech_name)
+
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
-            exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME)
+            exe_name = "{0}{1}/openram.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
         cmd = "{0} -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                        out_file,

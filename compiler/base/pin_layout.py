@@ -396,9 +396,14 @@ class pin_layout:
         # Add the text in the middle of the pin.
         # This fixes some pin label offsetting when GDS gets
         # imported into Magic.
+        try:
+            zoom = GDS["zoom"]
+        except KeyError:
+            zoom = None
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
                           purposeNumber=label_purpose,
+                          magnification=zoom,
                           offsetInMicrons=self.center())
 
     def compute_overlap(self, other):

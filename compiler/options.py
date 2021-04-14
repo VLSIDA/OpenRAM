@@ -74,7 +74,7 @@ class options(optparse.Values):
         # If user defined the temporary location in their environment, use it
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
     except:
-        openram_temp = None
+        openram_temp = "/tmp"
         
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
@@ -171,6 +171,7 @@ class options(optparse.Values):
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
     nand4_dec = "pnand4" # Not available right now
+    precharge = "precharge"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

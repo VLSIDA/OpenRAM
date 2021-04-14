@@ -7,8 +7,7 @@
 #
 import os
 import debug
-import globals
-from globals import OPTS,find_exe,get_tool
+from globals import OPTS, find_exe, get_tool
 from .lib import *
 from .delay import *
 from .elmore import *
@@ -21,7 +20,7 @@ from .model_check import *
 from .analytical_util import *
 from .regression_model import *
 
-debug.info(1,"Initializing characterizer...")
+debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""
 
 if not OPTS.analytical_delay:
@@ -30,17 +29,17 @@ if not OPTS.analytical_delay:
     if OPTS.spice_name != "":
         OPTS.spice_exe=find_exe(OPTS.spice_name)
         if OPTS.spice_exe=="" or OPTS.spice_exe==None:
-            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name),1)
+            debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name), 1)
     else:
-        (OPTS.spice_name,OPTS.spice_exe) = get_tool("spice",["hspice", "ngspice", "ngspice.exe", "xa"])
+        (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["ngspice", "ngspice.exe", "hspice", "xa"])
 
     # set the input dir for spice files if using ngspice
     if OPTS.spice_name == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
 
     if OPTS.spice_exe == "":
-        debug.error("No recognizable spice version found. Unable to perform characterization.",1)
+        debug.error("No recognizable spice version found. Unable to perform characterization.", 1)
 else:
-    debug.info(1,"Analytical model enabled.")
+    debug.info(1, "Analytical model enabled.")
 
 

@@ -73,7 +73,7 @@ def fork_tests(num_threads):
                     sys.stdin.close()
                     test_suite_result = AutoTimingTestResultDecorator(TestProtocolClient(stream))
                     test_suite.run(test_suite_result)
-                except:
+                except EBADF:
                     try:
                         stream.write(traceback.format_exc())
                     finally:

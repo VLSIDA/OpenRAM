@@ -248,21 +248,27 @@ class sram_base(design, verilog, lef):
 
         # Find the lowest leftest pin for vdd and gnd
         for pin_name in ["vdd", "gnd"]:
-            # Copy the pin shape to rectangles
+            # Copy the pin shape(s) to rectangles
             for pin in self.get_pins(pin_name):
                 self.add_rect(pin.layer,
                               pin.ll(),
                               pin.width(),
                               pin.height())
-            # Remove the pins
+
+            # Remove the pin shape(s)
             self.remove_layout_pin(pin_name)
 
-            pin = rtr.get_pin(pin_name)
-            
+            # Get the lowest, leftest pin
+            pin = rtr.get_ll_pin(pin_name)
+
+            # Add it as an IO pin to the perimeter
+            lowest_coord = self.find_lowest_coords()
+            pin_width = pin.rx() - lowest_coord.x
+            pin_offset = vector(lowest_coord.x, pin.by())
             self.add_layout_pin(pin_name,
                                 pin.layer,
-                                pin.ll(),
-                                pin.width(),
+                                pin_offset,
+                                pin_width,
                                 pin.height())
 
     def route_escape_pins(self):

@@ -124,6 +124,8 @@ class layout():
 
         if len(self.pin_map) > 0:
             for pin_set in self.pin_map.values():
+                if len(pin_set) == 0:
+                    continue
                 lowestx = min(min(pin.lx() for pin in pin_set), lowestx)
                 lowesty = min(min(pin.by() for pin in pin_set), lowesty)
             
@@ -146,6 +148,8 @@ class layout():
 
         if len(self.pin_map) > 0:
             for pin_set in self.pin_map.values():
+                if len(pin_set) == 0:
+                    continue
                 highestx = max(max(pin.rx() for pin in pin_set), highestx)
                 highesty = max(max(pin.uy() for pin in pin_set), highesty)
             

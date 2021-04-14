@@ -68,7 +68,7 @@ class lef:
     def lef_write(self, lef_name):
         """ Write the entire lef of the object to the file. """
 
-        if OPTS.drc_exe[0] == "magic":
+        if OPTS.drc_exe and OPTS.drc_exe[0] == "magic":
             self.magic_lef_write(lef_name)
             return
 

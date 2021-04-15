@@ -61,6 +61,7 @@ class verilog:
         self.vf.write("  parameter RAM_DEPTH = 1 << ADDR_WIDTH;\n")
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter DELAY = 3 ;\n")
+        self.vf.write("  parameter VERBOSE = 1 ; //Set to 0 to only display warnings\n")
         self.vf.write("\n")
 
         for port in self.all_ports:
@@ -130,19 +131,19 @@ class verilog:
         if port in self.read_ports:
             self.vf.write("    dout{0} = {1}'bx;\n".format(port, self.word_size))
         if port in self.readwrite_ports:
-            self.vf.write("    if ( !csb{0}_reg && web{0}_reg ) \n".format(port))
+            self.vf.write("    if ( !csb{0}_reg && web{0}_reg && VERBOSE ) \n".format(port))
             self.vf.write("      $display($time,\" Reading %m addr{0}=%b dout{0}=%b\",addr{0}_reg,mem[addr{0}_reg]);\n".format(port))
         elif port in self.read_ports:
-            self.vf.write("    if ( !csb{0}_reg ) \n".format(port))
+            self.vf.write("    if ( !csb{0}_reg && VERBOSE ) \n".format(port))
             self.vf.write("      $display($time,\" Reading %m addr{0}=%b dout{0}=%b\",addr{0}_reg,mem[addr{0}_reg]);\n".format(port))
         if port in self.readwrite_ports:
-            self.vf.write("    if ( !csb{0}_reg && !web{0}_reg )\n".format(port))
+            self.vf.write("    if ( !csb{0}_reg && !web{0}_reg && VERBOSE )\n".format(port))
             if self.write_size:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b wmask{0}=%b\",addr{0}_reg,din{0}_reg,wmask{0}_reg);\n".format(port))
             else:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b\",addr{0}_reg,din{0}_reg);\n".format(port))
         elif port in self.write_ports:
-            self.vf.write("    if ( !csb{0}_reg )\n".format(port))
+            self.vf.write("    if ( !csb{0}_reg && VERBOSE )\n".format(port))
             if self.write_size:
                 self.vf.write("      $display($time,\" Writing %m addr{0}=%b din{0}=%b wmask{0}=%b\",addr{0}_reg,din{0}_reg,wmask{0}_reg);\n".format(port))
             else:

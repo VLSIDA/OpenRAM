@@ -12,6 +12,8 @@ module sram_2_16_1_freepdk45(
   parameter RAM_DEPTH = 1 << ADDR_WIDTH;
   // FIXME: This delay is arbitrary.
   parameter DELAY = 3 ;
+  parameter VERBOSE = 1 ; //Set to 0 to only display warnings
+  parameter T_HOLD = 1 ; //Delay to hold dout value after posedge. Value is arbitrary
 
   input  clk0; // clock
   input   csb0; // active low chip select
@@ -33,10 +35,10 @@ module sram_2_16_1_freepdk45(
     web0_reg = web0;
     addr0_reg = addr0;
     din0_reg = din0;
-    dout0 = 2'bx;
-    if ( !csb0_reg && web0_reg ) 
+    #(T_HOLD) dout0 = 2'bx;
+    if ( !csb0_reg && web0_reg && VERBOSE ) 
       $display($time," Reading %m addr0=%b dout0=%b",addr0_reg,mem[addr0_reg]);
-    if ( !csb0_reg && !web0_reg )
+    if ( !csb0_reg && !web0_reg && VERBOSE )
       $display($time," Writing %m addr0=%b din0=%b",addr0_reg,din0_reg);
   end
 

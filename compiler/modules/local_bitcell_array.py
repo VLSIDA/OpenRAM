@@ -10,6 +10,7 @@ from globals import OPTS
 from sram_factory import factory
 from vector import vector
 import debug
+from tech import layer_properties as layer_props
 
 
 class local_bitcell_array(bitcell_base_array.bitcell_base_array):
@@ -199,18 +200,22 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
             wordline_pins = self.wl_array.get_inputs()
 
+            wl_layer = layer_props.global_bitcell_array.wordline_layer
+            wl_pitch = getattr(self, "{}_pitch".format(wl_layer))
+
             for (wl_name, in_pin_name) in zip(wordline_names, wordline_pins):
                 # wl_pin = self.bitcell_array_inst.get_pin(wl_name)
                 in_pin = self.wl_insts[port].get_pin(in_pin_name)
 
                 y_offset = in_pin.cy()
+
                 if port == 0:
-                    y_offset -= 2 * self.m3_pitch
+                    y_offset -= 2 * wl_pitch
                 else:
-                    y_offset += 2 * self.m3_pitch
+                    y_offset += 2 * wl_pitch
 
                 self.add_layout_pin_segment_center(text=wl_name,
-                                                   layer="m3",
+                                                   layer=wl_layer,
                                                    start=vector(self.wl_insts[port].lx(), y_offset),
                                                    end=vector(self.wl_insts[port].lx() + self.wl_array.width, y_offset))
 

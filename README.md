@@ -1,12 +1,9 @@
+![](./images/OpenRAM_logo_yellow_transparent.svg)
 # OpenRAM
 
 [![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
 [![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
-
-Master: 
 [![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/master.zip)
-
-Dev: 
 [![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.

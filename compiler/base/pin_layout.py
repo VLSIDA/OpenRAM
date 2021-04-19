@@ -369,11 +369,23 @@ class pin_layout:
         debug.info(4, "writing pin (" + str(self.layer) + "):"
                    + str(self.width()) + "x"
                    + str(self.height()) + " @ " + str(self.ll()))
-        (layer_num, purpose) = layer[self.layer]
+
+        # Try to use the pin layer if it exists, otherwise
+        # use the regular layer
         try:
-            from tech import pin_purpose
+            (pin_layer_num, pin_purpose) = layer[self.layer + "p"]
+        except KeyError:
+            (pin_layer_num, pin_purpose) = layer[self.layer]
+        (layer_num, purpose) = layer[self.layer]
+
+        # Try to use a global pin purpose if it exists,
+        # otherwise, use the regular purpose
+        try:
+            from tech import pin_purpose as global_pin_purpose
+            pin_purpose = global_pin_purpose
         except ImportError:
-            pin_purpose = purpose
+            pass
+
         try:
             from tech import label_purpose
         except ImportError:
@@ -385,9 +397,9 @@ class pin_layout:
                          width=self.width(),
                          height=self.height(),
                          center=False)
-        # Draw a second pin shape too
-        if pin_purpose != purpose:
-            newLayout.addBox(layerNumber=layer_num,
+        # Draw a second pin shape too if it is different
+        if not self.same_lpp((pin_layer_num, pin_purpose), (layer_num, purpose)):
+            newLayout.addBox(layerNumber=pin_layer_num,
                              purposeNumber=pin_purpose,
                              offsetInMicrons=self.ll(),
                              width=self.width(),
@@ -396,9 +408,14 @@ class pin_layout:
         # Add the text in the middle of the pin.
         # This fixes some pin label offsetting when GDS gets
         # imported into Magic.
+        try:
+            zoom = GDS["zoom"]
+        except KeyError:
+            zoom = None
         newLayout.addText(text=self.name,
                           layerNumber=layer_num,
                           purposeNumber=label_purpose,
+                          magnification=zoom,
                           offsetInMicrons=self.center())
 
     def compute_overlap(self, other):

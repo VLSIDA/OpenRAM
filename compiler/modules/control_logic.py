@@ -333,21 +333,19 @@ class control_logic(design.design):
         row += 1
         self.place_gated_clk_buf_row(row)
         row += 1
-        self.place_wlen_row(row)
-        row += 1
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.place_sen_row(row)
+            row += 1
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_wen_row(row)
-            height = self.w_en_gate_inst.uy()
-            control_center_y = self.w_en_gate_inst.uy()
             row += 1
         self.place_pen_row(row)
         row += 1
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.place_rbl_delay_row(row)
             row += 1
-        if (self.port_type == "rw") or (self.port_type == "r"):
-            self.place_sen_row(row)
-            row += 1
+        self.place_wlen_row(row)
+        row += 1
         self.place_delay(row)
         height = self.delay_inst.uy()
         control_center_y = self.delay_inst.by()

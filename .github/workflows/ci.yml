@@ -4,52 +4,54 @@ jobs:
   scn4me_subm:
     runs-on: self-hosted
     steps:
-      - name: Check out repository
+      - name: Checkout code
         uses: actions/checkout@v1
       - name: SCMOS test
         run: |
          . /home/github-runner/setup-paths.sh 
-         export OPENRAM_HOME="`pwd`/compiler"
-         export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="`pwd`/scn4me_subm"
-         python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 48 -t scn4m_subm
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
+         export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
+         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
+         $OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: scn4me_subm Archives
-         path: $OPENRAM_TMP/ 
+         path: ${{ github.workspace }}/*.zip
   freepdk45:
     runs-on: self-hosted
     steps:
-      - name: Check out repository
+      - name: Checkout code
         uses: actions/checkout@v1
       - name: FreePDK45 test
         run: |
          . /home/github-runner/setup-paths.sh 
-         export OPENRAM_HOME="`pwd`/compiler"
-         export OPENRAM_TECH="`pwd`/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="`pwd`/freepdk45"
-         python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 48 -t freepdk45
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
+         export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
+         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
+         $OPENRAM_HOME/tests/regress.py -j 24 -t freepdk45
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
          name: FreePDK45 Archives
-         path: $OPENRAM_TMP/ 
-  coverage:
-    if: ${{ always() }}
-    needs: [scn4me_subm, freepdk45]
-    runs-on: self-hosted
-    steps:
-      - name: Coverage stats
-        run: |
-         python3-coverage combine
-         python3-coverage report
-         python3-coverage html -d coverage_html
-      - name: Archive coverage
-        uses: actions/upload-artifact@v2
-        with:
-         name: code-coverage-report
-         path: coverage_html/
+         path: ${{ github.workspace }}/*.zip
+  # coverage_stats:
+  #   if: ${{ always() }}
+  #   needs: [scn4me_subm, freepdk45]
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Coverage stats
+  #       run: |
+  #        python3-coverage combine
+  #        python3-coverage report
+  #        python3-coverage html -d ${{ github.workspace }}/coverage_html
+  #     - name: Archive coverage
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #        name: code-coverage-report
+  #        path: ${{ github.workspace }}/coverage_html/
 

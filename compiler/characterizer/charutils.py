@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import os
 import re
 import debug
 from globals import OPTS
@@ -20,6 +21,8 @@ def parse_spice_list(filename, key):
     if OPTS.spice_name == "xa" :
         # customsim has a different output file name
         full_filename="{0}xa.meas".format(OPTS.openram_temp)
+    elif OPTS.spice_name == "spectre":
+        full_filename = os.path.join(OPTS.openram_temp, "delay_stim.measure")
     else:
         # ngspice/hspice using a .lis file
         full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
@@ -28,6 +31,8 @@ def parse_spice_list(filename, key):
         f = open(full_filename, "r")
     except IOError:
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
+        debug.archive()
+        
     contents = f.read()
     f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)

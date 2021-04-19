@@ -18,19 +18,17 @@ class hierarchical_predecode(design.design):
     """
     Pre 2x4 and 3x8 and TBD 4x16 decoder shared code.
     """
-    def __init__(self, name, input_number, height=None):
+    def __init__(self, name, input_number, column_decoder=False, height=None):
         self.number_of_inputs = input_number
 
         b = factory.create(module_type=OPTS.bitcell)
 
         if not height:
             self.cell_height = b.height
-            self.column_decoder = False
         else:
             self.cell_height = height
-            # If we are pitch matched to the bitcell, it's a predecoder
-            # otherwise it's a column decoder (out of pgates)
-            self.column_decoder = (height != b.height)
+            
+        self.column_decoder = column_decoder
 
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
         super().__init__(name)
@@ -87,8 +85,15 @@ class hierarchical_predecode(design.design):
 
         self.bus_layer = layer_props.hierarchical_predecode.bus_layer
         self.bus_directions = layer_props.hierarchical_predecode.bus_directions
-        self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
-        self.bus_space = layer_props.hierarchical_predecode.bus_space_factor * getattr(self, self.bus_layer + "_space")
+
+        if self.column_decoder:
+            # Column decoders may be routed on M2/M3 if there's a write mask
+            self.bus_pitch = self.m3_pitch
+            self.bus_space = self.m3_space
+        else:
+            self.bus_pitch = getattr(self, self.bus_layer + "_pitch")
+            self.bus_space = getattr(self, self.bus_layer + "_space")
+        self.bus_space = layer_props.hierarchical_predecode.bus_space_factor * self.bus_space
         self.input_layer = layer_props.hierarchical_predecode.input_layer
         self.output_layer = layer_props.hierarchical_predecode.output_layer
         self.output_layer_pitch = getattr(self, self.output_layer + "_pitch")

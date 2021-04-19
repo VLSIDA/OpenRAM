@@ -43,7 +43,7 @@ def error(str, return_value=0):
 
     if globals.OPTS.debug:
         pdb.set_trace()
-            
+
     assert return_value == 0
 
 
@@ -108,7 +108,20 @@ def info(lev, str):
         print_raw("[{0}/{1}]: {2}".format(class_name,
                                           frm[0].f_code.co_name, str))
 
+        
+def archive():
+    from globals import OPTS
+    try:
+        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+    except:
+        error("$OPENRAM_HOME is not properly defined.", 1)
 
+    import shutil
+    zip_file = "{0}/{1}_{2}".format(OPENRAM_HOME, "fail_", os.getpid())
+    info(0, "Archiving failed files to {}.zip".format(zip_file))
+    shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+
+    
 def bp():
     """
     An empty function so you can set soft breakpoints in pdb.

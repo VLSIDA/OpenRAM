@@ -325,13 +325,13 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
-        # Route the supplies first since the MST is not blockage aware
-        # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
-
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             self.route_escape_pins()
+            
+        # Route the supplies first since the MST is not blockage aware
+        # and signals can route to anywhere on sides (it is flexible)
+        self.route_supplies()
         
     def route_dffs(self, add_routes=True):
 
@@ -340,6 +340,15 @@ class sram_1bank(sram_base):
 
     def route_dff(self, port, add_routes):
 
+        # This is only done when we add_routes because the data channel will be larger
+        # so that can be used for area estimation.
+        if add_routes:
+            self.route_col_addr_dffs(port)
+
+        self.route_data_dffs(port, add_routes)
+
+    def route_col_addr_dffs(self, port):
+        
         route_map = []
 
         # column mux dff is routed on it's own since it is to the far end
@@ -351,6 +360,38 @@ class sram_1bank(sram_base):
             bank_pins = [self.bank_inst.get_pin(x) for x in bank_names]
             route_map.extend(list(zip(bank_pins, dff_pins)))
 
+        if len(route_map) > 0:
+
+            layer_stack = self.m1_stack
+
+            if port == 0:
+                offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
+                                - self.data_bus_size[port] + 2 * self.m3_pitch)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
+                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # with no active devices.
+                self.add_inst(cr.name, cr)
+                self.connect_inst([])
+                #self.add_flat_inst(cr.name, cr)
+            else:
+                offset = vector(0,
+                                self.bank.height + self.m3_pitch)
+                cr = channel_route(netlist=route_map,
+                                   offset=offset,
+                                   layer_stack=layer_stack,
+                                   parent=self)
+                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # with no active devices.
+                self.add_inst(cr.name, cr)
+                self.connect_inst([])
+                #self.add_flat_inst(cr.name, cr)
+        
+    def route_data_dffs(self, port, add_routes):
+        route_map = []
+            
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
@@ -377,6 +418,7 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
+            # The write masks will have blockages on M1
             if self.num_wmasks > 0 and port in self.write_ports:
                 layer_stack = self.m3_stack
             else:

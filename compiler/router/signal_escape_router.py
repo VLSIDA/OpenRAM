@@ -17,12 +17,17 @@ class signal_escape_router(router):
     A router that routes signals to perimeter and makes pins.
     """
 
-    def __init__(self, layers, design, bbox=None, gds_filename=None):
+    def __init__(self, layers, design, bbox=None, margin=0, gds_filename=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, layers, design, gds_filename, bbox)
+        router.__init__(self,
+                        layers=layers,
+                        design=design,
+                        gds_filename=gds_filename,
+                        bbox=bbox,
+                        margin=margin)
 
     def perimeter_dist(self, pin_name):
         """
@@ -54,8 +59,8 @@ class signal_escape_router(router):
         start_time = datetime.now()
         for pin_name in ordered_pin_names:
             self.route_signal(pin_name)
-            #if pin_name == "dout1[1]":
-            #    self.write_debug_gds("postroute.gds", False)
+            # if pin_name == "dout0[1]":
+            #     self.write_debug_gds("postroute.gds", True)
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 

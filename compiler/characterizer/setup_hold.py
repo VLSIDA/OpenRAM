@@ -82,7 +82,13 @@ class setup_hold():
 
         """
         self.sf.write("\n* Generation of the data and clk signals\n")
-        incorrect_value = self.stim.get_inverse_value(correct_value)
+        if correct_value == 1:
+            incorrect_value = 0
+        elif correct_value == 0:
+            incorrect_value = 1
+        else:
+            debug.error("Invalid value {}".format(correct_value))
+
         if mode=="HOLD":
             init_value = incorrect_value
             start_value = correct_value

@@ -51,11 +51,8 @@ class sram():
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 
-    def sp_write(self, name):
-        self.s.sp_write(name)
-
-    def lvs_write(self, name):
-        self.s.lvs_write(name)
+    def sp_write(self, name, lvs=False, trim=False):
+        self.s.sp_write(name, lvs, trim)
 
     def lef_write(self, name):
         self.s.lef_write(name)
@@ -117,7 +114,7 @@ class sram():
         start_time = datetime.datetime.now()
         lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
         debug.print_raw("LVS: Writing to {0}".format(lvsname))
-        self.lvs_write(lvsname)
+        self.sp_write(lvsname, lvs=True)
         if not OPTS.netlist_only and OPTS.check_lvsdrc:
             verify.write_lvs_script(cell_name=self.s.name,
                                     gds_name=os.path.basename(gdsname),

@@ -7,6 +7,9 @@
 #
 import debug
 from tech import layer_names
+import os
+import shutil
+from globals import OPTS
 
 
 class lef:
@@ -23,9 +26,53 @@ class lef:
         # Round to ensure float values are divisible by 0.0025 (the manufacturing grid)
         self.round_grid = 4
 
+    def magic_lef_write(self, lef_name):
+        """ Use a magic script to perform LEF creation. """
+        debug.info(3, "Writing abstracted LEF to {0}".format(lef_name))
+
+        # Copy .magicrc file into the output directory
+        magic_file = OPTS.openram_tech + "tech/.magicrc"
+        if os.path.exists(magic_file):
+            shutil.copy(magic_file, OPTS.openram_temp)
+        else:
+            debug.warning("Could not locate .magicrc file: {}".format(magic_file))
+
+        gds_name = OPTS.openram_temp + "{}.gds".format(self.name)
+        self.gds_write(gds_name)
+
+        run_file = OPTS.openram_temp + "run_lef.sh"
+        f = open(run_file, "w")
+        f.write("#!/bin/sh\n")
+        f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
+        f.write('echo "$(date): Starting GDS to MAG using Magic {}"\n'.format(OPTS.drc_exe[1]))
+        f.write('\n')
+        f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
+        f.write("drc off\n")
+        f.write("gds polygon subcell true\n")
+        f.write("gds warning default\n")
+        f.write("gds flatten true\n")
+        f.write("gds ordering true\n")
+        f.write("gds readonly true\n")
+        f.write("gds read {}\n".format(gds_name))
+        f.write('puts "Finished reading gds {}"\n'.format(gds_name))
+        f.write("load {}\n".format(self.name))
+        f.write('puts "Finished loading cell {}"\n'.format(self.name))
+        f.write("cellname delete \\(UNNAMED\\)\n")
+        f.write("lef write {} -hide\n".format(lef_name))
+        f.write('puts "Finished writing LEF cell {}"\n'.format(self.name))
+        f.close()
+        os.system("chmod u+x {}".format(run_file))
+        from run_script import run_script
+        (outfile, errfile, resultsfile) = run_script(self.name, "lef")
+
     def lef_write(self, lef_name):
-        """Write the entire lef of the object to the file."""
-        debug.info(3, "Writing to {0}".format(lef_name))
+        """ Write the entire lef of the object to the file. """
+
+        if OPTS.drc_exe and OPTS.drc_exe[0] == "magic":
+            self.magic_lef_write(lef_name)
+            return
+
+        debug.info(3, "Writing detailed LEF to {0}".format(lef_name))
 
         self.indent = "" # To maintain the indent level easily
 

@@ -22,7 +22,7 @@ import getpass
 import subprocess
 
 
-VERSION = "1.1.9"
+VERSION = "1.1.14"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -61,8 +61,13 @@ def parse_args():
         optparse.make_option("-j", "--threads",
                              action="store",
                              type="int",
-                             help="Specify the number of threads (default: 2)",
+                             help="Specify the number of threads (default: 1)",
                              dest="num_threads"),
+        optparse.make_option("-m", "--sim_threads",
+                             action="store",
+                             type="int",
+                             help="Specify the number of spice simulation threads (default: 2)",
+                             dest="num_sim_threads"),
         optparse.make_option("-v",
                              "--verbose",
                              action="count",
@@ -381,6 +386,10 @@ def purge_temp():
     """ Remove the temp directory. """
     debug.info(1,
                "Purging temp directory: {}".format(OPTS.openram_temp))
+    #import inspect
+    #s = inspect.stack()
+    #print("Purge {0} in dir {1}".format(s[3].filename, OPTS.openram_temp))
+
     # This annoyingly means you have to re-cd into
     # the directory each debug iteration
     # shutil.rmtree(OPTS.openram_temp, ignore_errors=True)
@@ -429,9 +438,15 @@ def setup_paths():
         if "__pycache__" not in full_path:
             sys.path.append("{0}".format(full_path))
 
-    # Use a unique temp subdirectory
-    OPTS.openram_temp += "/openram_{0}_{1}_temp/".format(getpass.getuser(),
-                                                         os.getpid())
+    # Use a unique temp subdirectory if multithreaded
+    if OPTS.num_threads > 1 or OPTS.openram_temp == "/tmp":
+
+        # Make a unique subdir
+        tempdir = "/openram_{0}_{1}_temp".format(getpass.getuser(),
+                                                 os.getpid())
+        # Only add the unique subdir one time
+        if tempdir not in OPTS.openram_temp:
+            OPTS.openram_temp += tempdir
         
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
@@ -470,6 +485,12 @@ def init_paths():
         except OSError as e:
             if e.errno == 17:  # errno.EEXIST
                 os.chmod(OPTS.openram_temp, 0o750)
+    #import inspect
+    #s = inspect.stack()
+    #from pprint import pprint
+    #pprint(s)
+    #print("Test {0} in dir {1}".format(s[2].filename, OPTS.openram_temp))
+                
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

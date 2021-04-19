@@ -27,7 +27,10 @@ class simulation():
             self.num_spare_cols = 0
         else:
             self.num_spare_cols = self.sram.num_spare_cols
-        self.sp_file = spfile
+        if not spfile:
+            self.sp_file = OPTS.openram_temp + "sram.sp"
+        else:
+            self.sp_file = spfile
 
         self.all_ports = self.sram.all_ports
         self.readwrite_ports = self.sram.readwrite_ports
@@ -467,7 +470,7 @@ class simulation():
         """
 
         port = self.read_ports[0]
-        if not OPTS.use_pex:
+        if not OPTS.use_pex or (OPTS.use_pex and OPTS.pex_exe[0] == "calibre"):
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
@@ -523,7 +526,7 @@ class simulation():
         debug.check(len(sa_mods) == 1, "Only expected one type of Sense Amp. Cannot perform s_en checks.")
         enable_name = sa_mods[0].get_enable_name()
         sen_name = self.get_alias_in_path(paths, enable_name, sa_mods[0])
-        if OPTS.use_pex:
+        if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             sen_name = sen_name.split('.')[-1]
         return sen_name
 
@@ -581,7 +584,7 @@ class simulation():
         exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
-        if OPTS.use_pex:
+        if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             for i in range(len(bl_names)):
                 bl_names[i] = bl_names[i].split('.')[-1]
         return bl_names[0], bl_names[1]

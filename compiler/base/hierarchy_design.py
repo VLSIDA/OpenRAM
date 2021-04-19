@@ -53,7 +53,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         elif (OPTS.inline_lvsdrc or force_check or final_verification):
 
             tempspice = "{}.sp".format(self.name)
-            self.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
+            self.sp_write("{0}{1}".format(OPTS.openram_temp, tempspice), lvs=True)
             tempgds = "{}.gds".format(self.name)
             self.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
             # Final verification option does not allow nets to be connected by label.
@@ -82,7 +82,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             return
         elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             tempspice = "{}.sp".format(self.name)
-            self.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
+            self.sp_write("{0}{1}".format(OPTS.openram_temp, tempspice), lvs=True)
             tempgds = "{}.gds".format(self.cell_name)
             self.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
             num_errors = verify.run_drc(self.cell_name, tempgds, tempspice, final_verification=final_verification)
@@ -102,7 +102,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             return
         elif (not OPTS.is_unit_test and OPTS.check_lvsdrc and (OPTS.inline_lvsdrc or final_verification)):
             tempspice = "{}.sp".format(self.cell_name)
-            self.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
+            self.sp_write("{0}{1}".format(OPTS.openram_temp, tempspice), lvs=True)
             tempgds = "{}.gds".format(self.name)
             self.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
             num_errors = verify.run_lvs(self.name, tempgds, tempspice, final_verification=final_verification)

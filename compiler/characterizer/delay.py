@@ -170,10 +170,10 @@ class delay(simulation):
                                                            meas.targ_name_no_port))
             self.dout_volt_meas[-1].meta_str = meas.meta_str
 
-            if not OPTS.use_pex:
-                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name + "{}", "FALL", "RISE", measure_scale=1e9)
-            else:
+            if OPTS.use_pex and OPTS.pex_exe[0] != 'calibre':
                 self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+            else:
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name + "{}", "FALL", "RISE", measure_scale=1e9)
 
         self.sen_meas.meta_str = sram_op.READ_ZERO
         self.sen_meas.meta_add_delay = True
@@ -220,13 +220,13 @@ class delay(simulation):
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={}").format(storage_names))
-        if not OPTS.use_pex:
-            q_name = cell_name + '.' + str(storage_names[0])
-            qbar_name = cell_name + '.' + str(storage_names[1])
-        else:
+        if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             bank_num = self.sram.get_bank_num(self.sram.name, bit_row, bit_col)
             q_name = "bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
             qbar_name = "bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
+        else:
+            q_name = cell_name + '.' + str(storage_names[0])
+            qbar_name = cell_name + '.' + str(storage_names[1])
 
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally. {} added to names to differentiate between ports allow the
@@ -387,6 +387,9 @@ class delay(simulation):
         self.delay_stim_sp = "delay_stim.sp"
         temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
+
+        if OPTS.spice_name == "spectre":
+            self.sf.write("simulator lang=spice\n")
         self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
                                                                                              self.load,
                                                                                              self.slew))
@@ -415,7 +418,9 @@ class delay(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
+        # self.load_all_measure_nets()
         self.write_delay_measures()
+        # self.write_simulation_saves()
 
         # run until the end of the cycle time
         self.stim.write_control(self.cycle_times[-1] + self.period)
@@ -592,6 +597,69 @@ class delay(simulation):
         for write_port in self.targ_write_ports:
             self.sf.write("* Write ports {}\n".format(write_port))
             self.write_delay_measures_write_port(write_port)
+
+    def load_pex_net(self, net: str):
+        from subprocess import check_output, CalledProcessError
+        prefix = (self.sram_instance_name + ".").lower()
+        if not net.lower().startswith(prefix) or not OPTS.use_pex or not OPTS.calibre_pex:
+            return net
+        original_net = net
+        net = net[len(prefix):]
+        net = net.replace(".", "_").replace("[", "\[").replace("]", "\]")
+        for pattern in ["\sN_{}_[MXmx]\S+_[gsd]".format(net), net]:
+            try:
+                match = check_output(["grep", "-m1", "-o", "-iE", pattern, self.sp_file])
+                return prefix + match.decode().strip()
+            except CalledProcessError:
+                pass
+        return original_net
+
+    def load_all_measure_nets(self):
+        measurement_nets = set()
+        for port, meas in zip(self.targ_read_ports * len(self.read_meas_lists) +
+                              self.targ_write_ports * len(self.write_meas_lists),
+                              self.read_meas_lists + self.write_meas_lists):
+            for measurement in meas:
+                visited = getattr(measurement, 'pex_visited', False)
+                for prop in ["trig_name_no_port", "targ_name_no_port"]:
+                    if hasattr(measurement, prop):
+                        net = getattr(measurement, prop).format(port)
+                        if not visited:
+                            net = self.load_pex_net(net)
+                        setattr(measurement, prop, net)
+                        measurement_nets.add(net)
+                measurement.pex_visited = True
+        self.measurement_nets = measurement_nets
+        return measurement_nets
+
+    def write_simulation_saves(self):
+        for net in self.measurement_nets:
+            self.sf.write(".plot V({0}) \n".format(net))
+        probe_nets = set()
+        sram_name = self.sram_instance_name
+        col = self.bitline_column
+        row = self.wordline_row
+        for port in set(self.targ_read_ports + self.targ_write_ports):
+            probe_nets.add("WEB{}".format(port))
+            probe_nets.add("{}.w_en{}".format(self.sram_instance_name, port))
+            probe_nets.add("{0}.Xbank0.Xport_data{1}.Xwrite_driver_array{1}.Xwrite_driver{2}.en_bar".format(
+                self.sram_instance_name, port, self.bitline_column))
+            probe_nets.add("{}.Xbank0.br_{}_{}".format(self.sram_instance_name, port,
+                                                       self.bitline_column))
+            if not OPTS.use_pex:
+                continue
+            probe_nets.add(
+                "{0}.vdd_Xbank0_Xbitcell_array_xbitcell_array_xbit_r{1}_c{2}".format(sram_name, row, col - 1))
+            probe_nets.add(
+                "{0}.p_en_bar{1}_Xbank0_Xport_data{1}_Xprecharge_array{1}_Xpre_column_{2}".format(sram_name, port, col))
+            probe_nets.add(
+                "{0}.vdd_Xbank0_Xport_data{1}_Xprecharge_array{1}_xpre_column_{2}".format(sram_name, port, col))
+            probe_nets.add("{0}.vdd_Xbank0_Xport_data{1}_Xwrite_driver_array{1}_xwrite_driver{2}".format(sram_name,
+                                                                                                         port, col))
+        probe_nets.update(self.measurement_nets)
+        for net in probe_nets:
+            debug.info(2, "Probe: {}".format(net))
+            self.sf.write(".plot V({}) \n".format(self.load_pex_net(net)))
 
     def write_power_measures(self):
         """
@@ -1032,14 +1100,8 @@ class delay(simulation):
 
         # Set up to trim the netlist here if that is enabled
         if OPTS.trim_netlist:
-            self.trim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
-            self.trimsp=trim_spice(self.sp_file, self.trim_sp_file)
-            self.trimsp.set_configuration(self.num_banks,
-                                          self.num_rows,
-                                          self.num_cols,
-                                          self.word_size,
-                                          self.num_spare_rows)
-            self.trimsp.trim(self.probe_address, self.probe_data)
+            self.trim_sp_file = "{}trimmed.sp".format(OPTS.openram_temp)
+            self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
         else:
             # The non-reduced netlist file when it is disabled
             self.trim_sp_file = "{}sram.sp".format(OPTS.openram_temp)

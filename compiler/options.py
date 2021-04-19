@@ -104,7 +104,7 @@ class options(optparse.Values):
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = False
+    trim_netlist = True
     # Run with extracted parasitics
     use_pex = False
     # Output config with all options
@@ -135,7 +135,7 @@ class options(optparse.Values):
     magic_exe = None
     
     # Number of threads to use
-    num_threads = 2
+    num_threads = 1
     # Number of threads to use in ngspice/hspice
     num_sim_threads = 2
 
@@ -173,6 +173,7 @@ class options(optparse.Values):
     nand2_dec = "pnand2"
     nand3_dec = "pnand3"
     nand4_dec = "pnand4" # Not available right now
+    precharge = "precharge"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitline = "replica_bitline"

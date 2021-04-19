@@ -239,7 +239,12 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     out_loc = out_pin.lc()
                     mid_loc = vector(self.wl_insts[port].lx() - 1.5 * self.m3_pitch, out_loc.y)
                     in_loc = in_pin.rc()
-                self.add_path(out_pin.layer, [out_loc, mid_loc, in_loc])
+
+                self.add_path(out_pin.layer, [out_loc, mid_loc])
+                self.add_via_stack_center(from_layer=out_pin.layer,
+                                          to_layer=in_pin.layer,
+                                          offset=mid_loc)
+                self.add_path(in_pin.layer, [mid_loc, in_loc])
 
     def get_main_array_top(self):
         return self.bitcell_array_inst.by() + self.bitcell_array.get_main_array_top()

@@ -37,12 +37,12 @@ class supply_tree_router(router):
         """
         Route the two nets in a single layer)
         """
-        debug.info(1,"Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
+        debug.info(1, "Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
         self.vdd_name = vdd_name
         self.gnd_name = gnd_name
 
         # Clear the pins if we have previously routed
-        if (hasattr(self,'rg')):
+        if (hasattr(self, 'rg')):
             self.clear_pins()
         else:
             # Creat a routing grid over the entire area
@@ -53,14 +53,14 @@ class supply_tree_router(router):
         # Get the pin shapes
         start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
-        print_time("Finding pins and blockages",datetime.now(), start_time, 3)
+        print_time("Finding pins and blockages", datetime.now(), start_time, 3)
 
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
         self.route_pins(vdd_name)
         self.route_pins(gnd_name)
-        print_time("Maze routing supplies",datetime.now(), start_time, 3)
+        print_time("Maze routing supplies", datetime.now(), start_time, 3)
 
         # self.write_debug_gds("final_tree_router.gds",False)
 
@@ -79,11 +79,11 @@ class supply_tree_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1,"Routing {0} with {1} pin components to connect.".format(pin_name,
-                                                                              remaining_components))
+        debug.info(1, "Routing {0} with {1} pins.".format(pin_name,
+                                                          remaining_components))
 
         # Create full graph
-        debug.info(2,"Creating adjacency matrix")
+        debug.info(2, "Creating adjacency matrix")
         pin_size = len(self.pin_groups[pin_name])
         adj_matrix = [[0] * pin_size for i in range(pin_size)]
 
@@ -95,7 +95,7 @@ class supply_tree_router(router):
                 adj_matrix[index1][index2] = dist
 
         # Find MST
-        debug.info(2,"Finding MinimumSpanning Tree")
+        debug.info(2, "Finding MinimumSpanning Tree")
         X = csr_matrix(adj_matrix)
         Tcsr = minimum_spanning_tree(X)
         mst = Tcsr.toarray().astype(int)
@@ -108,7 +108,9 @@ class supply_tree_router(router):
                     connections.append((x, y))
 
         # Route MST components
-        for (src, dest) in connections:
+        for index, (src, dest) in enumerate(connections):
+            if not (index % 100):
+                debug.info(1, "{0} supply segments routed, {1} remaining.".format(index, len(connections) - index))
             self.route_signal(pin_name, src, dest)
             # if pin_name == "gnd":
             #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
@@ -144,6 +146,7 @@ class supply_tree_router(router):
                 self.add_pin_component_source(pin_name, src_idx)
 
                 # Marks all pin components except index as target
+                # which unmarks it as a blockage too
                 self.add_pin_component_target(pin_name, dest_idx)
 
                 # Actually run the A* router

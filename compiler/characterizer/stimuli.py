@@ -52,7 +52,7 @@ class stimuli():
     def inst_model(self, pins, model_name):
         """ Function to instantiate a generic model with a set of pins """
 
-        if OPTS.use_pex:
+        if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             self.inst_pex_model(pins, model_name)
         else:
             self.sf.write("X{0} ".format(model_name))
@@ -169,22 +169,14 @@ class stimuli():
     def gen_constant(self, sig_name, v_val):
         """ Generates a constant signal with reference voltage and the voltage value """
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
-
-    def get_inverse_voltage(self, value):
-        if value > 0.5 * self.voltage:
+                        
+    def get_voltage(self, value):
+        if value == "0" or value == 0:
             return 0
-        elif value <= 0.5 * self.voltage:
+        elif value == "1" or value == 1:
             return self.voltage
         else:
-            debug.error("Invalid value to get an inverse of: {0}".format(value))
-
-    def get_inverse_value(self, value):
-        if value > 0.5:
-            return 0
-        elif value <= 0.5:
-            return 1
-        else:
-            debug.error("Invalid value to get an inverse of: {0}".format(value))
+            debug.error("Invalid value to get a voltage of: {0}".format(value))
 
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
@@ -228,8 +220,8 @@ class stimuli():
                                                                             t_initial,
                                                                             t_final))
 
-    def gen_meas_value(self, meas_name, dout, t_intital, t_final):
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
+    def gen_meas_value(self, meas_name, dout, t_initial, t_final):
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
@@ -246,28 +238,51 @@ class stimuli():
             reltol = 0.001 # 0.1%
         timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
 
-        # UIC is needed for ngspice to converge
-        self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
         self.sf.write(".TEMP {}\n".format(self.temperature))
         if OPTS.spice_name == "ngspice":
+            # UIC is needed for ngspice to converge
+            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
+            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear ACCT\n".format(reltol))
+        elif OPTS.spice_name == "spectre":
+            self.sf.write("simulator lang=spectre\n")
+            if OPTS.use_pex:
+                nestlvl = 1
+                spectre_save = "selected"
+            else:
+                nestlvl = 10
+                spectre_save = "lvlpub"
+            self.sf.write('saveOptions options save={} nestlvl={} pwr=total \n'.format(
+                spectre_save, nestlvl))
+            self.sf.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp={0} try_fast_op=no "
+                          "rforce=10m maxnotes=10 maxwarns=10 "
+                          " preservenode=all topcheck=fixall "
+                          "digits=5 cols=80 dc_pivot_check=yes pivrel=1e-3 "
+                          " \n".format(self.temperature))
+            self.sf.write('tran tran step={} stop={}n ic=node write=spectre.dc errpreset=moderate '
+                          ' annotate=status maxiters=5 \n'.format("5p", end_time))
+            self.sf.write("simulator lang=spice\n")
         else:
+            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
+            if OPTS.spice_name == "hspice":  # for cadence plots
+                self.sf.write(".OPTIONS PSF=1 \n")
+                self.sf.write(".OPTIONS HIER_DELIM=1 \n")
 
         # create plots for all signals
-        self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
-        if OPTS.verbose_level>0:
-            if OPTS.spice_name in ["hspice", "xa"]:
-                self.sf.write(".probe V(*)\n")
+        if not OPTS.use_pex:   # Don't save all for extracted simulations
+            self.sf.write("* probe is used for hspice/xa, while plot is used in ngspice\n")
+            if OPTS.verbose_level>0:
+                if OPTS.spice_name in ["hspice", "xa"]:
+                    self.sf.write(".probe V(*)\n")
+                else:
+                    self.sf.write(".plot V(*)\n")
             else:
-                self.sf.write(".plot V(*)\n")
-        else:
-            self.sf.write("*.probe V(*)\n")
-            self.sf.write("*.plot V(*)\n")
+                self.sf.write("*.probe V(*)\n")
+                self.sf.write("*.plot V(*)\n")
 
         # end the stimulus file
         self.sf.write(".end\n\n")
@@ -287,6 +302,9 @@ class stimuli():
         for item in list(includes):
             self.sf.write(".include \"{0}\"\n".format(item))
 
+    def add_comment(self, msg):
+        self.sf.write(msg + "\n")
+        
     def write_supply(self):
         """ Writes supply voltage statements """
         gnd_node_name = "0"
@@ -314,6 +332,16 @@ class stimuli():
                                                                  OPTS.openram_temp,
                                                                  OPTS.num_sim_threads)
             valid_retcode=0
+        elif OPTS.spice_name == "spectre":
+            if OPTS.use_pex:
+                extra_options = " +dcopt +postlayout "
+            else:
+                extra_options = ""
+            cmd = ("{0} -64 {1} -format psfbin -raw {2} {3} -maxwarnstolog 1000 "
+                   " +mt={4} -maxnotestolog 1000 "
+                   .format(OPTS.spice_exe, temp_stim, OPTS.openram_temp, extra_options,
+                           OPTS.num_sim_threads))
+            valid_retcode = 0
         elif OPTS.spice_name == "hspice":
             # TODO: Should make multithreading parameter a configuration option
             cmd = "{0} -mt {1} -i {2} -o {3}timing".format(OPTS.spice_exe,
@@ -327,6 +355,8 @@ class stimuli():
             # -r {2}timing.raw
             ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
             ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
+            ng_cfg.write("set ngbehavior=hsa\n")
+            ng_cfg.write("set ng_nomodcheck\n")
             ng_cfg.close()
 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,

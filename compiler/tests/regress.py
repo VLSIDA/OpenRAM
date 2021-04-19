@@ -13,7 +13,6 @@ import sys, os
 sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from subunit import ProtocolTestCase, TestProtocolClient
-from subunit.test_results import AutoTimingTestResultDecorator
 from testtools import ConcurrentTestSuite
 
 (OPTS, args) = globals.parse_args()
@@ -71,7 +70,7 @@ def fork_tests(num_threads):
                     stream = os.fdopen(c2pwrite, 'wb', 0)
                     os.close(c2pread)
                     sys.stdin.close()
-                    test_suite_result = AutoTimingTestResultDecorator(TestProtocolClient(stream))
+                    test_suite_result = TestProtocolClient(stream)
                     test_suite.run(test_suite_result)
                 except EBADF:
                     try:

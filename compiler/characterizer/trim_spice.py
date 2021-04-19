@@ -9,6 +9,7 @@ import debug
 from math import log,ceil
 import re
 
+
 class trim_spice():
     """
     A utility to trim redundant parts of an SRAM spice netlist.
@@ -29,7 +30,6 @@ class trim_spice():
         for i in range(len(self.spice)):
             self.spice[i] = self.spice[i].rstrip(" \n")
 
-
         self.sp_buffer = self.spice
 
     def set_configuration(self, banks, rows, columns, word_size):
@@ -46,21 +46,23 @@ class trim_spice():
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
-
-
+        
     def trim(self, address, data_bit):
-        """ Reduce the spice netlist but KEEP the given bits at the
-        address (and things that will add capacitive load!)"""
+        """ 
+        Reduce the spice netlist but KEEP the given bits at the
+        address (and things that will add capacitive load!)
+        """
 
         # Always start fresh if we do multiple reductions
         self.sp_buffer = self.spice
 
         # Split up the address and convert to an int
-        wl_address = int(address[self.col_addr_size:],2)
-        if self.col_addr_size>0:
-            col_address = int(address[0:self.col_addr_size],2)
+        wl_address = int(address[self.col_addr_size:], 2)
+        if self.col_addr_size > 0:
+            col_address = int(address[0:self.col_addr_size], 2)
         else:
             col_address = 0
+            
         # 1. Keep cells in the bitcell array based on WL and BL
         wl_name = "wl_{}".format(wl_address)
         bl_name = "bl_{}".format(int(self.words_per_row*data_bit + col_address))
@@ -81,7 +83,6 @@ class trim_spice():
         self.sp_buffer.insert(0, "* It should NOT be used for LVS!!")
         self.sp_buffer.insert(0, "* WARNING: This is a TRIMMED NETLIST.")
 
-
         wl_regex = r"wl\d*_{}".format(wl_address)
         bl_regex = r"bl\d*_{}".format(int(self.words_per_row*data_bit + col_address))
         self.remove_insts("bitcell_array",[wl_regex,bl_regex])
@@ -91,11 +92,11 @@ class trim_spice():
         #self.remove_insts("sense_amp_array",[bl_regex])
 
         # 3. Keep column muxes basd on BL
-        self.remove_insts("column_mux_array",[bl_regex])
+        self.remove_insts("column_mux_array", [bl_regex])
 
         # 4. Keep write driver based on DATA
         data_regex = r"data_{}".format(data_bit)
-        self.remove_insts("write_driver_array",[data_regex])
+        self.remove_insts("write_driver_array", [data_regex])
 
         # 5. Keep wordline driver based on WL
         # Need to keep the gater too
@@ -111,7 +112,6 @@ class trim_spice():
         sp.write("\n".join(self.sp_buffer))
         sp.close()
 
-
     def remove_insts(self, subckt_name, keep_inst_list):
         """This will remove all of the instances in the list from the named
         subckt that DO NOT contain a term in the list.  It just does a
@@ -119,7 +119,7 @@ class trim_spice():
         net connection, the instance name, anything..
         """
         removed_insts = 0
-        #Expects keep_inst_list are regex patterns. Compile them here.
+        # Expects keep_inst_list are regex patterns. Compile them here.
         compiled_patterns = [re.compile(pattern) for pattern in keep_inst_list]
 
         start_name = ".SUBCKT {}".format(subckt_name)

@@ -11,5 +11,5 @@ MM5 Q Q_bar vdd vdd PMOS_VTG W=90n L=50n
 * Access transistors
 MM3 bl_noconn wl Q gnd NMOS_VTG W=135.00n L=50n
 MM2 br_noconn wl Q_bar gnd NMOS_VTG W=135.00n L=50n 
-.ENDS cell_1rw
+.ENDS dummy_cell_1rw
 

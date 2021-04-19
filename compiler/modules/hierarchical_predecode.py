@@ -85,7 +85,6 @@ class hierarchical_predecode(design.design):
 
         self.bus_layer = layer_props.hierarchical_predecode.bus_layer
         self.bus_directions = layer_props.hierarchical_predecode.bus_directions
-
         if self.column_decoder:
             # Column decoders may be routed on M2/M3 if there's a write mask
             self.bus_pitch = self.m3_pitch
@@ -119,7 +118,8 @@ class hierarchical_predecode(design.design):
         self.input_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                     offset=offset,
                                                     names=input_names,
-                                                    length=self.height - 2 * self.bus_pitch)
+                                                    length=self.height - 2 * self.bus_pitch,
+                                                    pitch=self.bus_pitch)
 
         invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
         non_invert_names = ["A_{}".format(x) for x in range(self.number_of_inputs)]
@@ -128,7 +128,8 @@ class hierarchical_predecode(design.design):
         self.decode_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                      offset=offset,
                                                      names=decode_names,
-                                                     length=self.height - 2 * self.bus_pitch)
+                                                     length=self.height - 2 * self.bus_pitch,
+                                                     pitch=self.bus_pitch)
 
     def create_input_inverters(self):
         """ Create the input inverters to invert input signals for the decode stage. """
@@ -180,10 +181,12 @@ class hierarchical_predecode(design.design):
                                            mirror=mirror)
 
     def route(self):
+
         self.route_input_inverters()
+        self.route_output_inverters()
         self.route_inputs_to_rails()
-        self.route_and_to_rails()
-        self.route_output_and()
+        self.route_input_ands()
+        self.route_output_ands()
         self.route_vdd_gnd()
 
     def route_inputs_to_rails(self):
@@ -215,7 +218,7 @@ class hierarchical_predecode(design.design):
                                       to_layer=self.bus_layer,
                                       offset=[self.decode_rails[a_pin].cx(), y_offset])
 
-    def route_output_and(self):
+    def route_output_ands(self):
         """
         Route all conections of the outputs and gates
         """
@@ -230,12 +233,40 @@ class hierarchical_predecode(design.design):
 
     def route_input_inverters(self):
         """
-        Route all conections of the inputs inverters [Inputs, outputs, vdd, gnd]
+        Route all conections of the inverter inputs
+        """
+        for inv_num in range(self.number_of_inputs):
+            in_pin = "in_{}".format(inv_num)
+
+            # route input
+            pin = self.inv_inst[inv_num].get_pin("A")
+            inv_in_pos = pin.center()
+            in_pos = vector(self.input_rails[in_pin].cx(), inv_in_pos.y)
+            self.add_path(self.input_layer, [in_pos, inv_in_pos])
+
+            # Inverter input pin
+            self.add_via_stack_center(from_layer=pin.layer,
+                                      to_layer=self.input_layer,
+                                      offset=inv_in_pos)
+            # Input rail pin position
+            via=self.add_via_stack_center(from_layer=self.input_layer,
+                                          to_layer=self.bus_layer,
+                                          offset=in_pos,
+                                          directions=self.bus_directions)
+
+            # Create the input pin at this location on the rail
+            self.add_layout_pin_rect_center(text=in_pin,
+                                            layer=self.bus_layer,
+                                            offset=in_pos,
+                                            height=via.mod.second_layer_height,
+                                            width=via.mod.second_layer_width)
+
+    def route_output_inverters(self):
+        """
+        Route all conections of the inverter outputs
         """
         for inv_num in range(self.number_of_inputs):
             out_pin = "Abar_{}".format(inv_num)
-            in_pin = "in_{}".format(inv_num)
-
             inv_out_pin = self.inv_inst[inv_num].get_pin("Z")
 
             # add output so that it is just below the vdd or gnd rail
@@ -255,31 +286,11 @@ class hierarchical_predecode(design.design):
                                       offset=rail_pos,
                                       directions=self.bus_directions)
 
-            # route input
-            pin = self.inv_inst[inv_num].get_pin("A")
-            inv_in_pos = pin.center()
-            in_pos = vector(self.input_rails[in_pin].cx(), inv_in_pos.y)
-            self.add_path(self.input_layer, [in_pos, inv_in_pos])
-            self.add_via_stack_center(from_layer=pin.layer,
-                                      to_layer=self.input_layer,
-                                      offset=inv_in_pos)
-            via=self.add_via_stack_center(from_layer=self.input_layer,
-                                          to_layer=self.bus_layer,
-                                          offset=in_pos)
-            # Create the input pin at this location on the rail
-            self.add_layout_pin_rect_center(text=in_pin,
-                                            layer=self.bus_layer,
-                                            offset=in_pos,
-                                            height=via.mod.second_layer_height,
-                                            width=via.mod.second_layer_width)
+    def route_input_ands(self):
+        """
+        Route the different permutations of the NAND/AND decocer cells.
+        """
 
-            # This is a hack to fix via-to-via spacing issues, but it is currently
-            # causing its own DRC problems.
-            # if layer_props.hierarchical_predecode.vertical_supply:
-            #     below_rail = vector(self.decode_rails[out_pin].cx(), y_offset - (self.cell_height / 2))
-            #     self.add_path(self.bus_layer, [rail_pos, below_rail], width=self.li_width + self.m1_enclose_mcon * 2)
-
-    def route_and_to_rails(self):
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()
         for k in range(self.number_of_outputs):

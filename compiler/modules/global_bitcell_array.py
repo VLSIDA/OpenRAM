@@ -11,6 +11,7 @@ from sram_factory import factory
 from vector import vector
 import debug
 from numpy import cumsum
+from tech import layer_properties as layer_props
 
 
 class global_bitcell_array(bitcell_base_array.bitcell_base_array):
@@ -223,11 +224,20 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                     new_name = "{0}_{1}".format(base_name, col + col_value)
                     self.copy_layout_pin(inst, pin_name, new_name)
 
+        # Add the global word lines
+        wl_layer = layer_props.global_bitcell_array.wordline_layer
+
         for wl_name in self.local_mods[0].get_inputs():
+            for local_inst in self.local_insts:
+                wl_pin = local_inst.get_pin(wl_name)
+                self.add_via_stack_center(from_layer=wl_pin.layer,
+                                          to_layer=wl_layer,
+                                          offset=wl_pin.center())
+
             left_pin = self.local_insts[0].get_pin(wl_name)
             right_pin = self.local_insts[-1].get_pin(wl_name)
             self.add_layout_pin_segment_center(text=wl_name,
-                                               layer=left_pin.layer,
+                                               layer=wl_layer,
                                                start=left_pin.lc(),
                                                end=right_pin.rc())
 

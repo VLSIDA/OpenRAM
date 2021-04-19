@@ -123,6 +123,12 @@ class _wordline_driver:
         self.vertical_supply = vertical_supply
 
 
+class _bitcell_array:
+    def __init__(self,
+                 wordline_layer):
+        self.wordline_layer = wordline_layer
+
+
 class layer_properties():
     """
     This contains meta information about the module routing layers. These
@@ -159,6 +165,10 @@ class layer_properties():
 
         self._wordline_driver = _wordline_driver(vertical_supply=False)
 
+        self._local_bitcell_array = _bitcell_array(wordline_layer="m3")
+
+        self._global_bitcell_array = _bitcell_array(wordline_layer="m3")
+
     @property
     def bank(self):
         return self._bank
@@ -190,4 +200,12 @@ class layer_properties():
     @property
     def wordline_driver(self):
         return self._wordline_driver
+
+    @property
+    def global_bitcell_array(self):
+        return self._global_bitcell_array
+
+    @property
+    def local_bitcell_array(self):
+        return self._local_bitcell_array
 

@@ -263,13 +263,18 @@ class sram_base(design, verilog, lef):
 
             # Add it as an IO pin to the perimeter
             lowest_coord = self.find_lowest_coords()
-            pin_width = pin.rx() - lowest_coord.x
+            route_width = pin.rx() - lowest_coord.x
+            pin_width = 2 * getattr(self, "{}_width".format(pin.layer))
             pin_offset = vector(lowest_coord.x, pin.by())
             self.add_layout_pin(pin_name,
                                 pin.layer,
                                 pin_offset,
                                 pin_width,
                                 pin.height())
+            self.add_rect(pin.layer,
+                          pin_offset,
+                          route_width,
+                          pin.height())
 
     def route_escape_pins(self):
         """

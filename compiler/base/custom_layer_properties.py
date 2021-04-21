@@ -125,8 +125,10 @@ class _wordline_driver:
 
 class _bitcell_array:
     def __init__(self,
-                 wordline_layer):
+                 wordline_layer,
+                 wordline_pitch_factor=2):
         self.wordline_layer = wordline_layer
+        self.wordline_pitch_factor = wordline_pitch_factor
 
 
 class layer_properties():
@@ -165,7 +167,7 @@ class layer_properties():
 
         self._wordline_driver = _wordline_driver(vertical_supply=False)
 
-        self._local_bitcell_array = _bitcell_array(wordline_layer="m3")
+        self._local_bitcell_array = _bitcell_array(wordline_layer="m2")
 
         self._global_bitcell_array = _bitcell_array(wordline_layer="m3")
 

@@ -191,6 +191,11 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def route(self):
 
+        global_wl_layer = layer_props.global_bitcell_array.wordline_layer
+        global_wl_pitch = getattr(self, "{}_pitch".format(global_wl_layer))
+        global_wl_pitch_factor = layer_props.global_bitcell_array.wordline_pitch_factor
+        local_wl_layer = layer_props.local_bitcell_array.wordline_layer
+
         # Route the global wordlines
         for port in self.all_ports:
             if port == 0:
@@ -200,9 +205,6 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
             wordline_pins = self.wl_array.get_inputs()
 
-            wl_layer = layer_props.global_bitcell_array.wordline_layer
-            wl_pitch = getattr(self, "{}_pitch".format(wl_layer))
-
             for (wl_name, in_pin_name) in zip(wordline_names, wordline_pins):
                 # wl_pin = self.bitcell_array_inst.get_pin(wl_name)
                 in_pin = self.wl_insts[port].get_pin(in_pin_name)
@@ -210,23 +212,21 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                 y_offset = in_pin.cy()
 
                 if port == 0:
-                    y_offset -= 2 * wl_pitch
+                    y_offset -= global_wl_pitch_factor * global_wl_pitch
                 else:
-                    y_offset += 2 * wl_pitch
-
-                self.add_layout_pin_segment_center(text=wl_name,
-                                                   layer=wl_layer,
-                                                   start=vector(self.wl_insts[port].lx(), y_offset),
-                                                   end=vector(self.wl_insts[port].lx() + self.wl_array.width, y_offset))
-
+                    y_offset += global_wl_pitch_factor * global_wl_pitch
                 mid = vector(in_pin.cx(), y_offset)
-                self.add_path("m2", [in_pin.center(), mid])
+
+                self.add_layout_pin_rect_center(text=wl_name,
+                                                layer=global_wl_layer,
+                                                offset=mid)
+
+                self.add_path(local_wl_layer, [in_pin.center(), mid])
 
                 self.add_via_stack_center(from_layer=in_pin.layer,
-                                          to_layer="m2",
-                                          offset=in_pin.center())
-                self.add_via_center(self.m2_stack,
-                                    offset=mid)
+                                          to_layer=local_wl_layer,
+                                          offset=mid,
+                                          min_area=True)
 
         # Route the buffers
         for port in self.all_ports:

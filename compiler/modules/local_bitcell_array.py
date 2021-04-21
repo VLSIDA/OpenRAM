@@ -215,13 +215,13 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     y_offset -= global_wl_pitch_factor * global_wl_pitch
                 else:
                     y_offset += global_wl_pitch_factor * global_wl_pitch
-
-                self.add_layout_pin_segment_center(text=wl_name,
-                                                   layer=global_wl_layer,
-                                                   start=vector(self.wl_insts[port].lx(), y_offset),
-                                                   end=vector(self.wl_insts[port].lx() + self.wl_array.width, y_offset))
-
                 mid = vector(in_pin.cx(), y_offset)
+
+                self.add_layout_pin_rect_center(text=wl_name,
+                                                layer=global_wl_layer,
+                                                offset=mid)
+
+                self.add_path(local_wl_layer, [in_pin.center(), mid])
 
                 # A short jog to the global line
                 self.add_via_stack_center(from_layer=in_pin.layer,

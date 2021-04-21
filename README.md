@@ -31,8 +31,7 @@ things that need to be fixed.
 The OpenRAM compiler has very few dependencies:
 + [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
 + Python 3.5 or higher
-+ Python numpy (pip3 install numpy to install)
-+ Python scipy (pip3 install scipy to install)
++ Various Python packages (pip install -r requirements.txt)
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45])

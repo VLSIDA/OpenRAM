@@ -22,7 +22,7 @@ import getpass
 import subprocess
 
 
-VERSION = "1.1.16"
+VERSION = "1.1.17"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 

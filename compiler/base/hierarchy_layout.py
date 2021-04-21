@@ -674,7 +674,8 @@ class layout():
                              directions=None,
                              size=[1, 1],
                              implant_type=None,
-                             well_type=None):
+                             well_type=None,
+                             min_area=False):
         """
         Punch a stack of vias from a start layer to a target layer by the center.
         """
@@ -708,7 +709,7 @@ class layout():
                                       implant_type=implant_type,
                                       well_type=well_type)
 
-            if cur_layer != from_layer:
+            if cur_layer != from_layer or min_area:
                 self.add_min_area_rect_center(cur_layer,
                                               offset,
                                               via.mod.first_layer_width,

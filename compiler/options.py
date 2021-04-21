@@ -153,6 +153,9 @@ class options(optparse.Values):
     # Route the input/output pins to the perimeter
     perimeter_pins = True
 
+    # Detailed or abstract LEF view
+    detailed_lef = False
+
     keep_temp = False
 
 

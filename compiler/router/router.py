@@ -1215,8 +1215,9 @@ class router(router_tech):
             
         return None
             
-    def get_pin(self, pin_name):
+    def get_ll_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
+
         keep_pin = None
         for index,pg in enumerate(self.pin_groups[pin_name]):
             for pin in pg.enclosures:

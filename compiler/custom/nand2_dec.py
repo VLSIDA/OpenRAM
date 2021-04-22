@@ -70,3 +70,7 @@ class nand2_dec(design.design):
         """
         self.add_graph_edges(graph, port_nets)
 
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+
+        return False

@@ -33,6 +33,12 @@ class pin_layout:
 
         # These are the valid pin layers
         valid_layers = {x: layer[x] for x in layer_indices.keys()}
+        # search for the "+p" pins also
+        valid_pin_layers = {}
+        for x in layer_indices.keys():
+            y = x + "p"
+            if y in layer:
+                valid_pin_layers[x] = layer[y]
 
         # if it's a string, use the name
         if type(layer_name_pp) == str:
@@ -46,12 +52,7 @@ class pin_layout:
                     self._layer = layer_name
                     break
             else:
-                # Iterate also the pin_layer
-                try:
-                    from tech import pin_layer
-                except:
-                    pin_layer = {}
-                for (layer_name, lpp) in pin_layer.items():
+                for (layer_name, lpp) in valid_pin_layers.items():
                     if not lpp:
                         continue
                     if self.same_lpp(layer_name_pp, lpp):
@@ -60,10 +61,6 @@ class pin_layout:
                 else:
                     debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
 
-        try:
-            self.lpp_pin = pin_layer[self.layer]
-        except:
-            self.lpp_pin = layer[self.layer]
         self.lpp = layer[self.layer]
         self._recompute_hash()
 
@@ -415,16 +412,8 @@ class pin_layout:
         except ImportError:
             label_purpose = purpose
 
-        # Here, try to extract the full layer and purpose if it is inside pin_layer
-        try:
-            from tech import pin_layer
-            (layer_num, label_purpose) = pin_layer[self.layer]
-            (layer_num, pin_purpose) = pin_layer[self.layer]
-        except:
-            pass
 
-
-        newLayout.addBox(layerNumber=true_layer_num,
+        newLayout.addBox(layerNumber=layer_num,
                          purposeNumber=purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
@@ -445,11 +434,19 @@ class pin_layout:
             zoom = GDS["zoom"]
         except KeyError:
             zoom = None
-        newLayout.addText(text=self.name,
-                          layerNumber=layer_num,
-                          purposeNumber=label_purpose,
-                          magnification=zoom,
-                          offsetInMicrons=self.center())
+        # Draw a second pin text too if it is different
+        if pin_layer_num != layer_num:
+            newLayout.addText(text=self.name,
+                              layerNumber=pin_layer_num,
+                              purposeNumber=pin_purpose,
+                              magnification=zoom,
+                              offsetInMicrons=self.center())
+        else:
+            newLayout.addText(text=self.name,
+                              layerNumber=layer_num,
+                              purposeNumber=label_purpose,
+                              magnification=zoom,
+                              offsetInMicrons=self.center())
 
     def compute_overlap(self, other):
         """ Calculate the rectangular overlap of two rectangles. """

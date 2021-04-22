@@ -76,6 +76,8 @@ class model_delay_test(openram_test):
             error_tolerance = 0.25
         elif OPTS.tech_name == "scn4m_subm":
             error_tolerance = 0.25
+        elif OPTS.tech_name == "tsmc18":
+            error_tolerance = 0.25
         else:
             self.assertTrue(False) # other techs fail
 

@@ -28,7 +28,7 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, bbox=None, route_track_width=1):
+    def __init__(self, layers, design, gds_filename=None, bbox=None, margin=0, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
@@ -83,9 +83,11 @@ class router(router_tech):
         # A list of path blockages (they might be expanded for wide metal DRC)
         self.path_blockages = []
 
-        self.init_bbox(bbox)
+        # The perimeter pins should be placed outside the SRAM macro by a distance
+        self.margin = margin
+        self.init_bbox(bbox, margin)
 
-    def init_bbox(self, bbox=None):
+    def init_bbox(self, bbox=None, margin=0):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
         """
@@ -99,18 +101,19 @@ class router(router_tech):
         else:
             self.ll, self.ur = bbox
 
-        self.bbox = (self.ll, self.ur)
+        margin_offset = vector(margin, margin)
+        self.bbox = (self.ll - margin_offset, self.ur + margin_offset)
         size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1}".format(size.x, size.y))
+        debug.info(1, "Size: {0} x {1} with perimeter margin {2}".format(size.x, size.y, margin))
         
     def get_bbox(self):
         return self.bbox
     
-    def create_routing_grid(self, router_type, bbox=None):
+    def create_routing_grid(self, router_type):
         """
         Create a sprase routing grid with A* expansion functions.
         """
-        self.init_bbox(bbox)
+        self.init_bbox(self.bbox, self.margin)
         self.rg = router_type(self.ll, self.ur, self.track_width)
 
     def clear_pins(self):
@@ -1212,8 +1215,9 @@ class router(router_tech):
             
         return None
             
-    def get_pin(self, pin_name):
+    def get_ll_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
+
         keep_pin = None
         for index,pg in enumerate(self.pin_groups[pin_name]):
             for pin in pg.enclosures:

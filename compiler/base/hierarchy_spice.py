@@ -63,6 +63,8 @@ class spice():
         self.conns = []
         # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
         self.no_instances = False
+        # If we are doing a trimmed netlist, these are the instance that will be filtered
+        self.trim_insts = set()
         # Keep track of any comments to add the the spice
         try:
             self.commments
@@ -312,10 +314,11 @@ class spice():
                 return True
         return False
 
-    def sp_write_file(self, sp, usedMODS, lvs_netlist=False):
+    def sp_write_file(self, sp, usedMODS, lvs=False, trim=False):
         """
         Recursive spice subcircuit write;
-        Writes the spice subcircuit from the library or the dynamically generated one
+        Writes the spice subcircuit from the library or the dynamically generated one.
+        Trim netlist is intended ONLY for bitcell arrays.
         """
 
         if self.no_instances:
@@ -328,7 +331,7 @@ class spice():
                 if self.contains(i, usedMODS):
                     continue
                 usedMODS.append(i)
-                i.sp_write_file(sp, usedMODS, lvs_netlist)
+                i.sp_write_file(sp, usedMODS, lvs, trim)
 
             if len(self.insts) == 0:
                 return
@@ -371,10 +374,16 @@ class spice():
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
+                
                 # Instance with no devices in it needs no subckt/instance
                 if self.insts[i].mod.no_instances:
                     continue
-                if lvs_netlist and hasattr(self.insts[i].mod, "lvs_device"):
+                
+                # If this is a trimmed netlist, skip it by adding comment char
+                if trim and self.insts[i].name in self.trim_insts:
+                    sp.write("* ")
+                    
+                if lvs and hasattr(self.insts[i].mod, "lvs_device"):
                     sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
                                                                    " ".join(self.conns[i])))
                     sp.write("\n")
@@ -394,30 +403,20 @@ class spice():
             # Including the file path makes the unit test fail for other users.
             # if os.path.isfile(self.sp_file):
             #    sp.write("\n* {0}\n".format(self.sp_file))
-            if lvs_netlist and hasattr(self, "lvs"):
+            if lvs and hasattr(self, "lvs"):
                 sp.write("\n".join(self.lvs))
             else:
                 sp.write("\n".join(self.spice))
 
             sp.write("\n")
 
-    def sp_write(self, spname):
+    def sp_write(self, spname, lvs=False, trim=False):
         """Writes the spice to files"""
         debug.info(3, "Writing to {0}".format(spname))
         spfile = open(spname, 'w')
         spfile.write("*FIRST LINE IS A COMMENT\n")
         usedMODS = list()
-        self.sp_write_file(spfile, usedMODS)
-        del usedMODS
-        spfile.close()
-
-    def lvs_write(self, spname):
-        """Writes the lvs to files"""
-        debug.info(3, "Writing to {0}".format(spname))
-        spfile = open(spname, 'w')
-        spfile.write("*FIRST LINE IS A COMMENT\n")
-        usedMODS = list()
-        self.sp_write_file(spfile, usedMODS, True)
+        self.sp_write_file(spfile, usedMODS, lvs=lvs, trim=trim)
         del usedMODS
         spfile.close()
 

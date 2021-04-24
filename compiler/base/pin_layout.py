@@ -139,13 +139,13 @@ class pin_layout:
         min_area = drc("{}_minarea".format(self.layer))
         pass
 
-    def inflate(self, spacing=None):
+    def inflate(self, spacing=None, multiple=0.5):
         """
         Inflate the rectangle by the spacing (or other rule)
         and return the new rectangle.
         """
         if not spacing:
-            spacing = 0.5*drc("{0}_to_{0}".format(self.layer))
+            spacing = multiple*drc("{0}_to_{0}".format(self.layer))
 
         (ll, ur) = self.rect
         spacing = vector(spacing, spacing)
@@ -154,15 +154,23 @@ class pin_layout:
 
         return (newll, newur)
 
+    def inflated_pin(self, spacing=None, multiple=0.5):
+        """
+        Inflate the rectangle by the spacing (or other rule)
+        and return the new rectangle.
+        """
+        inflated_area = self.inflate(spacing, multiple)
+        return pin_layout(self.name, inflated_area, self.layer)
+
     def intersection(self, other):
         """ Check if a shape overlaps with a rectangle  """
         (ll, ur) = self.rect
         (oll, our) = other.rect
 
         min_x = max(ll.x, oll.x)
-        max_x = min(ll.x, oll.x)
+        max_x = min(ur.x, our.x)
         min_y = max(ll.y, oll.y)
-        max_y = min(ll.y, oll.y)
+        max_y = min(ur.y, our.y)
 
         return [vector(min_x, min_y), vector(max_x, max_y)]
 
@@ -369,11 +377,23 @@ class pin_layout:
         debug.info(4, "writing pin (" + str(self.layer) + "):"
                    + str(self.width()) + "x"
                    + str(self.height()) + " @ " + str(self.ll()))
-        (layer_num, purpose) = layer[self.layer]
+
+        # Try to use the pin layer if it exists, otherwise
+        # use the regular layer
         try:
-            from tech import pin_purpose
+            (pin_layer_num, pin_purpose) = layer[self.layer + "p"]
+        except KeyError:
+            (pin_layer_num, pin_purpose) = layer[self.layer]
+        (layer_num, purpose) = layer[self.layer]
+
+        # Try to use a global pin purpose if it exists,
+        # otherwise, use the regular purpose
+        try:
+            from tech import pin_purpose as global_pin_purpose
+            pin_purpose = global_pin_purpose
         except ImportError:
-            pin_purpose = purpose
+            pass
+
         try:
             from tech import label_purpose
         except ImportError:
@@ -385,9 +405,9 @@ class pin_layout:
                          width=self.width(),
                          height=self.height(),
                          center=False)
-        # Draw a second pin shape too
-        if pin_purpose != purpose:
-            newLayout.addBox(layerNumber=layer_num,
+        # Draw a second pin shape too if it is different
+        if not self.same_lpp((pin_layer_num, pin_purpose), (layer_num, purpose)):
+            newLayout.addBox(layerNumber=pin_layer_num,
                              purposeNumber=pin_purpose,
                              offsetInMicrons=self.ll(),
                              width=self.width(),
@@ -565,6 +585,30 @@ class pin_layout:
                 return r
 
         return None
+
+    def cut(self, shape):
+        """
+        Return a set of shapes that are this shape minus the argument shape.
+        """
+        # Make the unique coordinates in X and Y directions
+        x_offsets = sorted([self.lx(), self.rx(), shape.lx(), shape.rx()])
+        y_offsets = sorted([self.by(), self.uy(), shape.by(), shape.uy()])
+
+        new_shapes = []
+        # Create all of the shapes
+        for x1, x2 in zip(x_offsets[0:], x_offsets[1:]):
+            if x1==x2:
+                continue
+            for y1, y2 in zip(y_offsets[0:], y_offsets[1:]):
+                if y1==y2:
+                    continue
+                new_shape = pin_layout("", [vector(x1, y1), vector(x2, y2)], self.lpp)
+                # Don't add the existing shape in if it overlaps the pin shape
+                if new_shape.contains(shape):
+                    continue
+                new_shapes.append(new_shape)
+
+        return new_shapes
 
     def same_lpp(self, lpp1, lpp2):
         """

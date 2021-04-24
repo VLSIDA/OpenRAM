@@ -169,22 +169,14 @@ class stimuli():
     def gen_constant(self, sig_name, v_val):
         """ Generates a constant signal with reference voltage and the voltage value """
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
-
-    def get_inverse_voltage(self, value):
-        if value > 0.5 * self.voltage:
+                        
+    def get_voltage(self, value):
+        if value == "0" or value == 0:
             return 0
-        elif value <= 0.5 * self.voltage:
+        elif value == "1" or value == 1:
             return self.voltage
         else:
-            debug.error("Invalid value to get an inverse of: {0}".format(value))
-
-    def get_inverse_value(self, value):
-        if value > 0.5:
-            return 0
-        elif value <= 0.5:
-            return 1
-        else:
-            debug.error("Invalid value to get an inverse of: {0}".format(value))
+            debug.error("Invalid value to get a voltage of: {0}".format(value))
 
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
@@ -228,8 +220,8 @@ class stimuli():
                                                                             t_initial,
                                                                             t_final))
 
-    def gen_meas_value(self, meas_name, dout, t_intital, t_final):
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_intital, t_final)
+    def gen_meas_value(self, meas_name, dout, t_initial, t_final):
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
@@ -254,7 +246,7 @@ class stimuli():
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
             # unless you figure out what these are.
-            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear\n".format(reltol))
+            self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear ACCT\n".format(reltol))
         elif OPTS.spice_name == "spectre":
             self.sf.write("simulator lang=spectre\n")
             if OPTS.use_pex:
@@ -310,6 +302,9 @@ class stimuli():
         for item in list(includes):
             self.sf.write(".include \"{0}\"\n".format(item))
 
+    def add_comment(self, msg):
+        self.sf.write(msg + "\n")
+        
     def write_supply(self):
         """ Writes supply voltage statements """
         gnd_node_name = "0"
@@ -360,6 +355,8 @@ class stimuli():
             # -r {2}timing.raw
             ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
             ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
+            ng_cfg.write("set ngbehavior=hsa\n")
+            ng_cfg.write("set ng_nomodcheck\n")
             ng_cfg.close()
 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,

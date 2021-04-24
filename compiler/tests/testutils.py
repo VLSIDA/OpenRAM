@@ -12,11 +12,36 @@ from globals import OPTS
 import debug
 import pdb
 import traceback
+import time
 
 
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
 
+    def setUp(self):
+        self.start_time = time.time()
+
+    def tearDown(self):
+        duration = time.time() - self.start_time
+        print('%s: %.3fs' % (self.id(), duration))
+        
+    def fail(self, msg):
+        import inspect
+        s = inspect.stack()
+        base_filename = os.path.splitext(os.path.basename(s[2].filename))[0]
+        
+        try:
+            OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+        except:
+            debug.error("$OPENRAM_HOME is not properly defined.", 1)
+        
+        import shutil
+        zip_file = "{0}/../{1}_{2}".format(OPENRAM_HOME, base_filename, os.getpid())
+        debug.info(0, "Archiving failed temp files {0} to {1}".format(OPTS.openram_temp, zip_file))
+        shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+        
+        super().fail(msg)
+        
     def local_drc_check(self, w):
 
         self.reset()
@@ -28,10 +53,9 @@ class openram_test(unittest.TestCase):
         result=verify.run_drc(w.name, tempgds, None)
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
-
-        if not OPTS.keep_temp:
+        elif not OPTS.keep_temp:
             self.cleanup()
-
+ 
     def local_check(self, a, final_verification=False):
 
         self.reset()
@@ -39,7 +63,7 @@ class openram_test(unittest.TestCase):
         tempspice = "{}.sp".format(a.name)
         tempgds = "{}.gds".format(a.name)
 
-        a.lvs_write("{0}{1}".format(OPTS.openram_temp, tempspice))
+        a.sp_write("{0}{1}".format(OPTS.openram_temp, tempspice), lvs=True)
         # cannot write gds in netlist_only mode
         if not OPTS.netlist_only:
             a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
@@ -74,10 +98,10 @@ class openram_test(unittest.TestCase):
                 # shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
                 self.fail("LVS mismatch: {}".format(a.name))
 
+            if lvs_result == 0 and drc_result == 0 and not OPTS.keep_temp:
+                self.cleanup()
         # For debug...
         # import pdb; pdb.set_trace()
-        if not OPTS.keep_temp:
-            self.cleanup()
 
     def run_pex(self, a, output=None):
         tempspice = "{}.sp".format(a.name)
@@ -104,6 +128,7 @@ class openram_test(unittest.TestCase):
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
+        
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files

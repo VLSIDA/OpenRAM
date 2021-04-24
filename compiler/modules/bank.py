@@ -329,13 +329,13 @@ class bank(design.design):
         self.input_control_signals = []
         port_num = 0
         for port in range(OPTS.num_rw_ports):
-            self.input_control_signals.append(["s_en{}".format(port_num), "w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
+            self.input_control_signals.append(["p_en_bar{}".format(port_num), "s_en{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_w_ports):
-            self.input_control_signals.append(["w_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
+            self.input_control_signals.append(["p_en_bar{}".format(port_num), "w_en{}".format(port_num)])
             port_num += 1
         for port in range(OPTS.num_r_ports):
-            self.input_control_signals.append(["s_en{}".format(port_num), "p_en_bar{}".format(port_num), "wl_en{}".format(port_num)])
+            self.input_control_signals.append(["p_en_bar{}".format(port_num), "s_en{}".format(port_num)])
             port_num += 1
 
         # Number of control lines in the bus for each port
@@ -530,13 +530,16 @@ class bank(design.design):
                                                  height=self.dff.height)
         elif self.col_addr_size == 2:
             self.column_decoder = factory.create(module_type="hierarchical_predecode2x4",
+                                                 column_decoder=True,
                                                  height=self.dff.height)
 
         elif self.col_addr_size == 3:
             self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
+                                                 column_decoder=True,
                                                  height=self.dff.height)
         elif self.col_addr_size == 4:
             self.column_decoder = factory.create(module_type="hierarchical_predecode4x16",
+                                                 column_decoder=True,
                                                  height=self.dff.height)
         else:
             # No error checking before?
@@ -692,6 +695,8 @@ class bank(design.design):
                                            make_pins=(self.num_banks==1),
                                            pitch=self.m3_pitch)
 
+        self.copy_layout_pin(self.port_address_inst[0], "wl_en", self.prefix + "wl_en0")
+        
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array
@@ -706,6 +711,8 @@ class bank(design.design):
                                                vertical=True,
                                                make_pins=(self.num_banks==1),
                                                pitch=self.m3_pitch)
+
+            self.copy_layout_pin(self.port_address_inst[1], "wl_en", self.prefix + "wl_en1")
 
     def route_port_data_to_bitcell_array(self, port):
         """ Routing of BL and BR between port data and bitcell array """
@@ -1055,21 +1062,6 @@ class bank(design.design):
                                       to_layer="m2",
                                       offset=control_pos)
 
-        # clk to wordline_driver
-        control_signal = self.prefix + "wl_en{}".format(port)
-        if port % 2:
-            pin_pos = self.port_address_inst[port].get_pin("wl_en").uc()
-            control_y_offset = self.bus_pins[port][control_signal].by()
-            mid_pos = vector(pin_pos.x, control_y_offset + self.m1_pitch)
-        else:
-            pin_pos = self.port_address_inst[port].get_pin("wl_en").bc()
-            control_y_offset = self.bus_pins[port][control_signal].uy()
-            mid_pos = vector(pin_pos.x, control_y_offset - self.m1_pitch)
-        control_x_offset = self.bus_pins[port][control_signal].cx()
-        control_pos = vector(control_x_offset, mid_pos.y)
-        self.add_wire(self.m1_stack, [pin_pos, mid_pos, control_pos])
-        self.add_via_center(layers=self.m1_stack,
-                            offset=control_pos)
 
     def graph_exclude_precharge(self):
         """

@@ -64,7 +64,11 @@ class bitcell_array(bitcell_base_array):
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.cell)
                 self.connect_inst(self.get_bitcell_pins(row, col))
-
+                
+                # If it is a "core" cell, it could be trimmed for sim time
+                if col>0 and col<self.column_size-1 and row>0 and row<self.row_size-1:
+                    self.trim_insts.add(name)
+                    
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
 

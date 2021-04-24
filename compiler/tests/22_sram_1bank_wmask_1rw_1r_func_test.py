@@ -24,6 +24,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
+
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
@@ -49,10 +50,7 @@ class sram_wmask_1w_1r_func_test(openram_test):
                        c.write_size,
                        c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"
-        s.sp_write(tempspice)
-
-        f = functional(s.s, tempspice)
+        f = functional(s.s)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

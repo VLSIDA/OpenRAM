@@ -25,7 +25,7 @@ class sram_1bank_2mux_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
-
+        
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         import characterizer
@@ -43,10 +43,7 @@ class sram_1bank_2mux_func_test(openram_test):
                                                                                c.words_per_row,
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"
-        s.sp_write(tempspice)
-
-        f = functional(s.s, tempspice)
+        f = functional(s.s)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

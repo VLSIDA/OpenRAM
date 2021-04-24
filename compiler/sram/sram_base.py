@@ -196,7 +196,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
 
-        # self.offset_all_coordinates()
+        self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
@@ -248,22 +248,33 @@ class sram_base(design, verilog, lef):
 
         # Find the lowest leftest pin for vdd and gnd
         for pin_name in ["vdd", "gnd"]:
-            # Copy the pin shape to rectangles
+            # Copy the pin shape(s) to rectangles
             for pin in self.get_pins(pin_name):
                 self.add_rect(pin.layer,
                               pin.ll(),
                               pin.width(),
                               pin.height())
-            # Remove the pins
+
+            # Remove the pin shape(s)
             self.remove_layout_pin(pin_name)
 
-            pin = rtr.get_pin(pin_name)
-            
+            # Get the lowest, leftest pin
+            pin = rtr.get_ll_pin(pin_name)
+
+            # Add it as an IO pin to the perimeter
+            lowest_coord = self.find_lowest_coords()
+            route_width = pin.rx() - lowest_coord.x
+            pin_width = 2 * getattr(self, "{}_width".format(pin.layer))
+            pin_offset = vector(lowest_coord.x, pin.by())
             self.add_layout_pin(pin_name,
                                 pin.layer,
-                                pin.ll(),
-                                pin.width(),
+                                pin_offset,
+                                pin_width,
                                 pin.height())
+            self.add_rect(pin.layer,
+                          pin_offset,
+                          route_width,
+                          pin.height())
 
     def route_escape_pins(self):
         """
@@ -306,7 +317,9 @@ class sram_base(design, verilog, lef):
                     pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
         from signal_escape_router import signal_escape_router as router
-        rtr=router(self.m3_stack, self)
+        rtr=router(layers=self.m3_stack,
+                   design=self,
+                   margin=4 * self.m3_pitch)
         rtr.escape_route(pins_to_route)
 
     def compute_bus_sizes(self):
@@ -675,7 +688,7 @@ class sram_base(design, verilog, lef):
 
         return insts
 
-    def sp_write(self, sp_name, lvs_netlist=False):
+    def sp_write(self, sp_name, lvs=False, trim=False):
         # Write the entire spice of the object to the file
         ############################################################
         # Spice circuit
@@ -688,6 +701,8 @@ class sram_base(design, verilog, lef):
         sp.write("* Data bits: {}\n".format(self.word_size))
         sp.write("* Banks: {}\n".format(self.num_banks))
         sp.write("* Column mux: {}:1\n".format(self.words_per_row))
+        sp.write("* Trimmed: {}\n".format(trim))
+        sp.write("* LVS: {}\n".format(lvs))
         sp.write("**************************************************\n")
         # This causes unit test mismatch
 
@@ -696,12 +711,9 @@ class sram_base(design, verilog, lef):
         # sp.write(".global {0} {1}\n".format(spice["vdd_name"],
         #                                     spice["gnd_name"]))
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS, lvs_netlist=lvs_netlist)
+        self.sp_write_file(sp, usedMODS, lvs=lvs, trim=trim)
         del usedMODS
         sp.close()
-
-    def lvs_write(self, sp_name):
-        self.sp_write(sp_name, lvs_netlist=True)
 
     def graph_exclude_bits(self, targ_row, targ_col):
         """

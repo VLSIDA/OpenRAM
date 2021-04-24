@@ -24,7 +24,6 @@ class riscv_func_test(openram_test):
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
-        OPTS.trim_netlist = False
         OPTS.local_array_size = 16
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
@@ -49,11 +48,8 @@ class riscv_func_test(openram_test):
                                                                                c.words_per_row,
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
-        tempspice = OPTS.openram_temp + "sram.sp"
-        s.sp_write(tempspice)
-
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, tempspice, corner)
+        f = functional(s.s, corner=corner)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

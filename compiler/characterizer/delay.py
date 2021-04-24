@@ -1100,14 +1100,8 @@ class delay(simulation):
 
         # Set up to trim the netlist here if that is enabled
         if OPTS.trim_netlist:
-            self.trim_sp_file = "{}reduced.sp".format(OPTS.openram_temp)
-            self.trimsp=trim_spice(self.sp_file, self.trim_sp_file)
-            self.trimsp.set_configuration(self.num_banks,
-                                          self.num_rows,
-                                          self.num_cols,
-                                          self.word_size,
-                                          self.num_spare_rows)
-            self.trimsp.trim(self.probe_address, self.probe_data)
+            self.trim_sp_file = "{}trimmed.sp".format(OPTS.openram_temp)
+            self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
         else:
             # The non-reduced netlist file when it is disabled
             self.trim_sp_file = "{}sram.sp".format(OPTS.openram_temp)

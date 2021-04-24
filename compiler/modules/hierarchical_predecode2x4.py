@@ -13,8 +13,8 @@ class hierarchical_predecode2x4(hierarchical_predecode):
     """
     Pre 2x4 decoder used in hierarchical_decoder.
     """
-    def __init__(self, name, height=None):
-        super().__init__( name, 2, height)
+    def __init__(self, name, column_decoder=False, height=None):
+        super().__init__(name, 2, column_decoder, height)
 
         self.create_netlist()
         if not OPTS.netlist_only:

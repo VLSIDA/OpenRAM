@@ -9,6 +9,7 @@ import collections
 import debug
 import random
 import math
+from numpy import binary_repr
 from .stimuli import *
 from .charutils import *
 from globals import OPTS
@@ -21,13 +22,17 @@ class functional(simulation):
        for successful SRAM operation.
     """
 
-    def __init__(self, sram, spfile, corner=None, cycles=15, period=None, output_path=None):
+    def __init__(self, sram, spfile=None, corner=None, cycles=15, period=None, output_path=None):
         super().__init__(sram, spfile, corner)
 
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
 
+        if not spfile:
+            # self.sp_file is assigned in base class
+            sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
+            
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
 
@@ -47,6 +52,22 @@ class functional(simulation):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        self.max_data = 2 ** self.word_size - 1
+        self.max_col_data = 2 ** self.num_spare_cols - 1
+        if self.words_per_row>1:
+            # This will truncate bits for word addressing in a row_addr_dff
+            # This makes one set of spares per row by using top bits of the address
+            self.addr_spare_index = -int(math.log(self.words_per_row) / math.log(2))
+        else:
+            # This will select the entire address when one word per row
+            self.addr_spare_index = self.addr_size
+        # If trim is set, specify the valid addresses
+        self.valid_addresses = set()
+        self.max_address = 2**self.addr_size - 1 + (self.num_spare_rows * self.words_per_row) 
+        if OPTS.trim_netlist:
+            for i in range(self.words_per_row):
+                self.valid_addresses.add(i)
+                self.valid_addresses.add(self.max_address - i)
         self.probe_address, self.probe_data = '0' * self.addr_size, 0
         self.set_corner(corner)
         self.set_spice_constants()
@@ -66,6 +87,7 @@ class functional(simulation):
         self.num_cycles = cycles
         # This is to have ordered keys for random selection
         self.stored_words = collections.OrderedDict()
+        self.stored_spares = collections.OrderedDict()        
         self.read_check = []
         self.read_results = []
 
@@ -121,10 +143,12 @@ class functional(simulation):
         # 1. Write all the write ports first to seed a bunch of locations.
         for port in self.write_ports:
             addr = self.gen_addr()
-            word = self.gen_data()
-            comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
-            self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
+            (word, spare) = self.gen_data()
+            combined_word = "{}+{}".format(word, spare)            
+            comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
+            self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
+            self.stored_spares[addr[:self.addr_spare_index]] = spare
 
         # All other read-only ports are noops.
         for port in self.read_ports:
@@ -142,7 +166,9 @@ class functional(simulation):
             if port in self.write_ports:
                 self.add_noop_one_port(port)
             else:
-                comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
+                (addr, word, spare) = self.get_data()
+                combined_word = "{}+{}".format(word, spare)
+                comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                 self.add_read_one_port(comment, addr, port)
                 self.add_read_check(word, port)
         self.cycle_times.append(self.t_current)
@@ -170,27 +196,33 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        word = self.gen_data()
-                        comment = self.gen_cycle_comment("write", word, addr, "1" * self.num_wmasks, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word, "1" * self.num_wmasks, port)
+                        (word, spare) = self.gen_data()
+                        combined_word = "{}+{}".format(word, spare)
+                        comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
+                        self.stored_spares[addr[:self.addr_spare_index]] = spare
                         w_addrs.append(addr)
                 elif op == "partial_write":
                     # write only to a word that's been written to
-                    (addr, old_word) = self.get_data()
+                    (addr, old_word, old_spare) = self.get_data()
                     # two ports cannot write to the same address
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        word = self.gen_data()
+                        (word, spare) = self.gen_data()
                         wmask  = self.gen_wmask()
                         new_word = self.gen_masked_data(old_word, word, wmask)
-                        comment = self.gen_cycle_comment("partial_write", word, addr, wmask, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word, wmask, port)
+                        combined_word = "{}+{}".format(word, spare)
+                        comment = self.gen_cycle_comment("partial_write", combined_word, addr, wmask, port, self.t_current)
+                        self.add_write_one_port(comment, addr, word + spare, wmask, port)
                         self.stored_words[addr] = new_word
+                        self.stored_spares[addr[:self.addr_spare_index]] = spare
                         w_addrs.append(addr)
                 else:
                     (addr, word) = random.choice(list(self.stored_words.items()))
+                    spare = self.stored_spares[addr[:self.addr_spare_index]]
+                    combined_word = "{}+{}".format(word, spare)
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -198,9 +230,9 @@ class functional(simulation):
                     if addr in w_addrs:
                         self.add_noop_one_port(port)
                     else:
-                        comment = self.gen_cycle_comment("read", word, addr, "0" * self.num_wmasks, port, self.t_current)
+                        comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                         self.add_read_one_port(comment, addr, port)
-                        self.add_read_check(word, port)
+                        self.add_read_check(word + spare, port)
 
             self.cycle_times.append(self.t_current)
             self.t_current += self.period
@@ -227,18 +259,18 @@ class functional(simulation):
     def add_read_check(self, word, port):
         """ Add to the check array to ensure a read works. """
         try:
-            self.check
+            self.check_count
         except:
-            self.check = 0
-        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check])
-        self.check += 1
+            self.check_count = 0
+        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check_count])
+        self.check_count += 1
 
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
-        for (word, dout_port, eo_period, check) in self.read_check:
+        for (word, dout_port, eo_period, check_count) in self.read_check:
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
-                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check))
+                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check_count))
                 try:
                     value = float(value)
                     if value > self.v_high:
@@ -260,13 +292,13 @@ class functional(simulation):
 
                     return (0, error)
 
-            self.read_results.append([sp_read_value, dout_port, eo_period, check])
+            self.read_results.append([sp_read_value, dout_port, eo_period, check_count])
         return (1, "SUCCESS")
 
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
-                str = "FAILED: {0} value {1} does not match written value {2} read during cycle {3} at time {4}n"
+                str = "FAILED: {0} read value {1} does not match written value {2} during cycle {3} at time {4}n"
                 error = str.format(self.read_results[i][1],
                                    self.read_results[i][0],
                                    self.read_check[i][0],
@@ -300,22 +332,22 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        if not self.num_spare_cols:
-            random_value = random.randint(0, (2 ** self.word_size) - 1)
+        random_value = random.randint(0, self.max_data)
+        data_bits = binary_repr(random_value, self.word_size)
+        if self.num_spare_cols>0:
+            random_value = random.randint(0, self.max_col_data)
+            spare_bits = binary_repr(random_value, self.num_spare_cols)
         else:
-            random_value1 = random.randint(0, (2 ** self.word_size) - 1)
-            random_value2 = random.randint(0, (2 ** self.num_spare_cols) - 1)
-            random_value = random_value1 + random_value2
-        data_bits = self.convert_to_bin(random_value, False)
-        return data_bits
+            spare_bits = ""
+        return data_bits, spare_bits
 
     def gen_addr(self):
         """ Generates a random address value to write to. """
-        if self.num_spare_rows==0:
-            random_value = random.randint(0, (2 ** self.addr_size) - 1)
+        if self.valid_addresses:
+            random_value = random.sample(self.valid_addresses, 1)[0]
         else:
-            random_value = random.randint(0, ((2 ** (self.addr_size - 1) - 1)) + (self.num_spare_rows * self.words_per_row))
-        addr_bits = self.convert_to_bin(random_value, True)
+            random_value = random.randint(0, self.max_address)
+        addr_bits = binary_repr(random_value, self.addr_size)
         return addr_bits
 
     def get_data(self):
@@ -323,20 +355,8 @@ class functional(simulation):
         # Used for write masks since they should be writing to previously written addresses
         addr = random.choice(list(self.stored_words.keys()))
         word = self.stored_words[addr]
-        return (addr, word)
-
-    def convert_to_bin(self, value, is_addr):
-        """ Converts addr & word to usable binary values. """
-        new_value = str.replace(bin(value), "0b", "")
-        if(is_addr):
-            expected_value = self.addr_size
-        else:
-            expected_value = self.word_size + self.num_spare_cols
-        for i in range(expected_value - len(new_value)):
-            new_value = "0" + new_value
-
-        # print("Binary Conversion: {} to {}".format(value, new_value))
-        return new_value
+        spare = self.stored_spares[addr[:self.addr_spare_index]]
+        return (addr, word, spare)
 
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
@@ -432,12 +452,21 @@ class functional(simulation):
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
         for (word, dout_port, eo_period, check) in self.read_check:
-            t_intital = eo_period - 0.01 * self.period
+            t_initial = eo_period - 0.01 * self.period
             t_final = eo_period + 0.01 * self.period
-            for bit in range(self.word_size + self.num_spare_cols):
-                self.stim.gen_meas_value(meas_name="V{0}_{1}ck{2}".format(dout_port, bit, check),
-                                         dout="{0}_{1}".format(dout_port, bit),
-                                         t_intital=t_intital,
+            num_bits = self.word_size + self.num_spare_cols
+            for bit in range(num_bits):
+                measure_name = "V{0}_{1}ck{2}".format(dout_port, bit, check)
+                signal_name = "{0}_{1}".format(dout_port, bit)
+                voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
+
+                self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,
+                                                                                measure_name,
+                                                                                voltage_value,
+                                                                                eo_period))
+                self.stim.gen_meas_value(meas_name=measure_name,
+                                         dout=signal_name,
+                                         t_initial=t_initial,
                                          t_final=t_final)
 
         self.stim.write_control(self.cycle_times[-1] + self.period)

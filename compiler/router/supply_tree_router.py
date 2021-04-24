@@ -79,8 +79,8 @@ class supply_tree_router(router):
         """
 
         remaining_components = sum(not x.is_routed() for x in self.pin_groups[pin_name])
-        debug.info(1, "Routing {0} with {1} pin components to connect.".format(pin_name,
-                                                                               remaining_components))
+        debug.info(1, "Routing {0} with {1} pins.".format(pin_name,
+                                                          remaining_components))
 
         # Create full graph
         debug.info(2, "Creating adjacency matrix")
@@ -108,7 +108,9 @@ class supply_tree_router(router):
                     connections.append((x, y))
 
         # Route MST components
-        for (src, dest) in connections:
+        for index, (src, dest) in enumerate(connections):
+            if not (index % 100):
+                debug.info(1, "{0} supply segments routed, {1} remaining.".format(index, len(connections) - index))
             self.route_signal(pin_name, src, dest)
             # if pin_name == "gnd":
             #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))

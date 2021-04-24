@@ -11,6 +11,7 @@ from sram_factory import factory
 from collections import namedtuple
 from vector import vector
 from globals import OPTS
+from tech import cell_properties
 from tech import layer_properties as layer_props
 
 
@@ -39,9 +40,12 @@ class port_data(design.design):
 
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
+            if(cell_properties.use_strap):
+                strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
+                precharge_width = bitcell.width + strap.width
             self.bit_offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
-                self.bit_offsets.append(i * bitcell.width)
+                self.bit_offsets.append(i * precharge_width)
         else:
             self.bit_offsets = bit_offsets
 
@@ -196,14 +200,18 @@ class port_data(design.design):
         # and mirroring happens correctly
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type=OPTS.bitcell)
-
+        cell = factory.create(module_type=OPTS.bitcell)
+        if(cell_properties.use_strap):
+            strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
+            precharge_width = cell.width + strap.width
+        
         if self.port == 0:
             # Append an offset on the left
-            precharge_bit_offsets = [self.bit_offsets[0] - self.cell.width] + self.bit_offsets
+            precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
         else:
             # Append an offset on the right
-            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + self.cell.width]
+            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
+
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + self.num_spare_cols + 1,
                                               offsets=precharge_bit_offsets,

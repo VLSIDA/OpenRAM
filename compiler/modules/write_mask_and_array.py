@@ -144,7 +144,10 @@ class write_mask_and_array(design.design):
             supply_pin_yoffset = supply_pin.cy()
             left_loc = vector(0, supply_pin_yoffset)
             right_loc = vector(self.width, supply_pin_yoffset)
-            self.add_path(supply_pin.layer, [left_loc, right_loc])
-            self.copy_power_pin(supply_pin, loc=left_loc)
-            self.copy_power_pin(supply_pin, loc=right_loc)
+            self.add_path("m1", [left_loc, right_loc])
+            for loc in [left_loc, right_loc]:
+                self.add_via_stack_center(from_layer=supply_pin.layer,
+                                          to_layer="m1",
+                                          offset=loc)
+                self.copy_power_pin(supply_pin, loc=loc)
 

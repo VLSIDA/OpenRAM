@@ -29,6 +29,11 @@ class verilog:
             self.vf.write("\n")
 
         self.vf.write("module {0}(\n".format(self.name))
+        self.vf.write("`ifdef USE_POWER_PINS\n")
+        self.vf.write("    vdd,\n")
+        self.vf.write("    gnd,\n")
+        self.vf.write("`endif\n")
+        
         for port in self.all_ports:
             if port in self.readwrite_ports:
                 self.vf.write("// Port {0}: RW\n".format(port))
@@ -65,6 +70,12 @@ class verilog:
         self.vf.write("  parameter T_HOLD = 1 ; //Delay to hold dout value after posedge. Value is arbitrary\n")
         self.vf.write("\n")
 
+        self.vf.write("module {0}(\n".format(self.name))
+        self.vf.write("`ifdef USE_POWER_PINS\n")
+        self.vf.write("    inout vdd;\n")
+        self.vf.write("    inout gnd;\n")
+        self.vf.write("`endif\n")
+        
         for port in self.all_ports:
             self.add_inputs_outputs(port)
 

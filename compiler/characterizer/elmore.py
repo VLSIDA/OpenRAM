@@ -78,8 +78,6 @@ class elmore(simulation):
                             port_data[port][mname].append(total_delay.delay / 1e3)
                         elif "slew" in mname and port in self.read_ports:
                             port_data[port][mname].append(total_delay.slew / 1e3)
-                        else:
-                            debug.error("Measurement name not recognized: {}".format(mname), 1)
 
         # Margin for error in period. Calculated by averaging required margin for a small and large 
         # memory. FIXME: margin is quite large, should be looked into.

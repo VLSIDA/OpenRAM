@@ -117,9 +117,10 @@ class write_mask_and_array(design.design):
         for i in range(self.num_wmasks):
             # Route the A pin over to the left so that it doesn't conflict with the sense
             # amp output which is usually in the center
-            a_pin = self.and2_insts[i].get_pin("A")
+            inst = self.and2_insts[i]
+            a_pin = inst.get_pin("A")
             a_pos = a_pin.center()
-            in_pos = vector(self.and2_insts[i].lx(),
+            in_pos = vector(inst.lx(),
                             a_pos.y)
             self.add_via_stack_center(from_layer=a_pin.layer,
                                       to_layer="m2",
@@ -130,21 +131,31 @@ class write_mask_and_array(design.design):
             self.add_path(a_pin.layer, [in_pos, a_pos])
 
             # Copy remaining layout pins
-            self.copy_layout_pin(self.and2_insts[i], "Z", "wmask_out_{0}".format(i))
+            self.copy_layout_pin(inst, "Z", "wmask_out_{0}".format(i))
 
             # Add via connections to metal3 for AND array's B pin
-            en_pin = self.and2_insts[i].get_pin("B")
+            en_pin = inst.get_pin("B")
             en_pos = en_pin.center()
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer="m3",
                                       offset=en_pos)
+
+            # Add connection to the supply
+            for supply_name in ["gnd", "vdd"]:
+                supply_pin = inst.get_pin(supply_name)
+                self.add_via_stack_center(from_layer=supply_pin.layer,
+                                          to_layer="m1",
+                                          offset=supply_pin.center())
             
         for supply in ["gnd", "vdd"]:
             supply_pin = self.and2_insts[0].get_pin(supply)
             supply_pin_yoffset = supply_pin.cy()
             left_loc = vector(0, supply_pin_yoffset)
             right_loc = vector(self.width, supply_pin_yoffset)
-            self.add_path(supply_pin.layer, [left_loc, right_loc])
-            self.copy_power_pin(supply_pin, loc=left_loc)
-            self.copy_power_pin(supply_pin, loc=right_loc)
+            self.add_path("m1", [left_loc, right_loc])
+            for loc in [left_loc, right_loc]:
+                self.add_via_stack_center(from_layer=supply_pin.layer,
+                                          to_layer="m1",
+                                          offset=loc)
+                self.copy_power_pin(supply_pin, loc=loc)
 

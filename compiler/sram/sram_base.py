@@ -24,7 +24,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["m1", "m2", "m3", "m4"])
+        lef.__init__(self, ["m1", "m2", "m3", "m4", "m5"]) # TODO: Generation of lef layers should be dependent of tech
         verilog.__init__(self)
 
         self.sram_config = sram_config
@@ -247,6 +247,9 @@ class sram_base(design, verilog, lef):
         rtr.route()
 
         # Find the lowest leftest pin for vdd and gnd
+        # NOTE: Not necessary if the route_supplies is "grid"
+        if OPTS.route_supplies == "grid":
+            return
         for pin_name in ["vdd", "gnd"]:
             # Copy the pin shape(s) to rectangles
             for pin in self.get_pins(pin_name):

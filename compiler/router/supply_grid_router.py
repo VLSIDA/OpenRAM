@@ -357,7 +357,7 @@ class supply_grid_router(router):
 
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
-            self.prepare_blockages(pin_name)
+            self.prepare_blockages()
 
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too

@@ -227,7 +227,7 @@ class column_mux(pgate.pgate):
             strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
             rbc_width = self.bitcell.width + strap.width
         else:
-            rbc_width = cell.width
+            rbc_width = self.bitcell.width
         # Add it to the right, aligned in between the two tx
         active_pos = vector(rbc_width,
                             self.nmos_upper.by() - 0.5 * self.poly_space)

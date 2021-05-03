@@ -229,6 +229,10 @@ class sram_base(design, verilog, lef):
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
+        elif OPTS.route_supplies == "grid":
+            from supply_grid_router import supply_grid_router as router
+        else:
+            from supply_tree_router import supply_tree_router as router
 
         try:
             from tech import power_grid
@@ -237,17 +241,15 @@ class sram_base(design, verilog, lef):
             # if no power_grid is specified by tech we use sensible defaults
             # Route a M3/M4 grid
             grid_stack = self.m3_stack
-
-        if OPTS.route_supplies == "grid":
-            from supply_grid_router import supply_grid_router as router
-        elif OPTS.route_supplies:
-            from supply_tree_router import supply_tree_router as router
             
         rtr=router(grid_stack, self)
         rtr.route()
 
+        lowest_coord = self.find_lowest_coords()
+        highest_coord = self.find_highest_coords()
+        
         # Find the lowest leftest pin for vdd and gnd
-        for pin_name in ["vdd", "gnd"]:
+        for (pin_name, pin_index) in [("vdd", 0), ("gnd", 1)]:
             # Copy the pin shape(s) to rectangles
             for pin in self.get_pins(pin_name):
                 self.add_rect(pin.layer,
@@ -258,23 +260,57 @@ class sram_base(design, verilog, lef):
             # Remove the pin shape(s)
             self.remove_layout_pin(pin_name)
 
-            # Get the lowest, leftest pin
-            pin = rtr.get_ll_pin(pin_name)
+            # Either add two long rails or a simple pin
+            if OPTS.route_supplies == "side":
+                # Get the leftest pins
+                pins = rtr.get_left_pins(pin_name)
+                
+                pin_width = 2 * getattr(self, "{}_width".format(pins[0].layer))
+                pin_space = 2 * getattr(self, "{}_space".format(pins[0].layer))
+                supply_pitch = pin_width + pin_space
+            
+                # Add side power rails on left from bottom to top
+                # These have a temporary name and will be connected later.
+                # They are here to reserve space now and ensure other pins go beyond
+                # their perimeter.
+                supply_height = highest_coord.y - lowest_coord.y
+                supply_pin = self.add_layout_pin(text=pin_name,
+                                                 layer="m4",
+                                                 offset=lowest_coord + vector(pin_index * supply_pitch, 0),
+                                                 width=pin_width,
+                                                 height=supply_height)
 
-            # Add it as an IO pin to the perimeter
-            lowest_coord = self.find_lowest_coords()
-            route_width = pin.rx() - lowest_coord.x
-            pin_width = 2 * getattr(self, "{}_width".format(pin.layer))
-            pin_offset = vector(lowest_coord.x, pin.by())
-            self.add_layout_pin(pin_name,
-                                pin.layer,
-                                pin_offset,
-                                pin_width,
-                                pin.height())
-            self.add_rect(pin.layer,
-                          pin_offset,
-                          route_width,
-                          pin.height())
+                route_width = pins[0].rx() - lowest_coord.x
+                for pin in pins:
+                    pin_offset = vector(lowest_coord.x, pin.by())
+                    self.add_rect(pin.layer,
+                                  pin_offset,
+                                  route_width,
+                                  pin.height())
+                    center_offset = vector(supply_pin.cx(),
+                                           pin.cy())
+                    self.add_via_center(layers=self.m3_stack,
+                                        offset=center_offset)
+            else:
+                # Get the lowest, leftest pin
+                pin = rtr.get_ll_pins(pin_name)
+                
+                pin_width = 2 * getattr(self, "{}_width".format(pin.layer))
+                pin_space = 2 * getattr(self, "{}_space".format(pin.layer))
+            
+                # Add it as an IO pin to the perimeter
+                route_width = pin.rx() - lowest_coord.x
+                pin_offset = vector(lowest_coord.x, pin.by())
+                self.add_rect(pin.layer,
+                              pin_offset,
+                              route_width,
+                              pin.height())
+
+                self.add_layout_pin(pin_name,
+                                    pin.layer,
+                                    pin_offset,
+                                    pin_width,
+                                    pin.height())
 
     def route_escape_pins(self):
         """

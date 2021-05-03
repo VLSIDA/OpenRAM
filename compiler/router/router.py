@@ -1214,7 +1214,7 @@ class router(router_tech):
                 return self.convert_track_to_pin(v)
             
         return None
-            
+
     def get_ll_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
 
@@ -1228,6 +1228,23 @@ class router(router_tech):
                         keep_pin = pin
                         
         return keep_pin
+    
+    def get_left_pins(self, pin_name):
+        """ Return the leftest pin(s) group """
+
+        keep_pins = []
+        for index, pg in enumerate(self.pin_groups[pin_name]):
+            for pin in pg.enclosures:
+                if not keep_pins:
+                    keep_pins = [pin]
+                else:
+                    # Only need to check first since they are all the same left value
+                    if pin.lx() == keep_pins[0].lx():
+                        keep_pins.append(pin)
+                    elif pin.lx() < keep_pins[0].lx():
+                        keep_pins = [pin]
+                        
+        return keep_pins
 
     def check_all_routed(self, pin_name):
         """

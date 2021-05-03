@@ -72,7 +72,7 @@ class bank(design.design):
         # self.add_lvs_correspondence_points()
 
         # Remember the bank center for further placement
-        self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)
+        #self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)
         self.bank_array_ur = self.bitcell_array_inst.ur()
         self.bank_array_ul = self.bitcell_array_inst.ul()
         self.DRC_LVS()
@@ -362,7 +362,9 @@ class bank(design.design):
 
         # A space for wells or jogging m2
         self.m2_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
-                          3 * self.m2_pitch)
+                          3 * self.m2_pitch,
+                          drc("nwell_to_nwell"))
+
 
     def add_modules(self):
         """ Add all the modules using the class loader """
@@ -386,11 +388,12 @@ class bank(design.design):
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
+        self.num_spare_cols += (self.bitcell_array.column_size % (self.word_size *self.words_per_row))
 
         self.port_address = []
         for port in self.all_ports:
             self.port_address.append(factory.create(module_type="port_address",
-                                                    cols=self.bitcell_array.column_size + self.num_spare_cols,
+                                                    cols=self.bitcell_array.column_size,
                                                     rows=self.bitcell_array.row_size,
                                                     port=port))
             self.add_mod(self.port_address[port])
@@ -401,8 +404,9 @@ class bank(design.design):
             temp_pre = factory.create(module_type="port_data",
                                       sram_config=self.sram_config,
                                       dimension_override=True,
-                                      cols=self.bitcell_array.column_size + self.num_spare_cols,
+                                      cols=self.bitcell_array.column_size - self.num_spare_cols,
                                       rows=self.bitcell_array.row_size,
+                                      num_spare_cols=self.num_spare_cols,
                                       port=port,
                                       bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
@@ -430,7 +434,6 @@ class bank(design.design):
 
         temp.append("vdd")
         temp.append("gnd")
-
         self.connect_inst(temp)
 
     def place_bitcell_array(self, offset):
@@ -449,10 +452,10 @@ class bank(design.design):
             temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))
             if port in self.read_ports:
-                for bit in range(int(self.bitcell_array.column_size/self.words_per_row) + self.num_spare_cols):
+                for bit in range(self.word_size + self.num_spare_cols):
                     temp.append("dout{0}_{1}".format(port, bit))
             if port in self.write_ports:
-                for bit in range(int(self.bitcell_array.column_size/self.words_per_row) + self.num_spare_cols):
+                for bit in range(self.word_size + self.num_spare_cols):
                     temp.append("din{0}_{1}".format(port, bit))
             # Will be empty if no col addr lines
             sel_names = ["sel{0}_{1}".format(port, x) for x in range(self.num_col_addr_lines)]

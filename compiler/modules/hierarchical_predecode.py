@@ -304,6 +304,7 @@ class hierarchical_predecode(design.design):
 
             overlapping_pin_space = drc["{0}_to_{0}".format(self.output_layer)]
             total_buffer_space = (overlapping_pin_space + via.height)
+            #FIXME: compute rail locations instead of just guessing and nudging
             while(True):
                 drc_error = 0
                 for and_input in self.input_and_rail_pos:

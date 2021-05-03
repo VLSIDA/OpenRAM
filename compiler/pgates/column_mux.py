@@ -56,7 +56,13 @@ class column_mux(pgate.pgate):
 
         self.place_ptx()
 
-        self.width = self.bitcell.width
+        cell = factory.create(module_type=OPTS.bitcell)
+        if(cell_props.use_strap == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
+            precharge_width = cell.width + strap.width
+        else:
+            precharge_width = cell.width
+        self.width = precharge_width
         self.height = self.nmos_upper.uy() + self.pin_height
 
         self.connect_poly()

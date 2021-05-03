@@ -329,7 +329,7 @@ def read_config(config_file, is_unit_test=True):
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
         config = importlib.import_module(module_name)
-    except:
+    except ImportError:
         debug.error("Unable to read configuration file: {0}".format(config_file), 2)
 
     OPTS.overridden = {}

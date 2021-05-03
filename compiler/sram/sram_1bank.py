@@ -140,6 +140,7 @@ class sram_1bank(sram_base):
         # This includes 2 M2 pitches for the row addr clock line.
         # The delay line is aligned with the bitcell array while the control logic is aligned with the port_data
         # using the control_logic_center value.
+        breakpoint()
         self.control_pos[port] = vector(-self.control_logic_insts[port].width - 2 * self.m2_pitch,
                                         self.bank.bank_array_ll.y - self.control_logic_insts[port].mod.control_logic_center.y)
         self.control_logic_insts[port].place(self.control_pos[port])

@@ -388,7 +388,8 @@ class bank(design.design):
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
-        self.num_spare_cols += (self.bitcell_array.column_size % (self.word_size *self.words_per_row))
+        if self.num_spare_cols == 0:
+            self.num_spare_cols = (self.bitcell_array.column_size % (self.word_size *self.words_per_row))
 
         self.port_address = []
         for port in self.all_ports:

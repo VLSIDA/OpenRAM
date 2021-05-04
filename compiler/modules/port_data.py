@@ -22,7 +22,6 @@ class port_data(design.design):
     """
 
     def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="", rows=None, cols=None, dimension_override=False):
-
         sram_config.set_local_config(self)
         if dimension_override:
             self.num_rows = rows
@@ -35,10 +34,9 @@ class port_data(design.design):
         else:
             self.num_wmasks = 0
         
-        if num_spare_cols is not None:
-                self.num_spare_cols = num_spare_cols + self.num_spare_cols
-        if self.num_spare_cols is None:
-            self.num_spare_cols = 0
+
+        if self.num_spare_cols is None or self.num_spare_cols is 0:
+            self.num_spare_cols = num_spare_cols
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
             if(cell_properties.use_strap == True and OPTS.num_ports == 1):

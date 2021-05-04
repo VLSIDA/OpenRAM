@@ -31,6 +31,7 @@ class delay_chain(design.design):
 
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
+        self.rows = len(self.fanout_list)
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -43,7 +44,7 @@ class delay_chain(design.design):
 
     def create_layout(self):
         # Each stage is a a row
-        self.height = len(self.fanout_list) * self.inv.height
+        self.height = self.rows * self.inv.height
         # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list) + 1) * self.inv.width
 
@@ -69,7 +70,7 @@ class delay_chain(design.design):
         """ Create the inverters and connect them based on the stage list """
         self.driver_inst_list = []
         self.load_inst_map = {}
-        for stage_num, fanout_size in zip(range(len(self.fanout_list)), self.fanout_list):
+        for stage_num, fanout_size in zip(range(self.rows), self.fanout_list):
             # Add the inverter
             cur_driver=self.add_inst(name="dinv{}".format(stage_num),
                                      mod=self.inv)
@@ -77,7 +78,7 @@ class delay_chain(design.design):
             self.driver_inst_list.append(cur_driver)
 
             # Hook up the driver
-            if stage_num + 1 == len(self.fanout_list):
+            if stage_num + 1 == self.rows:
                 stageout_name = "out"
             else:
                 stageout_name = "dout_{}".format(stage_num + 1)
@@ -101,7 +102,7 @@ class delay_chain(design.design):
 
     def place_inverters(self):
         """ Place the inverters and connect them based on the stage list """
-        for stage_num, fanout_size in zip(range(len(self.fanout_list)), self.fanout_list):
+        for stage_num, fanout_size in zip(range(self.rows), self.fanout_list):
             if stage_num % 2:
                 inv_mirror = "MX"
                 inv_offset = vector(0, (stage_num + 1) * self.inv.height)
@@ -189,20 +190,17 @@ class delay_chain(design.design):
         self.add_via_stack_center(from_layer=a_pin.layer,
                                   to_layer="m2",
                                   offset=a_pin.center())
-        self.add_layout_pin(text="in",
-                            layer="m2",
-                            offset=a_pin.ll().scale(1, 0),
-                            height=a_pin.cy())
+        self.add_layout_pin_rect_center(text="in",
+                                        layer="m2",
+                                        offset=a_pin.center())
 
-        # output is A pin of last load inverter
+        # output is A pin of last load/fanout inverter
         last_driver_inst = self.driver_inst_list[-1]
         a_pin = self.load_inst_map[last_driver_inst][-1].get_pin("A")
         self.add_via_stack_center(from_layer=a_pin.layer,
-                                  to_layer="m2",
+                                  to_layer="m1",
                                   offset=a_pin.center())
-        mid_point = vector(a_pin.cx() + 3 * self.m2_width, a_pin.cy())
-        self.add_path("m2", [a_pin.center(), mid_point, mid_point.scale(1, 0)])
-        self.add_layout_pin_segment_center(text="out",
-                                           layer="m2",
-                                           start=mid_point,
-                                           end=mid_point.scale(1, 0))
+        self.add_layout_pin_rect_center(text="out",
+                                        layer="m1",
+                                        offset=a_pin.center())
+        

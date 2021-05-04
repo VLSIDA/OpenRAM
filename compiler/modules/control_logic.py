@@ -346,9 +346,12 @@ class control_logic(design.design):
             row += 1
         self.place_wlen_row(row)
         row += 1
-        self.place_delay(row)
+
+        control_center_y = self.wl_en_inst.uy() + self.m3_pitch
+        
+        # Delay chain always gets placed at row 4
+        self.place_delay(4)
         height = self.delay_inst.uy()
-        control_center_y = self.delay_inst.by()
 
         # This offset is used for placement of the control logic in the SRAM level.
         self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
@@ -387,19 +390,22 @@ class control_logic(design.design):
 
     def place_delay(self, row):
         """ Place the replica bitline """
-        y_off = row * self.and2.height + 2 * self.m1_pitch
+        debug.check(row % 2 == 0, "Must place delay chain at even row for supply alignment.")
+
+        # It is flipped on X axis
+        y_off = (row + self.delay_chain.rows) * self.and2.height
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel
-        offset = vector(self.delay_chain.width, y_off)
-        self.delay_inst.place(offset, mirror="MY")
+        offset = vector(0, y_off)
+        self.delay_inst.place(offset, mirror="MX")
 
     def route_delay(self):
 
-        out_pos = self.delay_inst.get_pin("out").bc()
+        out_pos = self.delay_inst.get_pin("out").center()
         # Connect to the rail level with the vdd rail
-        # Use pen since it is in every type of control logic
-        vdd_ypos = self.p_en_bar_nand_inst.get_pin("vdd").by()
+        # Use gated clock since it is in every type of control logic
+        vdd_ypos = self.gated_clk_buf_inst.get_pin("vdd").cy() + self.m1_pitch
         in_pos = vector(self.input_bus["rbl_bl_delay"].cx(), vdd_ypos)
         mid1 = vector(out_pos.x, in_pos.y)
         self.add_wire(self.m1_stack, [out_pos, mid1, in_pos])
@@ -676,7 +682,7 @@ class control_logic(design.design):
         # Connect the clock rail to the other clock rail
         # by routing in the supply rail track to avoid channel conflicts
         in_pos = self.ctrl_dff_inst.get_pin("clk").uc()
-        mid_pos = in_pos + vector(0, self.and2.height)
+        mid_pos = vector(in_pos.x, self.gated_clk_buf_inst.get_pin("vdd").cy() - self.m1_pitch)
         rail_pos = vector(self.input_bus["clk_buf"].cx(), mid_pos.y)
         self.add_wire(self.m1_stack, [in_pos, mid_pos, rail_pos])
         self.add_via_center(layers=self.m1_stack,
@@ -794,3 +800,8 @@ class control_logic(design.design):
                                   to_layer="m2",
                                   offset=out_pos)
 
+    def get_left_pins(self, name):
+        """
+        Return the left side supply pins to connect to a vertical stripe.
+        """
+        return(self.cntrl_dff_inst.get_pins(name) + self.delay_inst.get_pins(name))

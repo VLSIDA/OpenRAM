@@ -33,10 +33,12 @@ class port_data(design.design):
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
-        
 
-        if self.num_spare_cols is None or self.num_spare_cols is 0:
+        if num_spare_cols:
             self.num_spare_cols = num_spare_cols
+        elif self.num_spare_cols is None:
+            self.num_spare_cols = 0
+
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
             if(cell_properties.use_strap == True and OPTS.num_ports == 1):

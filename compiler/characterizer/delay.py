@@ -813,7 +813,7 @@ class delay(simulation):
 
             result[port].update(read_port_dict)
             
-            self.check_path_measures()
+            self.path_delays = self.check_path_measures()
 
         return (True, result)
 
@@ -927,7 +927,7 @@ class delay(simulation):
             if type(val) != float or val > self.period/2:
                 debug.info(1,'Failed measurement:{}={}'.format(meas.name, val))
             value_dict[meas.name] = val
-        
+        #debug.info(0, "value_dict={}".format(value_dict))
         return value_dict
 
     def run_power_simulation(self):
@@ -1153,10 +1153,17 @@ class delay(simulation):
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(load_slews, leakage_offset)
-
+        if len(load_slews) > 1:
+            debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
+        # Get and save the path delays
+        bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)
+        char_sram_data["bl_path_delays"] = bl_delays
+        char_sram_data["sen_path_delays"] = sen_delays
+        char_sram_data["bl_path_names"] = bl_names
+        char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
         self.alter_lh_char_data(char_port_data)
-
+           
         return (char_sram_data, char_port_data)
 
     def alter_lh_char_data(self, char_port_data):
@@ -1171,6 +1178,7 @@ class delay(simulation):
         """Simulate all specified output loads and input slews pairs of all ports"""
 
         measure_data = self.get_empty_measure_data_dict()
+        path_dict = {}
         # Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
@@ -1189,6 +1197,22 @@ class delay(simulation):
                     else:
                         measure_data[port][mname].append(value)
         return measure_data
+
+    def get_delay_lists(self, value_dict):
+        """Returns dicts for path measures of bitline and sen paths"""
+        sen_name_list = []
+        sen_delay_list = []
+        for meas in self.sen_path_meas:
+            sen_name_list.append(meas.name)
+            sen_delay_list.append(value_dict[meas.name])
+        
+        bl_name_list = []
+        bl_delay_list = []
+        for meas in self.bl_path_meas:
+            bl_name_list.append(meas.name)
+            bl_delay_list.append(value_dict[meas.name])
+
+        return sen_name_list, sen_delay_list, bl_name_list, bl_delay_list 
 
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""

@@ -638,10 +638,21 @@ class lib:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.load_slews)
+            
+            
+            
         self.char_sram_results, self.char_port_results = char_results
         if 'sim_time' in self.char_sram_results:
             self.pred_time = self.char_sram_results['sim_time']
-        
+        # Add to the OPTS to be written out as part of the extended OPTS file
+        # FIXME: should be written to datasheet, current version is simplifies current use of this    
+        if not self.use_model:
+            OPTS.sen_path_delays = self.char_sram_results["sen_path_delays"]
+            OPTS.sen_path_names = self.char_sram_results["sen_path_names"]
+            OPTS.bl_path_delays = self.char_sram_results["bl_path_delays"]
+            OPTS.bl_path_names = self.char_sram_results["bl_path_names"]
+  
+            
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet
@@ -865,4 +876,6 @@ class lib:
             #FIXME: should be read_fall_power
             datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), read0_power))
         
+        
+ 
         

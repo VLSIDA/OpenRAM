@@ -21,7 +21,7 @@ class supply_tree_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None, bbox=None):
+    def __init__(self, layers, design, bbox=None, side_pin=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -31,11 +31,19 @@ class supply_tree_router(router):
         # for prettier routes.
         self.route_track_width = 1
 
-        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
+        # The pin escape router already made the bounding box big enough,
+        # so we can use the regular bbox here.
+        self.side_pin = side_pin
+        router.__init__(self,
+                        layers,
+                        design,
+                        bbox=bbox,
+                        route_track_width=self.route_track_width)
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
-        Route the two nets in a single layer)
+        Route the two nets in a single layer. 
+        Setting pin stripe will make a power rail on the left side.
         """
         debug.info(1, "Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
         self.vdd_name = vdd_name
@@ -50,11 +58,17 @@ class supply_tree_router(router):
             # but this is simplest for now.
             self.create_routing_grid(signal_grid)
 
-        # Get the pin shapes
         start_time = datetime.now()
+
+        # Get the pin shapes
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages", datetime.now(), start_time, 3)
 
+        # Add side pins if enabled
+        if self.side_pin:
+            self.add_side_supply_pin(self.vdd_name)
+            self.add_side_supply_pin(self.gnd_name)
+        
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
@@ -87,15 +101,15 @@ class supply_tree_router(router):
         pin_size = len(self.pin_groups[pin_name])
         adj_matrix = [[0] * pin_size for i in range(pin_size)]
 
-        for index1,pg1 in enumerate(self.pin_groups[pin_name]):
-            for index2,pg2 in enumerate(self.pin_groups[pin_name]):
+        for index1, pg1 in enumerate(self.pin_groups[pin_name]):
+            for index2, pg2 in enumerate(self.pin_groups[pin_name]):
                 if index1>=index2:
                     continue
                 dist = int(grid_utils.distance_set(list(pg1.grids)[0], pg2.grids))
                 adj_matrix[index1][index2] = dist
 
         # Find MST
-        debug.info(2, "Finding MinimumSpanning Tree")
+        debug.info(2, "Finding Minimum Spanning Tree")
         X = csr_matrix(adj_matrix)
         Tcsr = minimum_spanning_tree(X)
         mst = Tcsr.toarray().astype(int)

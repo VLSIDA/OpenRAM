@@ -122,35 +122,45 @@ class grid:
             self.set_target(n)
             # self.set_blocked(n, False)
 
-    def add_perimeter_target(self, side="all"):
-        debug.info(3, "Adding perimeter target")
-
+    def get_perimeter_list(self, side="left", layers=[0, 1], width=1, margin=0, offset=0):
+        """
+        Side specifies which side.
+        Layer specifies horizontal (0) or vertical (1)
+        Width specifies how wide the perimter "stripe" should be.
+        """
         perimeter_list = []
         # Add the left/right columns
         if side=="all" or side=="left":
-            x = self.ll.x
-            for y in range(self.ll.y, self.ur.y, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+            for x in range(self.ll.x + offset, self.ll.x + width + offset, 1):
+                for y in range(self.ll.y + margin, self.ur.y - margin, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
                 
         if side=="all" or side=="right":
-            x = self.ur.x
-            for y in range(self.ll.y, self.ur.y, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+            for x in range(self.ur.x - width - offset, self.ur.x - offset, 1):
+                for y in range(self.ll.y + margin, self.ur.y - margin, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
         if side=="all" or side=="bottom":
-            y = self.ll.y
-            for x in range(self.ll.x, self.ur.x, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+            for y in range(self.ll.y + offset, self.ll.y + width + offset, 1):
+                for x in range(self.ll.x + margin, self.ur.x - margin, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
         if side=="all" or side=="top":
-            y = self.ur.y
-            for x in range(self.ll.x, self.ur.x, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+            for y in range(self.ur.y - width - offset, self.ur.y - offset, 1):
+                for x in range(self.ll.x + margin, self.ur.x - margin, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
+        return perimeter_list
+    
+    def add_perimeter_target(self, side="all", layers=[0, 1]):
+        debug.info(3, "Adding perimeter target")
+        
+        perimeter_list = self.get_perimeter_list(side, layers)
+        
         self.set_target(perimeter_list)
                 
     def is_target(self, point):

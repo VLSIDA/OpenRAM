@@ -112,18 +112,22 @@ class lef:
         for pin_name in self.pins:
             pin = self.get_pin(pin_name)
             inflated_pin = pin.inflated_pin(multiple=1)
-            for blockage in self.blockages[pin.layer]:
-                if blockage.overlaps(inflated_pin):
-                    intersection_shape = blockage.intersection(inflated_pin)
-                    # If it is zero area, don't add the pin
-                    if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
-                        continue
-                    # Remove the old blockage and add the new ones
-                    self.blockages[pin.layer].remove(blockage)
-                    intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
-                    new_blockages = blockage.cut(intersection_pin)
-                    self.blockages[pin.layer].extend(new_blockages)
-
+            another_iteration_needed = True
+            while another_iteration_needed:
+                another_iteration_needed = False
+                old_blockages = list(self.blockages[pin.layer])
+                for blockage in old_blockages:
+                    if blockage.overlaps(inflated_pin):
+                        intersection_shape = blockage.intersection(inflated_pin)
+                        # If it is zero area, don't add the pin
+                        if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
+                            continue
+                        another_iteration_needed = True
+                        # Remove the old blockage and add the new ones
+                        self.blockages[pin.layer].remove(blockage)
+                        intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
+                        new_blockages = blockage.cut(intersection_pin)
+                        self.blockages[pin.layer].extend(new_blockages)
 
     def lef_write_header(self):
         """ Header of LEF file """

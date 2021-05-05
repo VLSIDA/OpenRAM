@@ -422,7 +422,8 @@ class VlsiLayout:
         self.structures[self.rootStructureName].texts.append(textToAdd)
 
     def padText(self, text):
-        if(len(text)%2 == 1):
+        debug.check(len(text) > 0, "Cannot have zero length text string.")
+        if(len(text) % 2 == 1):
             return text + '\x00'
         else:
             return text
@@ -695,7 +696,6 @@ class VlsiLayout:
             max_pins.append(max_pin)
 
         return max_pins
-
 
     def getAllPinShapes(self, pin_name):
         """

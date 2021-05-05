@@ -391,9 +391,9 @@ class control_logic(design.design):
     def place_delay(self, row):
         """ Place the replica bitline """
         debug.check(row % 2 == 0, "Must place delay chain at even row for supply alignment.")
-
+        
         # It is flipped on X axis
-        y_off = (row + self.delay_chain.rows) * self.and2.height
+        y_off = row * self.and2.height + self.delay_chain.height
 
         # Add the RBL above the rows
         # Add to the right of the control rows and routing channel

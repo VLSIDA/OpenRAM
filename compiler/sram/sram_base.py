@@ -265,7 +265,7 @@ class sram_base(design, verilog, lef):
             from supply_grid_router import supply_grid_router as router
         else:
             from supply_tree_router import supply_tree_router as router
-            
+
         rtr=router(grid_stack, self, side_pin=(OPTS.route_supplies == "side"))
         rtr.route()
 
@@ -290,7 +290,7 @@ class sram_base(design, verilog, lef):
                                     pin.width(),
                                     pin.height())
             
-        elif OPTS.route_supplies == "tree":
+        elif OPTS.route_supplies:
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
         
@@ -324,9 +324,9 @@ class sram_base(design, verilog, lef):
                                     pin_offset,
                                     pin_width,
                                     pin.height())
-            else:
-                # Grid is left with many top level pins
-                pass
+        else:
+            # Grid is left with many top level pins
+            pass
 
     def route_escape_pins(self):
         """

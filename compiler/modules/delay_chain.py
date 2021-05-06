@@ -191,13 +191,18 @@ class delay_chain(design.design):
     def add_layout_pins(self):
 
         # input is A pin of first inverter
+        # It gets routed to the left a bit to prevent pin access errors
+        # due to the output pin when going up to M3
         a_pin = self.driver_inst_list[0].get_pin("A")
+        mid_loc = vector(a_pin.cx() - self.m3_pitch, a_pin.cy())
         self.add_via_stack_center(from_layer=a_pin.layer,
-                                  to_layer="m2",
-                                  offset=a_pin.center())
+                                        to_layer="m2",
+                                        offset=mid_loc)
+        self.add_path(a_pin.layer, [a_pin.center(), mid_loc])
+        
         self.add_layout_pin_rect_center(text="in",
                                         layer="m2",
-                                        offset=a_pin.center())
+                                        offset=mid_loc)
 
         # output is A pin of last load/fanout inverter
         last_driver_inst = self.driver_inst_list[-1]

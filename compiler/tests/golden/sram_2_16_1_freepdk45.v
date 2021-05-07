@@ -19,7 +19,6 @@ module sram_2_16_1_freepdk45(
   parameter VERBOSE = 1 ; //Set to 0 to only display warnings
   parameter T_HOLD = 1 ; //Delay to hold dout value after posedge. Value is arbitrary
 
-module sram_2_16_1_freepdk45(
 `ifdef USE_POWER_PINS
     inout vdd;
     inout gnd;

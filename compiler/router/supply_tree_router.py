@@ -111,6 +111,11 @@ class supply_tree_router(router):
         # Find MST
         debug.info(2, "Finding Minimum Spanning Tree")
         X = csr_matrix(adj_matrix)
+        from scipy.sparse import save_npz
+        #print("Saving {}.npz".format(self.cell.name))
+        #save_npz("{}.npz".format(self.cell.name), X)
+        #exit(1)
+
         Tcsr = minimum_spanning_tree(X)
         mst = Tcsr.toarray().astype(int)
         connections = []

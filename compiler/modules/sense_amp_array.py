@@ -124,7 +124,7 @@ class sense_amp_array(design.design):
         if not self.offsets:
             self.offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
-                self.offsets.append(i * precharge_width)
+                self.offsets.append(i * self.amp_spacing)
 
         for i, xoffset in enumerate(self.offsets[0:self.num_cols:self.words_per_row]):
             if self.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
@@ -140,7 +140,7 @@ class sense_amp_array(design.design):
             index = self.word_size + i
             if self.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
-                xoffset = xoffset + self.amp_width
+                xoffset = xoffset + self.amp_spacing
             else:
                 mirror = ""
 

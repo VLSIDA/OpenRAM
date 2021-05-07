@@ -420,11 +420,11 @@ class sram_1bank(sram_base):
         if len(route_map) > 0:
 
             # The write masks will have blockages on M1
-            if self.num_wmasks > 0 and port in self.write_ports:
-                layer_stack = self.m3_stack
-            else:
-                layer_stack = self.m1_stack
-
+            # if self.num_wmasks > 0 and port in self.write_ports:
+            #     layer_stack = self.m3_stack
+            # else:
+            #     layer_stack = self.m1_stack
+            layer_stack = self.m3_stack
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 - self.data_bus_size[port] + 2 * self.m3_pitch)

@@ -28,7 +28,7 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, bbox=None, margin=0, route_track_width=1):
+    def __init__(self, layers, design, bbox=None, margin=0, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
@@ -39,19 +39,7 @@ class router(router_tech):
 
         self.cell = design
 
-        # If didn't specify a gds blockage file, write it out to read the gds
-        # This isn't efficient, but easy for now
-        # start_time = datetime.now()
-        if not gds_filename:
-            gds_filename = OPTS.openram_temp+"temp.gds"
-            self.cell.gds_write(gds_filename)
-
-        # Load the gds file and read in all the shapes
-        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
-        self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(gds_filename)
-        self.top_name = self.layout.rootStructureName
-        # print_time("GDS read",datetime.now(), start_time)
+        self.gds_filename = OPTS.openram_temp + "temp.gds"
 
         # The pin data structures
         # A map of pin names to a set of pin_layout structures
@@ -91,6 +79,16 @@ class router(router_tech):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
         """
+
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.cell.gds_write(self.gds_filename)
+        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        self.reader = gdsMill.Gds2reader(self.layout)
+        self.reader.loadFromFile(self.gds_filename)
+        self.top_name = self.layout.rootStructureName
+        
         if not bbox:
             # The boundary will determine the limits to the size
             # of the routing grid
@@ -178,6 +176,17 @@ class router(router_tech):
         """
         Find the pins and blockages in the design
         """
+
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.cell.gds_write(self.gds_filename)
+        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        self.reader = gdsMill.Gds2reader(self.layout)
+        self.reader.loadFromFile(self.gds_filename)
+        self.top_name = self.layout.rootStructureName
+        # print_time("GDS read",datetime.now(), start_time)
+        
         # This finds the pin shapes and sorts them into "groups" that
         # are connected. This must come before the blockages, so we
         # can not count the pins themselves
@@ -881,12 +890,32 @@ class router(router_tech):
         # Clearing the blockage of this pin requires the inflated pins
         self.clear_blockages(pin_name)
 
+    def add_side_supply_pin(self, name, side="left", width=2):
+        """
+        Adds a supply pin to the perimeter and resizes the bounding box.
+        """
+        pg = pin_group(name, [], self)
+        if name == "vdd":
+            offset = width
+        else:
+            offset = 0
+        
+        pg.grids = set(self.rg.get_perimeter_list(side=side,
+                                                  width=width,
+                                                  margin=self.margin,
+                                                  offset=offset,
+                                                  layers=[1]))
+        pg.enclosures = pg.compute_enclosures()
+        pg.pins = set(pg.enclosures)
+        self.cell.pin_map[name].update(pg.pins)
+        self.pin_groups[name].append(pg)
+        
     def add_perimeter_target(self, side="all"):
         """
         This will mark all the cells on the perimeter of the original layout as a target.
         """
         self.rg.add_perimeter_target(side=side)
-    
+
     def num_pin_components(self, pin_name):
         """
         This returns how many disconnected pin components there are.
@@ -1214,12 +1243,12 @@ class router(router_tech):
                 return self.convert_track_to_pin(v)
             
         return None
-            
+
     def get_ll_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
 
         keep_pin = None
-        for index,pg in enumerate(self.pin_groups[pin_name]):
+        for index, pg in enumerate(self.pin_groups[pin_name]):
             for pin in pg.enclosures:
                 if not keep_pin:
                     keep_pin = pin
@@ -1228,7 +1257,7 @@ class router(router_tech):
                         keep_pin = pin
                         
         return keep_pin
-
+    
     def check_all_routed(self, pin_name):
         """
         Check that all pin groups are routed.

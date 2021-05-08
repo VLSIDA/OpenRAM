@@ -15,12 +15,12 @@ class signal_router(router):
     route on a given layer. This is limited to two layer routes.
     """
 
-    def __init__(self, layers, design, gds_filename=None, bbox=None):
+    def __init__(self, layers, design, bbox=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
         """
-        router.__init__(self, layers, design, gds_filename, bbox)
+        router.__init__(self, layers, design, bbox)
 
     def route(self, src, dest, detour_scale=5):
         """

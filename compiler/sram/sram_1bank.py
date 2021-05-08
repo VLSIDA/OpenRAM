@@ -120,8 +120,9 @@ class sram_1bank(sram_base):
         port = 0
         # The row address bits are placed above the control logic aligned on the right.
         x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
-        # It is above the control logic but below the top of the bitcell array
-        y_offset = max(self.control_logic_insts[port].uy(), self.bank.predecoder_height)
+        # It is above the control logic and the predecoder array
+        y_offset = max(self.control_logic_insts[port].uy(), self.bank.predecoder_top)
+
         self.row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(self.row_addr_pos[port])
 
@@ -130,7 +131,7 @@ class sram_1bank(sram_base):
             # The row address bits are placed above the control logic aligned on the left.
             x_offset = self.control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
             # If it can be placed above the predecoder and below the control logic, do it
-            y_offset = self.bank.bank_array_ll.y
+            y_offset = self.bank.predecoder_bottom
             self.row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(self.row_addr_pos[port], mirror="XY")
 
@@ -419,11 +420,11 @@ class sram_1bank(sram_base):
         if len(route_map) > 0:
 
             # The write masks will have blockages on M1
-            if self.num_wmasks > 0 and port in self.write_ports:
-                layer_stack = self.m3_stack
-            else:
-                layer_stack = self.m1_stack
-
+            # if self.num_wmasks > 0 and port in self.write_ports:
+            #     layer_stack = self.m3_stack
+            # else:
+            #     layer_stack = self.m1_stack
+            layer_stack = self.m3_stack
             if port == 0:
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 - self.data_bus_size[port] + 2 * self.m3_pitch)
@@ -527,13 +528,13 @@ class sram_1bank(sram_base):
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
             dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
-            self.add_wire(self.m2_stack[::-1],
+            self.add_wire(self.m3_stack,
                           [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
             self.add_via_stack_center(from_layer=src_pin.layer,
-                                      to_layer="m2",
+                                      to_layer="m4",
                                       offset=src_pin.center())
             self.add_via_stack_center(from_layer=dest_pin.layer,
-                                      to_layer="m2",
+                                      to_layer="m3",
                                       offset=dest_pin.center())
 
     def route_row_addr_dff(self):

@@ -75,6 +75,11 @@ class bank(design.design):
         self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)
         self.bank_array_ur = self.bitcell_array_inst.ur()
         self.bank_array_ul = self.bitcell_array_inst.ul()
+
+        # These are used for other placements (e.g. address flops)
+        self.predecoder_top = self.port_address[0].predecoder_height + self.port_address_inst[0].by()
+        self.predecoder_bottom = self.port_address_inst[0].by()
+
         self.DRC_LVS()
 
     def add_pins(self):
@@ -227,7 +232,6 @@ class bank(design.design):
         x_offset = self.m2_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
-        self.predecoder_height = self.port_address[port].predecoder_height + self.port_address_offsets[port].y
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver

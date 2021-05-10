@@ -461,6 +461,12 @@ class pin_group:
         # Compute the enclosure pin_layout list of the set of tracks
         self.enclosures = self.compute_enclosures()
 
+        # for pin in self.pins:
+        #     lx = pin.lx()
+        #     ly = pin.by()
+        #     if  lx > 61.1 and lx < 62.0 and ly > 56.2 and ly < 56.7:
+        #         breakpoint()
+
         # Find a connector to every pin and add it to the enclosures
         for pin in self.pins:
 
@@ -620,7 +626,7 @@ class pin_group:
         # for pin in self.pins:
         #     lx = pin.lx()
         #     ly = pin.by()
-        #     if  lx > 122.1 and lx < 123.5 and ly > 61.1 and ly < 61.7:
+        #     if  lx > 61.1 and lx < 62.0 and ly > 56.2 and ly < 56.7:
         #         breakpoint()
         for pin in self.pins:
             debug.info(4, "  Converting {0}".format(pin))

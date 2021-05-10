@@ -66,14 +66,15 @@ class supply_grid_router(router):
         # Block everything
         self.prepare_blockages()
         self.clear_blockages(self.gnd_name)
-        
-        
+        self.write_debug_gds("post_blockages.gds", False)
+
+
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 
         # Block everything
         self.prepare_blockages()
-        self.clear_blockages(self.vdd_name)        
+        self.clear_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)
@@ -82,6 +83,7 @@ class supply_grid_router(router):
         self.route_simple_overlaps(vdd_name)
         self.route_simple_overlaps(gnd_name)
         print_time("Simple overlap routing", datetime.now(), start_time, 3)
+        self.write_debug_gds("post_simple_overlap.gds", False)
 
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
@@ -89,7 +91,7 @@ class supply_grid_router(router):
         self.route_pins_to_rails(vdd_name)
         self.route_pins_to_rails(gnd_name)
         print_time("Maze routing supplies", datetime.now(), start_time, 3)
-        # self.write_debug_gds("final.gds", False)
+        self.write_debug_gds("final.gds", False)
 
         # Did we route everything??
         if not self.check_all_routed(vdd_name):

@@ -111,13 +111,11 @@ class precharge(design.design):
         self.add_path(self.en_layer, [pmos_pin.center(), pmos_vdd_pos])
 
         self.add_power_pin("vdd",
-                           self.well_contact_pos,
-                           directions=("V", "V"))
+                           self.well_contact_pos)
 
         self.add_via_stack_center(from_layer=pmos_pin.layer,
                                   to_layer=self.en_layer,
-                                  offset=pmos_pin.center(),
-                                  directions=("V", "V"))
+                                  offset=pmos_pin.center())
 
     def create_ptx(self):
         """

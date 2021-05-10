@@ -504,6 +504,7 @@ class pin_layout:
         Calculate the intersection segment and determine its length
         """
 
+        inter=lambda a,b: a[0].x < b[1].x and a[1].x > b[0].x and a[0].y < b[1].y and a[1].y > b[0].y
         if self.contains(other):
             return math.inf
         elif other.contains(self):
@@ -516,7 +517,19 @@ class pin_layout:
                 (p1, p2) = intersections
                 return math.sqrt(pow(p1[0]-p2[0], 2) + pow(p1[1]-p2[1], 2))
             else:
-                # This is where we had a corner intersection or none
+                # TODO: Check this version
+                # The case is: If there is a full intersection in X, but not in Y,
+                # compute_overlap_segment does not detect it, as the number
+                # of points here is 4. Our lambda will take care of that.
+                # This is the last resort
+                if inter(self.rect, other.rect):
+                    debug.warning("Detected lambda-intersection. The length is {0}. The rects are: {1} : {2}".format(
+                        len(intersections),
+                        self.rect,
+                        other.rect
+                    ))
+                    return math.inf
+                # This is where we had a corner intersection or none (1 or 0)
                 return 0
 
 

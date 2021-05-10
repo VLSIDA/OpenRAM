@@ -620,7 +620,7 @@ class pin_group:
         # for pin in self.pins:
         #     lx = pin.lx()
         #     ly = pin.by()
-        #     if  lx > 87.9 and lx < 87.99 and ly > 18.56 and ly < 18.6:
+        #     if  lx > 122.1 and lx < 123.5 and ly > 61.1 and ly < 61.7:
         #         breakpoint()
         for pin in self.pins:
             debug.info(4, "  Converting {0}".format(pin))

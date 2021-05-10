@@ -369,6 +369,7 @@ class supply_grid_router(router):
 
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
+                debug.warning("Component not routed. Location: {0}. Writting a debug gds.".format(str(pg.grids)))
                 self.write_debug_gds("debug_route.gds", False)
 
             # if index==3 and pin_name=="vdd":

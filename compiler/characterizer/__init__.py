@@ -33,6 +33,12 @@ if not OPTS.analytical_delay:
     else:
         (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["Xyce", "ngspice", "ngspice.exe", "hspice", "xa"])
 
+    if OPTS.spice_name == "Xyce":
+        (OPTS.mpi_name, OPTS.mpi_exe) = get_tool("mpi", ["mpirun"])
+    else:
+        OPTS.mpi_name = None
+        OPTS.mpi_exe = ""
+
     # set the input dir for spice files if using ngspice
     if OPTS.spice_name == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)

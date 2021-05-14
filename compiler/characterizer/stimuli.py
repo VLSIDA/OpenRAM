@@ -358,6 +358,19 @@ class stimuli():
                                                            temp_stim,
                                                            OPTS.openram_temp)
             valid_retcode=0
+        elif OPTS.spice_name == "Xyce":
+            if OPTS.num_sim_threads > 1 and OPTS.mpi_name:
+                mpi_cmd = "{0} -np {1}".format(OPTS.mpi_exe,
+                                               OPTS.num_sim_threads)
+            else:
+                mpi_cmd = ""
+
+            cmd = "{0} {1} -o {3}timing.lis {2}".format(mpi_cmd,
+                                                        OPTS.spice_exe,
+                                                        temp_stim,
+                                                        OPTS.openram_temp)
+
+            valid_retcode=0
         else:
             # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit
             # Measurements can't be made with a raw file set in ngspice

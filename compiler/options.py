@@ -135,7 +135,7 @@ class options(optparse.Values):
     # Number of threads to use
     num_threads = 1
     # Number of threads to use in ngspice/hspice
-    num_sim_threads = 2
+    num_sim_threads = 3
 
     # Should we print out the banner at startup
     print_banner = True

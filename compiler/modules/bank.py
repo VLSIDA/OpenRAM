@@ -1075,7 +1075,7 @@ class bank(design.design):
         """
         Gets the spice name of the target bitcell.
         """
-        return self.bitcell_array_inst.mod.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name,
+        return self.bitcell_array_inst.mod.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name,
                                                          row,
                                                          col)
 

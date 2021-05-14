@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import optparse
-import getpass
 import os
+
 
 class options(optparse.Values):
     """
@@ -137,6 +137,9 @@ class options(optparse.Values):
     # Number of threads to use in ngspice/hspice
     num_sim_threads = 3
 
+    # Some tools (e.g. Xyce) use other separators like ":"
+    hier_seperator = "."
+    
     # Should we print out the banner at startup
     print_banner = True
 

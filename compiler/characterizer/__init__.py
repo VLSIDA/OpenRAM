@@ -24,9 +24,10 @@ debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""
 
 if not OPTS.analytical_delay:
-    debug.info(1, "Finding spice simulator.")
-
     if OPTS.spice_name != "":
+        # Capitalize Xyce
+        if OPTS.spice_name == "xyce":
+            OPTS.spice_name = "Xyce"
         OPTS.spice_exe=find_exe(OPTS.spice_name)
         if OPTS.spice_exe=="" or OPTS.spice_exe==None:
             debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name), 1)
@@ -35,6 +36,7 @@ if not OPTS.analytical_delay:
 
     if OPTS.spice_name == "Xyce":
         (OPTS.mpi_name, OPTS.mpi_exe) = get_tool("mpi", ["mpirun"])
+        OPTS.hier_seperator = ":"
     else:
         OPTS.mpi_name = None
         OPTS.mpi_exe = ""
@@ -45,6 +47,12 @@ if not OPTS.analytical_delay:
 
     if OPTS.spice_exe == "":
         debug.error("No recognizable spice version found. Unable to perform characterization.", 1)
+    else:
+        debug.info(1, "Finding spice simulator: {} ({})".format(OPTS.spice_name, OPTS.spice_exe))
+        if OPTS.mpi_name:
+            debug.info(1, "MPI for spice simulator: {} ({})".format(OPTS.mpi_name, OPTS.mpi_exe))
+        debug.info(1, "Simulation threads: {}".format(OPTS.num_sim_threads))
+
 else:
     debug.info(1, "Analytical model enabled.")
 

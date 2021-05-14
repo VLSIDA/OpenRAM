@@ -613,7 +613,7 @@ class sram_1bank(sram_base):
         # Sanity check in case it was forgotten
         if inst_name.find("x") != 0:
             inst_name = "x" + inst_name
-        return self.bank_inst.mod.get_cell_name(inst_name + ".x" + self.bank_inst.name, row, col)
+        return self.bank_inst.mod.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bank_inst.name, row, col)
 
     def get_bank_num(self, inst_name, row, col):
         return 0

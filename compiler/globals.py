@@ -66,7 +66,7 @@ def parse_args():
         optparse.make_option("-m", "--sim_threads",
                              action="store",
                              type="int",
-                             help="Specify the number of spice simulation threads (default: 2)",
+                             help="Specify the number of spice simulation threads (default: 3)",
                              dest="num_sim_threads"),
         optparse.make_option("-v",
                              "--verbose",

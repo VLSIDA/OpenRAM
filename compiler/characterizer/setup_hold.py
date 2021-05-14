@@ -76,10 +76,10 @@ class setup_hold():
         self.stim.write_supply()
 
     def write_data(self, mode, target_time, correct_value):
-        """Create the data signals for setup/hold analysis. First period is to
+        """
+        Create the data signals for setup/hold analysis. First period is to
         initialize it to the opposite polarity. Second period is used for
         characterization.
-
         """
         self.sf.write("\n* Generation of the data and clk signals\n")
         if correct_value == 1:
@@ -106,8 +106,11 @@ class setup_hold():
                           setup=0)
 
     def write_clock(self):
-        """ Create the clock signal for setup/hold analysis. First period initializes the FF
-        while the second is used for characterization."""
+        """ 
+        Create the clock signal for setup/hold analysis. 
+        First period initializes the FF
+        while the second is used for characterization.
+        """
 
         self.stim.gen_pwl(sig_name="clk",
                           # initial clk edge is right after the 0 time to initialize a flop
@@ -128,16 +131,6 @@ class setup_hold():
         else:
             dout_rise_or_fall = "FALL"
 
-        # in SETUP mode, the input mirrors what the output should be
-        if mode == "SETUP":
-            din_rise_or_fall = dout_rise_or_fall
-        else:
-            # in HOLD mode, however, the input should be opposite of the output
-            if correct_value == 1:
-                din_rise_or_fall = "FALL"
-            else:
-                din_rise_or_fall = "RISE"
-
         self.sf.write("\n* Measure statements for pass/fail verification\n")
         trig_name = "clk"
         targ_name = "Q"
@@ -152,19 +145,6 @@ class setup_hold():
                                  targ_dir=dout_rise_or_fall,
                                  trig_td=1.9 * self.period,
                                  targ_td=1.9 * self.period)
-
-        targ_name = "D"
-        # Start triggers right after initialize value is returned to normal
-        # at one period
-        self.stim.gen_meas_delay(meas_name="setup_hold_time",
-                                 trig_name=trig_name,
-                                 targ_name=targ_name,
-                                 trig_val=trig_val,
-                                 targ_val=targ_val,
-                                 trig_dir="RISE",
-                                 targ_dir=din_rise_or_fall,
-                                 trig_td=1.2 * self.period,
-                                 targ_td=1.2 * self.period)
 
     def bidir_search(self, correct_value, mode):
         """ This will perform a bidirectional search for either setup or hold times.
@@ -189,26 +169,29 @@ class setup_hold():
                             correct_value=correct_value)
         self.stim.run_sim(self.stim_sp)
         ideal_clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
-        setuphold_time = convert_to_float(parse_spice_list("timing", "setup_hold_time"))
-        debug.info(2,"*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode, correct_value,ideal_clk_to_q,setuphold_time))
+        # We use a 1/2 speed clock for some reason...
+        setuphold_time = (feasible_bound - 2 * self.period) / 1e9
+        if mode == "SETUP": # SETUP is clk-din, not din-clk
+            passing_setuphold_time = -1e9 * setuphold_time
+        else:
+            passing_setuphold_time = 1e9 * setuphold_time
+        debug.info(2, "*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode,
+                                                                                      correct_value,
+                                                                                      ideal_clk_to_q,
+                                                                                      setuphold_time))
 
-        if type(ideal_clk_to_q)!=float or type(setuphold_time)!=float:
-            debug.error("Initial hold time fails for data value feasible bound {0} Clk-to-Q {1} Setup/Hold {2}".format(feasible_bound,
-                                                                                                                       ideal_clk_to_q,
-                                                                                                                       setuphold_time),
+        if type(ideal_clk_to_q)!=float:
+            debug.error("Initial hold time fails for data value feasible "
+                        "bound {0} Clk-to-Q {1} Setup/Hold {2}".format(feasible_bound,
+                                                                       ideal_clk_to_q,
+                                                                       setuphold_time),
                         2)
 
-        if mode == "SETUP": # SETUP is clk-din, not din-clk
-            setuphold_time *= -1e9
-        else:
-            setuphold_time *= 1e9
-
-        passing_setuphold_time = setuphold_time
         debug.info(2, "Checked initial {0} time {1}, data at {2}, clock at {3} ".format(mode,
                                                                                         setuphold_time,
                                                                                         feasible_bound,
                                                                                         2 * self.period))
-        #raw_input("Press Enter to continue...")
+        # raw_input("Press Enter to continue...")
 
         while True:
             target_time = (feasible_bound + infeasible_bound) / 2
@@ -224,15 +207,14 @@ class setup_hold():
 
             self.stim.run_sim(self.stim_sp)
             clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
-            setuphold_time = convert_to_float(parse_spice_list("timing", "setup_hold_time"))
-            if type(clk_to_q) == float and (clk_to_q < 1.1 * ideal_clk_to_q) and type(setuphold_time)==float:
-                if mode == "SETUP": # SETUP is clk-din, not din-clk
-                    setuphold_time *= -1e9
-                else:
-                    setuphold_time *= 1e9
-
+            # We use a 1/2 speed clock for some reason...            
+            setuphold_time = (target_time - 2 * self.period) / 1e9
+            if mode == "SETUP": # SETUP is clk-din, not din-clk
+                passing_setuphold_time = -1e9 * setuphold_time
+            else:
+                passing_setuphold_time = 1e9 * setuphold_time
+            if type(clk_to_q) == float and (clk_to_q < 1.1 * ideal_clk_to_q):
                 debug.info(2, "PASS Clk-to-Q: {0} Setup/Hold: {1}".format(clk_to_q, setuphold_time))
-                passing_setuphold_time = setuphold_time
                 feasible_bound = target_time
             else:
                 debug.info(2, "FAIL Clk-to-Q: {0} Setup/Hold: {1}".format(clk_to_q, setuphold_time))
@@ -241,7 +223,6 @@ class setup_hold():
             if relative_compare(feasible_bound, infeasible_bound, error_tolerance=0.001):
                 debug.info(3, "CONVERGE {0} vs {1}".format(feasible_bound, infeasible_bound))
                 break
-
 
         debug.info(2, "Converged on {0} time {1}.".format(mode, passing_setuphold_time))
         return passing_setuphold_time

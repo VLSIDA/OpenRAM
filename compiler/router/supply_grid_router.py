@@ -202,19 +202,28 @@ class supply_grid_router(router):
         min_yoffset = self.rg.ll.y
         min_xoffset = self.rg.ll.x
 
+        # Remove the current pins in the layout. Only leave the new ones
+        self.cell.remove_layout_pin(name)
+
         for rail in self.supply_rails[name]:
             ll = grid_utils.get_lower_left(rail)
             ur = grid_utils.get_upper_right(rail)
+            z = ll.z
+            pin = self.compute_pin_enclosure(ll, ur, z, name)
             # Add the ones only in the perimeter
-            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset:
-                z = ll.z
-                pin = self.compute_pin_enclosure(ll, ur, z, name)
-                debug.info(3, "Adding supply rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
+            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= (max_xoffset-1) or ur.y >= (max_yoffset-1):
+                debug.info(3, "Adding supply pin rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
                 self.cell.add_layout_pin(text=name,
                                          layer=pin.layer,
                                          offset=pin.ll(),
                                          width=pin.width(),
                                          height=pin.height())
+            else:
+                debug.info(3, "Adding supply norm rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
+                self.cell.add_rect(layer=pin.layer,
+                                   offset=pin.ll(),
+                                   width=pin.width(),
+                                   height=pin.height())
 
     def compute_supply_rails(self, name, supply_number):
         """

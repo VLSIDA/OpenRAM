@@ -196,17 +196,25 @@ class supply_grid_router(router):
         This is after the paths have been pruned and only include rails that are
         connected with vias.
         """
+
+        max_yoffset = self.rg.ur.y
+        max_xoffset = self.rg.ur.x
+        min_yoffset = self.rg.ll.y
+        min_xoffset = self.rg.ll.x
+
         for rail in self.supply_rails[name]:
             ll = grid_utils.get_lower_left(rail)
             ur = grid_utils.get_upper_right(rail)
-            z = ll.z
-            pin = self.compute_pin_enclosure(ll, ur, z, name)
-            debug.info(3, "Adding supply rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
-            self.cell.add_layout_pin(text=name,
-                                     layer=pin.layer,
-                                     offset=pin.ll(),
-                                     width=pin.width(),
-                                     height=pin.height())
+            # Add the ones only in the perimeter
+            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset:
+                z = ll.z
+                pin = self.compute_pin_enclosure(ll, ur, z, name)
+                debug.info(3, "Adding supply rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
+                self.cell.add_layout_pin(text=name,
+                                         layer=pin.layer,
+                                         offset=pin.ll(),
+                                         width=pin.width(),
+                                         height=pin.height())
 
     def compute_supply_rails(self, name, supply_number):
         """

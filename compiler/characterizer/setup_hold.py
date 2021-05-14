@@ -191,7 +191,6 @@ class setup_hold():
                                                                                         setuphold_time,
                                                                                         feasible_bound,
                                                                                         2 * self.period))
-        # raw_input("Press Enter to continue...")
 
         while True:
             target_time = (feasible_bound + infeasible_bound) / 2

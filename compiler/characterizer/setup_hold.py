@@ -170,11 +170,11 @@ class setup_hold():
         self.stim.run_sim(self.stim_sp)
         ideal_clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
         # We use a 1/2 speed clock for some reason...
-        setuphold_time = (feasible_bound - 2 * self.period) / 1e9
+        setuphold_time = (feasible_bound - 2 * self.period)
         if mode == "SETUP": # SETUP is clk-din, not din-clk
-            passing_setuphold_time = -1e9 * setuphold_time
+            passing_setuphold_time = -1 * setuphold_time
         else:
-            passing_setuphold_time = 1e9 * setuphold_time
+            passing_setuphold_time = setuphold_time
         debug.info(2, "*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode,
                                                                                       correct_value,
                                                                                       ideal_clk_to_q,
@@ -208,11 +208,11 @@ class setup_hold():
             self.stim.run_sim(self.stim_sp)
             clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
             # We use a 1/2 speed clock for some reason...            
-            setuphold_time = (target_time - 2 * self.period) / 1e9
+            setuphold_time = (target_time - 2 * self.period)
             if mode == "SETUP": # SETUP is clk-din, not din-clk
-                passing_setuphold_time = -1e9 * setuphold_time
+                passing_setuphold_time = -1 * setuphold_time
             else:
-                passing_setuphold_time = 1e9 * setuphold_time
+                passing_setuphold_time = setuphold_time
             if type(clk_to_q) == float and (clk_to_q < 1.1 * ideal_clk_to_q):
                 debug.info(2, "PASS Clk-to-Q: {0} Setup/Hold: {1}".format(clk_to_q, setuphold_time))
                 feasible_bound = target_time

@@ -31,7 +31,10 @@ class supply_grid_router(router):
         # Power rail width in minimum wire widths
         self.route_track_width = 2
 
-        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
+        if not bbox:
+            router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
+        else:
+            router.__init__(self, layers, design, gds_filename, bbox) # The bbox should be already aligned.
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -83,6 +86,11 @@ class supply_grid_router(router):
         self.route_simple_overlaps(gnd_name)
         print_time("Simple overlap routing", datetime.now(), start_time, 3)
 
+        start_time = datetime.now()
+        self.route_1step(vdd_name)
+        self.route_1step(gnd_name)
+        print_time("1 step routing", datetime.now(), start_time, 3)
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
@@ -123,6 +131,43 @@ class supply_grid_router(router):
             # Else, if we overlap some of the space track, we can patch it with an enclosure
             # pg.create_simple_overlap_enclosure(pg.grids)
             # pg.add_enclosure(self.cell)
+
+        debug.info(1, "Routed {} simple overlap pins".format(routed_count))
+
+    def route_1step(self, pin_name):
+        """
+        This will check 1-step easy routes. This is mainly created for faster routes and avoid the full-fledged
+        router.
+        """
+        debug.info(1, "Routing 1 step pins for {0}".format(pin_name))
+
+        dirs = [vector3d(1, 0, 0), vector3d(-1, 0, 0), vector3d(0, 1, 0), vector3d(0, -1, 0), vector3d(0, 0, 1), vector3d(0, 0, -1)]
+        # These are the wire tracks
+        wire_tracks = self.supply_rail_tracks[pin_name]
+        routed_count=0
+        for pg in self.pin_groups[pin_name]:
+            if pg.is_routed():
+                continue
+
+            # Explore all grids
+            for grid in pg.grids:
+                # Explore all directions
+                for dir in dirs:
+                    pt = grid + dir
+                    if pt in wire_tracks:
+                        # Contruct the path
+                        path = [grid, pt]
+                        abs_path = [self.convert_point_to_units(x) for x in path]
+                        debug.info(3, "Adding easy route {0} {1}->{2}, {3}".format(pin_name, grid, pt, abs_path))
+                        routed_count += 1
+                        pg.set_routed()
+                        self.cell.add_route(layers=self.layers,
+                                            coordinates=abs_path,
+                                            layer_widths=self.layer_widths)
+                        break
+                else:
+                    continue
+                break
 
         debug.info(1, "Routed {} simple overlap pins".format(routed_count))
 
@@ -211,7 +256,7 @@ class supply_grid_router(router):
             z = ll.z
             pin = self.compute_pin_enclosure(ll, ur, z, name)
             # Add the ones only in the perimeter
-            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= (max_xoffset-1) or ur.y >= (max_yoffset-1):
+            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset:
                 debug.info(3, "Adding supply pin rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
                 self.cell.add_layout_pin(text=name,
                                          layer=pin.layer,
@@ -245,7 +290,7 @@ class supply_grid_router(router):
             # Seed the function at the location with the given width
             wave = [vector3d(min_xoffset, offset, 0)]
             # While we can keep expanding east in this horizontal track
-            while wave and wave[0].x < max_xoffset:
+            while wave and wave[0].x <= max_xoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.EAST)
                 if not added_rail:
                     # Just seed with the next one
@@ -260,7 +305,7 @@ class supply_grid_router(router):
             # Seed the function at the location with the given width
             wave = [vector3d(offset, min_yoffset, 1)]
             # While we can keep expanding north in this vertical track
-            while wave and wave[0].y < max_yoffset:
+            while wave and wave[0].y <= max_yoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.NORTH)
                 if not added_rail:
                     # Just seed with the next one
@@ -303,15 +348,19 @@ class supply_grid_router(router):
         if not wave_path:
             return None
 
+        # NOTE: Why? The trimmings are kinda useless for escape routing
+        # The escape routing is already done at this point
+        # this will be ignored for now.
+
         # drop the first and last steps to leave escape routing room
         # around the blockage that stopped the probe
         # except, don't drop the first if it is the first in a row/column
-        if (direct==direction.NORTH and start_wave[0].y>0):
-            wave_path.trim_first()
-        elif (direct == direction.EAST and start_wave[0].x>0):
-            wave_path.trim_first()
+        #if (direct==direction.NORTH and start_wave[0].y>0):
+        #    wave_path.trim_first()
+        #elif (direct == direction.EAST and start_wave[0].x>0):
+        #    wave_path.trim_first()
 
-        wave_path.trim_last()
+        #wave_path.trim_last()
 
         return wave_path
 

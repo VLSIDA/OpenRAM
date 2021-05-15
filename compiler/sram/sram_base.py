@@ -40,6 +40,9 @@ class sram_base(design, verilog, lef):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        # For assigning only once the bbox
+        self.bbox = None
+
     def add_pins(self):
         """ Add pins for entire SRAM. """
 
@@ -243,7 +246,7 @@ class sram_base(design, verilog, lef):
         elif OPTS.route_supplies:
             from supply_tree_router import supply_tree_router as router
             
-        rtr=router(grid_stack, self)
+        rtr=router(grid_stack, self, None, self.bbox) # Use a possible bbox here
         rtr.route()
 
         # Find the lowest leftest pin for vdd and gnd
@@ -324,6 +327,7 @@ class sram_base(design, verilog, lef):
                    design=self,
                    margin=4 * self.m3_pitch)
         rtr.escape_route(pins_to_route)
+        self.bbox = (rtr.ll, rtr.ur) # Capture the bbox after done with the escape routes, as can increase
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

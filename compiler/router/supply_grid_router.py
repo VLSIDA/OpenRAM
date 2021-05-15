@@ -94,8 +94,8 @@ class supply_grid_router(router):
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
-        self.route_pins_to_rails(vdd_name)
-        self.route_pins_to_rails(gnd_name)
+        #self.route_pins_to_rails(vdd_name)
+        #self.route_pins_to_rails(gnd_name)
         print_time("Maze routing supplies", datetime.now(), start_time, 3)
         # self.write_debug_gds("final.gds", False)
 
@@ -145,7 +145,7 @@ class supply_grid_router(router):
         # These are the wire tracks
         wire_tracks = self.supply_rail_tracks[pin_name]
         routed_count=0
-        for pg in self.pin_groups[pin_name]:
+        for i, pg in enumerate(self.pin_groups[pin_name]):
             if pg.is_routed():
                 continue
 
@@ -154,7 +154,7 @@ class supply_grid_router(router):
                 # Explore all directions
                 for dir in dirs:
                     pt = grid + dir
-                    if pt in wire_tracks:
+                    if pt in wire_tracks and pt not in self.blocked_grids:
                         # Contruct the path
                         path = [grid, pt]
                         abs_path = [self.convert_point_to_units(x) for x in path]
@@ -164,6 +164,8 @@ class supply_grid_router(router):
                         self.cell.add_route(layers=self.layers,
                                             coordinates=abs_path,
                                             layer_widths=self.layer_widths)
+                        # Add just the grid here in the pingroup
+                        self.pin_groups[pin_name][i].grids.add(pt)
                         break
                 else:
                     continue

@@ -32,8 +32,8 @@ class pnand4(pgate.pgate):
         # We have trouble pitch matching a 3x sizes to the bitcell...
         # If we relax this, we could size this better.
         self.size = size
-        self.nmos_size = 2 * size
-        self.pmos_size = parameter["beta"] * size
+        self.nmos_size = size
+        self.pmos_size = parameter["beta"] * size / 2.0
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
 

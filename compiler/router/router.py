@@ -351,12 +351,16 @@ class router(router_tech):
                 bigger.grids.remove(adj)
                 bigger.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
+                if adj in bigger.blockages:
+                    bigger.blockages.remove(adj)
             elif adj in smaller.secondary_grids:
                 debug.info(3,"Removing {} from smaller secondary {}".format(adj,
                                                                             smaller))
                 smaller.grids.remove(adj)
                 smaller.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
+                if adj in smaller.blockages:
+                    smaller.blockages.remove(adj)
             else:
                 # If we couldn't remove from a secondary grid,
                 # we must remove from the primary
@@ -365,10 +369,14 @@ class router(router_tech):
                     debug.info(3,"Removing {} from bigger primary {}".format(adj,
                                                                              bigger))
                     bigger.grids.remove(adj)
+                    if adj in bigger.blockages:
+                        bigger.blockages.remove(adj)
                 elif adj in smaller.grids:
                     debug.info(3,"Removing {} from smaller primary {}".format(adj,
                                                                               smaller))
                     smaller.grids.remove(adj)
+                    if adj in smaller.blockages:
+                        smaller.blockages.remove(adj)
 
     def set_supply_rail_blocked(self, value):
         # This is just a virtual function

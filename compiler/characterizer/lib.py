@@ -867,14 +867,14 @@ class lib:
             write0_power = np.mean(self.char_port_results[port]["write0_power"])
             datasheet.write("{0},{1},".format('write_rise_power_{}'.format(port), write1_power))
             #FIXME: should be write_fall_power
-            datasheet.write("{0},{1},".format('read_fall_power_{}'.format(port), write0_power))
+            datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), write0_power))
         
         for port in self.read_ports:
             read1_power = np.mean(self.char_port_results[port]["read1_power"])
             read0_power = np.mean(self.char_port_results[port]["read0_power"])
             datasheet.write("{0},{1},".format('read_rise_power_{}'.format(port), read1_power))
             #FIXME: should be read_fall_power
-            datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), read0_power))
+            datasheet.write("{0},{1},".format('read_fall_power_{}'.format(port), read0_power))
         
         
  

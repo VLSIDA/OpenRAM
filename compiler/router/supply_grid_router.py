@@ -257,8 +257,13 @@ class supply_grid_router(router):
             ur = grid_utils.get_upper_right(rail)
             z = ll.z
             pin = self.compute_pin_enclosure(ll, ur, z, name)
+            # Determinate if this rail is actually part of the very corner. This is to avoid
+            # large intersections, but only keeping the short ones
+            # TODO: The way to know that is horizontal or vertical, is just looking at z
+            avoid = (z == 0 and (ll.y <= min_yoffset or ur.y >= max_yoffset)) or \
+                    (z == 1 and (ll.x <= min_xoffset or ur.x >= max_xoffset))
             # Add the ones only in the perimeter
-            if ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset:
+            if (ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset) and not avoid:
                 debug.info(3, "Adding supply pin rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
                 self.cell.add_layout_pin(text=name,
                                          layer=pin.layer,

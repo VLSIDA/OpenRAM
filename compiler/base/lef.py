@@ -97,7 +97,8 @@ class lef:
         # Start with blockages on all layers the size of the block
         # minus the pin escape margin (hard coded to 4 x m3 pitch)
         # These are a pin_layout to use their geometric functions
-        perimeter_margin = self.m3_pitch
+        # TODO: The escape is already set to 0. Is not anymore 4xm3. Perimeter is now 0
+        perimeter_margin = 0 # self.m3_pitch
         self.blockages = {}
         for layer_name in self.lef_layers:
             self.blockages[layer_name]=[]

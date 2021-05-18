@@ -34,7 +34,7 @@ if not OPTS.analytical_delay:
     else:
         (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["Xyce", "ngspice", "ngspice.exe", "hspice", "xa"])
 
-    if OPTS.spice_name == "Xyce":
+    if OPTS.spice_name in ["Xyce", "xyce"]:
         (OPTS.mpi_name, OPTS.mpi_exe) = get_tool("mpi", ["mpirun"])
         OPTS.hier_seperator = ":"
     else:

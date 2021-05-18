@@ -26,7 +26,7 @@ def parse_spice_list(filename, key):
         full_filename="{0}xa.meas".format(OPTS.openram_temp)
     elif OPTS.spice_name == "spectre":
         full_filename = os.path.join(OPTS.openram_temp, "delay_stim.measure")
-    elif OPTS.spice_name == "Xyce":
+    elif OPTS.spice_name in ["Xyce", "xyce"]:
         full_filename = os.path.join(OPTS.openram_temp, "spice_stdout.log")
     else:
         # ngspice/hspice using a .lis file

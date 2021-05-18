@@ -271,7 +271,7 @@ class stimuli():
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
             self.sf.write(".OPTIONS PSF=1 \n")
             self.sf.write(".OPTIONS HIER_DELIM=1 \n")
-        elif OPTS.spice_name == "Xyce":
+        elif OPTS.spice_name in ["Xyce", "xyce"]:
             self.sf.write(".OPTIONS DEVICE TEMP={}\n".format(self.temperature))
             self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
             self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
@@ -318,7 +318,7 @@ class stimuli():
 
         # Adding a commented out supply for simulators where gnd and 0 are not global grounds.
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
-        if OPTS.spice_name == "Xyce":
+        if OPTS.spice_name in ["Xyce", "xyce"]:
             self.sf.write("V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
         else:
             self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
@@ -358,7 +358,7 @@ class stimuli():
                                                            temp_stim,
                                                            OPTS.openram_temp)
             valid_retcode=0
-        elif OPTS.spice_name == "Xyce":
+        elif OPTS.spice_name in ["Xyce", "xyce"]:
             if OPTS.num_sim_threads > 1 and OPTS.mpi_name:
                 mpi_cmd = "{0} -np {1}".format(OPTS.mpi_exe,
                                                OPTS.num_sim_threads)

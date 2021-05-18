@@ -24,7 +24,7 @@ class sram_base(design, verilog, lef):
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
-        lef.__init__(self, ["m1", "m2", "m3", "m4", "m5"]) # TODO: Generation of lef layers should be dependent of tech
+        lef.__init__(self, ["m1", "m2", "m3", "m4"])
         verilog.__init__(self)
 
         self.sram_config = sram_config

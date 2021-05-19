@@ -3,6 +3,7 @@ import csv
 import re
 import sys
 import csv
+import importlib
 
 # Use the HTML file to extra the data. Easier to do than LIB
 data_file_ext = ".html"
@@ -38,48 +39,61 @@ def get_config_mods(openram_dir):
     if not os.path.exists(openram_dir+'/'+dataset_name+".py"):
         print("Python module for {} not found. Returning...".format(dataset_name))
     else:
-        imp_mod = import_module(dataset_name, openram_dir+"/"dataset_name+".py")
+        imp_mod = import_module(dataset_name, openram_dir+"/"+dataset_name+".py")
         
     if not os.path.exists(openram_dir+'/'+dataset_name+extended_name+".py"):
         print("Python module for {} not found. Returning...".format(dataset_name))
     else:
-        imp_mod_extended = import_module(dataset_name+extended_name, openram_dir+"/"dataset_name+extended_name+".py")
-        
-    return imp_mod, imp_mod_extended  
+        imp_mod_extended = import_module(dataset_name+extended_name, openram_dir+"/"+dataset_name+extended_name+".py")
     
-def write_to_csv(csv_file, config_mod, config_mod_ext):    
+    datasheet_fname = openram_dir+"/"+dataset_name+data_file_ext
+    
+    return dataset_name, imp_mod, imp_mod_extended, datasheet_fname  
+
+def get_corners(datafile_contents, dataset_name, tech):
+    """Search through given datasheet to find all corners available"""
+
+    corner_regex = r"{}.*{},([-+]?[0-9]*\.?[0-9]*),([-+]?[0-9]*\.?[0-9]*),([tsfTSF][tsfTSF]),".format(dataset_name, tech)
+    corners = re.findall(corner_regex,datafile_contents)
+    return corners # List of corner tuples in order (T, V, P)
+ 
+feature_names = ['num_words', 
+                 'word_size', 
+                 'words_per_row',
+                 'local_array_size',
+                 'area', 
+                 'process', 
+                 'voltage', 
+                 'temperature',
+                 'slew',
+                 'load']
+output_names =  ['rise_delay', 
+                 'fall_delay',
+                 'rise_slew',
+                 'fall_slew',
+                 'write1_power',
+                 'write0_power',
+                 'read1_power',
+                 'read0_power',
+                 'leakage_power'] 
+                 
+multivalue_names = ['cell_rise_0', 
+                    'cell_fall_0',
+                    'rise_transition_0',
+                    'fall_transition_0']
+singlevalue_names = ['write_rise_power_0',
+                    'write_fall_power_0',
+                    'read_rise_power_0',
+                    'read_fall_power_0']                  
+ 
+def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_extended, mode):    
 
     
     writer = csv.writer(csv_file)
+    # If the file was opened to write and not append then we write the header
+    if mode == 'w':
+        writer.writerow(feature_names+output_names)
 
-    
-    feature_names = ['num_words', 
-                     'word_size', 
-                     'words_per_row',
-                     'local_array_size',
-                     'area', 
-                     'process', 
-                     'voltage', 
-                     'temperature',
-                     'slew',
-                     'load']
-    output_names =  ['rise_delay', 
-                     'fall_delay',
-                     'rise_slew',
-                     'fall_slew',
-                     'write1_power',
-                     'write0_power',
-                     'read1_power',
-                     'read0_power',
-                     'leakage_power'] 
-
-   
-                     
-    writer.writerow(feature_names+output_names)
-
-           
-    available_corners = imp_mod_extended.use_specified_corners
-    
     try:
         load_slews = imp_mod.use_specified_load_slew
     except:
@@ -93,26 +107,19 @@ def write_to_csv(csv_file, config_mod, config_mod_ext):
         num_items = 9
         num_loads_or_slews = 3
       
-    multivalue_names = ['cell_rise_0', 
-                        'cell_fall_0',
-                        'rise_transition_0',
-                        'fall_transition_0']
-    singlevalue_names = ['write_rise_power_0',
-                        'write_fall_power_0',
-                        'read_rise_power_0',
-                        'read_fall_power_0'] 
-    file_name = openram_dir+"/"+dataset_name+data_file_ext
     try:
-        f = open(file_name, "r")
+        f = open(datasheet_fname, "r")
     except IOError:
-        print("Unable to open spice output file: {0}".format(file_name))
+        print("Unable to open spice output file: {0}".format(datasheet_fname))
         return None
-    print("Opened file",file_name)
+    print("Opened file",datasheet_fname)
     contents = f.read()
     f.close()                    
-                        
+                  
+    available_corners = get_corners(contents, dataset_name, imp_mod_extended.tech_name)
+                  
     # Loop through corners, adding data for each corner    
-    for (process, voltage, temp) in available_corners:    
+    for (temp, voltage, process) in available_corners:    
         
         # Create a regex to search the datasheet for specified outputs
         voltage_str = "".join(['\\'+i if i=='.' else i for i in str(voltage)])
@@ -174,7 +181,7 @@ def write_to_csv(csv_file, config_mod, config_mod_ext):
         datasheet_singlevalues = [re.search(r,contents) for r in singlevalue_regexs]
         for dval in datasheet_multivalues+datasheet_singlevalues:
             if dval == None:
-                print("Error occurred while searching through datasheet: {}".format(file_name))
+                print("Error occurred while searching through datasheet: {}".format(datasheet_fname))
                 return None
 
         # All the extracted values are delays but val[2] is the max delay
@@ -205,25 +212,46 @@ def write_to_csv(csv_file, config_mod, config_mod_ext):
                 writer.writerow(feature_vals+[slew, load]+multi_values+single_values+[leakage_vals[1]])      
                 c+=1
 
-    
-def get_comparison_data(openram_dir, out_dir):
+
+def extract_data(openram_dir, out_dir, is_first):
     """Given an OpenRAM output dir, searches through datasheet files and ouputs
        a CSV files with data used in model."""
 
     # Get dataset name used by all the files e.g. sram_1b_16
-    inp_mod, imp_mod_extended = get_config_mods(openram_dir)
+    dataset_name, inp_mod, imp_mod_extended, datasheet_fname = get_config_mods(openram_dir)
 
-    data_file = open("{}/sim_data.csv".format(out_dir), 'w', newline='')
-    write_to_csv(data_file, inp_mod, imp_mod_extended)
+    if is_first:
+        mode = 'w'
+    else:
+        mode = 'a+'
+    data_file = open("{}/sim_data.csv".format(out_dir), mode, newline='')
+    write_to_csv(dataset_name, data_file, datasheet_fname, inp_mod, imp_mod_extended, mode)
 
     return out_dir
     
-
+def gen_model_csv(openram_dir_path, out_dir):
+    if not os.path.isdir(input_dir_path):
+        print("Path does not exist: {}".format(input_dir_path))
+        return
+        
+    if not os.path.isdir(out_path):
+        print("Path does not exist: {}".format(out_path))
+        return   
+        
+    is_first = True
+    oram_dirs = [openram_dir_path+'/'+name for name in os.listdir(openram_dir_path) if os.path.isdir(openram_dir_path+'/'+name)]
+    for dir in oram_dirs:
+        extract_data(dir, out_dir, is_first)
+        is_first = False
+        
 if __name__ == "__main__":
-    tech = "scn4m_subm"
-    dir = '/soe/hznichol/git_repos/PrivateRAM/compiler/path_test'
-    dir = get_comparison_data(tech, dir)  
-    print(dir)
+    if len(sys.argv) < 3:
+        print("Usage: python model_data_util.py path_to_openram_dirs out_dir_path")
+    else:
+        input_dir_path = sys.argv[1]   
+        out_path = sys.argv[2] 
+        gen_model_csv(input_dir_path, out_path) 
+
     
     
     

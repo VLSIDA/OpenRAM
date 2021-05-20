@@ -1153,7 +1153,7 @@ class delay(simulation):
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(load_slews, leakage_offset)
-        if len(load_slews) > 1:
+        if OPTS.use_specified_load_slew != None and len(load_slews) > 1:
             debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
         # Get and save the path delays
         bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)

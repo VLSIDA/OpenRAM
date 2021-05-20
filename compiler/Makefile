@@ -64,11 +64,12 @@ usage: ${USAGE_TESTS}
 
 $(ALL_TESTS):
 	python3 $@ -t ${TECH}
-
-#CONFIG_DIR = $(OPENRAM_HOME)/example_configs/model_configs
-CONFIG_DIR = $(OPENRAM_HOME)/example_configs/test_configs
+OPENRAM_TECHS = $(subst :, ,$(OPENRAM_TECH))
+TECH_DIR := $(word 1, $(foreach dir,$(OPENRAM_TECHS),$(wildcard $(dir)/$(TECH))))
+CONFIG_DIR = $(OPENRAM_HOME)/model_configs
 MODEL_CONFIGS = $(wildcard $(CONFIG_DIR)/*.py)
-SIM_OUT = $(OPENRAM_TECH)/$(TECH)/sim_data
+SIM_DIR = $(OPENRAM_HOME)/model_data
+CSV_DIR = $(TECH_DIR)/sim_data
 OPTS = 
 # Characterize and perform DRC/LVS
 OPTS += -c 
@@ -79,16 +80,18 @@ OPTS += -n
 # Spice
 OPTS += -s hspice
 
-
 .PHONY: ${MODEL_CONFIGS}
 
-model: $(MODEL_CONFIGS)
+.PHONY: model
 
+model: $(MODEL_CONFIGS)
+	mkdir -p $(CSV_DIR)
+	python3 $(OPENRAM_HOME)/model_data_util.py $(SIM_DIR) $(CSV_DIR)
+	
 $(MODEL_CONFIGS):
 	$(eval bname=$(basename $(notdir $@)))
-	#echo $(bname)
-	mkdir -p $(SIM_OUT)/$(bname)
-	python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_OUT)/$(bname) -o $(bname) $@ 2>&1 > /dev/null
+	mkdir -p $(SIM_DIR)/$(bname)
+	python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) $@ 2>&1 > /dev/null
 	
 clean:
 	find . -name \*.pyc -exec rm {} \;

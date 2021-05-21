@@ -32,7 +32,7 @@ if not OPTS.analytical_delay:
         if OPTS.spice_exe=="" or OPTS.spice_exe==None:
             debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name), 1)
     else:
-        (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["ngspice", "ngspice.exe", "hspice", "xa", "Xyce"])
+        (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["Xyce", "ngspice", "ngspice.exe", "hspice", "xa"])
 
     if OPTS.spice_name in ["Xyce", "xyce"]:
         (OPTS.mpi_name, OPTS.mpi_exe) = get_tool("mpi", ["mpirun"])

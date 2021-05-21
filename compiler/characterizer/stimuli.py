@@ -274,6 +274,7 @@ class stimuli():
         elif OPTS.spice_name in ["Xyce", "xyce"]:
             self.sf.write(".OPTIONS DEVICE TEMP={}\n".format(self.temperature))
             self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
+            self.sf.write(".OPTIONS LINSOL type=klu\n")
             self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
         else:
             debug.error("Unkown spice simulator {}".format(OPTS.spice_name))

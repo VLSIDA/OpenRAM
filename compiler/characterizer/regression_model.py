@@ -81,10 +81,10 @@ class regression_model(simulation):
             sram_vals = self.get_predictions(model_inputs+[slew, load], models)
             # Delay is only calculated on a single port and replicated for now.
             for port in self.all_ports:
-                port_data[port]['delay_lh'].append(sram_vals['delay_lh'])
-                port_data[port]['delay_hl'].append(sram_vals['delay_hl'])
-                port_data[port]['slew_lh'].append(sram_vals['slew_lh'])
-                port_data[port]['slew_hl'].append(sram_vals['slew_hl'])
+                port_data[port]['delay_lh'].append(sram_vals['rise_delay'])
+                port_data[port]['delay_hl'].append(sram_vals['fall_delay'])
+                port_data[port]['slew_lh'].append(sram_vals['rise_slew'])
+                port_data[port]['slew_hl'].append(sram_vals['fall_slew'])
                 
                 port_data[port]['write1_power'].append(sram_vals['write1_power'])
                 port_data[port]['write0_power'].append(sram_vals['write0_power'])
@@ -100,13 +100,12 @@ class regression_model(simulation):
                 debug.info(1, '{}, {}, {}, {}, {}'.format(slew, 
                                                           load, 
                                                           port, 
-                                                          sram_vals['delay_lh'], 
-                                                          sram_vals['slew_lh']))
+                                                          sram_vals['rise_delay'], 
+                                                          sram_vals['rise_slew']))
         # Estimate the period as double the delay with margin
         period_margin = 0.1
-        sram_data = {"min_period": sram_vals['delay_lh'] * 2,
-                     "leakage_power": sram_vals["leakage_power"],
-                     "sim_time":sram_vals["sim_time"]}
+        sram_data = {"min_period": sram_vals['rise_delay'] * 2,
+                     "leakage_power": sram_vals["leakage_power"]}
 
         debug.info(2, "SRAM Data:\n{}".format(sram_data))
         debug.info(2, "Port Data:\n{}".format(port_data))
@@ -118,20 +117,19 @@ class regression_model(simulation):
         Generate a model and prediction for LIB output
         """
         
-        #Scaled the inputs using first data file as a reference
-        data_name = lib_dnames[0]       
-        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, data_paths[data_name])])
+        #Scaled the inputs using first data file as a reference    
+        scaled_inputs = np.asarray([scale_input_datapoint(model_inputs, data_path)])
 
         predictions = {}
-        for dname in data_paths.keys():
-            path = data_paths[dname]
+        out_pos = 0
+        for dname in self.output_names:
             m = models[dname]
         
-            features, labels = get_scaled_data(path)
             scaled_pred = self.model_prediction(m, scaled_inputs)
-            pred = unscale_data(scaled_pred.tolist(), path)
+            pred = unscale_data(scaled_pred.tolist(), data_path, pos=self.num_inputs+out_pos)
             debug.info(2,"Unscaled Prediction = {}".format(pred))
-            predictions[dname] = pred[0][0]
+            predictions[dname] = pred[0]
+            out_pos+=1
         return predictions
 
     def train_models(self):

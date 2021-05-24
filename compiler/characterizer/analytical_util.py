@@ -293,16 +293,13 @@ def unscale_data(data, file_path, pos=None):
         
     # Hard coded to only convert the last max/min (i.e. the label of the data) 
     if pos == None:
-        maxs,mins,avgs = [maxs[-1]],[mins[-1]],[avgs[-1]]
+        maxs,mins,avgs = maxs[-1],mins[-1],avgs[-1]
     else:
-        maxs,mins,avgs = [maxs[pos]],[mins[pos]],[avgs[pos]]
+        maxs,mins,avgs = maxs[pos],mins[pos],avgs[pos]
     unscaled_data = []
     for data_row in data:
-        unscaled_row = []
-        for val, cur_max, cur_min in zip(data_row, maxs, mins):
-            unscaled_val = val*(cur_max-cur_min) + cur_min
-            unscaled_row.append(unscaled_val)
-        unscaled_data.append(unscaled_row)   
+        unscaled_val = data_row*(maxs-mins) + mins
+        unscaled_data.append(unscaled_val) 
 
     return unscaled_data
     

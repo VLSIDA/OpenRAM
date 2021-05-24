@@ -614,7 +614,7 @@ def report_status():
         # then it doesn't need a write mask. It would be writing
         # the whole word.
         if (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size/2):
-            debug.error("Write size needs to be between 1 bit and {0} bits/2.".format(OPTS.word_size))
+            debug.error("Write size needs to be between 1 bit and {0} bits.".format(OPTS.word_size/2))
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")

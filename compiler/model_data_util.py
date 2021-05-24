@@ -8,6 +8,7 @@ import importlib
 # Use the HTML file to extra the data. Easier to do than LIB
 data_file_ext = ".html"
 extended_name = "_extended" # Name addon of extended config file
+DEFAULT_LAS = 0
 
 def gen_regex_float_group(num, separator):
     if num <= 0:
@@ -184,11 +185,16 @@ def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_exten
                 print("Error occurred while searching through datasheet: {}".format(datasheet_fname))
                 return None
 
+        try:
+            las = imp_mod.local_array_size
+        except:
+            las = DEFAULT_LAS
+        
         # All the extracted values are delays but val[2] is the max delay
         feature_vals = [imp_mod.num_words, 
                         imp_mod.word_size,
                         imp_mod_extended.words_per_row,
-                        imp_mod.local_array_size,
+                        las,
                         area_vals[1], 
                         process, 
                         voltage, 

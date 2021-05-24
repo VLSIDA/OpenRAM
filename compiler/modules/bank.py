@@ -439,6 +439,9 @@ class bank(design.design):
 
         temp.append("vdd")
         temp.append("gnd")
+        if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
+            temp.append('vpb')
+            temp.append('vnb')
         self.connect_inst(temp)
 
     def place_bitcell_array(self, offset):
@@ -621,6 +624,10 @@ class bank(design.design):
         for inst in self.insts:
             self.copy_power_pins(inst, "vdd", add_vias=False)
             self.copy_power_pins(inst, "gnd", add_vias=False)
+
+        #if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
+        #    for pin_name, supply_name in zip(['vpb','vnb'],['vdd','gnd']):
+        #        self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.
         # Other decoders already have them.
@@ -1069,7 +1076,6 @@ class bank(design.design):
             self.add_via_stack_center(from_layer=pin.layer,
                                       to_layer="m2",
                                       offset=control_pos)
-
 
     def graph_exclude_precharge(self):
         """

@@ -1203,22 +1203,24 @@ class layout():
                              height=ymax - ymin)
         return rect
 
-    def copy_power_pins(self, inst, name, add_vias=True):
+    def copy_power_pins(self, inst, name, add_vias=True, new_name=""):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
         """
         pins = inst.get_pins(name)
         for pin in pins:
+            if new_name == "":
+                new_name = pin.name
             if pin.layer == self.pwr_grid_layer:
-                self.add_layout_pin(name,
+                self.add_layout_pin(new_name,
                                     pin.layer,
                                     pin.ll(),
                                     pin.width(),
                                     pin.height())
 
             elif add_vias:
-                self.copy_power_pin(pin)
+                self.copy_power_pin(pin, new_name=new_name)
 
     def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
@@ -1264,13 +1266,15 @@ class layout():
                                             width=width,
                                             height=height)
 
-    def copy_power_pin(self, pin, loc=None, directions=None):
+    def copy_power_pin(self, pin, loc=None, directions=None, new_name=""):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
 
+        if new_name == "":
+                new_name = pin.name
         if not loc:
             loc = pin.center()
             
@@ -1284,7 +1288,7 @@ class layout():
             height = None
             
         if pin.layer == self.pwr_grid_layer:
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,
@@ -1299,7 +1303,7 @@ class layout():
                 width = via.width
             if not height:
                 height = via.height
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,

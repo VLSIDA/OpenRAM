@@ -13,7 +13,8 @@ import debug
 
 import math
 
-relative_data_path = "/sim_data"
+relative_data_path = "sim_data"
+data_file = "sim_data.csv"
 data_fnames = ["rise_delay.csv",
                "fall_delay.csv",
                "rise_slew.csv",
@@ -41,7 +42,7 @@ if OPTS.sim_data_path == None:
 else:
     data_dir = OPTS.sim_data_path 
     
-data_paths = {dname:data_dir +'/'+fname for dname, fname in zip(lib_dnames, data_fnames)}
+data_path = data_dir + '/' + data_file
 
 class regression_model(simulation):
 
@@ -65,7 +66,9 @@ class regression_model(simulation):
                         self.temperature]  
                         # Area removed for now
                         # self.sram.width * self.sram.height,
-
+        # Include above inputs, plus load and slew which are added below
+        self.num_inputs = len(model_inputs)+2
+        
         self.create_measurement_names()
         models = self.train_models()
 
@@ -135,12 +138,18 @@ class regression_model(simulation):
         """
         Generate and return models
         """
+        self.output_names = get_data_names(data_path)[self.num_inputs:]
+        data = get_scaled_data(data_path)
+        features, labels = data[:, :self.num_inputs], data[:,self.num_inputs:]
+
+        output_num = 0
         models = {}
-        for dname, dpath in data_paths.items():
-            features, labels = get_scaled_data(dpath)
-            model = self.generate_model(features, labels)
-            models[dname] = model
-            self.save_model(dname, model)
+        for o_name in self.output_names:
+            output_label = labels[:,output_num]
+            model = self.generate_model(features, output_label)
+            models[o_name] = model
+            output_num+=1
+
         return models
     
     # Fixme - only will work for sklearn regression models

@@ -14,7 +14,7 @@ import os
 
 process_transform = {'SS':0.0, 'TT': 0.5, 'FF':1.0}
 
-def get_data_names(file_name):
+def get_data_names(file_name, exclude_area=True):
     """
     Returns just the data names in the first row of the CSV
     """
@@ -25,8 +25,18 @@ def get_data_names(file_name):
         # reader is iterable not a list, probably  a better way to do this
         for row in csv_reader:
             # Return names from first row
-            return row[0].split(',')
-    
+            names = row[0].split(',')
+            break
+    if exclude_area:
+        try:
+            area_ind = names.index('area')
+        except ValueError:
+            area_ind = -1
+            
+        if area_ind != -1:    
+            names = names[:area_ind] + names[area_ind+1:]
+    return names        
+            
 def get_data(file_name):
     """
     Returns data in CSV as lists of features
@@ -41,7 +51,6 @@ def get_data(file_name):
             if row_iter == 1:
                 feature_names = row[0].split(',')
                 input_list = [[] for _ in range(len(feature_names)-removed_items)]
-                scaled_list = [[] for _ in range(len(feature_names)-removed_items)]
                 try:
                     # Save to remove area
                     area_ind = feature_names.index('area')
@@ -237,9 +246,8 @@ def get_scaled_data(file_name):
     
     # Data is scaled by max/min and data format is changed to points vs feature lists
     self_scaled_data = scale_data_and_transform(all_data)
-    samples = np.asarray(self_scaled_data)
-    features, labels = samples[:, :-1], samples[:,-1:]
-    return features, labels
+    data_np = np.asarray(self_scaled_data)
+    return data_np
 
 def scale_data_and_transform(data):
     """

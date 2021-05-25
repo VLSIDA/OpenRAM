@@ -899,17 +899,21 @@ class router(router_tech):
         """
         pg = pin_group(name, [], self)
         if name == "vdd":
-            offset = width
+            offset = width + 1
         else:
-            offset = 0
-        
+            offset = 1
+        if side in ["left", "right"]:
+            layers = [1]
+        else:
+            layers = [0]
         pg.grids = set(self.rg.get_perimeter_list(side=side,
                                                   width=width,
                                                   margin=self.margin,
                                                   offset=offset,
-                                                  layers=[1]))
+                                                  layers=layers))
         pg.enclosures = pg.compute_enclosures()
         pg.pins = set(pg.enclosures)
+        debug.check(len(pg.pins)==1, "Too many pins for a side supply.")
 
         self.cell.pin_map[name].update(pg.pins)
         self.pin_groups[name].append(pg)

@@ -209,7 +209,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
 
-        self.offset_all_coordinates()
+        #self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]
@@ -247,30 +247,6 @@ class sram_base(design, verilog, lef):
             # Route a M3/M4 grid
             grid_stack = self.m3_stack
 
-        # lowest_coord = self.find_lowest_coords()
-        # highest_coord = self.find_highest_coords()
-            
-        # # Add two rails to the side
-        # if OPTS.route_supplies == "side":
-        #     supply_pins = {}
-        #     # Find the lowest leftest pin for vdd and gnd
-        #     for (pin_name, pin_index) in [("vdd", 0), ("gnd", 1)]:
-        #         pin_width = 8 * getattr(self, "{}_width".format(grid_stack[2]))
-        #         pin_space = 2 * getattr(self, "{}_space".format(grid_stack[2]))
-        #         supply_pitch = pin_width + pin_space
-
-        #         # Add side power rails on left from bottom to top
-        #         # These have a temporary name and will be connected later.
-        #         # They are here to reserve space now and ensure other pins go beyond
-        #         # their perimeter.
-        #         supply_height = highest_coord.y - lowest_coord.y
-                
-        #         supply_pins[pin_name] = self.add_layout_pin(text=pin_name, 
-        #                                                     layer=grid_stack[2],
-        #                                                     offset=lowest_coord + vector(pin_index * supply_pitch, 0),
-        #                                                     width=pin_width,
-        #                                                     height=supply_height)
-
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
@@ -285,7 +261,7 @@ class sram_base(design, verilog, lef):
 
         rtr.route()
 
-        if OPTS.route_supplies in ["side", "ring"]:
+        if OPTS.route_supplies in ["left", "right", "top", "bottom", "ring"]:
             # Find the lowest leftest pin for vdd and gnd
             for pin_name in ["vdd", "gnd"]:
                 # Copy the pin shape(s) to rectangles
@@ -298,13 +274,14 @@ class sram_base(design, verilog, lef):
                 # Remove the pin shape(s)
                 self.remove_layout_pin(pin_name)
 
-                # Get the lowest, leftest pin
-                pin = rtr.get_ll_pin(pin_name)
-                self.add_layout_pin(self.ext_supply[pin_name],
-                                    pin.layer,
-                                    pin.ll(),
-                                    pin.width(),
-                                    pin.height())
+                # Get new pins
+                pins = rtr.get_new_pins(pin_name)
+                for pin in pins:
+                    self.add_layout_pin(self.ext_supply[pin_name],
+                                        pin.layer,
+                                        pin.ll(),
+                                        pin.width(),
+                                        pin.height())
             
         elif OPTS.route_supplies:
             # Update these as we may have routed outside the region (perimeter pins)

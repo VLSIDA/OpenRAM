@@ -34,7 +34,7 @@ class supply_tree_router(router):
         # The pin escape router already made the bounding box big enough,
         # so we can use the regular bbox here.
         if pin_type:
-            debug.check(pin_type in ["side", "ring"], "Invalid pin type {}".format(pin_type))
+            debug.check(pin_type in ["left", "right", "top", "bottom", "ring"], "Invalid pin type {}".format(pin_type))
         self.pin_type = pin_type
         router.__init__(self,
                         layers,
@@ -67,9 +67,9 @@ class supply_tree_router(router):
         print_time("Finding pins and blockages", datetime.now(), start_time, 3)
 
         # Add side pins if enabled
-        if self.pin_type == "side":
-            self.add_side_supply_pin(self.vdd_name)
-            self.add_side_supply_pin(self.gnd_name)
+        if self.pin_type in ["left", "right", "top", "bottom"]:
+            self.add_side_supply_pin(self.vdd_name, side=self.pin_type)
+            self.add_side_supply_pin(self.gnd_name, side=self.pin_type)
         elif self.pin_type == "ring":
             self.add_ring_supply_pin(self.vdd_name)
             self.add_ring_supply_pin(self.gnd_name)

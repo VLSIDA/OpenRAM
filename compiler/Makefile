@@ -1,4 +1,4 @@
-TECH = scn4m_subm
+TECH = freepdk45
 CUR_DIR = $(shell pwd)
 TEST_DIR = ${CUR_DIR}/tests
 
@@ -90,8 +90,8 @@ model: $(MODEL_CONFIGS)
 	
 $(MODEL_CONFIGS):
 	$(eval bname=$(basename $(notdir $@)))
-	mkdir -p $(SIM_DIR)/$(bname)
-	python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) $@ 2>&1 > /dev/null
+	mkdir -p $(SIM_DIR)/$(TECH)/$(bname)
+	python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(TECH)/$(bname) -o $(bname) -t $(TECH) $@ 2>&1 > /dev/null
 	
 clean:
 	find . -name \*.pyc -exec rm {} \;

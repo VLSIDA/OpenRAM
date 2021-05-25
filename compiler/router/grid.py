@@ -132,25 +132,25 @@ class grid:
         # Add the left/right columns
         if side=="all" or side=="left":
             for x in range(self.ll.x + offset, self.ll.x + width + offset, 1):
-                for y in range(self.ll.y + margin, self.ur.y - margin, 1):
+                for y in range(self.ll.y + offset + margin, self.ur.y - offset - margin, 1):
                     for layer in layers:
                         perimeter_list.append(vector3d(x, y, layer))
                 
         if side=="all" or side=="right":
             for x in range(self.ur.x - width - offset, self.ur.x - offset, 1):
-                for y in range(self.ll.y + margin, self.ur.y - margin, 1):
+                for y in range(self.ll.y + offset + margin, self.ur.y - offset - margin, 1):
                     for layer in layers:
                         perimeter_list.append(vector3d(x, y, layer))
 
         if side=="all" or side=="bottom":
             for y in range(self.ll.y + offset, self.ll.y + width + offset, 1):
-                for x in range(self.ll.x + margin, self.ur.x - margin, 1):
+                for x in range(self.ll.x + offset + margin, self.ur.x - offset - margin, 1):
                     for layer in layers:
                         perimeter_list.append(vector3d(x, y, layer))
 
         if side=="all" or side=="top":
             for y in range(self.ur.y - width - offset, self.ur.y - offset, 1):
-                for x in range(self.ll.x + margin, self.ur.x - margin, 1):
+                for x in range(self.ll.x + offset + margin, self.ur.x - offset - margin, 1):
                     for layer in layers:
                         perimeter_list.append(vector3d(x, y, layer))
 

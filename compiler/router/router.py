@@ -75,6 +75,9 @@ class router(router_tech):
         self.margin = margin
         self.init_bbox(bbox, margin)
 
+        # New pins if we create a ring or side pins or etc.
+        self.new_pins = {}
+
     def init_bbox(self, bbox=None, margin=0):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
@@ -907,18 +910,23 @@ class router(router_tech):
                                                   layers=[1]))
         pg.enclosures = pg.compute_enclosures()
         pg.pins = set(pg.enclosures)
+
         self.cell.pin_map[name].update(pg.pins)
         self.pin_groups[name].append(pg)
 
+        self.new_pins[name] = pg.pins
+        
     def add_ring_supply_pin(self, name, width=2):
         """
-        Adds a ring supply pin
+        Adds a ring supply pin that goes inside the given bbox.
         """
         pg = pin_group(name, [], self)
+        # Offset the vdd inside one ring width
+        # Units are in routing grids
         if name == "vdd":
-            offset = width
+            offset = width + 1
         else:
-            offset = 0
+            offset = 1
 
         # LEFT
         left_grids = set(self.rg.get_perimeter_list(side="left",
@@ -946,23 +954,29 @@ class router(router_tech):
                                                       offset=offset,
                                                       layers=[0]))
 
-        # The big pin group
-        pg.grids = left_grids | right_grids | top_grids | bottom_grids
-        pg.enclosures = pg.compute_enclosures()
-        pg.pins = set(pg.enclosures)
-        self.cell.pin_map[name].update(pg.pins)
-        self.pin_groups[name].append(pg)
-
-        # Must move to the same layer
+        horizontal_layer_grids = left_grids | right_grids
+        
+        # Must move to the same layer to find layer 1 corner grids
         vertical_layer_grids = set()
         for x in top_grids | bottom_grids:
             vertical_layer_grids.add(vector3d(x.x, x.y, 1))
-        horizontal_layer_grids = left_grids | right_grids
 
         # Add vias in the overlap points
-        corner_grids = vertical_layer_grids & horizontal_layer_grids
-        for g in corner_grids:
+        horizontal_corner_grids = vertical_layer_grids & horizontal_layer_grids
+        for g in horizontal_corner_grids:
             self.add_via(g)
+
+        # The big pin group, but exclude the corners from the pins
+        pg.grids = (left_grids | right_grids | top_grids | bottom_grids)
+        pg.enclosures = pg.compute_enclosures()
+        pg.pins = set(pg.enclosures)
+        
+        self.cell.pin_map[name].update(pg.pins)
+        self.pin_groups[name].append(pg)
+        self.new_pins[name] = pg.pins
+
+    def get_new_pins(self, name):
+        return self.new_pins[name]
         
     def add_perimeter_target(self, side="all"):
         """

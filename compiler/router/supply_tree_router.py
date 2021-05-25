@@ -21,7 +21,7 @@ class supply_tree_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, bbox=None, side_pin=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -33,7 +33,9 @@ class supply_tree_router(router):
 
         # The pin escape router already made the bounding box big enough,
         # so we can use the regular bbox here.
-        self.side_pin = side_pin
+        if pin_type:
+            debug.check(pin_type in ["side", "ring"], "Invalid pin type {}".format(pin_type))
+        self.pin_type = pin_type
         router.__init__(self,
                         layers,
                         design,
@@ -65,10 +67,13 @@ class supply_tree_router(router):
         print_time("Finding pins and blockages", datetime.now(), start_time, 3)
 
         # Add side pins if enabled
-        if self.side_pin:
+        if self.pin_type == "side":
             self.add_side_supply_pin(self.vdd_name)
             self.add_side_supply_pin(self.gnd_name)
-        
+        elif self.pin_type == "ring":
+            self.add_ring_supply_pin(self.vdd_name)
+            self.add_ring_supply_pin(self.gnd_name)
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()

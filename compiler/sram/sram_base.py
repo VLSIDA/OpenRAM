@@ -15,7 +15,7 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
-from tech import spice
+from tech import spice, layer
 
 
 class sram_base(design, verilog, lef):
@@ -265,7 +265,7 @@ class sram_base(design, verilog, lef):
         #         # their perimeter.
         #         supply_height = highest_coord.y - lowest_coord.y
                 
-        #         supply_pins[pin_name] = self.add_layout_pin(text=pin_name,
+        #         supply_pins[pin_name] = self.add_layout_pin(text=pin_name, 
         #                                                     layer=grid_stack[2],
         #                                                     offset=lowest_coord + vector(pin_index * supply_pitch, 0),
         #                                                     width=pin_width,
@@ -276,13 +276,16 @@ class sram_base(design, verilog, lef):
             return
         elif OPTS.route_supplies == "grid":
             from supply_grid_router import supply_grid_router as router
+            rtr=router(grid_stack, self)
         else:
             from supply_tree_router import supply_tree_router as router
+            rtr=router(grid_stack,
+                       self,
+                       pin_type=OPTS.route_supplies)
 
-        rtr=router(grid_stack, self, side_pin=(OPTS.route_supplies == "side"))
         rtr.route()
 
-        if OPTS.route_supplies == "side":
+        if OPTS.route_supplies in ["side", "ring"]:
             # Find the lowest leftest pin for vdd and gnd
             for pin_name in ["vdd", "gnd"]:
                 # Copy the pin shape(s) to rectangles

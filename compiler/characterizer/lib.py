@@ -647,9 +647,9 @@ class lib:
         # Add to the OPTS to be written out as part of the extended OPTS file
         # FIXME: should be written to datasheet, current version is simplifies current use of this    
         if not self.use_model:
-            OPTS.sen_path_delays = self.char_sram_results["sen_path_delays"]
+            OPTS.sen_path_delays = self.char_sram_results["sen_path_measures"]
             OPTS.sen_path_names = self.char_sram_results["sen_path_names"]
-            OPTS.bl_path_delays = self.char_sram_results["bl_path_delays"]
+            OPTS.bl_path_delays = self.char_sram_results["bl_path_measures"]
             OPTS.bl_path_names = self.char_sram_results["bl_path_names"]
   
             

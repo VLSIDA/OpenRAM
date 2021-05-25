@@ -1157,8 +1157,8 @@ class delay(simulation):
             debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
         # Get and save the path delays
         bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)
-        char_sram_data["bl_path_delays"] = bl_delays
-        char_sram_data["sen_path_delays"] = sen_delays
+        char_sram_data["bl_path_measures"] = bl_delays
+        char_sram_data["sen_path_measures"] = sen_delays
         char_sram_data["bl_path_names"] = bl_names
         char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.

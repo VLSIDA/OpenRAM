@@ -71,9 +71,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     global OPTS
 
     # Copy .magicrc file into the output directory
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    magic_file = os.environ.get('OPENRAM_MAGICRC', None)
+    if not magic_file:
+        magic_file = OPTS.openram_tech + "tech/.magicrc"
+        
     if os.path.exists(magic_file):
-        shutil.copy(magic_file, output_path)
+        shutil.copy(magic_file, output_path + "/.magicrc")
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
     

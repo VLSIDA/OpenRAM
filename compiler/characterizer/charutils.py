@@ -11,21 +11,26 @@ import debug
 from globals import OPTS
 
 
-def relative_compare(value1,value2,error_tolerance=0.001):
+def relative_compare(value1, value2, error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
-    return (abs(value1 - value2) / abs(max(value1,value2)) <= error_tolerance)
+    return (abs(value1 - value2) / abs(max(value1, value2)) <= error_tolerance)
 
 
 def parse_spice_list(filename, key):
     """Parses a hspice output.lis file for a key value"""
+
+    lower_key = key.lower()
+
     if OPTS.spice_name == "xa" :
         # customsim has a different output file name
         full_filename="{0}xa.meas".format(OPTS.openram_temp)
     elif OPTS.spice_name == "spectre":
         full_filename = os.path.join(OPTS.openram_temp, "delay_stim.measure")
+    elif OPTS.spice_name in ["Xyce", "xyce"]:
+        full_filename = os.path.join(OPTS.openram_temp, "spice_stdout.log")
     else:
         # ngspice/hspice using a .lis file
-        full_filename="{0}{1}.lis".format(OPTS.openram_temp, filename)
+        full_filename = "{0}{1}.lis".format(OPTS.openram_temp, filename)
 
     try:
         f = open(full_filename, "r")
@@ -33,31 +38,34 @@ def parse_spice_list(filename, key):
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
         debug.archive()
         
-    contents = f.read()
+    contents = f.read().lower()
     f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)
-    val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
+    val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(lower_key), contents)
     if val != None:
-        debug.info(4, "Key = " + key + " Val = " + val.group(1))
+        debug.info(4, "Key = " + lower_key + " Val = " + val.group(1))
         return convert_to_float(val.group(1))
     else:
         return "Failed"
 
-def round_time(time,time_precision=3):
+
+def round_time(time, time_precision=3):
     # times are in ns, so this is how many digits of precision
     # 3 digits = 1ps
     # 4 digits = 0.1ps
     # etc.
-    return round(time,time_precision)
+    return round(time, time_precision)
 
-def round_voltage(voltage,voltag_precision=5):
+
+def round_voltage(voltage, voltage_precision=5):
     # voltages are in volts
     # 3 digits = 1mv
     # 4 digits = 0.1mv
     # 5 digits = 0.01mv
     # 6 digits = 1uv
     # etc
-    return round(voltage,voltage_precision)
+    return round(voltage, voltage_precision)
+
 
 def convert_to_float(number):
     """Converts a string into a (float) number; also converts units(m,u,n,p)"""
@@ -84,7 +92,7 @@ def convert_to_float(number):
                 'n': lambda x: x * 0.000000001,  # nano
                 'p': lambda x: x * 0.000000000001,  # pico
                 'f': lambda x: x * 0.000000000000001  # femto
-                }[unit.group(2)](float(unit.group(1)))
+            }[unit.group(2)](float(unit.group(1)))
 
     # if we weren't able to convert it to a float then error out
     if not type(float_value)==float:
@@ -92,9 +100,10 @@ def convert_to_float(number):
 
     return float_value
 
+
 def check_dict_values_is_float(dict):
     """Checks if all the values are floats. Useful for checking failed Spice measurements."""
     for key, value in dict.items():
-            if type(value)!=float:
-                return False
+        if type(value)!=float:
+            return False
     return True

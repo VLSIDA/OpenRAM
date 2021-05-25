@@ -22,7 +22,7 @@ import getpass
 import subprocess
 
 
-VERSION = "1.1.14"
+VERSION = "1.1.15"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -66,7 +66,7 @@ def parse_args():
         optparse.make_option("-m", "--sim_threads",
                              action="store",
                              type="int",
-                             help="Specify the number of spice simulation threads (default: 2)",
+                             help="Specify the number of spice simulation threads (default: 3)",
                              dest="num_sim_threads"),
         optparse.make_option("-v",
                              "--verbose",
@@ -329,7 +329,7 @@ def read_config(config_file, is_unit_test=True):
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
         config = importlib.import_module(module_name)
-    except:
+    except ImportError:
         debug.error("Unable to read configuration file: {0}".format(config_file), 2)
 
     OPTS.overridden = {}

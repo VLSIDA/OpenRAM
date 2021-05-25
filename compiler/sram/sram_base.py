@@ -225,11 +225,7 @@ class sram_base(design, verilog, lef):
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name)
-
-        if not OPTS.route_supplies:
-            # Do not route the power supply (leave as must-connect pins)
-            return
-
+        
         try:
             from tech import power_grid
             grid_stack = power_grid
@@ -238,38 +234,99 @@ class sram_base(design, verilog, lef):
             # Route a M3/M4 grid
             grid_stack = self.m3_stack
 
-        if OPTS.route_supplies == "grid":
-            from supply_grid_router import supply_grid_router as router
-        elif OPTS.route_supplies:
-            from supply_tree_router import supply_tree_router as router
+        # lowest_coord = self.find_lowest_coords()
+        # highest_coord = self.find_highest_coords()
             
-        rtr=router(grid_stack, self)
+        # # Add two rails to the side
+        # if OPTS.route_supplies == "side":
+        #     supply_pins = {}
+        #     # Find the lowest leftest pin for vdd and gnd
+        #     for (pin_name, pin_index) in [("vdd", 0), ("gnd", 1)]:
+        #         pin_width = 8 * getattr(self, "{}_width".format(grid_stack[2]))
+        #         pin_space = 2 * getattr(self, "{}_space".format(grid_stack[2]))
+        #         supply_pitch = pin_width + pin_space
+
+        #         # Add side power rails on left from bottom to top
+        #         # These have a temporary name and will be connected later.
+        #         # They are here to reserve space now and ensure other pins go beyond
+        #         # their perimeter.
+        #         supply_height = highest_coord.y - lowest_coord.y
+                
+        #         supply_pins[pin_name] = self.add_layout_pin(text=pin_name,
+        #                                                     layer=grid_stack[2],
+        #                                                     offset=lowest_coord + vector(pin_index * supply_pitch, 0),
+        #                                                     width=pin_width,
+        #                                                     height=supply_height)
+
+        if not OPTS.route_supplies:
+            # Do not route the power supply (leave as must-connect pins)
+            return
+        elif OPTS.route_supplies == "grid":
+            from supply_grid_router import supply_grid_router as router
+        else:
+            from supply_tree_router import supply_tree_router as router
+
+        rtr=router(grid_stack, self, side_pin=(OPTS.route_supplies == "side"))
         rtr.route()
 
-        # Find the lowest leftest pin for vdd and gnd
-        for pin_name in ["vdd", "gnd"]:
-            # Copy the pin shape(s) to rectangles
-            for pin in self.get_pins(pin_name):
+        if OPTS.route_supplies == "side":
+            # Find the lowest leftest pin for vdd and gnd
+            for pin_name in ["vdd", "gnd"]:
+                # Copy the pin shape(s) to rectangles
+                for pin in self.get_pins(pin_name):
+                    self.add_rect(pin.layer,
+                                  pin.ll(),
+                                  pin.width(),
+                                  pin.height())
+
+                # Remove the pin shape(s)
+                self.remove_layout_pin(pin_name)
+
+                # Get the lowest, leftest pin
+                pin = rtr.get_ll_pin(pin_name)
+                self.add_layout_pin(pin_name,
+                                    pin.layer,
+                                    pin.ll(),
+                                    pin.width(),
+                                    pin.height())
+            
+        elif OPTS.route_supplies:
+            # Update these as we may have routed outside the region (perimeter pins)
+            lowest_coord = self.find_lowest_coords()
+        
+            # Find the lowest leftest pin for vdd and gnd
+            for pin_name in ["vdd", "gnd"]:
+                # Copy the pin shape(s) to rectangles
+                for pin in self.get_pins(pin_name):
+                    self.add_rect(pin.layer,
+                                  pin.ll(),
+                                  pin.width(),
+                                  pin.height())
+
+                # Remove the pin shape(s)
+                self.remove_layout_pin(pin_name)
+
+                # Get the lowest, leftest pin
+                pin = rtr.get_ll_pin(pin_name)
+
+                pin_width = 2 * getattr(self, "{}_width".format(pin.layer))
+
+                # Add it as an IO pin to the perimeter
+                route_width = pin.rx() - lowest_coord.x
+                pin_offset = vector(lowest_coord.x, pin.by())
                 self.add_rect(pin.layer,
-                              pin.ll(),
-                              pin.width(),
+                              pin_offset,
+                              route_width,
                               pin.height())
 
-            # Remove the pin shape(s)
-            self.remove_layout_pin(pin_name)
-
-            # Get the lowest, leftest pin
-            pin = rtr.get_ll_pin(pin_name)
-
-            # Add it as an IO pin to the perimeter
-            lowest_coord = self.find_lowest_coords()
-            pin_width = pin.rx() - lowest_coord.x
-            pin_offset = vector(lowest_coord.x, pin.by())
-            self.add_layout_pin(pin_name,
-                                pin.layer,
-                                pin_offset,
-                                pin_width,
-                                pin.height())
+                self.add_layout_pin(pin_name,
+                                    pin.layer,
+                                    pin_offset,
+                                    pin_width,
+                                    pin.height())
+        else:
+            # Grid is left with many top level pins
+            pass
 
     def route_escape_pins(self):
         """
@@ -314,7 +371,7 @@ class sram_base(design, verilog, lef):
         from signal_escape_router import signal_escape_router as router
         rtr=router(layers=self.m3_stack,
                    design=self,
-                   margin=4 * self.m3_pitch)
+                   margin=8 * self.m3_pitch)
         rtr.escape_route(pins_to_route)
 
     def compute_bus_sizes(self):

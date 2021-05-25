@@ -586,7 +586,7 @@ class simulation():
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             for i in range(len(bl_names)):
-                bl_names[i] = bl_names[i].split('.')[-1]
+                bl_names[i] = bl_names[i].split(OPTS.hier_seperator)[-1]
         return bl_names[0], bl_names[1]
         
     def get_empty_measure_data_dict(self):

@@ -17,7 +17,7 @@ class signal_escape_router(router):
     A router that routes signals to perimeter and makes pins.
     """
 
-    def __init__(self, layers, design, bbox=None, margin=0, gds_filename=None):
+    def __init__(self, layers, design, bbox=None, margin=0):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -25,7 +25,6 @@ class signal_escape_router(router):
         router.__init__(self,
                         layers=layers,
                         design=design,
-                        gds_filename=gds_filename,
                         bbox=bbox,
                         margin=margin)
 

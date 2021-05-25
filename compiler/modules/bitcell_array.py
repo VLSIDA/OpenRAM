@@ -121,4 +121,4 @@ class bitcell_array(bitcell_base_array):
 
     def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""
-        return inst_name + '.x' + self.cell_inst[row, col].name, self.cell_inst[row, col]
+        return inst_name + "{}x".format(OPTS.hier_seperator) + self.cell_inst[row, col].name, self.cell_inst[row, col]

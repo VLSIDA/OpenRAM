@@ -146,7 +146,7 @@ class stimuli():
             edge. The first clk_time should be 0 and is the initial time that corresponds
             to the initial value.
         """
-        # the initial value is not a clock time
+
         str = "Clock and data value lengths don't match. {0} clock values, {1} data values for {2}"
         debug.check(len(clk_times)==len(data_values),
                     str.format(len(clk_times),
@@ -181,7 +181,7 @@ class stimuli():
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={4}n TARG v({5}) VAL={6} {7}=1 TD={8}n\n\n"
-        self.sf.write(measure_string.format(meas_name,
+        self.sf.write(measure_string.format(meas_name.lower(),
                                             trig_name,
                                             trig_val,
                                             trig_dir,
@@ -194,7 +194,7 @@ class stimuli():
     def gen_meas_find_voltage(self, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
-        self.sf.write(measure_string.format(meas_name,
+        self.sf.write(measure_string.format(meas_name.lower(),
                                             targ_name,
                                             trig_name,
                                             trig_val,
@@ -204,7 +204,7 @@ class stimuli():
     def gen_meas_find_voltage_at_time(self, meas_name, targ_name, time_at):
         """ Creates the .meas statement for voltage at time"""
         measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
-        self.sf.write(measure_string.format(meas_name,
+        self.sf.write(measure_string.format(meas_name.lower(),
                                             targ_name,
                                             time_at))
 
@@ -215,13 +215,13 @@ class stimuli():
             power_exp = "power"
         else:
             power_exp = "par('(-1*v(" + str(self.vdd_name) + ")*I(v" + str(self.vdd_name) + "))')"
-        self.sf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name,
+        self.sf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name.lower(),
                                                                             power_exp,
                                                                             t_initial,
                                                                             t_final))
 
     def gen_meas_value(self, meas_name, dout, t_initial, t_final):
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name, dout, t_initial, t_final)
+        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
@@ -238,8 +238,8 @@ class stimuli():
             reltol = 0.001 # 0.1%
         timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
 
-        self.sf.write(".TEMP {}\n".format(self.temperature))
         if OPTS.spice_name == "ngspice":
+            self.sf.write(".TEMP {}\n".format(self.temperature))
             # UIC is needed for ngspice to converge
             self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
@@ -248,6 +248,7 @@ class stimuli():
             # unless you figure out what these are.
             self.sf.write(".OPTIONS POST=1 RELTOL={0} PROBE method=gear ACCT\n".format(reltol))
         elif OPTS.spice_name == "spectre":
+            self.sf.write(".TEMP {}\n".format(self.temperature))
             self.sf.write("simulator lang=spectre\n")
             if OPTS.use_pex:
                 nestlvl = 1
@@ -255,8 +256,7 @@ class stimuli():
             else:
                 nestlvl = 10
                 spectre_save = "lvlpub"
-            self.sf.write('saveOptions options save={} nestlvl={} pwr=total \n'.format(
-                spectre_save, nestlvl))
+            self.sf.write('saveOptions options save={} nestlvl={} pwr=total \n'.format(spectre_save, nestlvl))
             self.sf.write("simulatorOptions options reltol=1e-3 vabstol=1e-6 iabstol=1e-12 temp={0} try_fast_op=no "
                           "rforce=10m maxnotes=10 maxwarns=10 "
                           " preservenode=all topcheck=fixall "
@@ -265,12 +265,19 @@ class stimuli():
             self.sf.write('tran tran step={} stop={}n ic=node write=spectre.dc errpreset=moderate '
                           ' annotate=status maxiters=5 \n'.format("5p", end_time))
             self.sf.write("simulator lang=spice\n")
-        else:
+        elif OPTS.spice_name in ["hspice", "xa"]:
+            self.sf.write(".TEMP {}\n".format(self.temperature))
             self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
-            if OPTS.spice_name == "hspice":  # for cadence plots
-                self.sf.write(".OPTIONS PSF=1 \n")
-                self.sf.write(".OPTIONS HIER_DELIM=1 \n")
+            self.sf.write(".OPTIONS PSF=1 \n")
+            self.sf.write(".OPTIONS HIER_DELIM=1 \n")
+        elif OPTS.spice_name in ["Xyce", "xyce"]:
+            self.sf.write(".OPTIONS DEVICE TEMP={}\n".format(self.temperature))
+            self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
+            self.sf.write(".OPTIONS LINSOL type=klu\n")
+            self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
+        else:
+            debug.error("Unkown spice simulator {}".format(OPTS.spice_name))
 
         # create plots for all signals
         if not OPTS.use_pex:   # Don't save all for extracted simulations
@@ -278,7 +285,7 @@ class stimuli():
             if OPTS.verbose_level>0:
                 if OPTS.spice_name in ["hspice", "xa"]:
                     self.sf.write(".probe V(*)\n")
-                else:
+                elif OPTS.spice_name != "Xyce":
                     self.sf.write(".plot V(*)\n")
             else:
                 self.sf.write("*.probe V(*)\n")
@@ -312,7 +319,10 @@ class stimuli():
 
         # Adding a commented out supply for simulators where gnd and 0 are not global grounds.
         self.sf.write("\n*Nodes gnd and 0 are the same global ground node in ngspice/hspice/xa. Otherwise, this source may be needed.\n")
-        self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
+        if OPTS.spice_name in ["Xyce", "xyce"]:
+            self.sf.write("V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
+        else:
+            self.sf.write("*V{0} {0} {1} {2}\n".format(self.gnd_name, gnd_node_name, 0.0))
 
     def run_sim(self, name):
         """ Run hspice in batch mode and output rawfile to parse. """
@@ -348,6 +358,19 @@ class stimuli():
                                                            OPTS.num_sim_threads,
                                                            temp_stim,
                                                            OPTS.openram_temp)
+            valid_retcode=0
+        elif OPTS.spice_name in ["Xyce", "xyce"]:
+            if OPTS.num_sim_threads > 1 and OPTS.mpi_name:
+                mpi_cmd = "{0} -np {1}".format(OPTS.mpi_exe,
+                                               OPTS.num_sim_threads)
+            else:
+                mpi_cmd = ""
+
+            cmd = "{0} {1} -o {3}timing.lis {2}".format(mpi_cmd,
+                                                        OPTS.spice_exe,
+                                                        temp_stim,
+                                                        OPTS.openram_temp)
+
             valid_retcode=0
         else:
             # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit

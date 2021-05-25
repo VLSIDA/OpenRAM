@@ -67,18 +67,15 @@ class elmore(simulation):
                                                load,
                                                total_delay.delay / 1e3,
                                                total_delay.slew / 1e3))
-
-            # Delay is only calculated on a single port and replicated for now.
-            for port in self.all_ports:
-                for mname in self.delay_meas_names + self.power_meas_names:
-                    if "power" in mname:
-                        port_data[port][mname].append(power.dynamic)
-                    elif "delay" in mname and port in self.read_ports:
-                        port_data[port][mname].append(total_delay.delay / 1e3)
-                    elif "slew" in mname and port in self.read_ports:
-                        port_data[port][mname].append(total_delay.slew / 1e3)
-                    else:
-                        debug.error("Measurement name not recognized: {}".format(mname), 1)
+                # Delay is only calculated on a single port and replicated for now.
+                for port in self.all_ports:
+                    for mname in self.delay_meas_names + self.power_meas_names:
+                        if "power" in mname:
+                            port_data[port][mname].append(power.dynamic)
+                        elif "delay" in mname and port in self.read_ports:
+                            port_data[port][mname].append(total_delay.delay / 1e3)
+                        elif "slew" in mname and port in self.read_ports:
+                            port_data[port][mname].append(total_delay.slew / 1e3)
 
         # Margin for error in period. Calculated by averaging required margin for a small and large 
         # memory. FIXME: margin is quite large, should be looked into.

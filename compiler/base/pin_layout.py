@@ -139,13 +139,13 @@ class pin_layout:
         min_area = drc("{}_minarea".format(self.layer))
         pass
 
-    def inflate(self, spacing=None):
+    def inflate(self, spacing=None, multiple=0.5):
         """
         Inflate the rectangle by the spacing (or other rule)
         and return the new rectangle.
         """
         if not spacing:
-            spacing = 0.5*drc("{0}_to_{0}".format(self.layer))
+            spacing = multiple*drc("{0}_to_{0}".format(self.layer))
 
         (ll, ur) = self.rect
         spacing = vector(spacing, spacing)
@@ -154,15 +154,23 @@ class pin_layout:
 
         return (newll, newur)
 
+    def inflated_pin(self, spacing=None, multiple=0.5):
+        """
+        Inflate the rectangle by the spacing (or other rule)
+        and return the new rectangle.
+        """
+        inflated_area = self.inflate(spacing, multiple)
+        return pin_layout(self.name, inflated_area, self.layer)
+
     def intersection(self, other):
         """ Check if a shape overlaps with a rectangle  """
         (ll, ur) = self.rect
         (oll, our) = other.rect
 
         min_x = max(ll.x, oll.x)
-        max_x = min(ll.x, oll.x)
+        max_x = min(ur.x, our.x)
         min_y = max(ll.y, oll.y)
-        max_y = min(ll.y, oll.y)
+        max_y = min(ur.y, our.y)
 
         return [vector(min_x, min_y), vector(max_x, max_y)]
 
@@ -577,6 +585,30 @@ class pin_layout:
                 return r
 
         return None
+
+    def cut(self, shape):
+        """
+        Return a set of shapes that are this shape minus the argument shape.
+        """
+        # Make the unique coordinates in X and Y directions
+        x_offsets = sorted([self.lx(), self.rx(), shape.lx(), shape.rx()])
+        y_offsets = sorted([self.by(), self.uy(), shape.by(), shape.uy()])
+
+        new_shapes = []
+        # Create all of the shapes
+        for x1, x2 in zip(x_offsets[0:], x_offsets[1:]):
+            if x1==x2:
+                continue
+            for y1, y2 in zip(y_offsets[0:], y_offsets[1:]):
+                if y1==y2:
+                    continue
+                new_shape = pin_layout("", [vector(x1, y1), vector(x2, y2)], self.lpp)
+                # Don't add the existing shape in if it overlaps the pin shape
+                if new_shape.contains(shape):
+                    continue
+                new_shapes.append(new_shape)
+
+        return new_shapes
 
     def same_lpp(self, lpp1, lpp2):
         """

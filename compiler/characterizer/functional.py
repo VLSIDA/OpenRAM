@@ -81,7 +81,7 @@ class functional(simulation):
         self.create_graph()
         self.set_internal_spice_names()
         self.q_name, self.qbar_name = self.get_bit_name()
-        debug.info(2, "q name={}\nqbar name={}".format(self.q_name, self.qbar_name))
+        debug.info(2, "q name={0}\nqbar name={1}".format(self.q_name, self.qbar_name))
 
         # Number of checks can be changed
         self.num_cycles = cycles
@@ -144,7 +144,7 @@ class functional(simulation):
         for port in self.write_ports:
             addr = self.gen_addr()
             (word, spare) = self.gen_data()
-            combined_word = "{}+{}".format(word, spare)            
+            combined_word = "{0}+{1}".format(word, spare)
             comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
             self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
@@ -167,7 +167,7 @@ class functional(simulation):
                 self.add_noop_one_port(port)
             else:
                 (addr, word, spare) = self.get_data()
-                combined_word = "{}+{}".format(word, spare)
+                combined_word = "{0}+{1}".format(word, spare)
                 comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                 self.add_read_one_port(comment, addr, port)
                 self.add_read_check(word, port)
@@ -197,7 +197,7 @@ class functional(simulation):
                         self.add_noop_one_port(port)
                     else:
                         (word, spare) = self.gen_data()
-                        combined_word = "{}+{}".format(word, spare)
+                        combined_word = "{0}+{1}".format(word, spare)
                         comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
                         self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
@@ -213,7 +213,7 @@ class functional(simulation):
                         (word, spare) = self.gen_data()
                         wmask  = self.gen_wmask()
                         new_word = self.gen_masked_data(old_word, word, wmask)
-                        combined_word = "{}+{}".format(word, spare)
+                        combined_word = "{0}+{1}".format(word, spare)
                         comment = self.gen_cycle_comment("partial_write", combined_word, addr, wmask, port, self.t_current)
                         self.add_write_one_port(comment, addr, word + spare, wmask, port)
                         self.stored_words[addr] = new_word
@@ -222,7 +222,7 @@ class functional(simulation):
                 else:
                     (addr, word) = random.choice(list(self.stored_words.items()))
                     spare = self.stored_spares[addr[:self.addr_spare_index]]
-                    combined_word = "{}+{}".format(word, spare)
+                    combined_word = "{0}+{1}".format(word, spare)
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -363,7 +363,7 @@ class functional(simulation):
         self.stim_sp = "functional_stim.sp"
         temp_stim = "{0}/{1}".format(self.output_path, self.stim_sp)
         self.sf = open(temp_stim, "w")
-        self.sf.write("* Functional test stimulus file for {}ns period\n\n".format(self.period))
+        self.sf.write("* Functional test stimulus file for {0}ns period\n\n".format(self.period))
         self.stim = stimuli(self.sf, self.corner)
 
         # Write include statements
@@ -387,16 +387,16 @@ class functional(simulation):
 
         # Write important signals to stim file
         self.sf.write("\n\n* Important signals for debug\n")
-        self.sf.write("* bl: {}\n".format(self.bl_name.format(port)))
-        self.sf.write("* br: {}\n".format(self.br_name.format(port)))
-        self.sf.write("* s_en: {}\n".format(self.sen_name))
-        self.sf.write("* q: {}\n".format(self.q_name))
-        self.sf.write("* qbar: {}\n".format(self.qbar_name))
+        self.sf.write("* bl: {0}\n".format(self.bl_name.format(port)))
+        self.sf.write("* br: {0}\n".format(self.br_name.format(port)))
+        self.sf.write("* s_en: {0}\n".format(self.sen_name))
+        self.sf.write("* q: {0}\n".format(self.q_name))
+        self.sf.write("* qbar: {0}\n".format(self.qbar_name))
 
         # Write debug comments to stim file
         self.sf.write("\n\n* Sequence of operations\n")
         for comment in self.fn_cycle_comments:
-            self.sf.write("*{}\n".format(comment))
+            self.sf.write("*{0}\n".format(comment))
 
         # Generate data input bits
         self.sf.write("\n* Generation of data and address signals\n")
@@ -414,10 +414,10 @@ class functional(simulation):
         # Generate control signals
         self.sf.write("\n * Generation of control signals\n")
         for port in self.all_ports:
-            self.stim.gen_pwl("CSB{}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
+            self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
 
         for port in self.readwrite_ports:
-            self.stim.gen_pwl("WEB{}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
+            self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
 
         # Generate wmask bits
         for port in self.write_ports:
@@ -472,15 +472,15 @@ class functional(simulation):
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
 
-    #FIXME: Similar function to delay.py, refactor this
+    # FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
-                                              "supported for characterization. Storage nets={}").format(storage_names))
-        q_name = cell_name + '.' + str(storage_names[0])
-        qbar_name = cell_name + '.' + str(storage_names[1])
+                                              "supported for characterization. Storage nets={0}").format(storage_names))
+        q_name = cell_name + OPTS.hier_seperator + str(storage_names[0])
+        qbar_name = cell_name + OPTS.hier_seperator + str(storage_names[1])
 
         return (q_name, qbar_name)
 

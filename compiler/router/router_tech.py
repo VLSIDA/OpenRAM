@@ -123,7 +123,7 @@ class router_tech:
 
         min_wire_width = drc("minwidth_{0}".format(layer_name), 0, math.inf)
 
-        min_width = drc("minwidth_{0}".format(layer_name), self.route_track_width * min_wire_width, math.inf)
+        min_width = self.route_track_width * drc("minwidth_{0}".format(layer_name), self.route_track_width * min_wire_width, math.inf)
         min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), self.route_track_width * min_wire_width, math.inf)
 
         return (min_width, min_spacing)

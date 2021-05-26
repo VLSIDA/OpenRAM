@@ -15,6 +15,7 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
+from tech import spice
 
 
 class sram_base(design, verilog, lef):
@@ -81,8 +82,20 @@ class sram_base(design, verilog, lef):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
 
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
+        # Standard supply and ground names
+        try:
+            self.vdd_name = spice["power"]
+        except KeyError:
+            self.vdd_name = "vdd"
+        try:
+            self.gnd_name = spice["ground"]
+        except KeyError:
+            self.gnd_name = "gnd"
+
+        self.add_pin(self.vdd_name, "POWER")
+        self.add_pin(self.gnd_name, "GROUND")
+        self.ext_supplies = [self.vdd_name, self.gnd_name]
+        self.ext_supply = {"vdd" : self.vdd_name, "gnd" : self.gnd_name}
 
     def add_global_pex_labels(self):
         """
@@ -224,7 +237,7 @@ class sram_base(design, verilog, lef):
         # This will either be used to route or left unconnected.
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
-                self.copy_power_pins(inst, pin_name)
+                self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
         
         try:
             from tech import power_grid
@@ -284,7 +297,7 @@ class sram_base(design, verilog, lef):
 
                 # Get the lowest, leftest pin
                 pin = rtr.get_ll_pin(pin_name)
-                self.add_layout_pin(pin_name,
+                self.add_layout_pin(self.ext_supply[pin_name],
                                     pin.layer,
                                     pin.ll(),
                                     pin.width(),
@@ -319,7 +332,7 @@ class sram_base(design, verilog, lef):
                               route_width,
                               pin.height())
 
-                self.add_layout_pin(pin_name,
+                self.add_layout_pin(self.ext_supply[pin_name],
                                     pin.layer,
                                     pin_offset,
                                     pin_width,
@@ -571,7 +584,7 @@ class sram_base(design, verilog, lef):
                 temp.append("bank_spare_wen{0}[{1}]".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
-        temp.extend(["vdd", "gnd"])
+        temp.extend(self.ext_supplies)
         self.connect_inst(temp)
 
         return self.bank_insts[-1]
@@ -620,7 +633,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("addr{}[{}]".format(port, bit + self.col_addr_size))
                 outputs.append("a{}[{}]".format(port, bit + self.col_addr_size))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
         return insts
 
@@ -638,7 +651,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("addr{}[{}]".format(port, bit))
                 outputs.append("a{}[{}]".format(port, bit))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
         return insts
 
@@ -660,7 +673,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("din{}[{}]".format(port, bit))
                 outputs.append("bank_din{}[{}]".format(port, bit))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
         return insts
 
@@ -682,7 +695,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("wmask{}[{}]".format(port, bit))
                 outputs.append("bank_wmask{}[{}]".format(port, bit))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_suplies)
 
         return insts
 
@@ -704,7 +717,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("spare_wen{}[{}]".format(port, bit))
                 outputs.append("bank_spare_wen{}[{}]".format(port, bit))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port), "vdd", "gnd"])
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
         return insts
 
@@ -735,7 +748,7 @@ class sram_base(design, verilog, lef):
             if port in self.write_ports:
                 temp.append("w_en{}".format(port))
             temp.append("p_en_bar{}".format(port))
-            temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port), "vdd", "gnd"])
+            temp.extend(["wl_en{}".format(port), "clk_buf{}".format(port)] + self.ext_supplies)
             self.connect_inst(temp)
 
         return insts

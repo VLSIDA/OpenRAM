@@ -14,6 +14,7 @@ from .charutils import *
 import tech
 import numpy as np
 from globals import OPTS
+from tech import spice
 
 
 class lib:
@@ -21,6 +22,15 @@ class lib:
 
     def __init__(self, out_dir, sram, sp_file, use_model=OPTS.analytical_delay):
 
+        try:
+            self.vdd_name = spice["power"]
+        except KeyError:
+            self.vdd_name = "vdd"
+        try:
+            self.gnd_name = spice["ground"]
+        except KeyError:
+            self.gnd_name = "gnd"
+            
         self.out_dir = out_dir
         self.sram = sram
         self.sp_file = sp_file
@@ -249,8 +259,8 @@ class lib:
         self.lib.write("    default_max_fanout   : 4.0 ;\n")
         self.lib.write("    default_connection_class : universal ;\n\n")
 
-        self.lib.write("    voltage_map ( VDD, {} );\n".format(self.voltage))
-        self.lib.write("    voltage_map ( GND, 0 );\n\n")
+        self.lib.write("    voltage_map ( {0}, {1} );\n".format(self.vdd_name.upper(), self.voltage))
+        self.lib.write("    voltage_map ( {0}, 0 );\n\n".format(self.gnd_name.upper()))
 
     def create_list(self,values):
         """ Helper function to create quoted, line wrapped list """
@@ -582,12 +592,12 @@ class lib:
             self.lib.write("        }\n")
 
     def write_pg_pin(self):
-        self.lib.write("    pg_pin(vdd) {\n")
-        self.lib.write("         voltage_name : VDD;\n")
+        self.lib.write("    pg_pin({0}) ".format(self.vdd_name) + "{\n")
+        self.lib.write("         voltage_name : {};\n".format(self.vdd_name.upper()))
         self.lib.write("         pg_type : primary_power;\n")
         self.lib.write("    }\n\n")
-        self.lib.write("    pg_pin(gnd) {\n")
-        self.lib.write("         voltage_name : GND;\n")
+        self.lib.write("    pg_pin({0}) ".format(self.gnd_name) + "{\n")
+        self.lib.write("         voltage_name : {};\n".format(self.gnd_name.upper()))
         self.lib.write("         pg_type : primary_ground;\n")
         self.lib.write("    }\n\n")
 

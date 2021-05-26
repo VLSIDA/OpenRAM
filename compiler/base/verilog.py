@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import math
+from tech import spice
 
 
 class verilog:

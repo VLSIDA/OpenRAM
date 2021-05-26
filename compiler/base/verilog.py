@@ -28,10 +28,19 @@ class verilog:
         else:
             self.vf.write("\n")
 
+        try:
+            self.vdd_name = spice["power"]
+        except KeyError:
+            self.vdd_name = "vdd"
+        try:
+            self.gnd_name = spice["ground"]
+        except KeyError:
+            self.gnd_name = "gnd"
+            
         self.vf.write("module {0}(\n".format(self.name))
         self.vf.write("`ifdef USE_POWER_PINS\n")
-        self.vf.write("    vdd,\n")
-        self.vf.write("    gnd,\n")
+        self.vf.write("    {},\n".format(self.vdd_name))
+        self.vf.write("    {},\n".format(self.gnd_name))
         self.vf.write("`endif\n")
         
         for port in self.all_ports:
@@ -71,8 +80,8 @@ class verilog:
         self.vf.write("\n")
 
         self.vf.write("`ifdef USE_POWER_PINS\n")
-        self.vf.write("    inout vdd;\n")
-        self.vf.write("    inout gnd;\n")
+        self.vf.write("    inout {};\n".format(self.vdd_name))
+        self.vf.write("    inout {};\n".format(self.gnd_name))
         self.vf.write("`endif\n")
         
         for port in self.all_ports:

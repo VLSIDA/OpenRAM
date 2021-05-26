@@ -695,7 +695,7 @@ class sram_base(design, verilog, lef):
                 inputs.append("wmask{}[{}]".format(port, bit))
                 outputs.append("bank_wmask{}[{}]".format(port, bit))
 
-            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_suplies)
+            self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
         return insts
 

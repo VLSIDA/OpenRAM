@@ -209,7 +209,7 @@ class sram_base(design, verilog, lef):
 
         self.add_lvs_correspondence_points()
 
-        #self.offset_all_coordinates()
+        self.offset_all_coordinates()
 
         highest_coord = self.find_highest_coords()
         self.width = highest_coord[0]

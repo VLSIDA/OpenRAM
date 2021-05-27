@@ -1378,6 +1378,12 @@ class layout():
         layer_stack = self.active_stack
         tap_spacing = 2
         nwell_offset = vector(self.nwell_width, self.nwell_width)
+
+        # Every nth tap is connected to gnd
+        period = 5
+
+        # BOTTOM
+        count = 0
         loc = ll + nwell_offset.scale(tap_spacing, 0)
         end_loc = lr - nwell_offset.scale(tap_spacing, 0)
         while loc.x < end_loc.x:
@@ -1385,11 +1391,19 @@ class layout():
                                 offset=loc,
                                 implant_type="n",
                                 well_type="n")
-            self.add_via_stack_center(from_layer="li",
-                                      to_layer="m1",
-                                      offset=loc)
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m1",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="gnd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
             loc += nwell_offset.scale(tap_spacing, 0)
 
+        # TOP
+        count = 0
         loc = ul + nwell_offset.scale(tap_spacing, 0)
         end_loc = ur - nwell_offset.scale(tap_spacing, 0)
         while loc.x < end_loc.x:
@@ -1397,11 +1411,19 @@ class layout():
                                 offset=loc,
                                 implant_type="n",
                                 well_type="n")
-            self.add_via_stack_center(from_layer="li",
-                                      to_layer="m2",
-                                      offset=loc)
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m1",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="gnd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
             loc += nwell_offset.scale(tap_spacing, 0)
 
+        # LEFT
+        count = 0
         loc = ll + nwell_offset.scale(0, tap_spacing)
         end_loc = ul - nwell_offset.scale(0, tap_spacing)
         while loc.y < end_loc.y:
@@ -1409,11 +1431,19 @@ class layout():
                                 offset=loc,
                                 implant_type="n",
                                 well_type="n")
-            self.add_via_stack_center(from_layer="li",
-                                      to_layer="m2",
-                                      offset=loc)
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m2",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="gnd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
             loc += nwell_offset.scale(0, tap_spacing)
 
+        # RIGHT
+        count = 0
         loc = lr + nwell_offset.scale(0, tap_spacing)
         end_loc = ur - nwell_offset.scale(0, tap_spacing)
         while loc.y < end_loc.y:
@@ -1421,9 +1451,15 @@ class layout():
                                 offset=loc,
                                 implant_type="n",
                                 well_type="n")
-            self.add_via_stack_center(from_layer="li",
-                                      to_layer="m2",
-                                      offset=loc)
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m2",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="gnd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
             loc += nwell_offset.scale(0, tap_spacing)
 
         # Add the gnd ring

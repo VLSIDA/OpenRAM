@@ -898,7 +898,7 @@ class router(router_tech):
         Adds a supply pin to the perimeter and resizes the bounding box.
         """
         pg = pin_group(name, [], self)
-        if name == "vdd":
+        if name == "gnd":
             offset = width + 1
         else:
             offset = 1
@@ -927,7 +927,7 @@ class router(router_tech):
         pg = pin_group(name, [], self)
         # Offset the vdd inside one ring width
         # Units are in routing grids
-        if name == "vdd":
+        if name == "gnd":
             offset = width + 1
         else:
             offset = 1

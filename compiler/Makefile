@@ -68,7 +68,7 @@ OPENRAM_TECHS = $(subst :, ,$(OPENRAM_TECH))
 TECH_DIR := $(word 1, $(foreach dir,$(OPENRAM_TECHS),$(wildcard $(dir)/$(TECH))))
 CONFIG_DIR = $(OPENRAM_HOME)/model_configs
 MODEL_CONFIGS = $(wildcard $(CONFIG_DIR)/*.py)
-SIM_DIR = $(OPENRAM_HOME)/model_data
+SIM_DIR = $(OPENRAM_HOME)/model_data/$(TECH)
 CSV_DIR = $(TECH_DIR)/sim_data
 OPTS = 
 # Characterize and perform DRC/LVS
@@ -90,8 +90,8 @@ model: $(MODEL_CONFIGS)
 	
 $(MODEL_CONFIGS):
 	$(eval bname=$(basename $(notdir $@)))
-	mkdir -p $(SIM_DIR)/$(TECH)/$(bname)
-	python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(TECH)/$(bname) -o $(bname) -t $(TECH) $@ 2>&1 > /dev/null
+	mkdir -p $(SIM_DIR)/$(bname)
+	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $@ 2>&1 > /dev/null
 	
 clean:
 	find . -name \*.pyc -exec rm {} \;

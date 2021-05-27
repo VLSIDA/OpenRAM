@@ -22,7 +22,7 @@ from globals import OPTS
 class stimuli():
     """ Class for providing stimuli functions """
 
-    def __init__(self, stim_file, corner):
+    def __init__(self, stim_file, corner):        
         self.vdd_name = "vdd"
         self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]

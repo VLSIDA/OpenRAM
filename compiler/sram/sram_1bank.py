@@ -326,6 +326,9 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
+        # Some technologies have an isolation
+        self.add_dnwell(inflate=2)
+
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             self.route_escape_pins()

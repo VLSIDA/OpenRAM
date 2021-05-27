@@ -51,7 +51,11 @@ class timing_sram_test(openram_test):
         import tech
         loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
-        data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        load_slews = []
+        for slew in slews:
+            for load in loads:
+                load_slews.append((load, slew))
+        data, port_data = d.analyze(probe_address, probe_data, load_slews)
         # Combine info about port into all data
         data.update(port_data[0])
 

@@ -41,6 +41,14 @@ class sram_base(design, verilog, lef):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        try:
+            from tech import power_grid
+            self.supply_stack = power_grid
+        except ImportError:
+            # if no power_grid is specified by tech we use sensible defaults
+            # Route a M3/M4 grid
+            self.supply_stack = self.m3_stack
+
     def add_pins(self):
         """ Add pins for entire SRAM. """
 
@@ -239,32 +247,21 @@ class sram_base(design, verilog, lef):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
         
-        try:
-            from tech import power_grid
-            grid_stack = power_grid
-        except ImportError:
-            # if no power_grid is specified by tech we use sensible defaults
-            # Route a M3/M4 grid
-            grid_stack = self.m3_stack
-
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
         elif OPTS.route_supplies == "grid":
             from supply_grid_router import supply_grid_router as router
-            rtr=router(layers=grid_stack,
-                       design=self,
-                       bbox=bbox)
         else:
             from supply_tree_router import supply_tree_router as router
-            rtr=router(layers=grid_stack,
-                       design=self,
-                       bbox=bbox,
-                       pin_type=OPTS.route_supplies)
+        rtr=router(layers=self.supply_stack,
+                   design=self,
+                   bbox=bbox,
+                   pin_type=OPTS.supply_pin_type)
 
         rtr.route()
 
-        if OPTS.route_supplies in ["left", "right", "top", "bottom", "ring"]:
+        if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
             # Find the lowest leftest pin for vdd and gnd
             for pin_name in ["vdd", "gnd"]:
                 # Copy the pin shape(s) to rectangles
@@ -286,7 +283,7 @@ class sram_base(design, verilog, lef):
                                         pin.width(),
                                         pin.height())
             
-        elif OPTS.route_supplies or OPTS.route_supplies == "single":
+        elif OPTS.route_supplies and OPTS.supply_pin_type == "single":
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
         

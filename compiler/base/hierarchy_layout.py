@@ -1190,19 +1190,19 @@ class layout():
 
         ll_offset = vector(0, 0)
         ur_offset = vector(0, 0)
-        if side in ["ring", "top"]:
+        if side in ["ring", "top", "all"]:
             ur_offset += vector(0, big_margin)
         else:
             ur_offset += vector(0, little_margin)
-        if side in ["ring", "bottom"]:
+        if side in ["ring", "bottom", "all"]:
             ll_offset += vector(0, big_margin)
         else:
             ll_offset += vector(0, little_margin)
-        if side in ["ring", "left"]:
+        if side in ["ring", "left", "all"]:
             ll_offset += vector(big_margin, 0)
         else:
             ll_offset += vector(little_margin, 0)
-        if side in ["ring", "right"]:
+        if side in ["ring", "right", "all"]:
             ur_offset += vector(big_margin, 0)
         else:
             ur_offset += vector(little_margin, 0)

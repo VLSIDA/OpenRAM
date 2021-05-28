@@ -9,6 +9,7 @@ from vector import vector
 from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
+from router_tech import router_tech
 from globals import OPTS
 
 
@@ -334,11 +335,21 @@ class sram_1bank(sram_base):
         # Route the pins to the perimeter
         pre_bbox = None
         if OPTS.perimeter_pins:
+            rt = router_tech(self.supply_stack, 1)
+
+            if OPTS.supply_pin_type in ["ring", "left", "right", "top", "bottom"]:
+                big_margin = 12 * rt.track_width
+                little_margin = 2 * rt.track_width
+            else:
+                big_margin = 6 * rt.track_width
+                little_margin = 0
+
             pre_bbox = self.get_bbox(side="ring",
-                                     big_margin=self.m3_pitch)
-            bbox = self.get_bbox(side=OPTS.route_supplies,
-                                 big_margin=14 * self.m3_pitch,
-                                 little_margin=4 * self.m3_pitch)
+                                     big_margin=rt.track_width)
+
+            bbox = self.get_bbox(side=OPTS.supply_pin_type,
+                                 big_margin=big_margin,
+                                 little_margin=little_margin)
             self.route_escape_pins(bbox)
             
         # Route the supplies first since the MST is not blockage aware

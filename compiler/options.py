@@ -99,6 +99,7 @@ class options(optparse.Values):
     netlist_only = False
     # Whether we should do the final power routing
     route_supplies = "tree"
+    supply_pin_type = "ring"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.

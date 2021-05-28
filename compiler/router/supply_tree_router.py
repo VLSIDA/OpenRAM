@@ -34,7 +34,7 @@ class supply_tree_router(router):
         # The pin escape router already made the bounding box big enough,
         # so we can use the regular bbox here.
         if pin_type:
-            debug.check(pin_type in ["left", "right", "top", "bottom", "single", "ring"],
+            debug.check(pin_type in ["left", "right", "top", "bottom", "tree", "ring"],
                         "Invalid pin type {}".format(pin_type))
         self.pin_type = pin_type
         router.__init__(self,

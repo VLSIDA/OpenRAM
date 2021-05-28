@@ -89,6 +89,9 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     # Do not run DRC for extraction/conversion
     f.write("drc off\n")
+    f.write("set VDD vdd\n")
+    f.write("set GND gnd\n")
+    f.write("set SUB gnd\n")
     f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
@@ -244,11 +247,14 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
-    if os.path.exists(full_setup_file):
+    # Copy .magicrc file into the output directory
+    setup_file = os.environ.get('OPENRAM_NETGENRC', None)
+    if not setup_file:
+        setup_file = OPTS.openram_tech + "tech/setup.tcl"
+        
+    if os.path.exists(setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(full_setup_file, output_path)
+        shutil.copy(setup_file, output_path)
     else:
         setup_file = 'nosetup'
 

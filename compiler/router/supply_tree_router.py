@@ -75,7 +75,6 @@ class supply_tree_router(router):
             self.add_ring_supply_pin(self.vdd_name)
             self.add_ring_supply_pin(self.gnd_name)
 
-        self.write_debug_gds("foo.gds", False)
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()

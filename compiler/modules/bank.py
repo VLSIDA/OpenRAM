@@ -625,9 +625,9 @@ class bank(design.design):
             self.copy_power_pins(inst, "vdd", add_vias=False)
             self.copy_power_pins(inst, "gnd", add_vias=False)
 
-        #if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
-        #    for pin_name, supply_name in zip(['vpb','vnb'],['vdd','gnd']):
-        #        self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
+        if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
+            for pin_name, supply_name in zip(['vpb','vnb'],['vdd','gnd']):
+                self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.
         # Other decoders already have them.

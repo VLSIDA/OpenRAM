@@ -132,7 +132,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         for subinst, conns in zip(self.insts, self.conns):
             if subinst in self.graph_inst_exclude:
                 continue
-            subinst_name = inst_name + '.X' + subinst.name
+            subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             subinst.mod.build_graph(graph, subinst_name, subinst_ports)
 
@@ -148,7 +148,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         port_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
         for subinst, conns in zip(self.insts, self.conns):
-            subinst_name = inst_name + '.X' + subinst.name
+            subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             for si_port, conn in zip(subinst_ports, conns):
                 # Only add for first occurrence
@@ -166,7 +166,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             if conn in port_dict:
                 converted_conns.append(port_dict[conn])
             else:
-                converted_conns.append("{}.{}".format(inst_name, conn))
+                converted_conns.append("{0}{2}{1}".format(inst_name, conn, OPTS.hier_seperator))
         return converted_conns
 
     def add_graph_edges(self, graph, port_nets):

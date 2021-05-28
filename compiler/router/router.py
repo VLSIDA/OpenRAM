@@ -75,35 +75,20 @@ class router(router_tech):
         self.margin = margin
         self.init_bbox(bbox, margin)
 
+        # New pins if we create a ring or side pins or etc.
+        self.new_pins = {}
+
     def init_bbox(self, bbox=None, margin=0):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
         """
-
-        # If didn't specify a gds blockage file, write it out to read the gds
-        # This isn't efficient, but easy for now
-        # Load the gds file and read in all the shapes
-        self.cell.gds_write(self.gds_filename)
-        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
-        self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(self.gds_filename)
-        self.top_name = self.layout.rootStructureName
-        
         if not bbox:
-            # The boundary will determine the limits to the size
-            # of the routing grid
-            self.boundary = self.layout.measureBoundary(self.top_name)
-            # These must be un-indexed to get rid of the matrix type
-            self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-            self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+            self.bbox = self.cell.get_bbox(margin)
         else:
-            self.ll, self.ur = bbox
+            self.bbox = bbox
 
-        margin_offset = vector(margin, margin)
-        self.bbox = (self.ll - margin_offset, self.ur + margin_offset)
-        size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1} with perimeter margin {2}".format(size.x, size.y, margin))
-        
+        (self.ll, self.ur) = self.bbox
+
     def get_bbox(self):
         return self.bbox
     
@@ -890,25 +875,96 @@ class router(router_tech):
         # Clearing the blockage of this pin requires the inflated pins
         self.clear_blockages(pin_name)
 
-    def add_side_supply_pin(self, name, side="left", width=2):
+    def add_side_supply_pin(self, name, side="left", width=3, space=2):
         """
         Adds a supply pin to the perimeter and resizes the bounding box.
         """
         pg = pin_group(name, [], self)
+        # Offset two spaces inside and one between the rings
         if name == "vdd":
-            offset = width
+            offset = width + 2 * space
         else:
-            offset = 0
-        
+            offset = space
+        if side in ["left", "right"]:
+            layers = [1]
+        else:
+            layers = [0]
+
         pg.grids = set(self.rg.get_perimeter_list(side=side,
                                                   width=width,
                                                   margin=self.margin,
                                                   offset=offset,
-                                                  layers=[1]))
+                                                  layers=layers))
         pg.enclosures = pg.compute_enclosures()
         pg.pins = set(pg.enclosures)
+        debug.check(len(pg.pins)==1, "Too many pins for a side supply.")
+
         self.cell.pin_map[name].update(pg.pins)
         self.pin_groups[name].append(pg)
+
+        self.new_pins[name] = pg.pins
+        
+    def add_ring_supply_pin(self, name, width=3, space=2):
+        """
+        Adds a ring supply pin that goes inside the given bbox.
+        """
+        pg = pin_group(name, [], self)
+        # Offset two spaces inside and one between the rings
+        # Units are in routing grids
+        if name == "vdd":
+            offset = width + 2 * space
+        else:
+            offset = space
+
+        # LEFT
+        left_grids = set(self.rg.get_perimeter_list(side="left_ring",
+                                                    width=width,
+                                                    margin=self.margin,
+                                                    offset=offset,
+                                                    layers=[1]))
+
+        # RIGHT
+        right_grids = set(self.rg.get_perimeter_list(side="right_ring",
+                                                     width=width,
+                                                     margin=self.margin,
+                                                     offset=offset,
+                                                     layers=[1]))
+        # TOP
+        top_grids = set(self.rg.get_perimeter_list(side="top_ring",
+                                                   width=width,
+                                                   margin=self.margin,
+                                                   offset=offset,
+                                                   layers=[0]))
+        # BOTTOM
+        bottom_grids = set(self.rg.get_perimeter_list(side="bottom_ring",
+                                                      width=width,
+                                                      margin=self.margin,
+                                                      offset=offset,
+                                                      layers=[0]))
+
+        horizontal_layer_grids = left_grids | right_grids
+        
+        # Must move to the same layer to find layer 1 corner grids
+        vertical_layer_grids = set()
+        for x in top_grids | bottom_grids:
+            vertical_layer_grids.add(vector3d(x.x, x.y, 1))
+
+        # Add vias in the overlap points
+        horizontal_corner_grids = vertical_layer_grids & horizontal_layer_grids
+        for g in horizontal_corner_grids:
+            self.add_via(g)
+
+        # The big pin group, but exclude the corners from the pins
+        pg.grids = (left_grids | right_grids | top_grids | bottom_grids)
+        pg.enclosures = pg.compute_enclosures()
+        pg.pins = set(pg.enclosures)
+        
+        self.cell.pin_map[name].update(pg.pins)
+        self.pin_groups[name].append(pg)
+        self.new_pins[name] = pg.pins
+
+    def get_new_pins(self, name):
+        return self.new_pins[name]
         
     def add_perimeter_target(self, side="all"):
         """

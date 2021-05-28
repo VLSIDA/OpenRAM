@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import optparse
-import getpass
 import os
+
 
 class options(optparse.Values):
     """
@@ -89,6 +89,8 @@ class options(optparse.Values):
     use_specified_corners = None
     # Allows specification of model data
     sim_data_path = None
+    # A list of load/slew tuples
+    use_specified_load_slew = None
 
     ###################
     # Run-time vs accuracy options.
@@ -99,6 +101,7 @@ class options(optparse.Values):
     netlist_only = False
     # Whether we should do the final power routing
     route_supplies = "tree"
+    supply_pin_type = "ring"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
@@ -137,8 +140,11 @@ class options(optparse.Values):
     # Number of threads to use
     num_threads = 1
     # Number of threads to use in ngspice/hspice
-    num_sim_threads = 2
+    num_sim_threads = 3
 
+    # Some tools (e.g. Xyce) use other separators like ":"
+    hier_seperator = "."
+    
     # Should we print out the banner at startup
     print_banner = True
 

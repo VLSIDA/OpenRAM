@@ -15,12 +15,13 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class timing_sram_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        OPTS.spice_name="ngspice"
+        OPTS.spice_name="xyce"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
 
@@ -55,42 +56,41 @@ class timing_sram_test(openram_test):
             for load in loads:
                 load_slews.append((load, slew))
         data, port_data = d.analyze(probe_address, probe_data, load_slews)
-        #Combine info about port into all data
+        # Combine info about port into all data
         data.update(port_data[0])
 
         if OPTS.tech_name == "freepdk45":
-            golden_data = {'delay_hl': [0.24671600000000002],
-                           'delay_lh': [0.24671600000000002],
-                           'disabled_read0_power': [0.1749204],
-                           'disabled_read1_power': [0.1873704],
-                           'disabled_write0_power': [0.204619],
-                           'disabled_write1_power': [0.2262653],
-                           'leakage_power': 0.0021375310000000002,
-                           'min_period': 0.977,
-                           'read0_power': [0.3856875],
-                           'read1_power': [0.38856060000000003],
-                           'slew_hl': [0.2842019],
-                           'slew_lh': [0.2842019],
-                           'write0_power': [0.45274410000000004],
-                           'write1_power': [0.38727789999999995]}
+            golden_data = {'delay_hl': [0.24042560000000002],
+                           'delay_lh': [0.24042560000000002],
+                           'disabled_read0_power': [0.8981647999999998],
+                           'disabled_read1_power': [0.9101543999999998],
+                           'disabled_write0_power': [0.9270382999999998],
+                           'disabled_write1_power': [0.9482969999999998],
+                           'leakage_power': 2.9792199999999998,
+                           'min_period': 0.938,
+                           'read0_power': [1.1107930999999998],
+                           'read1_power': [1.1143252999999997],
+                           'slew_hl': [0.2800772],
+                           'slew_lh': [0.2800772],
+                           'write0_power': [1.1667769],
+                           'write1_power': [1.0986076999999999]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data =  {'delay_hl': [1.882508],
-                            'delay_lh': [1.882508],
-                            'disabled_read0_power': [7.487227],
-                            'disabled_read1_power': [8.749013],
-                            'disabled_write0_power': [9.268901],
-                            'disabled_write1_power': [9.962973],
-                            'leakage_power': 0.0046686359999999994,
-                            'min_period': 7.188,
-                            'read0_power': [16.64011],
-                            'read1_power': [17.20825],
-                            'slew_hl': [2.039655],
-                            'slew_lh': [2.039655],
-                            'write0_power': [19.31883],
-                            'write1_power': [15.297369999999999]} 
+            golden_data = {'delay_hl': [1.884186],
+                           'delay_lh': [1.884186],
+                           'disabled_read0_power': [20.86336],
+                           'disabled_read1_power': [22.10636],
+                           'disabled_write0_power': [22.62321],
+                           'disabled_write1_power': [23.316010000000002],
+                           'leakage_power': 13.351170000000002,
+                           'min_period': 7.188,
+                           'read0_power': [29.90159],
+                           'read1_power': [30.47858],
+                           'slew_hl': [2.042723],
+                           'slew_lh': [2.042723],
+                           'write0_power': [32.13199],
+                           'write1_power': [28.46703]}
         else:
             self.assertTrue(False) # other techs fail
-
         # Check if no too many or too few results
         self.assertTrue(len(data.keys())==len(golden_data.keys()))
 

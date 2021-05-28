@@ -9,6 +9,7 @@ from vector import vector
 from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
+from router_tech import router_tech
 from globals import OPTS
 
 
@@ -326,13 +327,34 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
+        # Some technologies have an isolation
+        self.add_dnwell(inflate=2)
+
+        # We need the initial bbox for the supply rings later
+        # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
+        pre_bbox = None
         if OPTS.perimeter_pins:
-            self.route_escape_pins()
+            rt = router_tech(self.supply_stack, 1)
+
+            if OPTS.supply_pin_type in ["ring", "left", "right", "top", "bottom"]:
+                big_margin = 12 * rt.track_width
+                little_margin = 2 * rt.track_width
+            else:
+                big_margin = 6 * rt.track_width
+                little_margin = 0
+
+            pre_bbox = self.get_bbox(side="ring",
+                                     big_margin=rt.track_width)
+
+            bbox = self.get_bbox(side=OPTS.supply_pin_type,
+                                 big_margin=big_margin,
+                                 little_margin=little_margin)
+            self.route_escape_pins(bbox)
             
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
+        self.route_supplies(pre_bbox)
         
     def route_dffs(self, add_routes=True):
 
@@ -613,7 +635,7 @@ class sram_1bank(sram_base):
         # Sanity check in case it was forgotten
         if inst_name.find("x") != 0:
             inst_name = "x" + inst_name
-        return self.bank_inst.mod.get_cell_name(inst_name + ".x" + self.bank_inst.name, row, col)
+        return self.bank_inst.mod.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bank_inst.name, row, col)
 
     def get_bank_num(self, inst_name, row, col):
         return 0

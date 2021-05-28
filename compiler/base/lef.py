@@ -112,23 +112,25 @@ class lef:
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
             for pin in pins:
-                inflated_pin = pin.inflated_pin(multiple=1)
-                another_iteration_needed = True
-                while another_iteration_needed:
-                    another_iteration_needed = False
+                inflated_pin = pin.inflated_pin(multiple=2)
+                continue_fragmenting = True
+                while continue_fragmenting:
+                    continue_fragmenting = False
                     old_blockages = list(self.blockages[pin.layer])
                     for blockage in old_blockages:
                         if blockage.overlaps(inflated_pin):
                             intersection_shape = blockage.intersection(inflated_pin)
-                            # If it is zero area, don't add the pin
+                            # If it is zero area, don't split the blockage
                             if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
                                 continue
-                            another_iteration_needed = True
+
                             # Remove the old blockage and add the new ones
                             self.blockages[pin.layer].remove(blockage)
                             intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
                             new_blockages = blockage.cut(intersection_pin)
                             self.blockages[pin.layer].extend(new_blockages)
+                            # We split something so make another pass
+                            continue_fragmenting = True
 
     def lef_write_header(self):
         """ Header of LEF file """

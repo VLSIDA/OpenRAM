@@ -329,13 +329,21 @@ class sram_1bank(sram_base):
         # Some technologies have an isolation
         self.add_dnwell(inflate=2)
 
+        # We need the initial bbox for the supply rings later
+        # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
+        pre_bbox = None
         if OPTS.perimeter_pins:
-            self.route_escape_pins()
+            pre_bbox = self.get_bbox(side="ring",
+                                     big_margin=self.m3_pitch)
+            bbox = self.get_bbox(side=OPTS.route_supplies,
+                                 big_margin=14 * self.m3_pitch,
+                                 little_margin=4 * self.m3_pitch)
+            self.route_escape_pins(bbox)
             
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
+        self.route_supplies(pre_bbox)
         
     def route_dffs(self, add_routes=True):
 

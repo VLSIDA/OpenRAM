@@ -41,7 +41,8 @@ class layout():
         
         self.width = None
         self.height = None
-        self.bounding_box = None
+        self.bounding_box = None # The rectangle shape
+        self.bbox = None # The ll, ur coords
         # Holds module/cell layout instances
         self.insts = []
         # Set of names to check for duplicates
@@ -1162,6 +1163,57 @@ class layout():
                                                   width=ur.x - ll.x)
 
         self.bbox = [self.bounding_box.ll(), self.bounding_box.ur()]
+
+    def get_bbox(self, side="all", big_margin=0, little_margin=0):
+        """
+        Get the bounding box from the GDS
+        """
+        gds_filename = OPTS.openram_temp + "temp.gds"
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.gds_write(gds_filename)
+        layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        reader = gdsMill.Gds2reader(layout)
+        reader.loadFromFile(gds_filename)
+        top_name = layout.rootStructureName
+
+        if not self.bbox:
+            # The boundary will determine the limits to the size
+            # of the routing grid
+            boundary = layout.measureBoundary(top_name)
+            # These must be un-indexed to get rid of the matrix type
+            ll = vector(boundary[0][0], boundary[0][1])
+            ur = vector(boundary[1][0], boundary[1][1])
+        else:
+            ll, ur = self.bbox
+
+        ll_offset = vector(0, 0)
+        ur_offset = vector(0, 0)
+        if side in ["ring", "top"]:
+            ur_offset += vector(0, big_margin)
+        else:
+            ur_offset += vector(0, little_margin)
+        if side in ["ring", "bottom"]:
+            ll_offset += vector(0, big_margin)
+        else:
+            ll_offset += vector(0, little_margin)
+        if side in ["ring", "left"]:
+            ll_offset += vector(big_margin, 0)
+        else:
+            ll_offset += vector(little_margin, 0)
+        if side in ["ring", "right"]:
+            ur_offset += vector(big_margin, 0)
+        else:
+            ur_offset += vector(little_margin, 0)
+        bbox = (ll - ll_offset, ur + ur_offset)
+        size = ur - ll
+        debug.info(1, "Size: {0} x {1} with perimeter big margin {2} little margin {3}".format(size.x,
+                                                                                               size.y,
+                                                                                               big_margin,
+                                                                                               little_margin))
+
+        return bbox
 
     def add_enclosure(self, insts, layer="nwell", extend=0, leftx=None, rightx=None, topy=None, boty=None):
         """

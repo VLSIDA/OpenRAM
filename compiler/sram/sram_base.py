@@ -230,7 +230,7 @@ class sram_base(design, verilog, lef):
     def create_modules(self):
         debug.error("Must override pure virtual function.", -1)
 
-    def route_supplies(self):
+    def route_supplies(self, bbox=None):
         """ Route the supply grid and connect the pins to them. """
 
         # Copy the pins to the top level
@@ -252,11 +252,14 @@ class sram_base(design, verilog, lef):
             return
         elif OPTS.route_supplies == "grid":
             from supply_grid_router import supply_grid_router as router
-            rtr=router(grid_stack, self)
+            rtr=router(layers=grid_stack,
+                       design=self,
+                       bbox=bbox)
         else:
             from supply_tree_router import supply_tree_router as router
-            rtr=router(grid_stack,
-                       self,
+            rtr=router(layers=grid_stack,
+                       design=self,
+                       bbox=bbox,
                        pin_type=OPTS.route_supplies)
 
         rtr.route()
@@ -283,7 +286,7 @@ class sram_base(design, verilog, lef):
                                         pin.width(),
                                         pin.height())
             
-        elif OPTS.route_supplies:
+        elif OPTS.route_supplies or OPTS.route_supplies == "single":
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
         
@@ -321,7 +324,7 @@ class sram_base(design, verilog, lef):
             # Grid is left with many top level pins
             pass
 
-    def route_escape_pins(self):
+    def route_escape_pins(self, bbox):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -364,7 +367,7 @@ class sram_base(design, verilog, lef):
         from signal_escape_router import signal_escape_router as router
         rtr=router(layers=self.m3_stack,
                    design=self,
-                   margin=8 * self.m3_pitch)
+                   bbox=bbox)
         rtr.escape_route(pins_to_route)
 
     def compute_bus_sizes(self):

@@ -92,7 +92,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("set VDD vdd\n")
     f.write("set GND gnd\n")
     f.write("set SUB gnd\n")
-    f.write("gds polygon subcell true\n")
+    #f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,

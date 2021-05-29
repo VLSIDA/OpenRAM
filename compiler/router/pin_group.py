@@ -149,7 +149,6 @@ class pin_group:
             pin_list.append(enclosure)
 
         if len(pin_list) == 0:
-            breakpoint()
             debug.error("Did not find any enclosures for {}".format(self.name))
             self.router.write_debug_gds("pin_enclosure_error.gds")
 

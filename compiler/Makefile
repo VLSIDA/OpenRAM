@@ -1,4 +1,4 @@
-TECH = freepdk45
+TECH = scn4m_subm
 CUR_DIR = $(shell pwd)
 TEST_DIR = ${CUR_DIR}/tests
 
@@ -83,7 +83,7 @@ OPTS += -n
 # Verbosity
 #OPTS += -v
 # Spice
-OPTS += -s hspice
+#OPTS += -s hspice
 
 .PHONY: model
 
@@ -91,7 +91,7 @@ model: $(STAMPS)
 	mkdir -p $(CSV_DIR)
 	python3 $(OPENRAM_HOME)/model_data_util.py $(SIM_DIR) $(CSV_DIR)
 
-%.ok: $(DIR)/$(addsuffix .py, $(notdir %))
+%.ok:
 	$(eval bname=$(basename $(notdir $<)))
 	mkdir -p $(SIM_DIR)/$(bname)
 	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $< 2>&1 > /dev/null

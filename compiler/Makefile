@@ -92,9 +92,10 @@ model: $(STAMPS)
 	python3 $(OPENRAM_HOME)/model_data_util.py $(SIM_DIR) $(CSV_DIR)
 
 %.ok:
-	$(eval bname=$(basename $(notdir $<)))
+	$(eval bname=$(basename $(notdir $@)))
+	$(eval config_path=$(CONFIG_DIR)/$(addsuffix .py, $(notdir $(basename $@))))
 	mkdir -p $(SIM_DIR)/$(bname)
-	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $< 2>&1 > /dev/null
+	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $(config_path) 2>&1 > /dev/null
 	touch $@
 
 clean_model:

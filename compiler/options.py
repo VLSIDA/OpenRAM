@@ -120,13 +120,13 @@ class options(optparse.Values):
     # Tool options
     ###################
     # Variable to select the variant of spice
-    spice_name = ""
+    spice_name = None
     # The spice executable being used which is derived from the user PATH.
-    spice_exe = ""
+    spice_exe = None
     # Variable to select the variant of drc, lvs, pex
-    drc_name = ""
-    lvs_name = ""
-    pex_name = ""
+    drc_name = None
+    lvs_name = None
+    pex_name = None
     # The DRC/LVS/PEX executable being used
     # which is derived from the user PATH.
     drc_exe = None

@@ -90,7 +90,7 @@ singlevalue_names = ['write_rise_power_0',
 def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_extended, mode):    
 
     
-    writer = csv.writer(csv_file)
+    writer = csv.writer(csv_file,lineterminator='\n')
     # If the file was opened to write and not append then we write the header
     if mode == 'w':
         writer.writerow(feature_names+output_names)
@@ -230,8 +230,8 @@ def extract_data(openram_dir, out_dir, is_first):
         mode = 'w'
     else:
         mode = 'a+'
-    data_file = open("{}/sim_data.csv".format(out_dir), mode, newline='')
-    write_to_csv(dataset_name, data_file, datasheet_fname, inp_mod, imp_mod_extended, mode)
+    with open("{}/sim_data.csv".format(out_dir), mode, newline='\n') as data_file:
+        write_to_csv(dataset_name, data_file, datasheet_fname, inp_mod, imp_mod_extended, mode)
 
     return out_dir
     

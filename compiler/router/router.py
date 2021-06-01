@@ -881,7 +881,7 @@ class router(router_tech):
         """
         pg = pin_group(name, [], self)
         # Offset two spaces inside and one between the rings
-        if name == "vdd":
+        if name == "gnd":
             offset = width + 2 * space
         else:
             offset = space
@@ -911,7 +911,7 @@ class router(router_tech):
         pg = pin_group(name, [], self)
         # Offset two spaces inside and one between the rings
         # Units are in routing grids
-        if name == "vdd":
+        if name == "gnd":
             offset = width + 2 * space
         else:
             offset = space

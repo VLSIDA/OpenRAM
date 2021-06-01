@@ -1409,7 +1409,7 @@ class layout():
         [ll, ur] = bbox
 
         # Possibly inflate the bbox
-        nwell_offset = vector(self.nwell_width, self.nwell_width)
+        nwell_offset = vector(2 * self.nwell_width, 2 * self.nwell_width)
         ll -= nwell_offset.scale(inflate, inflate)
         ur += nwell_offset.scale(inflate, inflate)
 
@@ -1448,7 +1448,7 @@ class layout():
                                           to_layer="m1",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1468,7 +1468,7 @@ class layout():
                                           to_layer="m1",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1488,7 +1488,7 @@ class layout():
                                           to_layer="m2",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1508,7 +1508,7 @@ class layout():
                                           to_layer="m2",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1

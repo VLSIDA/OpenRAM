@@ -38,12 +38,14 @@ def get_config_mods(openram_dir):
     imp_mod = None
     imp_mod_extended = None
     if not os.path.exists(openram_dir+'/'+dataset_name+".py"):
-        print("Python module for {} not found. Returning...".format(dataset_name))
+        print("Python module for {} not found.".format(dataset_name))
+        imp_mod = None
     else:
         imp_mod = import_module(dataset_name, openram_dir+"/"+dataset_name+".py")
         
     if not os.path.exists(openram_dir+'/'+dataset_name+extended_name+".py"):
-        print("Python module for {} not found. Returning...".format(dataset_name))
+        print("Extended Python module for {} not found.".format(dataset_name))
+        imp_mod_extended = None
     else:
         imp_mod_extended = import_module(dataset_name+extended_name, openram_dir+"/"+dataset_name+extended_name+".py")
     
@@ -225,6 +227,9 @@ def extract_data(openram_dir, out_dir, is_first):
 
     # Get dataset name used by all the files e.g. sram_1b_16
     dataset_name, inp_mod, imp_mod_extended, datasheet_fname = get_config_mods(openram_dir)
+    if inp_mod == None or imp_mod_extended == None:
+        print("Config file(s) for this run not found. Skipping...")
+        return
 
     if is_first:
         mode = 'w'

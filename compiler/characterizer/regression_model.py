@@ -55,7 +55,7 @@ class regression_model(simulation):
         A model and prediction is created for each output needed for the LIB 
         """
         
-        debug.info(1, "Characterizing SRAM using linear regression models.")
+        debug.info(1, "Characterizing SRAM using regression models.")
         log_num_words = math.log(OPTS.num_words, 2)
         model_inputs = [log_num_words, 
                         OPTS.word_size, 

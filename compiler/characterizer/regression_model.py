@@ -150,6 +150,43 @@ class regression_model(simulation):
 
         return models
     
+    def score_model(self):
+        num_inputs = 9 #FIXME - should be defined somewhere else
+        self.output_names = get_data_names(data_path)[num_inputs:]
+        data = get_scaled_data(data_path)
+        features, labels = data[:, :num_inputs], data[:,num_inputs:]
+
+        output_num = 0
+        models = {}
+        debug.info(1, "Output name, score")
+        for o_name in self.output_names:
+            output_label = labels[:,output_num]
+            model = self.generate_model(features, output_label)
+            scr = model.score(features, output_label)
+            debug.info(1, "{}, {}".format(o_name, scr))
+            output_num+=1
+    
+    
+    def cross_validation(self):
+        from sklearn.model_selection import cross_val_score
+        untrained_model = self.get_model()
+        
+        num_inputs = 9 #FIXME - should be defined somewhere else
+        self.output_names = get_data_names(data_path)[num_inputs:]
+        data = get_scaled_data(data_path)
+        features, labels = data[:, :num_inputs], data[:,num_inputs:]
+
+        output_num = 0
+        models = {}
+        debug.info(1, "Output name, mean_accuracy, std_dev")
+        for o_name in self.output_names:
+            output_label = labels[:,output_num]
+            scores = cross_val_score(untrained_model, features, output_label, cv=5)
+            debug.info(1, "{}, {}, {}".format(o_name, scores.mean(), scores.std()))
+            output_num+=1
+        
+            
+    
     # Fixme - only will work for sklearn regression models
     def save_model(self, model_name, model):
         try:

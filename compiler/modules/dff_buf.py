@@ -109,7 +109,7 @@ class dff_buf(design.design):
         except AttributeError:
             pass
 
-        well_spacing += self.well_extend_active
+        well_spacing += 2 * self.well_extend_active
         
         self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing, 0))
 

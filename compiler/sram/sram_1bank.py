@@ -446,8 +446,12 @@ class sram_1bank(sram_base):
             layer_stack = self.m3_stack
             if port == 0:
                 # This is relative to the bank at 0,0 or the s_en which is routed on M3 also
-                s_en_bot = self.control_logic_insts[port].get_pin("s_en").by()
-                y_offset = min(0, s_en_bot) - self.data_bus_size[port] + 2 * self.m3_pitch
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_bottom = min(0, self.control_logic_insts[port].get_pin("s_en").by())
+                else:
+                    y_bottom = 0
+                    
+                y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
                            
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 y_offset)
@@ -464,8 +468,11 @@ class sram_1bank(sram_base):
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
-                s_en_top = self.control_logic_insts[port].get_pin("s_en").uy()
-                y_offset = max(self.bank.height, s_en_top) + self.m3_pitch
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_top = max(self.bank.height, self.control_logic_insts[port].get_pin("s_en").uy())
+                else:
+                    y_top = self.bank.height
+                y_offset = y_top + self.m3_pitch
                 offset = vector(0,
                                 y_offset)
                 cr = channel_route(netlist=route_map,

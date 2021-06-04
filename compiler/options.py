@@ -72,7 +72,9 @@ class options(optparse.Values):
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
+        
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
+        
     except:
         openram_temp = "/tmp"
         

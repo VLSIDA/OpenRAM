@@ -6,7 +6,7 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import drc, spice
+from tech import drc, spice, cell_properties
 from vector import vector
 from globals import OPTS
 from sram_factory import factory

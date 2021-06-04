@@ -472,6 +472,12 @@ class sram_base(design, verilog, lef):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.dff = factory.create(module_type="dff")
 
+        # Create the bank module (up to four are instantiated)
+        self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
+        self.add_mod(self.bank)
+
+        self.num_spare_cols = self.bank.num_spare_cols
+
         # Create the address and control flops (but not the clk)
         self.row_addr_dff = factory.create("dff_array", module_name="row_addr_dff", rows=self.row_addr_size, columns=1)
         self.add_mod(self.row_addr_dff)
@@ -492,10 +498,6 @@ class sram_base(design, verilog, lef):
         if self.num_spare_cols:
             self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
             self.add_mod(self.spare_wen_dff)
-
-        # Create the bank module (up to four are instantiated)
-        self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
-        self.add_mod(self.bank)
 
         # Create bank decoder
         if(self.num_banks > 1):

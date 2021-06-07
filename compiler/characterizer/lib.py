@@ -634,6 +634,8 @@ class lib:
                 from .linear_regression import linear_regression as model
             elif model_name_lc == "elmore":
                 from .elmore import elmore as model
+            elif model_name_lc == "neural_network":
+                from .neural_network import neural_network as model
             else:
                 debug.error("{} model not recognized. See options.py for available models.".format(OPTS.model_name))
 

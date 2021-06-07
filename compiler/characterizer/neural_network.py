@@ -9,10 +9,7 @@
 from .regression_model import regression_model
 from globals import OPTS
 import debug
-
-from tensorflow import keras
-from tensorflow.keras import layers
-import tensorflow as tf
+from sklearn.neural_network import MLPRegressor
 
 
 class neural_network(regression_model):
@@ -20,21 +17,19 @@ class neural_network(regression_model):
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
 
+    def get_model(self):
+        return MLPRegressor(solver='lbfgs', alpha=1e-5,
+                            hidden_layer_sizes=(40, 40, 40, 40), random_state=1)
+
     def generate_model(self, features, labels):
         """
-        Supervised training of model.
+        Training multilayer model
         """
         
-        model = keras.Sequential([
-            layers.Dense(32, activation=tf.nn.relu, input_shape=[features.shape[1]]),
-            layers.Dense(32, activation=tf.nn.relu),
-            layers.Dense(32, activation=tf.nn.relu),
-            layers.Dense(1)
-        ])
-
-        optimizer = keras.optimizers.RMSprop(0.0099)
-        model.compile(loss='mean_squared_error', optimizer=optimizer)
-        model.fit(features, labels, epochs=100, verbose=0)
+        flat_labels = np.ravel(labels)
+        model = self.get_model()
+        model.fit(features, flat_labels)
+        
         return model
         
     def model_prediction(self, model, features):    
@@ -44,5 +39,6 @@ class neural_network(regression_model):
         """
         
         pred = model.predict(features)
-        return pred
+        reshape_pred = np.reshape(pred, (len(pred),1))
+        return reshape_pred
         

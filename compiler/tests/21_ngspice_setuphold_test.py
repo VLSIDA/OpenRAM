@@ -45,8 +45,8 @@ class timing_setup_test(openram_test):
                            'setup_times_HL': [0.1757812],
                            'setup_times_LH': [0.1879883]}
         elif OPTS.tech_name == "sky130":
-            golden_data = {'hold_times_HL': [-0.05615234],
-                           'hold_times_LH': [-0.03173828],
+            golden_data = {'hold_times_HL': [-0.03173828],
+                           'hold_times_LH': [-0.05615234],
                            'setup_times_HL': [0.078125],
                            'setup_times_LH': [0.1025391]}
         else:

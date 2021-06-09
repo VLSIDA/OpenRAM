@@ -83,7 +83,7 @@ OPTS += -n
 # Verbosity
 #OPTS += -v
 # Spice
-#OPTS += -s hspice
+OPTS += -s hspice
 
 .PHONY: model
 

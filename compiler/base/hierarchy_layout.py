@@ -41,7 +41,8 @@ class layout():
         
         self.width = None
         self.height = None
-        self.bounding_box = None
+        self.bounding_box = None # The rectangle shape
+        self.bbox = None # The ll, ur coords
         # Holds module/cell layout instances
         self.insts = []
         # Set of names to check for duplicates
@@ -1161,6 +1162,59 @@ class layout():
                                                   height=ur.y - ll.y,
                                                   width=ur.x - ll.x)
 
+        self.bbox = [self.bounding_box.ll(), self.bounding_box.ur()]
+
+    def get_bbox(self, side="all", big_margin=0, little_margin=0):
+        """
+        Get the bounding box from the GDS
+        """
+        gds_filename = OPTS.openram_temp + "temp.gds"
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.gds_write(gds_filename)
+        layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        reader = gdsMill.Gds2reader(layout)
+        reader.loadFromFile(gds_filename)
+        top_name = layout.rootStructureName
+
+        if not self.bbox:
+            # The boundary will determine the limits to the size
+            # of the routing grid
+            boundary = layout.measureBoundary(top_name)
+            # These must be un-indexed to get rid of the matrix type
+            ll = vector(boundary[0][0], boundary[0][1])
+            ur = vector(boundary[1][0], boundary[1][1])
+        else:
+            ll, ur = self.bbox
+
+        ll_offset = vector(0, 0)
+        ur_offset = vector(0, 0)
+        if side in ["ring", "top", "all"]:
+            ur_offset += vector(0, big_margin)
+        else:
+            ur_offset += vector(0, little_margin)
+        if side in ["ring", "bottom", "all"]:
+            ll_offset += vector(0, big_margin)
+        else:
+            ll_offset += vector(0, little_margin)
+        if side in ["ring", "left", "all"]:
+            ll_offset += vector(big_margin, 0)
+        else:
+            ll_offset += vector(little_margin, 0)
+        if side in ["ring", "right", "all"]:
+            ur_offset += vector(big_margin, 0)
+        else:
+            ur_offset += vector(little_margin, 0)
+        bbox = (ll - ll_offset, ur + ur_offset)
+        size = ur - ll
+        debug.info(1, "Size: {0} x {1} with perimeter big margin {2} little margin {3}".format(size.x,
+                                                                                               size.y,
+                                                                                               big_margin,
+                                                                                               little_margin))
+
+        return bbox
+
     def add_enclosure(self, insts, layer="nwell", extend=0, leftx=None, rightx=None, topy=None, boty=None):
         """
         Add a layer that surrounds the given instances. Useful
@@ -1203,22 +1257,24 @@ class layout():
                              height=ymax - ymin)
         return rect
 
-    def copy_power_pins(self, inst, name, add_vias=True):
+    def copy_power_pins(self, inst, name, add_vias=True, new_name=""):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
         """
         pins = inst.get_pins(name)
         for pin in pins:
+            if new_name == "":
+                new_name = pin.name
             if pin.layer == self.pwr_grid_layer:
-                self.add_layout_pin(name,
+                self.add_layout_pin(new_name,
                                     pin.layer,
                                     pin.ll(),
                                     pin.width(),
                                     pin.height())
 
             elif add_vias:
-                self.copy_power_pin(pin)
+                self.copy_power_pin(pin, new_name=new_name)
 
     def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
@@ -1264,13 +1320,15 @@ class layout():
                                             width=width,
                                             height=height)
 
-    def copy_power_pin(self, pin, loc=None, directions=None):
+    def copy_power_pin(self, pin, loc=None, directions=None, new_name=""):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
 
+        if new_name == "":
+                new_name = pin.name
         if not loc:
             loc = pin.center()
             
@@ -1284,7 +1342,7 @@ class layout():
             height = None
             
         if pin.layer == self.pwr_grid_layer:
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,
@@ -1299,7 +1357,7 @@ class layout():
                 width = via.width
             if not height:
                 height = via.height
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,
@@ -1341,7 +1399,182 @@ class layout():
                                                layer=layer,
                                                offset=peri_pin_loc)
 
-    def add_power_ring(self, bbox):
+    def add_dnwell(self, bbox=None, inflate=1):
+        """ Create a dnwell, along with nwell moat at border. """
+
+        if "dnwell" not in techlayer:
+            return
+
+        if not bbox:
+            bbox =  [self.find_lowest_coords(),
+                     self.find_highest_coords()]
+
+        # Find the corners
+        [ll, ur] = bbox
+
+        # Possibly inflate the bbox
+        nwell_offset = vector(2 * self.nwell_width, 2 * self.nwell_width)
+        ll -= nwell_offset.scale(inflate, inflate)
+        ur += nwell_offset.scale(inflate, inflate)
+
+        # Other corners
+        ul = vector(ll.x, ur.y)
+        lr = vector(ur.x, ll.y)
+
+        # Add the dnwell
+        self.add_rect("dnwell",
+                      offset=ll,
+                      height=ur.y - ll.y,
+                      width=ur.x - ll.x)
+
+        # Add the moat
+        self.add_path("nwell", [ll, lr, ur, ul, ll - vector(0, 0.5 * self.nwell_width)])
+
+        # Add the taps
+        layer_stack = self.active_stack
+        tap_spacing = 2
+        nwell_offset = vector(self.nwell_width, self.nwell_width)
+
+        # Every nth tap is connected to gnd
+        period = 5
+
+        # BOTTOM
+        count = 0
+        loc = ll + nwell_offset.scale(tap_spacing, 0)
+        end_loc = lr - nwell_offset.scale(tap_spacing, 0)
+        while loc.x < end_loc.x:
+            self.add_via_center(layers=layer_stack,
+                                offset=loc,
+                                implant_type="n",
+                                well_type="n")
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m1",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="vdd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
+            loc += nwell_offset.scale(tap_spacing, 0)
+
+        # TOP
+        count = 0
+        loc = ul + nwell_offset.scale(tap_spacing, 0)
+        end_loc = ur - nwell_offset.scale(tap_spacing, 0)
+        while loc.x < end_loc.x:
+            self.add_via_center(layers=layer_stack,
+                                offset=loc,
+                                implant_type="n",
+                                well_type="n")
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m1",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="vdd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
+            loc += nwell_offset.scale(tap_spacing, 0)
+
+        # LEFT
+        count = 0
+        loc = ll + nwell_offset.scale(0, tap_spacing)
+        end_loc = ul - nwell_offset.scale(0, tap_spacing)
+        while loc.y < end_loc.y:
+            self.add_via_center(layers=layer_stack,
+                                offset=loc,
+                                implant_type="n",
+                                well_type="n")
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m2",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="vdd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
+            loc += nwell_offset.scale(0, tap_spacing)
+
+        # RIGHT
+        count = 0
+        loc = lr + nwell_offset.scale(0, tap_spacing)
+        end_loc = ur - nwell_offset.scale(0, tap_spacing)
+        while loc.y < end_loc.y:
+            self.add_via_center(layers=layer_stack,
+                                offset=loc,
+                                implant_type="n",
+                                well_type="n")
+            if count % period:
+                self.add_via_stack_center(from_layer="li",
+                                          to_layer="m2",
+                                          offset=loc)
+            else:
+                self.add_power_pin(name="vdd",
+                                   loc=loc,
+                                   start_layer="li")
+            count += 1
+            loc += nwell_offset.scale(0, tap_spacing)
+
+        # Add the gnd ring
+        self.add_ring([ll, ur])
+
+    def add_ring(self, bbox=None, width_mult=8, offset=0):
+        """
+        Add a ring around the bbox
+        """
+        # Ring size/space/pitch
+        wire_width = self.m2_width * width_mult
+        half_width = 0.5 * wire_width
+        wire_space = self.m2_space
+        wire_pitch = wire_width + wire_space
+
+        # Find the corners
+        if not bbox:
+            bbox =  [self.find_lowest_coords(),
+                     self.find_highest_coords()]
+
+        [ll, ur] = bbox
+        ul = vector(ll.x, ur.y)
+        lr = vector(ur.x, ll.y)
+        ll += vector(-offset * wire_pitch,
+                     -offset * wire_pitch)
+        lr += vector(offset * wire_pitch,
+                     -offset * wire_pitch)
+        ur += vector(offset * wire_pitch,
+                     offset * wire_pitch)
+        ul += vector(-offset * wire_pitch,
+                     offset * wire_pitch)
+
+        half_offset = vector(half_width, half_width)
+        self.add_path("m1", [ll - half_offset.scale(1, 0), lr + half_offset.scale(1, 0)], width=wire_width)
+        self.add_path("m1", [ul - half_offset.scale(1, 0), ur + half_offset.scale(1, 0)], width=wire_width)
+        self.add_path("m2", [ll - half_offset.scale(0, 1), ul + half_offset.scale(0, 1)], width=wire_width)
+        self.add_path("m2", [lr - half_offset.scale(0, 1), ur + half_offset.scale(0, 1)], width=wire_width)
+
+        # Find the number of vias for this pitch
+        supply_vias = 1
+        from sram_factory import factory
+        while True:
+            c = factory.create(module_type="contact",
+                               layer_stack=self.m1_stack,
+                               dimensions=(supply_vias, supply_vias))
+            if c.second_layer_width < wire_width and c.second_layer_height < wire_width:
+                supply_vias += 1
+            else:
+                supply_vias -= 1
+                break
+
+        via_points = [ll, lr, ur, ul]
+        for pt in via_points:
+            self.add_via_center(layers=self.m1_stack,
+                                offset=pt,
+                                size=(supply_vias,
+                                      supply_vias))
+
+    def add_power_ring(self):
         """
         Create vdd and gnd power rings around an area of the bounding box
         argument. Must have a supply_rail_width and supply_rail_pitch
@@ -1350,7 +1583,7 @@ class layout():
         modules..
         """
 
-        [ll, ur] = bbox
+        [ll, ur] = self.bbox
 
         supply_rail_spacing = self.supply_rail_pitch - self.supply_rail_width
         height = (ur.y - ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing

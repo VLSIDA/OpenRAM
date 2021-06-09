@@ -9,6 +9,7 @@ from vector import vector
 from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
+from router_tech import router_tech
 from globals import OPTS
 
 
@@ -326,13 +327,34 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
+        # Some technologies have an isolation
+        self.add_dnwell(inflate=2)
+
+        # We need the initial bbox for the supply rings later
+        # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
+        pre_bbox = None
         if OPTS.perimeter_pins:
-            self.route_escape_pins()
+            rt = router_tech(self.supply_stack, 1)
+
+            if OPTS.supply_pin_type in ["ring", "left", "right", "top", "bottom"]:
+                big_margin = 12 * rt.track_width
+                little_margin = 2 * rt.track_width
+            else:
+                big_margin = 6 * rt.track_width
+                little_margin = 0
+
+            pre_bbox = self.get_bbox(side="ring",
+                                     big_margin=rt.track_width)
+
+            bbox = self.get_bbox(side=OPTS.supply_pin_type,
+                                 big_margin=big_margin,
+                                 little_margin=little_margin)
+            self.route_escape_pins(bbox)
             
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
+        self.route_supplies(pre_bbox)
         
     def route_dffs(self, add_routes=True):
 
@@ -363,6 +385,7 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
+            # This layer stack must be different than the data dff layer stack
             layer_stack = self.m1_stack
 
             if port == 0:
@@ -372,11 +395,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
             else:
                 offset = vector(0,
                                 self.bank.height + self.m3_pitch)
@@ -384,11 +407,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
         
     def route_data_dffs(self, port, add_routes):
         route_map = []
@@ -419,40 +442,49 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
-            # The write masks will have blockages on M1
-            # if self.num_wmasks > 0 and port in self.write_ports:
-            #     layer_stack = self.m3_stack
-            # else:
-            #     layer_stack = self.m1_stack
+            # This layer stack must be different than the column addr dff layer stack
             layer_stack = self.m3_stack
             if port == 0:
+                # This is relative to the bank at 0,0 or the s_en which is routed on M3 also
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_bottom = min(0, self.control_logic_insts[port].get_pin("s_en").by())
+                else:
+                    y_bottom = 0
+                    
+                y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
+                           
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                                - self.data_bus_size[port] + 2 * self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_top = max(self.bank.height, self.control_logic_insts[port].get_pin("s_en").uy())
+                else:
+                    y_top = self.bank.height
+                y_offset = y_top + self.m3_pitch
                 offset = vector(0,
-                                self.bank.height + self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 

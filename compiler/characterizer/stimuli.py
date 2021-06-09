@@ -22,7 +22,7 @@ from globals import OPTS
 class stimuli():
     """ Class for providing stimuli functions """
 
-    def __init__(self, stim_file, corner):
+    def __init__(self, stim_file, corner):        
         self.vdd_name = "vdd"
         self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]
@@ -276,8 +276,8 @@ class stimuli():
             self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
             self.sf.write(".OPTIONS LINSOL type=klu\n")
             self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
-        else:
-            debug.error("Unkown spice simulator {}".format(OPTS.spice_name))
+        elif OPTS.spice_name:
+            debug.error("Unkown spice simulator {}".format(OPTS.spice_name), -1)
 
         # create plots for all signals
         if not OPTS.use_pex:   # Don't save all for extracted simulations

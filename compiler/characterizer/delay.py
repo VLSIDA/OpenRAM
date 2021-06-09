@@ -828,7 +828,7 @@ class delay(simulation):
 
             result[port].update(read_port_dict)
             
-            self.check_path_measures()
+            self.path_delays = self.check_path_measures()
 
         return (True, result)
 
@@ -942,7 +942,7 @@ class delay(simulation):
             if type(val) != float or val > self.period / 2:
                 debug.info(1, 'Failed measurement:{}={}'.format(meas.name, val))
             value_dict[meas.name] = val
-        
+        #debug.info(0, "value_dict={}".format(value_dict))
         return value_dict
 
     def run_power_simulation(self):
@@ -1135,7 +1135,7 @@ class delay(simulation):
         self.create_measurement_names()
         self.create_measurement_objects()
 
-    def analyze(self, probe_address, probe_data, slews, loads):
+    def analyze(self, probe_address, probe_data, load_slews):
         """
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
@@ -1143,7 +1143,11 @@ class delay(simulation):
         # Dict to hold all characterization values
         char_sram_data = {}
         self.analysis_init(probe_address, probe_data)
-
+        loads = []
+        slews = []
+        for load,slew in load_slews:
+            loads.append(load)
+            slews.append(slew)
         self.load=max(loads)
         self.slew=max(slews)
 
@@ -1163,11 +1167,19 @@ class delay(simulation):
         leakage_offset = full_array_leakage - trim_array_leakage
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
-        char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
-
+        char_port_data = self.simulate_loads_and_slews(load_slews, leakage_offset)
+        if OPTS.use_specified_load_slew != None and len(load_slews) > 1:
+            debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
+        # Get and save the path delays
+        bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)
+        # Removed from characterization output temporarily
+        #char_sram_data["bl_path_measures"] = bl_delays
+        #char_sram_data["sen_path_measures"] = sen_delays
+        #char_sram_data["bl_path_names"] = bl_names
+        #char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
         self.alter_lh_char_data(char_port_data)
-
+           
         return (char_sram_data, char_port_data)
 
     def alter_lh_char_data(self, char_port_data):
@@ -1178,30 +1190,46 @@ class delay(simulation):
             char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
             char_port_data[port]['slew_lh'] = char_port_data[port]['slew_hl']
 
-    def simulate_loads_and_slews(self, slews, loads, leakage_offset):
+    def simulate_loads_and_slews(self, load_slews, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
 
         measure_data = self.get_empty_measure_data_dict()
+        path_dict = {}
         # Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
-        for slew in slews:
-            for load in loads:
-                self.set_load_slew(load, slew)
-                # Find the delay, dynamic power, and leakage power of the trimmed array.
-                (success, delay_results) = self.run_delay_simulation()
-                debug.check(success, "Couldn't run a simulation. slew={0} load={1}\n".format(self.slew, self.load))
-                debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew, self.load))
-                # The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
-                for port in self.all_ports:
-                    for mname, value in delay_results[port].items():
-                        if "power" in mname:
-                            # Subtract partial array leakage and add full array leakage for the power measures
-                            debug.info(1, "Adding leakage offset to {0} {1} + {2} = {3}".format(mname, value, leakage_offset, value + leakage_offset))
-                            measure_data[port][mname].append(value + leakage_offset)
-                        else:
-                            measure_data[port][mname].append(value)
+        for load, slew in load_slews:
+            self.set_load_slew(load, slew)
+            # Find the delay, dynamic power, and leakage power of the trimmed array.
+            (success, delay_results) = self.run_delay_simulation()
+            debug.check(success, "Couldn't run a simulation. slew={0} load={1}\n".format(self.slew, self.load))
+            debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew, self.load))
+            # The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
+            for port in self.all_ports:
+                for mname, value in delay_results[port].items():
+                    if "power" in mname:
+                        # Subtract partial array leakage and add full array leakage for the power measures
+                        debug.info(1, "Adding leakage offset to {0} {1} + {2} = {3}".format(mname, value, leakage_offset, value + leakage_offset))
+                        measure_data[port][mname].append(value + leakage_offset)
+                    else:
+                        measure_data[port][mname].append(value)
         return measure_data
+
+    def get_delay_lists(self, value_dict):
+        """Returns dicts for path measures of bitline and sen paths"""
+        sen_name_list = []
+        sen_delay_list = []
+        for meas in self.sen_path_meas:
+            sen_name_list.append(meas.name)
+            sen_delay_list.append(value_dict[meas.name])
+        
+        bl_name_list = []
+        bl_delay_list = []
+        for meas in self.bl_path_meas:
+            bl_name_list.append(meas.name)
+            bl_delay_list.append(value_dict[meas.name])
+
+        return sen_name_list, sen_delay_list, bl_name_list, bl_delay_list 
 
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""

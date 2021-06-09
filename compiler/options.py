@@ -72,7 +72,9 @@ class options(optparse.Values):
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
+        
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
+        
     except:
         openram_temp = "/tmp"
         
@@ -87,6 +89,8 @@ class options(optparse.Values):
     use_specified_corners = None
     # Allows specification of model data
     sim_data_path = None
+    # A list of load/slew tuples
+    use_specified_load_slew = None
 
     ###################
     # Run-time vs accuracy options.
@@ -97,6 +101,7 @@ class options(optparse.Values):
     netlist_only = False
     # Whether we should do the final power routing
     route_supplies = "tree"
+    supply_pin_type = "ring"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
@@ -117,13 +122,13 @@ class options(optparse.Values):
     # Tool options
     ###################
     # Variable to select the variant of spice
-    spice_name = ""
+    spice_name = None
     # The spice executable being used which is derived from the user PATH.
-    spice_exe = ""
+    spice_exe = None
     # Variable to select the variant of drc, lvs, pex
-    drc_name = ""
-    lvs_name = ""
-    pex_name = ""
+    drc_name = None
+    lvs_name = None
+    pex_name = None
     # The DRC/LVS/PEX executable being used
     # which is derived from the user PATH.
     drc_exe = None

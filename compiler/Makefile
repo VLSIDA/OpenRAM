@@ -1,8 +1,8 @@
-TECH = scn4m_subm
+TECH = freepdk45
 CUR_DIR = $(shell pwd)
 TEST_DIR = ${CUR_DIR}/tests
 
-MAKEFLAGS += -j 1
+#MAKEFLAGS += -j 1
 
 # Library test
 LIBRARY_TESTS = $(shell find ${TEST_DIR} -name 0[1-2]*_test.py)
@@ -64,7 +64,35 @@ usage: ${USAGE_TESTS}
 
 $(ALL_TESTS):
 	python3 $@ -t ${TECH}
+OPENRAM_TECHS = $(subst :, ,$(OPENRAM_TECH))
+TECH_DIR := $(word 1, $(foreach dir,$(OPENRAM_TECHS),$(wildcard $(dir)/$(TECH))))
+CONFIG_DIR = $(OPENRAM_HOME)/model_configs
+MODEL_CONFIGS = $(wildcard $(CONFIG_DIR)/*.py)
+SIM_DIR = $(OPENRAM_HOME)/model_data/$(TECH)
+CSV_DIR = $(TECH_DIR)/sim_data
+OPTS = 
+# Characterize and perform DRC/LVS
+OPTS += -c 
+# Do not characterize or perform DRC/LVS
+OPTS += -n
+# Verbosity
+#OPTS += -v
+# Spice
+OPTS += -s hspice
 
+.PHONY: ${MODEL_CONFIGS}
+
+.PHONY: model
+
+model: $(MODEL_CONFIGS)
+	mkdir -p $(CSV_DIR)
+	python3 $(OPENRAM_HOME)/model_data_util.py $(SIM_DIR) $(CSV_DIR)
+	
+$(MODEL_CONFIGS):
+	$(eval bname=$(basename $(notdir $@)))
+	mkdir -p $(SIM_DIR)/$(bname)
+	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $@ 2>&1 > /dev/null
+	
 clean:
 	find . -name \*.pyc -exec rm {} \;
 	find . -name \*~ -exec rm {} \;

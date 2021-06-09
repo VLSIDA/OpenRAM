@@ -14,7 +14,7 @@ import os
 
 process_transform = {'SS':0.0, 'TT': 0.5, 'FF':1.0}
 
-def get_data_names(file_name):
+def get_data_names(file_name, exclude_area=True):
     """
     Returns just the data names in the first row of the CSV
     """
@@ -25,8 +25,18 @@ def get_data_names(file_name):
         # reader is iterable not a list, probably  a better way to do this
         for row in csv_reader:
             # Return names from first row
-            return row[0].split(',')
-    
+            names = row[0].split(',')
+            break
+    if exclude_area:
+        try:
+            area_ind = names.index('area')
+        except ValueError:
+            area_ind = -1
+            
+        if area_ind != -1:    
+            names = names[:area_ind] + names[area_ind+1:]
+    return names        
+            
 def get_data(file_name):
     """
     Returns data in CSV as lists of features
@@ -35,24 +45,33 @@ def get_data(file_name):
     with open(file_name, newline='') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         row_iter = 0
+        removed_items = 1
         for row in csv_reader:
             row_iter += 1
             if row_iter == 1:
                 feature_names = row[0].split(',')
-                input_list = [[] for _ in feature_names]
-                scaled_list = [[] for _ in feature_names]
-                
+                input_list = [[] for _ in range(len(feature_names)-removed_items)]
+                try:
+                    # Save to remove area
+                    area_ind = feature_names.index('area')
+                except ValueError:
+                    area_ind = -1
+                    
                 try:
                     process_ind = feature_names.index('process')
                 except:
                     debug.error('Process not included as a feature.')
                 continue
+                
+                
 
             data = []
             split_str = row[0].split(',')
             for i in range(len(split_str)):
                 if i == process_ind:
                     data.append(process_transform[split_str[i]])
+                elif i == area_ind:
+                    continue
                 else:
                     data.append(float(split_str[i]))
 
@@ -227,9 +246,8 @@ def get_scaled_data(file_name):
     
     # Data is scaled by max/min and data format is changed to points vs feature lists
     self_scaled_data = scale_data_and_transform(all_data)
-    samples = np.asarray(self_scaled_data)
-    features, labels = samples[:, :-1], samples[:,-1:]
-    return features, labels
+    data_np = np.asarray(self_scaled_data)
+    return data_np
 
 def scale_data_and_transform(data):
     """
@@ -275,16 +293,13 @@ def unscale_data(data, file_path, pos=None):
         
     # Hard coded to only convert the last max/min (i.e. the label of the data) 
     if pos == None:
-        maxs,mins,avgs = [maxs[-1]],[mins[-1]],[avgs[-1]]
+        maxs,mins,avgs = maxs[-1],mins[-1],avgs[-1]
     else:
-        maxs,mins,avgs = [maxs[pos]],[mins[pos]],[avgs[pos]]
+        maxs,mins,avgs = maxs[pos],mins[pos],avgs[pos]
     unscaled_data = []
     for data_row in data:
-        unscaled_row = []
-        for val, cur_max, cur_min in zip(data_row, maxs, mins):
-            unscaled_val = val*(cur_max-cur_min) + cur_min
-            unscaled_row.append(unscaled_val)
-        unscaled_data.append(unscaled_row)   
+        unscaled_val = data_row*(maxs-mins) + mins
+        unscaled_data.append(unscaled_val) 
 
     return unscaled_data
     

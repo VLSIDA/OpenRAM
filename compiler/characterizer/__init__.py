@@ -24,7 +24,7 @@ debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""
 
 if not OPTS.analytical_delay:
-    if OPTS.spice_name != "":
+    if OPTS.spice_name:
         # Capitalize Xyce
         if OPTS.spice_name == "xyce":
             OPTS.spice_name = "Xyce"
@@ -32,7 +32,7 @@ if not OPTS.analytical_delay:
         if OPTS.spice_exe=="" or OPTS.spice_exe==None:
             debug.error("{0} not found. Unable to perform characterization.".format(OPTS.spice_name), 1)
     else:
-        (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["ngspice", "ngspice.exe", "hspice", "xa", "Xyce"])
+        (OPTS.spice_name, OPTS.spice_exe) = get_tool("spice", ["Xyce", "ngspice", "ngspice.exe", "hspice", "xa"])
 
     if OPTS.spice_name in ["Xyce", "xyce"]:
         (OPTS.mpi_name, OPTS.mpi_exe) = get_tool("mpi", ["mpirun"])
@@ -45,7 +45,7 @@ if not OPTS.analytical_delay:
     if OPTS.spice_name == "ngspice":
         os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
 
-    if OPTS.spice_exe == "":
+    if not OPTS.spice_exe:
         debug.error("No recognizable spice version found. Unable to perform characterization.", 1)
     else:
         debug.info(1, "Finding spice simulator: {} ({})".format(OPTS.spice_name, OPTS.spice_exe))

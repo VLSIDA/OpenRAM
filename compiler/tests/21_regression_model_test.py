@@ -30,6 +30,7 @@ class regression_model_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import linear_regression
+        from characterizer import neural_network
         from sram import sram
         from sram_config import sram_config
         c = sram_config(word_size=1,
@@ -49,31 +50,11 @@ class regression_model_test(openram_test):
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         
-        m = linear_regression(s.s, tempspice, corner)
-        m.cross_validation()
-
-        # Only compare the delays
-        # spice_delays = {key:value for key, value in spice_data.items() if 'delay' in key}
-        # spice_delays['min_period'] = spice_data['min_period']
-        # model_delays = {key:value for key, value in model_data.items() if 'delay' in key}
-        # model_delays['min_period'] = model_data['min_period']
-        # debug.info(1,"Spice Delays={}".format(spice_delays))
-        # debug.info(1,"Model Delays={}".format(model_delays))
-
-        # if OPTS.tech_name == "freepdk45":
-            # error_tolerance = 0.25
-        # elif OPTS.tech_name == "scn4m_subm":
-            # error_tolerance = 0.25
-        # else:
-            # self.assertTrue(False) # other techs fail
-
-        # print('spice_delays', spice_delays)
-        # print('model_delays', model_delays)
-
-        # # Check if no too many or too few results
-        # self.assertTrue(len(spice_delays.keys())==len(model_delays.keys()))
-
-        # self.assertTrue(self.check_golden_data(spice_delays,model_delays,error_tolerance))
+        #m = linear_regression(s.s, tempspice, corner)
+        m = neural_network(s.s, tempspice, corner)
+        scores = m.cross_validation()
+        accuracy_requirement = 0.75
+        self.assertTrue(scores['rise_delay'] >= accuracy_requirement)
 
         globals.end_openram()
 

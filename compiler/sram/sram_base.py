@@ -41,6 +41,14 @@ class sram_base(design, verilog, lef):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        try:
+            from tech import power_grid
+            self.supply_stack = power_grid
+        except ImportError:
+            # if no power_grid is specified by tech we use sensible defaults
+            # Route a M3/M4 grid
+            self.supply_stack = self.m3_stack
+
     def add_pins(self):
         """ Add pins for entire SRAM. """
 
@@ -230,7 +238,7 @@ class sram_base(design, verilog, lef):
     def create_modules(self):
         debug.error("Must override pure virtual function.", -1)
 
-    def route_supplies(self):
+    def route_supplies(self, bbox=None):
         """ Route the supply grid and connect the pins to them. """
 
         # Copy the pins to the top level
@@ -239,29 +247,21 @@ class sram_base(design, verilog, lef):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
         
-        try:
-            from tech import power_grid
-            grid_stack = power_grid
-        except ImportError:
-            # if no power_grid is specified by tech we use sensible defaults
-            # Route a M3/M4 grid
-            grid_stack = self.m3_stack
-
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
         elif OPTS.route_supplies == "grid":
             from supply_grid_router import supply_grid_router as router
-            rtr=router(grid_stack, self)
         else:
             from supply_tree_router import supply_tree_router as router
-            rtr=router(grid_stack,
-                       self,
-                       pin_type=OPTS.route_supplies)
+        rtr=router(layers=self.supply_stack,
+                   design=self,
+                   bbox=bbox,
+                   pin_type=OPTS.supply_pin_type)
 
         rtr.route()
 
-        if OPTS.route_supplies in ["left", "right", "top", "bottom", "ring"]:
+        if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
             # Find the lowest leftest pin for vdd and gnd
             for pin_name in ["vdd", "gnd"]:
                 # Copy the pin shape(s) to rectangles
@@ -283,7 +283,7 @@ class sram_base(design, verilog, lef):
                                         pin.width(),
                                         pin.height())
             
-        elif OPTS.route_supplies:
+        elif OPTS.route_supplies and OPTS.supply_pin_type == "single":
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
         
@@ -321,7 +321,7 @@ class sram_base(design, verilog, lef):
             # Grid is left with many top level pins
             pass
 
-    def route_escape_pins(self):
+    def route_escape_pins(self, bbox):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -364,7 +364,7 @@ class sram_base(design, verilog, lef):
         from signal_escape_router import signal_escape_router as router
         rtr=router(layers=self.m3_stack,
                    design=self,
-                   margin=8 * self.m3_pitch)
+                   bbox=bbox)
         rtr.escape_route(pins_to_route)
 
     def compute_bus_sizes(self):
@@ -472,6 +472,12 @@ class sram_base(design, verilog, lef):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
         self.dff = factory.create(module_type="dff")
 
+        # Create the bank module (up to four are instantiated)
+        self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
+        self.add_mod(self.bank)
+
+        self.num_spare_cols = self.bank.num_spare_cols
+
         # Create the address and control flops (but not the clk)
         self.row_addr_dff = factory.create("dff_array", module_name="row_addr_dff", rows=self.row_addr_size, columns=1)
         self.add_mod(self.row_addr_dff)
@@ -492,10 +498,6 @@ class sram_base(design, verilog, lef):
         if self.num_spare_cols:
             self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
             self.add_mod(self.spare_wen_dff)
-
-        # Create the bank module (up to four are instantiated)
-        self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
-        self.add_mod(self.bank)
 
         # Create bank decoder
         if(self.num_banks > 1):

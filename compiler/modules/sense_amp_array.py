@@ -8,6 +8,7 @@
 import design
 from vector import vector
 from sram_factory import factory
+from tech import cell_properties
 import debug
 from globals import OPTS
 
@@ -41,7 +42,6 @@ class sense_amp_array(design.design):
             self.en_layer = "m3"
         else:
             self.en_layer = "m1"
-
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -109,15 +109,22 @@ class sense_amp_array(design.design):
                                self.en_name, "vdd", "gnd"])
 
     def place_sense_amp_array(self):
-        if self.bitcell.width > self.amp.width:
-            self.amp_spacing = self.bitcell.width
+        cell = factory.create(module_type=OPTS.bitcell)
+        if(cell_properties.use_strap  == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
+            precharge_width = cell.width + strap.width
+        else:
+            precharge_width = cell.width
+
+        if precharge_width > self.amp.width:
+            self.amp_spacing = precharge_width
         else:
             self.amp_spacing = self.amp.width
 
         if not self.offsets:
             self.offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
-                self.offsets.append(i * self.bitcell.width)
+                self.offsets.append(i * self.amp_spacing)
 
         for i, xoffset in enumerate(self.offsets[0:self.num_cols:self.words_per_row]):
             if self.bitcell.mirror.y and (i * self.words_per_row + self.column_offset) % 2:
@@ -128,13 +135,12 @@ class sense_amp_array(design.design):
 
             amp_position = vector(xoffset, 0)
             self.local_insts[i].place(offset=amp_position, mirror=mirror)
-
         # place spare sense amps (will share the same enable as regular sense amps)
         for i, xoffset in enumerate(self.offsets[self.num_cols:]):
             index = self.word_size + i
             if self.bitcell.mirror.y and (index + self.column_offset) % 2:
                 mirror = "MY"
-                xoffset = xoffset + self.amp_width
+                xoffset = xoffset + self.amp_spacing
             else:
                 mirror = ""
 

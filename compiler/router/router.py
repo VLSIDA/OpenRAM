@@ -82,31 +82,13 @@ class router(router_tech):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
         """
-
-        # If didn't specify a gds blockage file, write it out to read the gds
-        # This isn't efficient, but easy for now
-        # Load the gds file and read in all the shapes
-        self.cell.gds_write(self.gds_filename)
-        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
-        self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(self.gds_filename)
-        self.top_name = self.layout.rootStructureName
-        
         if not bbox:
-            # The boundary will determine the limits to the size
-            # of the routing grid
-            self.boundary = self.layout.measureBoundary(self.top_name)
-            # These must be un-indexed to get rid of the matrix type
-            self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-            self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+            self.bbox = self.cell.get_bbox(margin)
         else:
-            self.ll, self.ur = bbox
+            self.bbox = bbox
 
-        margin_offset = vector(margin, margin)
-        self.bbox = (self.ll - margin_offset, self.ur + margin_offset)
-        size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1} with perimeter margin {2}".format(size.x, size.y, margin))
-        
+        (self.ll, self.ur) = self.bbox
+
     def get_bbox(self):
         return self.bbox
     
@@ -893,19 +875,21 @@ class router(router_tech):
         # Clearing the blockage of this pin requires the inflated pins
         self.clear_blockages(pin_name)
 
-    def add_side_supply_pin(self, name, side="left", width=2):
+    def add_side_supply_pin(self, name, side="left", width=3, space=2):
         """
         Adds a supply pin to the perimeter and resizes the bounding box.
         """
         pg = pin_group(name, [], self)
+        # Offset two spaces inside and one between the rings
         if name == "gnd":
-            offset = width + 1
+            offset = width + 2 * space
         else:
-            offset = 1
+            offset = space
         if side in ["left", "right"]:
             layers = [1]
         else:
             layers = [0]
+
         pg.grids = set(self.rg.get_perimeter_list(side=side,
                                                   width=width,
                                                   margin=self.margin,
@@ -920,39 +904,39 @@ class router(router_tech):
 
         self.new_pins[name] = pg.pins
         
-    def add_ring_supply_pin(self, name, width=2):
+    def add_ring_supply_pin(self, name, width=3, space=2):
         """
         Adds a ring supply pin that goes inside the given bbox.
         """
         pg = pin_group(name, [], self)
-        # Offset the vdd inside one ring width
+        # Offset two spaces inside and one between the rings
         # Units are in routing grids
         if name == "gnd":
-            offset = width + 1
+            offset = width + 2 * space
         else:
-            offset = 1
+            offset = space
 
         # LEFT
-        left_grids = set(self.rg.get_perimeter_list(side="left",
+        left_grids = set(self.rg.get_perimeter_list(side="left_ring",
                                                     width=width,
                                                     margin=self.margin,
                                                     offset=offset,
                                                     layers=[1]))
 
         # RIGHT
-        right_grids = set(self.rg.get_perimeter_list(side="right",
+        right_grids = set(self.rg.get_perimeter_list(side="right_ring",
                                                      width=width,
                                                      margin=self.margin,
                                                      offset=offset,
                                                      layers=[1]))
         # TOP
-        top_grids = set(self.rg.get_perimeter_list(side="top",
+        top_grids = set(self.rg.get_perimeter_list(side="top_ring",
                                                    width=width,
                                                    margin=self.margin,
                                                    offset=offset,
                                                    layers=[0]))
         # BOTTOM
-        bottom_grids = set(self.rg.get_perimeter_list(side="bottom",
+        bottom_grids = set(self.rg.get_perimeter_list(side="bottom_ring",
                                                       width=width,
                                                       margin=self.margin,
                                                       offset=offset,

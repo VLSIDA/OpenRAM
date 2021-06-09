@@ -21,7 +21,7 @@ class supply_grid_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, margin=0, bbox=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).

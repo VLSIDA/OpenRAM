@@ -41,7 +41,8 @@ class layout():
         
         self.width = None
         self.height = None
-        self.bounding_box = None
+        self.bounding_box = None # The rectangle shape
+        self.bbox = None # The ll, ur coords
         # Holds module/cell layout instances
         self.insts = []
         # Set of names to check for duplicates
@@ -1163,6 +1164,57 @@ class layout():
 
         self.bbox = [self.bounding_box.ll(), self.bounding_box.ur()]
 
+    def get_bbox(self, side="all", big_margin=0, little_margin=0):
+        """
+        Get the bounding box from the GDS
+        """
+        gds_filename = OPTS.openram_temp + "temp.gds"
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.gds_write(gds_filename)
+        layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        reader = gdsMill.Gds2reader(layout)
+        reader.loadFromFile(gds_filename)
+        top_name = layout.rootStructureName
+
+        if not self.bbox:
+            # The boundary will determine the limits to the size
+            # of the routing grid
+            boundary = layout.measureBoundary(top_name)
+            # These must be un-indexed to get rid of the matrix type
+            ll = vector(boundary[0][0], boundary[0][1])
+            ur = vector(boundary[1][0], boundary[1][1])
+        else:
+            ll, ur = self.bbox
+
+        ll_offset = vector(0, 0)
+        ur_offset = vector(0, 0)
+        if side in ["ring", "top", "all"]:
+            ur_offset += vector(0, big_margin)
+        else:
+            ur_offset += vector(0, little_margin)
+        if side in ["ring", "bottom", "all"]:
+            ll_offset += vector(0, big_margin)
+        else:
+            ll_offset += vector(0, little_margin)
+        if side in ["ring", "left", "all"]:
+            ll_offset += vector(big_margin, 0)
+        else:
+            ll_offset += vector(little_margin, 0)
+        if side in ["ring", "right", "all"]:
+            ur_offset += vector(big_margin, 0)
+        else:
+            ur_offset += vector(little_margin, 0)
+        bbox = (ll - ll_offset, ur + ur_offset)
+        size = ur - ll
+        debug.info(1, "Size: {0} x {1} with perimeter big margin {2} little margin {3}".format(size.x,
+                                                                                               size.y,
+                                                                                               big_margin,
+                                                                                               little_margin))
+
+        return bbox
+
     def add_enclosure(self, insts, layer="nwell", extend=0, leftx=None, rightx=None, topy=None, boty=None):
         """
         Add a layer that surrounds the given instances. Useful
@@ -1205,22 +1257,24 @@ class layout():
                              height=ymax - ymin)
         return rect
 
-    def copy_power_pins(self, inst, name, add_vias=True):
+    def copy_power_pins(self, inst, name, add_vias=True, new_name=""):
         """
         This will copy a power pin if it is on the lowest power_grid layer.
         If it is on M1, it will add a power via too.
         """
         pins = inst.get_pins(name)
         for pin in pins:
+            if new_name == "":
+                new_name = pin.name
             if pin.layer == self.pwr_grid_layer:
-                self.add_layout_pin(name,
+                self.add_layout_pin(new_name,
                                     pin.layer,
                                     pin.ll(),
                                     pin.width(),
                                     pin.height())
 
             elif add_vias:
-                self.copy_power_pin(pin)
+                self.copy_power_pin(pin, new_name=new_name)
 
     def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
         """
@@ -1266,13 +1320,15 @@ class layout():
                                             width=width,
                                             height=height)
 
-    def copy_power_pin(self, pin, loc=None, directions=None):
+    def copy_power_pin(self, pin, loc=None, directions=None, new_name=""):
         """
         Add a single power pin from the lowest power_grid layer down to M1 (or li) at
         the given center location. The starting layer is specified to determine
         which vias are needed.
         """
 
+        if new_name == "":
+                new_name = pin.name
         if not loc:
             loc = pin.center()
             
@@ -1286,7 +1342,7 @@ class layout():
             height = None
             
         if pin.layer == self.pwr_grid_layer:
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,
@@ -1301,7 +1357,7 @@ class layout():
                 width = via.width
             if not height:
                 height = via.height
-            self.add_layout_pin_rect_center(text=pin.name,
+            self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,
                                             offset=loc,
                                             width=width,
@@ -1357,7 +1413,7 @@ class layout():
         [ll, ur] = bbox
 
         # Possibly inflate the bbox
-        nwell_offset = vector(self.nwell_width, self.nwell_width)
+        nwell_offset = vector(2 * self.nwell_width, 2 * self.nwell_width)
         ll -= nwell_offset.scale(inflate, inflate)
         ur += nwell_offset.scale(inflate, inflate)
 
@@ -1396,7 +1452,7 @@ class layout():
                                           to_layer="m1",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1416,7 +1472,7 @@ class layout():
                                           to_layer="m1",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1436,7 +1492,7 @@ class layout():
                                           to_layer="m2",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1
@@ -1456,7 +1512,7 @@ class layout():
                                           to_layer="m2",
                                           offset=loc)
             else:
-                self.add_power_pin(name="gnd",
+                self.add_power_pin(name="vdd",
                                    loc=loc,
                                    start_layer="li")
             count += 1

@@ -238,8 +238,8 @@ def setup_bitcell():
         OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
     else:
-        num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        OPTS.bitcell = "bitcell_{}port".format(num_ports)
+        OPTS.num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        OPTS.bitcell = "bitcell_{}port".format(OPTS.num_ports)
         OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
                 
@@ -607,7 +607,7 @@ def report_status():
 
     # If a write mask is specified by the user, the mask write size should be the same as
     # the word size so that an entire word is written at once.
-    if OPTS.write_size is not None:
+    if OPTS.write_size is not None and OPTS.write_size != OPTS.word_size:
         if (OPTS.word_size % OPTS.write_size != 0):
             debug.error("Write size needs to be an integer multiple of word size.")
         # If write size is more than half of the word size,

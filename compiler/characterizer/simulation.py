@@ -487,22 +487,21 @@ class simulation():
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
             port_pos = -1 - len(str(column_addr)) - len(str(port))
 
-            if bl_name_port.endswith(str(port) + "_" + str(column_addr)):
-                self.bl_name = bl_name_port[:port_pos] + "{}" + bl_name_port[port_pos + len(str(port)):]
-            elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            if bl_name_port.endswith(str(port) + "_" + str(self.bitline_column)): # single port SRAM case, bl will not be numbered eg bl_0
                 self.bl_name = bl_name_port
             else:
                 self.bl_name = bl_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
 
-            if br_name_port.endswith(str(port) + "_" + str(column_addr)):
-                self.br_name = br_name_port[:port_pos] + "{}" + br_name_port[port_pos + len(str(port)):]
-            elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            if br_name_port.endswith(str(port) + "_" + str(self.bitline_column)): # single port SRAM case, bl will not be numbered eg bl_0
                 self.br_name = br_name_port
             else:
                 self.br_name = br_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
-            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
+            debug.info(0, "bl name={}, br name={}".format(self.bl_name, self.br_name))
+            debug.info(0, "br_name_port[port_pos]={}".format(br_name_port[port_pos]))
+            debug.info(0, "mport ending={}".format(str(port) + "_" + str(column_addr)))
+            debug.info(0, "self.bitline_column={}".format(self.bitline_column))
         else:
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))

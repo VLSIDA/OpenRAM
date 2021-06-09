@@ -498,10 +498,6 @@ class simulation():
             else:
                 self.br_name = br_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
-            debug.info(0, "bl name={}, br name={}".format(self.bl_name, self.br_name))
-            debug.info(0, "br_name_port[port_pos]={}".format(br_name_port[port_pos]))
-            debug.info(0, "mport ending={}".format(str(port) + "_" + str(column_addr)))
-            debug.info(0, "self.bitline_column={}".format(self.bitline_column))
         else:
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))

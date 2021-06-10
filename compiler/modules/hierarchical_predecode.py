@@ -215,12 +215,16 @@ class hierarchical_predecode(design.design):
             in_pos = vector(self.input_rails[in_pin].cx(), y_offset)
             a_pos = vector(self.decode_rails[a_pin].cx(), y_offset)
             self.add_path(self.input_layer, [in_pos, a_pos])
+            
             self.add_via_stack_center(from_layer=self.input_layer,
                                       to_layer=self.bus_layer,
-                                      offset=[self.input_rails[in_pin].cx(), y_offset])
+                                      offset=[self.input_rails[in_pin].cx(), y_offset],
+                                      directions= ("H", "H"))
+            
             self.add_via_stack_center(from_layer=self.input_layer,
                                       to_layer=self.bus_layer,
-                                      offset=[self.decode_rails[a_pin].cx(), y_offset])
+                                      offset=[self.decode_rails[a_pin].cx(), y_offset],
+                                      directions=("H", "H"))
 
     def route_output_ands(self):
         """

@@ -385,6 +385,7 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
+            # This layer stack must be different than the data dff layer stack
             layer_stack = self.m1_stack
 
             if port == 0:
@@ -394,11 +395,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
             else:
                 offset = vector(0,
                                 self.bank.height + self.m3_pitch)
@@ -406,11 +407,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
         
     def route_data_dffs(self, port, add_routes):
         route_map = []
@@ -441,40 +442,49 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
-            # The write masks will have blockages on M1
-            # if self.num_wmasks > 0 and port in self.write_ports:
-            #     layer_stack = self.m3_stack
-            # else:
-            #     layer_stack = self.m1_stack
+            # This layer stack must be different than the column addr dff layer stack
             layer_stack = self.m3_stack
             if port == 0:
+                # This is relative to the bank at 0,0 or the s_en which is routed on M3 also
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_bottom = min(0, self.control_logic_insts[port].get_pin("s_en").by())
+                else:
+                    y_bottom = 0
+                    
+                y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
+                           
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                                - self.data_bus_size[port] + 2 * self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_top = max(self.bank.height, self.control_logic_insts[port].get_pin("s_en").uy())
+                else:
+                    y_top = self.bank.height
+                y_offset = y_top + self.m3_pitch
                 offset = vector(0,
-                                self.bank.height + self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 

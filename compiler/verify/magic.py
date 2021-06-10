@@ -180,6 +180,10 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write('puts "Finished drc check"\n')
     f.write("drc catchup\n")
     f.write('puts "Finished drc catchup"\n')
+    # This is needed instead of drc count total because it displays
+    # some errors that are not "DRC" errors.
+    # f.write("puts -nonewline \"Total DRC errors found: \"\n")
+    # f.write("puts stdout [drc listall count total]\n")
     f.write("drc count total\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")

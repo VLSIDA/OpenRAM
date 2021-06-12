@@ -195,7 +195,7 @@ class hierarchical_predecode(design.design):
 
     def route_inputs_to_rails(self):
         """ Route the uninverted inputs to the second set of rails """
-
+        
         top_and_gate = self.and_inst[-1]
         for num in range(self.number_of_inputs):
             if num == 0:
@@ -321,7 +321,6 @@ class hierarchical_predecode(design.design):
                     y_offset += drc["grid"]
             rail_pos.y = y_offset
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
-            
             self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
 
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
@@ -336,7 +335,7 @@ class hierarchical_predecode(design.design):
         """
         Route the different permutations of the NAND/AND decocer cells.
         """
-
+        
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()
         for k in range(self.number_of_outputs):

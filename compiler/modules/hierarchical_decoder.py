@@ -11,8 +11,10 @@ import math
 from sram_factory import factory
 from vector import vector
 from globals import OPTS
+from tech import layer_indices
+from tech import layer_stacks
 from tech import layer_properties as layer_props
-
+from tech import drc
 
 class hierarchical_decoder(design.design):
     """
@@ -29,7 +31,7 @@ class hierarchical_decoder(design.design):
 
         b = factory.create(module_type=OPTS.bitcell)
         self.cell_height = b.height
-
+        self.predecode_bus_rail_pos = []
         self.num_outputs = num_outputs
         self.num_inputs = math.ceil(math.log(self.num_outputs, 2))
         (self.no_of_pre2x4, self.no_of_pre3x8, self.no_of_pre4x16)=self.determine_predecodes(self.num_inputs)
@@ -504,9 +506,9 @@ class hierarchical_decoder(design.design):
                                                               offset=vector(self.bus_pitch, 0),
                                                               names=input_bus_names,
                                                               length=self.height)
-
-            self.route_predecodes_to_bus()
             self.route_bus_to_decoder()
+            self.route_predecodes_to_bus()
+            
 
     def route_predecodes_to_bus(self):
         """
@@ -521,7 +523,7 @@ class hierarchical_decoder(design.design):
                 pin = self.pre2x4_inst[pre_num].get_pin(out_name)
                 x_offset = self.pre2x4_inst[pre_num].rx() + self.output_layer_pitch
                 y_offset = self.pre2x4_inst[pre_num].by() + i * self.cell_height
-                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset)
+                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset, "pre2x4")
 
         # FIXME: convert to connect_bus
         for pre_num in range(self.no_of_pre3x8):
@@ -531,7 +533,7 @@ class hierarchical_decoder(design.design):
                 pin = self.pre3x8_inst[pre_num].get_pin(out_name)
                 x_offset = self.pre3x8_inst[pre_num].rx() + self.output_layer_pitch
                 y_offset = self.pre3x8_inst[pre_num].by() + i * self.cell_height
-                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset)
+                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset, "pre3x8")
 
         # FIXME: convert to connect_bus
         for pre_num in range(self.no_of_pre4x16):
@@ -541,7 +543,7 @@ class hierarchical_decoder(design.design):
                 pin = self.pre4x16_inst[pre_num].get_pin(out_name)
                 x_offset = self.pre4x16_inst[pre_num].rx() + self.output_layer_pitch
                 y_offset = self.pre4x16_inst[pre_num].by() + i * self.cell_height
-                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset)
+                self.route_predecode_bus_inputs(predecode_name, pin, x_offset, y_offset, "pre4x16")
 
     def route_bus_to_decoder(self):
         """
@@ -649,8 +651,9 @@ class hierarchical_decoder(design.design):
                                   to_layer=self.input_layer,
                                   offset=pin_pos,
                                   directions=("H", "H"))
-
-    def route_predecode_bus_inputs(self, rail_name, pin, x_offset, y_offset):
+        self.predecode_bus_rail_pos.append(rail_pos)
+        
+    def route_predecode_bus_inputs(self, rail_name, pin, x_offset, y_offset, predecode_type):
         """
         Connect the routing rail to the given metal1 pin using a jog
         to the right of the cell at the given x_offset.
@@ -661,14 +664,58 @@ class hierarchical_decoder(design.design):
         mid_point1 = vector(x_offset, pin_pos.y)
         mid_point2 = vector(x_offset, y_offset)
         rail_pos = vector(self.predecode_bus[rail_name].cx(), mid_point2.y)
-        self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
+        #self.add_path(self.output_layer, [pin_pos, mid_point1, mid_point2, rail_pos])
         #if layer_props.hierarchical_decoder.vertical_supply:
         #    above_rail = vector(self.predecode_bus[rail_name].cx(), mid_point2.y + (self.cell_height / 2))
         #    self.add_path(self.bus_layer, [rail_pos, above_rail], width=self.li_width + self.m1_enclose_mcon * 2)
 
-        # pin_pos = pin.center()
-        # rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
-        # self.add_path(self.output_layer, [pin_pos, rail_pos])
+        #pin_pos = pin.center()
+        #rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
+        #self.add_path(self.output_layer, [pin_pos, rail_pos])
+        
+        # create via for dimensions
+        from_layer = self.output_layer
+        to_layer = self.bus_layer
+
+        cur_layer = from_layer
+        from_id = layer_indices[cur_layer]
+        to_id   = layer_indices[to_layer]
+
+        if from_id < to_id: # grow the stack up
+            search_id = 0
+            next_id = 2
+        else: # grow the stack down
+            search_id = 2
+            next_id = 0
+        curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+        via = factory.create(module_type="contact",
+            layer_stack=curr_stack,
+            dimensions=[1, 1],
+            directions=self.bus_directions)
+        overlapping_pin_space = drc["{0}_to_{0}".format(self.output_layer)]
+        total_buffer_space = (overlapping_pin_space + via.height)
+        while(True):
+            drc_error = 0
+            for and_input in self.predecode_bus_rail_pos:
+                if and_input.x == rail_pos.x:
+                    if (abs(y_offset - and_input.y) < total_buffer_space) or (abs(y_offset - and_input.y) < via.height):
+                        drc_error = 1
+            if drc_error == 0:
+                break
+            else:
+                y_offset += drc["grid"]
+        rail_pos.y = y_offset
+        
+        if predecode_type == "pre2x4":
+            right_pos = pin_pos
+        elif predecode_type =="pre3x8":
+            right_pos = pin_pos
+        elif predecode_type == "pre4x16":
+            right_pos = pin_pos
+        # else:
+        #   error("invalid predcoder type {}".format(predecode_type))
+        self.add_path(self.output_layer, [pin_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
+
         self.add_via_stack_center(from_layer=pin.layer,
                                   to_layer=self.output_layer,
                                   offset=pin_pos)

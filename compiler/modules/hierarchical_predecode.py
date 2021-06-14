@@ -122,7 +122,7 @@ class hierarchical_predecode(design.design):
         self.input_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                     offset=offset,
                                                     names=input_names,
-                                                    length=self.height - 2 * self.bus_pitch,
+                                                    length=self.height - self.bus_pitch,
                                                     pitch=self.bus_pitch)
 
         invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
@@ -132,7 +132,7 @@ class hierarchical_predecode(design.design):
         self.decode_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                      offset=offset,
                                                      names=decode_names,
-                                                     length=self.height - 2 * self.bus_pitch,
+                                                     length=self.height - self.bus_pitch,
                                                      pitch=self.bus_pitch)
 
     def create_input_inverters(self):

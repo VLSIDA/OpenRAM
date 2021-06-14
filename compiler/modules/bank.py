@@ -1105,3 +1105,8 @@ class bank(design.design):
         """
         self.bitcell_array.clear_exclude_bits()
 
+    def graph_exclude_column_mux(self, column_include_num, port):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        self.port_data[port].graph_exclude_column_mux(column_include_num)

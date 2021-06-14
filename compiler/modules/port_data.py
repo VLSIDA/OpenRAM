@@ -856,3 +856,10 @@ class port_data(design.design):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
+
+    def graph_exclude_column_mux(self, column_include_num):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.graph_exclude_columns(column_include_num)

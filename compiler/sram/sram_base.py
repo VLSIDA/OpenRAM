@@ -773,3 +773,10 @@ class sram_base(design, verilog, lef):
         Clears the bit exclusions
         """
         self.bank.clear_exclude_bits()
+        
+    def graph_exclude_column_mux(self, column_include_num, port):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        self.bank.graph_exclude_column_mux(column_include_num, port)
+    

@@ -637,7 +637,7 @@ class sram_1bank(sram_base):
         # Insts located in control logic, exclusion function called here
         for inst in self.control_logic_insts:
             inst.mod.graph_exclude_dffs()
-
+            
     def get_cell_name(self, inst_name, row, col):
         """
         Gets the spice name of the target bitcell.

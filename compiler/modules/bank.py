@@ -1110,3 +1110,9 @@ class bank(design.design):
         Excludes all columns muxes unrelated to the target bit being simulated.
         """
         self.port_data[port].graph_exclude_column_mux(column_include_num)
+
+    def graph_clear_column_mux(self, port):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        self.port_data[port].graph_clear_column_mux()

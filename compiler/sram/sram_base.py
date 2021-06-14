@@ -780,3 +780,8 @@ class sram_base(design, verilog, lef):
         """
         self.bank.graph_exclude_column_mux(column_include_num, port)
     
+    def graph_clear_column_mux(self, port):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        self.bank.graph_clear_column_mux(port)

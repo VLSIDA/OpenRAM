@@ -534,9 +534,9 @@ class simulation():
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
         port=0 #FIXME, port_data requires a port specification, assuming single port for now
         if self.words_per_row > 1:
+            self.sram.graph_clear_column_mux(port)
             self.sram.graph_exclude_column_mux(self.bitline_column, port)
         
-        debug.info(0, "self.bitline_column={}".format(self.bitline_column))
         # Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
         self.sram_instance_name = "X{}".format(self.sram.name)
@@ -558,7 +558,6 @@ class simulation():
         """
         net_found = False
         for path in paths:
-            debug.info(0, "path={}".format(path))
             aliases = self.sram.find_aliases(self.sram_instance_name, self.pins, path, internal_net, mod, exclusion_set)
             if net_found and len(aliases) >= 1:
                 debug.error('Found multiple paths with {} net.'.format(internal_net), 1)

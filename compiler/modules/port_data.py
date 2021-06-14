@@ -863,3 +863,10 @@ class port_data(design.design):
         """
         if self.column_mux_array:
             self.column_mux_array.graph_exclude_columns(column_include_num)
+            
+    def graph_clear_column_mux(self):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.init_graph_params()       

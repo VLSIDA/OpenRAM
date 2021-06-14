@@ -246,7 +246,7 @@ class delay(simulation):
         bl_and_port = self.bl_name.format(port) # bl_name contains a '{}' for the port
         # Isolate the s_en and bitline paths
         debug.info(1, "self.bl_name = {0}".format(self.bl_name))
-        debug.info(1, "self.graph.all_paths = {0}".format(self.graph.all_paths))
+        debug.info(2, "self.graph.all_paths = {0}".format(self.graph.all_paths))
         sen_paths = [path for path in self.graph.all_paths if sen_and_port in path]
         bl_paths = [path for path in self.graph.all_paths if bl_and_port in path]
         debug.check(len(sen_paths)==1, 'Found {0} paths which contain the s_en net.'.format(len(sen_paths)))

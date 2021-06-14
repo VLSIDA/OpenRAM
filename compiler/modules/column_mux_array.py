@@ -236,10 +236,6 @@ class column_mux_array(design.design):
         Excludes all columns muxes unrelated to the target bit being simulated.
         Each mux in mux_inst corresponds to respective column in bitcell array.
         """
-        #stop = 34
         for i in range(len(self.mux_inst)):
             if i != column_include_num:
                 self.graph_inst_exclude.add(self.mux_inst[i])
-                debug.info(0, "Excluded mux {}".format(i))
-            #if i == stop:
-             #   break

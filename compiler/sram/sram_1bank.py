@@ -452,7 +452,6 @@ class sram_1bank(sram_base):
                     y_bottom = 0
                     
                 y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
-                           
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 y_offset)
                 cr = channel_route(netlist=route_map,

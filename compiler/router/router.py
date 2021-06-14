@@ -711,6 +711,27 @@ class router(router_tech):
         p = pin_layout("", [ll, ur], self.get_layer(track[2]))
         return p
 
+    def convert_tracks_to_pin(self, tracks):
+        """
+        Convert a list of grid point into a rectangle shape.
+        Must all be on the same layer.
+        """
+        for t in tracks:
+            debug.check(t[2] == tracks[0][2], "Different layers used.")
+            
+        # For each shape, convert it to a pin
+        pins = [self.convert_track_to_pin(t) for t in tracks]
+        # Now find the bounding box
+        minx = min([p.lx() for p in pins])
+        maxx = max([p.rx() for p in pins])
+        miny = min([p.by() for p in pins])
+        maxy = max([p.uy() for p in pins])
+        ll = vector(minx, miny)
+        ur = vector(maxx, maxy)
+        
+        p = pin_layout("", [ll, ur], self.get_layer(tracks[0][2]))
+        return p
+    
     def convert_track_to_shape_pin(self, track):
         """
         Convert a grid point into a rectangle shape
@@ -1294,10 +1315,27 @@ class router(router_tech):
 
     def get_perimeter_pin(self):
         """ Return the shape of the last routed path that was on the perimeter """
-        for v in self.paths[-1]:
+        lastpath = self.paths[-1]
+        for v in lastpath:
             if self.rg.is_target(v):
+                # Find neighboring grid to make double wide pin
+                neighbor = v + vector3d(0, 1, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(0, -1, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(1, 0, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(-1, 0, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+
+                # Else if we came from a different layer, we can only add
+                # a signle grid
                 return self.convert_track_to_pin(v)
-            
+                
         return None
 
     def get_ll_pin(self, pin_name):

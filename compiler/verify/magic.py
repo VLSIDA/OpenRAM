@@ -74,7 +74,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     magic_file = os.environ.get('OPENRAM_MAGICRC', None)
     if not magic_file:
         magic_file = OPTS.openram_tech + "tech/.magicrc"
-        
+
     if os.path.exists(magic_file):
         shutil.copy(magic_file, output_path + "/.magicrc")
     else:
@@ -251,7 +251,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    # Copy .magicrc file into the output directory
+    # Copy setup.tcl file into the output directory
     setup_file = os.environ.get('OPENRAM_NETGENRC', None)
     if not setup_file:
         setup_file = OPTS.openram_tech + "tech/setup.tcl"

@@ -299,7 +299,8 @@ class stimuli():
 
         self.sf.write("* {} process corner\n".format(self.process))
         for item in self.device_libraries:
-            item[0] = item[0].replace("SIMULATOR", OPTS.spice_name.lower())
+            if OPTS.spice_name:
+                item[0] = item[0].replace("SIMULATOR", OPTS.spice_name.lower())
             if os.path.isfile(item[0]):
                 self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
             else:

@@ -84,9 +84,9 @@ class sram():
         debug.print_raw("SP: Writing to {0}".format(spname))
         self.sp_write(spname)
         functional(self.s,
-                   os.path.basename(spname),
-                   cycles=200,
-                   output_path=OPTS.output_path)
+                  os.path.basename(spname),
+                  cycles=200,
+                  output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
         if not OPTS.netlist_only:
@@ -142,7 +142,7 @@ class sram():
         start_time = datetime.datetime.now()
         from characterizer import lib
         debug.print_raw("LIB: Characterizing... ")
-        lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
+         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
 
         # Write the config file
@@ -157,7 +157,7 @@ class sram():
         from datasheet_gen import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
         debug.print_raw("Datasheet: Writing to {0}".format(dname))
-        datasheet_gen.datasheet_write(dname)
+         datasheet_gen.datasheet_write(dname)
         print_time("Datasheet", datetime.datetime.now(), start_time)
 
         # Write a verilog model

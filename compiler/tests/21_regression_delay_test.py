@@ -52,7 +52,8 @@ class regression_model_test(openram_test):
         
         #m = linear_regression(s.s, tempspice, corner)
         m = neural_network(s.s, tempspice, corner)
-        scores = m.cross_validation()
+        only_test = ['rise_delay']
+        scores = m.cross_validation(only_test)
         accuracy_requirement = 0.75
         self.assertTrue(scores['rise_delay'] >= accuracy_requirement)
 

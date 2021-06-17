@@ -167,7 +167,7 @@ class regression_model(simulation):
             output_num+=1
     
     
-    def cross_validation(self):
+    def cross_validation(self, test_only=None):
         """Wrapper for sklean cross validation function for OpenRAM regression models.
            Returns the mean accuracy for each model/output."""
         
@@ -183,7 +183,11 @@ class regression_model(simulation):
         models = {}
         debug.info(1, "Output name, mean_accuracy, std_dev")
         model_scores = {}
-        for o_name in self.output_names:
+        if test_only != None:
+            test_outputs = test_only
+        else:
+            test_outputs = self.output_names
+        for o_name in test_outputs:
             output_label = labels[:,output_num]
             scores = cross_val_score(untrained_model, features, output_label, cv=10)
             debug.info(1, "{}, {}, {}".format(o_name, scores.mean(), scores.std()))

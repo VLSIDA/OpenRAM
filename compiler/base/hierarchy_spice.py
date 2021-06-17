@@ -32,7 +32,6 @@ class spice():
         # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
-
         self.sp_file = OPTS.openram_tech + "sp_lib/" + cell_name + ".sp"
 
         # If we have a separate lvs directory, then all the lvs files
@@ -570,6 +569,7 @@ class spice():
             net = net.lower()
             int_net = self.name_dict[net]['int_net']
             int_mod = self.name_dict[net]['mod']
+
             if int_mod.is_net_alias(int_net, alias, alias_mod, exclusion_set):
                 aliases.append(net)
         return aliases

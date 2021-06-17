@@ -26,7 +26,6 @@ class bitcell_base(design.design):
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror
             self.end_caps = prop.end_caps
-          
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained
@@ -84,7 +83,7 @@ class bitcell_base(design.design):
             return self.storage_nets
         else:
             fmt_str = "Storage nodes={} not found in spice file."
-            debug.info(1, fmt_str.format(self.storage_nets))
+            debug.warning(fmt_str.format(self.storage_nets))
             return None
 
     def get_storage_net_offset(self):

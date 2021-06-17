@@ -148,12 +148,14 @@ def get_gds_pins(pin_names, name, gds_filename, units):
             cell[str(pin_name)] = []
             pin_list = cell_vlsi.getPinShape(str(pin_name))
             for pin_shape in pin_list:
-                if pin_shape is not None:
+                if pin_shape != None:
                     (lpp, boundary) = pin_shape
                     rect = [vector(boundary[0], boundary[1]),
                             vector(boundary[2], boundary[3])]
                     # this is a list because other cells/designs
                     # may have must-connect pins
+                    if isinstance(lpp[1], list):
+                        lpp = (lpp[0], None)
                     cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
 
         _GDS_PINS_CACHE[k] = cell

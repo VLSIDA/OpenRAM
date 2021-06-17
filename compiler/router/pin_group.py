@@ -155,6 +155,10 @@ class pin_group:
         # Now simplify the enclosure list
         new_pin_list = self.remove_redundant_shapes(pin_list)
 
+        # Now add the right name
+        for pin in new_pin_list:
+            pin.name = self.name
+            
         debug.check(len(new_pin_list) > 0,
                     "Did not find any enclosures.")
 

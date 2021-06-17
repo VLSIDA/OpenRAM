@@ -330,7 +330,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         # We must also translate the global array column number to the local array column number
         local_col = col - self.col_offsets[i - 1]
 
-        return local_array.get_cell_name(inst_name + '.x' + local_inst.name, row, local_col)
+        return local_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + local_inst.name, row, local_col)
 
     def clear_exclude_bits(self):
         """

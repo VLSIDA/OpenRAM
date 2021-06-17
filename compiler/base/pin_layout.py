@@ -611,7 +611,9 @@ class pin_layout:
                 # Don't add the existing shape in if it overlaps the pin shape
                 if new_shape.contains(shape):
                     continue
-                new_shapes.append(new_shape)
+                # Only add non-zero shapes
+                if new_shape.area() > 0:
+                    new_shapes.append(new_shape)
 
         return new_shapes
 

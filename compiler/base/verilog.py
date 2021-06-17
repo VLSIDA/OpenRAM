@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import math
+from tech import spice
 
 
 class verilog:
@@ -28,7 +29,21 @@ class verilog:
         else:
             self.vf.write("\n")
 
+        try:
+            self.vdd_name = spice["power"]
+        except KeyError:
+            self.vdd_name = "vdd"
+        try:
+            self.gnd_name = spice["ground"]
+        except KeyError:
+            self.gnd_name = "gnd"
+            
         self.vf.write("module {0}(\n".format(self.name))
+        self.vf.write("`ifdef USE_POWER_PINS\n")
+        self.vf.write("    {},\n".format(self.vdd_name))
+        self.vf.write("    {},\n".format(self.gnd_name))
+        self.vf.write("`endif\n")
+        
         for port in self.all_ports:
             if port in self.readwrite_ports:
                 self.vf.write("// Port {0}: RW\n".format(port))
@@ -65,6 +80,11 @@ class verilog:
         self.vf.write("  parameter T_HOLD = 1 ; //Delay to hold dout value after posedge. Value is arbitrary\n")
         self.vf.write("\n")
 
+        self.vf.write("`ifdef USE_POWER_PINS\n")
+        self.vf.write("    inout {};\n".format(self.vdd_name))
+        self.vf.write("    inout {};\n".format(self.gnd_name))
+        self.vf.write("`endif\n")
+        
         for port in self.all_ports:
             self.add_inputs_outputs(port)
 

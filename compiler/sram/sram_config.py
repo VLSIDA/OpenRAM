@@ -63,6 +63,11 @@ class sram_config:
 
         self.recompute_sizes()
 
+        # Set word_per_row in OPTS 
+        OPTS.words_per_row = self.words_per_row
+        debug.info(1, "Set SRAM Words Per Row={}".format(OPTS.words_per_row))
+
+        
     def recompute_sizes(self):
         """
         Calculate the auxiliary values assuming fixed number of words per row.

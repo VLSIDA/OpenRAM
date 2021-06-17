@@ -21,7 +21,7 @@ class supply_grid_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None, bbox=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None, margin=0):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -29,12 +29,18 @@ class supply_grid_router(router):
         start_time = datetime.now()
 
         # Power rail width in minimum wire widths
-        self.route_track_width = 2
+        self.route_track_width = 1
 
+        # The pin escape router already made the bounding box big enough,
+        # so we can use the regular bbox here.
+        if pin_type:
+            debug.check(pin_type in ["left", "right", "top", "bottom", "single", "ring"],
+                        "Invalid pin type {}".format(pin_type))
+        self.pin_type = pin_type
         if not bbox:
-            router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
+            router.__init__(self, layers, design, bbox=bbox, margin=margin, route_track_width=self.route_track_width)
         else:
-            router.__init__(self, layers, design, gds_filename, bbox) # The bbox should be already aligned.
+            router.__init__(self, layers, design, bbox=bbox, margin=margin) # The bbox should be already aligned.
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -64,6 +70,15 @@ class supply_grid_router(router):
         start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages", datetime.now(), start_time, 3)
+
+        # Add side pins if enabled
+        if self.pin_type in ["left", "right", "top", "bottom"]:
+            self.add_side_supply_pin(self.vdd_name, side=self.pin_type)
+            self.add_side_supply_pin(self.gnd_name, side=self.pin_type)
+        elif self.pin_type == "ring":
+            self.add_ring_supply_pin(self.vdd_name)
+            self.add_ring_supply_pin(self.gnd_name)
+
         # Add the supply rails in a mesh network and connect H/V with vias
         start_time = datetime.now()
         # Block everything
@@ -431,7 +446,7 @@ class supply_grid_router(router):
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
             self.prepare_blockages()
-
+            self.clear_blockages(self.vdd_name)
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name, index)
@@ -443,7 +458,7 @@ class supply_grid_router(router):
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
                 debug.warning("Component not routed. Location: {0}. Writting a debug gds.".format(str(pg.grids)))
-                self.write_debug_gds("debug_route.gds", False)
+                self.write_debug_gds("debug_route.gds")
 
             # if index==3 and pin_name=="vdd":
             #     self.write_debug_gds("route.gds",False)

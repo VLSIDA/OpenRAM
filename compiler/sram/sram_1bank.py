@@ -9,6 +9,7 @@ from vector import vector
 from sram_base import sram_base
 from contact import m2_via
 from channel_route import channel_route
+from router_tech import router_tech
 from globals import OPTS
 
 
@@ -120,8 +121,9 @@ class sram_1bank(sram_base):
         port = 0
         # The row address bits are placed above the control logic aligned on the right.
         x_offset = self.control_logic_insts[port].rx() - self.row_addr_dff_insts[port].width
-        # It is above the control logic but below the top of the bitcell array
-        y_offset = max(self.control_logic_insts[port].uy(), self.bank.predecoder_height)
+        # It is above the control logic and the predecoder array
+        y_offset = max(self.control_logic_insts[port].uy(), self.bank.predecoder_top)
+
         self.row_addr_pos[port] = vector(x_offset, y_offset)
         self.row_addr_dff_insts[port].place(self.row_addr_pos[port])
 
@@ -130,7 +132,7 @@ class sram_1bank(sram_base):
             # The row address bits are placed above the control logic aligned on the left.
             x_offset = self.control_pos[port].x - self.control_logic_insts[port].width + self.row_addr_dff_insts[port].width
             # If it can be placed above the predecoder and below the control logic, do it
-            y_offset = self.bank.bank_array_ll.y
+            y_offset = self.bank.predecoder_bottom
             self.row_addr_pos[port] = vector(x_offset, y_offset)
             self.row_addr_dff_insts[port].place(self.row_addr_pos[port], mirror="XY")
 
@@ -325,13 +327,34 @@ class sram_1bank(sram_base):
         # they might create some blockages
         self.add_layout_pins()
 
+        # Some technologies have an isolation
+        self.add_dnwell(inflate=2)
+
+        # We need the initial bbox for the supply rings later
+        # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
+        pre_bbox = None
         if OPTS.perimeter_pins:
-            self.route_escape_pins()
+            rt = router_tech(self.supply_stack, 1)
+
+            if OPTS.supply_pin_type in ["ring", "left", "right", "top", "bottom"]:
+                big_margin = 12 * rt.track_width
+                little_margin = 2 * rt.track_width
+            else:
+                big_margin = 6 * rt.track_width
+                little_margin = 0
+
+            pre_bbox = self.get_bbox(side="ring",
+                                     big_margin=rt.track_width)
+
+            bbox = self.get_bbox(side=OPTS.supply_pin_type,
+                                 big_margin=big_margin,
+                                 little_margin=little_margin)
+            self.route_escape_pins(bbox)
             
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies()
+        self.route_supplies(pre_bbox)
         
     def route_dffs(self, add_routes=True):
 
@@ -362,6 +385,7 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
+            # This layer stack must be different than the data dff layer stack
             layer_stack = self.m1_stack
 
             if port == 0:
@@ -371,11 +395,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
             else:
                 offset = vector(0,
                                 self.bank.height + self.m3_pitch)
@@ -383,11 +407,11 @@ class sram_1bank(sram_base):
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
-                # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                # This causes problem in magic since it sometimes cannot extract connectivity of instances
                 # with no active devices.
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
-                #self.add_flat_inst(cr.name, cr)
+                # self.add_flat_inst(cr.name, cr)
         
     def route_data_dffs(self, port, add_routes):
         route_map = []
@@ -418,40 +442,49 @@ class sram_1bank(sram_base):
 
         if len(route_map) > 0:
 
-            # The write masks will have blockages on M1
-            if self.num_wmasks > 0 and port in self.write_ports:
-                layer_stack = self.m3_stack
-            else:
-                layer_stack = self.m1_stack
-
+            # This layer stack must be different than the column addr dff layer stack
+            layer_stack = self.m3_stack
             if port == 0:
+                # This is relative to the bank at 0,0 or the s_en which is routed on M3 also
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_bottom = min(0, self.control_logic_insts[port].get_pin("s_en").by())
+                else:
+                    y_bottom = 0
+                    
+                y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
+                           
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
-                                - self.data_bus_size[port] + 2 * self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
             else:
+                if "s_en" in self.control_logic_insts[port].mod.pin_map:
+                    y_top = max(self.bank.height, self.control_logic_insts[port].get_pin("s_en").uy())
+                else:
+                    y_top = self.bank.height
+                y_offset = y_top + self.m3_pitch
                 offset = vector(0,
-                                self.bank.height + self.m3_pitch)
+                                y_offset)
                 cr = channel_route(netlist=route_map,
                                    offset=offset,
                                    layer_stack=layer_stack,
                                    parent=self)
                 if add_routes:
-                    # This causes problem in magic since it sometimes cannot extract connectivity of isntances
+                    # This causes problem in magic since it sometimes cannot extract connectivity of instances
                     # with no active devices.
                     self.add_inst(cr.name, cr)
                     self.connect_inst([])
-                    #self.add_flat_inst(cr.name, cr)
+                    # self.add_flat_inst(cr.name, cr)
                 else:
                     self.data_bus_size[port] = max(cr.height, self.col_addr_bus_size[port]) + self.data_bus_gap
 
@@ -527,13 +560,13 @@ class sram_1bank(sram_base):
             # Only input (besides pins) is the replica bitline
             src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
             dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
-            self.add_wire(self.m2_stack[::-1],
+            self.add_wire(self.m3_stack,
                           [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
             self.add_via_stack_center(from_layer=src_pin.layer,
-                                      to_layer="m2",
+                                      to_layer="m4",
                                       offset=src_pin.center())
             self.add_via_stack_center(from_layer=dest_pin.layer,
-                                      to_layer="m2",
+                                      to_layer="m3",
                                       offset=dest_pin.center())
 
     def route_row_addr_dff(self):
@@ -612,7 +645,7 @@ class sram_1bank(sram_base):
         # Sanity check in case it was forgotten
         if inst_name.find("x") != 0:
             inst_name = "x" + inst_name
-        return self.bank_inst.mod.get_cell_name(inst_name + ".x" + self.bank_inst.name, row, col)
+        return self.bank_inst.mod.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bank_inst.name, row, col)
 
     def get_bank_num(self, inst_name, row, col):
         return 0

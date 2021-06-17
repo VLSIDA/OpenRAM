@@ -57,7 +57,13 @@ class column_mux(pgate.pgate):
 
         self.place_ptx()
 
-        self.width = self.bitcell.width
+        cell = factory.create(module_type=OPTS.bitcell)
+        if(cell_props.use_strap == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
+            precharge_width = cell.width + strap.width
+        else:
+            precharge_width = cell.width
+        self.width = precharge_width
         self.height = self.nmos_upper.uy() + self.pin_height
 
         self.connect_poly()
@@ -218,10 +224,15 @@ class column_mux(pgate.pgate):
         Add a well and implant over the whole cell. Also, add the
         pwell contact (if it exists)
         """
-
+        if(cell_props.use_strap == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
+            rbc_width = self.bitcell.width + strap.width
+        else:
+            rbc_width = self.bitcell.width
         # Add it to the right, aligned in between the two tx
-        active_pos = vector(self.bitcell.width,
+        active_pos = vector(rbc_width,
                             self.nmos_upper.by() - 0.5 * self.poly_space)
+
         self.well_contact = self.add_via_center(layers=self.active_stack,
                             offset=active_pos,
                             implant_type="p",
@@ -240,7 +251,7 @@ class column_mux(pgate.pgate):
         if "pwell" in layer:
             self.add_rect(layer="pwell",
                           offset=vector(0, 0),
-                          width=self.bitcell.width,
+                          width=rbc_width,
                           height=self.height)
 
         # TSMC18 gate port hack

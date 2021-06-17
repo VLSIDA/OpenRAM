@@ -33,7 +33,11 @@ class precharge(design.design):
         self.beta = parameter["beta"]
         self.ptx_width = self.beta * parameter["min_tx_size"]
         self.ptx_mults = 1
-        self.width = self.bitcell.width
+        if(cell_props.use_strap == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
+            self.width = self.bitcell.width + strap.width
+        else:
+            self.width = self.bitcell.width
         self.bitcell_bl = bitcell_bl
         self.bitcell_br = bitcell_br
         self.bitcell_bl_pin =self.bitcell.get_pin(self.bitcell_bl)

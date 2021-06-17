@@ -6,7 +6,7 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import drc, spice
+from tech import drc, spice, cell_properties
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -553,7 +553,7 @@ class replica_bitcell_array(bitcell_base_array):
         """
         Gets the spice name of the target bitcell.
         """
-        return self.bitcell_array.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name, row, col)
+        return self.bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name, row, col)
 
     def clear_exclude_bits(self):
         """

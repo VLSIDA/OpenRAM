@@ -11,7 +11,7 @@ process_corners = ["TT"]
 supply_voltages = [5.0]
 temperatures = [25]
 
-route_supplies = True
+route_supplies = "side"
 check_lvsdrc = True
 
 output_name = "sram_{0}rw{1}r{2}w_{3}_{4}_{5}".format(num_rw_ports,

@@ -7,6 +7,7 @@
 #
 
 from .regression_model import regression_model
+from sklearn.linear_model import Ridge
 from globals import OPTS
 import debug
 
@@ -23,7 +24,8 @@ class linear_regression(regression_model):
         Supervised training of model.
         """
         
-        model = LinearRegression()
+        #model = LinearRegression()
+        model = Ridge()
         model.fit(features, labels)
         return model
         

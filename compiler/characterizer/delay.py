@@ -69,7 +69,7 @@ class delay(simulation):
             for meas in meas_list:
                 name = meas.name.lower()
                 debug.check(name not in name_set, ("SPICE measurements must have unique names. "
-                                                   "Duplicate name={}").format(name))
+                                                   "Duplicate name={0}").format(name))
                 name_set.add(name)
 
     def create_read_port_measurement_objects(self):
@@ -77,7 +77,7 @@ class delay(simulation):
 
         self.read_lib_meas = []
         self.clk_frmt = "clk{0}" # Unformatted clock name
-        targ_name = "{0}{1}_{2}".format(self.dout_name, "{}", self.probe_data) # Empty values are the port and probe data bit
+        targ_name = "{0}{{}}_{1}".format(self.dout_name, self.probe_data) # Empty values are the port and probe data bit
         self.delay_meas = []
         self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "RISE", "RISE", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ONE # Used to index time delay values when measurements written to spice file.
@@ -166,7 +166,7 @@ class delay(simulation):
         self.dout_volt_meas = []
         for meas in self.delay_meas:
             # Output voltage measures
-            self.dout_volt_meas.append(voltage_at_measure("v_{}".format(meas.name),
+            self.dout_volt_meas.append(voltage_at_measure("v_{0}".format(meas.name),
                                                            meas.targ_name_no_port))
             self.dout_volt_meas[-1].meta_str = meas.meta_str
 
@@ -186,7 +186,7 @@ class delay(simulation):
         self.read_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
         meas_cycles = (sram_op.READ_ZERO, sram_op.READ_ONE)
         for cycle in meas_cycles:
-            meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
+            meas_tag = "a{0}_b{1}_{2}".format(self.probe_address, self.probe_data, cycle.name)
             single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
             for polarity, meas in single_bit_meas.items():
                 meas.meta_str = cycle
@@ -200,7 +200,7 @@ class delay(simulation):
         self.write_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
         meas_cycles = (sram_op.WRITE_ZERO, sram_op.WRITE_ONE)
         for cycle in meas_cycles:
-            meas_tag = "a{}_b{}_{}".format(self.probe_address, self.probe_data, cycle.name)
+            meas_tag = "a{0}_b{1}_{2}".format(self.probe_address, self.probe_data, cycle.name)
             single_bit_meas = self.get_bit_measures(meas_tag, self.probe_address, self.probe_data)
             for polarity, meas in single_bit_meas.items():
                 meas.meta_str = cycle
@@ -219,20 +219,20 @@ class delay(simulation):
         (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
         storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
-                                              "supported for characterization. Storage nets={}").format(storage_names))
+                                              "supported for characterization. Storage nets={0}").format(storage_names))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             bank_num = self.sram.get_bank_num(self.sram.name, bit_row, bit_col)
             q_name = "bitcell_Q_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
             qbar_name = "bitcell_Q_bar_b{0}_r{1}_c{2}".format(bank_num, bit_row, bit_col)
         else:
-            q_name = cell_name + '.' + str(storage_names[0])
-            qbar_name = cell_name + '.' + str(storage_names[1])
+            q_name = cell_name + OPTS.hier_seperator + str(storage_names[0])
+            qbar_name = cell_name + OPTS.hier_seperator + str(storage_names[1])
 
         # Bit measures, measurements times to be defined later. The measurement names must be unique
         # but they is enforced externally. {} added to names to differentiate between ports allow the
         # measurements are independent of the ports
-        q_meas = voltage_at_measure("v_q_{}".format(meas_tag), q_name)
-        qbar_meas = voltage_at_measure("v_qbar_{}".format(meas_tag), qbar_name)
+        q_meas = voltage_at_measure("v_q_{0}".format(meas_tag), q_name)
+        qbar_meas = voltage_at_measure("v_qbar_{0}".format(meas_tag), qbar_name)
 
         return {bit_polarity.NONINVERTING: q_meas, bit_polarity.INVERTING: qbar_meas}
         
@@ -242,15 +242,15 @@ class delay(simulation):
         # FIXME: There should be a default_read_port variable in this case, pathing is done with this
         # but is never mentioned otherwise
         port = self.read_ports[0]
-        sen_and_port = self.sen_name+str(port)
+        sen_and_port = self.sen_name + str(port)
         bl_and_port = self.bl_name.format(port) # bl_name contains a '{}' for the port
         # Isolate the s_en and bitline paths
-        debug.info(1, "self.bl_name = {}".format(self.bl_name))
-        debug.info(1, "self.graph.all_paths = {}".format(self.graph.all_paths))
+        debug.info(1, "self.bl_name = {0}".format(self.bl_name))
+        debug.info(1, "self.graph.all_paths = {0}".format(self.graph.all_paths))
         sen_paths = [path for path in self.graph.all_paths if sen_and_port in path]
         bl_paths = [path for path in self.graph.all_paths if bl_and_port in path]
-        debug.check(len(sen_paths)==1, 'Found {} paths which contain the s_en net.'.format(len(sen_paths)))
-        debug.check(len(bl_paths)==1, 'Found {} paths which contain the bitline net.'.format(len(bl_paths)))
+        debug.check(len(sen_paths)==1, 'Found {0} paths which contain the s_en net.'.format(len(sen_paths)))
+        debug.check(len(bl_paths)==1, 'Found {0} paths which contain the bitline net.'.format(len(bl_paths)))
         sen_path = sen_paths[0]
         bitline_path = bl_paths[0]
         
@@ -286,11 +286,11 @@ class delay(simulation):
         
         # Create the measurements
         path_meas = []
-        for i in range(len(path)-1):
-            cur_net, next_net = path[i], path[i+1]
-            cur_dir, next_dir = path_dirs[i], path_dirs[i+1]
-            meas_name = "delay_{}_to_{}".format(cur_net, next_net)
-            if i+1 != len(path)-1:
+        for i in range(len(path) - 1):
+            cur_net, next_net = path[i], path[i + 1]
+            cur_dir, next_dir = path_dirs[i], path_dirs[i + 1]
+            meas_name = "delay_{0}_to_{1}".format(cur_net, next_net)
+            if i + 1 != len(path) - 1:
                 path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, next_dir, measure_scale=1e9, has_port=False))
             else: # Make the last measurement always measure on FALL because is a read 0
                 path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, "FALL", measure_scale=1e9, has_port=False))
@@ -309,13 +309,13 @@ class delay(simulation):
         # Convert to booleans based on function of modules (inverting/non-inverting)
         mod_type_bools = [mod.is_non_inverting() for mod in edge_mods]
         
-        #FIXME: obtuse hack to differentiate s_en input from bitline in sense amps
+        # FIXME: obtuse hack to differentiate s_en input from bitline in sense amps
         if self.sen_name in path:
             # Force the sense amp to be inverting for s_en->DOUT. 
             # bitline->DOUT is non-inverting, but the module cannot differentiate inputs.
             s_en_index = path.index(self.sen_name)
             mod_type_bools[s_en_index] = False
-            debug.info(2,'Forcing sen->dout to be inverting.')
+            debug.info(2, 'Forcing sen->dout to be inverting.')
         
         # Use these to determine direction list assuming delay start on neg. edge of clock (FALL)
         # Also, use shorthand that 'FALL' == False, 'RISE' == True to simplify logic
@@ -493,7 +493,7 @@ class delay(simulation):
         elif meas_type is voltage_at_measure:
             variant_tuple = self.get_volt_at_measure_variants(port, measure_obj)
         else:
-            debug.error("Input function not defined for measurement type={}".format(meas_type))
+            debug.error("Input function not defined for measurement type={0}".format(meas_type))
         # Removes port input from any object which does not use it. This shorthand only works if
         # the measurement has port as the last input. Could be implemented by measurement type or
         # remove entirely from measurement classes.
@@ -515,7 +515,7 @@ class delay(simulation):
         elif delay_obj.meta_str == sram_op.READ_ONE:
             meas_cycle_delay = self.cycle_times[self.measure_cycles[port][delay_obj.meta_str]]
         else:
-            debug.error("Unrecognized delay Index={}".format(delay_obj.meta_str),1)
+            debug.error("Unrecognized delay Index={0}".format(delay_obj.meta_str), 1)
 
         # These measurements have there time further delayed to the neg. edge of the clock.
         if delay_obj.meta_add_delay:
@@ -587,20 +587,20 @@ class delay(simulation):
         # Output some comments to aid where cycles start and
         # what is happening
         for comment in self.cycle_comments:
-            self.sf.write("* {}\n".format(comment))
+            self.sf.write("* {0}\n".format(comment))
 
         self.sf.write("\n")
         for read_port in self.targ_read_ports:
-            self.sf.write("* Read ports {}\n".format(read_port))
+            self.sf.write("* Read ports {0}\n".format(read_port))
             self.write_delay_measures_read_port(read_port)
 
         for write_port in self.targ_write_ports:
-            self.sf.write("* Write ports {}\n".format(write_port))
+            self.sf.write("* Write ports {0}\n".format(write_port))
             self.write_delay_measures_write_port(write_port)
 
     def load_pex_net(self, net: str):
         from subprocess import check_output, CalledProcessError
-        prefix = (self.sram_instance_name + ".").lower()
+        prefix = (self.sram_instance_name + OPTS.hier_seperator).lower()
         if not net.lower().startswith(prefix) or not OPTS.use_pex or not OPTS.calibre_pex:
             return net
         original_net = net
@@ -640,26 +640,41 @@ class delay(simulation):
         col = self.bitline_column
         row = self.wordline_row
         for port in set(self.targ_read_ports + self.targ_write_ports):
-            probe_nets.add("WEB{}".format(port))
-            probe_nets.add("{}.w_en{}".format(self.sram_instance_name, port))
-            probe_nets.add("{0}.Xbank0.Xport_data{1}.Xwrite_driver_array{1}.Xwrite_driver{2}.en_bar".format(
-                self.sram_instance_name, port, self.bitline_column))
-            probe_nets.add("{}.Xbank0.br_{}_{}".format(self.sram_instance_name, port,
-                                                       self.bitline_column))
+            probe_nets.add("WEB{0}".format(port))
+            probe_nets.add("{0}{2}w_en{1}".format(self.sram_instance_name, port, OPTS.hier_seperator))
+            probe_nets.add("{0}{3}Xbank0{3}Xport_data{1}{3}Xwrite_driver_array{1}{3}Xwrite_driver{2}{3}en_bar".format(self.sram_instance_name,
+                                                                                                                      port,
+                                                                                                                      self.bitline_column,
+                                                                                                                      OPTS.hier_seperator))
+            probe_nets.add("{0}{3}Xbank0{3}br_{1}_{2}".format(self.sram_instance_name,
+                                                              port,
+                                                              self.bitline_column,
+                                                              OPTS.hier_seperator))
             if not OPTS.use_pex:
                 continue
             probe_nets.add(
-                "{0}.vdd_Xbank0_Xbitcell_array_xbitcell_array_xbit_r{1}_c{2}".format(sram_name, row, col - 1))
+                "{0}{3}vdd_Xbank0_Xbitcell_array_xbitcell_array_xbit_r{1}_c{2}".format(sram_name,
+                                                                                       row,
+                                                                                       col - 1,
+                                                                                       OPTS.hier_seperator))
             probe_nets.add(
-                "{0}.p_en_bar{1}_Xbank0_Xport_data{1}_Xprecharge_array{1}_Xpre_column_{2}".format(sram_name, port, col))
+                "{0}{3}p_en_bar{1}_Xbank0_Xport_data{1}_Xprecharge_array{1}_Xpre_column_{2}".format(sram_name,
+                                                                                                    port,
+                                                                                                    col,
+                                                                                                    OPTS.hier_seperator))
             probe_nets.add(
-                "{0}.vdd_Xbank0_Xport_data{1}_Xprecharge_array{1}_xpre_column_{2}".format(sram_name, port, col))
-            probe_nets.add("{0}.vdd_Xbank0_Xport_data{1}_Xwrite_driver_array{1}_xwrite_driver{2}".format(sram_name,
-                                                                                                         port, col))
+                "{0}{3}vdd_Xbank0_Xport_data{1}_Xprecharge_array{1}_xpre_column_{2}".format(sram_name,
+                                                                                            port,
+                                                                                            col,
+                                                                                            OPTS.hier_seperator))
+            probe_nets.add("{0}{3}vdd_Xbank0_Xport_data{1}_Xwrite_driver_array{1}_xwrite_driver{2}".format(sram_name,
+                                                                                                           port,
+                                                                                                           col,
+                                                                                                           OPTS.hier_seperator))
         probe_nets.update(self.measurement_nets)
         for net in probe_nets:
-            debug.info(2, "Probe: {}".format(net))
-            self.sf.write(".plot V({}) \n".format(self.load_pex_net(net)))
+            debug.info(2, "Probe: {0}".format(net))
+            self.sf.write(".plot V({0}) \n".format(self.load_pex_net(net)))
 
     def write_power_measures(self):
         """
@@ -778,7 +793,7 @@ class delay(simulation):
             if not self.check_bit_measures(self.write_bit_meas, port):
                 return(False, {})
 
-            debug.info(2, "Checking write values for port {}".format(port))
+            debug.info(2, "Checking write values for port {0}".format(port))
             write_port_dict = {}
             for measure in self.write_lib_meas:
                 write_port_dict[measure.name] = measure.retrieve_measure(port=port)
@@ -792,7 +807,7 @@ class delay(simulation):
             if not self.check_bit_measures(self.read_bit_meas, port):
                 return(False, {})
 
-            debug.info(2, "Checking read delay values for port {}".format(port))
+            debug.info(2, "Checking read delay values for port {0}".format(port))
             # Check sen timing, then bitlines, then general measurements.
             if not self.check_sen_measure(port):
                 return (False, {})
@@ -813,7 +828,7 @@ class delay(simulation):
 
             result[port].update(read_port_dict)
             
-            self.check_path_measures()
+            self.path_delays = self.check_path_measures()
 
         return (True, result)
 
@@ -821,7 +836,7 @@ class delay(simulation):
         """Checks that the sen occurred within a half-period"""
 
         sen_val = self.sen_meas.retrieve_measure(port=port)
-        debug.info(2, "s_en delay={}ns".format(sen_val))
+        debug.info(2, "s_en delay={0}ns".format(sen_val))
         if self.sen_meas.meta_add_delay:
             max_delay = self.period / 2
         else:
@@ -843,22 +858,22 @@ class delay(simulation):
             elif self.br_name == meas.targ_name_no_port:
                 br_vals[meas.meta_str] = val
 
-            debug.info(2, "{}={}".format(meas.name, val))
+            debug.info(2, "{0}={1}".format(meas.name, val))
 
         dout_success = True
         bl_success = False
         for meas in self.dout_volt_meas:
             val = meas.retrieve_measure(port=port)
-            debug.info(2, "{}={}".format(meas.name, val))
+            debug.info(2, "{0}={1}".format(meas.name, val))
             debug.check(type(val)==float, "Error retrieving numeric measurement: {0} {1}".format(meas.name, val))
 
             if meas.meta_str == sram_op.READ_ONE and val < self.vdd_voltage * 0.1:
                 dout_success = False
-                debug.info(1, "Debug measurement failed. Value {}V was read on read 1 cycle.".format(val))
+                debug.info(1, "Debug measurement failed. Value {0}V was read on read 1 cycle.".format(val))
                 bl_success = self.check_bitline_meas(bl_vals[sram_op.READ_ONE], br_vals[sram_op.READ_ONE])
             elif meas.meta_str == sram_op.READ_ZERO and val > self.vdd_voltage * 0.9:
                 dout_success = False
-                debug.info(1, "Debug measurement failed. Value {}V was read on read 0 cycle.".format(val))
+                debug.info(1, "Debug measurement failed. Value {0}V was read on read 0 cycle.".format(val))
                 bl_success = self.check_bitline_meas(br_vals[sram_op.READ_ONE], bl_vals[sram_op.READ_ONE])
 
             # If the bitlines have a correct value while the output does not then that is a
@@ -877,7 +892,7 @@ class delay(simulation):
         for polarity, meas_list in bit_measures.items():
             for meas in meas_list:
                 val = meas.retrieve_measure(port=port)
-                debug.info(2, "{}={}".format(meas.name, val))
+                debug.info(2, "{0}={1}".format(meas.name, val))
                 if type(val) != float:
                     continue
                 meas_cycle = meas.meta_str
@@ -896,8 +911,8 @@ class delay(simulation):
                     success = val < self.vdd_voltage / 2
                 if not success:
                     debug.info(1, ("Wrong value detected on probe bit during read/write cycle. "
-                                   "Check writes and control logic for bugs.\n measure={}, op={}, "
-                                   "bit_storage={}, V(bit)={}").format(meas.name, meas_cycle.name, polarity.name, val))
+                                   "Check writes and control logic for bugs.\n measure={0}, op={1}, "
+                                   "bit_storage={2}, V(bit)={3}").format(meas.name, meas_cycle.name, polarity.name, val))
 
         return success
 
@@ -912,7 +927,7 @@ class delay(simulation):
         min_dicharge = v_discharged_bl < self.vdd_voltage * 0.9
         min_diff = (v_charged_bl - v_discharged_bl) > self.vdd_voltage * 0.1
 
-        debug.info(1, "min_dicharge={}, min_diff={}".format(min_dicharge, min_diff))
+        debug.info(1, "min_dicharge={0}, min_diff={1}".format(min_dicharge, min_diff))
         return (min_dicharge and min_diff)
 
     def check_path_measures(self):
@@ -921,13 +936,13 @@ class delay(simulation):
         # Get and set measurement, no error checking done other than prints.
         debug.info(2, "Checking measures in Delay Path")
         value_dict = {}
-        for meas in self.sen_path_meas+self.bl_path_meas:
+        for meas in self.sen_path_meas + self.bl_path_meas:
             val = meas.retrieve_measure()
-            debug.info(2, '{}={}'.format(meas.name, val))
-            if type(val) != float or val > self.period/2:
-                debug.info(1,'Failed measurement:{}={}'.format(meas.name, val))
+            debug.info(2, '{0}={1}'.format(meas.name, val))
+            if type(val) != float or val > self.period / 2:
+                debug.info(1, 'Failed measurement:{}={}'.format(meas.name, val))
             value_dict[meas.name] = val
-        
+        #debug.info(0, "value_dict={}".format(value_dict))
         return value_dict
 
     def run_power_simulation(self):
@@ -1100,14 +1115,14 @@ class delay(simulation):
 
         # Set up to trim the netlist here if that is enabled
         if OPTS.trim_netlist:
-            self.trim_sp_file = "{}trimmed.sp".format(OPTS.openram_temp)
+            self.trim_sp_file = "{0}trimmed.sp".format(OPTS.openram_temp)
             self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
         else:
             # The non-reduced netlist file when it is disabled
-            self.trim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
+            self.trim_sp_file = "{0}sram.sp".format(OPTS.openram_temp)
 
         # The non-reduced netlist file for power simulation
-        self.sim_sp_file = "{}sram.sp".format(OPTS.openram_temp)
+        self.sim_sp_file = "{0}sram.sp".format(OPTS.openram_temp)
         # Make a copy in temp for debugging
         shutil.copy(self.sp_file, self.sim_sp_file)
 
@@ -1120,7 +1135,7 @@ class delay(simulation):
         self.create_measurement_names()
         self.create_measurement_objects()
 
-    def analyze(self, probe_address, probe_data, slews, loads):
+    def analyze(self, probe_address, probe_data, load_slews):
         """
         Main function to characterize an SRAM for a table. Computes both delay and power characterization.
         """
@@ -1128,7 +1143,11 @@ class delay(simulation):
         # Dict to hold all characterization values
         char_sram_data = {}
         self.analysis_init(probe_address, probe_data)
-
+        loads = []
+        slews = []
+        for load,slew in load_slews:
+            loads.append(load)
+            slews.append(slew)
         self.load=max(loads)
         self.slew=max(slews)
 
@@ -1148,11 +1167,19 @@ class delay(simulation):
         leakage_offset = full_array_leakage - trim_array_leakage
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
-        char_port_data = self.simulate_loads_and_slews(slews, loads, leakage_offset)
-
+        char_port_data = self.simulate_loads_and_slews(load_slews, leakage_offset)
+        if OPTS.use_specified_load_slew != None and len(load_slews) > 1:
+            debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
+        # Get and save the path delays
+        bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)
+        # Removed from characterization output temporarily
+        #char_sram_data["bl_path_measures"] = bl_delays
+        #char_sram_data["sen_path_measures"] = sen_delays
+        #char_sram_data["bl_path_names"] = bl_names
+        #char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
         self.alter_lh_char_data(char_port_data)
-
+           
         return (char_sram_data, char_port_data)
 
     def alter_lh_char_data(self, char_port_data):
@@ -1163,29 +1190,46 @@ class delay(simulation):
             char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
             char_port_data[port]['slew_lh'] = char_port_data[port]['slew_hl']
 
-    def simulate_loads_and_slews(self, slews, loads, leakage_offset):
+    def simulate_loads_and_slews(self, load_slews, leakage_offset):
         """Simulate all specified output loads and input slews pairs of all ports"""
 
         measure_data = self.get_empty_measure_data_dict()
+        path_dict = {}
         # Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
-        for slew in slews:
-            for load in loads:
-                self.set_load_slew(load, slew)
-                # Find the delay, dynamic power, and leakage power of the trimmed array.
-                (success, delay_results) = self.run_delay_simulation()
-                debug.check(success, "Couldn't run a simulation. slew={0} load={1}\n".format(self.slew, self.load))
-                debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew, self.load))
-                # The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
-                for port in self.all_ports:
-                    for mname, value in delay_results[port].items():
-                        if "power" in mname:
-                            # Subtract partial array leakage and add full array leakage for the power measures
-                            measure_data[port][mname].append(value + leakage_offset)
-                        else:
-                            measure_data[port][mname].append(value)
+        for load, slew in load_slews:
+            self.set_load_slew(load, slew)
+            # Find the delay, dynamic power, and leakage power of the trimmed array.
+            (success, delay_results) = self.run_delay_simulation()
+            debug.check(success, "Couldn't run a simulation. slew={0} load={1}\n".format(self.slew, self.load))
+            debug.info(1, "Simulation Passed: Port {0} slew={1} load={2}".format("All", self.slew, self.load))
+            # The results has a dict for every port but dicts can be empty (e.g. ports were not targeted).
+            for port in self.all_ports:
+                for mname, value in delay_results[port].items():
+                    if "power" in mname:
+                        # Subtract partial array leakage and add full array leakage for the power measures
+                        debug.info(1, "Adding leakage offset to {0} {1} + {2} = {3}".format(mname, value, leakage_offset, value + leakage_offset))
+                        measure_data[port][mname].append(value + leakage_offset)
+                    else:
+                        measure_data[port][mname].append(value)
         return measure_data
+
+    def get_delay_lists(self, value_dict):
+        """Returns dicts for path measures of bitline and sen paths"""
+        sen_name_list = []
+        sen_delay_list = []
+        for meas in self.sen_path_meas:
+            sen_name_list.append(meas.name)
+            sen_delay_list.append(value_dict[meas.name])
+        
+        bl_name_list = []
+        bl_delay_list = []
+        for meas in self.bl_path_meas:
+            bl_name_list.append(meas.name)
+            bl_delay_list.append(value_dict[meas.name])
+
+        return sen_name_list, sen_delay_list, bl_name_list, bl_delay_list 
 
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""
@@ -1218,13 +1262,13 @@ class delay(simulation):
         if self.t_current == 0:
             self.add_noop_all_ports("Idle cycle (no positive clock edge)")
 
-        self.add_write("W data 1 address {}".format(inverse_address),
+        self.add_write("W data 1 address {0}".format(inverse_address),
                        inverse_address,
                        data_ones,
                        wmask_ones,
                        write_port)
 
-        self.add_write("W data 0 address {} to write value".format(self.probe_address),
+        self.add_write("W data 0 address {0} to write value".format(self.probe_address),
                        self.probe_address,
                        data_zeros,
                        wmask_ones,
@@ -1235,11 +1279,11 @@ class delay(simulation):
         self.measure_cycles[write_port]["disabled_write0"] = len(self.cycle_times) - 1
 
         # This also ensures we will have a H->L transition on the next read
-        self.add_read("R data 1 address {} to set dout caps".format(inverse_address),
+        self.add_read("R data 1 address {0} to set dout caps".format(inverse_address),
                       inverse_address,
                       read_port)
 
-        self.add_read("R data 0 address {} to check W0 worked".format(self.probe_address),
+        self.add_read("R data 0 address {0} to check W0 worked".format(self.probe_address),
                       self.probe_address,
                       read_port)
         self.measure_cycles[read_port][sram_op.READ_ZERO] = len(self.cycle_times) - 1
@@ -1249,7 +1293,7 @@ class delay(simulation):
 
         self.add_noop_all_ports("Idle cycle (if read takes >1 cycle)")
 
-        self.add_write("W data 1 address {} to write value".format(self.probe_address),
+        self.add_write("W data 1 address {0} to write value".format(self.probe_address),
                        self.probe_address,
                        data_ones,
                        wmask_ones,
@@ -1259,7 +1303,7 @@ class delay(simulation):
         self.add_noop_clock_one_port(write_port)
         self.measure_cycles[write_port]["disabled_write1"] = len(self.cycle_times) - 1
 
-        self.add_write("W data 0 address {} to clear din caps".format(inverse_address),
+        self.add_write("W data 0 address {0} to clear din caps".format(inverse_address),
                        inverse_address,
                        data_zeros,
                        wmask_ones,
@@ -1269,11 +1313,11 @@ class delay(simulation):
         self.measure_cycles[read_port]["disabled_read1"] = len(self.cycle_times) - 1
 
         # This also ensures we will have a L->H transition on the next read
-        self.add_read("R data 0 address {} to clear dout caps".format(inverse_address),
+        self.add_read("R data 0 address {0} to clear dout caps".format(inverse_address),
                       inverse_address,
                       read_port)
 
-        self.add_read("R data 1 address {} to check W1 worked".format(self.probe_address),
+        self.add_read("R data 1 address {0} to check W1 worked".format(self.probe_address),
                       self.probe_address,
                       read_port)
         self.measure_cycles[read_port][sram_op.READ_ONE] = len(self.cycle_times) - 1

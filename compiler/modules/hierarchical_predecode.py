@@ -217,7 +217,6 @@ class hierarchical_predecode(design.design):
             self.add_path(self.input_layer, [in_pos, a_pos])
 
             if(layer_props.hierarchical_predecode.force_horizontal_input_contact):
-                print("ping")
                 self.add_via_stack_center(from_layer=self.input_layer,
                                         to_layer=self.bus_layer,
                                         offset=[self.input_rails[in_pin].cx(), y_offset],

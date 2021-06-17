@@ -508,7 +508,7 @@ class hierarchical_decoder(design.design):
                                                               length=self.height)
             self.route_bus_to_decoder()
             self.route_predecodes_to_bus()
-            
+
 
     def route_predecodes_to_bus(self):
         """
@@ -652,7 +652,7 @@ class hierarchical_decoder(design.design):
                                   offset=pin_pos,
                                   directions=("H", "H"))
         self.predecode_bus_rail_pos.append(rail_pos)
-        
+
     def route_predecode_bus_inputs(self, rail_name, pin, x_offset, y_offset, predecode_type):
         """
         Connect the routing rail to the given metal1 pin using a jog
@@ -672,7 +672,7 @@ class hierarchical_decoder(design.design):
         #pin_pos = pin.center()
         #rail_pos = vector(self.predecode_bus[rail_name].cx(), pin_pos.y)
         #self.add_path(self.output_layer, [pin_pos, rail_pos])
-        
+
         # create via for dimensions
         from_layer = self.output_layer
         to_layer = self.bus_layer
@@ -692,7 +692,7 @@ class hierarchical_decoder(design.design):
             layer_stack=curr_stack,
             dimensions=[1, 1],
             directions=self.bus_directions)
-        overlapping_pin_space = drc["{0}_to_{0}".format(self.output_layer)]
+        overlapping_pin_space = getattr(self, "{}_space".format(self.output_layer))
         total_buffer_space = (overlapping_pin_space + via.height)
         while(True):
             drc_error = 0
@@ -705,7 +705,7 @@ class hierarchical_decoder(design.design):
             else:
                 y_offset += drc["grid"]
         rail_pos.y = y_offset
-        
+
         if predecode_type == "pre2x4":
             right_pos = pin_pos
         elif predecode_type =="pre3x8":

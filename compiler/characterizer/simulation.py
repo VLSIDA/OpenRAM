@@ -577,7 +577,7 @@ class simulation():
         Gets the signal name associated with the bitlines in the bank.
         """
         # FIXME: change to a solution that does not depend on the technology
-        if OPTS.tech_name == 'sky130':
+        if OPTS.tech_name == "sky130" and self.total_ports == 1:
             cell_mod = factory.create(module_type=OPTS.bitcell, version="opt1")
         else:
             cell_mod = factory.create(module_type=OPTS.bitcell)

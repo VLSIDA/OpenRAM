@@ -56,14 +56,14 @@ class verilog:
                 if self.write_size:
                     self.vf.write("wmask{},".format(port))
                 if self.num_spare_cols > 0:
-                    self.vf.write("    spare_wen{0},".format(port))
+                    self.vf.write("spare_wen{0},".format(port))
                 self.vf.write("addr{0},din{0},dout{0}".format(port))
             elif port in self.write_ports:
                 self.vf.write("    clk{0},csb{0},".format(port))
                 if self.write_size:
                     self.vf.write("wmask{},".format(port))
                 if self.num_spare_cols > 0:
-                    self.vf.write("    spare_wen{0},".format(port))
+                    self.vf.write("spare_wen{0},".format(port))
                 self.vf.write("addr{0},din{0}".format(port))
             elif port in self.read_ports:
                 self.vf.write("    clk{0},csb{0},addr{0},dout{0}".format(port))
@@ -192,10 +192,10 @@ class verilog:
             self.vf.write("  input  web{0}; // active low write control\n".format(port))
             if self.write_size:
                 self.vf.write("  input [NUM_WMASKS-1:0]   wmask{0}; // write mask\n".format(port))
-            if self.num_spare_cols > 1:
-                self.vf.write("  input [{1}:0]   spare_wen{0}; // write mask\n".format(port, self.num_spare_cols-1))
-            else:
-                self.vf.write("  input           spare_wen{0}; // write mask\n".format(port))
+            if self.num_spare_cols == 1:
+                self.vf.write("  input           spare_wen{0}; // spare mask\n".format(port))
+            elif self.num_spare_cols > 1:
+                self.vf.write("  input [{1}:0]   spare_wen{0}; // spare mask\n".format(port, self.num_spare_cols-1))
 
         self.vf.write("  input [ADDR_WIDTH-1:0]  addr{0};\n".format(port))
         if port in self.write_ports:

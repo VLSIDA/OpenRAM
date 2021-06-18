@@ -39,6 +39,8 @@ class port_data(design.design):
             if(cell_properties.use_strap == True and OPTS.num_ports == 1):
                 strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
                 precharge_width = bitcell.width + strap.width
+            else:
+                precharge_width = bitcell.width
             self.bit_offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
                 self.bit_offsets.append(i * precharge_width)

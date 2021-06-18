@@ -9,6 +9,8 @@ import debug
 from math import log, sqrt, ceil
 from globals import OPTS
 from sram_factory import factory
+from tech import array_row_multiple
+from tech import array_col_multiple
 
 
 class sram_config:
@@ -46,7 +48,7 @@ class sram_config:
 
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank
-
+        
         # If this was hard coded, don't dynamically compute it!
         if not self.words_per_row:
             # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
@@ -96,6 +98,13 @@ class sram_config:
                    + " Col addr size: {}".format(self.col_addr_size)
                    + " Bank addr size: {}".format(self.bank_addr_size))
 
+        num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_w_ports
+        if ((self.num_cols + num_ports + self.num_spare_cols) % array_col_multiple != 0):
+            debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, array_col_multiple), -1)
+
+        if ((self.num_rows + num_ports) % array_row_multiple != 0):
+            debug.error("invalid number of rows including dummy row(s): {}. Total cols must be divisible by {}".format(self.num_rows + num_ports, array_row_multiple), -1)
+            
     def estimate_words_per_row(self, tentative_num_cols, word_size):
         """
         This provides a heuristic rounded estimate for the number of words

@@ -99,7 +99,8 @@ class sram_config:
                    + " Bank addr size: {}".format(self.bank_addr_size))
 
         num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_w_ports
-        if num_ports == 1:
+        print(num_ports)
+        if num_ports != 1:
             if ((self.num_cols + num_ports + self.num_spare_cols) % array_col_multiple != 0):
                 debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, array_col_multiple), -1)
 

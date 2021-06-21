@@ -15,7 +15,7 @@ from design import design
 from verilog import verilog
 from lef import lef
 from sram_factory import factory
-from tech import spice, layer
+from tech import spice
 
 
 class sram_base(design, verilog, lef):
@@ -553,13 +553,13 @@ class sram_base(design, verilog, lef):
             temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
-                temp.append("bank_din{0}[{1}]".format(port, bit))
+                temp.append("bank_din{0}_{1}".format(port, bit))
         for port in self.all_ports:
             for bit in range(self.bank_addr_size):
-                temp.append("a{0}[{1}]".format(port, bit))
+                temp.append("a{0}_{1}".format(port, bit))
         if(self.num_banks > 1):
             for port in self.all_ports:
-                temp.append("bank_sel{0}[{1}]".format(port, bank_num))
+                temp.append("bank_sel{0}_{1}".format(port, bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
         for port in self.all_ports:
@@ -567,12 +567,9 @@ class sram_base(design, verilog, lef):
         for port in self.write_ports:
             temp.append("w_en{0}".format(port))
             for bit in range(self.num_wmasks):
-                temp.append("bank_wmask{}[{}]".format(port, bit))
-            if self.num_spare_cols == 1:
-                temp.append("bank_spare_wen{0}".format(port))
-            else:
-                for bit in range(self.num_spare_cols):
-                    temp.append("bank_spare_wen{0}_{1}".format(port, bit))
+                temp.append("bank_wmask{0}_{1}".format(port, bit))
+            for bit in range(self.num_spare_cols):
+                temp.append("bank_spare_wen{0}_{1}".format(port, bit))
         for port in self.all_ports:
             temp.append("wl_en{0}".format(port))
         temp.extend(self.ext_supplies)
@@ -622,7 +619,7 @@ class sram_base(design, verilog, lef):
             outputs = []
             for bit in range(self.row_addr_size):
                 inputs.append("addr{}[{}]".format(port, bit + self.col_addr_size))
-                outputs.append("a{}[{}]".format(port, bit + self.col_addr_size))
+                outputs.append("a{}_{}".format(port, bit + self.col_addr_size))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
@@ -640,7 +637,7 @@ class sram_base(design, verilog, lef):
             outputs = []
             for bit in range(self.col_addr_size):
                 inputs.append("addr{}[{}]".format(port, bit))
-                outputs.append("a{}[{}]".format(port, bit))
+                outputs.append("a{}_{}".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
@@ -662,7 +659,7 @@ class sram_base(design, verilog, lef):
             outputs = []
             for bit in range(self.word_size + self.num_spare_cols):
                 inputs.append("din{}[{}]".format(port, bit))
-                outputs.append("bank_din{}[{}]".format(port, bit))
+                outputs.append("bank_din{}_{}".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
@@ -684,7 +681,7 @@ class sram_base(design, verilog, lef):
             outputs = []
             for bit in range(self.num_wmasks):
                 inputs.append("wmask{}[{}]".format(port, bit))
-                outputs.append("bank_wmask{}[{}]".format(port, bit))
+                outputs.append("bank_wmask{}_{}".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 
@@ -709,7 +706,7 @@ class sram_base(design, verilog, lef):
                 outputs.append("bank_spare_wen{}".format(port))
             else:
                 for bit in range(self.num_spare_cols):
-                    inputs.append("spare_wen{}_{}]".format(port, bit))
+                    inputs.append("spare_wen{}[{}]".format(port, bit))
                     outputs.append("bank_spare_wen{}_{}".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)

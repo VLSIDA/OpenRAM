@@ -21,24 +21,19 @@ class port_data(design.design):
     Port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="", rows=None, cols=None, dimension_override=False):
-        sram_config.set_local_config(self)
-        if dimension_override:
-            self.num_rows = rows
-            self.num_cols = cols
-            self.word_size = sram_config.word_size
+    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="",):
 
+        sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
-
-        if num_spare_cols:
-            self.num_spare_cols = num_spare_cols
-        elif self.num_spare_cols is None:
+        
+        if num_spare_cols is not None:
+                self.num_spare_cols = num_spare_cols + self.num_spare_cols
+        if self.num_spare_cols is None:
             self.num_spare_cols = 0
-
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
             if(cell_properties.use_strap == True and OPTS.num_ports == 1):

@@ -305,3 +305,5 @@ pex_name = "magic"
 ###################################################
 ##END Technology Tool Preferences
 ###################################################
+array_row_multiple = 1
+array_col_multiple = 1

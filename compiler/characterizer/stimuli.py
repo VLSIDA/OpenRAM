@@ -22,7 +22,7 @@ from globals import OPTS
 class stimuli():
     """ Class for providing stimuli functions """
 
-    def __init__(self, stim_file, corner):        
+    def __init__(self, stim_file, corner):
         self.vdd_name = "vdd"
         self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]
@@ -169,7 +169,7 @@ class stimuli():
     def gen_constant(self, sig_name, v_val):
         """ Generates a constant signal with reference voltage and the voltage value """
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
-                        
+
     def get_voltage(self, value):
         if value == "0" or value == 0:
             return 0
@@ -301,21 +301,25 @@ class stimuli():
         for item in self.device_libraries:
             if OPTS.spice_name:
                 item[0] = item[0].replace("SIMULATOR", OPTS.spice_name.lower())
+            else:
+                item[0] = item[0].replace("SIMULATOR", "ngspice")
             if os.path.isfile(item[0]):
                 self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
             else:
-                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
+                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]), -1)
 
         includes = self.device_models + [circuit]
 
         for item in list(includes):
             if OPTS.spice_name:
                 item = item.replace("SIMULATOR", OPTS.spice_name.lower())
+            else:
+                item = item.replace("SIMULATOR", "ngspice")
             self.sf.write(".include \"{0}\"\n".format(item))
 
     def add_comment(self, msg):
         self.sf.write(msg + "\n")
-        
+
     def write_supply(self):
         """ Writes supply voltage statements """
         gnd_node_name = "0"
@@ -407,5 +411,3 @@ class stimuli():
             end_time = datetime.datetime.now()
             delta_time = round((end_time - start_time).total_seconds(), 1)
             debug.info(2, "*** Spice: {} seconds".format(delta_time))
-
-

@@ -48,7 +48,7 @@ class sram_config:
 
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank
-        
+
         # If this was hard coded, don't dynamically compute it!
         if not self.words_per_row:
             # Compute the area of the bitcells and estimate a square bank (excluding auxiliary circuitry)
@@ -65,11 +65,11 @@ class sram_config:
 
         self.recompute_sizes()
 
-        # Set word_per_row in OPTS 
+        # Set word_per_row in OPTS
         OPTS.words_per_row = self.words_per_row
         debug.info(1, "Set SRAM Words Per Row={}".format(OPTS.words_per_row))
 
-        
+
     def recompute_sizes(self):
         """
         Calculate the auxiliary values assuming fixed number of words per row.
@@ -99,14 +99,13 @@ class sram_config:
                    + " Bank addr size: {}".format(self.bank_addr_size))
 
         num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
-        print(num_ports)
         if num_ports == 1:
             if ((self.num_cols + num_ports + self.num_spare_cols) % array_col_multiple != 0):
                 debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, array_col_multiple), -1)
 
             if ((self.num_rows + num_ports) % array_row_multiple != 0):
                 debug.error("invalid number of rows including dummy row(s): {}. Total cols must be divisible by {}".format(self.num_rows + num_ports, array_row_multiple), -1)
-                
+
     def estimate_words_per_row(self, tentative_num_cols, word_size):
         """
         This provides a heuristic rounded estimate for the number of words

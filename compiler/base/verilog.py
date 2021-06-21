@@ -230,7 +230,7 @@ class verilog:
 
         if self.num_spare_cols == 1:
             self.vf.write("        if (spare_wen{0}_reg)\n".format(port))
-            self.vf.write("                mem[addr{0}_reg][{1}] = din{0}_reg[{1}];\n".format(port, self.word_size + num))
+            self.vf.write("                mem[addr{0}_reg][{1}] = din{0}_reg[{1}];\n".format(port, self.word_size))
         else:
             for num in range(self.num_spare_cols):
                 self.vf.write("        if (spare_wen{0}_reg[{1}])\n".format(port, num))

@@ -473,7 +473,6 @@ class simulation():
         if not OPTS.use_pex or (OPTS.use_pex and OPTS.pex_exe[0] == "calibre"):
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-
             sen_with_port = self.get_sen_name(self.graph.all_paths)
             if sen_with_port.endswith(str(port)):
                 self.sen_name = sen_with_port[:-len(str(port))]
@@ -530,9 +529,10 @@ class simulation():
         Creates timing graph to generate the timing paths for the SRAM output.
         """
 
+        #Make exclusions dependent on the bit being tested.
         self.sram.clear_exclude_bits() # Removes previous bit exclusions
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
-        port=0 #FIXME, port_data requires a port specification, assuming single port for now
+        port=self.read_ports[0] #FIXME, port_data requires a port specification, assuming single port for now
         if self.words_per_row > 1:
             self.sram.graph_clear_column_mux(port)
             self.sram.graph_exclude_column_mux(self.bitline_column, port)

@@ -84,9 +84,9 @@ class sram():
         debug.print_raw("SP: Writing to {0}".format(spname))
         self.sp_write(spname)
         functional(self.s,
-                   os.path.basename(spname),
-                   cycles=200,
-                   output_path=OPTS.output_path)
+                  os.path.basename(spname),
+                  cycles=200,
+                  output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
         if not OPTS.netlist_only:

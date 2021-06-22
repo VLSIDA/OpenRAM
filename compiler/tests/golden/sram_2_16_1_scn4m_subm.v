@@ -56,8 +56,9 @@ reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];
   // Write Operation : When web0 = 0, csb0 = 0
   always @ (negedge clk0)
   begin : MEM_WRITE0
-    if ( !csb0_reg && !web0_reg )
-        mem[addr0_reg] = din0_reg;
+    if ( !csb0_reg && !web0_reg ) begin
+        mem[addr0_reg][1:0] = din0_reg[1:0];
+    end
   end
 
   // Memory Read Block Port 0

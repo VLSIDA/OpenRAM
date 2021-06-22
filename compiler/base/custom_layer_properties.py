@@ -45,7 +45,8 @@ class _hierarchical_predecode:
                  bus_space_factor,
                  input_layer,
                  output_layer,
-                 vertical_supply):
+                 vertical_supply,
+                 force_horizontal_input_contact):
         # hierarchical_predecode
         # bus_layer, bus_directions, bus_pitch, bus_space, input_layer, output_layer, output_layer_pitch
         # m2, pref, m2_pitch, m2_space, m1, m1, m1_pitch
@@ -59,6 +60,7 @@ class _hierarchical_predecode:
         self.input_layer = input_layer
         self.output_layer = output_layer
         self.vertical_supply = vertical_supply
+        self.force_horizontal_input_contact = force_horizontal_input_contact
 
 
 class _column_mux_array:
@@ -152,7 +154,8 @@ class layer_properties():
                                                                bus_space_factor=1,
                                                                input_layer="m1",
                                                                output_layer="m1",
-                                                               vertical_supply=False)
+                                                               vertical_supply=False,
+                                                               force_horizontal_input_contact=False)
 
         self._column_mux_array = _column_mux_array(select_layer="m1",
                                                    select_pitch="m2_pitch",

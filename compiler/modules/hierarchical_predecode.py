@@ -122,7 +122,7 @@ class hierarchical_predecode(design.design):
         self.input_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                     offset=offset,
                                                     names=input_names,
-                                                    length=self.height - 2 * self.bus_pitch,
+                                                    length=self.height - self.bus_pitch,
                                                     pitch=self.bus_pitch)
 
         invert_names = ["Abar_{}".format(x) for x in range(self.number_of_inputs)]
@@ -132,7 +132,7 @@ class hierarchical_predecode(design.design):
         self.decode_rails = self.create_vertical_bus(layer=self.bus_layer,
                                                      offset=offset,
                                                      names=decode_names,
-                                                     length=self.height - 2 * self.bus_pitch,
+                                                     length=self.height - self.bus_pitch,
                                                      pitch=self.bus_pitch)
 
     def create_input_inverters(self):
@@ -195,7 +195,7 @@ class hierarchical_predecode(design.design):
 
     def route_inputs_to_rails(self):
         """ Route the uninverted inputs to the second set of rails """
-
+        
         top_and_gate = self.and_inst[-1]
         for num in range(self.number_of_inputs):
             if num == 0:
@@ -215,13 +215,25 @@ class hierarchical_predecode(design.design):
             in_pos = vector(self.input_rails[in_pin].cx(), y_offset)
             a_pos = vector(self.decode_rails[a_pin].cx(), y_offset)
             self.add_path(self.input_layer, [in_pos, a_pos])
-            self.add_via_stack_center(from_layer=self.input_layer,
-                                      to_layer=self.bus_layer,
-                                      offset=[self.input_rails[in_pin].cx(), y_offset])
-            self.add_via_stack_center(from_layer=self.input_layer,
-                                      to_layer=self.bus_layer,
-                                      offset=[self.decode_rails[a_pin].cx(), y_offset])
 
+            if(layer_props.hierarchical_predecode.force_horizontal_input_contact):
+                self.add_via_stack_center(from_layer=self.input_layer,
+                                        to_layer=self.bus_layer,
+                                        offset=[self.input_rails[in_pin].cx(), y_offset],
+                                        directions= ("H", "H"))
+                
+                self.add_via_stack_center(from_layer=self.input_layer,
+                                        to_layer=self.bus_layer,
+                                        offset=[self.decode_rails[a_pin].cx(), y_offset],
+                                        directions=("H", "H"))
+            else:
+                self.add_via_stack_center(from_layer=self.input_layer,
+                                        to_layer=self.bus_layer,
+                                        offset=[self.input_rails[in_pin].cx(), y_offset])
+
+                self.add_via_stack_center(from_layer=self.input_layer,
+                                        to_layer=self.bus_layer,
+                                        offset=[self.decode_rails[a_pin].cx(), y_offset])
     def route_output_ands(self):
         """
         Route all conections of the outputs and gates
@@ -317,7 +329,6 @@ class hierarchical_predecode(design.design):
                     y_offset += drc["grid"]
             rail_pos.y = y_offset
             right_pos = inv_out_pos + vector(self.inv.width - self.inv.get_pin("Z").rx(), 0)
-            
             self.add_path(self.output_layer, [inv_out_pos, right_pos, vector(right_pos.x, y_offset), rail_pos])
 
             self.add_via_stack_center(from_layer=inv_out_pin.layer,
@@ -332,7 +343,7 @@ class hierarchical_predecode(design.design):
         """
         Route the different permutations of the NAND/AND decocer cells.
         """
-
+        
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()
         for k in range(self.number_of_outputs):

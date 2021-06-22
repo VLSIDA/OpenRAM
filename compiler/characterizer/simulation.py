@@ -481,7 +481,7 @@ class simulation():
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
 
             debug.info(2, "s_en name = {}".format(self.sen_name))
-            
+
             column_addr = self.get_column_addr()
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
             port_pos = -1 - len(str(column_addr)) - len(str(port))
@@ -575,7 +575,11 @@ class simulation():
         """
         Gets the signal name associated with the bitlines in the bank.
         """
-        cell_mod = factory.create(module_type=OPTS.bitcell)
+        # FIXME: change to a solution that does not depend on the technology
+        if OPTS.tech_name == "sky130" and len(self.all_ports) == 1:
+            cell_mod = factory.create(module_type=OPTS.bitcell, version="opt1")
+        else:
+            cell_mod = factory.create(module_type=OPTS.bitcell)
         cell_bl = cell_mod.get_bl_name(port)
         cell_br = cell_mod.get_br_name(port)
 
@@ -587,14 +591,14 @@ class simulation():
             for i in range(len(bl_names)):
                 bl_names[i] = bl_names[i].split(OPTS.hier_seperator)[-1]
         return bl_names[0], bl_names[1]
-        
+
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
 
         measure_names = self.delay_meas_names + self.power_meas_names
         # Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
         measure_data = [{mname: [] for mname in measure_names} for i in self.all_ports]
-        return measure_data    
+        return measure_data
 
     def sum_delays(self, delays):
         """Adds the delays (delay_data objects) so the correct slew is maintained"""
@@ -603,5 +607,3 @@ class simulation():
         for i in range(1, len(delays)):
             delay+=delays[i]
         return delay
-
-

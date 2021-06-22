@@ -392,14 +392,12 @@ class bank(design.design):
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
-        if self.num_spare_cols == 0:
-            self.num_spare_cols = (self.bitcell_array.column_size % (self.word_size *self.words_per_row))
 
         self.port_address = []
         for port in self.all_ports:
             self.port_address.append(factory.create(module_type="port_address",
-                                                    cols=self.bitcell_array.column_size,
-                                                    rows=self.bitcell_array.row_size,
+                                                    cols=self.num_cols + self.num_spare_cols,
+                                                    rows=self.num_rows,
                                                     port=port))
             self.add_mod(self.port_address[port])
 
@@ -408,10 +406,6 @@ class bank(design.design):
         for port in self.all_ports:
             temp_pre = factory.create(module_type="port_data",
                                       sram_config=self.sram_config,
-                                      dimension_override=True,
-                                      cols=self.bitcell_array.column_size - self.num_spare_cols,
-                                      rows=self.bitcell_array.row_size,
-                                      num_spare_cols=self.num_spare_cols,
                                       port=port,
                                       bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
@@ -500,7 +494,7 @@ class bank(design.design):
                                                          mod=self.port_address[port])
 
             temp = []
-            for bit in range(ceil(log(self.bitcell_array.row_size, 2))):
+            for bit in range(self.row_addr_size):
                 temp.append("addr{0}_{1}".format(port, bit + self.col_addr_size))
             temp.append("wl_en{}".format(port))
             wordline_names = self.bitcell_array.get_wordline_names(port)
@@ -626,7 +620,7 @@ class bank(design.design):
             self.copy_power_pins(inst, "gnd", add_vias=False)
 
         if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
-            for pin_name, supply_name in zip(['vpb','vnb'],['vdd','gnd']):
+            for pin_name, supply_name in zip(['vpb','vnb'],['gnd','vdd']):
                 self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.

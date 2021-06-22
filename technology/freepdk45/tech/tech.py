@@ -465,3 +465,6 @@ lvs_name = "calibre"
 pex_name = "calibre"
 
 blackbox_bitcell = False
+
+array_row_multiple = 1
+array_col_multiple = 1

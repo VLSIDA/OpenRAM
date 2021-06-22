@@ -3,7 +3,7 @@ from datetime import *
 import numpy as np
 import math
 import debug
-from tech import use_purpose
+
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""
@@ -80,6 +80,12 @@ class VlsiLayout:
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
             coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
+
+    def prefixAll(self, prefix):
+        for name in self.structures:
+            if name == self.rootStructureName:
+                continue
+            self.structures[prefix + name] = self.structures[name]
 
     def rename(self,newName):
         # take the root structure and copy it to a new structure with the new name
@@ -211,17 +217,17 @@ class VlsiLayout:
         del transformPath[-1]
         return
 
-    def initialize(self):
+    def initialize(self, special_purposes={}):
         self.deduceHierarchy()
         # self.traverseTheHierarchy()
         self.populateCoordinateMap()
-        #only ones with text
+        # only ones with text
         for layerNumber in self.layerNumbersInUse:
-            #if layerNumber not in no_pin_shape:
-                if layerNumber in use_purpose:
-                    self.processLabelPins((layerNumber, use_purpose[layerNumber]))
-                else:
-                    self.processLabelPins((layerNumber, None))
+            # if layerNumber not in no_pin_shape:
+            if layerNumber in special_purposes:
+                self.processLabelPins((layerNumber, special_purposes[layerNumber]))
+            else:
+                self.processLabelPins((layerNumber, None))
 
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):

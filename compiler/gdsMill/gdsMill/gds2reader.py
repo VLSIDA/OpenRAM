@@ -79,7 +79,7 @@ class Gds2reader:
         recordLength = struct.unpack(">h",recordLengthAscii)  #gives us a tuple with a short int inside
         offset_int = int(recordLength[0])  # extract length
         offset += offset_int  # count offset
-        if(self.debugToTerminal==1):        
+        if(self.debugToTerminal==1):
             print("Offset: " + str(offset))  #print out the record numbers for de-bugging
         record = self.fileHandle.read(recordLength[0]-2) #read the rest of it (first 2 bytes were already read)
         return record
@@ -669,11 +669,11 @@ class Gds2reader:
         else:
             print("There was an error parsing the GDS header.  Aborting...")
 
-    def loadFromFile(self, fileName):
+    def loadFromFile(self, fileName, special_purposes={}):
         self.fileHandle = open(fileName,"rb")
         self.readGds2()
         self.fileHandle.close()
-        self.layoutObject.initialize()
+        self.layoutObject.initialize(special_purposes)
 
 ##############################################
 

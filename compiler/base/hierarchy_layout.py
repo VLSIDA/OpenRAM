@@ -20,6 +20,10 @@ from globals import OPTS
 from vector import vector
 from pin_layout import pin_layout
 from utils import round_to_grid
+try:
+    from tech import special_purposes
+except ImportError:
+    special_purposes = {}
 
 
 class layout():
@@ -36,9 +40,9 @@ class layout():
         # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
-        
+
         self.gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
-        
+
         self.width = None
         self.height = None
         self.bounding_box = None # The rectangle shape
@@ -58,7 +62,7 @@ class layout():
         self.visited = []
         # Flag for library cells
         self.is_library_cell = False
-        
+
         self.gds_read()
 
         try:
@@ -66,7 +70,7 @@ class layout():
             self.pwr_grid_layer = power_grid[0]
         except ImportError:
             self.pwr_grid_layer = "m3"
-    
+
     ############################################################
     # GDS layout
     ############################################################
@@ -118,7 +122,7 @@ class layout():
         if len(self.objs) > 0:
             lowestx = min(min(obj.lx() for obj in self.objs if obj.name != "label"), lowestx)
             lowesty = min(min(obj.by() for obj in self.objs if obj.name != "label"), lowesty)
-            
+
         if len(self.insts) > 0:
             lowestx = min(min(inst.lx() for inst in self.insts), lowestx)
             lowesty = min(min(inst.by() for inst in self.insts), lowesty)
@@ -129,7 +133,7 @@ class layout():
                     continue
                 lowestx = min(min(pin.lx() for pin in pin_set), lowestx)
                 lowesty = min(min(pin.by() for pin in pin_set), lowesty)
-            
+
         return vector(lowestx, lowesty)
 
     def find_highest_coords(self):
@@ -138,7 +142,7 @@ class layout():
         this layout
         """
         highestx = highesty = -sys.maxsize - 1
-        
+
         if len(self.objs) > 0:
             highestx = max(max(obj.rx() for obj in self.objs if obj.name != "label"), highestx)
             highesty = max(max(obj.uy() for obj in self.objs if obj.name != "label"), highesty)
@@ -153,7 +157,7 @@ class layout():
                     continue
                 highestx = max(max(pin.rx() for pin in pin_set), highestx)
                 highesty = max(max(pin.uy() for pin in pin_set), highesty)
-            
+
         return vector(highestx, highesty)
 
     def find_highest_layer_coords(self, layer):
@@ -234,7 +238,7 @@ class layout():
         # This is commented out for runtime reasons
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
-    
+
     def get_inst(self, name):
         """ Retrieve an instance by name """
         for inst in self.insts:
@@ -332,7 +336,7 @@ class layout():
         Return the pin or list of pins
         """
         name = self.get_pin_name(text)
-        
+
         try:
             if len(self.pin_map[name]) > 1:
                 debug.error("Should use a pin iterator since more than one pin {}".format(text), -1)
@@ -349,7 +353,7 @@ class layout():
         Return a pin list (instead of a single pin)
         """
         name = self.get_pin_name(text)
-            
+
         if name in self.pin_map.keys():
             return self.pin_map[name]
         else:
@@ -360,12 +364,12 @@ class layout():
         Create a mapping from internal pin names to external pin names.
         """
         self.pin_names = pin_dict
-        
+
         self.original_pin_names = {y: x for (x, y) in self.pin_names.items()}
 
     def get_pin_name(self, text):
         """ Return the custom cell pin name """
-        
+
         if text in self.pin_names:
             return self.pin_names[text]
         else:
@@ -373,7 +377,7 @@ class layout():
 
     def get_original_pin_names(self):
         """ Return the internal cell pin name """
-        
+
         # This uses the hierarchy_spice pins (in order)
         return [self.get_original_pin_name(x) for x in self.pins]
 
@@ -383,7 +387,7 @@ class layout():
             return self.original_pin_names[text]
         else:
             return text
-    
+
     def get_pin_names(self):
         """
         Return a pin list of all pins
@@ -480,7 +484,7 @@ class layout():
                           offset=s.ll(),
                           width=s.width(),
                           height=s.height())
-        
+
     def replace_layout_pin(self, text, pin):
         """
         Remove the old pin and replace with a new one
@@ -495,7 +499,7 @@ class layout():
                             offset=pin.ll(),
                             width=pin.width(),
                             height=pin.height())
-        
+
     def add_layout_pin(self, text, layer, offset, width=None, height=None):
         """
         Create a labeled pin
@@ -777,7 +781,7 @@ class layout():
             debug.info(3, "opening {}".format(self.gds_file))
             self.gds = gdsMill.VlsiLayout(units=GDS["unit"])
             reader = gdsMill.Gds2reader(self.gds)
-            reader.loadFromFile(self.gds_file)
+            reader.loadFromFile(self.gds_file, special_purposes)
         else:
             debug.info(3, "Creating layout structure {}".format(self.name))
             self.gds = gdsMill.VlsiLayout(name=self.name, units=GDS["unit"])
@@ -789,7 +793,7 @@ class layout():
         debug.info(4, "Printing {}".format(gds_file))
         arrayCellLayout = gdsMill.VlsiLayout(units=GDS["unit"])
         reader = gdsMill.Gds2reader(arrayCellLayout, debugToTerminal=1)
-        reader.loadFromFile(gds_file)
+        reader.loadFromFile(gds_file, special_purposes)
 
     def clear_visited(self):
         """ Recursively clear the visited flag """
@@ -1126,7 +1130,7 @@ class layout():
         # self.add_inst(cr.name, cr)
         # self.connect_inst([])
         self.add_flat_inst(cr.name, cr)
-        
+
     def create_horizontal_channel_route(self, netlist, offset, layer_stack, directions=None):
         """
         Wrapper to create a horizontal channel route
@@ -1138,7 +1142,7 @@ class layout():
         # self.add_inst(cr.name, cr)
         # self.connect_inst([])
         self.add_flat_inst(cr.name, cr)
-        
+
     def add_boundary(self, ll=vector(0, 0), ur=None):
         """ Add boundary for debugging dimensions """
         if OPTS.netlist_only:
@@ -1331,7 +1335,7 @@ class layout():
                 new_name = pin.name
         if not loc:
             loc = pin.center()
-            
+
         # Hack for min area
         if OPTS.tech_name == "sky130":
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
@@ -1340,7 +1344,7 @@ class layout():
         else:
             width = None
             height = None
-            
+
         if pin.layer == self.pwr_grid_layer:
             self.add_layout_pin_rect_center(text=new_name,
                                             layer=self.pwr_grid_layer,

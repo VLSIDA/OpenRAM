@@ -83,17 +83,20 @@ class VlsiLayout:
 
     def uniquify(self):
         new_structures = {}
-        prefix = self.rootStructureName + "_"
-
+        if self.rootStructureName[-1] == "\x00":
+            prefix = self.rootStructureName[0:-1] + "_"
+        else:
+            prefix = self.rootStructureName + "_"
         for name in self.structures:
+            if name[-1] == "\x00":
+                base_name = name[0:-1]
+            else:
+                base_name = name
             if name != self.rootStructureName:
-                if name[-1] == "\x00":
-                    base_name = name[0:-1]
-                else:
-                    base_name = name
                 new_name = self.padText(prefix + base_name)
             else:
                 new_name = name
+            #print("Structure: {0} -> {1}".format(base_name, new_name))
 
             new_structures[new_name] = self.structures[name]
             new_structures[new_name].name = new_name
@@ -104,7 +107,7 @@ class VlsiLayout:
                     base_sref_name = sref.sName
                 new_sref_name = self.padText(prefix + base_sref_name)
                 sref.sName = new_sref_name
-
+                #print("SREF: {0} -> {1}".format(base_sref_name, new_sref_name))
         self.structures = new_structures
 
     def rename(self,newName):

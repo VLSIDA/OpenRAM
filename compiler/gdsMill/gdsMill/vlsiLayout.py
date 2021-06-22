@@ -82,10 +82,29 @@ class VlsiLayout:
         return coordinatesRotate
 
     def prefixAll(self, prefix):
+        new_structures = {}
+
         for name in self.structures:
-            if name == self.rootStructureName:
-                continue
-            self.structures[prefix + name] = self.structures[name]
+            if name != self.rootStructureName:
+                if name[-1] == "\x00":
+                    base_name = name[0:-1]
+                else:
+                    base_name = name
+                new_name = self.padText(prefix + base_name)
+            else:
+                new_name = name
+
+            new_structures[new_name] = self.structures[name]
+            new_structures[new_name].name = new_name
+            for sref in new_structures[new_name].srefs:
+                if sref.sName[-1] == "\x00":
+                    base_sref_name = sref.sName[0:-1]
+                else:
+                    base_sref_name = sref.sName
+                new_sref_name = self.padText(prefix + base_sref_name)
+                sref.sName = new_sref_name
+
+        self.structures = new_structures
 
     def rename(self,newName):
         # take the root structure and copy it to a new structure with the new name

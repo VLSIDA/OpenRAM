@@ -11,9 +11,9 @@ if len(sys.argv) < 4:
 prefix = sys.argv[1]
 
 gds_file = sys.argv[2]
-arrayCellLayout = gdsMill.VlsiLayout()
-gds = gdsMill.Gds2reader(arrayCellLayout,debugToTerminal = 1)
-gds.loadFromFile(gds_file)
+gds = gdsMill.VlsiLayout()
+reader = gdsMill.Gds2reader(gds)
+reader.loadFromFile(gds_file)
 
 gds.prefixAll(prefix)
 

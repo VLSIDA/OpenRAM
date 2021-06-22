@@ -81,8 +81,9 @@ class VlsiLayout:
             coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
 
-    def prefixAll(self, prefix):
+    def uniquify(self):
         new_structures = {}
+        prefix = self.rootStructureName + "_"
 
         for name in self.structures:
             if name != self.rootStructureName:

@@ -60,7 +60,7 @@ class options(optparse.Values):
     rbl_delay_percentage = 0.5
 
     # Allow manual adjustment of the delay chain over automatic
-    auto_delay_chain_sizing = False 
+    auto_delay_chain_sizing = False
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
 
@@ -72,12 +72,12 @@ class options(optparse.Values):
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
-        
+
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
-        
+
     except:
         openram_temp = "/tmp"
-        
+
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     verbose_level = 0
@@ -136,7 +136,7 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
-    
+
     # Number of threads to use
     num_threads = 1
     # Number of threads to use in ngspice/hspice
@@ -144,7 +144,7 @@ class options(optparse.Values):
 
     # Some tools (e.g. Xyce) use other separators like ":"
     hier_seperator = "."
-    
+
     # Should we print out the banner at startup
     print_banner = True
 
@@ -166,6 +166,9 @@ class options(optparse.Values):
 
     keep_temp = False
 
+    # Add a prefix of the root cell before every structure in the GDS
+    # after outputting the GDS2
+    uniquify = False
 
     # These are the default modules that can be over-riden
     bank_select = "bank_select"

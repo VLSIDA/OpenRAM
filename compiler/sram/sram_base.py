@@ -701,13 +701,9 @@ class sram_base(design, verilog, lef):
             # inputs, outputs/output/bar
             inputs = []
             outputs = []
-            if self.num_spare_cols == 1:
-                inputs.append("spare_wen{}".format(port))
-                outputs.append("bank_spare_wen{}".format(port))
-            else:
-                for bit in range(self.num_spare_cols):
-                    inputs.append("spare_wen{}[{}]".format(port, bit))
-                    outputs.append("bank_spare_wen{}_{}".format(port, bit))
+            for bit in range(self.num_spare_cols):
+                inputs.append("spare_wen{}[{}]".format(port, bit))
+                outputs.append("bank_spare_wen{}_{}".format(port, bit))
 
             self.connect_inst(inputs + outputs + ["clk_buf{}".format(port)] + self.ext_supplies)
 

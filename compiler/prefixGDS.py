@@ -3,7 +3,7 @@
 import sys
 from gdsMill import gdsMill
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 3:
     print("Script to prefix every instance and structure with the root cell name to provide unique namespace.")
     print("Usage: {0} in.gds out.gds".format(sys.argv[0]))
     sys.exit(1)

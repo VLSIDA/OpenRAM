@@ -14,7 +14,10 @@ import globals
 import debug
 from vector import vector
 from pin_layout import pin_layout
-
+try:
+    from tech import special_purposes
+except ImportError:
+    special_purposes = {}
 OPTS = globals.OPTS
 
 
@@ -88,7 +91,7 @@ def _get_gds_reader(units, gds_filename):
         debug.info(4, "Creating VLSI layout from {}".format(gds_absname))
         cell_vlsi = gdsMill.VlsiLayout(units=units)
         reader = gdsMill.Gds2reader(cell_vlsi)
-        reader.loadFromFile(gds_absname)
+        reader.loadFromFile(gds_absname, special_purposes)
 
         _GDS_READER_CACHE[k] = cell_vlsi
         return cell_vlsi

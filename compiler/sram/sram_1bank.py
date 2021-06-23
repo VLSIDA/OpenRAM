@@ -334,7 +334,7 @@ class sram_1bank(sram_base):
         self.add_layout_pins()
 
         # Some technologies have an isolation
-        self.add_dnwell(inflate=2)
+        self.add_dnwell(inflate=2.5)
 
         # We need the initial bbox for the supply rings later
         # because the perimeter pins will change the bbox
@@ -642,7 +642,7 @@ class sram_1bank(sram_base):
         # Insts located in control logic, exclusion function called here
         for inst in self.control_logic_insts:
             inst.mod.graph_exclude_dffs()
-            
+
     def get_cell_name(self, inst_name, row, col):
         """
         Gets the spice name of the target bitcell.

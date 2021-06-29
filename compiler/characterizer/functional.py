@@ -297,13 +297,37 @@ class functional(simulation):
             self.read_results.append([sp_read_value, dout_port, eo_period, check_count])
         return (1, "SUCCESS")
 
+    def format_value(self, value):
+        """ Format in better readable manner """
+
+        def delineate(word):
+            # Create list of chars in reverse order
+            split_word = list(reversed([x for x in word]))
+            # Add underscore every 4th char
+            split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
+            # Join the word unreversed back together
+            new_word = ''.join(reversed(split_word2))
+            return(new_word)
+
+        # Split extra cols
+        vals = value[:-self.num_spare_cols]
+        spare_vals = value[-self.num_spare_cols:]
+
+        # Insert underscores
+        vals = delineate(vals)
+        spare_vals = delineate(spare_vals)
+
+        return vals + "+" + spare_vals
+
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
+                read_val = self.format_value(self.read_results[i][0])
+                correct_val = self.format_value(self.read_check[i][0])
                 str = "FAILED: {0} read value {1} does not match written value {2} during cycle {3} at time {4}n"
                 error = str.format(self.read_results[i][1],
-                                   self.read_results[i][0],
-                                   self.read_check[i][0],
+                                   read_val,
+                                   correct_val,
                                    int((self.read_results[i][2] - self.period) / self.period),
                                    self.read_results[i][2])
                 return(0, error)

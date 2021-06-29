@@ -221,7 +221,8 @@ class stimuli():
                                                                             t_final))
 
     def gen_meas_value(self, meas_name, dout, t_initial, t_final):
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
+        measure_string=".meas tran {0} FIND v({1}) AT={2}n\n\n".format(meas_name.lower(), dout, (t_initial + t_final) / 2)
+        # measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):

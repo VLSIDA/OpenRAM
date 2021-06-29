@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 
 
-#@unittest.skip("SKIPPING 22_sram_func_test")
+@unittest.skip("SKIPPING 22_sram_func_test")
 class sram_1bank_nomux_sparecols_func_test(openram_test):
 
     def runTest(self):

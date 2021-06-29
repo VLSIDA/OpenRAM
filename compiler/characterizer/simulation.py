@@ -296,7 +296,8 @@ class simulation():
         self.add_data(data, port)
         self.add_address(address, port)
         self.add_wmask(wmask, port)
-        self.add_spare_wen("1" * self.num_spare_cols, port)
+        # Disable spare writes for now
+        self.add_spare_wen("0" * self.num_spare_cols, port)
 
     def add_read_one_port(self, comment, address, port):
         """ Add the control values for a read cycle. Does not increment the period. """

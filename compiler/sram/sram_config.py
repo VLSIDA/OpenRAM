@@ -9,8 +9,6 @@ import debug
 from math import log, sqrt, ceil
 from globals import OPTS
 from sram_factory import factory
-from tech import array_row_multiple
-from tech import array_col_multiple
 
 
 class sram_config:
@@ -23,6 +21,18 @@ class sram_config:
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
         self.num_spare_cols = num_spare_cols
+
+        try:
+            from tech import array_row_multiple
+            self.array_row_multiple = array_row_multiple
+        except ImportError:
+            self.array_row_multiple = 1
+        try:
+            from tech import array_col_multiple
+            self.array_col_multiple = array_col_multiple
+        except ImportError:
+            self.array_col_multiple = 1
+
 
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
@@ -69,7 +79,6 @@ class sram_config:
         OPTS.words_per_row = self.words_per_row
         debug.info(1, "Set SRAM Words Per Row={}".format(OPTS.words_per_row))
 
-
     def recompute_sizes(self):
         """
         Calculate the auxiliary values assuming fixed number of words per row.
@@ -100,11 +109,11 @@ class sram_config:
 
         num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
         if num_ports == 1:
-            if ((self.num_cols + num_ports + self.num_spare_cols) % array_col_multiple != 0):
-                debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, array_col_multiple), -1)
+            if ((self.num_cols + num_ports + self.num_spare_cols) % self.array_col_multiple != 0):
+                debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, self.array_col_multiple), -1)
 
-            if ((self.num_rows + num_ports) % array_row_multiple != 0):
-                debug.error("invalid number of rows including dummy row(s): {}. Total cols must be divisible by {}".format(self.num_rows + num_ports, array_row_multiple), -1)
+            if ((self.num_rows + num_ports) % self.array_row_multiple != 0):
+                debug.error("invalid number of rows including dummy row(s): {}. Total cols must be divisible by {}".format(self.num_rows + num_ports, self.array_row_multiple), -1)
 
     def estimate_words_per_row(self, tentative_num_cols, word_size):
         """

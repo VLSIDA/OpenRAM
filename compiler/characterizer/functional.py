@@ -310,8 +310,13 @@ class functional(simulation):
             return(new_word)
 
         # Split extra cols
-        vals = value[-self.num_spare_cols - 1:]
-        spare_vals = value[:-self.num_spare_cols - 1]
+        if self.num_spare_cols > 0:
+            vals = value[self.num_spare_cols:]
+            spare_vals = value[:self.num_spare_cols]
+        else:
+            vals = values
+            spare_vals = ""
+
         # Insert underscores
         vals = delineate(vals)
         spare_vals = delineate(spare_vals)

@@ -412,6 +412,3 @@ lvs_name = "netgen"
 pex_name = "magic"
 
 blackbox_bitcell = False
-
-array_row_multiple = 1
-array_col_multiple = 1

@@ -374,10 +374,11 @@ class stimuli():
             else:
                 mpi_cmd = ""
 
-            cmd = "{0} {1} -o {3}timing.lis {2}".format(mpi_cmd,
-                                                        OPTS.spice_exe,
-                                                        temp_stim,
-                                                        OPTS.openram_temp)
+            # Xyce can save a raw file while doing timing, so keep it around
+            cmd = "{0} {1} -r {3}timing.raw -o {3}timing.lis {2}".format(mpi_cmd,
+                                                                         OPTS.spice_exe,
+                                                                         temp_stim,
+                                                                         OPTS.openram_temp)
 
             valid_retcode=0
         else:
@@ -399,7 +400,7 @@ class stimuli():
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
-        debug.info(3, cmd)
+        debug.info(2, cmd)
         retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 
         spice_stdout.close()

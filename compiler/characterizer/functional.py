@@ -32,13 +32,13 @@ class functional(simulation):
         if not spfile:
             # self.sp_file is assigned in base class
             sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
-            
+
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
 
         if period:
             self.period = period
-            
+
         if not output_path:
             self.output_path = OPTS.openram_temp
         else:
@@ -63,11 +63,12 @@ class functional(simulation):
             self.addr_spare_index = self.addr_size
         # If trim is set, specify the valid addresses
         self.valid_addresses = set()
-        self.max_address = 2**self.addr_size - 1 + (self.num_spare_rows * self.words_per_row) 
+        # Don't base off address with since we may have a couple spare columns
+        self.max_address = self.num_rows * self.words_per_row
         if OPTS.trim_netlist:
             for i in range(self.words_per_row):
                 self.valid_addresses.add(i)
-                self.valid_addresses.add(self.max_address - i)
+                self.valid_addresses.add(self.max_address - i - 1)
         self.probe_address, self.probe_data = '0' * self.addr_size, 0
         self.set_corner(corner)
         self.set_spice_constants()
@@ -87,7 +88,7 @@ class functional(simulation):
         self.num_cycles = cycles
         # This is to have ordered keys for random selection
         self.stored_words = collections.OrderedDict()
-        self.stored_spares = collections.OrderedDict()        
+        self.stored_spares = collections.OrderedDict()
         self.read_check = []
         self.read_results = []
 
@@ -128,11 +129,12 @@ class functional(simulation):
                                                                                                     name))
 
     def create_random_memory_sequence(self):
+        # Select randomly, but have 3x more reads to increase probability
         if self.write_size:
-            rw_ops = ["noop", "write", "partial_write", "read"]
+            rw_ops = ["noop", "write", "partial_write", "read", "read", "read"]
             w_ops = ["noop", "write", "partial_write"]
         else:
-            rw_ops = ["noop", "write", "read"]
+            rw_ops = ["noop", "write", "read", "read", "read"]
             w_ops = ["noop", "write"]
         r_ops = ["noop", "read"]
 
@@ -483,5 +485,3 @@ class functional(simulation):
         qbar_name = cell_name + OPTS.hier_seperator + str(storage_names[1])
 
         return (q_name, qbar_name)
-
-

@@ -37,6 +37,8 @@ class simulation():
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
         self.words_per_row = self.sram.words_per_row
+        self.num_rows = self.sram.num_rows
+        self.num_cols = self.sram.num_cols
         if self.write_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
@@ -536,7 +538,7 @@ class simulation():
         if self.words_per_row > 1:
             self.sram.graph_clear_column_mux(port)
             self.sram.graph_exclude_column_mux(self.bitline_column, port)
-        
+
         # Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
         self.sram_instance_name = "X{}".format(self.sram.name)

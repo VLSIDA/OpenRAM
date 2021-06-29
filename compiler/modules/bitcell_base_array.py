@@ -128,9 +128,8 @@ class bitcell_base_array(design.design):
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
         return temp
-
-    def add_layout_pins(self):
-        """ Add the layout pins """
+        
+    def add_bitline_pins(self):
         bitline_names = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
             for port in self.all_ports:
@@ -146,7 +145,7 @@ class bitcell_base_array(design.design):
                                     offset=br_pin.ll().scale(1, 0),
                                     width=br_pin.width(),
                                     height=self.height)
-
+    def add_wl_pins(self):
         wl_names = self.cell.get_all_wl_names()
         for row in range(self.row_size):
             for port in self.all_ports:
@@ -157,25 +156,22 @@ class bitcell_base_array(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # Copy a vdd/gnd layout pin from every cell
+    def add_supply_pins(self):
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
                 if row == 2: #add only 1 label per col
-                    if 'VPB' in self.cell_inst[row, col].mod.pins:
-                        self.add_label("gnd", inst.get_pin("vpb").layer, inst.get_pin("vpb").ll())
-                    if 'VNB' in self.cell_inst[row, col].mod.pins:
-                        try:
-                            from tech import layer_override
-                            if layer_override['VNB\x00']:
-                                inst.get_pin("vnb").layer = layer_override['VNB\x00']
-                        except:
-                            pass
-                        self.add_label("vdd", inst.get_pin("vnb").layer, inst.get_pin("vnb").ll())
+                    for pin_name in ["vdd", "gnd"]:
+                        self.copy_layout_pin(inst, pin_name)
 
-
+    def add_layout_pins(self):
+        """ Add the layout pins """
+        self.add_bitline_pins()
+        self.add_wl_pins()
+        self.add_supply_pins()
+        
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
         dir_y = False

@@ -749,6 +749,7 @@ class VlsiLayout:
         Find all text labels and create a map to a list of shapes that
         they enclose on the given layer.
         """
+
         # Get the labels on a layer in the root level
         labels = self.getTexts(lpp)
 
@@ -760,6 +761,12 @@ class VlsiLayout:
             label_coordinate = label.coordinates[0]
             user_coordinate = [x*self.units[0] for x in label_coordinate]
             pin_shapes = []
+            try:
+                from tech import layer_override
+                if layer_override[label.textString]:
+                    shapes = self.getAllShapes((layer_override[label.textString], None))
+            except:
+                pass
             for boundary in shapes:
                 if self.labelInRectangle(user_coordinate, boundary):
                     pin_shapes.append((lpp, boundary))

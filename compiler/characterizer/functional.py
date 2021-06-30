@@ -54,7 +54,7 @@ class functional(simulation):
 
         self.max_data = 2 ** self.word_size - 1
         self.max_col_data = 2 ** self.num_spare_cols - 1
-        if self.words_per_row>1:
+        if self.words_per_row > 1:
             # This will truncate bits for word addressing in a row_addr_dff
             # This makes one set of spares per row by using top bits of the address
             self.addr_spare_index = -int(math.log(self.words_per_row) / math.log(2))
@@ -63,8 +63,7 @@ class functional(simulation):
             self.addr_spare_index = self.addr_size
         # If trim is set, specify the valid addresses
         self.valid_addresses = set()
-        # Don't base off address with since we may have a couple spare columns
-        self.max_address = self.num_rows * self.words_per_row
+        self.max_address = self.num_rows * self.words_per_row - 1
         if OPTS.trim_netlist:
             for i in range(self.words_per_row):
                 self.valid_addresses.add(i)
@@ -131,10 +130,10 @@ class functional(simulation):
     def create_random_memory_sequence(self):
         # Select randomly, but have 3x more reads to increase probability
         if self.write_size:
-            rw_ops = ["noop", "write", "partial_write", "read", "read", "read"]
+            rw_ops = ["noop", "write", "partial_write", "read", "read"]
             w_ops = ["noop", "write", "partial_write"]
         else:
-            rw_ops = ["noop", "write", "read", "read", "read"]
+            rw_ops = ["noop", "write", "read", "read"]
             w_ops = ["noop", "write"]
         r_ops = ["noop", "read"]
 
@@ -146,9 +145,9 @@ class functional(simulation):
         for port in self.write_ports:
             addr = self.gen_addr()
             (word, spare) = self.gen_data()
-            combined_word = "{0}+{1}".format(word, spare)
+            combined_word = self.combine_word(spare, word)
             comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
-            self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
+            self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
             self.stored_spares[addr[:self.addr_spare_index]] = spare
 
@@ -165,14 +164,14 @@ class functional(simulation):
         # address simultaniously.  This will test the viablilty of the
         # transistor sizing in the bitcell.
         for port in self.all_ports:
-            if port in self.write_ports:
+            if port in self.write_ports and port not in self.read_ports:
                 self.add_noop_one_port(port)
             else:
                 (addr, word, spare) = self.get_data()
-                combined_word = "{0}+{1}".format(word, spare)
+                combined_word = self.combine_word(spare, word)
                 comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                 self.add_read_one_port(comment, addr, port)
-                self.add_read_check(word, port)
+                self.add_read_check(spare + word, port)
         self.cycle_times.append(self.t_current)
         self.t_current += self.period
         self.check_lengths()
@@ -199,9 +198,9 @@ class functional(simulation):
                         self.add_noop_one_port(port)
                     else:
                         (word, spare) = self.gen_data()
-                        combined_word = "{0}+{1}".format(word, spare)
+                        combined_word = self.combine_word(spare, word)
                         comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word + spare, "1" * self.num_wmasks, port)
+                        self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
                         self.stored_spares[addr[:self.addr_spare_index]] = spare
                         w_addrs.append(addr)
@@ -215,16 +214,16 @@ class functional(simulation):
                         (word, spare) = self.gen_data()
                         wmask  = self.gen_wmask()
                         new_word = self.gen_masked_data(old_word, word, wmask)
-                        combined_word = "{0}+{1}".format(word, spare)
+                        combined_word = self.combine_word(spare, word)
                         comment = self.gen_cycle_comment("partial_write", combined_word, addr, wmask, port, self.t_current)
-                        self.add_write_one_port(comment, addr, word + spare, wmask, port)
+                        self.add_write_one_port(comment, addr, spare + word, wmask, port)
                         self.stored_words[addr] = new_word
                         self.stored_spares[addr[:self.addr_spare_index]] = spare
                         w_addrs.append(addr)
                 else:
                     (addr, word) = random.choice(list(self.stored_words.items()))
                     spare = self.stored_spares[addr[:self.addr_spare_index]]
-                    combined_word = "{0}+{1}".format(word, spare)
+                    combined_word = self.combine_word(spare, word)
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -234,8 +233,7 @@ class functional(simulation):
                     else:
                         comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                         self.add_read_one_port(comment, addr, port)
-                        self.add_read_check(word + spare, port)
-
+                        self.add_read_check(spare + word, port)
             self.cycle_times.append(self.t_current)
             self.t_current += self.period
 
@@ -260,19 +258,22 @@ class functional(simulation):
 
     def add_read_check(self, word, port):
         """ Add to the check array to ensure a read works. """
-        try:
-            self.check_count
-        except:
-            self.check_count = 0
-        self.read_check.append([word, "{0}{1}".format(self.dout_name, port), self.t_current + self.period, self.check_count])
-        self.check_count += 1
+        self.read_check.append([word,
+                                "{0}{1}".format(self.dout_name, port),
+                                self.t_current + self.period,
+                                int(self.t_current/self.period)])
 
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
-        for (word, dout_port, eo_period, check_count) in self.read_check:
+        for (word, dout_port, eo_period, cycle) in self.read_check:
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
-                value = parse_spice_list("timing", "v{0}.{1}ck{2}".format(dout_port.lower(), bit, check_count))
+                measure_name = "v{0}_{1}ck{2}".format(dout_port.lower(), bit, cycle)
+                value = parse_spice_list("timing", measure_name)
+                # FIXME: Ignore the spare columns for now
+                if bit >= self.word_size:
+                    value = 0
+
                 try:
                     value = float(value)
                     if value > self.v_high:
@@ -293,9 +294,14 @@ class functional(simulation):
                                                                                            eo_period)
 
                     return (0, error)
-
-            self.read_results.append([sp_read_value, dout_port, eo_period, check_count])
+            self.read_results.append([sp_read_value, dout_port, eo_period, cycle])
         return (1, "SUCCESS")
+
+    def combine_word(self, spare, word):
+        if len(spare) > 0:
+            return spare + "+" + word
+
+        return word
 
     def format_value(self, value):
         """ Format in better readable manner """
@@ -310,26 +316,34 @@ class functional(simulation):
             return(new_word)
 
         # Split extra cols
-        vals = value[:-self.num_spare_cols]
-        spare_vals = value[-self.num_spare_cols:]
+        if self.num_spare_cols > 0:
+            vals = value[self.num_spare_cols:]
+            spare_vals = value[:self.num_spare_cols]
+        else:
+            vals = value
+            spare_vals = ""
 
         # Insert underscores
         vals = delineate(vals)
         spare_vals = delineate(spare_vals)
 
-        return vals + "+" + spare_vals
+        return self.combine_word(spare_vals, vals)
 
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
+                output_name = self.read_check[i][1]
+                cycle = self.read_check[i][3]
                 read_val = self.format_value(self.read_results[i][0])
                 correct_val = self.format_value(self.read_check[i][0])
-                str = "FAILED: {0} read value {1} does not match written value {2} during cycle {3} at time {4}n"
-                error = str.format(self.read_results[i][1],
+                check_name = "v{0}_Xck{1}".format(output_name, cycle)
+                str = "FAILED: {0} read value {1} during cycle {3} at time {4}n ({5}) does not match written value ({2})"
+                error = str.format(output_name,
                                    read_val,
                                    correct_val,
-                                   int((self.read_results[i][2] - self.period) / self.period),
-                                   self.read_results[i][2])
+                                   cycle,
+                                   self.read_results[i][2],
+                                   check_name)
                 return(0, error)
         return(1, "SUCCESS")
 
@@ -365,6 +379,10 @@ class functional(simulation):
             spare_bits = binary_repr(random_value, self.num_spare_cols)
         else:
             spare_bits = ""
+
+        # FIXME: Set these to 0 for now...
+        spare_bits = "0" * len(spare_bits)
+
         return data_bits, spare_bits
 
     def gen_addr(self):
@@ -470,20 +488,21 @@ class functional(simulation):
             self.stim.gen_pulse(sig_name="{0}{1}".format("clk", port),
                                 v1=self.gnd_voltage,
                                 v2=self.vdd_voltage,
-                                offset=self.period,
+                                offset=self.period - 0.5 * self.slew,
                                 period=self.period,
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
-        for (word, dout_port, eo_period, check) in self.read_check:
-            t_initial = eo_period - 0.01 * self.period
-            t_final = eo_period + 0.01 * self.period
+
+        for (word, dout_port, eo_period, cycle) in self.read_check:
+            t_initial = eo_period
+            t_final = eo_period
             num_bits = self.word_size + self.num_spare_cols
             for bit in range(num_bits):
-                measure_name = "V{0}_{1}ck{2}".format(dout_port, bit, check)
                 signal_name = "{0}_{1}".format(dout_port, bit)
+                measure_name = "V{0}ck{1}".format(signal_name, cycle)
                 voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
 
                 self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,

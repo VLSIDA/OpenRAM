@@ -145,7 +145,7 @@ class functional(simulation):
         for port in self.write_ports:
             addr = self.gen_addr()
             (word, spare) = self.gen_data()
-            combined_word = "{0}+{1}".format(spare, word)
+            combined_word = self.combine_word(spare, word)
             comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
             self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
             self.stored_words[addr] = word
@@ -168,7 +168,7 @@ class functional(simulation):
                 self.add_noop_one_port(port)
             else:
                 (addr, word, spare) = self.get_data()
-                combined_word = "{0}+{1}".format(spare, word)
+                combined_word = self.combine_word(spare, word)
                 comment = self.gen_cycle_comment("read", combined_word, addr, "0" * self.num_wmasks, port, self.t_current)
                 self.add_read_one_port(comment, addr, port)
                 self.add_read_check(spare + word, port)
@@ -198,7 +198,7 @@ class functional(simulation):
                         self.add_noop_one_port(port)
                     else:
                         (word, spare) = self.gen_data()
-                        combined_word = "{0}+{1}".format(spare, word)
+                        combined_word = self.combine_word(spare, word)
                         comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
                         self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
                         self.stored_words[addr] = word
@@ -214,7 +214,7 @@ class functional(simulation):
                         (word, spare) = self.gen_data()
                         wmask  = self.gen_wmask()
                         new_word = self.gen_masked_data(old_word, word, wmask)
-                        combined_word = "{0}+{1}".format(spare, word)
+                        combined_word = self.combine_word(spare, word)
                         comment = self.gen_cycle_comment("partial_write", combined_word, addr, wmask, port, self.t_current)
                         self.add_write_one_port(comment, addr, spare + word, wmask, port)
                         self.stored_words[addr] = new_word
@@ -223,7 +223,7 @@ class functional(simulation):
                 else:
                     (addr, word) = random.choice(list(self.stored_words.items()))
                     spare = self.stored_spares[addr[:self.addr_spare_index]]
-                    combined_word = "{0}+{1}".format(spare, word)
+                    combined_word = self.combine_word(spare, word)
                     # The write driver is not sized sufficiently to drive through the two
                     # bitcell access transistors to the read port. So, for now, we do not allow
                     # a simultaneous write and read to the same address on different ports. This
@@ -297,6 +297,12 @@ class functional(simulation):
             self.read_results.append([sp_read_value, dout_port, eo_period, cycle])
         return (1, "SUCCESS")
 
+    def combine_word(self, spare, word):
+        if len(spare) > 0:
+            return spare + "+" + word
+
+        return word
+
     def format_value(self, value):
         """ Format in better readable manner """
 
@@ -314,14 +320,14 @@ class functional(simulation):
             vals = value[self.num_spare_cols:]
             spare_vals = value[:self.num_spare_cols]
         else:
-            vals = values
+            vals = value
             spare_vals = ""
 
         # Insert underscores
         vals = delineate(vals)
         spare_vals = delineate(spare_vals)
 
-        return spare_vals + "+" + vals
+        return self.combine_word(spare_vals, vals)
 
     def check_stim_results(self):
         for i in range(len(self.read_check)):

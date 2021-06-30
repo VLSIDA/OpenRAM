@@ -158,6 +158,12 @@ def get_gds_pins(pin_names, name, gds_filename, units):
                     # this is a list because other cells/designs
                     # may have must-connect pins
                     if isinstance(lpp[1], list):
+                        try:
+                            from tech import layer_override
+                            if layer_override[pin_name]:
+                                lpp = layer_override[pin_name.textString]
+                        except:
+                            pass                        
                         lpp = (lpp[0], None)
                     cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
 

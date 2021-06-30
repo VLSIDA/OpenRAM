@@ -761,21 +761,21 @@ class VlsiLayout:
             label_coordinate = label.coordinates[0]
             user_coordinate = [x*self.units[0] for x in label_coordinate]
             pin_shapes = []
+            # Remove the padding if it exists
+            if label.textString[-1] == "\x00":
+                label_text = label.textString[0:-1]
+            else:
+                label_text = label.textString
             try:
                 from tech import layer_override
-                if layer_override[label.textString]:
-                    shapes = self.getAllShapes((layer_override[label.textString], None))
+                if layer_override[label_text]:
+                    shapes = self.getAllShapes((layer_override[label_text][0], None))
+                    lpp = layer_override[label_text]
             except:
                 pass
             for boundary in shapes:
                 if self.labelInRectangle(user_coordinate, boundary):
                     pin_shapes.append((lpp, boundary))
-
-            label_text = label.textString
-
-            # Remove the padding if it exists
-            if label_text[-1] == "\x00":
-                label_text = label_text[0:-1]
 
             try:
                 self.pins[label_text]

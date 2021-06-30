@@ -45,9 +45,19 @@ class pin_layout:
                 if self.same_lpp(layer_name_pp, lpp):
                     self._layer = layer_name
                     break
+                
             else:
-                debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
-
+                try:
+                    from tech import layer_override
+                    from tech import layer_override_name
+                    if layer_override[name]:
+                       self.lpp = layer_override[name]
+                       self.layer = "m1"
+                       self._recompute_hash()
+                       return
+                except:
+                    debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
+        
         self.lpp = layer[self.layer]
         self._recompute_hash()
 

@@ -81,7 +81,11 @@ class functional(simulation):
         self.create_graph()
         self.set_internal_spice_names()
         self.q_name, self.qbar_name = self.get_bit_name()
-        debug.info(2, "q name={0}\nqbar name={1}".format(self.q_name, self.qbar_name))
+        debug.info(2, "q:\t\t{0}".format(self.q_name))
+        debug.info(2, "qbar:\t{0}".format(self.qbar_name))
+        debug.info(2, "s_en:\t{0}".format(self.sen_name))
+        debug.info(2, "bl:\t{0}".format(self.bl_name))
+        debug.info(2, "br:\t{0}".format(self.br_name))
 
         # Number of checks can be changed
         self.num_cycles = cycles
@@ -346,8 +350,7 @@ class functional(simulation):
         random_value = random.randint(1, self.max_data - 1)
         data_bits = binary_repr(random_value, self.word_size)
         if self.num_spare_cols>0:
-            # Don't use 0 or max value
-            random_value = random.randint(1, self.max_col_data - 1)
+            random_value = random.randint(0, self.max_col_data)
             spare_bits = binary_repr(random_value, self.num_spare_cols)
         else:
             spare_bits = ""
@@ -403,11 +406,11 @@ class functional(simulation):
 
         # Write important signals to stim file
         self.sf.write("\n\n* Important signals for debug\n")
-        self.sf.write("* bl: {0}\n".format(self.bl_name.format(port)))
-        self.sf.write("* br: {0}\n".format(self.br_name.format(port)))
-        self.sf.write("* s_en: {0}\n".format(self.sen_name))
-        self.sf.write("* q: {0}\n".format(self.q_name))
-        self.sf.write("* qbar: {0}\n".format(self.qbar_name))
+        self.sf.write("* bl:\t{0}\n".format(self.bl_name.format(port)))
+        self.sf.write("* br:\t{0}\n".format(self.br_name.format(port)))
+        self.sf.write("* s_en:\t{0}\n".format(self.sen_name))
+        self.sf.write("* q:\t{0}\n".format(self.q_name))
+        self.sf.write("* qbar:\t{0}\n".format(self.qbar_name))
 
         # Write debug comments to stim file
         self.sf.write("\n\n* Sequence of operations\n")

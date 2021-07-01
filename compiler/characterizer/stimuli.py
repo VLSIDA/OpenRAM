@@ -222,7 +222,7 @@ class stimuli():
 
     def gen_meas_value(self, meas_name, dout, t_initial, t_final):
         measure_string=".meas tran {0} FIND v({1}) AT={2}n\n\n".format(meas_name.lower(), dout, (t_initial + t_final) / 2)
-        # measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
+        #measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
@@ -237,12 +237,13 @@ class stimuli():
             reltol = 0.005 # 0.5%
         else:
             reltol = 0.001 # 0.1%
-        timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
+        timestep = 10 # ps
 
         if OPTS.spice_name == "ngspice":
             self.sf.write(".TEMP {}\n".format(self.temperature))
             # UIC is needed for ngspice to converge
-            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
+            # Format: .tran tstep tstop < tstart < tmax >>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
@@ -268,7 +269,8 @@ class stimuli():
             self.sf.write("simulator lang=spice\n")
         elif OPTS.spice_name in ["hspice", "xa"]:
             self.sf.write(".TEMP {}\n".format(self.temperature))
-            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
+            # Format: .tran tstep tstop < tstart < tmax >>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
             self.sf.write(".OPTIONS PSF=1 \n")
             self.sf.write(".OPTIONS HIER_DELIM=1 \n")
@@ -276,7 +278,9 @@ class stimuli():
             self.sf.write(".OPTIONS DEVICE TEMP={}\n".format(self.temperature))
             self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
             self.sf.write(".OPTIONS LINSOL type=klu\n")
-            self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
+            self.sf.write(".OPTIONS TIMEINT RELTOL=1e-6 ABSTOL=1e-10 method=gear minorder=2\n")
+            # Format: .TRAN <initial step> <final time> <start time> <step ceiling>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p\n".format(timestep, end_time))
         elif OPTS.spice_name:
             debug.error("Unkown spice simulator {}".format(OPTS.spice_name), -1)
 

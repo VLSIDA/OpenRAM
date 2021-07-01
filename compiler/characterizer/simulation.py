@@ -372,6 +372,38 @@ class simulation():
                                                                                     time_spacing,
                                                                                     comment))
 
+    def combine_word(self, spare, word):
+        if len(spare) > 0:
+            return spare + "+" + word
+
+        return word
+
+    def format_value(self, value):
+        """ Format in better readable manner """
+
+        def delineate(word):
+            # Create list of chars in reverse order
+            split_word = list(reversed([x for x in word]))
+            # Add underscore every 4th char
+            split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
+            # Join the word unreversed back together
+            new_word = ''.join(reversed(split_word2))
+            return(new_word)
+
+        # Split extra cols
+        if self.num_spare_cols > 0:
+            vals = value[self.num_spare_cols:]
+            spare_vals = value[:self.num_spare_cols]
+        else:
+            vals = value
+            spare_vals = ""
+
+        # Insert underscores
+        vals = delineate(vals)
+        spare_vals = delineate(spare_vals)
+
+        return self.combine_word(spare_vals, vals)
+
     def gen_cycle_comment(self, op, word, addr, wmask, port, t_current):
         if op == "noop":
             str = "\tIdle during cycle {0} ({1}ns - {2}ns)"

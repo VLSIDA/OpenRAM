@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 50_riscv_func_test")
+@unittest.skip("SKIPPING 50_riscv_func_test")
 class riscv_func_test(openram_test):
 
     def runTest(self):

@@ -34,9 +34,10 @@ class riscv_phys_test(openram_test):
 
         c = sram_config(word_size=32,
                         write_size=8,
-                        num_words=256,
-                        num_banks=1)
-
+                        num_words=32,
+                        num_banks=1,
+                        num_spare_rows=1,
+                        num_spare_cols=1)
         c.words_per_row=2
         c.recompute_sizes()
         debug.info(1, "Layout test for {}rw,{}r,{}w sram "

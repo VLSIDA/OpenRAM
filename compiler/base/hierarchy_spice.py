@@ -419,6 +419,19 @@ class spice():
         del usedMODS
         spfile.close()
 
+    def cacti_delay(self, corner, inrisetime, c_load=0.0):
+        """Generalization of how Cacti determines the delay of a gate"""
+        
+        # Get the r_on the the tx
+        rd = self.tr_r_on()
+        # Calculate the intrinsic capacitance 
+        c_intrinsic = self.drain_c_()
+        # Calculate tau with provided output load then calc delay
+        tf = rd*(c_intrinsic+c_load)
+        this_delay = horowitz(inrisetime, tf, 0.5, 0.5, True)
+        inrisetime = this_delay / (1.0 - 0.5);
+        return delay_data(this_delay, inrisetime)
+
     def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
 
@@ -463,6 +476,118 @@ class spice():
                       .format(self.__class__.__name__,
                               self.cell_name))
         return 0
+
+    def horowitz(inputramptime, # input rise time
+                 tf,            # time constant of gate
+                 vs1,           # threshold voltage
+                 vs2,           # threshold voltage
+                 rise):         # whether input rises or fall
+{
+        if inputramptime == 0 and vs1 == vs2:
+            return tf * (-math.log(vs1) if vs1 < 1 else math.log(vs1))
+
+        a = inputramptime / tf
+        if rise == RISE:
+            b = 0.5;
+            td = tf * sqrt(math.log(vs1)*math.log(vs1) + 2*a*b*(1.0 - vs1)) + tf*(math.log(vs1) - math.log(vs2))
+
+        else:
+            b = 0.4;
+            td = tf * sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
+
+        return td
+  
+    def tr_r_on(width, nchannel, stack, _is_cell):
+
+        # FIXME: temp code until parameters have been determined
+        if _is_cell:
+            dt = tech.sram_cell  #SRAM cell access transistor
+        else:
+            dt = tech.peri_global
+      
+
+        restrans = dt.R_nch_on if nchannel else dt.R_pch_on
+        return stack * restrans / width
+
+    def gate_c(width, wirelength, _is_cell)
+    
+        if _is_cell:
+            dt = tech.sram_cell  #SRAM cell access transistor
+    
+        else:
+            dt = tech.peri_global
+      
+
+        return (dt.C_g_ideal + dt.C_overlap + 3*dt.C_fringe)*width + dt.l_phy*Cpolywire
+    
+    def drain_c_(width,
+                 nchannel,
+                 stack,
+                 next_arg_thresh_folding_width_or_height_cell,
+                 fold_dimension,
+                 _is_dram,
+                 _is_cell,
+                 _is_wl_tr,
+                 _is_sleep_tx):
+
+        if _is_cell:
+            dt = tech.sram_cell  # SRAM cell access transistor
+     
+        else
+            dt = tech.peri_global
+      
+
+        c_junc_area = dt.C_junc;
+        c_junc_sidewall = dt.C_junc_sidewall
+        c_fringe = 2*dt.C_fringe
+        c_overlap = 2*dt.C_overlap
+        drain_C_metal_connecting_folded_tr = 0
+
+        # determine the width of the transistor after folding (if it is getting folded)
+        if next_arg_thresh_folding_width_or_height_cell == 0:
+            # interpret fold_dimension as the the folding width threshold
+            # i.e. the value of transistor width above which the transistor gets folded
+            w_folded_tr = fold_dimension
+      
+        else:
+            # interpret fold_dimension as the height of the cell that this transistor is part of.
+            h_tr_region  = fold_dimension - 2 * tech.HPOWERRAIL
+            # TODO : w_folded_tr must come from Component::compute_gate_area()
+            ratio_p_to_n = 2.0 / (2.0 + 1.0)
+            
+            if nchannel:
+                w_folded_tr = (1 - ratio_p_to_n) * (h_tr_region - tech.MIN_GAP_BET_P_AND_N_DIFFS)
+            
+            else:
+                w_folded_tr = ratio_p_to_n * (h_tr_region - tech.MIN_GAP_BET_P_AND_N_DIFFS)
+            
+      
+        num_folded_tr = int(ceil(width / w_folded_tr))
+
+        if num_folded_tr < 2:
+            w_folded_tr = width;
+      
+
+        total_drain_w = (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +  # only for drain
+                             (stack - 1) * tech.spacing_poly_to_poly
+        drain_h_for_sidewall = w_folded_tr
+        total_drain_height_for_cap_wrt_gate = w_folded_tr + 2 * w_folded_tr * (stack - 1)
+        if num_folded_tr > 1:
+            total_drain_w += (num_folded_tr - 2) * (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +
+                             (num_folded_tr - 1) * ((stack - 1) * tech.spacing_poly_to_poly)
+
+            if num_folded_tr%2 == 0:
+                drain_h_for_sidewall = 0
+        
+            total_drain_height_for_cap_wrt_gate *= num_folded_tr
+            drain_C_metal_connecting_folded_tr   = tech.wire_local.C_per_um * total_drain_w
+      
+
+        drain_C_area     = c_junc_area * total_drain_w * w_folded_tr
+        drain_C_sidewall = c_junc_sidewall * (drain_h_for_sidewall + 2 * total_drain_w)
+        drain_C_wrt_gate = (c_fringe + c_overlap) * total_drain_height_for_cap_wrt_gate
+
+        return drain_C_area + drain_C_sidewall + drain_C_wrt_gate + drain_C_metal_connecting_folded_tr
 
     def cal_delay_with_rc(self, corner, r, c, slew, swing=0.5):
         """

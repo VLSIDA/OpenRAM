@@ -113,7 +113,8 @@ class timing_graph():
             if i == len(path) - 2:
                 cout += load
 
-            delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
+            #delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
+            delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout))
             cur_slew = delays[-1].slew
 
         return delays

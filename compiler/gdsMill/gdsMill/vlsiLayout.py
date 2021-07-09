@@ -770,7 +770,13 @@ class VlsiLayout:
                 from tech import layer_override
                 if layer_override[label_text]:
                     shapes = self.getAllShapes((layer_override[label_text][0], None))
-                    lpp = layer_override[label_text]
+                    if not shapes:
+                        shapes = self.getAllShapes(lpp)
+                    else:
+                        lpp = layer_override[label_text]
+                        
+                        
+                    
             except:
                 pass
             for boundary in shapes:

@@ -17,7 +17,11 @@ class sram_config:
     def __init__(self, word_size, num_words, write_size=None, num_banks=1, words_per_row=None, num_spare_rows=0, num_spare_cols=0):
         self.word_size = word_size
         self.num_words = num_words
-        self.write_size = write_size
+        # Don't add a write mask if it is the same size as the data word
+        if write_size and write_size==word_size:
+            self.write_size = None
+        else:
+            self.write_size = write_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
         self.num_spare_cols = num_spare_cols

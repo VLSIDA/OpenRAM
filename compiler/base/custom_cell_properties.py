@@ -93,9 +93,9 @@ class cell:
         # It is assumed it is [nwell, pwell]
         self._body_bias = body_bias
         self._port_map['vnb'] = body_bias[0]
-        self._port_types['vnb'] = "POWER"
+        self._port_types['vnb'] = "GROUND"
         self._port_map['vpb'] = body_bias[1]
-        self._port_types['vpb'] = "GROUND"
+        self._port_types['vpb'] = "POWER"
         
     @property
     def port_types(self):

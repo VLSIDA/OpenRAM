@@ -403,6 +403,11 @@ parameter["sa_inv_pmos_size"] = 18 * _lambda_
 parameter["sa_inv_nmos_size"] = 9 * _lambda_
 parameter["bitcell_drain_cap"] = 0.2        # In Femto-Farad, approximation of drain capacitance
 
+# Spice Values uses to calculate analytical delay based on CACTI equations
+# FIXME: temp values used currently. Need to be derived from simulations or the SPICE model
+spice["r_nch_on"] = 0
+spice["r_pch_on"] = 0
+
 ###################################################
 # Technology Tool Preferences
 ###################################################

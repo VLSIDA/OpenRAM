@@ -428,8 +428,11 @@ class spice():
         c_intrinsic = self.get_intrinsic_capacitance()
         # Calculate tau with provided output load then calc delay
         tf = rd*(c_intrinsic+c_load)
-        this_delay = horowitz(inrisetime, tf, 0.5, 0.5, True)
-        inrisetime = this_delay / (1.0 - 0.5);
+        # FIXME: horowitz disabled until other parameters have been 
+        # fixed due to divide by zero issues
+        #this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
+        this_delay = 0
+        inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)
 
     def analytical_delay(self, corner, slew, load=0.0):
@@ -495,50 +498,39 @@ class spice():
                               self.cell_name))
         return 0
 
-    def horowitz(inputramptime, # input rise time
+    def horowitz(self, 
+                 inputramptime, # input rise time
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
                  vs2,           # threshold voltage
                  rise):         # whether input rises or fall
-{
+
         if inputramptime == 0 and vs1 == vs2:
             return tf * (-math.log(vs1) if vs1 < 1 else math.log(vs1))
 
         a = inputramptime / tf
-        if rise == RISE:
-            b = 0.5;
-            td = tf * sqrt(math.log(vs1)*math.log(vs1) + 2*a*b*(1.0 - vs1)) + tf*(math.log(vs1) - math.log(vs2))
+        if rise == True:
+            b = 0.5
+            td = tf * math.sqrt(math.log(vs1)*math.log(vs1) + 2*a*b*(1.0 - vs1)) + tf*(math.log(vs1) - math.log(vs2))
 
         else:
-            b = 0.4;
-            td = tf * sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
+            b = 0.4
+            td = tf * math.sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
 
         return td
   
-    def tr_r_on(width, is_nchannel, stack, _is_cell):
-
-        # FIXME: temp code until parameters have been determined
-        if _is_cell:
-            dt = tech.sram_cell  #SRAM cell access transistor
-        else:
-            dt = tech.peri_global
-      
-
-        restrans = dt.R_nch_on if is_nchannel else dt.R_pch_on
+    def tr_r_on(self, width, is_nchannel, stack, _is_cell):      
+        
+        restrans = tech.spice["r_nch_on"] if is_nchannel else tech.spice["r_pch_on"]
         return stack * restrans / width
 
-    def gate_c(width, wirelength, _is_cell)
+    def gate_c(self, width, wirelength, _is_cell):
     
-        if _is_cell:
-            dt = tech.sram_cell  #SRAM cell access transistor
+        return (tech.spice["c_g_ideal"] + tech.spice["c_overlap"] + 3*tech.spice["c_fringe"])*width +\
+               tech.spice["l_phy"]*tech.spice["cpolywire"]
     
-        else:
-            dt = tech.peri_global
-      
-
-        return (dt.C_g_ideal + dt.C_overlap + 3*dt.C_fringe)*width + dt.l_phy*Cpolywire
-    
-    def drain_c_(width,
+    def drain_c_(self,
+                 width,
                  nchannel,
                  stack,
                  next_arg_thresh_folding_width_or_height_cell,
@@ -551,11 +543,11 @@ class spice():
         if _is_cell:
             dt = tech.sram_cell  # SRAM cell access transistor
      
-        else
+        else:
             dt = tech.peri_global
       
 
-        c_junc_area = dt.C_junc;
+        c_junc_area = dt.C_junc
         c_junc_sidewall = dt.C_junc_sidewall
         c_fringe = 2*dt.C_fringe
         c_overlap = 2*dt.C_overlap
@@ -583,15 +575,15 @@ class spice():
         num_folded_tr = int(ceil(width / w_folded_tr))
 
         if num_folded_tr < 2:
-            w_folded_tr = width;
+            w_folded_tr = width
       
-
-        total_drain_w = (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +  # only for drain
-                             (stack - 1) * tech.spacing_poly_to_poly
+        # only for drain
+        total_drain_w = (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +\
+                        (stack - 1) * tech.spacing_poly_to_poly
         drain_h_for_sidewall = w_folded_tr
         total_drain_height_for_cap_wrt_gate = w_folded_tr + 2 * w_folded_tr * (stack - 1)
         if num_folded_tr > 1:
-            total_drain_w += (num_folded_tr - 2) * (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +
+            total_drain_w += (num_folded_tr - 2) * (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +\
                              (num_folded_tr - 1) * ((stack - 1) * tech.spacing_poly_to_poly)
 
             if num_folded_tr%2 == 0:

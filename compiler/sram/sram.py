@@ -69,7 +69,12 @@ class sram():
             reader = gdsMill.Gds2reader(gds)
             reader.loadFromFile(name)
 
-            gds.uniquify()
+            # Uniquify but skip the library cells since they are hard coded
+            try:
+                from tech import library_prefix_name
+            except ImportError:
+                library_prefix_name = None
+            gds.uniquify(library_prefix_name)
 
             writer = gdsMill.Gds2writer(gds)
             unique_name = name.replace(".gds", "_unique.gds")

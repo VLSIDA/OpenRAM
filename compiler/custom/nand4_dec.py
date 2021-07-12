@@ -74,3 +74,10 @@ class nand4_dec(design.design):
         """Return input to output polarity for module"""
 
         return False
+
+    def get_on_resistance(self):
+        """On resistance of pnand, defined by stacked NMOS"""
+        is_nchannel = True
+        stack = 4
+        is_cell = False
+        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)  

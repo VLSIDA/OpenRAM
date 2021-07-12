@@ -202,3 +202,9 @@ class bitcell_base(design.design):
         debug.check(port == 0, "One port for bitcell only.")
         return "wl"
 
+    def get_on_resistance(self):
+        """On resistance of pinv, defined by single nmos"""
+        is_nchannel = True
+        stack = 2 # for access and inv tx
+        is_cell = False
+        return self.tr_r_on(drc["minwidth_tx"], is_nchannel, stack, is_cell)    

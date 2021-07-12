@@ -552,3 +552,10 @@ class ptx(design.design):
         """Return input to output polarity for module"""
         
         return True
+
+    def get_on_resistance(self):
+        """On resistance of pinv, defined by single nmos"""
+        is_nchannel = True
+        stack = 1
+        is_cell = False
+        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)    

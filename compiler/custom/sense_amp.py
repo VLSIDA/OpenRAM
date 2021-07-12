@@ -79,3 +79,10 @@ class sense_amp(design.design):
         
         #FIXME: This only applied to bl/br -> dout and not s_en->dout
         return True     
+
+    def get_on_resistance(self):
+        """On resistance of pinv, defined by single nmos"""
+        is_nchannel = False
+        stack = 1
+        is_cell = False
+        return self.tr_r_on(parameter["sa_inv_nmos_size"], is_nchannel, stack, is_cell)    

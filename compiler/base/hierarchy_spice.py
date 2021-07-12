@@ -515,7 +515,7 @@ class spice():
 
         return td
   
-    def tr_r_on(width, nchannel, stack, _is_cell):
+    def tr_r_on(width, is_nchannel, stack, _is_cell):
 
         # FIXME: temp code until parameters have been determined
         if _is_cell:
@@ -524,7 +524,7 @@ class spice():
             dt = tech.peri_global
       
 
-        restrans = dt.R_nch_on if nchannel else dt.R_pch_on
+        restrans = dt.R_nch_on if is_nchannel else dt.R_pch_on
         return stack * restrans / width
 
     def gate_c(width, wirelength, _is_cell)

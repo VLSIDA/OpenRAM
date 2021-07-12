@@ -423,9 +423,9 @@ class spice():
         """Generalization of how Cacti determines the delay of a gate"""
         
         # Get the r_on the the tx
-        rd = self.tr_r_on()
+        rd = self.get_on_resistance()
         # Calculate the intrinsic capacitance 
-        c_intrinsic = self.drain_c_()
+        c_intrinsic = self.get_intrinsic_capacitance()
         # Calculate tau with provided output load then calc delay
         tf = rd*(c_intrinsic+c_load)
         this_delay = horowitz(inrisetime, tf, 0.5, 0.5, True)
@@ -458,6 +458,24 @@ class spice():
                       .format(self.__class__.__name__,
                               self.cell_name))
         return None
+
+    def get_on_resistance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} on resistance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
+
+    def get_intrinsic_capacitance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} intrinsic capacitance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
 
     def get_cin(self):
         """Returns input load in Femto-Farads. All values generated using

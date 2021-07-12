@@ -126,31 +126,3 @@ class and3_dec(design.design):
                                             offset=pin.center(),
                                             width=pin.width(),
                                             height=pin.height())
-
-    def analytical_delay(self, corner, slew, load=0.0):
-        """ Calculate the analytical delay of DFF-> INV -> INV """
-        nand_delay = self.nand.analytical_delay(corner,
-                                                slew=slew,
-                                                load=self.inv.input_load())
-        inv_delay = self.inv.analytical_delay(corner,
-                                              slew=nand_delay.slew,
-                                              load=load)
-        return nand_delay + inv_delay
-
-    def get_stage_efforts(self, external_cout, inp_is_rise=False):
-        """Get the stage efforts of the A or B -> Z path"""
-        stage_effort_list = []
-        stage1_cout = self.inv.get_cin()
-        stage1 = self.nand.get_stage_effort(stage1_cout, inp_is_rise)
-        stage_effort_list.append(stage1)
-        last_stage_is_rise = stage1.is_rise
-
-        stage2 = self.inv.get_stage_effort(external_cout, last_stage_is_rise)
-        stage_effort_list.append(stage2)
-
-        return stage_effort_list
-
-    def get_cin(self):
-        """Return the relative input capacitance of a single input"""
-        return self.nand.get_cin()
-

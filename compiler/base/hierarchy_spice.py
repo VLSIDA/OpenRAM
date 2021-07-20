@@ -535,10 +535,7 @@ class spice():
                  stack,
                  next_arg_thresh_folding_width_or_height_cell,
                  fold_dimension,
-                 _is_dram,
-                 _is_cell,
-                 _is_wl_tr,
-                 _is_sleep_tx):
+                 _is_cell):
 
         if _is_cell:
             dt = tech.sram_cell  # SRAM cell access transistor

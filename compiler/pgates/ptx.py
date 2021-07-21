@@ -555,7 +555,11 @@ class ptx(design.design):
 
     def get_on_resistance(self):
         """On resistance of pinv, defined by single nmos"""
-        is_nchannel = True
+        is_nchannel = (self.tx_type == "nmos")
         stack = 1
         is_cell = False
-        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)    
+        return self.tr_r_on(self.tx_width, is_nchannel, stack, is_cell)    
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        return self.gate_c(self.tx_width)      

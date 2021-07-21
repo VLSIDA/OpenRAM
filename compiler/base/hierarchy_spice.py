@@ -419,9 +419,9 @@ class spice():
         del usedMODS
         spfile.close()
 
-    def cacti_delay(self, corner, inrisetime, c_load=0.0):
+    def cacti_delay(self, corner, inrisetime, c_load, cacti_params):
         """Generalization of how Cacti determines the delay of a gate"""
-        
+        self.cacti_params = cacti_params
         # Get the r_on the the tx
         rd = self.get_on_resistance()
         # Calculate the intrinsic capacitance 
@@ -471,6 +471,15 @@ class spice():
                               self.cell_name))
         return 0
 
+    def get_input_capacitance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} input capacitance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
+
     def get_intrinsic_capacitance(self):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} intrinsic capacitance function needs to be defined"
@@ -491,7 +500,7 @@ class spice():
 
     def input_load(self):
         """Inform users undefined relative capacitance functions used for analytical delays."""
-        debug.warning("Design Class {0} input capacitance function needs to be defined"
+        debug.warning("Design Class {0} input load function needs to be defined"
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
@@ -521,13 +530,13 @@ class spice():
   
     def tr_r_on(self, width, is_nchannel, stack, _is_cell):      
         
-        restrans = tech.spice["r_nch_on"] if is_nchannel else tech.spice["r_pch_on"]
+        restrans = self.cacti_params["r_nch_on"] if is_nchannel else self.cacti_params["r_pch_on"]
         return stack * restrans / width
 
-    def gate_c(self, width, wirelength, _is_cell):
+    def gate_c(self, width):
     
         return (tech.spice["c_g_ideal"] + tech.spice["c_overlap"] + 3*tech.spice["c_fringe"])*width +\
-               tech.spice["l_phy"]*tech.spice["cpolywire"]
+               tech.drc["minlength_channel"]*tech.spice["cpolywire"]
     
     def drain_c_(self,
                  width,

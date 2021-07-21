@@ -32,6 +32,14 @@ class cacti(simulation):
         self.set_corner(corner)
         self.create_signal_names()
         self.add_graph_exclusions()
+        self.set_params()
+        
+    def set_params(self):    
+        """Set parameters specific to the corner being simulated"""
+        self.params = {}
+        # Only parameter right now is r_on which is dependent on Vdd
+        self.params["r_nch_on"] = self.vdd_voltage / tech.spice["i_on_n"]
+        self.params["r_pch_on"] = self.vdd_voltage / tech.spice["i_on_p"]
     
     def get_lib_values(self, load_slews):
         """
@@ -39,7 +47,7 @@ class cacti(simulation):
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("In analytical mode, all ports have the timing of the first read port.")
-
+            
         # Probe set to 0th bit, does not matter for analytical delay.
         self.set_probe('0' * self.addr_size, 0)
         self.create_graph()
@@ -61,7 +69,7 @@ class cacti(simulation):
         max_delay = 0.0
         for load,slew in load_slews:
             # Calculate delay based on slew and load
-            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
+            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load, self.params)
 
             total_delay = self.sum_delays(path_delays)
             max_delay = max(max_delay, total_delay.delay)

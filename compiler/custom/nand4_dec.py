@@ -81,3 +81,7 @@ class nand4_dec(design.design):
         stack = 4
         is_cell = False
         return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)  
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        return self.gate_c(self.nmos_width+self.pmos_width)     

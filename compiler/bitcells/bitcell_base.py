@@ -208,3 +208,8 @@ class bitcell_base(design.design):
         stack = 2 # for access and inv tx
         is_cell = False
         return self.tr_r_on(drc["minwidth_tx"], is_nchannel, stack, is_cell)    
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        # Input cap of both access TX connected to the wordline
+        return self.gate_c(2*parameter["6T_access_size"])      

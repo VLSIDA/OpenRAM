@@ -86,3 +86,7 @@ class sense_amp(design.design):
         stack = 1
         is_cell = False
         return self.tr_r_on(parameter["sa_inv_nmos_size"], is_nchannel, stack, is_cell)    
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        return self.gate_c(parameter["sa_inv_nmos_size"])     

@@ -92,7 +92,7 @@ class timing_graph():
         path.pop()
         visited.remove(cur_node)
 
-    def get_timing(self, path, corner, slew, load):
+    def get_timing(self, path, corner, slew, load, cacti_params):
         """Returns the analytical delays in the input path"""
 
         if len(path) == 0:
@@ -108,13 +108,14 @@ class timing_graph():
             cout = 0
             for node in self.graph[path[i + 1]]:
                 output_edge_mod = self.edge_mods[(path[i + 1], node)]
-                cout+=output_edge_mod.get_cin()
+                #cout+=output_edge_mod.get_cin() # logical effort based CIN
+                cout+=output_edge_mod.get_input_capacitance()
             # If at the last output, include the final output load
             if i == len(path) - 2:
                 cout += load
 
             #delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
-            delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout))
+            delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, cacti_params))
             cur_slew = delays[-1].slew
 
         return delays

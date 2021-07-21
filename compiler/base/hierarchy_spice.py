@@ -428,10 +428,7 @@ class spice():
         c_intrinsic = self.get_intrinsic_capacitance()
         # Calculate tau with provided output load then calc delay
         tf = rd*(c_intrinsic+c_load)
-        # FIXME: horowitz disabled until other parameters have been 
-        # fixed due to divide by zero issues
-        #this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
-        this_delay = 0
+        this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
         inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)
 

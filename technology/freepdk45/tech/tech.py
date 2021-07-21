@@ -457,9 +457,15 @@ parameter["sa_inv_nmos_size"] = 0.27        # micro-meters
 parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of drain capacitance
 
 # Spice Values uses to calculate analytical delay based on CACTI equations
-# FIXME: temp values used currently. Need to be derived from simulations or the SPICE model
-spice["r_nch_on"] = 0
-spice["r_pch_on"] = 0
+spice["i_on_n"] = 0.0004463 # A/um 
+spice["i_on_p"] = 0.0000771   # A/um
+spice["tox"] = 0.00114        # microns
+spice["eps_ox"] = 0.00245e-14  # F/um, calculated from CACTI 45nm data 
+spice["cox"] = spice["eps_ox"]/spice["tox"] # F/um^2
+spice["c_g_ideal"] = spice["cox"]*drc["minlength_channel"] # F/um
+spice["c_overlap"] = 0.2*spice["c_g_ideal"] # F/um
+spice["c_fringe"] = 0 # F/um, not defined in this technology
+spice["cpolywire"] = 0 # F/um, replicated from CACTI which is hardcoded to 0
 
 ###################################################
 # Technology Tool Preferences

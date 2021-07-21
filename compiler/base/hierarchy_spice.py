@@ -540,63 +540,32 @@ class spice():
     
     def drain_c_(self,
                  width,
-                 nchannel,
                  stack,
-                 next_arg_thresh_folding_width_or_height_cell,
-                 fold_dimension,
-                 _is_cell):
+                 folds):
 
-        if _is_cell:
-            dt = tech.sram_cell  # SRAM cell access transistor
-     
-        else:
-            dt = tech.peri_global
-      
-
-        c_junc_area = dt.C_junc
-        c_junc_sidewall = dt.C_junc_sidewall
-        c_fringe = 2*dt.C_fringe
-        c_overlap = 2*dt.C_overlap
+        c_junc_area = tech.spice["c_junc"]
+        c_junc_sidewall = tech.spice["c_junc_sw"]
+        c_fringe = 2*tech.spice["c_overlap"]
+        c_overlap = 2*tech.spice["c_fringe"]
         drain_C_metal_connecting_folded_tr = 0
-
-        # determine the width of the transistor after folding (if it is getting folded)
-        if next_arg_thresh_folding_width_or_height_cell == 0:
-            # interpret fold_dimension as the the folding width threshold
-            # i.e. the value of transistor width above which the transistor gets folded
-            w_folded_tr = fold_dimension
-      
-        else:
-            # interpret fold_dimension as the height of the cell that this transistor is part of.
-            h_tr_region  = fold_dimension - 2 * tech.HPOWERRAIL
-            # TODO : w_folded_tr must come from Component::compute_gate_area()
-            ratio_p_to_n = 2.0 / (2.0 + 1.0)
             
-            if nchannel:
-                w_folded_tr = (1 - ratio_p_to_n) * (h_tr_region - tech.MIN_GAP_BET_P_AND_N_DIFFS)
-            
-            else:
-                w_folded_tr = ratio_p_to_n * (h_tr_region - tech.MIN_GAP_BET_P_AND_N_DIFFS)
-            
-      
-        num_folded_tr = int(ceil(width / w_folded_tr))
-
-        if num_folded_tr < 2:
-            w_folded_tr = width
+        w_folded_tr = width/folds
+        num_folded_tr = folds
       
         # only for drain
-        total_drain_w = (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +\
-                        (stack - 1) * tech.spacing_poly_to_poly
+        total_drain_w = (tech.spice["w_poly_contact"] + 2 * tech.drc["active_contact_to_gate"]) +\
+                        (stack - 1) * tech.spice["spacing_poly_to_poly"]
         drain_h_for_sidewall = w_folded_tr
         total_drain_height_for_cap_wrt_gate = w_folded_tr + 2 * w_folded_tr * (stack - 1)
         if num_folded_tr > 1:
-            total_drain_w += (num_folded_tr - 2) * (tech.w_poly_contact + 2 * tech.spacing_poly_to_contact) +\
-                             (num_folded_tr - 1) * ((stack - 1) * tech.spacing_poly_to_poly)
+            total_drain_w += (num_folded_tr - 2) * (tech.spice["w_poly_contact"] + 2 * tech.drc["active_contact_to_gate"]) +\
+                             (num_folded_tr - 1) * ((stack - 1) * tech.spice["spacing_poly_to_poly"])
 
             if num_folded_tr%2 == 0:
                 drain_h_for_sidewall = 0
         
             total_drain_height_for_cap_wrt_gate *= num_folded_tr
-            drain_C_metal_connecting_folded_tr   = tech.wire_local.C_per_um * total_drain_w
+            drain_C_metal_connecting_folded_tr   = tech.spice["wire_c_per_um"] * total_drain_w
       
 
         drain_C_area     = c_junc_area * total_drain_w * w_folded_tr

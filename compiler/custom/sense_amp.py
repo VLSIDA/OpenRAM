@@ -90,3 +90,21 @@ class sense_amp(design.design):
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
         return self.gate_c(parameter["sa_inv_nmos_size"])     
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        stack = 1
+        mult = 1
+        # Add the inverter drain Cap and the bitline TX drain Cap
+        nmos_drain_c =  self.drain_c_(parameter["sa_inv_nmos_size"]*mult, 
+                                      stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(parameter["sa_inv_pmos_size"]*mult, 
+                                      stack,
+                                      mult)
+        
+        bitline_pmos_size = 8
+        bl_pmos_drain_c =  self.drain_c_(drc("minwidth_tx")*bitline_pmos_size, 
+                                      stack,
+                                      mult)                               
+        return nmos_drain_c + pmos_drain_c + bl_pmos_drain_c

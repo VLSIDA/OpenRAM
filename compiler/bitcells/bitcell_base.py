@@ -213,3 +213,23 @@ class bitcell_base(design.design):
         """Input cap of input, passes width of gates to gate cap function"""
         # Input cap of both access TX connected to the wordline
         return self.gate_c(2*parameter["6T_access_size"])      
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        stack = 1
+        mult = 1
+        # FIXME: Need to define TX sizes of bitcell storage node. Using 
+        # min_width as a temp value
+        
+        # Add the inverter drain Cap and the bitline TX drain Cap
+        nmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
+                                      stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
+                                      stack,
+                                      mult)
+        
+        bl_nmos_drain_c =  self.drain_c_(parameter["6T_access_size"], 
+                                         stack,
+                                         mult)                               
+        return nmos_drain_c + pmos_drain_c + bl_nmos_drain_c    

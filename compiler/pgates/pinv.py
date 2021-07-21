@@ -353,3 +353,14 @@ class pinv(pgate.pgate):
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
         return self.gate_c(self.nmos_width+self.pmos_width)   
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        nmos_stack = 1
+        nmos_drain_c =  self.drain_c_(self.nmos_width*self.tx_mults, 
+                                      nmos_stack,
+                                      self.tx_mults)
+        pmos_drain_c =  self.drain_c_(self.pmos_width*self.tx_mults, 
+                                      1,
+                                      self.tx_mults)                               
+        return nmos_drain_c + pmos_drain_c                               

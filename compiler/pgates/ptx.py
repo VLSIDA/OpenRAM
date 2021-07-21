@@ -562,4 +562,10 @@ class ptx(design.design):
         
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
-        return self.gate_c(self.tx_width)      
+        return self.gate_c(self.tx_width)   
+
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        return self.drain_c_(self.tx_width*self.tx_mults, 
+                             1,
+                             self.mults)

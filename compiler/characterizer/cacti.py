@@ -65,19 +65,22 @@ class cacti(simulation):
         # Set delay/power for slews and loads
         port_data = self.get_empty_measure_data_dict()
         power = self.analytical_power(load_slews)
-        debug.info(1, 'Slew, Load, Delay(ns), Slew(ns)')
+        debug.info(1, 'Slew (ns), Load (fF), Delay(ns), Slew(ns)')
         max_delay = 0.0
         for load,slew in load_slews:
             # Calculate delay based on slew and load
-            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load, self.params)
+            # Calculations expect Farad, input is Femto-Farad
+            load_farad = load*1e-12
+            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load_farad, self.params)
 
             total_delay = self.sum_delays(path_delays)
+            delay_ns = total_delay.delay/1e-9
+            slew_ns = total_delay.slew/1e-9
             max_delay = max(max_delay, total_delay.delay)
-            debug.info(1,
-                       '{}, {}, {}, {}'.format(slew,
-                                               load,
-                                               total_delay.delay / 1e3,
-                                               total_delay.slew / 1e3))
+            debug.info(1,'{}, {}, {}, {}'.format(slew,
+                                                 load,
+                                                 delay_ns,
+                                                 slew_ns))
             # Delay is only calculated on a single port and replicated for now.
             for port in self.all_ports:
                 for mname in self.delay_meas_names + self.power_meas_names:

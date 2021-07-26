@@ -92,7 +92,7 @@ class timing_graph():
         path.pop()
         visited.remove(cur_node)
 
-    def get_timing(self, path, corner, slew, load, cacti_params):
+    def get_timing(self, path, corner, slew, load, params):
         """Returns the analytical delays in the input path"""
 
         if len(path) == 0:
@@ -108,14 +108,31 @@ class timing_graph():
             cout = 0
             for node in self.graph[path[i + 1]]:
                 output_edge_mod = self.edge_mods[(path[i + 1], node)]
+                if params["model_name"] == "cacti":
+                    cout+=output_edge_mod.get_input_capacitance()
+                elif params["model_name"] == "elmore":
+                    cout+=output_edge_mod.get_cin()
+                else:
+                    debug.error("Undefined model_name for analytical timing: {}".format(params["model_name"]),
+                                return_value=1)
                 #cout+=output_edge_mod.get_cin() # logical effort based CIN
-                cout+=output_edge_mod.get_input_capacitance()
+                #cout+=output_edge_mod.get_input_capacitance() #cacti called from module
+                #func = cacti_params["cin_function"]
+                #cout+=output_edge_mod.func()
             # If at the last output, include the final output load
             if i == len(path) - 2:
                 cout += load
-
+                
+            if params["model_name"] == "cacti":
+                delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, params))
+            elif params["model_name"] == "elmore":
+                delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
+            else:
+                debug.error("Undefined model_name for analytical timing: {}".format(params["model_name"]),
+                            return_value=1)
             #delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
-            delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, cacti_params))
+            #delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, cacti_params))
+            #delays.append(path_edge_mod.cacti_params["delay_function"](corner, cur_slew, cout, cacti_params))
             cur_slew = delays[-1].slew
 
         return delays

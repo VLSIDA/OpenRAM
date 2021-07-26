@@ -37,6 +37,8 @@ class cacti(simulation):
     def set_params(self):    
         """Set parameters specific to the corner being simulated"""
         self.params = {}
+        # Set the specific functions to use for timing defined in the SRAM module
+        self.params["model_name"] = OPTS.model_name
         # Only parameter right now is r_on which is dependent on Vdd
         self.params["r_nch_on"] = self.vdd_voltage / tech.spice["i_on_n"]
         self.params["r_pch_on"] = self.vdd_voltage / tech.spice["i_on_p"]

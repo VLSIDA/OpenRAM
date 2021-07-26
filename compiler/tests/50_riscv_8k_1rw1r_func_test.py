@@ -26,9 +26,10 @@ class riscv_func_test(openram_test):
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
 
+        OPTS.local_array_size = 16
         OPTS.num_rw_ports = 1
-        OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
         globals.setup_bitcell()
 
         # This is a hack to reload the characterizer __init__ with the spice version
@@ -39,10 +40,9 @@ class riscv_func_test(openram_test):
         from sram_config import sram_config
         c = sram_config(word_size=32,
                         write_size=8,
-                        num_words=32,
+                        num_words=2048,
                         num_banks=1)
-        c.words_per_row=1
-        c.recompute_sizes()
+
         debug.info(1, "Functional test RISC-V memory"
                    "{} bit words, {} words, {} words per row, {} banks".format(c.word_size,
                                                                                c.num_words,
@@ -50,7 +50,7 @@ class riscv_func_test(openram_test):
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, corner=corner, cycles=25)
+        f = functional(s.s, corner=corner, cycles=100)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

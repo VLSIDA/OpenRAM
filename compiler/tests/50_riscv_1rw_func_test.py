@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 50_riscv_func_test")
+@unittest.skip("SKIPPING 50_riscv_func_test")
 class riscv_func_test(openram_test):
 
     def runTest(self):
@@ -24,6 +24,15 @@ class riscv_func_test(openram_test):
         globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.trim_netlist = False
+
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
@@ -37,8 +46,10 @@ class riscv_func_test(openram_test):
         from sram_config import sram_config
         c = sram_config(word_size=32,
                         write_size=8,
-                        num_words=32,
-                        num_banks=1)
+                        num_words=64,
+                        num_banks=1,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Functional test RISC-V memory"
@@ -48,7 +59,7 @@ class riscv_func_test(openram_test):
                                                                                c.num_banks))
         s = factory.create(module_type="sram", sram_config=c)
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        f = functional(s.s, corner=corner, cycles=50)
+        f = functional(s.s, corner=corner, cycles=25)
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 

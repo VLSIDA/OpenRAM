@@ -52,7 +52,7 @@ class pin_layout:
                     from tech import layer_override_name
                     if layer_override[name]:
                        self.lpp = layer_override[name]
-                       self.layer = "m1"
+                       self.layer = "pwellp"
                        self._recompute_hash()
                        return
                 except:
@@ -406,6 +406,13 @@ class pin_layout:
 
         try:
             from tech import label_purpose
+            try:
+                from tech import layer_override_purpose
+                if pin_layer_num in layer_override_purpose:
+                    layer_num = layer_override_purpose[pin_layer_num][0]
+                    label_purpose = layer_override_purpose[pin_layer_num][1]
+            except:
+                pass
         except ImportError:
             label_purpose = purpose
 

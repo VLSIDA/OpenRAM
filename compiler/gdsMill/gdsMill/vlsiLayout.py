@@ -81,7 +81,7 @@ class VlsiLayout:
             coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
 
-    def uniquify(self):
+    def uniquify(self, prefix_name=None):
         new_structures = {}
         if self.rootStructureName[-1] == "\x00":
             prefix = self.rootStructureName[0:-1] + "_"
@@ -92,7 +92,10 @@ class VlsiLayout:
                 base_name = name[0:-1]
             else:
                 base_name = name
-            if name != self.rootStructureName:
+            # Don't do library cells
+            if prefix_name and base_name.startswith(prefix_name):
+                new_name = name
+            elif name != self.rootStructureName:
                 new_name = self.padText(prefix + base_name)
             else:
                 new_name = name
@@ -105,7 +108,11 @@ class VlsiLayout:
                     base_sref_name = sref.sName[0:-1]
                 else:
                     base_sref_name = sref.sName
-                new_sref_name = self.padText(prefix + base_sref_name)
+                # Don't do library cells
+                if prefix_name and base_sref_name.startswith(prefix_name):
+                    new_sref_name = sref.sName
+                else:
+                    new_sref_name = self.padText(prefix + base_sref_name)
                 sref.sName = new_sref_name
                 #print("SREF: {0} -> {1}".format(base_sref_name, new_sref_name))
         self.structures = new_structures
@@ -770,7 +777,13 @@ class VlsiLayout:
                 from tech import layer_override
                 if layer_override[label_text]:
                     shapes = self.getAllShapes((layer_override[label_text][0], None))
-                    lpp = layer_override[label_text]
+                    if not shapes:
+                        shapes = self.getAllShapes(lpp)
+                    else:
+                        lpp = layer_override[label_text]
+
+
+
             except:
                 pass
             for boundary in shapes:

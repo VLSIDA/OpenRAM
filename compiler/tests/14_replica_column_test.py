@@ -19,9 +19,19 @@ class replica_column_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
 
         debug.info(2, "Testing replica column for single port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=1)
+        a = factory.create(module_type="replica_column",
+                           rows=4 + num_spare_rows,
+                           rbl=[1, 0],
+                           replica_bit=1,
+                           column_offset=num_spare_cols)
         self.local_check(a)
 
         globals.end_openram()

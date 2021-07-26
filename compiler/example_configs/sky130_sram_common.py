@@ -12,6 +12,7 @@ nominal_corner_only = True
 route_supplies = "ring"
 #route_supplies = "left"
 check_lvsdrc = True
+uniquify = True
 #perimeter_pins = False
 #netlist_only = True
 #analytical_delay = False

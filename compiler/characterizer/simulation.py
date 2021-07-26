@@ -372,6 +372,38 @@ class simulation():
                                                                                     time_spacing,
                                                                                     comment))
 
+    def combine_word(self, spare, word):
+        if len(spare) > 0:
+            return spare + "+" + word
+
+        return word
+
+    def format_value(self, value):
+        """ Format in better readable manner """
+
+        def delineate(word):
+            # Create list of chars in reverse order
+            split_word = list(reversed([x for x in word]))
+            # Add underscore every 4th char
+            split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
+            # Join the word unreversed back together
+            new_word = ''.join(reversed(split_word2))
+            return(new_word)
+
+        # Split extra cols
+        if self.num_spare_cols > 0:
+            vals = value[self.num_spare_cols:]
+            spare_vals = value[:self.num_spare_cols]
+        else:
+            vals = value
+            spare_vals = ""
+
+        # Insert underscores
+        vals = delineate(vals)
+        spare_vals = delineate(spare_vals)
+
+        return self.combine_word(spare_vals, vals)
+
     def gen_cycle_comment(self, op, word, addr, wmask, port, t_current):
         if op == "noop":
             str = "\tIdle during cycle {0} ({1}ns - {2}ns)"
@@ -483,8 +515,6 @@ class simulation():
                 self.sen_name = sen_with_port
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
 
-            debug.info(2, "s_en name = {}".format(self.sen_name))
-
             column_addr = self.get_column_addr()
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
             port_pos = -1 - len(str(column_addr)) - len(str(port))
@@ -505,11 +535,12 @@ class simulation():
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
             self.sen_name = self.get_sen_name(self.graph.all_paths)
-            debug.info(2, "s_en name = {}".format(self.sen_name))
+            #debug.info(2, "s_en {}".format(self.sen_name))
 
             self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size - 1)
             self.br_name = "br{0}_{1}".format(port, OPTS.word_size - 1)
-            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
+            # debug.info(2, "bl name={0}".format(self.bl_name))
+            # debug.info(2, "br name={0}".format(self.br_name))
 
     def get_sen_name(self, paths, assumed_port=None):
         """

@@ -81,7 +81,11 @@ class functional(simulation):
         self.create_graph()
         self.set_internal_spice_names()
         self.q_name, self.qbar_name = self.get_bit_name()
-        debug.info(2, "q name={0}\nqbar name={1}".format(self.q_name, self.qbar_name))
+        debug.info(2, "q:\t\t{0}".format(self.q_name))
+        debug.info(2, "qbar:\t{0}".format(self.qbar_name))
+        debug.info(2, "s_en:\t{0}".format(self.sen_name))
+        debug.info(2, "bl:\t{0}".format(self.bl_name))
+        debug.info(2, "br:\t{0}".format(self.br_name))
 
         # Number of checks can be changed
         self.num_cycles = cycles
@@ -141,23 +145,25 @@ class functional(simulation):
         comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
-        # 1. Write all the write ports first to seed a bunch of locations.
-        for port in self.write_ports:
-            addr = self.gen_addr()
-            (word, spare) = self.gen_data()
-            combined_word = self.combine_word(spare, word)
-            comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
-            self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
-            self.stored_words[addr] = word
-            self.stored_spares[addr[:self.addr_spare_index]] = spare
 
-        # All other read-only ports are noops.
-        for port in self.read_ports:
-            if port not in self.write_ports:
-                self.add_noop_one_port(port)
-        self.cycle_times.append(self.t_current)
-        self.t_current += self.period
-        self.check_lengths()
+        # 1. Write all the write ports 2x to seed a bunch of locations.
+        for i in range(3):
+            for port in self.write_ports:
+                addr = self.gen_addr()
+                (word, spare) = self.gen_data()
+                combined_word = self.combine_word(spare, word)
+                comment = self.gen_cycle_comment("write", combined_word, addr, "1" * self.num_wmasks, port, self.t_current)
+                self.add_write_one_port(comment, addr, spare + word, "1" * self.num_wmasks, port)
+                self.stored_words[addr] = word
+                self.stored_spares[addr[:self.addr_spare_index]] = spare
+
+            # All other read-only ports are noops.
+            for port in self.read_ports:
+                if port not in self.write_ports:
+                    self.add_noop_one_port(port)
+            self.cycle_times.append(self.t_current)
+            self.t_current += self.period
+            self.check_lengths()
 
         # 2. Read at least once.  For multiport, it is important that one
         # read cycle uses all RW and R port to read from the same
@@ -297,38 +303,6 @@ class functional(simulation):
             self.read_results.append([sp_read_value, dout_port, eo_period, cycle])
         return (1, "SUCCESS")
 
-    def combine_word(self, spare, word):
-        if len(spare) > 0:
-            return spare + "+" + word
-
-        return word
-
-    def format_value(self, value):
-        """ Format in better readable manner """
-
-        def delineate(word):
-            # Create list of chars in reverse order
-            split_word = list(reversed([x for x in word]))
-            # Add underscore every 4th char
-            split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
-            # Join the word unreversed back together
-            new_word = ''.join(reversed(split_word2))
-            return(new_word)
-
-        # Split extra cols
-        if self.num_spare_cols > 0:
-            vals = value[self.num_spare_cols:]
-            spare_vals = value[:self.num_spare_cols]
-        else:
-            vals = value
-            spare_vals = ""
-
-        # Insert underscores
-        vals = delineate(vals)
-        spare_vals = delineate(spare_vals)
-
-        return self.combine_word(spare_vals, vals)
-
     def check_stim_results(self):
         for i in range(len(self.read_check)):
             if self.read_check[i][0] != self.read_results[i][0]:
@@ -372,7 +346,8 @@ class functional(simulation):
 
     def gen_data(self):
         """ Generates a random word to write. """
-        random_value = random.randint(0, self.max_data)
+        # Don't use 0 or max value
+        random_value = random.randint(1, self.max_data - 1)
         data_bits = binary_repr(random_value, self.word_size)
         if self.num_spare_cols>0:
             random_value = random.randint(0, self.max_col_data)
@@ -431,11 +406,11 @@ class functional(simulation):
 
         # Write important signals to stim file
         self.sf.write("\n\n* Important signals for debug\n")
-        self.sf.write("* bl: {0}\n".format(self.bl_name.format(port)))
-        self.sf.write("* br: {0}\n".format(self.br_name.format(port)))
-        self.sf.write("* s_en: {0}\n".format(self.sen_name))
-        self.sf.write("* q: {0}\n".format(self.q_name))
-        self.sf.write("* qbar: {0}\n".format(self.qbar_name))
+        self.sf.write("* bl:\t{0}\n".format(self.bl_name.format(port)))
+        self.sf.write("* br:\t{0}\n".format(self.br_name.format(port)))
+        self.sf.write("* s_en:\t{0}\n".format(self.sen_name))
+        self.sf.write("* q:\t{0}\n".format(self.q_name))
+        self.sf.write("* qbar:\t{0}\n".format(self.qbar_name))
 
         # Write debug comments to stim file
         self.sf.write("\n\n* Sequence of operations\n")
@@ -498,7 +473,7 @@ class functional(simulation):
 
         for (word, dout_port, eo_period, cycle) in self.read_check:
             t_initial = eo_period
-            t_final = eo_period
+            t_final = eo_period + 0.01 * self.period
             num_bits = self.word_size + self.num_spare_cols
             for bit in range(num_bits):
                 signal_name = "{0}_{1}".format(dout_port, bit)

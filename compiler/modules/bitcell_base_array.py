@@ -162,9 +162,6 @@ class bitcell_base_array(design.design):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
-                if row == 2: #add only 1 label per col
-                    for pin_name in ["vdd", "gnd"]:
-                        self.copy_layout_pin(inst, pin_name)
 
     def add_layout_pins(self):
         """ Add the layout pins """

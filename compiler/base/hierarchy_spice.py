@@ -17,7 +17,6 @@ from wire_spice_model import wire_spice_model
 from power_data import power_data
 import logical_effort
 
-
 class spice():
     """
     This provides a set of useful generic types for hierarchy
@@ -548,15 +547,25 @@ class spice():
             
         w_folded_tr = width/folds
         num_folded_tr = folds
-      
+        
+        # Re-created some logic contact to get minwidth as importing the contact
+        # module causes a failure
+        if "minwidth_contact" in tech.drc:
+            contact_width = tech.drc["minwidth_contact"]
+        elif "minwidth_active_contact" in tech.drc:
+            contact_width = tech.drc["minwidth_active_contact"]
+        else:
+            debug.warning("Undefined minwidth_contact in tech.")
+            contact_width = 0
+
         # only for drain
-        total_drain_w = (tech.spice["w_poly_contact"] + 2 * tech.drc["active_contact_to_gate"]) +\
-                        (stack - 1) * tech.spice["spacing_poly_to_poly"]
+        total_drain_w = (contact_width + 2 * tech.drc["active_contact_to_gate"]) +\
+                        (stack - 1) * tech.drc["poly_to_poly"]
         drain_h_for_sidewall = w_folded_tr
         total_drain_height_for_cap_wrt_gate = w_folded_tr + 2 * w_folded_tr * (stack - 1)
         if num_folded_tr > 1:
-            total_drain_w += (num_folded_tr - 2) * (tech.spice["w_poly_contact"] + 2 * tech.drc["active_contact_to_gate"]) +\
-                             (num_folded_tr - 1) * ((stack - 1) * tech.spice["spacing_poly_to_poly"])
+            total_drain_w += (num_folded_tr - 2) * (contact_width + 2 * tech.drc["active_contact_to_gate"]) +\
+                             (num_folded_tr - 1) * ((stack - 1) * tech.drc["poly_to_poly"])
 
             if num_folded_tr%2 == 0:
                 drain_h_for_sidewall = 0

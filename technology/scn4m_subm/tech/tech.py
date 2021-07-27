@@ -415,8 +415,6 @@ spice["c_fringe"] = 0 # F/um, not defined in this technology
 spice["cpolywire"] = 0 # F/um, replicated from CACTI which is hardcoded to 0
 spice["c_junc"] = 9.276962e-16 #F/um^2
 spice["c_junc_sw"] = 3.181055e-16 #F/um
-spice["w_poly_contact"] = 2*_lambda_
-spice["spacing_poly_to_poly"] = 3*_lambda_
 spice["wire_c_per_um"] = 0 # Temp value
 
 ###################################################

@@ -34,6 +34,12 @@ class design_rules(dict):
         """
         self.rules[b] = c
 
+    def __contains__(self, b):
+        """
+        Allows checking existence of rules
+        """
+        return b in self.rules
+
     def __getitem__(self, b):
         """
         For backward compatibility with existing rules.

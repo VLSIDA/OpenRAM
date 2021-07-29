@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 from globals import OPTS
-word_size = 1
+word_size = 2
 num_words = 16
 
 tech_name = OPTS.tech_name

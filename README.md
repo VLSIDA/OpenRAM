@@ -29,7 +29,7 @@ things that need to be fixed.
 ## Dependencies
 
 The OpenRAM compiler has very few dependencies:
-+ [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later)
++ [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later) or [Xyce] 7.2 (or later)
 + Python 3.5 or higher
 + Various Python packages (pip install -r requirements.txt)
 
@@ -214,6 +214,7 @@ If I forgot to add you, please let me know!
 [Netgen]:                http://opencircuitdesign.com/netgen/
 [Qflow]:                 http://opencircuitdesign.com/qflow/history.html
 [Ngspice]:               http://ngspice.sourceforge.net/
+[Xyce]:                  http://xyce.sandia.gov/
 
 [OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents

@@ -69,25 +69,31 @@ class lef:
 
     def lef_write(self, lef_name):
         """ Write the entire lef of the object to the file. """
+        # Can possibly use magic lef write to create the LEF
+        # if OPTS.drc_exe and OPTS.drc_exe[0] == "magic":
+        #     self.magic_lef_write(lef_name)
+        #     return
+
+        # To maintain the indent level easily
+        self.indent = "" 
 
         if OPTS.detailed_lef:
             debug.info(3, "Writing detailed LEF to {0}".format(lef_name))
-            self.detailed_lef_write(lef_name)
         else:
             debug.info(3, "Writing abstract LEF to {0}".format(lef_name))
-            # Can possibly use magic lef write to create the LEF
-            # if OPTS.drc_exe and OPTS.drc_exe[0] == "magic":
-            #     self.magic_lef_write(lef_name)
-            #     return
-            self.abstract_lef_write(lef_name)
-
-    def abstract_lef_write(self, lef_name):
-        # To maintain the indent level easily
-        self.indent = "" 
+            self.compute_abstract_blockages()
 
         self.lef  = open(lef_name, "w")
         self.lef_write_header()
 
+        for pin_name in self.pins:
+            self.lef_write_pin(pin_name)
+            
+        self.lef_write_obstructions(OPTS.detailed_lef)
+        self.lef_write_footer()
+        self.lef.close()
+
+    def compute_abstract_blockages(self):
         # Start with blockages on all layers the size of the block
         # minus the pin escape margin (hard coded to 4 x m3 pitch)
         # These are a pin_layout to use their geometric functions
@@ -104,37 +110,27 @@ class lef:
 
         # For each pin, remove the blockage and add the pin
         for pin_name in self.pins:
-            pin = self.get_pin(pin_name)
-            inflated_pin = pin.inflated_pin(multiple=1)
-            for blockage in self.blockages[pin.layer]:
-                if blockage.overlaps(inflated_pin):
-                    intersection_shape = blockage.intersection(inflated_pin)
-                    # If it is zero area, don't add the pin
-                    if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
-                        continue
-                    # Remove the old blockage and add the new ones
-                    self.blockages[pin.layer].remove(blockage)
-                    intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
-                    new_blockages = blockage.cut(intersection_pin)
-                    self.blockages[pin.layer].extend(new_blockages)
+            pins = self.get_pins(pin_name)
+            for pin in pins:
+                inflated_pin = pin.inflated_pin(multiple=2)
+                continue_fragmenting = True
+                while continue_fragmenting:
+                    continue_fragmenting = False
+                    old_blockages = list(self.blockages[pin.layer])
+                    for blockage in old_blockages:
+                        if blockage.overlaps(inflated_pin):
+                            intersection_shape = blockage.intersection(inflated_pin)
+                            # If it is zero area, don't split the blockage
+                            if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
+                                continue
 
-            self.lef_write_pin(pin_name)
-
-        self.lef_write_obstructions(abstracted=True)
-        self.lef_write_footer()
-        self.lef.close()
-
-    def detailed_lef_write(self, lef_name):
-        # To maintain the indent level easily
-        self.indent = ""
-
-        self.lef  = open(lef_name, "w")
-        self.lef_write_header()
-        for pin in self.pins:
-            self.lef_write_pin(pin)
-        self.lef_write_obstructions()
-        self.lef_write_footer()
-        self.lef.close()
+                            # Remove the old blockage and add the new ones
+                            self.blockages[pin.layer].remove(blockage)
+                            intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
+                            new_blockages = blockage.cut(intersection_pin)
+                            self.blockages[pin.layer].extend(new_blockages)
+                            # We split something so make another pass
+                            continue_fragmenting = True
 
     def lef_write_header(self):
         """ Header of LEF file """
@@ -155,8 +151,8 @@ class lef:
         self.lef.write("{0}SYMMETRY X Y R90 ;\n".format(self.indent))
 
     def lef_write_footer(self):
-        self.lef.write("{0}END    {1}\n".format(self.indent, self.name))
         self.indent = self.indent[:-3]
+        self.lef.write("{0}END    {1}\n".format(self.indent, self.name))
         self.lef.write("END    LIBRARY\n")
 
     def lef_write_pin(self, name):
@@ -188,20 +184,20 @@ class lef:
         self.indent = self.indent[:-3]
         self.lef.write("{0}END {1}\n".format(self.indent, name))
 
-    def lef_write_obstructions(self, abstracted=False):
+    def lef_write_obstructions(self, detailed=False):
         """ Write all the obstructions on each layer """
         self.lef.write("{0}OBS\n".format(self.indent))
         for layer in self.lef_layers:
             self.lef.write("{0}LAYER  {1} ;\n".format(self.indent, layer_names[layer]))
             self.indent += "   "
-            if abstracted:
-                blockages = self.blockages[layer]
-                for b in blockages:
-                    self.lef_write_shape(b.rect)
-            else:
+            if detailed:
                 blockages = self.get_blockages(layer, True)
                 for b in blockages:
                     self.lef_write_shape(b)
+            else:
+                blockages = self.blockages[layer]
+                for b in blockages:
+                    self.lef_write_shape(b.rect)
             self.indent = self.indent[:-3]
         self.lef.write("{0}END\n".format(self.indent))
 

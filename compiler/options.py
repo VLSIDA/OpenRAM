@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import optparse
-import getpass
 import os
+
 
 class options(optparse.Values):
     """
@@ -60,7 +60,7 @@ class options(optparse.Values):
     rbl_delay_percentage = 0.5
 
     # Allow manual adjustment of the delay chain over automatic
-    auto_delay_chain_sizing = False 
+    auto_delay_chain_sizing = False
     delay_chain_stages = 9
     delay_chain_fanout_per_stage = 4
 
@@ -72,10 +72,12 @@ class options(optparse.Values):
     # This is the temp directory where all intermediate results are stored.
     try:
         # If user defined the temporary location in their environment, use it
+
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
+
     except:
         openram_temp = "/tmp"
-        
+
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     verbose_level = 0
@@ -87,6 +89,8 @@ class options(optparse.Values):
     use_specified_corners = None
     # Allows specification of model data
     sim_data_path = None
+    # A list of load/slew tuples
+    use_specified_load_slew = None
 
     ###################
     # Run-time vs accuracy options.
@@ -97,6 +101,7 @@ class options(optparse.Values):
     netlist_only = False
     # Whether we should do the final power routing
     route_supplies = "tree"
+    supply_pin_type = "ring"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False
     # This determines whether LVS and DRC is checked for every submodule.
@@ -117,13 +122,13 @@ class options(optparse.Values):
     # Tool options
     ###################
     # Variable to select the variant of spice
-    spice_name = ""
+    spice_name = None
     # The spice executable being used which is derived from the user PATH.
-    spice_exe = ""
+    spice_exe = None
     # Variable to select the variant of drc, lvs, pex
-    drc_name = ""
-    lvs_name = ""
-    pex_name = ""
+    drc_name = None
+    lvs_name = None
+    pex_name = None
     # The DRC/LVS/PEX executable being used
     # which is derived from the user PATH.
     drc_exe = None
@@ -131,11 +136,14 @@ class options(optparse.Values):
     pex_exe = None
     # For sky130, we need magic for filtering.
     magic_exe = None
-    
+
     # Number of threads to use
     num_threads = 1
     # Number of threads to use in ngspice/hspice
-    num_sim_threads = 2
+    num_sim_threads = 3
+
+    # Some tools (e.g. Xyce) use other separators like ":"
+    hier_seperator = "."
 
     # Should we print out the banner at startup
     print_banner = True
@@ -158,6 +166,9 @@ class options(optparse.Values):
 
     keep_temp = False
 
+    # Add a prefix of the root cell before every structure in the GDS
+    # after outputting the GDS2
+    uniquify = False
 
     # These are the default modules that can be over-riden
     bank_select = "bank_select"

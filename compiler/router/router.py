@@ -28,7 +28,7 @@ class router(router_tech):
     route on a given layer. This is limited to two layer routes.
     It populates blockages on a grid class.
     """
-    def __init__(self, layers, design, gds_filename=None, bbox=None, margin=0, route_track_width=1):
+    def __init__(self, layers, design, bbox=None, margin=0, route_track_width=1):
         """
         This will instantiate a copy of the gds file or the module at (0,0) and
         route on top of this. The blockages from the gds/module will be
@@ -39,19 +39,7 @@ class router(router_tech):
 
         self.cell = design
 
-        # If didn't specify a gds blockage file, write it out to read the gds
-        # This isn't efficient, but easy for now
-        # start_time = datetime.now()
-        if not gds_filename:
-            gds_filename = OPTS.openram_temp+"temp.gds"
-            self.cell.gds_write(gds_filename)
-
-        # Load the gds file and read in all the shapes
-        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
-        self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(gds_filename)
-        self.top_name = self.layout.rootStructureName
-        # print_time("GDS read",datetime.now(), start_time)
+        self.gds_filename = OPTS.openram_temp + "temp.gds"
 
         # The pin data structures
         # A map of pin names to a set of pin_layout structures
@@ -87,25 +75,20 @@ class router(router_tech):
         self.margin = margin
         self.init_bbox(bbox, margin)
 
+        # New pins if we create a ring or side pins or etc.
+        self.new_pins = {}
+
     def init_bbox(self, bbox=None, margin=0):
         """
         Initialize the ll,ur values with the paramter or using the layout boundary.
         """
         if not bbox:
-            # The boundary will determine the limits to the size
-            # of the routing grid
-            self.boundary = self.layout.measureBoundary(self.top_name)
-            # These must be un-indexed to get rid of the matrix type
-            self.ll = vector(self.boundary[0][0], self.boundary[0][1])
-            self.ur = vector(self.boundary[1][0], self.boundary[1][1])
+            self.bbox = self.cell.get_bbox(margin)
         else:
-            self.ll, self.ur = bbox
+            self.bbox = bbox
 
-        margin_offset = vector(margin, margin)
-        self.bbox = (self.ll - margin_offset, self.ur + margin_offset)
-        size = self.ur - self.ll
-        debug.info(1, "Size: {0} x {1} with perimeter margin {2}".format(size.x, size.y, margin))
-        
+        (self.ll, self.ur) = self.bbox
+
     def get_bbox(self):
         return self.bbox
     
@@ -178,6 +161,17 @@ class router(router_tech):
         """
         Find the pins and blockages in the design
         """
+
+        # If didn't specify a gds blockage file, write it out to read the gds
+        # This isn't efficient, but easy for now
+        # Load the gds file and read in all the shapes
+        self.cell.gds_write(self.gds_filename)
+        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        self.reader = gdsMill.Gds2reader(self.layout)
+        self.reader.loadFromFile(self.gds_filename)
+        self.top_name = self.layout.rootStructureName
+        # print_time("GDS read",datetime.now(), start_time)
+        
         # This finds the pin shapes and sorts them into "groups" that
         # are connected. This must come before the blockages, so we
         # can not count the pins themselves
@@ -717,6 +711,27 @@ class router(router_tech):
         p = pin_layout("", [ll, ur], self.get_layer(track[2]))
         return p
 
+    def convert_tracks_to_pin(self, tracks):
+        """
+        Convert a list of grid point into a rectangle shape.
+        Must all be on the same layer.
+        """
+        for t in tracks:
+            debug.check(t[2] == tracks[0][2], "Different layers used.")
+            
+        # For each shape, convert it to a pin
+        pins = [self.convert_track_to_pin(t) for t in tracks]
+        # Now find the bounding box
+        minx = min([p.lx() for p in pins])
+        maxx = max([p.rx() for p in pins])
+        miny = min([p.by() for p in pins])
+        maxy = max([p.uy() for p in pins])
+        ll = vector(minx, miny)
+        ur = vector(maxx, maxy)
+        
+        p = pin_layout("", [ll, ur], self.get_layer(tracks[0][2]))
+        return p
+    
     def convert_track_to_shape_pin(self, track):
         """
         Convert a grid point into a rectangle shape
@@ -881,12 +896,103 @@ class router(router_tech):
         # Clearing the blockage of this pin requires the inflated pins
         self.clear_blockages(pin_name)
 
+    def add_side_supply_pin(self, name, side="left", width=3, space=2):
+        """
+        Adds a supply pin to the perimeter and resizes the bounding box.
+        """
+        pg = pin_group(name, [], self)
+        # Offset two spaces inside and one between the rings
+        if name == "gnd":
+            offset = width + 2 * space
+        else:
+            offset = space
+        if side in ["left", "right"]:
+            layers = [1]
+        else:
+            layers = [0]
+
+        pg.grids = set(self.rg.get_perimeter_list(side=side,
+                                                  width=width,
+                                                  margin=self.margin,
+                                                  offset=offset,
+                                                  layers=layers))
+        pg.enclosures = pg.compute_enclosures()
+        pg.pins = set(pg.enclosures)
+        debug.check(len(pg.pins)==1, "Too many pins for a side supply.")
+
+        self.cell.pin_map[name].update(pg.pins)
+        self.pin_groups[name].append(pg)
+
+        self.new_pins[name] = pg.pins
+        
+    def add_ring_supply_pin(self, name, width=3, space=2):
+        """
+        Adds a ring supply pin that goes inside the given bbox.
+        """
+        pg = pin_group(name, [], self)
+        # Offset two spaces inside and one between the rings
+        # Units are in routing grids
+        if name == "gnd":
+            offset = width + 2 * space
+        else:
+            offset = space
+
+        # LEFT
+        left_grids = set(self.rg.get_perimeter_list(side="left_ring",
+                                                    width=width,
+                                                    margin=self.margin,
+                                                    offset=offset,
+                                                    layers=[1]))
+
+        # RIGHT
+        right_grids = set(self.rg.get_perimeter_list(side="right_ring",
+                                                     width=width,
+                                                     margin=self.margin,
+                                                     offset=offset,
+                                                     layers=[1]))
+        # TOP
+        top_grids = set(self.rg.get_perimeter_list(side="top_ring",
+                                                   width=width,
+                                                   margin=self.margin,
+                                                   offset=offset,
+                                                   layers=[0]))
+        # BOTTOM
+        bottom_grids = set(self.rg.get_perimeter_list(side="bottom_ring",
+                                                      width=width,
+                                                      margin=self.margin,
+                                                      offset=offset,
+                                                      layers=[0]))
+
+        horizontal_layer_grids = left_grids | right_grids
+        
+        # Must move to the same layer to find layer 1 corner grids
+        vertical_layer_grids = set()
+        for x in top_grids | bottom_grids:
+            vertical_layer_grids.add(vector3d(x.x, x.y, 1))
+
+        # Add vias in the overlap points
+        horizontal_corner_grids = vertical_layer_grids & horizontal_layer_grids
+        for g in horizontal_corner_grids:
+            self.add_via(g)
+
+        # The big pin group, but exclude the corners from the pins
+        pg.grids = (left_grids | right_grids | top_grids | bottom_grids)
+        pg.enclosures = pg.compute_enclosures()
+        pg.pins = set(pg.enclosures)
+        
+        self.cell.pin_map[name].update(pg.pins)
+        self.pin_groups[name].append(pg)
+        self.new_pins[name] = pg.pins
+
+    def get_new_pins(self, name):
+        return self.new_pins[name]
+        
     def add_perimeter_target(self, side="all"):
         """
         This will mark all the cells on the perimeter of the original layout as a target.
         """
         self.rg.add_perimeter_target(side=side)
-    
+
     def num_pin_components(self, pin_name):
         """
         This returns how many disconnected pin components there are.
@@ -1209,17 +1315,34 @@ class router(router_tech):
 
     def get_perimeter_pin(self):
         """ Return the shape of the last routed path that was on the perimeter """
-        for v in self.paths[-1]:
+        lastpath = self.paths[-1]
+        for v in lastpath:
             if self.rg.is_target(v):
+                # Find neighboring grid to make double wide pin
+                neighbor = v + vector3d(0, 1, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(0, -1, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(1, 0, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+                neighbor = v + vector3d(-1, 0, 0)
+                if neighbor in lastpath:
+                    return self.convert_tracks_to_pin([v, neighbor])
+
+                # Else if we came from a different layer, we can only add
+                # a signle grid
                 return self.convert_track_to_pin(v)
-            
+                
         return None
-            
+
     def get_ll_pin(self, pin_name):
         """ Return the lowest, leftest pin group """
 
         keep_pin = None
-        for index,pg in enumerate(self.pin_groups[pin_name]):
+        for index, pg in enumerate(self.pin_groups[pin_name]):
             for pin in pg.enclosures:
                 if not keep_pin:
                     keep_pin = pin
@@ -1228,7 +1351,7 @@ class router(router_tech):
                         keep_pin = pin
                         
         return keep_pin
-
+    
     def check_all_routed(self, pin_name):
         """
         Check that all pin groups are routed.

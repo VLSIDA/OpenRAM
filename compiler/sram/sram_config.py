@@ -17,10 +17,26 @@ class sram_config:
     def __init__(self, word_size, num_words, write_size=None, num_banks=1, words_per_row=None, num_spare_rows=0, num_spare_cols=0):
         self.word_size = word_size
         self.num_words = num_words
-        self.write_size = write_size
+        # Don't add a write mask if it is the same size as the data word
+        if write_size and write_size==word_size:
+            self.write_size = None
+        else:
+            self.write_size = write_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
         self.num_spare_cols = num_spare_cols
+
+        try:
+            from tech import array_row_multiple
+            self.array_row_multiple = array_row_multiple
+        except ImportError:
+            self.array_row_multiple = 1
+        try:
+            from tech import array_col_multiple
+            self.array_col_multiple = array_col_multiple
+        except ImportError:
+            self.array_col_multiple = 1
+
 
         # This will get over-written when we determine the organization
         self.words_per_row = words_per_row
@@ -63,6 +79,10 @@ class sram_config:
 
         self.recompute_sizes()
 
+        # Set word_per_row in OPTS
+        OPTS.words_per_row = self.words_per_row
+        debug.info(1, "Set SRAM Words Per Row={}".format(OPTS.words_per_row))
+
     def recompute_sizes(self):
         """
         Calculate the auxiliary values assuming fixed number of words per row.
@@ -90,6 +110,14 @@ class sram_config:
         debug.info(1, "Row addr size: {}".format(self.row_addr_size)
                    + " Col addr size: {}".format(self.col_addr_size)
                    + " Bank addr size: {}".format(self.bank_addr_size))
+
+        num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
+        if num_ports == 1:
+            if ((self.num_cols + num_ports + self.num_spare_cols) % self.array_col_multiple != 0):
+                debug.error("Invalid number of cols including rbl(s): {}. Total cols must be divisible by {}".format(self.num_cols + num_ports + self.num_spare_cols, self.array_col_multiple), -1)
+
+            if ((self.num_rows + num_ports) % self.array_row_multiple != 0):
+                debug.error("invalid number of rows including dummy row(s): {}. Total cols must be divisible by {}".format(self.num_rows + num_ports, self.array_row_multiple), -1)
 
     def estimate_words_per_row(self, tentative_num_cols, word_size):
         """

@@ -14,7 +14,10 @@ import globals
 import debug
 from vector import vector
 from pin_layout import pin_layout
-
+try:
+    from tech import special_purposes
+except ImportError:
+    special_purposes = {}
 OPTS = globals.OPTS
 
 
@@ -88,7 +91,7 @@ def _get_gds_reader(units, gds_filename):
         debug.info(4, "Creating VLSI layout from {}".format(gds_absname))
         cell_vlsi = gdsMill.VlsiLayout(units=units)
         reader = gdsMill.Gds2reader(cell_vlsi)
-        reader.loadFromFile(gds_absname)
+        reader.loadFromFile(gds_absname, special_purposes)
 
         _GDS_READER_CACHE[k] = cell_vlsi
         return cell_vlsi
@@ -148,12 +151,21 @@ def get_gds_pins(pin_names, name, gds_filename, units):
             cell[str(pin_name)] = []
             pin_list = cell_vlsi.getPinShape(str(pin_name))
             for pin_shape in pin_list:
-                (lpp, boundary) = pin_shape
-                rect = [vector(boundary[0], boundary[1]),
-                        vector(boundary[2], boundary[3])]
-                # this is a list because other cells/designs
-                # may have must-connect pins
-                cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
+                if pin_shape != None:
+                    (lpp, boundary) = pin_shape
+                    rect = [vector(boundary[0], boundary[1]),
+                            vector(boundary[2], boundary[3])]
+                    # this is a list because other cells/designs
+                    # may have must-connect pins
+                    if isinstance(lpp[1], list):
+                        try:
+                            from tech import layer_override
+                            if layer_override[pin_name]:
+                                lpp = layer_override[pin_name.textString]
+                        except:
+                            pass                        
+                        lpp = (lpp[0], None)
+                    cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
 
         _GDS_PINS_CACHE[k] = cell
         return dict(cell)

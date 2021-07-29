@@ -230,3 +230,12 @@ class column_mux_array(design.design):
                                       to_layer=self.sel_layer,
                                       offset=br_out_offset_begin,
                                       directions=self.via_directions)
+
+    def graph_exclude_columns(self, column_include_num):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        Each mux in mux_inst corresponds to respective column in bitcell array.
+        """
+        for i in range(len(self.mux_inst)):
+            if i != column_include_num:
+                self.graph_inst_exclude.add(self.mux_inst[i])

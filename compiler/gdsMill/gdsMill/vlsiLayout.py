@@ -81,6 +81,42 @@ class VlsiLayout:
             coordinatesRotate.extend((newX,newY))
         return coordinatesRotate
 
+    def uniquify(self, prefix_name=None):
+        new_structures = {}
+        if self.rootStructureName[-1] == "\x00":
+            prefix = self.rootStructureName[0:-1] + "_"
+        else:
+            prefix = self.rootStructureName + "_"
+        for name in self.structures:
+            if name[-1] == "\x00":
+                base_name = name[0:-1]
+            else:
+                base_name = name
+            # Don't do library cells
+            if prefix_name and base_name.startswith(prefix_name):
+                new_name = name
+            elif name != self.rootStructureName:
+                new_name = self.padText(prefix + base_name)
+            else:
+                new_name = name
+            #print("Structure: {0} -> {1}".format(base_name, new_name))
+
+            new_structures[new_name] = self.structures[name]
+            new_structures[new_name].name = new_name
+            for sref in new_structures[new_name].srefs:
+                if sref.sName[-1] == "\x00":
+                    base_sref_name = sref.sName[0:-1]
+                else:
+                    base_sref_name = sref.sName
+                # Don't do library cells
+                if prefix_name and base_sref_name.startswith(prefix_name):
+                    new_sref_name = sref.sName
+                else:
+                    new_sref_name = self.padText(prefix + base_sref_name)
+                sref.sName = new_sref_name
+                #print("SREF: {0} -> {1}".format(base_sref_name, new_sref_name))
+        self.structures = new_structures
+
     def rename(self,newName):
         # take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
@@ -211,13 +247,17 @@ class VlsiLayout:
         del transformPath[-1]
         return
 
-    def initialize(self):
+    def initialize(self, special_purposes={}):
         self.deduceHierarchy()
         # self.traverseTheHierarchy()
         self.populateCoordinateMap()
-
+        # only ones with text
         for layerNumber in self.layerNumbersInUse:
-            self.processLabelPins((layerNumber, None))
+            # if layerNumber not in no_pin_shape:
+            if layerNumber in special_purposes:
+                self.processLabelPins((layerNumber, special_purposes[layerNumber]))
+            else:
+                self.processLabelPins((layerNumber, None))
 
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
@@ -422,7 +462,8 @@ class VlsiLayout:
         self.structures[self.rootStructureName].texts.append(textToAdd)
 
     def padText(self, text):
-        if(len(text)%2 == 1):
+        debug.check(len(text) > 0, "Cannot have zero length text string.")
+        if(len(text) % 2 == 1):
             return text + '\x00'
         else:
             return text
@@ -696,7 +737,6 @@ class VlsiLayout:
 
         return max_pins
 
-
     def getAllPinShapes(self, pin_name):
         """
         Search for a pin label and return ALL the enclosing rectangles on the same layer
@@ -716,6 +756,7 @@ class VlsiLayout:
         Find all text labels and create a map to a list of shapes that
         they enclose on the given layer.
         """
+
         # Get the labels on a layer in the root level
         labels = self.getTexts(lpp)
 
@@ -727,15 +768,27 @@ class VlsiLayout:
             label_coordinate = label.coordinates[0]
             user_coordinate = [x*self.units[0] for x in label_coordinate]
             pin_shapes = []
+            # Remove the padding if it exists
+            if label.textString[-1] == "\x00":
+                label_text = label.textString[0:-1]
+            else:
+                label_text = label.textString
+            try:
+                from tech import layer_override
+                if layer_override[label_text]:
+                    shapes = self.getAllShapes((layer_override[label_text][0], None))
+                    if not shapes:
+                        shapes = self.getAllShapes(lpp)
+                    else:
+                        lpp = layer_override[label_text]
+
+
+
+            except:
+                pass
             for boundary in shapes:
                 if self.labelInRectangle(user_coordinate, boundary):
                     pin_shapes.append((lpp, boundary))
-
-            label_text = label.textString
-
-            # Remove the padding if it exists
-            if label_text[-1] == "\x00":
-                label_text = label_text[0:-1]
 
             try:
                 self.pins[label_text]
@@ -902,6 +955,16 @@ def sameLPP(lpp1, lpp2):
     """
     if lpp1[1] == None or lpp2[1] == None:
         return lpp1[0] == lpp2[0]
+
+    if isinstance(lpp1[1], list):
+        for i in range(len(lpp1[1])):
+            if lpp1[0] == lpp2[0] and lpp1[1][i] == lpp2[1]:
+                return True
+
+    if isinstance(lpp2[1], list):
+        for i in range(len(lpp2[1])):
+            if lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1][i]:
+                return True
 
     return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
 

@@ -11,6 +11,7 @@ from sram_factory import factory
 from collections import namedtuple
 from vector import vector
 from globals import OPTS
+from tech import cell_properties
 from tech import layer_properties as layer_props
 
 
@@ -20,7 +21,7 @@ class port_data(design.design):
     Port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, bit_offsets=None, name=""):
+    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="",):
 
         sram_config.set_local_config(self)
         self.port = port
@@ -28,18 +29,23 @@ class port_data(design.design):
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
-
+        
+        if num_spare_cols is not None:
+                self.num_spare_cols = num_spare_cols + self.num_spare_cols
         if self.num_spare_cols is None:
             self.num_spare_cols = 0
-
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
+            if(cell_properties.use_strap == True and OPTS.num_ports == 1):
+                strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
+                precharge_width = bitcell.width + strap.width
+            else:
+                precharge_width = bitcell.width
             self.bit_offsets = []
             for i in range(self.num_cols + self.num_spare_cols):
-                self.bit_offsets.append(i * bitcell.width)
+                self.bit_offsets.append(i * precharge_width)
         else:
             self.bit_offsets = bit_offsets
-
         if name == "":
             name = "port_data_{0}".format(self.port)
         super().__init__(name)
@@ -117,7 +123,6 @@ class port_data(design.design):
         for bit in range(self.num_spare_cols):
             self.add_pin("sparebl_{0}".format(bit), "INOUT")
             self.add_pin("sparebr_{0}".format(bit), "INOUT")
-
         if self.port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout_{}".format(bit), "OUTPUT")
@@ -191,14 +196,19 @@ class port_data(design.design):
         # and mirroring happens correctly
 
         # Used for names/dimensions only
-        self.cell = factory.create(module_type=OPTS.bitcell)
-
+        cell = factory.create(module_type=OPTS.bitcell)
+        if(cell_properties.use_strap == True and OPTS.num_ports == 1):
+            strap = factory.create(module_type=cell_properties.strap_module, version=cell_properties.strap_version)
+            precharge_width = cell.width + strap.width
+        else:
+            precharge_width = cell.width
         if self.port == 0:
             # Append an offset on the left
-            precharge_bit_offsets = [self.bit_offsets[0] - self.cell.width] + self.bit_offsets
+            precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
         else:
             # Append an offset on the right
-            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + self.cell.width]
+            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
+
         self.precharge_array = factory.create(module_type="precharge_array",
                                               columns=self.num_cols + self.num_spare_cols + 1,
                                               offsets=precharge_bit_offsets,
@@ -567,19 +577,32 @@ class port_data(design.design):
                 off = 1
             else:
                 off = 0
+            if OPTS.num_ports > 1:
+                self.channel_route_bitlines(inst1=self.column_mux_array_inst,
+                                            inst1_bls_template="{inst}_out_{bit}",
+                                            inst2=inst2,
+                                            num_bits=self.word_size,
+                                            inst1_start_bit=start_bit)
 
-            self.channel_route_bitlines(inst1=self.column_mux_array_inst,
-                                        inst1_bls_template="{inst}_out_{bit}",
-                                        inst2=inst2,
-                                        num_bits=self.word_size,
-                                        inst1_start_bit=start_bit)
+                self.channel_route_bitlines(inst1=self.precharge_array_inst,
+                                            inst1_bls_template="{inst}_{bit}",
+                                            inst2=inst2,
+                                            num_bits=self.num_spare_cols,
+                                            inst1_start_bit=self.num_cols + off,
+                                            inst2_start_bit=self.word_size)
+            else:
+                self.connect_bitlines(inst1=self.column_mux_array_inst,
+                                            inst1_bls_template="{inst}_out_{bit}",
+                                            inst2=inst2,
+                                            num_bits=self.word_size,
+                                            inst1_start_bit=start_bit)
 
-            self.channel_route_bitlines(inst1=self.precharge_array_inst,
-                                        inst1_bls_template="{inst}_{bit}",
-                                        inst2=inst2,
-                                        num_bits=self.num_spare_cols,
-                                        inst1_start_bit=self.num_cols + off,
-                                        inst2_start_bit=self.word_size)
+                self.connect_bitlines(inst1=self.precharge_array_inst,
+                                            inst1_bls_template="{inst}_{bit}",
+                                            inst2=inst2,
+                                            num_bits=self.num_spare_cols,
+                                            inst1_start_bit=self.num_cols + off,
+                                            inst2_start_bit=self.word_size)
 
         elif layer_props.port_data.channel_route_bitlines:
             self.channel_route_bitlines(inst1=inst1,
@@ -828,3 +851,17 @@ class port_data(design.design):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
+
+    def graph_exclude_column_mux(self, column_include_num):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.graph_exclude_columns(column_include_num)
+            
+    def graph_clear_column_mux(self):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.init_graph_params()       

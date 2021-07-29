@@ -55,13 +55,17 @@ class model_delay_test(openram_test):
         import tech
         loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
+        load_slews = []
+        for slew in slews:
+            for load in loads:
+                load_slews.append((load, slew))
 
         # Run a spice characterization
-        spice_data, port_data = d.analyze(probe_address, probe_data, slews, loads)
+        spice_data, port_data = d.analyze(probe_address, probe_data, load_slews)
         spice_data.update(port_data[0])
 
         # Run analytical characterization
-        model_data, port_data = m.get_lib_values(slews, loads)
+        model_data, port_data = m.get_lib_values(load_slews)
         model_data.update(port_data[0])
 
         # Only compare the delays
@@ -78,6 +82,9 @@ class model_delay_test(openram_test):
             error_tolerance = 0.25
         else:
             self.assertTrue(False) # other techs fail
+
+        print('spice_delays', spice_delays)
+        print('model_delays', model_delays)
 
         # Check if no too many or too few results
         self.assertTrue(len(spice_delays.keys())==len(model_delays.keys()))

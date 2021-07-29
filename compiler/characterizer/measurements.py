@@ -53,11 +53,20 @@ class spice_measurement(ABC):
         elif not self.has_port and port != None:
             debug.error("Unexpected port input received during measure retrieval.",1)
 
+
 class delay_measure(spice_measurement):
     """Generates a spice measurement for the delay of 50%-to-50% points of two signals."""
 
-    def __init__(self, measure_name, trig_name, targ_name,  trig_dir_str, targ_dir_str,\
-                 trig_vdd=0.5, targ_vdd=0.5, measure_scale=None, has_port=True):
+    def __init__(self,
+                 measure_name,
+                 trig_name,
+                 targ_name,
+                 trig_dir_str,
+                 targ_dir_str,
+                 trig_vdd=0.5,
+                 targ_vdd=0.5,
+                 measure_scale=None,
+                 has_port=True):
         spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(trig_name, targ_name, trig_dir_str, targ_dir_str, trig_vdd, targ_vdd)
 
@@ -73,7 +82,7 @@ class delay_measure(spice_measurement):
         self.trig_name_no_port = trig_name
         self.targ_name_no_port = targ_name
 
-        #Time delays and ports are variant and needed as inputs when writing the measurement
+        # Time delays and ports are variant and needed as inputs when writing the measurement
 
     def get_measure_values(self, trig_td, targ_td, vdd_voltage, port=None):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
@@ -82,7 +91,7 @@ class delay_measure(spice_measurement):
         targ_val = self.targ_val_of_vdd * vdd_voltage
 
         if port != None:
-            #For dictionary indexing reasons, the name is formatted differently than the signals
+            # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             trig_name = self.trig_name_no_port.format(port)
             targ_name = self.targ_name_no_port.format(port)
@@ -90,7 +99,8 @@ class delay_measure(spice_measurement):
             meas_name = self.name
             trig_name = self.trig_name_no_port
             targ_name = self.targ_name_no_port
-        return (meas_name,trig_name,targ_name,trig_val,targ_val,self.trig_dir_str,self.targ_dir_str,trig_td,targ_td)
+        return (meas_name, trig_name, targ_name, trig_val, targ_val, self.trig_dir_str, self.targ_dir_str, trig_td, targ_td)
+
 
 class slew_measure(delay_measure):
 
@@ -114,7 +124,8 @@ class slew_measure(delay_measure):
         self.trig_name_no_port = signal_name
         self.targ_name_no_port = signal_name
 
-        #Time delays and ports are variant and needed as inputs when writing the measurement
+        # Time delays and ports are variant and needed as inputs when writing the measurement
+
 
 class power_measure(spice_measurement):
     """Generates a spice measurement for the average power between two time points."""
@@ -128,8 +139,8 @@ class power_measure(spice_measurement):
 
     def set_meas_constants(self, power_type):
         """Sets values useful for power simulations. This value is only meta related to the lib file (rise/fall)"""
-        #Not needed for power simulation
-        self.power_type = power_type #Expected to be  "RISE"/"FALL"
+        # Not needed for power simulation
+        self.power_type = power_type # Expected to be  "RISE"/"FALL"
 
     def get_measure_values(self, t_initial, t_final, port=None):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
@@ -138,7 +149,8 @@ class power_measure(spice_measurement):
             meas_name = "{}{}".format(self.name, port)
         else:
             meas_name = self.name
-        return (meas_name,t_initial,t_final)
+        return (meas_name, t_initial, t_final)
+
 
 class voltage_when_measure(spice_measurement):
     """Generates a spice measurement to measure the voltage of a signal based on the voltage of another."""
@@ -161,7 +173,7 @@ class voltage_when_measure(spice_measurement):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
         self.port_error_check(port)
         if port != None:
-            #For dictionary indexing reasons, the name is formatted differently than the signals
+            # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             trig_name = self.trig_name_no_port.format(port)
             targ_name = self.targ_name_no_port.format(port)
@@ -169,9 +181,10 @@ class voltage_when_measure(spice_measurement):
             meas_name = self.name
             trig_name = self.trig_name_no_port
             targ_name = self.targ_name_no_port
-        trig_voltage = self.trig_val_of_vdd*vdd_voltage
-        return (meas_name,trig_name,targ_name,trig_voltage,self.trig_dir_str,trig_td)
+        trig_voltage = self.trig_val_of_vdd * vdd_voltage
+        return (meas_name, trig_name, targ_name, trig_voltage, self.trig_dir_str, trig_td)
 
+    
 class voltage_at_measure(spice_measurement):
     """Generates a spice measurement to measure the voltage at a specific time.
        The time is considered variant with different periods."""
@@ -191,11 +204,11 @@ class voltage_at_measure(spice_measurement):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
         self.port_error_check(port)
         if port != None:
-            #For dictionary indexing reasons, the name is formatted differently than the signals
+            # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             targ_name = self.targ_name_no_port.format(port)
         else:
             meas_name = self.name
             targ_name = self.targ_name_no_port
-        return (meas_name,targ_name,time_at)
+        return (meas_name, targ_name, time_at)
 

@@ -71,9 +71,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     global OPTS
 
     # Copy .magicrc file into the output directory
-    magic_file = OPTS.openram_tech + "tech/.magicrc"
+    magic_file = os.environ.get('OPENRAM_MAGICRC', None)
+    if not magic_file:
+        magic_file = OPTS.openram_tech + "tech/.magicrc"
+
     if os.path.exists(magic_file):
-        shutil.copy(magic_file, output_path)
+        shutil.copy(magic_file, output_path + "/.magicrc")
     else:
         debug.warning("Could not locate .magicrc file: {}".format(magic_file))
     
@@ -86,7 +89,10 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
     # Do not run DRC for extraction/conversion
     f.write("drc off\n")
-    f.write("gds polygon subcell true\n")
+    f.write("set VDD vdd\n")
+    f.write("set GND gnd\n")
+    f.write("set SUB gnd\n")
+    #f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
@@ -174,6 +180,10 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write('puts "Finished drc check"\n')
     f.write("drc catchup\n")
     f.write('puts "Finished drc catchup"\n')
+    # This is needed instead of drc count total because it displays
+    # some errors that are not "DRC" errors.
+    # f.write("puts -nonewline \"Total DRC errors found: \"\n")
+    # f.write("puts stdout [drc listall count total]\n")
     f.write("drc count total\n")
     f.write("quit -noprompt\n")
     f.write("EOF\n")
@@ -241,11 +251,14 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    setup_file = "setup.tcl"
-    full_setup_file = OPTS.openram_tech + "tech/" + setup_file
-    if os.path.exists(full_setup_file):
+    # Copy setup.tcl file into the output directory
+    setup_file = os.environ.get('OPENRAM_NETGENRC', None)
+    if not setup_file:
+        setup_file = OPTS.openram_tech + "tech/setup.tcl"
+        
+    if os.path.exists(setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(full_setup_file, output_path)
+        shutil.copy(setup_file, output_path)
     else:
         setup_file = 'nosetup'
 

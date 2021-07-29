@@ -217,6 +217,12 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                     y_offset += global_wl_pitch_factor * global_wl_pitch
                 mid = vector(in_pin.cx(), y_offset)
 
+                self.add_layout_pin_rect_center(text=wl_name,
+                                                layer=global_wl_layer,
+                                                offset=mid)
+
+                self.add_path(local_wl_layer, [in_pin.center(), mid])
+
                 # A short jog to the global line
                 self.add_via_stack_center(from_layer=in_pin.layer,
                                           to_layer=local_wl_layer,
@@ -289,7 +295,7 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""
-        return self.bitcell_array.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name, row, col)
+        return self.bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name, row, col)
 
     def clear_exclude_bits(self):
         """

@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 import math
+
 
 class vector3d():
     """
@@ -22,20 +22,20 @@ class vector3d():
             self.x = x[0]
             self.y = x[1]
             self.z = x[2]
-        #will take inputs as the values of a coordinate
+        # will take inputs as the values of a coordinate
         else:
             self.x = x
             self.y = y
             self.z = z
-        self._hash = hash((self.x,self.y,self.z))
+        self._hash = hash((self.x, self.y, self.z))
 
     def __str__(self):
         """ override print function output """
-        return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
+        return "v3d[" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + "]"
 
     def __repr__(self):
         """ override print function output """
-        return "v3d["+str(self.x)+", "+str(self.y)+", "+str(self.z)+"]"
+        return "v3d[" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + "]"
 
     def __setitem__(self, index, value):
         """
@@ -74,7 +74,6 @@ class vector3d():
         """
         return vector3d(self.x + other[0], self.y + other[1], self.z + other[2])
 
-
     def __radd__(self, other):
         """
         Override + function (right add)
@@ -98,7 +97,6 @@ class vector3d():
         """
         return self._hash
 
-
     def __rsub__(self, other):
         """
         Override - function (right)
@@ -107,7 +105,7 @@ class vector3d():
 
     def rotate(self):
         """ pass a copy of rotated vector3d, without altering the vector3d! """
-        return vector3d(self.y,self.x,self.z)
+        return vector3d(self.y, self.x, self.z)
 
     def scale(self, x_factor, y_factor=None,z_factor=None):
         """ pass a copy of scaled vector3d, without altering the vector3d! """
@@ -115,7 +113,7 @@ class vector3d():
             z_factor=x_factor[2]
             y_factor=x_factor[1]
             x_factor=x_factor[0]
-        return vector3d(self.x*x_factor,self.y*y_factor,self.z*z_factor)
+        return vector3d(self.x * x_factor, self.y * y_factor, self.z * z_factor)
 
     def rotate_scale(self, x_factor, y_factor=None, z_factor=None):
         """ pass a copy of scaled vector3d, without altering the vector3d! """
@@ -123,25 +121,25 @@ class vector3d():
             z_factor=x_factor[2]
             y_factor=x_factor[1]
             x_factor=x_factor[0]
-        return vector3d(self.y*x_factor,self.x*y_factor,self.z*z_factor)
+        return vector3d(self.y * x_factor, self.x * y_factor, self.z * z_factor)
 
     def floor(self):
         """
         Override floor function
         """
-        return vector3d(int(math.floor(self.x)),int(math.floor(self.y)), self.z)
+        return vector3d(int(math.floor(self.x)), int(math.floor(self.y)), self.z)
 
     def ceil(self):
         """
         Override ceil function
         """
-        return vector3d(int(math.ceil(self.x)),int(math.ceil(self.y)), self.z)
+        return vector3d(int(math.ceil(self.x)), int(math.ceil(self.y)), self.z)
 
     def round(self):
         """
         Override round function
         """
-        return vector3d(int(round(self.x)),int(round(self.y)), self.z)
+        return vector3d(int(round(self.x)), int(round(self.y)), self.z)
 
     def __eq__(self, other):
         """Override the default Equals behavior"""
@@ -164,30 +162,29 @@ class vector3d():
 
     def max(self, other):
         """ Max of both values """
-        return vector3d(max(self.x,other.x),max(self.y,other.y),max(self.z,other.z))
+        return vector3d(max(self.x, other.x), max(self.y, other.y), max(self.z, other.z))
 
     def min(self, other):
         """ Min of both values """
-        return vector3d(min(self.x,other.x),min(self.y,other.y),min(self.z,other.z))
+        return vector3d(min(self.x, other.x), min(self.y, other.y), min(self.z, other.z))
 
     def distance(self, other):
         """ Return the manhattan distance between two values """
-        return abs(self.x-other.x)+abs(self.y-other.y)
+        return abs(self.x - other.x) + abs(self.y - other.y)
 
     def euclidean_distance(self, other):
         """ Return the euclidean distance between two values """
-        return math.sqrt((self.x-other.x)**2+(self.y-other.y)**2)
-
+        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
 
     def adjacent(self, other):
         """ Is the one grid adjacent in any planar direction to the other """
-        if self == other + vector3d(1,0,0):
+        if self == other + vector3d(1, 0, 0):
             return True
-        elif self == other + vector3d(-1,0,0):
+        elif self == other + vector3d(-1, 0, 0):
             return True
-        elif self == other + vector3d(0,1,0):
+        elif self == other + vector3d(0, 1, 0):
             return True
-        elif self == other + vector3d(0,-1,0):
+        elif self == other + vector3d(0, -1, 0):
             return True
         else:
             return False

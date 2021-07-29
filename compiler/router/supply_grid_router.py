@@ -21,7 +21,7 @@ class supply_grid_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, gds_filename=None, bbox=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -29,9 +29,9 @@ class supply_grid_router(router):
         start_time = datetime.now()
 
         # Power rail width in minimum wire widths
-        self.route_track_width = 2
+        self.route_track_width = 1
 
-        router.__init__(self, layers, design, gds_filename, bbox, self.route_track_width)
+        router.__init__(self, layers, design, bbox=bbox, margin=margin, route_track_width=self.route_track_width)
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -357,8 +357,9 @@ class supply_grid_router(router):
 
             # This is inefficient since it is non-incremental, but it was
             # easier to debug.
-            self.prepare_blockages(pin_name)
-
+            self.prepare_blockages()
+            self.clear_blockages(self.vdd_name)
+            
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name, index)
@@ -369,7 +370,7 @@ class supply_grid_router(router):
 
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
-                self.write_debug_gds("debug_route.gds", False)
+                self.write_debug_gds("debug_route.gds")
 
             # if index==3 and pin_name=="vdd":
             #     self.write_debug_gds("route.gds",False)

@@ -66,7 +66,7 @@ def parse_args():
         optparse.make_option("-m", "--sim_threads",
                              action="store",
                              type="int",
-                             help="Specify the number of spice simulation threads (default: 2)",
+                             help="Specify the number of spice simulation threads (default: 3)",
                              dest="num_sim_threads"),
         optparse.make_option("-v",
                              "--verbose",
@@ -238,8 +238,8 @@ def setup_bitcell():
         OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.replica_bitcell = "replica_pbitcell"
     else:
-        num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
-        OPTS.bitcell = "bitcell_{}port".format(num_ports)
+        OPTS.num_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        OPTS.bitcell = "bitcell_{}port".format(OPTS.num_ports)
         OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
                 
@@ -329,7 +329,7 @@ def read_config(config_file, is_unit_test=True):
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
         config = importlib.import_module(module_name)
-    except:
+    except ImportError:
         debug.error("Unable to read configuration file: {0}".format(config_file), 2)
 
     OPTS.overridden = {}
@@ -607,14 +607,14 @@ def report_status():
 
     # If a write mask is specified by the user, the mask write size should be the same as
     # the word size so that an entire word is written at once.
-    if OPTS.write_size is not None:
+    if OPTS.write_size is not None and OPTS.write_size != OPTS.word_size:
         if (OPTS.word_size % OPTS.write_size != 0):
             debug.error("Write size needs to be an integer multiple of word size.")
         # If write size is more than half of the word size,
         # then it doesn't need a write mask. It would be writing
         # the whole word.
-        if (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size/2):
-            debug.error("Write size needs to be between 1 bit and {0} bits/2.".format(OPTS.word_size))
+        if (OPTS.write_size < 1 or OPTS.write_size > OPTS.word_size / 2):
+            debug.error("Write size needs to be between 1 bit and {0} bits.".format(int(OPTS.word_size / 2)))
 
     if not OPTS.tech_name:
         debug.error("Tech name must be specified in config file.")

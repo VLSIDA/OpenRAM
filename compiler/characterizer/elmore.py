@@ -30,7 +30,7 @@ class elmore(simulation):
         self.create_signal_names()
         self.add_graph_exclusions()
     
-    def get_lib_values(self, slews, loads):
+    def get_lib_values(self, load_slews):
         """
         Return the analytical model results for the SRAM.
         """
@@ -53,33 +53,29 @@ class elmore(simulation):
 
         # Set delay/power for slews and loads
         port_data = self.get_empty_measure_data_dict()
-        power = self.analytical_power(slews, loads)
+        power = self.analytical_power(load_slews)
         debug.info(1, 'Slew, Load, Delay(ns), Slew(ns)')
         max_delay = 0.0
-        for slew in slews:
-            for load in loads:
-                # Calculate delay based on slew and load
-                path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
+        for load,slew in load_slews:
+            # Calculate delay based on slew and load
+            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
 
-                total_delay = self.sum_delays(path_delays)
-                max_delay = max(max_delay, total_delay.delay)
-                debug.info(1,
-                           '{}, {}, {}, {}'.format(slew,
-                                                   load,
-                                                   total_delay.delay / 1e3,
-                                                   total_delay.slew / 1e3))
-
-                # Delay is only calculated on a single port and replicated for now.
-                for port in self.all_ports:
-                    for mname in self.delay_meas_names + self.power_meas_names:
-                        if "power" in mname:
-                            port_data[port][mname].append(power.dynamic)
-                        elif "delay" in mname and port in self.read_ports:
-                            port_data[port][mname].append(total_delay.delay / 1e3)
-                        elif "slew" in mname and port in self.read_ports:
-                            port_data[port][mname].append(total_delay.slew / 1e3)
-                        else:
-                            debug.error("Measurement name not recognized: {}".format(mname), 1)
+            total_delay = self.sum_delays(path_delays)
+            max_delay = max(max_delay, total_delay.delay)
+            debug.info(1,
+                       '{}, {}, {}, {}'.format(slew,
+                                               load,
+                                               total_delay.delay / 1e3,
+                                               total_delay.slew / 1e3))
+            # Delay is only calculated on a single port and replicated for now.
+            for port in self.all_ports:
+                for mname in self.delay_meas_names + self.power_meas_names:
+                    if "power" in mname:
+                        port_data[port][mname].append(power.dynamic)
+                    elif "delay" in mname and port in self.read_ports:
+                        port_data[port][mname].append(total_delay.delay / 1e3)
+                    elif "slew" in mname and port in self.read_ports:
+                        port_data[port][mname].append(total_delay.slew / 1e3)
 
         # Margin for error in period. Calculated by averaging required margin for a small and large 
         # memory. FIXME: margin is quite large, should be looked into.
@@ -92,11 +88,11 @@ class elmore(simulation):
 
         return (sram_data, port_data)
 
-    def analytical_power(self, slews, loads):
+    def analytical_power(self, load_slews):
         """Get the dynamic and leakage power from the SRAM"""
 
         # slews unused, only last load is used
-        load = loads[-1]
+        load = load_slews[-1][0]
         power = self.sram.analytical_power(self.corner, load)
         # convert from nW to mW
         power.dynamic /= 1e6

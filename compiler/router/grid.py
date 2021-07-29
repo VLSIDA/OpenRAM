@@ -37,6 +37,8 @@ class grid:
         # This is really lower left bottom layer and upper right top layer in 3D.
         self.ll = vector3d(ll.x, ll.y, 0).scale(self.track_factor).round()
         self.ur = vector3d(ur.x, ur.y, 0).scale(self.track_factor).round()
+        debug.info(1, "BBOX coords: ll=" + str(ll) + " ur=" + str(ur))
+        debug.info(1, "BBOX grids: ll=" + str(self.ll) + " ur=" + str(self.ur))
 
         # let's leave the map sparse, cells are created on demand to reduce memory
         self.map={}
@@ -122,35 +124,59 @@ class grid:
             self.set_target(n)
             # self.set_blocked(n, False)
 
-    def add_perimeter_target(self, side="all"):
-        debug.info(3, "Adding perimeter target")
+    def get_perimeter_list(self, side="left", layers=[0, 1], width=1, margin=0, offset=0):
+        """
+        Side specifies which side.
+        Layer specifies horizontal (0) or vertical (1)
+        Width specifies how wide the perimter "stripe" should be.
+        Works from the inside out from the bbox (ll, ur)
+        """
+        if "ring" in side:
+            ring_width = width
+        else:
+            ring_width = 0
+
+        if "ring" in side:
+            ring_offset = offset
+        else:
+            ring_offset = 0
 
         perimeter_list = []
         # Add the left/right columns
-        if side=="all" or side=="left":
-            x = self.ll.x
-            for y in range(self.ll.y, self.ur.y, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+        if side=="all" or "left" in side:
+            for x in range(self.ll.x - offset, self.ll.x - width - offset, -1):
+                for y in range(self.ll.y - ring_offset - margin - ring_width + 1, self.ur.y + ring_offset + margin + ring_width, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
                 
-        if side=="all" or side=="right":
-            x = self.ur.x
-            for y in range(self.ll.y, self.ur.y, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+        if side=="all" or "right" in side:
+            for x in range(self.ur.x + offset, self.ur.x + width + offset, 1):
+                for y in range(self.ll.y - ring_offset - margin - ring_width + 1, self.ur.y + ring_offset + margin + ring_width, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
-        if side=="all" or side=="bottom":
-            y = self.ll.y
-            for x in range(self.ll.x, self.ur.x, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+        if side=="all" or "bottom" in side:
+            for y in range(self.ll.y - offset, self.ll.y - width - offset, -1):
+                for x in range(self.ll.x - ring_offset - margin - ring_width + 1, self.ur.x + ring_offset + margin + ring_width, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
-        if side=="all" or side=="top":
-            y = self.ur.y
-            for x in range(self.ll.x, self.ur.x, 1):
-                perimeter_list.append(vector3d(x, y, 0))
-                perimeter_list.append(vector3d(x, y, 1))
+        if side=="all" or "top" in side:
+            for y in range(self.ur.y + offset, self.ur.y + width + offset, 1):
+                for x in range(self.ll.x - ring_offset - margin - ring_width + 1, self.ur.x + ring_offset + margin + ring_width, 1):
+                    for layer in layers:
+                        perimeter_list.append(vector3d(x, y, layer))
 
+        # Add them all to the map
+        self.add_map(perimeter_list)
+
+        return perimeter_list
+    
+    def add_perimeter_target(self, side="all", layers=[0, 1]):
+        debug.info(3, "Adding perimeter target")
+        
+        perimeter_list = self.get_perimeter_list(side, layers)
+        
         self.set_target(perimeter_list)
                 
     def is_target(self, point):

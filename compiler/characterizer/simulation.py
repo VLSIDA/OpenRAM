@@ -37,6 +37,8 @@ class simulation():
         self.read_ports = self.sram.read_ports
         self.write_ports = self.sram.write_ports
         self.words_per_row = self.sram.words_per_row
+        self.num_rows = self.sram.num_rows
+        self.num_cols = self.sram.num_cols
         if self.write_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
@@ -294,7 +296,8 @@ class simulation():
         self.add_data(data, port)
         self.add_address(address, port)
         self.add_wmask(wmask, port)
-        self.add_spare_wen("1" * self.num_spare_cols, port)
+        # Disable spare writes for now
+        self.add_spare_wen("0" * self.num_spare_cols, port)
 
     def add_read_one_port(self, comment, address, port):
         """ Add the control values for a read cycle. Does not increment the period. """
@@ -368,6 +371,38 @@ class simulation():
                                                                                     time,
                                                                                     time_spacing,
                                                                                     comment))
+
+    def combine_word(self, spare, word):
+        if len(spare) > 0:
+            return spare + "+" + word
+
+        return word
+
+    def format_value(self, value):
+        """ Format in better readable manner """
+
+        def delineate(word):
+            # Create list of chars in reverse order
+            split_word = list(reversed([x for x in word]))
+            # Add underscore every 4th char
+            split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
+            # Join the word unreversed back together
+            new_word = ''.join(reversed(split_word2))
+            return(new_word)
+
+        # Split extra cols
+        if self.num_spare_cols > 0:
+            vals = value[self.num_spare_cols:]
+            spare_vals = value[:self.num_spare_cols]
+        else:
+            vals = value
+            spare_vals = ""
+
+        # Insert underscores
+        vals = delineate(vals)
+        spare_vals = delineate(spare_vals)
+
+        return self.combine_word(spare_vals, vals)
 
     def gen_cycle_comment(self, op, word, addr, wmask, port, t_current):
         if op == "noop":
@@ -473,7 +508,6 @@ class simulation():
         if not OPTS.use_pex or (OPTS.use_pex and OPTS.pex_exe[0] == "calibre"):
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
-
             sen_with_port = self.get_sen_name(self.graph.all_paths)
             if sen_with_port.endswith(str(port)):
                 self.sen_name = sen_with_port[:-len(str(port))]
@@ -481,38 +515,32 @@ class simulation():
                 self.sen_name = sen_with_port
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
 
-            debug.info(2, "s_en name = {}".format(self.sen_name))
-            
             column_addr = self.get_column_addr()
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
             port_pos = -1 - len(str(column_addr)) - len(str(port))
 
-            if bl_name_port.endswith(str(port) + "_" + str(column_addr)):
-                self.bl_name = bl_name_port[:port_pos] + "{}" + bl_name_port[port_pos + len(str(port)):]
-            elif not bl_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            if bl_name_port.endswith(str(port) + "_" + str(self.bitline_column)): # single port SRAM case, bl will not be numbered eg bl_0
                 self.bl_name = bl_name_port
             else:
                 self.bl_name = bl_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
 
-            if br_name_port.endswith(str(port) + "_" + str(column_addr)):
-                self.br_name = br_name_port[:port_pos] + "{}" + br_name_port[port_pos + len(str(port)):]
-            elif not br_name_port[port_pos].isdigit(): # single port SRAM case, bl will not be numbered eg bl_0
+            if br_name_port.endswith(str(port) + "_" + str(self.bitline_column)): # single port SRAM case, bl will not be numbered eg bl_0
                 self.br_name = br_name_port
             else:
                 self.br_name = br_name_port
                 debug.warning("Error occurred while determining bitline names. Can cause faults in simulation.")
-            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
         else:
             self.graph.get_all_paths('{}{}'.format("clk", port),
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
             self.sen_name = self.get_sen_name(self.graph.all_paths)
-            debug.info(2, "s_en name = {}".format(self.sen_name))
+            #debug.info(2, "s_en {}".format(self.sen_name))
 
             self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size - 1)
             self.br_name = "br{0}_{1}".format(port, OPTS.word_size - 1)
-            debug.info(2, "bl name={}, br name={}".format(self.bl_name, self.br_name))
+            # debug.info(2, "bl name={0}".format(self.bl_name))
+            # debug.info(2, "br name={0}".format(self.br_name))
 
     def get_sen_name(self, paths, assumed_port=None):
         """
@@ -535,8 +563,13 @@ class simulation():
         Creates timing graph to generate the timing paths for the SRAM output.
         """
 
+        #Make exclusions dependent on the bit being tested.
         self.sram.clear_exclude_bits() # Removes previous bit exclusions
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
+        port=self.read_ports[0] #FIXME, port_data requires a port specification, assuming single port for now
+        if self.words_per_row > 1:
+            self.sram.graph_clear_column_mux(port)
+            self.sram.graph_exclude_column_mux(self.bitline_column, port)
 
         # Generate new graph every analysis as edges might change depending on test bit
         self.graph = graph_util.timing_graph()
@@ -576,7 +609,11 @@ class simulation():
         """
         Gets the signal name associated with the bitlines in the bank.
         """
-        cell_mod = factory.create(module_type=OPTS.bitcell)
+        # FIXME: change to a solution that does not depend on the technology
+        if OPTS.tech_name == "sky130" and len(self.all_ports) == 1:
+            cell_mod = factory.create(module_type=OPTS.bitcell, version="opt1")
+        else:
+            cell_mod = factory.create(module_type=OPTS.bitcell)
         cell_bl = cell_mod.get_bl_name(port)
         cell_br = cell_mod.get_br_name(port)
 
@@ -586,16 +623,16 @@ class simulation():
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
             for i in range(len(bl_names)):
-                bl_names[i] = bl_names[i].split('.')[-1]
+                bl_names[i] = bl_names[i].split(OPTS.hier_seperator)[-1]
         return bl_names[0], bl_names[1]
-        
+
     def get_empty_measure_data_dict(self):
         """Make a dict of lists for each type of delay and power measurement to append results to"""
 
         measure_names = self.delay_meas_names + self.power_meas_names
         # Create list of dicts. List lengths is # of ports. Each dict maps the measurement names to lists.
         measure_data = [{mname: [] for mname in measure_names} for i in self.all_ports]
-        return measure_data    
+        return measure_data
 
     def sum_delays(self, delays):
         """Adds the delays (delay_data objects) so the correct slew is maintained"""
@@ -604,5 +641,3 @@ class simulation():
         for i in range(1, len(delays)):
             delay+=delays[i]
         return delay
-
-

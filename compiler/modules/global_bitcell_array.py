@@ -296,12 +296,12 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         # We must also translate the global array column number to the local array column number
         local_col = targ_col - self.col_offsets[i - 1]
 
-        for mod in self.local_mods:
+        for mod, inst in zip(self.local_mods, self.local_insts):
             if mod == local_array:
                 mod.graph_exclude_bits(targ_row, local_col)
             else:
-                # Otherwise, we exclude ALL of the rows/columns
-                mod.graph_exclude_bits()
+                # Otherwise, exclude the local array inst
+                self.graph_inst_exclude.add(inst)
 
     def graph_exclude_replica_col_bits(self):
         """
@@ -330,7 +330,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         # We must also translate the global array column number to the local array column number
         local_col = col - self.col_offsets[i - 1]
 
-        return local_array.get_cell_name(inst_name + '.x' + local_inst.name, row, local_col)
+        return local_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + local_inst.name, row, local_col)
 
     def clear_exclude_bits(self):
         """
@@ -338,6 +338,7 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         """
         for mod in self.local_mods:
             mod.clear_exclude_bits()
+        self.init_graph_params()
 
     def graph_exclude_dffs(self):
         """Exclude dffs from graph as they do not represent critical path"""

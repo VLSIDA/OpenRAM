@@ -23,7 +23,15 @@ class array_test(openram_test):
         globals.init_openram(config_file)
 
         debug.info(2, "Testing 8x8 array for 6t_cell")
-        a = factory.create(module_type="bitcell_array", cols=8, rows=8)
+
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
+        a = factory.create(module_type="bitcell_array", cols=8 + num_spare_cols, rows=8 + num_spare_rows)
         self.local_check(a)
 
         globals.end_openram()

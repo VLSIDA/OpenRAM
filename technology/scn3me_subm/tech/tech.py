@@ -63,6 +63,7 @@ layer["text"]           = (63, 0)
 layer["boundary"]       = (63, 0)
 layer["blockage"]       = (83, 0)
 
+use_purpose = {}
 ###################################################
 ##END GDS Layer Map
 ###################################################
@@ -304,3 +305,5 @@ pex_name = "magic"
 ###################################################
 ##END Technology Tool Preferences
 ###################################################
+array_row_multiple = 1
+array_col_multiple = 1

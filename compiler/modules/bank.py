@@ -75,6 +75,11 @@ class bank(design.design):
         self.bank_array_ll = self.offset_all_coordinates().scale(-1, -1)
         self.bank_array_ur = self.bitcell_array_inst.ur()
         self.bank_array_ul = self.bitcell_array_inst.ul()
+
+        # These are used for other placements (e.g. address flops)
+        self.predecoder_top = self.port_address[0].predecoder_height + self.port_address_inst[0].by()
+        self.predecoder_bottom = self.port_address_inst[0].by()
+
         self.DRC_LVS()
 
     def add_pins(self):
@@ -227,7 +232,6 @@ class bank(design.design):
         x_offset = self.m2_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
-        self.predecoder_height = self.port_address[port].predecoder_height + self.port_address_offsets[port].y
 
         # LOWER LEFT QUADRANT
         # Place the col decoder left aligned with wordline driver
@@ -362,18 +366,13 @@ class bank(design.design):
 
         # A space for wells or jogging m2
         self.m2_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
-                          3 * self.m2_pitch)
+                          3 * self.m2_pitch,
+                          drc("nwell_to_nwell"))
+
 
     def add_modules(self):
         """ Add all the modules using the class loader """
 
-        self.port_address = []
-        for port in self.all_ports:
-            self.port_address.append(factory.create(module_type="port_address",
-                                                    cols=self.num_cols + self.num_spare_cols,
-                                                    rows=self.num_rows,
-                                                    port=port))
-            self.add_mod(self.port_address[port])
 
         local_array_size = OPTS.local_array_size
 
@@ -393,6 +392,14 @@ class bank(design.design):
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
         self.add_mod(self.bitcell_array)
+
+        self.port_address = []
+        for port in self.all_ports:
+            self.port_address.append(factory.create(module_type="port_address",
+                                                    cols=self.num_cols + self.num_spare_cols,
+                                                    rows=self.num_rows,
+                                                    port=port))
+            self.add_mod(self.port_address[port])
 
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
@@ -426,7 +433,9 @@ class bank(design.design):
 
         temp.append("vdd")
         temp.append("gnd")
-
+        if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
+            temp.append('vpb')
+            temp.append('vnb')
         self.connect_inst(temp)
 
     def place_bitcell_array(self, offset):
@@ -609,6 +618,10 @@ class bank(design.design):
         for inst in self.insts:
             self.copy_power_pins(inst, "vdd", add_vias=False)
             self.copy_power_pins(inst, "gnd", add_vias=False)
+
+        if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
+            for pin_name, supply_name in zip(['vnb','vpb'],['gnd','vdd']):
+                self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.
         # Other decoders already have them.
@@ -1058,7 +1071,6 @@ class bank(design.design):
                                       to_layer="m2",
                                       offset=control_pos)
 
-
     def graph_exclude_precharge(self):
         """
         Precharge adds a loop between bitlines, can be excluded to reduce complexity
@@ -1071,7 +1083,7 @@ class bank(design.design):
         """
         Gets the spice name of the target bitcell.
         """
-        return self.bitcell_array_inst.mod.get_cell_name(inst_name + '.x' + self.bitcell_array_inst.name,
+        return self.bitcell_array_inst.mod.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name,
                                                          row,
                                                          col)
 
@@ -1087,3 +1099,14 @@ class bank(design.design):
         """
         self.bitcell_array.clear_exclude_bits()
 
+    def graph_exclude_column_mux(self, column_include_num, port):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        self.port_data[port].graph_exclude_column_mux(column_include_num)
+
+    def graph_clear_column_mux(self, port):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        self.port_data[port].graph_clear_column_mux()

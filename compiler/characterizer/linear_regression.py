@@ -7,6 +7,7 @@
 #
 
 from .regression_model import regression_model
+from sklearn.linear_model import Ridge
 from globals import OPTS
 import debug
 
@@ -18,12 +19,16 @@ class linear_regression(regression_model):
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
 
+    def get_model(self):
+        return Ridge()
+
     def generate_model(self, features, labels):
         """
         Supervised training of model.
         """
         
-        model = LinearRegression()
+        #model = LinearRegression()
+        model = self.get_model()
         model.fit(features, labels)
         return model
         

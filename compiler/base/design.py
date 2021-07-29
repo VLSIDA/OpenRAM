@@ -48,11 +48,11 @@ class design(hierarchy_design):
             self.add_pin_indices(prop.port_indices)
             self.add_pin_names(prop.port_map)
             self.add_pin_types(prop.port_types)
-            
+
+
             (width, height) = utils.get_libcell_size(self.cell_name,
                                                      GDS["unit"],
                                                      layer[prop.boundary_layer])
-
             self.pin_map = utils.get_libcell_pins(self.pins,
                                                   self.cell_name,
                                                   GDS["unit"])

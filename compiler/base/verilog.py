@@ -153,7 +153,7 @@ class verilog:
                 self.vf.write("    wmask{0}_reg = wmask{0};\n".format(port))
             if self.num_spare_cols:
                 self.vf.write("    spare_wen{0}_reg = spare_wen{0};\n".format(port))
-            self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
+        self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
         if port in self.read_ports:
             self.add_write_read_checks(port)
 

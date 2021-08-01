@@ -425,7 +425,7 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 # analytical delay parameters
 spice["nom_threshold"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
+spice["wire_unit_c"] = 0.64e-12  # Unit wire capacitance F/um^2
 spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.2     # Minimum transistor gate capacitance in ff
 spice["dff_setup"] = 9        # DFF setup time in ps
@@ -468,7 +468,8 @@ spice["c_fringe"] = 0 # F/um, not defined in this technology
 spice["cpolywire"] = 0 # F/um, replicated from CACTI which is hardcoded to 0
 spice["c_junc"] = 5e-16 #F/um^2
 spice["c_junc_sw"] = 5e-16 #F/um
-spice["wire_c_per_um"] = 0 # Temp value
+spice["wire_c_per_um"] = spice["wire_unit_c"]*drc["minwidth_m2"] # Unit c by m2 width,  F/um units
+spice["wire_r_per_um"] = spice["wire_unit_r"]/drc["minwidth_m2"] # Unit r per m2 width, Ohms/um units
 
 ###################################################
 # Technology Tool Preferences

@@ -370,9 +370,8 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
 spice["nom_threshold"] = 1.3   # Nominal Threshold voltage in Volts
-# FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
-spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
+spice["wire_unit_r"] = 0.07     # Unit wire resistance in ohms/square
+spice["wire_unit_c"] = 1.7e-17  # Unit wire capacitance F/um^2
 spice["min_tx_drain_c"] = 0.7   # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.1    # Minimum transistor gate capacitance in ff
 spice["dff_setup"] = 9        # DFF setup time in ps
@@ -415,7 +414,8 @@ spice["c_fringe"] = 0 # F/um, not defined in this technology
 spice["cpolywire"] = 0 # F/um, replicated from CACTI which is hardcoded to 0
 spice["c_junc"] = 9.276962e-16 #F/um^2
 spice["c_junc_sw"] = 3.181055e-16 #F/um
-spice["wire_c_per_um"] = 0 # Temp value
+spice["wire_c_per_um"] = spice["wire_unit_c"]*drc["minwidth_m2"] # Unit c by m2 width,  F/um units
+spice["wire_r_per_um"] = spice["wire_unit_r"]/drc["minwidth_m2"] # Unit r per m2 width, Ohms/um units
 
 ###################################################
 # Technology Tool Preferences

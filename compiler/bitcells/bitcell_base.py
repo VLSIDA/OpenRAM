@@ -10,7 +10,7 @@ import debug
 import design
 from globals import OPTS
 import logical_effort
-from tech import parameter, drc, layer
+from tech import parameter, drc, layer, spice
 
 
 class bitcell_base(design.design):
@@ -231,5 +231,23 @@ class bitcell_base(design.design):
         
         bl_nmos_drain_c =  self.drain_c_(parameter["6T_access_size"], 
                                          stack,
-                                         mult)                               
+                                         mult)              
+
         return nmos_drain_c + pmos_drain_c + bl_nmos_drain_c    
+        
+    def module_wire_c(self):
+        """Capacitance of bitline"""
+        # FIXME: entire bitline cap is calculated here because of the current
+        # graph implementation so array dims are all re-calculated here. May
+        # be incorrect if dim calculations change 
+        cells_in_col = OPTS.num_words/OPTS.words_per_row
+        return cells_in_col*self.height*spice["wire_c_per_um"]
+
+    def module_wire_r(self):
+        """Resistance of bitline"""
+        # FIXME: entire bitline r is calculated here because of the current
+        # graph implementation so array dims are all re-calculated. May
+        # be incorrect if dim calculations change 
+        cells_in_col = OPTS.num_words/OPTS.words_per_row
+        return cells_in_col*self.height*spice["wire_r_per_um"]   
+        

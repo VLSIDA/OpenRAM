@@ -566,6 +566,6 @@ class ptx(design.design):
 
     def get_intrinsic_capacitance(self):
         """Get the drain capacitances of the TXs in the gate."""
-        return self.drain_c_(self.tx_width*self.tx_mults, 
+        return self.drain_c_(self.tx_width*self.mults, 
                              1,
                              self.mults)

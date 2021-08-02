@@ -425,8 +425,11 @@ class spice():
         rd = self.get_on_resistance()
         # Calculate the intrinsic capacitance 
         c_intrinsic = self.get_intrinsic_capacitance()
+        # Get wire values
+        c_wire = self.module_wire_c()
+        r_wire = self.module_wire_r()
         # Calculate tau with provided output load then calc delay
-        tf = rd*(c_intrinsic+c_load)
+        tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_load/2)
         this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
         inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)
@@ -448,6 +451,18 @@ class spice():
         SLEW_APPROXIMATION = 0.1
         corner_slew = SLEW_APPROXIMATION * corner_delay
         return delay_data(corner_delay, corner_slew)
+
+    def module_wire_c(self):
+        """All devices assumed to have ideal capacitance (0).
+           Non-ideal cases should have this function re-defined. 
+        """
+        return 0
+
+    def module_wire_r(self):
+        """All devices assumed to have ideal resistance (0).
+           Non-ideal cases should have this function re-defined. 
+        """
+        return 0
 
     def get_stage_effort(self, cout, inp_is_rise=True):
         """Inform users undefined delay module while building new modules"""

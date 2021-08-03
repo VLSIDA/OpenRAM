@@ -460,8 +460,8 @@ parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of d
 # Technology Tool Preferences
 ###################################################
 
-drc_name = "calibre"
-lvs_name = "calibre"
-pex_name = "calibre"
+drc_name = "klayout"
+lvs_name = "klayout"
+pex_name = "klayout"
 
 blackbox_bitcell = False

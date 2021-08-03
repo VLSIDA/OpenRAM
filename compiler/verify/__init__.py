@@ -32,14 +32,16 @@ if not OPTS.check_lvsdrc:
     #     OPTS.magic_exe = None
 else:
     debug.info(1, "Finding DRC/LVS/PEX tools.")
-    OPTS.drc_exe = get_tool("DRC", ["calibre", "assura", "magic"], drc_name)
-    OPTS.lvs_exe = get_tool("LVS", ["calibre", "assura", "netgen"], lvs_name)
-    OPTS.pex_exe = get_tool("PEX", ["calibre", "magic"], pex_name)
+    OPTS.drc_exe = get_tool("DRC", ["klayout", "calibre", "assura", "magic"], drc_name)
+    OPTS.lvs_exe = get_tool("LVS", ["klayout", "calibre", "assura", "netgen"], lvs_name)
+    OPTS.pex_exe = get_tool("PEX", ["klayout", "calibre", "magic"], pex_name)
     # if OPTS.tech_name == "sky130":
     #     OPTS.magic_exe = get_tool("GDS", ["magic"])
 
 if not OPTS.drc_exe:
     from .none import run_drc, print_drc_stats, write_drc_script
+elif "klayout"==OPTS.drc_exe[0]:
+    from .klayout import run_drc, print_drc_stats, write_drc_script
 elif "calibre"==OPTS.drc_exe[0]:
     from .calibre import run_drc, print_drc_stats, write_drc_script
 elif "assura"==OPTS.drc_exe[0]:
@@ -52,6 +54,8 @@ else:
 
 if not OPTS.lvs_exe:
     from .none import run_lvs, print_lvs_stats, write_lvs_script
+elif "klayout"==OPTS.lvs_exe[0]:
+    from .klayout import run_lvs, print_lvs_stats, write_lvs_script
 elif "calibre"==OPTS.lvs_exe[0]:
     from .calibre import run_lvs, print_lvs_stats, write_lvs_script
 elif "assura"==OPTS.lvs_exe[0]:
@@ -65,6 +69,8 @@ else:
 
 if not OPTS.pex_exe:
     from .none import run_pex, print_pex_stats
+elif "klayout"==OPTS.pex_exe[0]:
+    from .klayout import run_pex, print_pex_stats
 elif "calibre"==OPTS.pex_exe[0]:
     from .calibre import run_pex, print_pex_stats
 elif "magic"==OPTS.pex_exe[0]:
@@ -78,4 +84,3 @@ else:
 #         from .magic import filter_gds
 #     else:
 #         debug.warning("Did not find Magic.")
-

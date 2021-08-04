@@ -73,9 +73,13 @@ class cacti(simulation):
             # Calculate delay based on slew and load
             # Calculations expect Farad, input is Femto-Farad
             load_farad = load*1e-12
+            load_farad = 0.052275e-12
+            slew = 0
             path_delays = self.graph.get_timing(bl_path, self.corner, slew, load_farad, self.params)
 
             total_delay = self.sum_delays(path_delays)
+            debug.info(0, "total_delay={}".format(total_delay))
+            sys.exit()
             delay_ns = total_delay.delay/1e-9
             slew_ns = total_delay.slew/1e-9
             max_delay = max(max_delay, total_delay.delay)

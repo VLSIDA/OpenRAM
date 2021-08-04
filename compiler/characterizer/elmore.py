@@ -26,9 +26,16 @@ class elmore(simulation):
         # else:
             # self.num_wmasks = 0
         #self.set_load_slew(0, 0)
+        self.set_params()
         self.set_corner(corner)
         self.create_signal_names()
         self.add_graph_exclusions()
+    
+    def set_params(self):    
+        """Set parameters specific to the corner being simulated"""
+        self.params = {}
+        # Set the specific functions to use for timing defined in the SRAM module
+        self.params["model_name"] = OPTS.model_name
     
     def get_lib_values(self, load_slews):
         """
@@ -58,8 +65,8 @@ class elmore(simulation):
         max_delay = 0.0
         for load,slew in load_slews:
             # Calculate delay based on slew and load
-            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load)
-
+            path_delays = self.graph.get_timing(bl_path, self.corner, slew, load, self.params)
+            
             total_delay = self.sum_delays(path_delays)
             max_delay = max(max_delay, total_delay.delay)
             debug.info(1,

@@ -429,7 +429,7 @@ class spice():
         c_wire = self.module_wire_c()
         r_wire = self.module_wire_r()
         # Calculate tau with provided output load then calc delay
-        tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_load/2)
+        tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_wire/2)
         this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
         inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)

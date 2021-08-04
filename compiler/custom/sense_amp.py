@@ -82,9 +82,9 @@ class sense_amp(design.design):
 
     def get_on_resistance(self):
         """On resistance of pinv, defined by single nmos"""
-        is_nchannel = False
+        is_nchannel = True
         stack = 1
-        is_cell = False
+        is_cell = False 
         return self.tr_r_on(parameter["sa_inv_nmos_size"], is_nchannel, stack, is_cell)    
         
     def get_input_capacitance(self):

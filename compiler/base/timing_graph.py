@@ -115,10 +115,7 @@ class timing_graph():
                 else:
                     debug.error("Undefined model_name for analytical timing: {}".format(params["model_name"]),
                                 return_value=1)
-                #cout+=output_edge_mod.get_cin() # logical effort based CIN
-                #cout+=output_edge_mod.get_input_capacitance() #cacti called from module
-                #func = cacti_params["cin_function"]
-                #cout+=output_edge_mod.func()
+
             # If at the last output, include the final output load
             if i == len(path) - 2:
                 cout += load
@@ -130,10 +127,6 @@ class timing_graph():
             else:
                 debug.error("Undefined model_name for analytical timing: {}".format(params["model_name"]),
                             return_value=1)
-            #delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
-            #delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, cacti_params))
-            #delays.append(path_edge_mod.cacti_params["delay_function"](corner, cur_slew, cout, cacti_params))
-            cur_slew = delays[-1].slew
 
         return delays
         

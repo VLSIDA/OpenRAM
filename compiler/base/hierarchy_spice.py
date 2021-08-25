@@ -430,7 +430,7 @@ class spice():
         r_wire = self.module_wire_r()
 
         tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_wire/2)
-        this_delay = self.horowitz(inrisetime, tf, 0.5, 0.5, True)
+        this_delay = self.cacti_rc_delay(inrisetime, tf, 0.5, 0.5, True)
         inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)
 
@@ -518,6 +518,17 @@ class spice():
                               self.cell_name))
         return 0
 
+    def cacti_rc_delay(self, 
+                 inputramptime, # input rise time
+                 tf,            # time constant of gate
+                 vs1,           # threshold voltage
+                 vs2,           # threshold voltage
+                 rise):         # whether input rises or fall
+)       """By default, CACTI delay uses horowitz for gate delay.
+           Can be overriden in cases like bitline if equation is different.
+        """
+        return self.horowitz(inputramptime, tf, vs1, vs2, rise)
+        
     def horowitz(self, 
                  inputramptime, # input rise time
                  tf,            # time constant of gate

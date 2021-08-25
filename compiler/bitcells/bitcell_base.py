@@ -241,6 +241,7 @@ class bitcell_base(design.design):
         # graph implementation so array dims are all re-calculated here. May
         # be incorrect if dim calculations change 
         cells_in_col = OPTS.num_words/OPTS.words_per_row
+        debug.info(0,"l={}".format(cells_in_col*self.height))
         return cells_in_col*self.height*spice["wire_c_per_um"]
 
     def module_wire_r(self):
@@ -251,3 +252,13 @@ class bitcell_base(design.design):
         cells_in_col = OPTS.num_words/OPTS.words_per_row
         return cells_in_col*self.height*spice["wire_r_per_um"]   
         
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise): 
+)       """ Special RC delay function used by CACTI for bitline delay
+        """
+        import math
+        vdd = 5 # temp value
+        if tf > 0.5*(vdd-spice["nom_threshold"])/rise:
+            delay = tf + (vdd-spice["nom_threshold"])/(2*rise)
+        else:
+            delay = math.sqrt(2*tf*(vdd-spice["nom_threshold"])/rise)
+        return delay  

@@ -425,7 +425,7 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 # analytical delay parameters
 spice["nom_threshold"] = 0.4     # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.25      # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 2.3e-16   # Unit wire capacitance F/um^2, calculated from CACTI 45dat
+spice["wire_unit_c"] = 2.3e-15   # Unit wire capacitance F/um^2, calculated from PTM
 spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.2     # Minimum transistor gate capacitance in ff
 spice["dff_setup"] = 9        # DFF setup time in ps

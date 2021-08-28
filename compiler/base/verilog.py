@@ -190,15 +190,15 @@ class verilog:
         self.vf.write("  input   csb{0}; // active low chip select\n".format(port))
         if port in self.readwrite_ports:
             self.vf.write("  input  web{0}; // active low write control\n".format(port))
+
+        self.vf.write("  input [ADDR_WIDTH-1:0]  addr{0};\n".format(port))
+        if port in self.write_ports:
             if self.write_size:
                 self.vf.write("  input [NUM_WMASKS-1:0]   wmask{0}; // write mask\n".format(port))
             if self.num_spare_cols == 1:
                 self.vf.write("  input           spare_wen{0}; // spare mask\n".format(port))
             elif self.num_spare_cols > 1:
                 self.vf.write("  input [{1}:0]   spare_wen{0}; // spare mask\n".format(port, self.num_spare_cols-1))
-
-        self.vf.write("  input [ADDR_WIDTH-1:0]  addr{0};\n".format(port))
-        if port in self.write_ports:
             self.vf.write("  input [DATA_WIDTH-1:0]  din{0};\n".format(port))
         if port in self.read_ports:
             self.vf.write("  output [DATA_WIDTH-1:0] dout{0};\n".format(port))

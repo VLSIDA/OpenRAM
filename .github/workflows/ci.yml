@@ -2,7 +2,7 @@ name: ci
 on:
     push:
       branches-ignore:
-        - "VLSIDA/OpenRAM"
+        - 'VLSIDA/OpenRAM'
 jobs:
   scn4me_subm:
     runs-on: self-hosted

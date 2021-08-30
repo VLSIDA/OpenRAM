@@ -1,8 +1,5 @@
 name: ci
-on:
-    push:
-      branches-ignore:
-        - 'VLSIDA/OpenRAM'
+on: [push]
 jobs:
   scn4me_subm:
     runs-on: self-hosted

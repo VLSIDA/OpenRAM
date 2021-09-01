@@ -430,7 +430,8 @@ class spice():
         r_wire = self.module_wire_r()
 
         tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_wire/2)
-        this_delay = self.cacti_rc_delay(inrisetime, tf, 0.5, 0.5, True)
+        extra_param_dict={'vdd': corner[1]} #voltage is second in PVT corner
+        this_delay = self.cacti_rc_delay(inrisetime, tf, 0.5, 0.5, True, extra_param_dict)
         inrisetime = this_delay / (1.0 - 0.5)
         return delay_data(this_delay, inrisetime)
 
@@ -523,7 +524,8 @@ class spice():
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
                  vs2,           # threshold voltage
-                 rise):         # whether input rises or fall
+                 rise,          # whether input rises or fall
+                 extra_param_dict=None):         
 )       """By default, CACTI delay uses horowitz for gate delay.
            Can be overriden in cases like bitline if equation is different.
         """

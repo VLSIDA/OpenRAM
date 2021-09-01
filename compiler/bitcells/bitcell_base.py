@@ -252,13 +252,16 @@ class bitcell_base(design.design):
         cells_in_col = OPTS.num_words/OPTS.words_per_row
         return cells_in_col*self.height*spice["wire_r_per_um"]   
         
-    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise): 
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
 )       """ Special RC delay function used by CACTI for bitline delay
         """
         import math
-        vdd = 5 # temp value
-        if tf > 0.5*(vdd-spice["nom_threshold"])/rise:
-            delay = tf + (vdd-spice["nom_threshold"])/(2*rise)
+        vdd = extra_param_dict['vdd'] 
+        m = vdd / inrisetime #v_wl = vdd for OpenRAM
+        # vdd == V_b_pre in OpenRAM. Bitline swing is assumed 10% of vdd
+        tstep = tf * math.log(vdd/(vdd - 0.1*vdd))
+        if tstep > 0.5*(vdd-spice["nom_threshold"])/m:
+            delay = tstep + (vdd-spice["nom_threshold"])/(2*m)
         else:
-            delay = math.sqrt(2*tf*(vdd-spice["nom_threshold"])/rise)
+            delay = math.sqrt(2*tstep*(vdd-spice["nom_threshold"])/m)
         return delay  

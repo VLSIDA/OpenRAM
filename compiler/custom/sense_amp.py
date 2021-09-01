@@ -109,15 +109,15 @@ class sense_amp(design.design):
                                       mult)                               
         return nmos_drain_c + pmos_drain_c + bl_pmos_drain_c
 
-    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise): 
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
 )       """ Special RC delay function used by CACTI for sense amp delay
         """
         import math
         
         # FIXME: temp values
-        c_senseamp = 0
+        c_senseamp = extra_param_dict['load']
+        vdd = extra_param_dict['vdd'] 
         g_m = 1
         tau = c_senseamp/g_m
-        vdd = 5
         v_sense = 1
-        return tau*math.log(vdd/v_sense)
+        return tau*math.log(vdd/(0.1*vdd))

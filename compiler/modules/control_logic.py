@@ -121,8 +121,10 @@ class control_logic(design.design):
         # max_fanout = max(self.num_rows, self.num_cols)
 
         # wl_en drives every row in the bank
+        # MRG 9/3/2021: Ensure that this is two stages to prevent race conditions with the write driver
+        size_list = [max(int(self.num_rows / 9), 1), max(int(self.num_rows / 3), 1)]
         self.wl_en_driver = factory.create(module_type="pdriver",
-                                           fanout=self.num_rows,
+                                           size_list=size_list,
                                            height=dff_height)
         self.add_mod(self.wl_en_driver)
 
@@ -348,7 +350,7 @@ class control_logic(design.design):
         row += 1
 
         control_center_y = self.wl_en_inst.uy() + self.m3_pitch
-        
+
         # Delay chain always gets placed at row 4
         self.place_delay(4)
         height = self.delay_inst.uy()
@@ -391,7 +393,7 @@ class control_logic(design.design):
     def place_delay(self, row):
         """ Place the replica bitline """
         debug.check(row % 2 == 0, "Must place delay chain at even row for supply alignment.")
-        
+
         # It is flipped on X axis
         y_off = row * self.and2.height + self.delay_chain.height
 

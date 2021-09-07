@@ -26,7 +26,6 @@ class riscv_func_test(openram_test):
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
 
-
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1

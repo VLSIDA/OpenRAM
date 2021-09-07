@@ -43,6 +43,21 @@ class sram_config:
 
         self.compute_sizes()
 
+    def __str__(self):
+        """ override print function output """
+        config_items = ["num_banks",
+                        "word_size",
+                        "num_words",
+                        "words_per_row",
+                        "write_size",
+                        "num_spare_rows",
+                        "num_spare_cols"]
+        str = ""
+        for item in config_items:
+            val = getattr(self, item)
+            str += "{} : {}\n".format(item, val)
+        return str
+
     def set_local_config(self, module):
         """ Copy all of the member variables to the given module for convenience """
 

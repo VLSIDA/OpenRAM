@@ -302,4 +302,3 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         Clears the bit exclusions
         """
         self.bitcell_array.clear_exclude_bits()
-

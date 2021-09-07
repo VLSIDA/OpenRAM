@@ -369,10 +369,8 @@ class bank(design.design):
                           3 * self.m2_pitch,
                           drc("nwell_to_nwell"))
 
-
     def add_modules(self):
         """ Add all the modules using the class loader """
-
 
         local_array_size = OPTS.local_array_size
 
@@ -705,7 +703,7 @@ class bank(design.design):
                                            pitch=self.m3_pitch)
 
         self.copy_layout_pin(self.port_address_inst[0], "wl_en", self.prefix + "wl_en0")
-        
+
         # Port 1
         if len(self.all_ports)==2:
             # The other control bus is routed up to two pitches above the bitcell array

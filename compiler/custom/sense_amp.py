@@ -7,7 +7,7 @@
 #
 import design
 import debug
-from tech import parameter, drc
+from tech import parameter, drc, spice
 from tech import cell_properties as props
 import logical_effort
 
@@ -110,14 +110,11 @@ class sense_amp(design.design):
         return nmos_drain_c + pmos_drain_c + bl_pmos_drain_c
 
     def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
-)       """ Special RC delay function used by CACTI for sense amp delay
+        """ Special RC delay function used by CACTI for sense amp delay
         """
         import math
         
-        # FIXME: temp values
         c_senseamp = extra_param_dict['load']
         vdd = extra_param_dict['vdd'] 
-        g_m = 1
-        tau = c_senseamp/g_m
-        v_sense = 1
+        tau = c_senseamp/spice["sa_transconductance"]
         return tau*math.log(vdd/(0.1*vdd))

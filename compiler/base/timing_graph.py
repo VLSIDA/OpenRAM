@@ -122,6 +122,7 @@ class timing_graph():
                 
             if params["model_name"] == "cacti":
                 delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, params))
+                cur_slew = delays[-1].slew
             elif params["model_name"] == "elmore":
                 delays.append(path_edge_mod.analytical_delay(corner, cur_slew, cout))
             else:

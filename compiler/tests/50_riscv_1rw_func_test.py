@@ -26,6 +26,7 @@ class riscv_func_test(openram_test):
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
 
+
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1
@@ -36,6 +37,7 @@ class riscv_func_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
+        OPTS.local_array_size = 16
         globals.setup_bitcell()
 
         # This is a hack to reload the characterizer __init__ with the spice version

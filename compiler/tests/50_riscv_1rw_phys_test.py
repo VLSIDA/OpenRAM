@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 
 
-# @unittest.skip("SKIPPING 50_riscv_phys_test")
+@unittest.skip("SKIPPING 50_riscv_phys_test")
 class riscv_phys_test(openram_test):
 
     def runTest(self):
@@ -25,7 +25,7 @@ class riscv_phys_test(openram_test):
         from sram_config import sram_config
 
         OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
+        OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
         OPTS.local_array_size = 16
         globals.setup_bitcell()

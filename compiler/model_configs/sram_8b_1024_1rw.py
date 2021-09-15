@@ -1,3 +1,4 @@
+from shared_config import *
 word_size = 8
 num_words = 1024
 

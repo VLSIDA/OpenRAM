@@ -15,10 +15,10 @@
  <interpreter>dsl</interpreter>
  <dsl-interpreter-name>drc-dsl-xml</dsl-interpreter-name>
  <text>#
-#  DRC  for  FreePDK45 according to : 
+#  DRC  for  FreePDK45 according to :
 #   https://www.eda.ncsu.edu/wiki/FreePDK45:RuleDevel
 #   https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
-# 
+#
 ##########################################################################################
 tstart = Time.now
 
@@ -107,7 +107,7 @@ pwell.space(135.nm, euclidian).output("WELL.3", "WELL.3 : Minimum spacing of pwe
 well.separation(well, 200.nm, euclidian).output("WELL.4", "WELL.4 : Minimum width of nwell/pwell : 200nm")
 vtg.not(well).output("VT.1","VT.1 : Vtg adjust layers must coincide with well")
 vth.not(well).output("VT.1","VT.1 : Vth adjust layers must coincide with well")
- 
+
  #   Poly
 gate = poly &amp; active
 poly.width(50.nm, euclidian).output("POLY.1", "POLY.1 : Minimum width of poly : 50nm")
@@ -180,8 +180,11 @@ metal2_gt900.edges.with_length(2.7.um,nil).space(900.nm,euclidian).output("METAL
 metal2_gt1500.edges.with_length(4.um,nil).space(1500.nm,euclidian).output("METAL2.9", "METAL2.9 : Minimum spacing of  intermediate metal2 wider than 1500 nm and longer than 4.0 um : 1500nm")
 
 #   via2
-via2.edges.without_length(70.nm).output("VIA2.1", "VIA2.1 : Minimum/Maximum width of via2 : 70nm")
-via2.space(85.nm, euclidian).output("VIA2.2", "VIA2.2 : Minimum spacing of via2 : 85nm")
+# The FreePDK45 design rules say this is 70nm, but their Calibre deck uses 65nm, so we are using that for compatibility.
+#via2.edges.without_length(70.nm).output("VIA2.1", "VIA2.1 : Minimum/Maximum width of via2 : 70nm")
+via2.edges.without_length(65.nm).output("VIA2.1", "VIA2.1 : Minimum/Maximum width of via2 : 65nm")
+#via2.space(85.nm, euclidian).output("VIA2.2", "VIA2.2 : Minimum spacing of via2 : 85nm")
+via2.space(75.nm, euclidian).output("VIA2.2", "VIA2.2 : Minimum spacing of via2 : 75nm")
 via2.not(metal2).output("VIA2.3", "VIA2.3 : via2 must be inside metal2")
 via2.not(metal3).output("VIA2.4", "VIA2.4 : via2 must be inside metal3")
 

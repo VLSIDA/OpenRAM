@@ -75,7 +75,7 @@ def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=
         f = open(resultsfile, "r")
     except FileNotFoundError:
         debug.error("Unable to load DRC results file from {}. Is klayout set up?".format(resultsfile), 1)
-    breakpoint()
+
     results = f.readlines()
     f.close()
     errors=len([x for x in results if "<visited>" in x])

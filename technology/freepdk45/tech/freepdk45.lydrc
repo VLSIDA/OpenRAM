@@ -199,7 +199,8 @@ metal2_gt1500.edges.with_length(4.um,nil).space(1500.nm,euclidian).output("METAL
 [ metal2_gt90, metal2_gt270, metal2_gt500, metal2_gt900, metal2_gt1500 ].each { |l| l.forget }
 
 #   via2
-via2.edges.without_length(70.nm).output("VIA2.1", "VIA2.1 : Minimum/Maximum width of via2 : 70nm")
+# FreePDK Calibre deck incorrectly has this as 65nm so we are going to be compatible.
+via2.edges.without_length(65.nm).output("VIA2.1", "VIA2.1 : Minimum/Maximum width of via2 : 65nm")
 via2.space(85.nm, euclidian).output("VIA2.2", "VIA2.2 : Minimum spacing of via2 : 85nm")
 via2.not(metal2).output("VIA2.3", "VIA2.3 : via2 must be inside metal2")
 via2.not(metal3).output("VIA2.4", "VIA2.4 : via2 must be inside metal3")

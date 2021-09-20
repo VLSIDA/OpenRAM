@@ -32,9 +32,9 @@ if not OPTS.check_lvsdrc:
     #     OPTS.magic_exe = None
 else:
     debug.info(1, "Finding DRC/LVS/PEX tools.")
-    OPTS.drc_exe = get_tool("DRC", ["klayout", "calibre", "assura", "magic"], drc_name)
-    OPTS.lvs_exe = get_tool("LVS", ["klayout", "calibre", "assura", "netgen"], lvs_name)
-    OPTS.pex_exe = get_tool("PEX", ["klayout", "calibre", "magic"], pex_name)
+    OPTS.drc_exe = get_tool("DRC", ["klayout", "magic", "calibre", "assura"], drc_name)
+    OPTS.lvs_exe = get_tool("LVS", ["klayout", "netgen", "calibre", "assura"], lvs_name)
+    OPTS.pex_exe = get_tool("PEX", ["klayout", "magic", "calibre"], pex_name)
     # if OPTS.tech_name == "sky130":
     #     OPTS.magic_exe = get_tool("GDS", ["magic"])
 

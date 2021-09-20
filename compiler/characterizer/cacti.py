@@ -91,14 +91,14 @@ class cacti(simulation):
                     if "power" in mname:
                         port_data[port][mname].append(power.dynamic)
                     elif "delay" in mname and port in self.read_ports:
-                        port_data[port][mname].append(total_delay.delay / 1e3)
+                        port_data[port][mname].append(total_delay.delay / 1e-9)
                     elif "slew" in mname and port in self.read_ports:
-                        port_data[port][mname].append(total_delay.slew / 1e3)
+                        port_data[port][mname].append(total_delay.slew / 1e-9)
 
         # Margin for error in period. Calculated by averaging required margin for a small and large 
         # memory. FIXME: margin is quite large, should be looked into.
         period_margin = 1.85
-        sram_data = {"min_period": (max_delay / 1e3) * 2 * period_margin,
+        sram_data = {"min_period": (max_delay / 1e-9) * 2 * period_margin,
                      "leakage_power": power.leakage}
 
         debug.info(2, "SRAM Data:\n{}".format(sram_data))

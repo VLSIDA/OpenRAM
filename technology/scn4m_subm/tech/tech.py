@@ -418,7 +418,7 @@ spice["wire_c_per_um"] = spice["wire_unit_c"]*drc["minwidth_m2"] # Unit c by m2 
 spice["wire_r_per_um"] = spice["wire_unit_r"]/drc["minwidth_m2"] # Unit r per m2 width, Ohms/um units
 spice["mobility_n"] = 444.94e8 # um^2/(V*s)
 spice["V_dsat"] = 0.256        # From CACTI 180nm tech
-spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa_inv_nmos_size"]/_lambda_)*spice["V_dsat"]
+spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa_inv_nmos_size"]/parameter["min_tx_size"])*spice["V_dsat"]
 
 
 ###################################################

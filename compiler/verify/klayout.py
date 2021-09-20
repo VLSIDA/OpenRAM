@@ -34,11 +34,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # klayout -b -r drc_FreePDK45.lydrc -rd input=sram_8_256_freepdk45.gds -rd topcell=sram_8_256_freepdk45 -rd output=drc_FreePDK45.lyrdb
 
     # Copy .lydrc file into the output directory
-    drc_file = OPTS.openram_tech + "tech/{}.lydrc".format(OPTS.tech_name)
-    if os.path.exists(drc_file):
-        shutil.copy(drc_file, output_path)
+    full_drc_file = OPTS.openram_tech + "tech/{}.lydrc".format(OPTS.tech_name)
+    drc_file = os.path.basename(full_drc_file)
+    if os.path.exists(full_drc_file):
+        shutil.copy(full_drc_file, output_path)
     else:
-        debug.warning("Could not locate file: {}".format(drc_file))
+        debug.warning("Could not locate file: {}".format(full_drc_file))
 
     # Create an auxiliary script to run calibre with the runset
     run_file = output_path + "run_drc.sh"
@@ -102,11 +103,13 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
         output_path = OPTS.openram_temp
 
     # Copy .lylvs file into the output directory
-    lvs_file = OPTS.openram_tech + "tech/{}.lylvs".format(OPTS.tech_name)
-    if os.path.exists(lvs_file):
-        shutil.copy(lvs_file, output_path)
+    full_lvs_file = OPTS.openram_tech + "tech/{}.lylvs".format(OPTS.tech_name)
+    lvs_file = os.path.basename(full_lvs_file)
+
+    if os.path.exists(full_lvs_file):
+        shutil.copy(full_lvs_file, output_path)
     else:
-        debug.warning("Could not locate file: {}".format(lvs_file))
+        debug.warning("Could not locate file: {}".format(full_lvs_file))
 
     run_file = output_path + "/run_lvs.sh"
     f = open(run_file, "w")

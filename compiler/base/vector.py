@@ -5,9 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+
 import math
 import tech
+
 
 class vector():
     """

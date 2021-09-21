@@ -5,7 +5,7 @@
   <fill-color>#ff8000</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C36</dither-pattern>
+  <dither-pattern>C35</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -22,7 +22,7 @@
   <fill-color>#00cc66</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C36</dither-pattern>
+  <dither-pattern>C35</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -39,7 +39,7 @@
   <fill-color>#0000ff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C41</dither-pattern>
+  <dither-pattern>C40</dither-pattern>
   <line-style>C1</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -56,7 +56,7 @@
   <fill-color>#0000ff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C42</dither-pattern>
+  <dither-pattern>C41</dither-pattern>
   <line-style>C1</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -73,7 +73,7 @@
   <fill-color>#00cc66</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C34</dither-pattern>
+  <dither-pattern>C33</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -84,6 +84,23 @@
   <animation>0</animation>
   <name>active.drawing - 1/0</name>
   <source>1/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#00cc66</frame-color>
+  <fill-color>#00cc66</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C34</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>active.blockage - 1/1</name>
+  <source>1/1@1</source>
  </properties>
  <properties>
   <frame-color>#00cc66</frame-color>
@@ -124,7 +141,7 @@
   <fill-color>#ff0000</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C37</dither-pattern>
+  <dither-pattern>C36</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -137,11 +154,28 @@
   <source>9/0@1</source>
  </properties>
  <properties>
+  <frame-color>#ff0000</frame-color>
+  <fill-color>#ff0000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C37</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>poly.blockage - 9/1</name>
+  <source>9/1@1</source>
+ </properties>
+ <properties>
   <frame-color>#ffff00</frame-color>
   <fill-color>#ffff00</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C43</dither-pattern>
+  <dither-pattern>C42</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -154,21 +188,38 @@
   <source>8/0@1</source>
  </properties>
  <properties>
-  <frame-color>#00cc66</frame-color>
-  <fill-color>#00cc66</fill-color>
+  <frame-color>#00ff00</frame-color>
+  <fill-color>#000000</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C1</dither-pattern>
+  <dither-pattern>I1</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>2</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
+  <name>contact.drawing - 10/0</name>
+  <source>10/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#00ff00</frame-color>
+  <fill-color>#000000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I1</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
-  <name>contact.drawing - 10/0</name>
-  <source>10/0@1</source>
+  <name>contact.blockage - 10/1</name>
+  <source>10/1@1</source>
  </properties>
  <properties>
   <frame-color>#0000ff</frame-color>
@@ -188,21 +239,72 @@
   <source>11/0@1</source>
  </properties>
  <properties>
-  <frame-color>#333399</frame-color>
-  <fill-color>#ff00ff</fill-color>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C12</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal1.blockage - 11/1</name>
+  <source>11/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C12</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal1.pin - 11/2</name>
+  <source>11/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#333399</frame-color>
+  <fill-color>#ff00ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via1.drawing - 12/0</name>
   <source>12/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#333399</frame-color>
+  <fill-color>#ff00ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via1.blockage - 12/1</name>
+  <source>12/1@1</source>
  </properties>
  <properties>
   <frame-color>#ff00ff</frame-color>
@@ -222,21 +324,72 @@
   <source>13/0@1</source>
  </properties>
  <properties>
-  <frame-color>#39bfff</frame-color>
-  <fill-color>#39bfff</fill-color>
+  <frame-color>#ff00ff</frame-color>
+  <fill-color>#ff00ff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C2</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal2.blockage - 13/1</name>
+  <source>13/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff00ff</frame-color>
+  <fill-color>#ff00ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C2</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal2.pin - 13/2</name>
+  <source>13/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via2.drawing - 14/0</name>
   <source>14/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via2.blockage - 14/1</name>
+  <source>14/1@1</source>
  </properties>
  <properties>
   <frame-color>#00ffff</frame-color>
@@ -256,28 +409,79 @@
   <source>15/0@1</source>
  </properties>
  <properties>
-  <frame-color>#ffe6bf</frame-color>
-  <fill-color>#ffe6bf</fill-color>
+  <frame-color>#00ffff</frame-color>
+  <fill-color>#00ffff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C11</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal3.blockage - 15/1</name>
+  <source>15/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#00ffff</frame-color>
+  <fill-color>#00ffff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C11</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal3.pin - 15/2</name>
+  <source>15/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via3.drawing - 16/0</name>
   <source>16/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via3.blockage - 16/1</name>
+  <source>16/1@1</source>
  </properties>
  <properties>
   <frame-color>#ffffcc</frame-color>
   <fill-color>#ffffcc</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C25</dither-pattern>
+  <dither-pattern>C24</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -290,28 +494,79 @@
   <source>17/0@1</source>
  </properties>
  <properties>
-  <frame-color>#0000ff</frame-color>
-  <fill-color>#0000ff</fill-color>
+  <frame-color>#ffffcc</frame-color>
+  <fill-color>#ffffcc</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C24</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal4.blockage - 17/1</name>
+  <source>17/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffffcc</frame-color>
+  <fill-color>#ffffcc</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C24</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal4.pin - 17/2</name>
+  <source>17/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via4.drawing - 18/0</name>
   <source>18/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via4.blockage - 18/1</name>
+  <source>18/1@1</source>
  </properties>
  <properties>
   <frame-color>#39bfff</frame-color>
   <fill-color>#39bfff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C29</dither-pattern>
+  <dither-pattern>C28</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -324,21 +579,72 @@
   <source>19/0@1</source>
  </properties>
  <properties>
-  <frame-color>#ffff00</frame-color>
-  <fill-color>#ffff00</fill-color>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C28</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal5.blockage - 19/1</name>
+  <source>19/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C28</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal5.pin - 19/2</name>
+  <source>19/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffff00</frame-color>
+  <fill-color>#ffff00</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via5.drawing - 20/0</name>
   <source>20/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffff00</frame-color>
+  <fill-color>#ffff00</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via5.blockage - 20/1</name>
+  <source>20/1@1</source>
  </properties>
  <properties>
   <frame-color>#d9cc00</frame-color>
@@ -358,21 +664,72 @@
   <source>21/0@1</source>
  </properties>
  <properties>
-  <frame-color>#ff00ff</frame-color>
-  <fill-color>#ff00ff</fill-color>
+  <frame-color>#d9cc00</frame-color>
+  <fill-color>#d9cc00</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C8</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal6.blockage - 21/1</name>
+  <source>21/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#d9cc00</frame-color>
+  <fill-color>#d9cc00</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C8</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal6.pin - 21/2</name>
+  <source>21/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff00ff</frame-color>
+  <fill-color>#ff00ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via6.drawing - 22/0</name>
   <source>22/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff00ff</frame-color>
+  <fill-color>#ff00ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via6.blockage - 22/1</name>
+  <source>22/1@1</source>
  </properties>
  <properties>
   <frame-color>#00ff00</frame-color>
@@ -392,21 +749,72 @@
   <source>23/0@1</source>
  </properties>
  <properties>
-  <frame-color>#39bfff</frame-color>
-  <fill-color>#39bfff</fill-color>
+  <frame-color>#00ff00</frame-color>
+  <fill-color>#00ff00</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C11</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal7.blockage - 23/1</name>
+  <source>23/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#00ff00</frame-color>
+  <fill-color>#00ff00</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C11</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal7.pin - 23/2</name>
+  <source>23/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via7.drawing - 24/0</name>
   <source>24/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#39bfff</frame-color>
+  <fill-color>#39bfff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via7.blockage - 24/1</name>
+  <source>24/1@1</source>
  </properties>
  <properties>
   <frame-color>#ffffff</frame-color>
@@ -426,21 +834,72 @@
   <source>25/0@1</source>
  </properties>
  <properties>
-  <frame-color>#ffffcc</frame-color>
-  <fill-color>#ffffcc</fill-color>
+  <frame-color>#ffffff</frame-color>
+  <fill-color>#ffffff</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C4</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal8.blockage - 25/1</name>
+  <source>25/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffffff</frame-color>
+  <fill-color>#ffffff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C4</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal8.pin - 25/2</name>
+  <source>25/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffffcc</frame-color>
+  <fill-color>#ffffcc</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via8.drawing - 26/0</name>
   <source>26/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffffcc</frame-color>
+  <fill-color>#ffffcc</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via8.blockage - 26/1</name>
+  <source>26/1@1</source>
  </properties>
  <properties>
   <frame-color>#ffe6bf</frame-color>
@@ -460,28 +919,79 @@
   <source>27/0@1</source>
  </properties>
  <properties>
-  <frame-color>#0000ff</frame-color>
-  <fill-color>#0000ff</fill-color>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C39</dither-pattern>
+  <dither-pattern>C6</dither-pattern>
   <line-style>C0</line-style>
-  <valid>true</valid>
+  <valid>false</valid>
   <visible>true</visible>
   <transparent>false</transparent>
   <width>1</width>
   <marked>false</marked>
   <xfill>false</xfill>
   <animation>0</animation>
+  <name>metal9.blockage - 27/1</name>
+  <source>27/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffe6bf</frame-color>
+  <fill-color>#ffe6bf</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C6</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal9.pin - 27/2</name>
+  <source>27/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>true</xfill>
+  <animation>0</animation>
   <name>via9.drawing - 28/0</name>
   <source>28/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C38</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>via9.blockage - 28/1</name>
+  <source>28/1@1</source>
  </properties>
  <properties>
   <frame-color>#ff8000</frame-color>
   <fill-color>#ff8000</fill-color>
   <frame-brightness>0</frame-brightness>
   <fill-brightness>0</fill-brightness>
-  <dither-pattern>C29</dither-pattern>
+  <dither-pattern>C28</dither-pattern>
   <line-style>C0</line-style>
   <valid>true</valid>
   <visible>true</visible>
@@ -492,6 +1002,57 @@
   <animation>0</animation>
   <name>metal10.drawing - 29/0</name>
   <source>29/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff8000</frame-color>
+  <fill-color>#ff8000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C28</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>false</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal10.blockage - 29/1</name>
+  <source>29/1@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff8000</frame-color>
+  <fill-color>#ff8000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C28</dither-pattern>
+  <line-style>C0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>3</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>metal10.pin - 29/2</name>
+  <source>29/2@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ffff00</frame-color>
+  <fill-color>#ffff00</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>C0</dither-pattern>
+  <line-style/>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>text.drawing - 230/0</name>
+  <source>230/0@1</source>
  </properties>
  <properties>
   <frame-color>#9900e6</frame-color>
@@ -510,6 +1071,142 @@
   <name>comment.drawing - 239/0</name>
   <source>239/0@1</source>
  </properties>
+ <properties>
+  <frame-color>#01ff6b</frame-color>
+  <fill-color>#01ff6b</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I3</dither-pattern>
+  <line-style>I6</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_silicon.drawing</name>
+  <source>400/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#808080</frame-color>
+  <fill-color>#808080</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I2</dither-pattern>
+  <line-style>I0</line-style>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_poly.drawing</name>
+  <source>410/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff0000</frame-color>
+  <fill-color>#ff0000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I9</dither-pattern>
+  <line-style/>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_pwell.drawing</name>
+  <source>420/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I5</dither-pattern>
+  <line-style/>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_nwell.drawing</name>
+  <source>430/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#ff0000</frame-color>
+  <fill-color>#ff0000</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I11</dither-pattern>
+  <line-style/>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_pimplant.drawing</name>
+  <source>440/0@1</source>
+ </properties>
+ <properties>
+  <frame-color>#0000ff</frame-color>
+  <fill-color>#0000ff</fill-color>
+  <frame-brightness>0</frame-brightness>
+  <fill-brightness>0</fill-brightness>
+  <dither-pattern>I7</dither-pattern>
+  <line-style/>
+  <valid>true</valid>
+  <visible>true</visible>
+  <transparent>false</transparent>
+  <width>1</width>
+  <marked>false</marked>
+  <xfill>false</xfill>
+  <animation>0</animation>
+  <name>phot_nimplant.drawing</name>
+  <source>450/0@1</source>
+ </properties>
+ <properties>
+   <frame-color>#ddff00</frame-color>
+   <fill-color>#ddff00</fill-color>
+   <frame-brightness>0</frame-brightness>
+   <fill-brightness>0</fill-brightness>
+   <dither-pattern>I9</dither-pattern>
+   <line-style/>
+   <valid>false</valid>
+   <visible>true</visible>
+   <transparent>true</transparent>
+   <width/>
+   <marked>false</marked>
+   <xfill>false</xfill>
+   <animation>0</animation>
+   <name>IP</name>
+   <source>63/63@1</source>
+  </properties>
+  <properties>
+   <frame-color>#ffffff</frame-color>
+   <fill-color/>
+   <frame-brightness>0</frame-brightness>
+   <fill-brightness>0</fill-brightness>
+   <dither-pattern>I1</dither-pattern>
+   <line-style>I1</line-style>
+   <valid>true</valid>
+   <visible>true</visible>
+   <transparent>false</transparent>
+   <width/>
+   <marked>false</marked>
+   <xfill>false</xfill>
+   <animation>0</animation>
+   <name>OUTLINE - 235/0</name>
+   <source>235/0@1</source>
+  </properties>
  <name/>
  <custom-dither-pattern>
   <pattern>
@@ -975,28 +1672,6 @@
  </custom-dither-pattern>
  <custom-dither-pattern>
   <pattern>
-   <line>*...*...*...*...</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>..*...*...*...*.</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>*...*...*...*...</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>..*...*...*...*.</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>*...*...*...*...</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>..*...*...*...*.</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>*...*...*...*...</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-   <line>..*...*...*...*.</line>
-   <line>.*.*.*.*.*.*.*.*</line>
-  </pattern>
-  <order>22</order>
-  <name>x</name>
- </custom-dither-pattern>
- <custom-dither-pattern>
-  <pattern>
    <line>*...............</line>
    <line>................</line>
    <line>................</line>
@@ -1014,7 +1689,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>23</order>
+  <order>22</order>
   <name>dot1</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1036,7 +1711,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>24</order>
+  <order>23</order>
   <name>dot2</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1058,7 +1733,7 @@
    <line>..*.....*.....*.</line>
    <line>................</line>
   </pattern>
-  <order>25</order>
+  <order>24</order>
   <name>dot3</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1080,7 +1755,7 @@
    <line>.*...*.....*....</line>
    <line>................</line>
   </pattern>
-  <order>26</order>
+  <order>25</order>
   <name>dot4</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1102,7 +1777,7 @@
    <line>........********</line>
    <line>........********</line>
   </pattern>
-  <order>27</order>
+  <order>26</order>
   <name>checker</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1124,7 +1799,7 @@
    <line>....*...*...*...</line>
    <line>...............*</line>
   </pattern>
-  <order>28</order>
+  <order>27</order>
   <name>viap</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1146,7 +1821,7 @@
    <line>.............**.</line>
    <line>..............**</line>
   </pattern>
-  <order>29</order>
+  <order>28</order>
   <name>metal1S</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1168,7 +1843,7 @@
    <line>.....*..........</line>
    <line>*..............*</line>
   </pattern>
-  <order>30</order>
+  <order>29</order>
   <name>metal2S</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1190,7 +1865,7 @@
    <line>....***.....***.</line>
    <line>......*.......*.</line>
   </pattern>
-  <order>31</order>
+  <order>30</order>
   <name>gnd2S</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1212,7 +1887,7 @@
    <line>.**......**.....</line>
    <line>..*.......*.....</line>
   </pattern>
-  <order>32</order>
+  <order>31</order>
   <name>vcc2S</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1234,7 +1909,7 @@
    <line>.**...*..**...*.</line>
    <line>..*....*..*....*</line>
   </pattern>
-  <order>33</order>
+  <order>32</order>
   <name>vcc1S</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1256,7 +1931,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>34</order>
+  <order>33</order>
   <name>poly2p</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1278,7 +1953,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>35</order>
+  <order>34</order>
   <name>contp</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1316,7 +1991,7 @@
    <line>................................</line>
    <line>................................</line>
   </pattern>
-  <order>36</order>
+  <order>35</order>
   <name>pplusp</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1354,7 +2029,7 @@
    <line>................................</line>
    <line>................................</line>
   </pattern>
-  <order>37</order>
+  <order>36</order>
   <name>wellp</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1376,7 +2051,7 @@
    <line>.*.*.*.*.*.*.*.*</line>
    <line>*.*.*.*.*.*.*.*.</line>
   </pattern>
-  <order>38</order>
+  <order>37</order>
   <name>checker1</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1398,7 +2073,7 @@
    <line>..**..**..**..**</line>
    <line>..**..**..**..**</line>
   </pattern>
-  <order>39</order>
+  <order>38</order>
   <name>checker2</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1420,7 +2095,7 @@
    <line>.***.***.***.***</line>
    <line>*.*.*.*.*.*.*.*.</line>
   </pattern>
-  <order>40</order>
+  <order>39</order>
   <name>invCross</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1458,7 +2133,7 @@
    <line>................................</line>
    <line>................................</line>
   </pattern>
-  <order>41</order>
+  <order>40</order>
   <name>wellBp</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1496,7 +2171,7 @@
    <line>...........*........*...........</line>
    <line>...........**********...........</line>
   </pattern>
-  <order>42</order>
+  <order>41</order>
   <name>wellvtg</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1534,7 +2209,7 @@
    <line>...........*.......*............</line>
    <line>...........*.......*............</line>
   </pattern>
-  <order>43</order>
+  <order>42</order>
   <name>wellvth</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1572,7 +2247,7 @@
    <line>...............*................</line>
    <line>...............*................</line>
   </pattern>
-  <order>44</order>
+  <order>43</order>
   <name>thickox</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1610,7 +2285,7 @@
    <line>................................</line>
    <line>................................</line>
   </pattern>
-  <order>45</order>
+  <order>44</order>
   <name>cwellBp</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1632,7 +2307,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>46</order>
+  <order>45</order>
   <name>capID</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1654,7 +2329,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>47</order>
+  <order>46</order>
   <name>resID</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1676,7 +2351,7 @@
    <line>................</line>
    <line>................</line>
   </pattern>
-  <order>48</order>
+  <order>47</order>
   <name>diodeID</name>
  </custom-dither-pattern>
  <custom-dither-pattern>
@@ -1698,8 +2373,15 @@
    <line>**.*.*.***.*.*.*</line>
    <line>****************</line>
   </pattern>
-  <order>49</order>
+  <order>48</order>
   <name>sgrid</name>
+ </custom-dither-pattern>
+ <custom-dither-pattern>
+  <pattern>
+   <line>*</line>
+  </pattern>
+  <order>49</order>
+  <name/>
  </custom-dither-pattern>
  <custom-line-style>
   <pattern>***</pattern>
@@ -1737,13 +2419,13 @@
   <name>hidden</name>
  </custom-line-style>
  <custom-line-style>
-  <pattern>***</pattern>
+  <pattern/>
   <order>8</order>
-  <name>thickLine</name>
+  <name/>
  </custom-line-style>
  <custom-line-style>
-  <pattern>***</pattern>
-  <order>9</order>
-  <name>mLine</name>
+  <pattern/>
+  <order>0</order>
+  <name/>
  </custom-line-style>
 </layer-properties>

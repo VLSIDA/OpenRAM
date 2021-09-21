@@ -71,15 +71,15 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     global OPTS
 
     # Copy .magicrc file into the output directory
-    magic_file = os.environ.get('OPENRAM_MAGICRC', None)
-    if not magic_file:
-        magic_file = OPTS.openram_tech + "tech/.magicrc"
+    full_magic_file = os.environ.get('OPENRAM_MAGICRC', None)
+    if not full_magic_file:
+        full_magic_file = OPTS.openram_tech + "tech/.magicrc"
 
-    if os.path.exists(magic_file):
-        shutil.copy(magic_file, output_path + "/.magicrc")
+    if os.path.exists(full_magic_file):
+        shutil.copy(full_magic_file, output_path + "/.magicrc")
     else:
-        debug.warning("Could not locate .magicrc file: {}".format(magic_file))
-    
+        debug.warning("Could not locate .magicrc file: {}".format(full_magic_file))
+
     run_file = output_path + "run_ext.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
@@ -96,7 +96,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("gds warning default\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
-    # they appear to be disconnected. 
+    # they appear to be disconnected.
     f.write("gds flatten true\n")
     f.write("gds ordering true\n")
     f.write("gds readonly true\n")
@@ -106,7 +106,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write('puts "Finished loading cell {}"\n'.format(cell_name))
     f.write("cellname delete \\(UNNAMED\\)\n")
     f.write("writeall force\n")
-    
+
     # Extract
     if not sp_name:
         f.write("port makeall\n")
@@ -142,7 +142,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
     f.write('puts "Finished ext2spice"\n')
-    
+
     f.write("quit -noprompt\n")
     f.write("EOF\n")
     f.write("magic_retcode=$?\n")
@@ -165,7 +165,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         mag_file = OPTS.openram_tech + "maglef_lib/" + blackbox_cell_name + ".mag"
         debug.check(os.path.isfile(mag_file), "Could not find blackbox cell {}".format(mag_file))
         f.write('cp {0} .\n'.format(mag_file))
-        
+
     f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write('\n')
     f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
@@ -193,7 +193,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
-    
+
 
 def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=False):
     """Run DRC check on a cell which is implemented in gds_name."""
@@ -202,9 +202,9 @@ def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=
     num_drc_runs += 1
 
     write_drc_script(cell_name, gds_name, extract, final_verification, OPTS.openram_temp, sp_name=sp_name)
-    
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "ext")
-    
+
     (outfile, errfile, resultsfile) = run_script(cell_name, "drc")
 
     # Check the result for these lines in the summary:
@@ -252,13 +252,14 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
         output_path = OPTS.openram_temp
 
     # Copy setup.tcl file into the output directory
-    setup_file = os.environ.get('OPENRAM_NETGENRC', None)
-    if not setup_file:
-        setup_file = OPTS.openram_tech + "tech/setup.tcl"
-        
-    if os.path.exists(setup_file):
+    full_setup_file = os.environ.get('OPENRAM_NETGENRC', None)
+    if not full_setup_file:
+        full_setup_file = OPTS.openram_tech + "tech/setup.tcl"
+    setup_file = os.path.basename(full_setup_file)
+
+    if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
-        shutil.copy(setup_file, output_path)
+        shutil.copy(full_setup_file, output_path)
     else:
         setup_file = 'nosetup'
 
@@ -290,7 +291,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=
 
     if not output_path:
         output_path = OPTS.openram_temp
-    
+
     write_lvs_script(cell_name, gds_name, sp_name, final_verification)
 
     (outfile, errfile, resultsfile) = run_script(cell_name, "lvs")
@@ -358,10 +359,10 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False, outp
 
     global num_pex_runs
     num_pex_runs += 1
-    
+
     if not output_path:
         output_path = OPTS.openram_temp
-    
+
     os.chdir(output_path)
 
     if not output_path:

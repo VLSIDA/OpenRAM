@@ -31,7 +31,7 @@ class lib:
             self.gnd_name = spice["ground"]
         except KeyError:
             self.gnd_name = "gnd"
-            
+
         self.out_dir = out_dir
         self.sram = sram
         self.sp_file = sp_file
@@ -60,7 +60,7 @@ class lib:
             self.load_scales = np.array(OPTS.load_scales)
             self.load = tech.spice["dff_in_cap"]
             self.loads = self.load_scales * self.load
-            
+
 
             self.slew_scales = np.array(OPTS.slew_scales)
             self.slew = tech.spice["rise_time"]
@@ -79,7 +79,7 @@ class lib:
                 self.slews.append(slew)
         self.loads = np.array(self.loads)
         self.slews = np.array(self.slews)
-        debug.info(1, "Slews: {0}".format(self.slews))    
+        debug.info(1, "Slews: {0}".format(self.slews))
         debug.info(1, "Loads: {0}".format(self.loads))
         debug.info(1, "self.load_slews : {0}".format(self.load_slews))
     def create_corners(self):
@@ -102,7 +102,7 @@ class lib:
 
         self.corners = []
         self.lib_files = []
-        
+
         if OPTS.use_specified_corners == None:
             # Nominal corner
             corner_tuples = set()
@@ -114,7 +114,7 @@ class lib:
                     for v in self.supply_voltages:
                         for t in self.temperatures:
                             corner_tuples.add((p, v, t))
-            else:    
+            else:
                 nom_corner = (nom_process, nom_supply, nom_temperature)
                 corner_tuples.add(nom_corner)
                 if not OPTS.nominal_corner_only:
@@ -132,7 +132,7 @@ class lib:
             corner_tuples.remove(nom_corner)
         else:
             corner_tuples = OPTS.use_specified_corners
-        
+
         for corner_tuple in corner_tuples:
             self.add_corner(*corner_tuple)
 
@@ -366,16 +366,16 @@ class lib:
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
-        self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
+        self.lib.write("    bit_from : {0};\n".format(self.sram.word_size - 1))
+        self.lib.write("    bit_to : 0;\n")
         self.lib.write("    }\n\n")
 
         self.lib.write("    type (addr){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
         self.lib.write("    bit_width : {0};\n".format(self.sram.addr_size))
-        self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.sram.addr_size - 1))
+        self.lib.write("    bit_from : {0};\n".format(self.sram.addr_size - 1))
+        self.lib.write("    bit_to : 0;\n")
         self.lib.write("    }\n\n")
 
         if self.sram.write_size:
@@ -383,8 +383,8 @@ class lib:
             self.lib.write("    base_type : array;\n")
             self.lib.write("    data_type : bit;\n")
             self.lib.write("    bit_width : {0};\n".format(self.sram.num_wmasks))
-            self.lib.write("    bit_from : 0;\n")
-            self.lib.write("    bit_to : {0};\n".format(self.sram.num_wmasks - 1))
+            self.lib.write("    bit_from : {0};\n".format(self.sram.num_wmasks - 1))
+            self.lib.write("    bit_to : 0;\n")
             self.lib.write("    }\n\n")
 
 
@@ -652,21 +652,21 @@ class lib:
                 probe_address = "0" + "1" * (self.sram.addr_size - 1)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.load_slews)
-            
-            
-            
+
+
+
         self.char_sram_results, self.char_port_results = char_results
         if 'sim_time' in self.char_sram_results:
             self.pred_time = self.char_sram_results['sim_time']
         # Add to the OPTS to be written out as part of the extended OPTS file
-        # FIXME: Temporarily removed from characterization output  
+        # FIXME: Temporarily removed from characterization output
         # if not self.use_model:
             # OPTS.sen_path_delays = self.char_sram_results["sen_path_measures"]
             # OPTS.sen_path_names = self.char_sram_results["sen_path_names"]
             # OPTS.bl_path_delays = self.char_sram_results["bl_path_measures"]
             # OPTS.bl_path_names = self.char_sram_results["bl_path_names"]
-  
-            
+
+
     def compute_setup_hold(self):
         """ Do the analysis if we haven't characterized a FF yet """
         # Do the analysis if we haven't characterized a FF yet
@@ -689,23 +689,23 @@ class lib:
             datasheet = open(datasheet_path +'/datasheet.info', 'w')
         else:
             datasheet = open(datasheet_path +'/datasheet.info', 'a+')
-        
+
         self.write_inp_params_datasheet(datasheet, corner, lib_name)
         self.write_signal_from_ports(datasheet,
-                                "din{1}[{0}:0]".format(self.sram.word_size - 1, '{}'), 
-                                self.write_ports, 
+                                "din{1}[{0}:0]".format(self.sram.word_size - 1, '{}'),
+                                self.write_ports,
                                 "setup_times_LH",
-                                "setup_times_HL", 
+                                "setup_times_HL",
                                 "hold_times_LH",
                                 "hold_times_HL")
-                                
+
         # self.write_signal_from_ports(datasheet,
-                                # "dout{1}[{0}:0]".format(self.sram.word_size - 1, '{}'), 
-                                # self.read_ports, 
+                                # "dout{1}[{0}:0]".format(self.sram.word_size - 1, '{}'),
+                                # self.read_ports,
                                 # "delay_lh",
-                                # "delay_hl", 
+                                # "delay_hl",
                                 # "slew_lh",
-                                # "slew_hl")      
+                                # "slew_hl")
         for port in self.all_ports:
             #dout timing
             if port in self.read_ports:
@@ -722,41 +722,41 @@ class lib:
 
                         min(list(map(round_time,self.char_port_results[port]["slew_hl"]))),
                         max(list(map(round_time,self.char_port_results[port]["slew_hl"])))
-                        ))        
+                        ))
 
         self.write_signal_from_ports(datasheet,
-                                "csb{}", 
-                                self.all_ports, 
+                                "csb{}",
+                                self.all_ports,
                                 "setup_times_LH",
-                                "setup_times_HL", 
+                                "setup_times_HL",
                                 "hold_times_LH",
                                 "hold_times_HL")
-                                
-        self.write_signal_from_ports(datasheet,
-                                "addr{1}[{0}:0]".format(self.sram.addr_size - 1, '{}'), 
-                                self.all_ports, 
-                                "setup_times_LH",
-                                "setup_times_HL", 
-                                "hold_times_LH",
-                                "hold_times_HL")                        
 
         self.write_signal_from_ports(datasheet,
-                                "web{}", 
-                                self.readwrite_ports, 
+                                "addr{1}[{0}:0]".format(self.sram.addr_size - 1, '{}'),
+                                self.all_ports,
                                 "setup_times_LH",
-                                "setup_times_HL", 
+                                "setup_times_HL",
                                 "hold_times_LH",
-                                "hold_times_HL")  
+                                "hold_times_HL")
+
+        self.write_signal_from_ports(datasheet,
+                                "web{}",
+                                self.readwrite_ports,
+                                "setup_times_LH",
+                                "setup_times_HL",
+                                "hold_times_LH",
+                                "hold_times_HL")
 
         self.write_power_datasheet(datasheet)
 
         self.write_model_params(datasheet, time)
-        
+
         datasheet.write("END\n")
         datasheet.close()
 
     def write_inp_params_datasheet(self, datasheet, corner, lib_name):
-    
+
         if OPTS.is_unit_test:
             git_id = 'FFFFFFFFFFFFFFFFFFFF'
 
@@ -776,7 +776,7 @@ class lib:
                     debug.warning("Failed to retrieve git id")
                     git_id = 'Failed to retrieve'
         current_time = datetime.date.today()
-        
+
         # write static information to be parser later
         datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16},".format(
                         OPTS.output_name,
@@ -804,8 +804,8 @@ class lib:
 
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')
-        
-    def write_signal_from_ports(self, datasheet, signal, ports, time_pos_1, time_pos_2, time_pos_3, time_pos_4):    
+
+    def write_signal_from_ports(self, datasheet, signal, ports, time_pos_1, time_pos_2, time_pos_3, time_pos_4):
         for port in ports:
             datasheet.write("{0},{1},{2},{3},{4},{5},{6},{7},{8},".format(
                     signal.format(port),
@@ -822,8 +822,8 @@ class lib:
                     max(list(map(round_time,self.times[time_pos_4])))
 
                     ))
-                    
-    def write_power_datasheet(self, datasheet):        
+
+    def write_power_datasheet(self, datasheet):
         # write power information
         for port in self.all_ports:
             name = ''
@@ -862,34 +862,30 @@ class lib:
             control_str += ' & csb{0}'.format(i)
 
         datasheet.write("{0},{1},{2},".format('leak', control_str, self.char_sram_results["leakage_power"]))
-        
+
     def write_model_params(self, datasheet, time):
         """Write values which will be used in the analytical model as inputs"""
         datasheet.write("{0},{1},".format('sim_time', time))
         datasheet.write("{0},{1},".format('words_per_row', OPTS.words_per_row))
         datasheet.write("{0},{1},".format('slews', list(self.slews)))
         datasheet.write("{0},{1},".format('loads', list(self.loads)))
-        
+
         for port in self.read_ports:
             datasheet.write("{0},{1},".format('cell_rise_{}'.format(port), self.char_port_results[port]["delay_lh"]))
             datasheet.write("{0},{1},".format('cell_fall_{}'.format(port), self.char_port_results[port]["delay_hl"]))
             datasheet.write("{0},{1},".format('rise_transition_{}'.format(port), self.char_port_results[port]["slew_lh"]))
             datasheet.write("{0},{1},".format('fall_transition_{}'.format(port), self.char_port_results[port]["slew_hl"]))
-        
+
         for port in self.write_ports:
             write1_power = np.mean(self.char_port_results[port]["write1_power"])
             write0_power = np.mean(self.char_port_results[port]["write0_power"])
             datasheet.write("{0},{1},".format('write_rise_power_{}'.format(port), write1_power))
             #FIXME: should be write_fall_power
             datasheet.write("{0},{1},".format('write_fall_power_{}'.format(port), write0_power))
-        
+
         for port in self.read_ports:
             read1_power = np.mean(self.char_port_results[port]["read1_power"])
             read0_power = np.mean(self.char_port_results[port]["read0_power"])
             datasheet.write("{0},{1},".format('read_rise_power_{}'.format(port), read1_power))
             #FIXME: should be read_fall_power
             datasheet.write("{0},{1},".format('read_fall_power_{}'.format(port), read0_power))
-        
-        
- 
-        

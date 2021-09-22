@@ -206,13 +206,13 @@ connect(metal10, metal10_pin)
 schematic.simplify
 
 if $connect_supplies
-connect_implicit("*", "vdd")
-connect_implicit("*", "gnd")
+  connect_implicit("vdd")
+  connect_implicit("gnd")
 end
 
-connect_global(pwell, "PWELL")
-connect_global(nwell, "NWELL")
-connect_global(bulk, "BULK")
+#connect_global(pwell, "PWELL")
+#connect_global(nwell, "NWELL")
+#connect_global(bulk, "BULK")
 
 for pat in %w(pinv* pnor* pnand* and?_dec* write_driver* port_address* replica_bitcell_array*)
   connect_explicit(pat, [ "NWELL", "vdd" ])

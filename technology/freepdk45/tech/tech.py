@@ -480,5 +480,8 @@ spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa
 drc_name = "calibre"
 lvs_name = "calibre"
 pex_name = "calibre"
+drc_name = "klayout"
+lvs_name = "klayout"
+pex_name = "klayout"
 
 blackbox_bitcell = False

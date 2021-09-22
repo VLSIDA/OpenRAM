@@ -205,9 +205,14 @@ connect(metal10, metal10_pin)
 # Global
 schematic.simplify
 
-connect_global(pwell, "PWELL")
-connect_global(nwell, "NWELL")
-connect_global(bulk, "BULK")
+if $connect_supplies
+  connect_implicit("vdd")
+  connect_implicit("gnd")
+end
+
+#connect_global(pwell, "PWELL")
+#connect_global(nwell, "NWELL")
+#connect_global(bulk, "BULK")
 
 #for pat in %w(pnand*_0 and2_dec_0 port_address* replica_bitcell_array)
 #  connect_explicit(pat, [ "NWELL", "vdd" ])

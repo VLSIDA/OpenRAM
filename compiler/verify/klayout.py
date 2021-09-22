@@ -41,6 +41,16 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     else:
         debug.warning("Could not locate file: {}".format(full_drc_file))
 
+    # Copy .gds file into the output directory
+    if os.path.isabs(gds_name):
+        shutil.copy(gds_name, output_path)
+        gds_name = os.path.basename(gds_name)
+
+    # Copy .sp file into the output directory
+    if sp_name and os.path.isabs(sp_name):
+        shutil.copy(sp_name, output_path)
+        sp_name = os.path.basename(sp_name)
+
     # Create an auxiliary script to run calibre with the runset
     run_file = output_path + "run_drc.sh"
     f = open(run_file, "w")
@@ -111,14 +121,29 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     else:
         debug.warning("Could not locate file: {}".format(full_lvs_file))
 
+    # Copy .gds file into the output directory
+    if os.path.isabs(gds_name):
+        shutil.copy(gds_name, output_path)
+        gds_name = os.path.basename(gds_name)
+
+    # Copy .sp file into the output directory
+    if os.path.isabs(sp_name):
+        shutil.copy(sp_name, output_path)
+        sp_name = os.path.basename(sp_name)
+
     run_file = output_path + "/run_lvs.sh"
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
-    cmd = "{0} -b -r {1} -rd input={2} -rd report={4}.lvs.report -rd schematic={3} -rd target_netlist={4}.spice".format(OPTS.lvs_exe[1],
-                                                                                                                        lvs_file,
-                                                                                                                        gds_name,
-                                                                                                                        sp_name,
-                                                                                                                        cell_name)
+    if final_verification:
+        connect_supplies = ""
+    else:
+        connect_supplies = "-rd connect_supplies=1"
+    cmd = "{0} -b -r {1} -rd input={2} -rd report={4}.lvs.report -rd schematic={3} -rd target_netlist={4}.spice {5}".format(OPTS.lvs_exe[1],
+                                                                                                                            lvs_file,
+                                                                                                                            gds_name,
+                                                                                                                            sp_name,
+                                                                                                                            cell_name,
+                                                                                                                            connect_supplies)
     f.write(cmd)
     f.write("\n")
     f.close()

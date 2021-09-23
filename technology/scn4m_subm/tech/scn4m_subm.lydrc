@@ -161,8 +161,7 @@ R27_9 = ( 2 *LAMBDA ).round(3)
 
 if !SUBM &amp;&amp; !DEEP
   R1_1 = ( 10 *LAMBDA ).round(3)
-  R1_2 = ( 6 *LAMBDA ).round(3)
-  #R1_2 = ( 9 *LAMBDA ).round(3)
+  R1_2 = ( 9 *LAMBDA ).round(3)
   R2_3 = ( 5 *LAMBDA ).round(3)
   R3_2 = ( 2 *LAMBDA ).round(3)
   R3_2_a  = ( 2 *LAMBDA ).round(3)

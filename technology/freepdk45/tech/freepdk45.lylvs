@@ -214,7 +214,7 @@ end
 #connect_global(nwell, "NWELL")
 #connect_global(bulk, "BULK")
 
-for pat in %w(pnand* and?_dec port_address* replica_bitcell_array)
+for pat in %w(pinv* pnor* pnand* and?_dec* port_address* replica_bitcell_array*)
   connect_explicit(pat, [ "NWELL", "vdd" ])
   connect_explicit(pat, [ "BULK", "PWELL", "gnd" ])
 end

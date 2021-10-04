@@ -762,7 +762,7 @@ class lib:
 
         else:
             with open(os.devnull, 'wb') as devnull:
-                # parses the mose recent git commit id - requres git is installed
+                # parses the most recent git commit id - reason for global git dependancy
                 proc = subprocess.Popen(['git','rev-parse','HEAD'], cwd=os.path.abspath(os.environ.get("OPENRAM_HOME")) + '/', stdout=subprocess.PIPE)
 
                 git_id = str(proc.stdout.read())

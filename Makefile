@@ -22,7 +22,9 @@ TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 .DEFAULT_GOAL := all
 
 # Skywater PDK SRAM library
-SRAM_LIBRARY ?= $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_bd_sram
+#SRAM_LIBRARY ?= $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_bd_sram
+SRAM_GIT_REPO ?= git@github.com:google/skywater-pdk-libs-sky130_fd_bd_sram.git
+SRAM_LIBRARY ?= $(TOP_DIR)/sky130_fd_bd_sram
 # Open PDKs
 OPEN_PDKS ?= $(PDK_ROOT)/sky130A
 
@@ -49,14 +51,21 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib lef_lib magl
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
-all: $(INSTALL_DIRS)
+
+install: $(INSTALL_DIRS)
+
+$(SRAM_LIBRARY):
+	git clone $(SRAM_GIT_REPO) $(SRAM_LIBRARY)
+
+.PHONY: $(SRAM_LIBRARY) $(INSTALL_DIRS) install
+
+all:	$(SRAM_LIBRARY)
 	@echo "Installing sky130 SRAM PDK..."
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIBRARY='$(SRAM_LIBRARY)'"
 	@echo "OPEN_PDKS='$(OPEN_PDKS)'"
+	make install
 	@true
-
-.PHONY: $(INSTALL_DIRS)
 
 $(INSTALL_BASE)/gds_lib: $(GDS_FILES)
 	@echo
@@ -132,6 +141,7 @@ $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUF
 	@echo
 
 clean:
+	rm -f $(SRAM_LIBRARY)
 	rm -f $(INSTALL_BASE)/tech/.magicrc
 	rm -f $(INSTALL_BASE)/mag_lib/.magicrc
 	rm -f $(INSTALL_BASE)/lef_lib/.magicrc

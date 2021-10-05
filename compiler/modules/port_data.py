@@ -616,7 +616,7 @@ class port_data(design.design):
             self.connect_bitlines(inst1=inst1,
                                   inst1_bls_template=inst1_bls_templ,
                                   inst2=inst2,
-                                  num_bits=self.word_size,
+                                  num_bits=self.word_size + self.num_spare_cols,
                                   inst1_start_bit=start_bit)
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):

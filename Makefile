@@ -23,10 +23,13 @@ TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # Skywater PDK SRAM library
 #SRAM_LIBRARY ?= $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_bd_sram
-SRAM_GIT_REPO ?= git@github.com:google/skywater-pdk-libs-sky130_fd_bd_sram.git
+SRAM_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 SRAM_LIBRARY ?= $(TOP_DIR)/sky130_fd_bd_sram
+
 # Open PDKs
-OPEN_PDKS ?= $(PDK_ROOT)/sky130A
+PDK_ROOT ?= $(TOP_DIR)/open_pdks
+OPEN_PDKS_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
+OPEN_PDKS ?= $(PDK_ROOT)/sky130/sky130A
 
 
 # Create lists of all the files to copy/link
@@ -57,9 +60,15 @@ install: $(INSTALL_DIRS)
 $(SRAM_LIBRARY):
 	git clone $(SRAM_GIT_REPO) $(SRAM_LIBRARY)
 
-.PHONY: $(SRAM_LIBRARY) $(INSTALL_DIRS) install
+$(OPEN_PDKS):
+	git clone $(OPEN_PDKS_REPO) $(PDK_ROOT)
+	cd $(PDK_ROOT) &&\
+	$(PDK_ROOT)/configure --enable-sky130-pdk
+	make -C $(PDK_ROOT)
 
-all:	$(SRAM_LIBRARY)
+.PHONY: $(SRAM_LIBRARY) $(OPEN_PDKS) $(INSTALL_DIRS) install
+
+all:	$(SRAM_LIBRARY) $(OPEN_PDKS)
 	@echo "Installing sky130 SRAM PDK..."
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIBRARY='$(SRAM_LIBRARY)'"
@@ -141,7 +150,8 @@ $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUF
 	@echo
 
 clean:
-	rm -f $(SRAM_LIBRARY)
+	rm -rf $(SRAM_LIBRARY)
+	rm -rf $(PDK_ROOT)
 	rm -f $(INSTALL_BASE)/tech/.magicrc
 	rm -f $(INSTALL_BASE)/mag_lib/.magicrc
 	rm -f $(INSTALL_BASE)/lef_lib/.magicrc

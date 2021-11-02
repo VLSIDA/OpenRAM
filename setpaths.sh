@@ -4,5 +4,5 @@
 # like this:
 # source setpaths.sh
 
-export OPENRAM_HOME="`pwd`/compiler"
-export OPENRAM_TECH="`pwd`/technology"
+export OPENRAM_HOME="/openram/compiler"
+export OPENRAM_TECH="/openram/technology"

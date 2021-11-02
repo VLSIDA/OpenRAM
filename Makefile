@@ -1,29 +1,11 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2020 Regents of the University of California
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# SPDX-License-Identifier: Apache-2.0
-
-# The top directory where environment will be created.
 TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+include $(TOP_DIR)/openram.mk
 
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := install
 
 # Skywater PDK SRAM library
-#SRAM_LIBRARY ?= $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_bd_sram
 SRAM_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
+SRAM_GIT_COMMIT ?= 9fa642baaf01110b59ac2783beba9a4fda03aeaf
 SRAM_LIBRARY ?= $(TOP_DIR)/sky130_fd_bd_sram
 
 # Open PDKs
@@ -55,11 +37,6 @@ INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
 
-install: $(INSTALL_DIRS)
-
-$(SRAM_LIBRARY):
-	git clone $(SRAM_GIT_REPO) $(SRAM_LIBRARY)
-
 $(OPEN_PDKS):
 	git clone $(OPEN_PDKS_REPO) $(PDK_ROOT)
 	cd $(PDK_ROOT) &&\
@@ -68,13 +45,19 @@ $(OPEN_PDKS):
 
 .PHONY: $(SRAM_LIBRARY) $(OPEN_PDKS) $(INSTALL_DIRS) install
 
-all:	$(SRAM_LIBRARY) $(OPEN_PDKS)
+install: $(SRAM_LIBRARY) $(INSTALL_DIRS) $(OPEN_PDKS)
 	@echo "Installing sky130 SRAM PDK..."
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIBRARY='$(SRAM_LIBRARY)'"
 	@echo "OPEN_PDKS='$(OPEN_PDKS)'"
 	make install
 	@true
+
+$(SRAM_LIBRARY):
+	git clone $(SRAM_GIT_REPO) $(SRAM_LIBRARY)
+
+.PHONY: $(SRAM_LIBRARY) $(INSTALL_DIRS) install
+
 
 $(INSTALL_BASE)/gds_lib: $(GDS_FILES)
 	@echo
@@ -149,7 +132,29 @@ $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUF
 	@echo "=================================================================="
 	@echo
 
-clean:
+macros:
+	cd macros && make
+
+.PHONY: macros
+
+tests:
+	docker run -v $(TOP_DIR):/openram \
+                -e OPENRAM_HOME=/openram/compiler \
+                -e OPENRAM_TECH=/openram/technology \
+                vlsida/openram-ubuntu:latest \
+                sh -c "cd /openram/compiler/tests && ./regress.py -v -k"
+.PHONY: tests
+
+
+mount:
+	docker run -it -v $(TOP_DIR):/openram \
+                -e OPENRAM_HOME=/openram/compiler \
+                -e OPENRAM_TECH=/openram/technology \
+                vlsida/openram-ubuntu:latest
+.PHONY: macros
+
+
+uninstall:
 	rm -rf $(SRAM_LIBRARY)
 	rm -rf $(PDK_ROOT)
 	rm -f $(INSTALL_BASE)/tech/.magicrc
@@ -157,3 +162,4 @@ clean:
 	rm -f $(INSTALL_BASE)/lef_lib/.magicrc
 	rm -f $(INSTALL_BASE)/maglef_lib/.magicrc
 	rm -rf $(INSTALL_DIRS)
+.PHONY: uninstall

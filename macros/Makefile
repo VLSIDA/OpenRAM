@@ -2,7 +2,12 @@ MACRO_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 TOP_DIR := $(realpath $(MACRO_DIR)/..)
 include $(TOP_DIR)/openram.mk
 
+UID = $(shell id -u)
+GID = $(shell id -g)
+
 .DEFAULT_GOAL := all
+
+SKY130_PDK ?= $(PDK_ROOT)/share/pdk/sky130A
 
 OPENRAM_OPTS := $(OPENRAM_OPTS)
 # Define `OPENRAM_FULL` in your environment to run a full characterize
@@ -51,13 +56,25 @@ all: | configs
 	@echo "Building $*"
 	@mkdir -p $*
 	docker run -v $(TOP_DIR):/openram \
-		-v $(PDK_ROOT)/share/sky130A:/sky130A \
-		-e PDK_ROOT=/ \
+		-v $(SKY130_PDK):$(SKY130_PDK) \
+		-e PDK_ROOT=$(PDK_ROOT) \
                 -e OPENRAM_HOME=/openram/compiler \
                 -e OPENRAM_TECH=/openram/technology \
 		-e OPENRAM_TMP=/openram/macros/$*/tmp \
+		--user $(UID):$(GID) \
                 vlsida/openram-ubuntu:latest \
 		python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
+
+mount:
+	docker run -it -v $(TOP_DIR):/openram \
+		-v $(SKY130_PDK):$(SKY130_PDK) \
+		-e PDK_ROOT=$(PDK_ROOT) \
+                -e OPENRAM_HOME=/openram/compiler \
+                -e OPENRAM_TECH=/openram/technology \
+		--user $(UID):$(GID) \
+                vlsida/openram-ubuntu:latest
+.PHONY: macros
+
 
 .DELETE_ON_ERROR: $(STAMPS)
 

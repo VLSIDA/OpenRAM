@@ -22,7 +22,7 @@ import getpass
 import subprocess
 
 
-VERSION = "1.1.15"
+VERSION = "1.1.18"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
 
@@ -158,6 +158,13 @@ def check_versions():
     minor_required = 5
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required, minor_required), -1)
+
+    # Verify any version of git is isntalled before proceeding
+    try:
+        subprocess.check_output(["git", "--version"])
+    except:
+        debug.error("Git is required. Please install git.")
+        sys.exit(1)
 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)

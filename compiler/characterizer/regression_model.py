@@ -55,7 +55,7 @@ class regression_model(simulation):
         A model and prediction is created for each output needed for the LIB 
         """
         
-        debug.info(1, "Characterizing SRAM using linear regression models.")
+        debug.info(1, "Characterizing SRAM using regression models.")
         log_num_words = math.log(OPTS.num_words, 2)
         model_inputs = [log_num_words, 
                         OPTS.word_size, 
@@ -149,6 +149,52 @@ class regression_model(simulation):
             output_num+=1
 
         return models
+    
+    def score_model(self):
+        num_inputs = 9 #FIXME - should be defined somewhere else
+        self.output_names = get_data_names(data_path)[num_inputs:]
+        data = get_scaled_data(data_path)
+        features, labels = data[:, :num_inputs], data[:,num_inputs:]
+
+        output_num = 0
+        models = {}
+        debug.info(1, "Output name, score")
+        for o_name in self.output_names:
+            output_label = labels[:,output_num]
+            model = self.generate_model(features, output_label)
+            scr = model.score(features, output_label)
+            debug.info(1, "{}, {}".format(o_name, scr))
+            output_num+=1
+    
+    
+    def cross_validation(self, test_only=None):
+        """Wrapper for sklean cross validation function for OpenRAM regression models.
+           Returns the mean accuracy for each model/output."""
+        
+        from sklearn.model_selection import cross_val_score
+        untrained_model = self.get_model()
+        
+        num_inputs = 9 #FIXME - should be defined somewhere else
+        self.output_names = get_data_names(data_path)[num_inputs:]
+        data = get_scaled_data(data_path)
+        features, labels = data[:, :num_inputs], data[:,num_inputs:]
+
+        output_num = 0
+        models = {}
+        debug.info(1, "Output name, mean_accuracy, std_dev")
+        model_scores = {}
+        if test_only != None:
+            test_outputs = test_only
+        else:
+            test_outputs = self.output_names
+        for o_name in test_outputs:
+            output_label = labels[:,output_num]
+            scores = cross_val_score(untrained_model, features, output_label, cv=10)
+            debug.info(1, "{}, {}, {}".format(o_name, scores.mean(), scores.std()))
+            model_scores[o_name] = scores.mean()
+            output_num+=1
+        
+        return model_scores    
     
     # Fixme - only will work for sklearn regression models
     def save_model(self, model_name, model):

@@ -11,6 +11,7 @@ import debug
 import verify
 from characterizer import functional
 from globals import OPTS, print_time
+import shutil
 
 
 class sram():
@@ -23,7 +24,7 @@ class sram():
     def __init__(self, sram_config, name):
 
         sram_config.set_local_config(self)
-                
+
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from design import design
@@ -59,6 +60,26 @@ class sram():
 
     def gds_write(self, name):
         self.s.gds_write(name)
+
+        # This addresses problems with flat GDS namespaces when we
+        # want to merge this SRAM with other SRAMs.
+        if OPTS.uniquify:
+            import gdsMill
+            gds = gdsMill.VlsiLayout()
+            reader = gdsMill.Gds2reader(gds)
+            reader.loadFromFile(name)
+
+            # Uniquify but skip the library cells since they are hard coded
+            try:
+                from tech import library_prefix_name
+            except ImportError:
+                library_prefix_name = None
+            gds.uniquify(library_prefix_name)
+
+            writer = gdsMill.Gds2writer(gds)
+            unique_name = name.replace(".gds", "_unique.gds")
+            writer.writeToFile(unique_name)
+            shutil.move(unique_name, name)
 
     def verilog_write(self, name):
         self.s.verilog_write(name)

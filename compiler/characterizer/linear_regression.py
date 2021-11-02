@@ -19,13 +19,16 @@ class linear_regression(regression_model):
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
 
+    def get_model(self):
+        return Ridge()
+
     def generate_model(self, features, labels):
         """
         Supervised training of model.
         """
         
         #model = LinearRegression()
-        model = Ridge()
+        model = self.get_model()
         model.fit(features, labels)
         return model
         

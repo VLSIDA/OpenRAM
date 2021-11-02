@@ -10,4 +10,6 @@
 **/model_data
 outputs
 technology/freepdk45/ncsu_basekit
+technology/sky130/*_lib
+technology/sky130/tech/.magicrc
 .idea

@@ -99,3 +99,8 @@ class bitcell_2port(bitcell_base.bitcell_base):
         # Port 1 edges
         graph.add_edge(pin_dict["wl1"], pin_dict["bl1"], self)
         graph.add_edge(pin_dict["wl1"], pin_dict["br1"], self)
+
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+        
+        return False

@@ -30,26 +30,29 @@ def get_config_mods(openram_dir):
     files_names = [name for name in os.listdir(openram_dir) if os.path.isfile(openram_dir+'/'+name)]
     log = [name for name in files_names if '.log' in name][0]
     dataset_name = log[:-4]
+    sys.path.append(openram_dir)
     print("Extracting dataset:{}".format(dataset_name))
      
     # Check that the config files exist (including special extended config) 
     dir_path = openram_dir+"/"
     #sys.path.append(dir_path)
-    imp_mod = None
+    #imp_mod = None
     imp_mod_extended = None
-    if not os.path.exists(openram_dir+'/'+dataset_name+".py"):
-        print("Python module for {} not found. Returning...".format(dataset_name))
-    else:
-        imp_mod = import_module(dataset_name, openram_dir+"/"+dataset_name+".py")
+    # if not os.path.exists(openram_dir+'/'+dataset_name+".py"):
+        # print("Python module for {} not found.".format(dataset_name))
+        # imp_mod = None
+    # else:
+        # imp_mod = import_module(dataset_name, openram_dir+"/"+dataset_name+".py")
         
     if not os.path.exists(openram_dir+'/'+dataset_name+extended_name+".py"):
-        print("Python module for {} not found. Returning...".format(dataset_name))
+        print("Extended Python module for {} not found.".format(dataset_name))
+        imp_mod_extended = None
     else:
         imp_mod_extended = import_module(dataset_name+extended_name, openram_dir+"/"+dataset_name+extended_name+".py")
     
     datasheet_fname = openram_dir+"/"+dataset_name+data_file_ext
     
-    return dataset_name, imp_mod, imp_mod_extended, datasheet_fname  
+    return dataset_name, imp_mod_extended, datasheet_fname  
 
 def get_corners(datafile_contents, dataset_name, tech):
     """Search through given datasheet to find all corners available"""
@@ -87,10 +90,10 @@ singlevalue_names = ['write_rise_power_0',
                     'read_rise_power_0',
                     'read_fall_power_0']                  
  
-def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_extended, mode):    
+def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, mode):    
 
     
-    writer = csv.writer(csv_file)
+    writer = csv.writer(csv_file,lineterminator='\n')
     # If the file was opened to write and not append then we write the header
     if mode == 'w':
         writer.writerow(feature_names+output_names)
@@ -117,7 +120,7 @@ def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_exten
     contents = f.read()
     f.close()                    
                   
-    available_corners = get_corners(contents, dataset_name, imp_mod_extended.tech_name)
+    available_corners = get_corners(contents, dataset_name, imp_mod.tech_name)
                   
     # Loop through corners, adding data for each corner    
     for (temp, voltage, process) in available_corners:    
@@ -183,6 +186,10 @@ def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_exten
         for dval in datasheet_multivalues+datasheet_singlevalues:
             if dval == None:
                 print("Error occurred while searching through datasheet: {}".format(datasheet_fname))
+                print("datasheet_multivalues",datasheet_multivalues)
+                print("datasheet_singlevalues",datasheet_singlevalues)
+                print("multivalue_regexs",multivalue_regexs[0])
+                sys.exit()
                 return None
 
         try:
@@ -193,7 +200,7 @@ def write_to_csv(dataset_name, csv_file, datasheet_fname, imp_mod, imp_mod_exten
         # All the extracted values are delays but val[2] is the max delay
         feature_vals = [imp_mod.num_words, 
                         imp_mod.word_size,
-                        imp_mod_extended.words_per_row,
+                        imp_mod.words_per_row,
                         las,
                         area_vals[1], 
                         process, 
@@ -224,14 +231,17 @@ def extract_data(openram_dir, out_dir, is_first):
        a CSV files with data used in model."""
 
     # Get dataset name used by all the files e.g. sram_1b_16
-    dataset_name, inp_mod, imp_mod_extended, datasheet_fname = get_config_mods(openram_dir)
+    dataset_name, inp_mod, datasheet_fname = get_config_mods(openram_dir)
+    if inp_mod == None:
+        print("Config file(s) for this run not found. Skipping...")
+        return
 
     if is_first:
         mode = 'w'
     else:
         mode = 'a+'
-    data_file = open("{}/sim_data.csv".format(out_dir), mode, newline='')
-    write_to_csv(dataset_name, data_file, datasheet_fname, inp_mod, imp_mod_extended, mode)
+    with open("{}/sim_data.csv".format(out_dir), mode, newline='\n') as data_file:
+        write_to_csv(dataset_name, data_file, datasheet_fname, inp_mod, mode)
 
     return out_dir
     

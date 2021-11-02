@@ -74,3 +74,26 @@ class nand2_dec(design.design):
         """Return input to output polarity for module"""
 
         return False
+
+    def get_on_resistance(self):
+        """On resistance of pnand, defined by stacked NMOS"""
+        is_nchannel = True
+        stack = 2
+        is_cell = False
+        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)   
+
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        return self.gate_c(self.nmos_width+self.pmos_width) 
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        nmos_stack = 2
+        mult = 1
+        nmos_drain_c =  self.drain_c_(self.nmos_width*mult, 
+                                      nmos_stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(self.pmos_width*mult, 
+                                      1,
+                                      mult)                               
+        return nmos_drain_c + pmos_drain_c     

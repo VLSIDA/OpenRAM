@@ -12,13 +12,13 @@ from .lib import *
 from .delay import *
 from .elmore import *
 from .linear_regression import *
+from .neural_network import *
 from .setup_hold import *
 from .functional import *
 from .simulation import *
 from .measurements import *
 from .model_check import *
 from .analytical_util import *
-from .regression_model import *
 
 debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""

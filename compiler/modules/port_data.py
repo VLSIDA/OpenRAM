@@ -21,24 +21,19 @@ class port_data(design.design):
     Port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="", rows=None, cols=None, dimension_override=False):
-        sram_config.set_local_config(self)
-        if dimension_override:
-            self.num_rows = rows
-            self.num_cols = cols
-            self.word_size = sram_config.word_size
+    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="",):
 
+        sram_config.set_local_config(self)
         self.port = port
         if self.write_size is not None:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
-
-        if num_spare_cols:
-            self.num_spare_cols = num_spare_cols
-        elif self.num_spare_cols is None:
+        
+        if num_spare_cols is not None:
+                self.num_spare_cols = num_spare_cols + self.num_spare_cols
+        if self.num_spare_cols is None:
             self.num_spare_cols = 0
-
         if not bit_offsets:
             bitcell = factory.create(module_type=OPTS.bitcell)
             if(cell_properties.use_strap == True and OPTS.num_ports == 1):
@@ -621,7 +616,7 @@ class port_data(design.design):
             self.connect_bitlines(inst1=inst1,
                                   inst1_bls_template=inst1_bls_templ,
                                   inst2=inst2,
-                                  num_bits=self.word_size,
+                                  num_bits=self.word_size + self.num_spare_cols,
                                   inst1_start_bit=start_bit)
 
     def route_write_driver_to_column_mux_or_precharge_array(self, port):
@@ -856,3 +851,17 @@ class port_data(design.design):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""
         if self.precharge_array_inst:
             self.graph_inst_exclude.add(self.precharge_array_inst)
+
+    def graph_exclude_column_mux(self, column_include_num):
+        """
+        Excludes all columns muxes unrelated to the target bit being simulated.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.graph_exclude_columns(column_include_num)
+            
+    def graph_clear_column_mux(self):
+        """
+        Clear mux exclusions to allow different bit tests.
+        """
+        if self.column_mux_array:
+            self.column_mux_array.init_graph_params()       

@@ -102,7 +102,7 @@ class sram_1bank(sram_base):
 
         # Place with an initial wide channel (from above)
         self.place_dffs()
-        
+
         # Route the channel and set to the new data bus size
         # We need to temporarily add some pins for the x offsets
         # but we'll remove them so that they have the right y
@@ -110,7 +110,7 @@ class sram_1bank(sram_base):
         self.add_layout_pins(add_vias=False)
         self.route_dffs(add_routes=False)
         self.remove_layout_pins()
-        
+
         # Re-place with the new channel size
         self.place_dffs()
 
@@ -270,7 +270,7 @@ class sram_1bank(sram_base):
                                 signal,
                                 signal + "{}".format(port),
                                 start_layer=pin_layer)
-                    
+
             if port in self.write_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
                     self.add_io_pin(self.data_dff_insts[port],
@@ -303,15 +303,21 @@ class sram_1bank(sram_base):
                         self.add_io_pin(self.wmask_dff_insts[port],
                                         "din_{}".format(bit),
                                         "wmask{0}[{1}]".format(port, bit),
-                                        start_layer=pin_layer)                                        
+                                        start_layer=pin_layer)
 
             if port in self.write_ports:
-                for bit in range(self.num_spare_cols):
+                if self.num_spare_cols == 1:
                     self.add_io_pin(self.spare_wen_dff_insts[port],
-                                    "din_{}".format(bit),
-                                    "spare_wen{0}[{1}]".format(port, bit),
-                                    start_layer=pin_layer)                                    
-            
+                                    "din_{}".format(0),
+                                    "spare_wen{0}".format(port),
+                                    start_layer=pin_layer)
+                else:
+                    for bit in range(self.num_spare_cols):
+                        self.add_io_pin(self.spare_wen_dff_insts[port],
+                                        "din_{}".format(bit),
+                                        "spare_wen{0}[{1}]".format(port, bit),
+                                        start_layer=pin_layer)
+
     def route_layout(self):
         """ Route a single bank SRAM """
 
@@ -328,7 +334,7 @@ class sram_1bank(sram_base):
         self.add_layout_pins()
 
         # Some technologies have an isolation
-        self.add_dnwell(inflate=2)
+        self.add_dnwell(inflate=2.5)
 
         # We need the initial bbox for the supply rings later
         # because the perimeter pins will change the bbox
@@ -351,11 +357,11 @@ class sram_1bank(sram_base):
                                  big_margin=big_margin,
                                  little_margin=little_margin)
             self.route_escape_pins(bbox)
-            
+
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
         self.route_supplies(pre_bbox)
-        
+
     def route_dffs(self, add_routes=True):
 
         for port in self.all_ports:
@@ -371,7 +377,7 @@ class sram_1bank(sram_base):
         self.route_data_dffs(port, add_routes)
 
     def route_col_addr_dffs(self, port):
-        
+
         route_map = []
 
         # column mux dff is routed on it's own since it is to the far end
@@ -412,10 +418,10 @@ class sram_1bank(sram_base):
                 self.add_inst(cr.name, cr)
                 self.connect_inst([])
                 # self.add_flat_inst(cr.name, cr)
-        
+
     def route_data_dffs(self, port, add_routes):
         route_map = []
-            
+
         # wmask dff
         if self.num_wmasks > 0 and port in self.write_ports:
             dff_names = ["dout_{}".format(x) for x in range(self.num_wmasks)]
@@ -450,9 +456,8 @@ class sram_1bank(sram_base):
                     y_bottom = min(0, self.control_logic_insts[port].get_pin("s_en").by())
                 else:
                     y_bottom = 0
-                    
+
                 y_offset = y_bottom - self.data_bus_size[port] + 2 * self.m3_pitch
-                           
                 offset = vector(self.control_logic_insts[port].rx() + self.dff.width,
                                 y_offset)
                 cr = channel_route(netlist=route_map,

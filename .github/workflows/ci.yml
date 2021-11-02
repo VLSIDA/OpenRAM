@@ -8,7 +8,7 @@ jobs:
         uses: actions/checkout@v1
       - name: SCMOS test
         run: |
-         . /home/github-runner/setup-paths.sh 
+         . /home/github-runner/setup-paths.sh
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v1
       - name: FreePDK45 test
         run: |
-         . /home/github-runner/setup-paths.sh 
+         . /home/github-runner/setup-paths.sh
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
          export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
@@ -54,4 +54,3 @@ jobs:
   #       with:
   #        name: code-coverage-report
   #        path: ${{ github.workspace }}/coverage_html/
-

@@ -45,7 +45,7 @@ class supply_tree_router(router):
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """
-        Route the two nets in a single layer. 
+        Route the two nets in a single layer.
         Setting pin stripe will make a power rail on the left side.
         """
         debug.info(1, "Running supply router on {0} and {1}...".format(vdd_name, gnd_name))
@@ -102,6 +102,16 @@ class supply_tree_router(router):
         debug.info(1, "Routing {0} with {1} pins.".format(pin_name,
                                                           remaining_components))
 
+        # Save pin center locations
+        if False:
+            debug.info(2, "Creating location file {0}_{1}.csv".format(self.cell.name, pin_name))
+            f = open("{0}_{1}.csv".format(self.cell.name, pin_name), "w")
+            pin_size = len(self.pin_groups[pin_name])
+            for index1, pg1 in enumerate(self.pin_groups[pin_name]):
+                location = list(pg1.grids)[0]
+                f.write("{0},{1},{2}\n".format(location.x, location.y, location.z))
+            f.close()
+
         # Create full graph
         debug.info(2, "Creating adjacency matrix")
         pin_size = len(self.pin_groups[pin_name])
@@ -140,8 +150,8 @@ class supply_tree_router(router):
             # if pin_name == "gnd":
             #     print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
             #     print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
-            #     self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)            
-                
+            #     self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)
+
         #self.write_debug_gds("final.gds", True)
         #return
 
@@ -153,7 +163,7 @@ class supply_tree_router(router):
         for unblock_routes in [False, True]:
             for detour_scale in [5 * pow(2, x) for x in range(5)]:
                 debug.info(2, "Routing {0} to {1} with scale {2}".format(src_idx, dest_idx, detour_scale))
-            
+
                 # Clear everything in the routing grid.
                 self.rg.reinit()
 

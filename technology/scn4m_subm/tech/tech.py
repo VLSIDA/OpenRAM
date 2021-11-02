@@ -370,9 +370,8 @@ spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
 spice["nom_threshold"] = 1.3   # Nominal Threshold voltage in Volts
-# FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
-spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
+spice["wire_unit_r"] = 0.07     # Unit wire resistance in ohms/square
+spice["wire_unit_c"] = 1.7e-17  # Unit wire capacitance F/um^2
 spice["min_tx_drain_c"] = 0.7   # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.1    # Minimum transistor gate capacitance in ff
 spice["dff_setup"] = 9        # DFF setup time in ps
@@ -402,6 +401,25 @@ parameter["sa_en_nmos_size"] = 9 * _lambda_
 parameter["sa_inv_pmos_size"] = 18 * _lambda_
 parameter["sa_inv_nmos_size"] = 9 * _lambda_
 parameter["bitcell_drain_cap"] = 0.2        # In Femto-Farad, approximation of drain capacitance
+
+# Spice Values uses to calculate analytical delay based on CACTI equations
+spice["i_on_n"] = 0.00060199 # A/um 
+spice["i_on_p"] = 0.000108   # A/um
+spice["tox"] = 0.0076          # microns
+spice["eps_ox"] = 0.00859e-14  # F/um, calculated from CACTI 180nm data 
+spice["cox"] = spice["eps_ox"]/spice["tox"] # F/um^2
+spice["c_g_ideal"] = spice["cox"]*drc["minlength_channel"] # F/um
+spice["c_overlap"] = 0.2*spice["c_g_ideal"] # F/um
+spice["c_fringe"] = 0 # F/um, not defined in this technology
+spice["cpolywire"] = 0 # F/um, replicated from CACTI which is hardcoded to 0
+spice["c_junc"] = 9.276962e-16 #F/um^2
+spice["c_junc_sw"] = 3.181055e-16 #F/um
+spice["wire_c_per_um"] = spice["wire_unit_c"]*drc["minwidth_m2"] # Unit c by m2 width,  F/um units
+spice["wire_r_per_um"] = spice["wire_unit_r"]/drc["minwidth_m2"] # Unit r per m2 width, Ohms/um units
+spice["mobility_n"] = 444.94e8 # um^2/(V*s)
+spice["V_dsat"] = 0.256        # From CACTI 180nm tech
+spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa_inv_nmos_size"]/parameter["min_tx_size"])*spice["V_dsat"]
+
 
 ###################################################
 # Technology Tool Preferences

@@ -7,7 +7,7 @@
 #
 import design
 import debug
-from tech import parameter, drc
+from tech import parameter, drc, spice
 from tech import cell_properties as props
 import logical_effort
 
@@ -79,3 +79,42 @@ class sense_amp(design.design):
         
         #FIXME: This only applied to bl/br -> dout and not s_en->dout
         return True     
+
+    def get_on_resistance(self):
+        """On resistance of pinv, defined by single nmos"""
+        is_nchannel = True
+        stack = 1
+        is_cell = False 
+        return self.tr_r_on(parameter["sa_inv_nmos_size"], is_nchannel, stack, is_cell)    
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        return self.gate_c(parameter["sa_inv_nmos_size"])     
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        stack = 1
+        mult = 1
+        # Add the inverter drain Cap and the bitline TX drain Cap
+        nmos_drain_c =  self.drain_c_(parameter["sa_inv_nmos_size"]*mult, 
+                                      stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(parameter["sa_inv_pmos_size"]*mult, 
+                                      stack,
+                                      mult)
+        
+        bitline_pmos_size = 8
+        bl_pmos_drain_c =  self.drain_c_(drc("minwidth_tx")*bitline_pmos_size, 
+                                      stack,
+                                      mult)                               
+        return nmos_drain_c + pmos_drain_c + bl_pmos_drain_c
+
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
+        """ Special RC delay function used by CACTI for sense amp delay
+        """
+        import math
+        
+        c_senseamp = extra_param_dict['load']
+        vdd = extra_param_dict['vdd'] 
+        tau = c_senseamp/spice["sa_transconductance"]
+        return tau*math.log(vdd/(0.1*vdd))

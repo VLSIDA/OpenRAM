@@ -17,7 +17,8 @@ class wire_spice_model():
 
     def cal_wire_c(self, wire_length, wire_width):
         from tech import spice
-        total_c = spice["wire_unit_c"] * wire_length * wire_width
+        # Convert the F/um^2 to fF/um^2 then multiple by width and length
+        total_c = (spice["wire_unit_c"]*1e12) * wire_length * wire_width
         wire_c = total_c / self.lump_num
         return wire_c
 

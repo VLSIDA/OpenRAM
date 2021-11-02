@@ -51,14 +51,17 @@ class pin_layout:
                 if self.same_lpp(layer_name_pp, lpp):
                     self._layer = layer_name
                     break
+                
             else:
-                for (layer_name, lpp) in valid_pin_layers.items():
-                    if not lpp:
-                        continue
-                    if self.same_lpp(layer_name_pp, lpp):
-                        self._layer = layer_name
-                        break
-                else:
+                try:
+                    from tech import layer_override
+                    from tech import layer_override_name
+                    if layer_override[name]:
+                       self.lpp = layer_override[name]
+                       self.layer = "pwellp"
+                       self._recompute_hash()
+                       return
+                except:
                     debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
 
         self.lpp = layer[self.layer]
@@ -392,6 +395,13 @@ class pin_layout:
 
         try:
             from tech import label_purpose
+            try:
+                from tech import layer_override_purpose
+                if pin_layer_num in layer_override_purpose:
+                    layer_num = layer_override_purpose[pin_layer_num][0]
+                    label_purpose = layer_override_purpose[pin_layer_num][1]
+            except:
+                pass
         except ImportError:
             label_purpose = purpose
 

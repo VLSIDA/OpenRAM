@@ -49,7 +49,7 @@ class model_delay_test(openram_test):
         debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        
+
         d = delay(s.s, tempspice, corner)
         m = elmore(s.s, tempspice, corner)
         import tech
@@ -77,9 +77,9 @@ class model_delay_test(openram_test):
         debug.info(1,"Model Delays={}".format(model_delays))
 
         if OPTS.tech_name == "freepdk45":
-            error_tolerance = 0.25
+            error_tolerance = 0.30
         elif OPTS.tech_name == "scn4m_subm":
-            error_tolerance = 0.25
+            error_tolerance = 0.30
         elif OPTS.tech_name == "tsmc18":
             error_tolerance = 0.25
         else:

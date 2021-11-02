@@ -22,7 +22,7 @@ from globals import OPTS
 class stimuli():
     """ Class for providing stimuli functions """
 
-    def __init__(self, stim_file, corner):        
+    def __init__(self, stim_file, corner):
         self.vdd_name = "vdd"
         self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]
@@ -169,7 +169,7 @@ class stimuli():
     def gen_constant(self, sig_name, v_val):
         """ Generates a constant signal with reference voltage and the voltage value """
         self.sf.write("V{0} {0} 0 DC {1}\n".format(sig_name, v_val))
-                        
+
     def get_voltage(self, value):
         if value == "0" or value == 0:
             return 0
@@ -221,7 +221,8 @@ class stimuli():
                                                                             t_final))
 
     def gen_meas_value(self, meas_name, dout, t_initial, t_final):
-        measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
+        measure_string=".meas tran {0} FIND v({1}) AT={2}n\n\n".format(meas_name.lower(), dout, (t_initial + t_final) / 2)
+        #measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
         self.sf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
@@ -236,12 +237,13 @@ class stimuli():
             reltol = 0.005 # 0.5%
         else:
             reltol = 0.001 # 0.1%
-        timestep = 10 # ps, was 5ps but ngspice was complaining the timestep was too small in certain tests.
+        timestep = 10 # ps
 
         if OPTS.spice_name == "ngspice":
             self.sf.write(".TEMP {}\n".format(self.temperature))
             # UIC is needed for ngspice to converge
-            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
+            # Format: .tran tstep tstop < tstart < tmax >>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
             # ngspice sometimes has convergence problems if not using gear method
             # which is more accurate, but slower than the default trapezoid method
             # Do not remove this or it may not converge due to some "pa_00" nodes
@@ -267,7 +269,8 @@ class stimuli():
             self.sf.write("simulator lang=spice\n")
         elif OPTS.spice_name in ["hspice", "xa"]:
             self.sf.write(".TEMP {}\n".format(self.temperature))
-            self.sf.write(".TRAN {0}p {1}n UIC\n".format(timestep, end_time))
+            # Format: .tran tstep tstop < tstart < tmax >>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p UIC\n".format(timestep, end_time))
             self.sf.write(".OPTIONS POST=1 RUNLVL={0} PROBE\n".format(runlvl))
             self.sf.write(".OPTIONS PSF=1 \n")
             self.sf.write(".OPTIONS HIER_DELIM=1 \n")
@@ -275,7 +278,9 @@ class stimuli():
             self.sf.write(".OPTIONS DEVICE TEMP={}\n".format(self.temperature))
             self.sf.write(".OPTIONS MEASURE MEASFAIL=1\n")
             self.sf.write(".OPTIONS LINSOL type=klu\n")
-            self.sf.write(".TRAN {0}p {1}n\n".format(timestep, end_time))
+            self.sf.write(".OPTIONS TIMEINT RELTOL=1e-6 ABSTOL=1e-10 method=gear minorder=2\n")
+            # Format: .TRAN <initial step> <final time> <start time> <step ceiling>
+            self.sf.write(".TRAN {0}p {1}n 0n {0}p\n".format(timestep, end_time))
         elif OPTS.spice_name:
             debug.error("Unkown spice simulator {}".format(OPTS.spice_name), -1)
 
@@ -299,19 +304,27 @@ class stimuli():
 
         self.sf.write("* {} process corner\n".format(self.process))
         for item in self.device_libraries:
+            if OPTS.spice_name:
+                item[0] = item[0].replace("SIMULATOR", OPTS.spice_name.lower())
+            else:
+                item[0] = item[0].replace("SIMULATOR", "ngspice")
             if os.path.isfile(item[0]):
                 self.sf.write(".lib \"{0}\" {1}\n".format(item[0], item[1]))
             else:
-                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]))
+                debug.error("Could not find spice library: {0}\nSet SPICE_MODEL_DIR to over-ride path.\n".format(item[0]), -1)
 
         includes = self.device_models + [circuit]
 
         for item in list(includes):
+            if OPTS.spice_name:
+                item = item.replace("SIMULATOR", OPTS.spice_name.lower())
+            else:
+                item = item.replace("SIMULATOR", "ngspice")
             self.sf.write(".include \"{0}\"\n".format(item))
 
     def add_comment(self, msg):
         self.sf.write(msg + "\n")
-        
+
     def write_supply(self):
         """ Writes supply voltage statements """
         gnd_node_name = "0"
@@ -366,10 +379,11 @@ class stimuli():
             else:
                 mpi_cmd = ""
 
-            cmd = "{0} {1} -o {3}timing.lis {2}".format(mpi_cmd,
-                                                        OPTS.spice_exe,
-                                                        temp_stim,
-                                                        OPTS.openram_temp)
+            # Xyce can save a raw file while doing timing, so keep it around
+            cmd = "{0} {1} -r {3}timing.raw -o {3}timing.lis {2}".format(mpi_cmd,
+                                                                         OPTS.spice_exe,
+                                                                         temp_stim,
+                                                                         OPTS.openram_temp)
 
             valid_retcode=0
         else:
@@ -391,7 +405,7 @@ class stimuli():
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
-        debug.info(3, cmd)
+        debug.info(2, cmd)
         retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 
         spice_stdout.close()
@@ -403,5 +417,3 @@ class stimuli():
             end_time = datetime.datetime.now()
             delta_time = round((end_time - start_time).total_seconds(), 1)
             debug.info(2, "*** Spice: {} seconds".format(delta_time))
-
-

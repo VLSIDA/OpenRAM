@@ -1,4 +1,4 @@
-TECH = freepdk45
+TECH = scn4m_subm
 CUR_DIR = $(shell pwd)
 TEST_DIR = ${CUR_DIR}/tests
 
@@ -64,12 +64,17 @@ usage: ${USAGE_TESTS}
 
 $(ALL_TESTS):
 	python3 $@ -t ${TECH}
+	
+	
 OPENRAM_TECHS = $(subst :, ,$(OPENRAM_TECH))
 TECH_DIR := $(word 1, $(foreach dir,$(OPENRAM_TECHS),$(wildcard $(dir)/$(TECH))))
 CONFIG_DIR = $(OPENRAM_HOME)/model_configs
 MODEL_CONFIGS = $(wildcard $(CONFIG_DIR)/*.py)
 SIM_DIR = $(OPENRAM_HOME)/model_data/$(TECH)
 CSV_DIR = $(TECH_DIR)/sim_data
+# Creates names of technology specific okay files for the configs
+STAMPS=$(addprefix $(SIM_DIR)/, $(addsuffix .ok, $(notdir $(basename $(MODEL_CONFIGS)))))
+
 OPTS = 
 # Characterize and perform DRC/LVS
 OPTS += -c 
@@ -80,18 +85,21 @@ OPTS += -n
 # Spice
 OPTS += -s hspice
 
-.PHONY: ${MODEL_CONFIGS}
-
 .PHONY: model
 
-model: $(MODEL_CONFIGS)
+model: $(STAMPS)
 	mkdir -p $(CSV_DIR)
 	python3 $(OPENRAM_HOME)/model_data_util.py $(SIM_DIR) $(CSV_DIR)
-	
-$(MODEL_CONFIGS):
+
+%.ok:
 	$(eval bname=$(basename $(notdir $@)))
+	$(eval config_path=$(CONFIG_DIR)/$(addsuffix .py, $(notdir $(basename $@))))
 	mkdir -p $(SIM_DIR)/$(bname)
-	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $@ 2>&1 > /dev/null
+	-python3 $(OPENRAM_HOME)/openram.py $(OPTS) -p $(SIM_DIR)/$(bname) -o $(bname) -t $(TECH) $(config_path) 2>&1 > /dev/null
+	touch $@
+
+clean_model:
+	rm -f -r $(SIM_DIR)/*.ok
 	
 clean:
 	find . -name \*.pyc -exec rm {} \;

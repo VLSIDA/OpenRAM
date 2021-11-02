@@ -53,7 +53,6 @@ class design(hierarchy_design):
             (width, height) = utils.get_libcell_size(self.cell_name,
                                                      GDS["unit"],
                                                      layer[prop.boundary_layer])
-
             self.pin_map = utils.get_libcell_pins(self.pins,
                                                   self.cell_name,
                                                   GDS["unit"])

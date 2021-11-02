@@ -10,7 +10,7 @@ import debug
 import design
 from globals import OPTS
 import logical_effort
-from tech import parameter, drc, layer
+from tech import parameter, drc, layer, spice
 
 
 class bitcell_base(design.design):
@@ -26,7 +26,6 @@ class bitcell_base(design.design):
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror
             self.end_caps = prop.end_caps
-          
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained
@@ -84,7 +83,7 @@ class bitcell_base(design.design):
             return self.storage_nets
         else:
             fmt_str = "Storage nodes={} not found in spice file."
-            debug.info(1, fmt_str.format(self.storage_nets))
+            debug.warning(fmt_str.format(self.storage_nets))
             return None
 
     def get_storage_net_offset(self):
@@ -203,3 +202,66 @@ class bitcell_base(design.design):
         debug.check(port == 0, "One port for bitcell only.")
         return "wl"
 
+    def get_on_resistance(self):
+        """On resistance of pinv, defined by single nmos"""
+        is_nchannel = True
+        stack = 2 # for access and inv tx
+        is_cell = False
+        return self.tr_r_on(drc["minwidth_tx"], is_nchannel, stack, is_cell)    
+        
+    def get_input_capacitance(self):
+        """Input cap of input, passes width of gates to gate cap function"""
+        # Input cap of both access TX connected to the wordline
+        return self.gate_c(2*parameter["6T_access_size"])      
+        
+    def get_intrinsic_capacitance(self):
+        """Get the drain capacitances of the TXs in the gate."""
+        stack = 1
+        mult = 1
+        # FIXME: Need to define TX sizes of bitcell storage node. Using 
+        # min_width as a temp value
+        
+        # Add the inverter drain Cap and the bitline TX drain Cap
+        nmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
+                                      stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
+                                      stack,
+                                      mult)
+        
+        bl_nmos_drain_c =  self.drain_c_(parameter["6T_access_size"], 
+                                         stack,
+                                         mult)              
+
+        return nmos_drain_c + pmos_drain_c + bl_nmos_drain_c    
+        
+    def module_wire_c(self):
+        """Capacitance of bitline"""
+        # FIXME: entire bitline cap is calculated here because of the current
+        # graph implementation so array dims are all re-calculated here. May
+        # be incorrect if dim calculations change 
+        cells_in_col = OPTS.num_words/OPTS.words_per_row
+        return cells_in_col*self.height*spice["wire_c_per_um"]
+
+    def module_wire_r(self):
+        """Resistance of bitline"""
+        # FIXME: entire bitline r is calculated here because of the current
+        # graph implementation so array dims are all re-calculated. May
+        # be incorrect if dim calculations change 
+        cells_in_col = OPTS.num_words/OPTS.words_per_row
+        return cells_in_col*self.height*spice["wire_r_per_um"]   
+        
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
+        """ Special RC delay function used by CACTI for bitline delay
+        """
+        import math
+        vdd = extra_param_dict['vdd'] 
+        m = vdd / inputramptime #v_wl = vdd for OpenRAM
+        # vdd == V_b_pre in OpenRAM. Bitline swing is assumed 10% of vdd
+        tstep = tf * math.log(vdd/(vdd - 0.1*vdd))
+        if tstep > 0.5*(vdd-spice["nom_threshold"])/m:
+            delay = tstep + (vdd-spice["nom_threshold"])/(2*m)
+        else:
+            delay = math.sqrt(2*tstep*(vdd-spice["nom_threshold"])/m)
+
+        return delay  

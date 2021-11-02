@@ -17,7 +17,6 @@ from wire_spice_model import wire_spice_model
 from power_data import power_data
 import logical_effort
 
-
 class spice():
     """
     This provides a set of useful generic types for hierarchy
@@ -32,7 +31,6 @@ class spice():
         # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
-
         self.sp_file = OPTS.openram_tech + "sp_lib/" + cell_name + ".sp"
 
         # If we have a separate lvs directory, then all the lvs files
@@ -420,6 +418,25 @@ class spice():
         del usedMODS
         spfile.close()
 
+    def cacti_delay(self, corner, inrisetime, c_load, cacti_params):
+        """Generalization of how Cacti determines the delay of a gate"""
+        self.cacti_params = cacti_params
+        # Get the r_on the the tx
+        rd = self.get_on_resistance()
+        # Calculate the intrinsic capacitance 
+        c_intrinsic = self.get_intrinsic_capacitance()
+        # Get wire values
+        c_wire = self.module_wire_c()
+        r_wire = self.module_wire_r()
+
+        tf = rd*(c_intrinsic+c_load+c_wire)+r_wire*(c_load+c_wire/2)
+        extra_param_dict = {}
+        extra_param_dict['vdd'] = corner[1] #voltage is second in PVT corner
+        extra_param_dict['load'] = c_wire+c_intrinsic+c_load #voltage is second in PVT corner
+        this_delay = self.cacti_rc_delay(inrisetime, tf, 0.5, 0.5, True, extra_param_dict)
+        inrisetime = this_delay / (1.0 - 0.5)
+        return delay_data(this_delay, inrisetime)
+
     def analytical_delay(self, corner, slew, load=0.0):
         """Inform users undefined delay module while building new modules"""
 
@@ -438,6 +455,18 @@ class spice():
         corner_slew = SLEW_APPROXIMATION * corner_delay
         return delay_data(corner_delay, corner_slew)
 
+    def module_wire_c(self):
+        """All devices assumed to have ideal capacitance (0).
+           Non-ideal cases should have this function re-defined. 
+        """
+        return 0
+
+    def module_wire_r(self):
+        """All devices assumed to have ideal resistance (0).
+           Non-ideal cases should have this function re-defined. 
+        """
+        return 0
+
     def get_stage_effort(self, cout, inp_is_rise=True):
         """Inform users undefined delay module while building new modules"""
         debug.warning("Design Class {0} logical effort function needs to be defined"
@@ -446,6 +475,33 @@ class spice():
                       .format(self.__class__.__name__,
                               self.cell_name))
         return None
+
+    def get_on_resistance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} on resistance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
+
+    def get_input_capacitance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} input capacitance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
+
+    def get_intrinsic_capacitance(self):
+        """Inform users undefined delay module while building new modules"""
+        debug.warning("Design Class {0} intrinsic capacitance function needs to be defined"
+                      .format(self.__class__.__name__))
+        debug.warning("Class {0} name {1}"
+                      .format(self.__class__.__name__,
+                              self.cell_name))
+        return 0
 
     def get_cin(self):
         """Returns input load in Femto-Farads. All values generated using
@@ -458,12 +514,101 @@ class spice():
 
     def input_load(self):
         """Inform users undefined relative capacitance functions used for analytical delays."""
-        debug.warning("Design Class {0} input capacitance function needs to be defined"
+        debug.warning("Design Class {0} input load function needs to be defined"
                       .format(self.__class__.__name__))
         debug.warning("Class {0} name {1}"
                       .format(self.__class__.__name__,
                               self.cell_name))
         return 0
+
+    def cacti_rc_delay(self, 
+                 inputramptime, # input rise time
+                 tf,            # time constant of gate
+                 vs1,           # threshold voltage
+                 vs2,           # threshold voltage
+                 rise,          # whether input rises or fall
+                 extra_param_dict=None):         
+        """By default, CACTI delay uses horowitz for gate delay.
+           Can be overriden in cases like bitline if equation is different.
+        """
+        return self.horowitz(inputramptime, tf, vs1, vs2, rise)
+        
+    def horowitz(self, 
+                 inputramptime, # input rise time
+                 tf,            # time constant of gate
+                 vs1,           # threshold voltage
+                 vs2,           # threshold voltage
+                 rise):         # whether input rises or fall
+
+        if inputramptime == 0 and vs1 == vs2:
+            return tf * (-math.log(vs1) if vs1 < 1 else math.log(vs1))
+
+        a = inputramptime / tf
+        if rise == True:
+            b = 0.5
+            td = tf * math.sqrt(math.log(vs1)*math.log(vs1) + 2*a*b*(1.0 - vs1)) + tf*(math.log(vs1) - math.log(vs2))
+
+        else:
+            b = 0.4
+            td = tf * math.sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
+
+        return td
+  
+    def tr_r_on(self, width, is_nchannel, stack, _is_cell):      
+        
+        restrans = self.cacti_params["r_nch_on"] if is_nchannel else self.cacti_params["r_pch_on"]
+        return stack * restrans / width
+
+    def gate_c(self, width):
+    
+        return (tech.spice["c_g_ideal"] + tech.spice["c_overlap"] + 3*tech.spice["c_fringe"])*width +\
+               tech.drc["minlength_channel"]*tech.spice["cpolywire"]
+    
+    def drain_c_(self,
+                 width,
+                 stack,
+                 folds):
+
+        c_junc_area = tech.spice["c_junc"]
+        c_junc_sidewall = tech.spice["c_junc_sw"]
+        c_fringe = 2*tech.spice["c_overlap"]
+        c_overlap = 2*tech.spice["c_fringe"]
+        drain_C_metal_connecting_folded_tr = 0
+            
+        w_folded_tr = width/folds
+        num_folded_tr = folds
+        
+        # Re-created some logic contact to get minwidth as importing the contact
+        # module causes a failure
+        if "minwidth_contact" in tech.drc:
+            contact_width = tech.drc["minwidth_contact"]
+        elif "minwidth_active_contact" in tech.drc:
+            contact_width = tech.drc["minwidth_active_contact"]
+        else:
+            debug.warning("Undefined minwidth_contact in tech.")
+            contact_width = 0
+
+        # only for drain
+        total_drain_w = (contact_width + 2 * tech.drc["active_contact_to_gate"]) +\
+                        (stack - 1) * tech.drc["poly_to_poly"]
+        drain_h_for_sidewall = w_folded_tr
+        total_drain_height_for_cap_wrt_gate = w_folded_tr + 2 * w_folded_tr * (stack - 1)
+        if num_folded_tr > 1:
+            total_drain_w += (num_folded_tr - 2) * (contact_width + 2 * tech.drc["active_contact_to_gate"]) +\
+                             (num_folded_tr - 1) * ((stack - 1) * tech.drc["poly_to_poly"])
+
+            if num_folded_tr%2 == 0:
+                drain_h_for_sidewall = 0
+        
+            total_drain_height_for_cap_wrt_gate *= num_folded_tr
+            drain_C_metal_connecting_folded_tr   = tech.spice["wire_c_per_um"] * total_drain_w
+      
+
+        drain_C_area     = c_junc_area * total_drain_w * w_folded_tr
+        drain_C_sidewall = c_junc_sidewall * (drain_h_for_sidewall + 2 * total_drain_w)
+        drain_C_wrt_gate = (c_fringe + c_overlap) * total_drain_height_for_cap_wrt_gate
+
+        return drain_C_area + drain_C_sidewall + drain_C_wrt_gate + drain_C_metal_connecting_folded_tr
 
     def cal_delay_with_rc(self, corner, r, c, slew, swing=0.5):
         """
@@ -570,6 +715,7 @@ class spice():
             net = net.lower()
             int_net = self.name_dict[net]['int_net']
             int_mod = self.name_dict[net]['mod']
+
             if int_mod.is_net_alias(int_net, alias, alias_mod, exclusion_set):
                 aliases.append(net)
         return aliases

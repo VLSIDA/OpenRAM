@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>lvs</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>lvs_scripts</group-name>
+ <menu-path>tools_menu.lvs.end</menu-path>
+ <interpreter>dsl</interpreter>
+ <dsl-interpreter-name>lvs-dsl-xml</dsl-interpreter-name>
+ <text>#
+# Extraction for freePDK45
+#
+############################
+tstart = Time.now
+
+# optionnal for a batch launch :   klayout -b -rd input=my_layout.gds -rd report=my_report.lyrdb -rd schematic=reference_netlist.cir -rd target_netlist=extracted_netlist.cir -r lvs_freepdk45.lvs
+if $input
+  source($input)
+end
+
+if $report
+  report_lvs($report)
+else
+  report_lvs("lvs_report.lvsdb")
+end
+
+if $schematic
+#reference netlist
+   schematic($schematic)
+else
+   schematic(RBA::CellView::active.filename.sub(/\.(oas|gds|oas.gz|gds.gz)$/, ".sp"))
+end
+
+# true: use net names instead of numbers
+# false: use numbers for nets
+spice_with_net_names = true
+
+# true: put in comments with details
+# false: no comments
+spice_with_comments = true
+
+if $target_netlist
+  target_netlist($target_netlist)
+else
+   # target_netlist("netlist.cir", write_spice(spice_with_net_names, spice_with_comments), "The netlist comment goes here.")
+   target_netlist(File.join(File.dirname(RBA::CellView::active.filename), source.cell_name+"_extracted.cir"), write_spice(spice_with_net_names, spice_with_comments),  "Extracted by KLayout on : #{Time.now.strftime("%d/%m/%Y %H:%M")}")
+end
+
+# Hierarchical mode
+deep
+# Use 4 CPU cores
+threads(4)
+# Print details
+verbose(true)
+
+
+# layers definitions
+########################
+active     = input(1, 0)
+pwell      = input(2, 0)
+nwell      = input(3, 0)
+nplus      = input(4, 0)
+pplus      = input(5, 0)
+vtg        = input(6, 0)
+vth        = input(7, 0)
+thkox      = input(8, 0)
+poly       = input(9, 0)
+cont       = input(10, 0)
+metal1     = input(11, 0)
+metal1_lbl     = input(11, 1)
+metal1_pin     = input(11, 2)
+via1       = input(12, 0)
+metal2     = input(13, 0)
+metal2_lbl     = input(13, 1)
+metal2_pin     = input(13, 2)
+via2       = input(14, 0)
+metal3     = input(15, 0)
+metal3_lbl     = input(15, 1)
+metal3_pin     = input(15, 2)
+via3       = input(16, 0)
+metal4     = input(17, 0)
+metal4_lbl     = input(17, 1)
+metal4_pin     = input(17, 2)
+via4       = input(18, 0)
+metal5     = input(19, 0)
+metal5_lbl     = input(19, 1)
+metal5_pin     = input(19, 2)
+via5       = input(20, 0)
+metal6     = input(21, 0)
+metal6_lbl     = input(21, 1)
+metal6_pin     = input(21, 2)
+via6       = input(22, 0)
+metal7     = input(23, 0)
+metal7_lbl     = input(23, 1)
+metal7_pin     = input(23, 2)
+via7       = input(24, 0)
+metal8     = input(25, 0)
+metal8_lbl     = input(25, 1)
+metal8_pin     = input(25, 2)
+via8       = input(26, 0)
+metal9     = input(27, 0)
+metal9_lbl     = input(27, 1)
+metal9_pin     = input(27, 2)
+via9       = input(28, 0)
+metal10    = input(29, 0)
+metal10_lbl    = input(29, 1)
+metal10_pin    = input(29, 2)
+
+# Bulk layer for terminal provisioning
+bulk        = polygon_layer
+
+# Computed layers
+active_in_nwell = active &amp; nwell
+pactive    = active_in_nwell &amp; pplus
+ntie       = active_in_nwell &amp; nplus
+pgate      = pactive &amp; poly
+psd        = pactive - pgate
+lv_pgate   = pgate - vtg - thkox
+gv_pgate   = pgate &amp; vtg - vth - thkox
+hv_pgate   = pgate - vtg - vth &amp; thkox
+
+active_in_pwell = active &amp; pwell
+nactive    = active_in_pwell &amp; nplus
+ptie       = active_in_pwell &amp; pplus
+ngate      = nactive &amp; poly
+nsd        = nactive - ngate
+lv_ngate   = ngate - vtg - thkox
+gv_ngate   = ngate &amp; vtg - vth - thkox
+hv_ngate   = ngate - vtg - vth &amp; thkox
+
+cheat("cell_6t", "dummy_cell_6t", "cell_1rw", "dummy_cell_1rw", "cell_2rw", "dummy_cell_2rw", "dff","wordline_driver_0") {
+
+# PMOS transistor device extraction
+extract_devices(mos4("PMOS_VTL"), { "SD" =&gt; psd, "G" =&gt; lv_pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })
+extract_devices(mos4("PMOS_VTG"), { "SD" =&gt; psd, "G" =&gt; gv_pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })
+extract_devices(mos4("PMOS_VTH"), { "SD" =&gt; psd, "G" =&gt; hv_pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })
+
+# NMOS transistor device extraction
+extract_devices(mos4("NMOS_VTL"), { "SD" =&gt; nsd, "G" =&gt; lv_ngate, "tS" =&gt; nsd, "tD" =&gt; nsd, "tG" =&gt; poly, "W" =&gt; pwell })
+extract_devices(mos4("NMOS_VTG"), { "SD" =&gt; nsd, "G" =&gt; gv_ngate, "tS" =&gt; nsd, "tD" =&gt; nsd, "tG" =&gt; poly, "W" =&gt; pwell })
+extract_devices(mos4("NMOS_VTH"), { "SD" =&gt; nsd, "G" =&gt; hv_ngate, "tS" =&gt; nsd, "tD" =&gt; nsd, "tG" =&gt; poly, "W" =&gt; pwell })
+
+}
+
+# Define connectivity for netlist extraction
+
+# Inter-layer
+connect(nwell,  ntie)
+connect(pwell,  ptie)
+connect(cont,   ntie)
+connect(cont,   ptie)
+connect(psd,    cont)
+connect(nsd,    cont)
+connect(poly,   cont)
+connect(cont,   metal1)
+connect(cont,   metal1)
+connect(metal1, via1)
+connect(via1,   metal2)
+connect(metal2, via2)
+connect(via2,   metal3)
+connect(metal3, via3)
+connect(via3,   metal4)
+connect(metal4, via4)
+connect(via4,   metal5)
+connect(metal5, via5)
+connect(via5,   metal6)
+connect(metal6, via6)
+connect(via6,   metal7)
+connect(metal7, via7)
+connect(via7,   metal8)
+connect(metal8, via8)
+connect(via8,   metal9)
+connect(metal9, via9)
+connect(via9,   metal10)
+# attach labels :
+connect(metal1, metal1_lbl)
+connect(metal1, metal1_pin)
+connect(metal2, metal2_lbl)
+connect(metal2, metal2_pin)
+connect(metal3, metal3_lbl)
+connect(metal3, metal3_pin)
+connect(metal4, metal4_lbl)
+connect(metal4, metal4_pin)
+connect(metal5, metal5_lbl)
+connect(metal5, metal5_pin)
+connect(metal6, metal6_lbl)
+connect(metal6, metal6_pin)
+connect(metal7, metal7_lbl)
+connect(metal7, metal7_pin)
+connect(metal8, metal8_lbl)
+connect(metal8, metal8_pin)
+connect(metal9, metal9_lbl)
+connect(metal9, metal9_pin)
+connect(metal10, metal10_lbl)
+connect(metal10, metal10_pin)
+
+
+# Global
+schematic.simplify
+
+connect_global(pwell, "PWELL")
+connect_global(nwell, "NWELL")
+connect_global(bulk, "BULK")
+
+#for pat in %w(pnand*_0 and2_dec_0 port_address* replica_bitcell_array)
+#  connect_explicit(pat, [ "NWELL", "vdd" ])
+#  connect_explicit(pat, [ "BULK", "PWELL", "gnd" ])
+#end
+
+#for pat in %w(XOR* XNOR* TLAT* TINV* TBUF* SDFF* OR* OAI*  NOR* NAND* MUX* LOGIC* INV* HA* FILLCELL*
+#              FA* DLL* DLH* DFF* DFFS* DFFR* DFFRS* CLKGATE*  CLKBUF* BUF* AOI* ANTENNA* AND*)
+#  connect_explicit(pat, [ "NWELL", "VDD" ])
+#  connect_explicit(pat, [ "BULK", "VSS" ])
+#end
+
+# Actually performs the extraction
+netlist # ... not really required
+
+# Flatten cells which are present in one netlist only
+align
+# SIMPLIFICATION of the netlist
+#netlist.make_top_level_pins
+#netlist.combine_devices
+#netlist.purge
+#netlist.purge_nets
+netlist.simplify
+
+# Tolerances for the devices extracted parameters
+#  tolerance(device_class_name, parameter_name [, :absolute =&gt; absolute_tolerance] [, :relative =&gt; relative_tolerance])
+tolerance("PMOS_LVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("PMOS_LVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("PMOS_GVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("PMOS_GVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("PMOS_HVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("PMOS_HVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_LVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_LVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_GVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_GVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_HVT", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("NMOS_HVT", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+
+#max_res(1000000)
+#min_caps(1e-15)
+
+max_branch_complexity(65536)
+max_depth(16)
+
+if ! compare
+  #raise "ERROR : Netlists don't match"
+  puts "ERROR : Netlists don't match"
+else
+  puts "CONGRATULATIONS! Netlists match."
+end
+
+# time spent for the LVS
+time = Time.now
+hours = ((time - tstart)/3600).to_i
+minutes = ((time - tstart)/60 - hours * 60).to_i
+seconds = ((time - tstart) - (minutes * 60 + hours * 3600)).to_i
+$stdout.write "LVS finished at : #{time.hour}:#{time.min}:#{time.sec}  -  LVS duration =  #{hours} hrs. #{minutes} min. #{seconds} sec.\n"</text>
+</klayout-macro>

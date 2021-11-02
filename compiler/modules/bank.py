@@ -242,7 +242,7 @@ class bank(design.design):
         # TODO: In tsmc180, is not 1.25 (dff is 6.72. crosses with the first gnd)
         mult = 1.25
         if OPTS.tech_name == "tsmc18":
-            mult = 1.5
+            mult = 1.35
         x_offset = self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
             x_offset += self.column_decoder.width + self.col_addr_bus_width

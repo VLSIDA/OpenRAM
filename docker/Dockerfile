@@ -34,7 +34,7 @@ RUN ./build.sh -qt5 \
 RUN rm -rf /root/klayout
 
 ### Magic ###
-ARG MAGIC_COMMIT=8.3.221
+ARG MAGIC_COMMIT=8.3.197
 WORKDIR /root
 RUN git clone git://opencircuitdesign.com/magic-8.3 magic
 WORKDIR /root/magic
@@ -57,7 +57,7 @@ RUN ./autogen.sh \
 RUN rm -rf /root/ngspice
 
 ### Netgen ###
-ARG NETGEN_COMMIT=1.5.194
+ARG NETGEN_COMMIT=e4a15f12fbdd3480b6adc0eeba09df269ed7b387
 WORKDIR /root
 RUN git clone git://opencircuitdesign.com/netgen-1.5 netgen
 WORKDIR /root/netgen
@@ -70,25 +70,30 @@ RUN rm -rf /root/netgen
 #ARG XYCE_COMMIT=b7bb12d81f11d8b50141262537299b09d64b5565
 #ARG TRILINOS_COMIT=
 
-# ### SET UP A GENERIC USER ###
-# WORKDIR /
-# RUN echo "cd ~" >> /etc/skel/.bashrc
-# RUN echo "source /set-paths.sh" >> /etc/skel/.bashrc
-# ADD set-paths.sh /set-paths.sh
-# RUN chmod 755 /set-paths.sh
-
 ### CLEAN UP ###
-
 # Remove development tools to save space
 RUN apt-get remove -y build-essential autoconf automake libtool bison flex  tcl-dev tk-dev
 # Cleanup to save some space
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-WORKDIR /
+
+# ### SET UP A GENERIC USER ###
+# WORKDIR /p
+# RUN echo "cd ~" >> /etc/skel/.bashrc
+# RUN echo "source /set-paths.sh" >> /etc/skel/.bashrc
+# ADD set-paths.sh /set-paths.sh
+# RUN chmod 755 /set-paths.sh
 
 ### ADD ENTRY POINT ###
 # COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 # RUN chmod 755 /usr/local/bin/entrypoint.sh
 # ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # CMD ["/bin/bash"]
+
+RUN mkdir /home/cad-user
+RUN useradd cad-user
+RUN chown -R cad-user /home/cad-user
+RUN chgrp -R cad-user /home/cad-user
+USER cad-user
+WORKDIR /home/cad-user

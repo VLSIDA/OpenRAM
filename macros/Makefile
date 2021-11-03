@@ -2,9 +2,6 @@ MACRO_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 TOP_DIR := $(realpath $(MACRO_DIR)/..)
 include $(TOP_DIR)/openram.mk
 
-UID = $(shell id -u)
-GID = $(shell id -g)
-
 .DEFAULT_GOAL := all
 
 SKY130_PDK ?= $(PDK_ROOT)/share/pdk/sky130A
@@ -42,7 +39,7 @@ BROKEN := \
 	sky130_sram_2kbyte_1rw_32x512_8 \
 	sky130_sram_4kbyte_1rw_32x1024_8 \
 
-WORKING_STAMPS=$(filter-out $(addsuffix .ok, (BROKEN)), $(STAMPS))
+WORKING_STAMPS=$(filter-out $(addsuffix .ok, $(BROKEN)), $(STAMPS))
 
 all: | configs
 	@echo
@@ -73,7 +70,7 @@ mount:
                 -e OPENRAM_TECH=/openram/technology \
 		--user $(UID):$(GID) \
                 vlsida/openram-ubuntu:latest
-.PHONY: macros
+.PHONY: mount
 
 
 .DELETE_ON_ERROR: $(STAMPS)

@@ -6,3 +6,6 @@ $(error Did not find '$(OPENRAM_COMPILER)' in '$(OPENRAM_HOME)' (from $$OPENRAM_
 endif
 export OPENRAM_HOME
 export OPENRAM_TECH
+
+UID = $(shell id -u)
+GID = $(shell id -g)

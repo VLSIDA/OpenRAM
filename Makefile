@@ -203,22 +203,24 @@ mount:
 .PHONY: mount
 
 clean:
-	rm -rf $(TEST_STAMPS)
-	rm -rf $(TEST_DIRS)
-	rm -f *.zip
+	@rm -rf $(TEST_STAMPS)
+	@rm -rf $(TEST_DIRS)
+	@rm -f *.zip
 .PHONE: clean
 
 uninstall: clean
-	rm -f $(INSTALL_BASE)/tech/.magicrc
-	rm -f $(INSTALL_BASE)/mag_lib/.magicrc
-	rm -f $(INSTALL_BASE)/lef_lib/.magicrc
-	rm -f $(INSTALL_BASE)/maglef_lib/.magicrc
-	rm -rf $(INSTALL_DIRS)
+	@rm -f $(INSTALL_BASE)/tech/.magicrc
+	@rm -f $(INSTALL_BASE)/mag_lib/.magicrc
+	@rm -f $(INSTALL_BASE)/lef_lib/.magicrc
+	@rm -f $(INSTALL_BASE)/maglef_lib/.magicrc
+	@rm -rf $(INSTALL_DIRS)
 .PHONY: uninstall
 
 # wipe the entire repos
 wipe: uninstall
-	rm -rf $(SKY130_PDK)
-	rm -rf $(SRAM_LIB_DIR)
-	rm -rf $(OPEN_PDKS_DIR)
+	@echo "Wiping PDK repos in 5 sec... (ctrl-c to quit)"
+	@sleep 5
+	@rm -rf $(SKY130_PDK)
+	@rm -rf $(SRAM_LIB_DIR)
+	@rm -rf $(OPEN_PDKS_DIR)
 .PHONY: wipe

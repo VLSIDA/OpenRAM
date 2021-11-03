@@ -145,51 +145,6 @@ macros:
 
 .PHONY: macros
 
-TEST_DIR = $(TOP_DIR)/compiler/tests
-TEST_SRCS=$(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
-TEST_DIRS=$(basename $(TEST_SRCS))
-TEST_STAMPS=$(addsuffix .ok,$(TEST_DIRS))
-
-TEST_BROKEN := \
-	sky130_sram_1kbyte_1r1w_8x1024_8 \
-	sky130_sram_1kbyte_1rw_32x256_8 \
-	sky130_sram_2kbyte_1rw_32x512_8 \
-	sky130_sram_4kbyte_1rw_32x1024_8 \
-
-WORKING_TEST_STAMPS=$(filter-out $(addsuffix .ok, (TEST_BROKEN)), $(TEST_STAMPS))
-
-$(TEST_DIRS):
-	@$(MAKE) --no-print-directory $@.ok
-
-tests:
-	@echo "Running the following tests"
-	@for S in $(WORKING_TEST_STAMPS); do echo " - $$S"; done
-	$(MAKE) $(WORKING_TEST_STAMPS)
-.PHONY: tests
-
-%.ok: compiler/tests/%.py
-	@mkdir -p $*
-	@docker run -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
-		-e OPENRAM_TMP=/openram/$* \
-		--user $(UID):$(GID) \
-                vlsida/openram-ubuntu:latest \
-		python3 -u /openram/compiler/tests/$*.py -v -k && touch $@
-
-.DELETE_ON_ERROR: $(TEST_STAMPS)
-
-regress:
-	@docker run -v $(TOP_DIR):/openram \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
-		--user $(UID):$(GID) \
-		vlsida/openram-ubuntu:latest \
-                sh -c "python3 -u /openram/compiler/tests/regress.py"
-.PHONY: regress
-
 mount:
 	@docker run -it -v $(TOP_DIR):/openram \
 		-v $(SKY130_PDK):$(SKY130_PDK) \
@@ -201,8 +156,6 @@ mount:
 .PHONY: mount
 
 clean:
-	@rm -rf $(TEST_STAMPS)
-	@rm -rf $(TEST_DIRS)
 	@rm -f *.zip
 .PHONE: clean
 

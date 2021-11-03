@@ -457,10 +457,10 @@ parameter["sa_inv_nmos_size"] = 0.27        # micro-meters
 parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of drain capacitance
 
 # Spice Values uses to calculate analytical delay based on CACTI equations
-spice["i_on_n"] = 0.0004463 # A/um 
+spice["i_on_n"] = 0.0004463 # A/um
 spice["i_on_p"] = 0.0000771   # A/um
 spice["tox"] = 0.00114        # microns
-spice["eps_ox"] = 0.00245e-14  # F/um, calculated from CACTI 45nm data 
+spice["eps_ox"] = 0.00245e-14  # F/um, calculated from CACTI 45nm data
 spice["cox"] = spice["eps_ox"]/spice["tox"] # F/um^2
 spice["c_g_ideal"] = spice["cox"]*drc["minlength_channel"] # F/um
 spice["c_overlap"] = 0.2*spice["c_g_ideal"] # F/um
@@ -477,8 +477,11 @@ spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa
 # Technology Tool Preferences
 ###################################################
 
-drc_name = "calibre"
-lvs_name = "calibre"
-pex_name = "calibre"
+#drc_name = "calibre"
+#lvs_name = "calibre"
+#pex_name = "calibre"
+drc_name = "klayout"
+lvs_name = "klayout"
+pex_name = "klayout"
 
 blackbox_bitcell = False

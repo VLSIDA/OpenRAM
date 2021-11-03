@@ -209,16 +209,10 @@ connect_global(pwell, "PWELL")
 connect_global(nwell, "NWELL")
 connect_global(bulk, "BULK")
 
-#for pat in %w(pnand*_0 and2_dec_0 port_address* replica_bitcell_array)
-#  connect_explicit(pat, [ "NWELL", "vdd" ])
-#  connect_explicit(pat, [ "BULK", "PWELL", "gnd" ])
-#end
-
-#for pat in %w(XOR* XNOR* TLAT* TINV* TBUF* SDFF* OR* OAI*  NOR* NAND* MUX* LOGIC* INV* HA* FILLCELL*
-#              FA* DLL* DLH* DFF* DFFS* DFFR* DFFRS* CLKGATE*  CLKBUF* BUF* AOI* ANTENNA* AND*)
-#  connect_explicit(pat, [ "NWELL", "VDD" ])
-#  connect_explicit(pat, [ "BULK", "VSS" ])
-#end
+for pat in %w(pnand* and2_dec* port_address* replica_bitcell_array)
+  connect_explicit(pat, [ "NWELL", "vdd" ])
+  connect_explicit(pat, [ "BULK", "PWELL", "gnd" ])
+end
 
 # Actually performs the extraction
 netlist # ... not really required

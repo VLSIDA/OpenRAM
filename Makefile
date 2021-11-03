@@ -202,23 +202,23 @@ mount:
                 vlsida/openram-ubuntu:latest
 .PHONY: mount
 
-
-testclean:
+clean:
 	rm -rf $(TEST_STAMPS)
 	rm -rf $(TEST_DIRS)
-	rm *.zip
-.PHONE: testclean
+	rm -f *.zip
+.PHONE: clean
 
-clean:
-	rm -rf $(SKY130_PDK)
+uninstall: clean
 	rm -f $(INSTALL_BASE)/tech/.magicrc
 	rm -f $(INSTALL_BASE)/mag_lib/.magicrc
 	rm -f $(INSTALL_BASE)/lef_lib/.magicrc
 	rm -f $(INSTALL_BASE)/maglef_lib/.magicrc
 	rm -rf $(INSTALL_DIRS)
-.PHONY: clean
+.PHONY: uninstall
 
-uninstall: clean
+# wipe the entire repos
+wipe: uninstall
+	rm -rf $(SKY130_PDK)
 	rm -rf $(SRAM_LIB_DIR)
 	rm -rf $(OPEN_PDKS_DIR)
-.PHONY: uninstall
+.PHONY: wipe

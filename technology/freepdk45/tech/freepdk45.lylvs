@@ -135,7 +135,7 @@ lv_ngate   = ngate - vtg - thkox
 gv_ngate   = ngate &amp; vtg - vth - thkox
 hv_ngate   = ngate - vtg - vth &amp; thkox
 
-cheat("cell_6t", "dummy_cell_6t", "cell_1rw", "dummy_cell_1rw", "cell_2rw", "dummy_cell_2rw", "dff","wordline_driver_0") {
+cheat("cell_6t", "dummy_cell_6t", "cell_1rw", "dummy_cell_1rw", "replica_cell_1rw", "cell_2rw", "dummy_cell_2rw", "replica_cell_2rw", "dff","wordline_driver*") {
 
 # PMOS transistor device extraction
 extract_devices(mos4("PMOS_VTL"), { "SD" =&gt; psd, "G" =&gt; lv_pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })
@@ -206,13 +206,13 @@ connect(metal10, metal10_pin)
 schematic.simplify
 
 if $connect_supplies
-  connect_implicit("vdd")
-  connect_implicit("gnd")
+connect_implicit("*", "vdd")
+connect_implicit("*", "gnd")
 end
 
-#connect_global(pwell, "PWELL")
-#connect_global(nwell, "NWELL")
-#connect_global(bulk, "BULK")
+connect_global(pwell, "PWELL")
+connect_global(nwell, "NWELL")
+connect_global(bulk, "BULK")
 
 for pat in %w(pinv* pnor* pnand* and?_dec* write_driver* port_address* replica_bitcell_array*)
   connect_explicit(pat, [ "NWELL", "vdd" ])

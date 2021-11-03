@@ -164,14 +164,12 @@ $(TEST_DIRS):
 tests:
 	@echo "Running the following tests"
 	@for S in $(WORKING_TEST_STAMPS); do echo " - $$S"; done
-	@sleep 5
 	$(MAKE) $(WORKING_TEST_STAMPS)
 .PHONY: tests
 
 %.ok: compiler/tests/%.py
-	@echo "Testing $*"
 	@mkdir -p $*
-	docker run -v $(TOP_DIR):/openram \
+	@docker run -v $(TOP_DIR):/openram \
 		-v $(SKY130_PDK):$(SKY130_PDK) \
 		-e PDK_ROOT=$(PDK_ROOT) \
                 -e OPENRAM_HOME=/openram/compiler \
@@ -184,7 +182,7 @@ tests:
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
 regress:
-	docker run -v $(TOP_DIR):/openram \
+	@docker run -v $(TOP_DIR):/openram \
                 -e OPENRAM_HOME=/openram/compiler \
                 -e OPENRAM_TECH=/openram/technology \
 		--user $(UID):$(GID) \
@@ -193,7 +191,7 @@ regress:
 .PHONY: regress
 
 mount:
-	docker run -it -v $(TOP_DIR):/openram \
+	@docker run -it -v $(TOP_DIR):/openram \
 		-v $(SKY130_PDK):$(SKY130_PDK) \
 		-e PDK_ROOT=$(PDK_ROOT) \
                 -e OPENRAM_HOME=/openram/compiler \

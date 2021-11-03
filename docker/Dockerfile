@@ -57,7 +57,7 @@ RUN ./autogen.sh \
 RUN rm -rf /root/ngspice
 
 ### Netgen ###
-ARG NETGEN_COMMIT=e4a15f12fbdd3480b6adc0eeba09df269ed7b387
+ARG NETGEN_COMMIT=88d53fab15eb611cffc024eebf8743fae5cf8cb7
 WORKDIR /root
 RUN git clone git://opencircuitdesign.com/netgen-1.5 netgen
 WORKDIR /root/netgen

@@ -94,7 +94,7 @@ class pand4(pgate.pgate):
             self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
 
             # Extension of the imp in both n and p for tsmc18
-            if OPTS.tech_name == "tsmc18":
+            if OPTS.tech_name in ["tsmc18", "lapis20"]:
                 pmos_rightmost_nand = self.nand_inst.mod.pmos4_pos
                 pmos_leftmost_inv = self.inv_inst.mod.inv_inst_list[0].mod.pmos_pos + vector(self.nand_inst.rx(), 0)
                 nmos_rightmost_nand = self.nand_inst.mod.nmos4_pos

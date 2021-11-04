@@ -255,7 +255,7 @@ class column_mux(pgate.pgate):
                           height=self.height)
 
         # TSMC18 gate port hack
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             # Body connection
             min_area = drc["minarea_{}".format(self.active_stack[0])]
             width = round_to_grid(self.well_contact.mod.first_layer_width)

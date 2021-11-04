@@ -241,7 +241,7 @@ class bank(design.design):
         # may be routed in M3 or M4
         # TODO: In tsmc180, is not 1.25 (dff is 6.72. crosses with the first gnd)
         mult = 1.25
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             mult = 1.35
         x_offset = self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:
@@ -289,7 +289,7 @@ class bank(design.design):
         # may be routed in M3 or M4
         # TODO: In tsmc180, is not 1.25 (dff is 6.72. crosses with the first gnd)
         mult = 1.25
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             mult = 1.5
         x_offset = self.bitcell_array_right  + self.central_bus_width[port] + self.port_address[port].wordline_driver_array.width
         if self.col_addr_size > 0:

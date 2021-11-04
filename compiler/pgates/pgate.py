@@ -143,7 +143,7 @@ class pgate(design.design):
         height = via.mod.second_layer_height
         offset = contact_offset
         # TODO: Put this in a function?
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             cur_layer = "poly"
             while cur_layer != self.route_layer:
                 from_id = layer_indices[cur_layer]
@@ -298,7 +298,7 @@ class pgate(design.design):
         #               height=implant_height)
 
         # TSMC18 gate port hack
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             min_area = drc["minarea_{}".format(self.active_stack[0])]
             width = round_to_grid(self.nwell_contact.mod.first_layer_width)
             height = round_to_grid(min_area / width)
@@ -429,7 +429,7 @@ class pgate(design.design):
         #               height=implant_height)
 
         # TSMC18 gate port hack
-        if OPTS.tech_name == "tsmc18":
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             min_area = drc["minarea_{}".format(self.active_stack[0])]
             width = round_to_grid(self.pwell_contact.mod.first_layer_width)
             height = round_to_grid(min_area / width)

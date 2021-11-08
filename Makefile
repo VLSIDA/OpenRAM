@@ -15,7 +15,7 @@ SRAM_LIB_GIT_COMMIT ?= main
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
 OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.156
-SKY130_PDK ?= $(PDK_ROOT)/share/pdk/sky130A
+SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
 # Create lists of all the files to copy/link
 GDS_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.gds))
@@ -47,10 +47,12 @@ $(OPEN_PDKS_DIR):
 $(SKY130_PDK): $(OPEN_PDKS_DIR)
 	@echo "Installing open_pdks..."
 	cd $(OPEN_PDKS_DIR) &&\
-	./configure --prefix=$(PDK_ROOT) --enable-sky130-pdk  \
-	--disable-openlane --disable-irsim --disable-xschem --disable-qflow
-	@sleep 5
-	make -C $(OPEN_PDKS_DIR) install
+	./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries  \
+	--disable-openlane --disable-irsim --disable-xschem --disable-qflow &&\
+	cd sky130 && \
+	make veryclean && \
+	make && \
+	make SHARED_PDKS_PATH=$(PDK_ROOT) install
 
 install: $(SRAM_LIB_DIR) $(SKY130_PDK) $(INSTALL_DIRS)
 	@echo "Installing sky130 SRAM PDK..."
@@ -171,7 +173,7 @@ uninstall: clean
 wipe: uninstall
 	@echo "Wiping PDK repos in 5 sec... (ctrl-c to quit)"
 	@sleep 5
-	@rm -rf $(SKY130_PDK)
-	@rm -rf $(SRAM_LIB_DIR)
-	@rm -rf $(OPEN_PDKS_DIR)
+	rm -rf $(SKY130_PDK)
+	rm -rf $(SRAM_LIB_DIR)
+	rm -rf $(OPEN_PDKS_DIR)
 .PHONY: wipe

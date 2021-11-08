@@ -21,7 +21,7 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 
 # OpenPDK needed for magicrc, tech file and spice models of transistors
 if 'PDK_ROOT' in os.environ:
-    open_pdks = os.path.join(os.environ['PDK_ROOT'], 'share', 'pdk', 'sky130A', 'libs.tech')
+    open_pdks = os.path.join(os.environ['PDK_ROOT'], 'sky130A', 'libs.tech')
 else:
     raise SystemError("Unable to find open_pdks tech file. Set PDK_ROOT.")
 

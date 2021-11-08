@@ -118,7 +118,7 @@ ngate      = nactive &amp; poly
 nsd        = nactive - ngate
 
 
-cheat("cell_1rw", "dummy_cell_1rw", "cell_2rw", "dummy_cell_2rw", "pbitcell", "dummy_pbitcell", "dff") {
+cheat("cell_1rw", "dummy_cell_1rw", "replica_cell_1rw", "cell_2rw", "dummy_cell_2rw", "replica_cell_2rw", "pbitcell", "dummy_pbitcell", "replica_pbitcell", "dff", "wordline_driver*") {
 
 # PMOS transistor device extraction
 extract_devices(mos4("p"), { "SD" =&gt; psd, "G" =&gt; pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })

@@ -425,7 +425,6 @@ class pbitcell(bitcell_base.bitcell_base):
                              width=self.width)
         self.add_power_pin("gnd", vector(0, gnd_ypos), directions=("H", "H"))
 
-
         vdd_ypos = self.inverter_nmos_ypos \
                    + self.inverter_nmos.active_height \
                    + self.inverter_gap \
@@ -1013,7 +1012,7 @@ class pbitcell(bitcell_base.bitcell_base):
             well_height = max_nmos_well_height + self.port_ypos \
                           - self.nwell_enclose_active - self.gnd_position.y
             # FIXME fudge factor xpos
-            well_width = self.width + 2*self.nwell_enclose_active
+            well_width = self.width + 2 * self.nwell_enclose_active
             offset = vector(self.leftmost_xpos - self.nwell_enclose_active, self.botmost_ypos)
             self.add_rect(layer="pwell",
                           offset=offset,
@@ -1163,7 +1162,7 @@ class pbitcell(bitcell_base.bitcell_base):
             return
 
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
-        
+
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
         r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
@@ -1172,4 +1171,3 @@ class pbitcell(bitcell_base.bitcell_base):
             for wl, bl, br in pin_zip:
                 graph.add_edge(pin_dict[wl], pin_dict[bl], self)
                 graph.add_edge(pin_dict[wl], pin_dict[br], self)
-

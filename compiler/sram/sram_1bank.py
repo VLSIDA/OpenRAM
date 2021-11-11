@@ -365,8 +365,6 @@ class sram_1bank(sram_base):
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
         self.route_supplies(pre_bbox)
-        print(bbox)
-        print(pre_bbox)
 
     def route_dffs(self, add_routes=True):
 

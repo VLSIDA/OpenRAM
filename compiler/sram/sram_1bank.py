@@ -350,17 +350,23 @@ class sram_1bank(sram_base):
                 big_margin = 6 * rt.track_width
                 little_margin = 0
 
-            pre_bbox = self.get_bbox(side="ring",
-                                     big_margin=rt.track_width)
+            if OPTS.supply_pin_type == "multiple":
+                pre_bbox = self.get_bbox(side="multiple") # NOTE: This will not add anything
+                bbox = pre_bbox
+            else:
+                pre_bbox = self.get_bbox(side="ring",
+                                         big_margin=rt.track_width)
+                bbox = self.get_bbox(side=OPTS.supply_pin_type,
+                                     big_margin=big_margin,
+                                     little_margin=little_margin)
 
-            bbox = self.get_bbox(side=OPTS.supply_pin_type,
-                                 big_margin=big_margin,
-                                 little_margin=little_margin)
             self.route_escape_pins(bbox)
 
         # Route the supplies first since the MST is not blockage aware
         # and signals can route to anywhere on sides (it is flexible)
         self.route_supplies(pre_bbox)
+        print(bbox)
+        print(pre_bbox)
 
     def route_dffs(self, add_routes=True):
 

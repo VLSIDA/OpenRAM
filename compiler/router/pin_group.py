@@ -552,7 +552,11 @@ class pin_group:
                         connected_set.add(cur_shape)
 
         # Remove the original shape
-        connected_set.remove(shape)
+        # NOTE: Normally the shape_list has only 1 shape, and "shape" is the same
+        # That means we do not need to remove the original shape
+        # Is highly improbable, but has happened in tsmc18 and lapis20
+        if shape in connected_set and len(connected_set) > 1:
+            connected_set.remove(shape)
 
         # if len(connected_set)<len(shape_list):
         #     import pprint

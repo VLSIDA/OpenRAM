@@ -169,11 +169,12 @@ class supply_grid_router(router):
                 # Explore all directions
                 for dir in dirs:
                     pt = grid + dir
+                    debug.info(3, "    trying pt {0}".format(pt))
                     if pt in wire_tracks and pt not in self.blocked_grids:
                         # Contruct the path
                         path = [grid, pt]
                         abs_path = [self.convert_point_to_units(x) for x in path]
-                        debug.info(3, "Adding easy route {0} {1}->{2}, {3}".format(pin_name, grid, pt, abs_path))
+                        debug.info(3, "  Adding easy route {0} {1}->{2}, {3}".format(pin_name, grid, pt, abs_path))
                         routed_count += 1
                         pg.set_routed()
                         self.cell.add_route(layers=self.layers,

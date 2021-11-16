@@ -26,21 +26,25 @@ things that need to be fixed.
 
 # Basic Setup
 
+## Docker
+
+We have a [docker setup](./docker) to run OpenRAM.
+
 ## Dependencies
 
 The OpenRAM compiler has very few dependencies:
-+ [Ngspice] 26 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later) or [Xyce] 7.2 (or later)
-+ Python 3.5 or higher
++ [Ngspice] 34 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later) or [Xyce] 7.4 (or later)
++ Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
 + [Git]
 
 If you want to perform DRC and LVS, you will need either:
 + Calibre (for [FreePDK45])
-+ [Magic] 8.3.130 or newer
-+ [Netgen] 1.5.164 or newer
++ [Magic] 8.3.197 or newer
++ [Netgen] 1.5.195 or newer
 
-You must set two environment variables: 
-+ OPENRAM\_HOME should point to the compiler source directory. 
+You must set two environment variables:
++ OPENRAM\_HOME should point to the compiler source directory.
 + OPENERAM\_TECH should point to one or more root technology directories (colon separated).
 
 ## Environment
@@ -58,24 +62,15 @@ You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
   export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
 ```
 
-We include the tech files necessary for [SCMOS] SCN4M_SUBM. The
-[SCMOS] spice models, however, are generic and should be replaced with
-foundry models.  If you are using [FreePDK45], you should also have
-that set up and have the environment variable point to the PDK. For
-example add this to your .bashrc:
-
-```
-  export FREEPDK45="/bsoe/software/design-kits/FreePDK45"
-```
-
-You may get the entire [FreePDK45 PDK here][FreePDK45].
-If you are using [SCMOS], you should install [Magic] and [Netgen].
-We have included the most recent SCN4M_SUBM design rules from [Qflow].
+We include the tech files necessary for [SCMOS] SCN4M_SUBM,
+[FreePDK45], and [Sky130]. The [SCMOS] spice models, however, are
+generic and should be replaced with foundry models. You may get the
+entire [FreePDK45 PDK here][FreePDK45].
 
 # Basic Usage
 
-Once you have defined the environment, you can run OpenRAM from the command line 
-using a single configuration file written in Python. 
+Once you have defined the environment, you can run OpenRAM from the command line
+using a single configuration file written in Python.
 
 For example, create a file called *myconfig.py* specifying the following
 parameters for your memory:
@@ -119,7 +114,7 @@ $OPENRAM\_HOME/options.py
 # Unit Tests
 
 Regression testing  performs a number of tests for all modules in OpenRAM.
-From the unit test directory ($OPENRAM\_HOME/tests), 
+From the unit test directory ($OPENRAM\_HOME/tests),
 use the following command to run all regression tests:
 
 ```
@@ -127,16 +122,16 @@ use the following command to run all regression tests:
 ```
 To run a specific test:
 ```
-   python3 {unit test}.py 
+   python3 {unit test}.py
 ```
-The unit tests take the same arguments as openram.py itself. 
+The unit tests take the same arguments as openram.py itself.
 
 To increase the verbosity of the test, add one (or more) -v options:
 ```
    python3 tests/00_code_format_check_test.py -v -t freepdk45
 ```
 To specify a particular technology use "-t <techname>" such as
-"-t freepdk45". The default for a unit test is scn4m_subm. 
+"-t freepdk45". The default for a unit test is scn4m_subm.
 The default for openram.py is specified in the configuration file.
 
 
@@ -144,7 +139,7 @@ The default for openram.py is specified in the configuration file.
 
 If you want to support a new technology, you will need to create:
 + a setup script for each technology you want to use
-+ a technology directory for each technology with the base cells 
++ a technology directory for each technology with the base cells
 
 We provide two technology examples for [SCMOS] and [FreePDK45]. Each
 specific technology (e.g., [FreePDK45]) should be a subdirectory
@@ -154,10 +149,10 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
   * sense_amp.gds
   * write_driver.gds
   * cell_1rw.gds
-  * replica\_cell\_1rw.gds 
-  * dummy\_cell\_1rw.gds 
+  * replica\_cell\_1rw.gds
+  * dummy\_cell\_1rw.gds
 * sp_lib folder with all the .sp (premade) library netlists for the above cells.
-* layers.map 
+* layers.map
 * A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:
   * References in tech.py to spice models
   * DRC/LVS rules needed for dynamic cells and routing
@@ -169,7 +164,7 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
 
 + Report bugs by submitting [Github issues].
 + Develop new features (see [how to contribute](./CONTRIBUTING.md))
-+ Submit code/fixes using a [Github pull request] 
++ Submit code/fixes using a [Github pull request]
 + Follow our [project][Github project].
 + Read and cite our [ICCAD paper][OpenRAMpaper]
 
@@ -181,7 +176,7 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
 
-# License 
+# License
 
 OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
@@ -203,7 +198,7 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
-[Github project]:       https://github.com/VLSIDA/OpenRAM
+[Github project]:         https://github.com/VLSIDA/OpenRAM
 
 [documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
@@ -218,8 +213,8 @@ If I forgot to add you, please let me know!
 [Xyce]:                  http://xyce.sandia.gov/
 [Git]:                   https://git-scm.com/
 
-[OSUPDK]:                https://vlsiarch.ecen.okstate.edu/flow/
 [FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
+[Sky130]:                https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 
 [Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LWZiYWMwNjNkZThmYTdkODc3NDE1NDhjNzUxNDhmMDQ4ZTM3NDgwNWFlNjM5NWFiZDkyMzBlNzc1NTg3ZjllNTY

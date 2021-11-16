@@ -67,6 +67,11 @@ We include the tech files necessary for [SCMOS] SCN4M_SUBM,
 generic and should be replaced with foundry models. You may get the
 entire [FreePDK45 PDK here][FreePDK45].
 
+To install [Sky130], simply run:
+```
+make install
+```
+
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line
@@ -111,6 +116,12 @@ python3 $OPENRAM_HOME/openram.py myconfig
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
 
+To run designs in Docker, it is suggested to use, for example:
+```
+cd openram/macros
+make example_config_scn4m_subm
+```
+
 # Unit Tests
 
 Regression testing  performs a number of tests for all modules in OpenRAM.
@@ -118,50 +129,28 @@ From the unit test directory ($OPENRAM\_HOME/tests),
 use the following command to run all regression tests:
 
 ```
-   python3 regress.py
+cd openram/compiler/tests
+make regress
 ```
+
 To run a specific test:
 ```
-   python3 {unit test}.py
+ce openram/compiler/tests
+make 05_bitcell_array_test
 ```
-The unit tests take the same arguments as openram.py itself.
 
-To increase the verbosity of the test, add one (or more) -v options:
+To increase the verbosity of the test, add one (or more) -v options and
+pass it as an argument to OpenRAM:
 ```
-   python3 tests/00_code_format_check_test.py -v -t freepdk45
+make 05_bitcell_array_test ARGS="-v -t scn4m_subm"
 ```
 To specify a particular technology use "-t <techname>" such as
 "-t freepdk45". The default for a unit test is scn4m_subm.
 The default for openram.py is specified in the configuration file.
 
-
-# Porting to a New Technology
-
-If you want to support a new technology, you will need to create:
-+ a setup script for each technology you want to use
-+ a technology directory for each technology with the base cells
-
-We provide two technology examples for [SCMOS] and [FreePDK45]. Each
-specific technology (e.g., [FreePDK45]) should be a subdirectory
-(e.g., $OPENRAM_TECH/freepdk45) and include certain folders and files:
-* gds_lib folder with all the .gds (premade) library cells:
-  * dff.gds
-  * sense_amp.gds
-  * write_driver.gds
-  * cell_1rw.gds
-  * replica\_cell\_1rw.gds
-  * dummy\_cell\_1rw.gds
-* sp_lib folder with all the .sp (premade) library netlists for the above cells.
-* layers.map
-* A valid tech Python module (tech directory with \_\_init\_\_.py and tech.py) with:
-  * References in tech.py to spice models
-  * DRC/LVS rules needed for dynamic cells and routing
-  * Layer information
-  * Spice and supply information
-  * etc.
-
 # Get Involved
 
++ [Port it](./PORTING.md) to a new technology.
 + Report bugs by submitting [Github issues].
 + Develop new features (see [how to contribute](./CONTRIBUTING.md))
 + Submit code/fixes using a [Github pull request]

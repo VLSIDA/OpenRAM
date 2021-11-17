@@ -4,7 +4,7 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := all
 
-SKY130_PDK ?= $(PDK_ROOT)/share/pdk/sky130A
+SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
 OPENRAM_OPTS := $(OPENRAM_OPTS)
 # Define `OPENRAM_FULL` in your environment to run a full characterize

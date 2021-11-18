@@ -177,13 +177,16 @@ class column_mux_array(design.design):
             # height to connect the gate to the correct horizontal row
             # sel_height = self.get_pin("sel_{}".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate
+            
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
+
+            bl_offset = offset + vector((self.mux_inst[col].get_pin("br_out").bc().x - self.mux_inst[col].get_pin("bl_out").bc().x)/2, 0)
             self.add_via_stack_center(from_layer="poly",
                                       to_layer=self.sel_layer,
-                                      offset=offset,
+                                      offset=bl_offset,
                                       directions=self.via_directions)
-            self.add_path("poly", [offset, gate_offset])
+            self.add_path("poly", [offset, gate_offset, bl_offset])
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """

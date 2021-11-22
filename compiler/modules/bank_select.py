@@ -78,20 +78,15 @@ class bank_select(design.design):
 
         # 1x Inverter
         self.inv_sel = factory.create(module_type="pinv", height=height)
-        self.add_mod(self.inv_sel)
 
         # 4x Inverter
         self.inv4x = factory.create(module_type="pinv", height=height, size=4)
-        self.add_mod(self.inv4x)
 
         self.nor2 = factory.create(module_type="pnor2", height=height)
-        self.add_mod(self.nor2)
 
         self.inv4x_nor = factory.create(module_type="pinv", height=height, size=4)
-        self.add_mod(self.inv4x_nor)
 
         self.nand2 = factory.create(module_type="pnand2", height=height)
-        self.add_mod(self.nand2)
 
     def calculate_module_offsets(self):
 

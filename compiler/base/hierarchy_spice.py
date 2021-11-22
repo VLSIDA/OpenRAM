@@ -45,10 +45,10 @@ class spice():
             self.lvs_file = lvs_dir + cell_name + ".sp"
         else:
             self.lvs_file = self.sp_file
-        
+
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
-        self.mods = []
+        self.mods = set()
         # Holds the pins for this module (in order)
         self.pins = []
         # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
@@ -128,7 +128,7 @@ class spice():
 
         new_list = [input_list[x] for x in self.pin_indices]
         return new_list
-        
+
     def add_pin_types(self, type_list):
         """
         Add pin types for all the cell's pins.
@@ -140,7 +140,7 @@ class spice():
                       \n Module names={}\
                       ".format(self.name, self.pins, type_list), 1)
         self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
-    
+
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         pin_type = self.pin_type[name]
@@ -187,10 +187,6 @@ class spice():
                 inout_list.append(pin)
         return inout_list
 
-    def add_mod(self, mod):
-        """Adds a subckt/submodule to the subckt hierarchy"""
-        self.mods.append(mod)
-
     def connect_inst(self, args, check=True):
         """
         Connects the pins of the last instance added
@@ -199,13 +195,13 @@ class spice():
         where we dynamically generate groups of connections after a
         group of modules are generated.
         """
-        
+
         num_pins = len(self.insts[-1].mod.pins)
         num_args = len(args)
 
         # Order the arguments if the hard cell has a custom port order
         ordered_args = self.get_ordered_inputs(args)
-        
+
         if (check and num_pins != num_args):
             if num_pins < num_args:
                 mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
@@ -372,15 +368,15 @@ class spice():
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
-                
+
                 # Instance with no devices in it needs no subckt/instance
                 if self.insts[i].mod.no_instances:
                     continue
-                
+
                 # If this is a trimmed netlist, skip it by adding comment char
                 if trim and self.insts[i].name in self.trim_insts:
                     sp.write("* ")
-                    
+
                 if lvs and hasattr(self.insts[i].mod, "lvs_device"):
                     sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
                                                                    " ".join(self.conns[i])))

@@ -93,7 +93,6 @@ class pdriver(pgate.pgate):
                                       height=self.height,
                                       add_wells=self.add_wells)
             self.inv_list.append(temp_inv)
-            self.add_mod(temp_inv)
 
     def create_insts(self):
         self.inv_inst_list = []

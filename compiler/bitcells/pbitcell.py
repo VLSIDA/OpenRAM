@@ -179,26 +179,21 @@ class pbitcell(bitcell_base.bitcell_base):
         # create ptx for inverter transistors
         self.inverter_nmos = ptx(width=inverter_nmos_width,
                                  tx_type="nmos")
-        self.add_mod(self.inverter_nmos)
 
         self.inverter_pmos = ptx(width=inverter_pmos_width,
                                  tx_type="pmos")
-        self.add_mod(self.inverter_pmos)
 
         # create ptx for readwrite transitors
         self.readwrite_nmos = ptx(width=readwrite_nmos_width,
                                   tx_type="nmos")
-        self.add_mod(self.readwrite_nmos)
 
         # create ptx for write transitors
         self.write_nmos = ptx(width=write_nmos_width,
                               tx_type="nmos")
-        self.add_mod(self.write_nmos)
 
         # create ptx for read transistors
         self.read_nmos = ptx(width=read_nmos_width,
                              tx_type="nmos")
-        self.add_mod(self.read_nmos)
 
     def calculate_spacing(self):
         """ Calculate transistor spacings """

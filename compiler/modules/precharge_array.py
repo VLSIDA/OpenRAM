@@ -76,8 +76,7 @@ class precharge_array(design.design):
                                       size=self.size,
                                       bitcell_bl=self.bitcell_bl,
                                       bitcell_br=self.bitcell_br)
-                                      
-        self.add_mod(self.pc_cell)
+
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def add_layout_pins(self):
@@ -130,5 +129,3 @@ class precharge_array(design.design):
 
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
-
-

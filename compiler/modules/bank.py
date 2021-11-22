@@ -389,7 +389,6 @@ class bank(design.design):
             self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
 
         self.port_address = []
         for port in self.all_ports:
@@ -397,7 +396,6 @@ class bank(design.design):
                                                     cols=self.num_cols + self.num_spare_cols,
                                                     rows=self.num_rows,
                                                     port=port))
-            self.add_mod(self.port_address[port])
 
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
@@ -407,11 +405,9 @@ class bank(design.design):
                                       port=port,
                                       bit_offsets=self.bit_offsets)
             self.port_data.append(temp_pre)
-            self.add_mod(self.port_data[port])
 
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
-            self.add_mod(self.bank_select)
 
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
@@ -547,7 +543,6 @@ class bank(design.design):
         else:
             # No error checking before?
             debug.error("Invalid column decoder?", -1)
-        self.add_mod(self.column_decoder)
 
         self.column_decoder_inst = [None] * len(self.all_ports)
         for port in self.all_ports:

@@ -43,9 +43,6 @@ class pand3(pgate.pgate):
                                   height=self.height,
                                   add_wells=self.add_wells)
 
-        self.add_mod(self.nand)
-        self.add_mod(self.inv)
-
     def create_layout(self):
         if self.vertical:
             self.height = 2 * self.nand.height

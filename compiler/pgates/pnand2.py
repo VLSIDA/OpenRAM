@@ -79,7 +79,6 @@ class pnand2(pgate.pgate):
                                         tx_type="nmos",
                                         add_source_contact=self.route_layer,
                                         add_drain_contact="active")
-        self.add_mod(self.nmos_left)
 
         self.nmos_right = factory.create(module_type="ptx",
                                          width=self.nmos_width,
@@ -87,7 +86,6 @@ class pnand2(pgate.pgate):
                                          tx_type="nmos",
                                          add_source_contact="active",
                                          add_drain_contact=self.route_layer)
-        self.add_mod(self.nmos_right)
 
         self.pmos_left = factory.create(module_type="ptx",
                                         width=self.pmos_width,
@@ -95,7 +93,6 @@ class pnand2(pgate.pgate):
                                         tx_type="pmos",
                                         add_source_contact=self.route_layer,
                                         add_drain_contact=self.route_layer)
-        self.add_mod(self.pmos_left)
 
         self.pmos_right = factory.create(module_type="ptx",
                                          width=self.pmos_width,
@@ -103,7 +100,6 @@ class pnand2(pgate.pgate):
                                          tx_type="pmos",
                                          add_source_contact=self.route_layer,
                                          add_drain_contact=self.route_layer)
-        self.add_mod(self.pmos_right)
 
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """
@@ -317,28 +313,26 @@ class pnand2(pgate.pgate):
 
     def is_non_inverting(self):
         """Return input to output polarity for module"""
-        
         return False
-        
+
     def get_on_resistance(self):
         """On resistance of pnand, defined by stacked NMOS"""
         is_nchannel = True
         stack = 2
         is_cell = False
-        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)    
-        
+        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)
+
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
-        return self.gate_c(self.nmos_width+self.pmos_width)  
+        return self.gate_c(self.nmos_width+self.pmos_width)
 
     def get_intrinsic_capacitance(self):
         """Get the drain capacitances of the TXs in the gate."""
         nmos_stack = 2
-        nmos_drain_c =  self.drain_c_(self.nmos_width*self.tx_mults, 
+        nmos_drain_c =  self.drain_c_(self.nmos_width*self.tx_mults,
                                       nmos_stack,
                                       self.tx_mults)
-        pmos_drain_c =  self.drain_c_(self.pmos_width*self.tx_mults, 
+        pmos_drain_c =  self.drain_c_(self.pmos_width*self.tx_mults,
                                       1,
-                                      self.tx_mults)                               
-        return nmos_drain_c + pmos_drain_c  
-        
+                                      self.tx_mults)
+        return nmos_drain_c + pmos_drain_c

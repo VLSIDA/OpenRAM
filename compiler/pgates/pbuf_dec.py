@@ -52,12 +52,10 @@ class pbuf_dec(pgate.pgate):
         self.inv1 = factory.create(module_type="pinv_dec",
                                    size=input_size,
                                    height=self.height)
-        self.add_mod(self.inv1)
 
         self.inv2 = factory.create(module_type="pinv_dec",
                                    size=self.size,
                                    height=self.height)
-        self.add_mod(self.inv2)
 
     def create_insts(self):
         self.inv1_inst = self.add_inst(name="buf_inv1",

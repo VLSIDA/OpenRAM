@@ -145,12 +145,10 @@ class port_address(design.design):
 
         self.row_decoder = factory.create(module_type="decoder",
                                           num_outputs=self.num_rows)
-        self.add_mod(self.row_decoder)
 
         self.wordline_driver_array = factory.create(module_type="wordline_driver_array",
                                                     rows=self.num_rows,
                                                     cols=self.num_cols)
-        self.add_mod(self.wordline_driver_array)
 
         local_array_size = OPTS.local_array_size
         if local_array_size > 0:
@@ -173,8 +171,6 @@ class port_address(design.design):
             self.rbl_driver = factory.create(module_type="and2_dec",
                                              size=driver_size,
                                              height=b.height)
-
-        self.add_mod(self.rbl_driver)
 
     def create_row_decoder(self):
         """  Create the hierarchical row decoder  """
@@ -235,7 +231,7 @@ class port_address(design.design):
         # The wordline driver also had an extra gap on the right, so use this offset
         well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
         x_offset = self.wordline_driver_array_inst.rx() - well_gap - self.rbl_driver.width
-        
+
         if self.port == 0:
             rbl_driver_offset = vector(x_offset,
                                        0)

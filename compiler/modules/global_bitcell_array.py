@@ -64,7 +64,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                 rbl=self.rbl,
                                 left_rbl=[0],
                                 right_rbl=[1] if len(self.all_ports) > 1 else [])
-            self.add_mod(la)
             self.local_mods.append(la)
             return
 
@@ -90,7 +89,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     cols=cols,
                                     rbl=self.rbl)
 
-            self.add_mod(la)
             self.local_mods.append(la)
 
     def add_pins(self):
@@ -344,4 +342,3 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         """Exclude dffs from graph as they do not represent critical path"""
 
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
-

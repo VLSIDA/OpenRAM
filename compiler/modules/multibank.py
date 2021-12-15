@@ -172,47 +172,36 @@ class multibank(design.design):
 
         self.bitcell_array = self.mod_bitcell_array(cols=self.num_cols,
                                                     rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
 
         self.precharge_array = self.mod_precharge_array(columns=self.num_cols)
-        self.add_mod(self.precharge_array)
 
         if self.col_addr_size > 0:
             self.column_mux_array = self.mod_column_mux_array(columns=self.num_cols,
                                                               word_size=self.word_size)
-            self.add_mod(self.column_mux_array)
 
 
         self.sense_amp_array = self.mod_sense_amp_array(word_size=self.word_size,
                                                         words_per_row=self.words_per_row)
-        self.add_mod(self.sense_amp_array)
 
         if self.write_size:
             self.write_mask_driver_array = self.mod_write_mask_driver_array(columns=self.num_cols,
                                                                   word_size=self.word_size,
                                                                   write_size=self.write_size)
-            self.add_mod(self.write_mask_driver_array)
         else:
             self.write_driver_array = self.mod_write_driver_array(columns=self.num_cols,
                                                                   word_size=self.word_size)
-            self.add_mod(self.write_driver_array)
 
         self.row_decoder = self.mod_decoder(rows=self.num_rows)
-        self.add_mod(self.row_decoder)
 
         self.tri_gate_array = self.mod_tri_gate_array(columns=self.num_cols,
                                                       word_size=self.word_size)
-        self.add_mod(self.tri_gate_array)
 
         self.wordline_driver = self.mod_wordline_driver(rows=self.num_rows)
-        self.add_mod(self.wordline_driver)
 
         self.inv = pinv()
-        self.add_mod(self.inv)
 
         if(self.num_banks > 1):
             self.bank_select = self.mod_bank_select()
-            self.add_mod(self.bank_select)
 
 
     def add_bitcell_array(self):

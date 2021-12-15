@@ -68,7 +68,6 @@ class dff_buf_array(design.design):
         self.dff = factory.create(module_type="dff_buf",
                                   inv1_size=self.inv1_size,
                                   inv2_size=self.inv2_size)
-        self.add_mod(self.dff)
 
     def create_dff_array(self):
         self.dff_insts={}

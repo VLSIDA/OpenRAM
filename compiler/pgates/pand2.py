@@ -39,9 +39,6 @@ class pand2(pgate.pgate):
                                   height=self.height,
                                   add_wells=self.add_wells)
 
-        self.add_mod(self.nand)
-        self.add_mod(self.inv)
-
     def create_layout(self):
         if self.vertical:
             self.height = 2 * self.nand.height
@@ -146,8 +143,8 @@ class pand2(pgate.pgate):
                                             offset=pin.center(),
                                             width=pin.width(),
                                             height=pin.height())
-    
+
     def is_non_inverting(self):
         """Return input to output polarity for module"""
-        
+
         return True

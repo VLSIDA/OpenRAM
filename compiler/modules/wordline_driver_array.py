@@ -65,8 +65,6 @@ class wordline_driver_array(design.design):
         self.wl_driver = factory.create(module_type="wordline_driver",
                                         cols=self.cols)
 
-        self.add_mod(self.wl_driver)
-
     def route_vdd_gnd(self):
         """
         Add a pin for each row of vdd/gnd which

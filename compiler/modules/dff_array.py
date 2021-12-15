@@ -48,7 +48,6 @@ class dff_array(design.design):
 
     def add_modules(self):
         self.dff = factory.create(module_type="dff")
-        self.add_mod(self.dff)
 
     def add_pins(self):
         for row in range(self.rows):

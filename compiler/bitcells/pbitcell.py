@@ -179,26 +179,21 @@ class pbitcell(bitcell_base.bitcell_base):
         # create ptx for inverter transistors
         self.inverter_nmos = ptx(width=inverter_nmos_width,
                                  tx_type="nmos")
-        self.add_mod(self.inverter_nmos)
 
         self.inverter_pmos = ptx(width=inverter_pmos_width,
                                  tx_type="pmos")
-        self.add_mod(self.inverter_pmos)
 
         # create ptx for readwrite transitors
         self.readwrite_nmos = ptx(width=readwrite_nmos_width,
                                   tx_type="nmos")
-        self.add_mod(self.readwrite_nmos)
 
         # create ptx for write transitors
         self.write_nmos = ptx(width=write_nmos_width,
                               tx_type="nmos")
-        self.add_mod(self.write_nmos)
 
         # create ptx for read transistors
         self.read_nmos = ptx(width=read_nmos_width,
                              tx_type="nmos")
-        self.add_mod(self.read_nmos)
 
     def calculate_spacing(self):
         """ Calculate transistor spacings """
@@ -425,7 +420,6 @@ class pbitcell(bitcell_base.bitcell_base):
                              width=self.width)
         self.add_power_pin("gnd", vector(0, gnd_ypos), directions=("H", "H"))
 
-
         vdd_ypos = self.inverter_nmos_ypos \
                    + self.inverter_nmos.active_height \
                    + self.inverter_gap \
@@ -474,6 +468,7 @@ class pbitcell(bitcell_base.bitcell_base):
                                                          mod=self.readwrite_nmos)
             self.connect_inst([self.Q_bar,
                                self.rw_wl_names[k], br_name, "gnd"])
+
 
     def place_readwrite_ports(self):
         """ Places read/write ports in the bit cell """
@@ -528,6 +523,21 @@ class pbitcell(bitcell_base.bitcell_base):
                                             layer="m2",
                                             offset=self.rwbr_positions[k],
                                             height=self.height)
+
+            if self.dummy_bitcell:
+                bl_name = self.rw_bl_names[k]
+                br_name = self.rw_br_names[k]
+                bl_name += "_noconn"
+                br_name += "_noconn"
+
+                # This helps with LVS matching in klayout
+                drain_pin = self.readwrite_nmos_left[k].get_pin("S")
+                self.add_label(bl_name, drain_pin.layer, drain_pin.center())
+
+                # This helps with LVS matching in klayout
+                source_pin = self.readwrite_nmos_right[k].get_pin("D")
+                self.add_label(br_name, source_pin.layer, source_pin.center())
+
 
         # update furthest left and right transistor edges
         self.left_building_edge = left_readwrite_transistor_xpos
@@ -625,6 +635,20 @@ class pbitcell(bitcell_base.bitcell_base):
                                             layer="m2",
                                             offset=self.wbr_positions[k],
                                             height=self.height)
+
+            if self.dummy_bitcell:
+                bl_name = self.w_bl_names[k]
+                br_name = self.w_br_names[k]
+                bl_name += "_noconn"
+                br_name += "_noconn"
+
+                # This helps with LVS matching in klayout
+                drain_pin = self.write_nmos_left[k].get_pin("S")
+                self.add_label(bl_name, drain_pin.layer, drain_pin.center())
+
+                # This helps with LVS matching in klayout
+                source_pin = self.write_nmos_right[k].get_pin("D")
+                self.add_label(br_name, source_pin.layer, source_pin.center())
 
         # update furthest left and right transistor edges
         self.left_building_edge = left_write_transistor_xpos
@@ -752,6 +776,20 @@ class pbitcell(bitcell_base.bitcell_base):
                                             layer="m2",
                                             offset=self.rbr_positions[k],
                                             height=self.height)
+
+            if self.dummy_bitcell:
+                bl_name = self.r_bl_names[k]
+                br_name = self.r_br_names[k]
+                bl_name += "_noconn"
+                br_name += "_noconn"
+
+                # This helps with LVS matching in klayout
+                drain_pin = self.read_access_nmos_left[k].get_pin("S")
+                self.add_label(bl_name, drain_pin.layer, drain_pin.center())
+
+                # This helps with LVS matching in klayout
+                source_pin = self.read_access_nmos_right[k].get_pin("D")
+                self.add_label(br_name, source_pin.layer, source_pin.center())
 
     def route_wordlines(self):
         """ Routes gate of transistors to their respective wordlines """
@@ -1013,7 +1051,7 @@ class pbitcell(bitcell_base.bitcell_base):
             well_height = max_nmos_well_height + self.port_ypos \
                           - self.nwell_enclose_active - self.gnd_position.y
             # FIXME fudge factor xpos
-            well_width = self.width + 2*self.nwell_enclose_active
+            well_width = self.width + 2 * self.nwell_enclose_active
             offset = vector(self.leftmost_xpos - self.nwell_enclose_active, self.botmost_ypos)
             self.add_rect(layer="pwell",
                           offset=offset,
@@ -1163,7 +1201,7 @@ class pbitcell(bitcell_base.bitcell_base):
             return
 
         pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
-        
+
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)
         r_pin_names = zip(self.rw_wl_names, self.rw_bl_names, self.rw_br_names)
@@ -1172,4 +1210,3 @@ class pbitcell(bitcell_base.bitcell_base):
             for wl, bl, br in pin_zip:
                 graph.add_edge(pin_dict[wl], pin_dict[bl], self)
                 graph.add_edge(pin_dict[wl], pin_dict[br], self)
-

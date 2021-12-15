@@ -90,7 +90,6 @@ class precharge(design.design):
                                    width=self.ptx_width,
                                    mults=self.ptx_mults,
                                    tx_type="pmos")
-        self.add_mod(self.pmos)
 
     def route_vdd_rail(self):
         """
@@ -305,4 +304,3 @@ class precharge(design.design):
         self.add_path(self.bitline_layer,
                       [left_pos, right_pos],
                       width=pmos_pin.height())
-

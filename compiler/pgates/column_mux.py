@@ -77,7 +77,6 @@ class column_mux(pgate.pgate):
         self.ptx_width = self.tx_size * drc("minwidth_tx")
         self.nmos = factory.create(module_type="ptx",
                                     width=self.ptx_width)
-        self.add_mod(self.nmos)
 
         # Space it in the center
         self.nmos_lower = self.add_inst(name="mux_tx1",

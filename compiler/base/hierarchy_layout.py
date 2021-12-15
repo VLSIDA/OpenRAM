@@ -232,6 +232,7 @@ class layout():
             # Check that the instance name is unique
             debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.cell_name, name))
 
+        self.mods.add(mod)
         self.inst_names.add(name)
         self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
@@ -638,7 +639,6 @@ class layout():
                              directions=directions,
                              implant_type=implant_type,
                              well_type=well_type)
-        self.add_mod(via)
         inst = self.add_inst(name=via.name,
                              mod=via,
                              offset=offset)
@@ -664,7 +664,6 @@ class layout():
         corrected_offset = offset + vector(-0.5 * width,
                                            -0.5 * height)
 
-        self.add_mod(via)
         inst = self.add_inst(name=via.name,
                              mod=via,
                              offset=corrected_offset)
@@ -756,7 +755,6 @@ class layout():
         mos = ptx.ptx(width=width,
                       mults=mults,
                       tx_type=tx_type)
-        self.add_mod(mos)
         inst = self.add_inst(name=mos.name,
                              mod=mos,
                              offset=offset,

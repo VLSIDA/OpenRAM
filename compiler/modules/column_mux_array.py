@@ -87,7 +87,6 @@ class column_mux_array(design.design):
         self.mux = factory.create(module_type="column_mux",
                                   bitcell_bl=self.bitcell_bl,
                                   bitcell_br=self.bitcell_br)
-        self.add_mod(self.mux)
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 

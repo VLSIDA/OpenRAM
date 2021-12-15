@@ -31,7 +31,7 @@ class hierarchical_predecode(design.design):
             self.cell_height = b.height
         else:
             self.cell_height = height
-            
+
         self.column_decoder = column_decoder
         self.input_and_rail_pos = []
         self.number_of_outputs = int(math.pow(2, self.number_of_inputs))
@@ -59,13 +59,11 @@ class hierarchical_predecode(design.design):
             inv_type = "inv_dec"
         self.and_mod = factory.create(module_type=and_type,
                                       height=self.cell_height)
-        self.add_mod(self.and_mod)
 
         # This uses the pinv_dec parameterized cell
         self.inv = factory.create(module_type=inv_type,
                                   height=self.cell_height,
                                   size=1)
-        self.add_mod(self.inv)
 
     def create_layout(self):
         """ The general organization is from left to right:
@@ -189,13 +187,13 @@ class hierarchical_predecode(design.design):
         self.route_input_inverters()
         self.route_input_ands()
         self.route_output_inverters()
-        self.route_inputs_to_rails()    
+        self.route_inputs_to_rails()
         self.route_output_ands()
         self.route_vdd_gnd()
 
     def route_inputs_to_rails(self):
         """ Route the uninverted inputs to the second set of rails """
-        
+
         top_and_gate = self.and_inst[-1]
         for num in range(self.number_of_inputs):
             if num == 0:
@@ -221,7 +219,7 @@ class hierarchical_predecode(design.design):
                                         to_layer=self.bus_layer,
                                         offset=[self.input_rails[in_pin].cx(), y_offset],
                                         directions= ("H", "H"))
-                
+
                 self.add_via_stack_center(from_layer=self.input_layer,
                                         to_layer=self.bus_layer,
                                         offset=[self.decode_rails[a_pin].cx(), y_offset],
@@ -306,7 +304,7 @@ class hierarchical_predecode(design.design):
             else: # grow the stack down
                 search_id = 2
                 next_id = 0
-            
+
             curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
 
             via = factory.create(module_type="contact",
@@ -343,7 +341,7 @@ class hierarchical_predecode(design.design):
         """
         Route the different permutations of the NAND/AND decocer cells.
         """
-        
+
         # This 2D array defines the connection mapping
         and_input_line_combination = self.get_and_input_line_combination()
         for k in range(self.number_of_outputs):
@@ -419,6 +417,3 @@ class hierarchical_predecode(design.design):
                                         self.and_inst[0].lx() - self.bus_space]:
                             pin_pos = vector(xoffset, and_pin.cy())
                             self.copy_power_pin(and_pin, loc=pin_pos)
-
-
-

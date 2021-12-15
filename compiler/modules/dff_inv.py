@@ -7,11 +7,10 @@
 #
 import debug
 import design
-from tech import drc
-from math import log
 from vector import vector
 from globals import OPTS
-from pinv import pinv
+from sram_factory import factory
+
 
 class dff_inv(design.design):
     """
@@ -66,12 +65,10 @@ class dff_inv(design.design):
 
     def add_modules(self):
         self.dff = dff_inv.dff_inv(self.inv_size)
-        self.add_mod(self.dff)
 
         self.inv1 = factory.create(module_type="pinv",
                                    size=self.inv_size,
                                    height=self.dff.height)
-        self.add_mod(self.inv1)
 
     def create_modules(self):
         self.dff_inst=self.add_inst(name="dff_inv_dff",

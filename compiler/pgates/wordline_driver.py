@@ -62,9 +62,6 @@ class wordline_driver(design.design):
                                          size=driver_size,
                                          height=self.nand.height)
 
-        self.add_mod(self.nand)
-        self.add_mod(self.driver)
-
     def create_layout(self):
         self.width = self.nand.width + self.driver.width
         if "li" in layer:

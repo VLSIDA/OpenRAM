@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>drc</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>drc_scripts</group-name>
+ <menu-path>tools_menu.drc.end</menu-path>
+ <interpreter>dsl</interpreter>
+ <dsl-interpreter-name>drc-dsl-xml</dsl-interpreter-name>
+ <text>#
+#    MOSIS SCMOS DRC
+#
+########################
+tstart = Time.now
+
+# optionnal for a batch launch :   klayout -b r drc_SCMOS.lydrc -rd input=my_layout.gds -rd topcell=your_topcell -rd output=SCMOS_DRC.lyrdb
+if $input
+  if $topcell
+    source($input,$topcell)
+  else
+    source($input)
+  end
+end
+
+if $output
+  report("SCMOS DRC runset", $output)
+else
+  report("SCMOS DRC runset", "SCMOS_DRC.lyrdb")
+end
+
+
+#   PROCESS  OPTIONS
+########################
+LAMBDA = 0.2
+SUBM = true
+DEEP = false
+NBR_OF_METALS = 6
+
+DFM = false
+
+# design rules limits definitions
+########################
+R1_3 = ( 6 *LAMBDA ).round(3)
+R2_1 = ( 3 *LAMBDA ).round(3)
+R2_2 = ( 3 *LAMBDA ).round(3)
+R2_4 = ( 3 *LAMBDA ).round(3)
+R2_5 = ( 4 *LAMBDA ).round(3)
+R3_1 = ( 2 *LAMBDA ).round(3)
+R3_5 = ( 1 *LAMBDA ).round(3)
+R4_1 = ( 3 *LAMBDA ).round(3)
+R4_2 = ( 2 *LAMBDA ).round(3)
+R5_1 = ( 2 *LAMBDA ).round(3)
+R5_2 = ( 1.5 *LAMBDA ).round(3)
+R5_4 = ( 2 *LAMBDA ).round(3)
+R5_2_b  = ( 1 *LAMBDA ).round(3)
+R5_6_b  = ( 2 *LAMBDA ).round(3)
+R5_7_b  = ( 3 *LAMBDA ).round(3)
+R6_1 = ( 2 *LAMBDA ).round(3)
+R6_2 = ( 1.5 *LAMBDA ).round(3)
+R6_4 = ( 2 *LAMBDA ).round(3)
+R6_2_b  = ( 1 *LAMBDA ).round(3)
+R6_5_b  = ( 5 *LAMBDA ).round(3)
+R6_6_b  = ( 2 *LAMBDA ).round(3)
+R6_7_b  = ( 3 *LAMBDA ).round(3)
+R6_8_b  = ( 4 *LAMBDA ).round(3)
+R7_1 = ( 3 *LAMBDA ).round(3)
+R7_3 = ( 1 *LAMBDA ).round(3)
+R8_2 = ( 3 *LAMBDA ).round(3)
+R8_3 = ( 1 *LAMBDA ).round(3)
+R8_4 = ( 2 *LAMBDA ).round(3)
+R9_1 = ( 3 *LAMBDA ).round(3)
+R9_3 = ( 1 *LAMBDA ).round(3)
+R10_1 = ( 60 *LAMBDA ).round(3)
+R10_2 = ( 20 *LAMBDA ).round(3)
+R10_3 = ( 6 *LAMBDA ).round(3)
+R10_4 = ( 30 *LAMBDA ).round(3)
+R10_5 = ( 15 *LAMBDA ).round(3)
+R11_2 = ( 3 *LAMBDA ).round(3)
+R11_4 = ( 2 *LAMBDA ).round(3)
+R11_6 = ( 2 *LAMBDA ).round(3)
+R12_1 = ( 2 *LAMBDA ).round(3)
+R12_2 = ( 3 *LAMBDA ).round(3)
+R12_3 = ( 2 *LAMBDA ).round(3)
+R12_4 = ( 1 *LAMBDA ).round(3)
+R12_5 = ( 2 *LAMBDA ).round(3)
+R12_6 = ( 3 *LAMBDA ).round(3)
+R13_1 = ( 2 *LAMBDA ).round(3)
+R13_3 = ( 3 *LAMBDA ).round(3)
+R13_4 = ( 2 *LAMBDA ).round(3)
+R13_5 = ( 3 *LAMBDA ).round(3)
+R14_2 = ( 3 *LAMBDA ).round(3)
+R14_3 = ( 1 *LAMBDA ).round(3)
+R14_4 = ( 2 *LAMBDA ).round(3)
+if NBR_OF_METALS &gt; 3
+  R15_3 = ( 1 *LAMBDA ).round(3)
+else
+  R15_3 = ( 2 *LAMBDA ).round(3)
+end
+R16_1 = ( 2 *LAMBDA ).round(3)
+R16_2 = ( 3 *LAMBDA ).round(3)
+R16_3 = ( 2 *LAMBDA ).round(3)
+R16_4 = ( 4 *LAMBDA ).round(3)
+R16_5 = ( 2 *LAMBDA ).round(3)
+R16_6 = ( 2 *LAMBDA ).round(3)
+R16_7 = ( 6 *LAMBDA ).round(3)
+R16_8 = ( 4 *LAMBDA ).round(3)
+R16_9 = ( 2 *LAMBDA ).round(3)
+R16_10 = ( 3 *LAMBDA ).round(3)
+R16_11 = ( 2 *LAMBDA ).round(3)
+R18_1 = ( 3 *LAMBDA ).round(3)
+R18_2 = ( 2 *LAMBDA ).round(3)
+R18_3 = ( 3 *LAMBDA ).round(3)
+R18_4 = ( 2 *LAMBDA ).round(3)
+R18_5 = ( 6 *LAMBDA ).round(3)
+R20_1 = ( 4 *LAMBDA ).round(3)
+R20_2 = ( 4 *LAMBDA ).round(3)
+R20_3 = ( 2 *LAMBDA ).round(3)
+R20_4 = ( 2 *LAMBDA ).round(3)
+R20_5 = ( 2 *LAMBDA ).round(3)
+R20_7 = ( 5 *LAMBDA ).round(3)
+R20_8 = ( 7 *LAMBDA ).round(3)
+R20_9 = ( 2 *LAMBDA ).round(3)
+R20_10 = ( 3 *LAMBDA ).round(3)
+R21_2 = ( 3 *LAMBDA ).round(3)
+R21_3 = ( 1 *LAMBDA ).round(3)
+if NBR_OF_METALS &gt; 4
+  R22_3 = ( 1 *LAMBDA ).round(3)
+else
+  R22_3 = ( 2 *LAMBDA ).round(3)
+end
+R23_1 = ( 8 *LAMBDA ).round(3)
+R23_2 = ( 4 *LAMBDA ).round(3)
+R23_3 = ( 8 *LAMBDA ).round(3)
+R23_4 = ( 3 *LAMBDA ).round(3)
+R23_5 = ( 2 *LAMBDA ).round(3)
+R23_6 = ( 2 *LAMBDA ).round(3)
+R23_7 = ( 2 *LAMBDA ).round(3)
+R23_8 = ( 4 *LAMBDA ).round(3)
+R23_9 = ( 2 *LAMBDA ).round(3)
+R24_1 = ( 4 *LAMBDA ).round(3)
+R24_2 = ( 4 *LAMBDA ).round(3)
+R24_3 = ( 4 *LAMBDA ).round(3)
+R24_4 = ( 4 *LAMBDA ).round(3)
+R24_5 = ( 3 *LAMBDA ).round(3)
+R27_1 = ( 4 *LAMBDA ).round(3)
+R27_2 = ( 4 *LAMBDA ).round(3)
+R27_3 = ( 2 *LAMBDA ).round(3)
+R27_4 = ( 2 *LAMBDA ).round(3)
+R27_5 = ( 2 *LAMBDA ).round(3)
+R27_7 = ( 5 *LAMBDA ).round(3)
+R27_8 = ( 7 *LAMBDA ).round(3)
+R27_9 = ( 2 *LAMBDA ).round(3)
+
+
+if !SUBM &amp;&amp; !DEEP
+  R1_1 = ( 10 *LAMBDA ).round(3)
+  R1_2 = ( 9 *LAMBDA ).round(3)
+  R2_3 = ( 5 *LAMBDA ).round(3)
+  R3_2 = ( 2 *LAMBDA ).round(3)
+  R3_2_a  = ( 2 *LAMBDA ).round(3)
+  R3_3 = ( 2 *LAMBDA ).round(3)
+  R3_4 = ( 3 *LAMBDA ).round(3)
+  R4_3 = ( 1 *LAMBDA ).round(3)
+  R4_4 = ( 2 *LAMBDA ).round(3)
+  R5_3 = ( 2 *LAMBDA ).round(3)
+  R5_5_b  = ( 4 *LAMBDA ).round(3)
+  R6_3 = ( 2 *LAMBDA ).round(3)
+  R7_2 = ( 2 *LAMBDA ).round(3)
+  R7_4 = ( 4 *LAMBDA ).round(3)
+  R8_1 = ( 2 *LAMBDA ).round(3)
+  R8_5 = ( 2 *LAMBDA ).round(3)
+  R9_2 = ( 3 *LAMBDA ).round(3)
+  R9_4 = ( 6 *LAMBDA ).round(3)
+  R11_1 = ( 3 *LAMBDA ).round(3)
+  R11_3 = ( 2 *LAMBDA ).round(3)
+  R11_5 = ( 3 *LAMBDA ).round(3)
+  R13_2 = ( 2 *LAMBDA ).round(3)
+  R14_1 = ( 2 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 3
+    R15_1 = ( 3 *LAMBDA ).round(3)
+    R15_2 = ( 3 *LAMBDA ).round(3)
+    R15_4 = ( 6 *LAMBDA ).round(3)
+  else
+    R15_1 = ( 6 *LAMBDA ).round(3)
+    R15_2 = ( 4 *LAMBDA ).round(3)
+    R15_4 = ( 8 *LAMBDA ).round(3)
+  end
+  R17_1 = ( 10 *LAMBDA ).round(3)
+  R17_2 = ( 9 *LAMBDA ).round(3)
+  R17_3 = ( 5 *LAMBDA ).round(3)
+  R17_4 = ( 5 *LAMBDA ).round(3)
+  R20_11 = ( 3 *LAMBDA ).round(3)
+  R21_1 = ( 2 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 4
+    R22_1 = ( 3 *LAMBDA ).round(3)
+    R22_2 = ( 3 *LAMBDA ).round(3)
+    R22_4 = ( 6 *LAMBDA ).round(3)
+  else
+    R22_1 = ( 6 *LAMBDA ).round(3)
+    R22_2 = ( 6 *LAMBDA ).round(3)
+    R22_4 = ( 12 *LAMBDA ).round(3)
+  end
+end
+
+if SUBM
+   R1_1 = ( 12 *LAMBDA ).round(3)
+   # We are assuming the wells are at the same potential since
+   # DRC can't tell otherwise
+   #R1_2 = ( 18 *LAMBDA ).round(3)
+   R1_2 = ( 6 *LAMBDA ).round(3)
+   R2_3 = ( 6 *LAMBDA ).round(3)
+   R3_2 = ( 3 *LAMBDA ).round(3)
+   R3_2_a  = ( 3 *LAMBDA ).round(3)
+   R3_3 = ( 2 *LAMBDA ).round(3)
+   R3_4 = ( 3 *LAMBDA ).round(3)
+   R4_3 = ( 1 *LAMBDA ).round(3)
+   R4_4 = ( 2 *LAMBDA ).round(3)
+   R5_3 = ( 3 *LAMBDA ).round(3)
+   R5_5_b  = ( 5 *LAMBDA ).round(3)
+   R6_3 = ( 3 *LAMBDA ).round(3)
+   R7_2 = ( 3 *LAMBDA ).round(3)
+   R7_4 = ( 6 *LAMBDA ).round(3)
+   R8_1 = ( 2 *LAMBDA ).round(3)
+   R8_5 = ( 2 *LAMBDA ).round(3)
+   R9_2 = ( 3 *LAMBDA ).round(3)
+   R9_4 = ( 6 *LAMBDA ).round(3)
+   R11_1 = ( 7 *LAMBDA ).round(3)
+   R11_3 = ( 5 *LAMBDA ).round(3)
+   R11_5 = ( 6 *LAMBDA ).round(3)
+   R13_2 = ( 3 *LAMBDA ).round(3)
+   R14_1 = ( 2 *LAMBDA ).round(3)
+   if NBR_OF_METALS &gt; 3
+     R15_1 = ( 3 *LAMBDA ).round(3)
+     R15_2 = ( 3 *LAMBDA ).round(3)
+     R15_4 = ( 6 *LAMBDA ).round(3)
+   else
+     R15_1 = ( 5 *LAMBDA ).round(3)
+     R15_2 = ( 3 *LAMBDA ).round(3)
+     R15_4 = ( 6 *LAMBDA ).round(3)
+   end
+   R17_1 = ( 12 *LAMBDA ).round(3)
+   R17_2 = ( 18 *LAMBDA ).round(3)
+   R17_3 = ( 6 *LAMBDA ).round(3)
+   R17_4 = ( 6 *LAMBDA ).round(3)
+   R20_11 = ( 5 *LAMBDA ).round(3)
+   R21_1 = ( 2 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 4
+    R22_1 = ( 3 *LAMBDA ).round(3)
+    R22_2 = ( 3 *LAMBDA ).round(3)
+    R22_4 = ( 6 *LAMBDA ).round(3)
+  else
+    R22_1 = ( 6 *LAMBDA ).round(3)
+    R22_2 = ( 6 *LAMBDA ).round(3)
+    R22_4 = ( 12 *LAMBDA ).round(3)
+  end
+   R25_1 = ( 2 *LAMBDA ).round(3)
+   R25_2 = ( 3 *LAMBDA ).round(3)
+   R25_3 = ( 1 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 5
+    R26_1 = ( 3 *LAMBDA ).round(3)
+    R26_2 = ( 3 *LAMBDA ).round(3)
+    R26_3 = ( 1 *LAMBDA ).round(3)
+    R26_4 = ( 6 *LAMBDA ).round(3)
+  else
+    R26_1 = ( 4 *LAMBDA ).round(3)
+    R26_2 = ( 4 *LAMBDA ).round(3)
+    R26_3 = ( 2 *LAMBDA ).round(3)
+    R26_4 = ( 8 *LAMBDA ).round(3)
+  end
+   R28_1 = ( 40 *LAMBDA ).round(3)
+   R28_2 = ( 12 *LAMBDA ).round(3)
+   R28_3 = ( 4 *LAMBDA ).round(3)
+   R28_4 = ( 3 *LAMBDA ).round(3)
+   R28_5 = ( 4 *LAMBDA ).round(3)
+   R28_6 = ( 2 *LAMBDA ).round(3)
+   R28_7 = ( 25 *LAMBDA ).round(3)
+   R28_8 = ( 4 *LAMBDA ).round(3)
+   R28_9 = ( 8 *LAMBDA ).round(3)
+   R28_10 = ( 20 *LAMBDA ).round(3)
+   R28_11 = ( 40 *LAMBDA ).round(3)
+   R29_1 = ( 3 *LAMBDA ).round(3)
+   R29_2 = ( 4 *LAMBDA ).round(3)
+   R29_3 = ( 1 *LAMBDA ).round(3)
+   R30_1 = ( 5 *LAMBDA ).round(3)
+   R30_2 = ( 5 *LAMBDA ).round(3)
+   R30_3 = ( 1 *LAMBDA ).round(3)
+   R30_4 = ( 10 *LAMBDA ).round(3)
+   R31_1 = ( 30 *LAMBDA ).round(3)
+   R31_2 = ( 50 *LAMBDA ).round(3)
+   R31_3 = ( 15 *LAMBDA ).round(3)
+   R31_4 = ( 20 *LAMBDA ).round(3)
+   R31_5 = ( 35 *LAMBDA ).round(3)
+   R31_6 = ( 5 *LAMBDA ).round(3)
+   R31_7 = ( 30 *LAMBDA ).round(3)
+   R31_8 = ( 10 *LAMBDA ).round(3)
+end
+
+if DEEP
+   R1_1 = ( 12 *LAMBDA ).round(3)
+   # We are assuming the wells are at the same potential since
+   # DRC can't tell otherwise
+   #R1_2 = ( 18 *LAMBDA ).round(3)
+   R1_2 = ( 6 *LAMBDA ).round(3)
+   R2_3 = ( 6 *LAMBDA ).round(3)
+   R3_2 = ( 3 *LAMBDA ).round(3)
+   R3_2_a  = ( 4 *LAMBDA ).round(3)
+   R3_3 = ( 2.5 *LAMBDA ).round(3)
+   R3_4 = ( 4 *LAMBDA ).round(3)
+   R4_3 = ( 1.5 *LAMBDA ).round(3)
+   R4_4 = ( 4 *LAMBDA ).round(3)
+   R5_3 = ( 4 *LAMBDA ).round(3)
+   R5_5_b  = ( 5 *LAMBDA ).round(3)
+   R6_3 = ( 4 *LAMBDA ).round(3)
+   R7_2 = ( 3 *LAMBDA ).round(3)
+   R7_4 = ( 6 *LAMBDA ).round(3)
+   R8_1 = ( 3 *LAMBDA ).round(3)
+   R9_2 = ( 4 *LAMBDA ).round(3)
+   R9_4 = ( 8 *LAMBDA ).round(3)
+   R11_1 = ( 7 *LAMBDA ).round(3)
+   R11_3 = ( 5 *LAMBDA ).round(3)
+   R11_5 = ( 6 *LAMBDA ).round(3)
+   R13_2 = ( 3 *LAMBDA ).round(3)
+   R14_1 = ( 3 *LAMBDA ).round(3)
+   if NBR_OF_METALS &gt; 3
+     R15_1 = ( 3 *LAMBDA ).round(3)
+     R15_2 = ( 4 *LAMBDA ).round(3)
+     R15_4 = ( 8 *LAMBDA ).round(3)
+   else
+     R15_1 = ( 5 *LAMBDA ).round(3)
+     R15_2 = ( 3 *LAMBDA ).round(3)
+     R15_4 = ( 6 *LAMBDA ).round(3)
+   end
+   R17_1 = ( 12 *LAMBDA ).round(3)
+   R17_2 = ( 18 *LAMBDA ).round(3)
+   R17_3 = ( 6 *LAMBDA ).round(3)
+   R17_4 = ( 6 *LAMBDA ).round(3)
+   R20_11 = ( 5 *LAMBDA ).round(3)
+   R21_1 = ( 3 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 4
+    R22_1 = ( 3 *LAMBDA ).round(3)
+    R22_2 = ( 4 *LAMBDA ).round(3)
+    R22_4 = ( 8 *LAMBDA ).round(3)
+  else
+    R22_1 = ( 6 *LAMBDA ).round(3)
+    R22_2 = ( 6 *LAMBDA ).round(3)
+    R22_4 = ( 12 *LAMBDA ).round(3)
+  end
+   R25_1 = ( 3 *LAMBDA ).round(3)
+   R25_2 = ( 3 *LAMBDA ).round(3)
+   R25_3 = ( 1 *LAMBDA ).round(3)
+  if NBR_OF_METALS &gt; 5
+    R26_1 = ( 3 *LAMBDA ).round(3)
+    R26_2 = ( 4 *LAMBDA ).round(3)
+    R26_3 = ( 1 *LAMBDA ).round(3)
+    R26_4 = ( 8 *LAMBDA ).round(3)
+  else
+    R26_1 = ( 4 *LAMBDA ).round(3)
+    R26_2 = ( 4 *LAMBDA ).round(3)
+    R26_3 = ( 2 *LAMBDA ).round(3)
+    R26_4 = ( 8 *LAMBDA ).round(3)
+  end
+   R28_1 = ( 45 *LAMBDA ).round(3)
+   R28_2 = ( 14 *LAMBDA ).round(3)
+   R28_3 = ( 5 *LAMBDA ).round(3)
+   R28_4 = ( 3 *LAMBDA ).round(3)
+   R28_5 = ( 5 *LAMBDA ).round(3)
+   R28_6 = ( 2 *LAMBDA ).round(3)
+   R28_7 = ( 25 *LAMBDA ).round(3)
+   R28_8 = ( 5 *LAMBDA ).round(3)
+   R28_9 = ( 9 *LAMBDA ).round(3)
+   R28_10 = ( 23 *LAMBDA ).round(3)
+   R28_11 = ( 45 *LAMBDA ).round(3)
+   R29_1 = ( 4 *LAMBDA ).round(3)
+   R29_2 = ( 4 *LAMBDA ).round(3)
+   R29_3 = ( 1 *LAMBDA ).round(3)
+   R30_1 = ( 5 *LAMBDA ).round(3)
+   R30_2 = ( 5 *LAMBDA ).round(3)
+   R30_3 = ( 2 *LAMBDA ).round(3)
+   R30_4 = ( 10 *LAMBDA ).round(3)
+   R31_1 = ( 34 *LAMBDA ).round(3)
+   R31_2 = ( 56 *LAMBDA ).round(3)
+   R31_3 = ( 17 *LAMBDA ).round(3)
+   R31_4 = ( 23 *LAMBDA ).round(3)
+   R31_5 = ( 39 *LAMBDA ).round(3)
+   R31_6 = ( 6 *LAMBDA ).round(3)
+   R31_7 = ( 34 *LAMBDA ).round(3)
+   R31_8 = ( 13 *LAMBDA ).round(3)
+end
+
+
+# KLAYOUT setttings
+########################
+# Use a tile size of 1mm
+tiles(1000.um)
+# Use a tile border of 10 micron:
+tile_borders(1.um)
+#no_borders
+
+# Use 4 CPU cores
+threads(4)
+verbose(true)
+
+# Define a new custom function that selects polygons by their number of holes:
+# It will return a new layer containing those polygons with min to max holes.
+# max can be nil to omit the upper limit.
+class DRC::DRCLayer
+  def with_holes(min, max)
+    new_data = RBA::Region::new
+    self.data.each do |p|
+      if p.holes &gt;= (min || 0) &amp;&amp; (!max || p.holes &lt;= max)
+        new_data.insert(p)
+      end
+    end
+    DRC::DRCLayer::new(@engine, new_data)
+  end
+end
+
+# layers definitions
+########################
+info("Layers definitions")
+
+  DNW = input(38,0)
+  NW = input(42,0)
+  PW = input(41,0)
+  CW = input(59,0)
+  AA = input(43,0)
+  TA = input(60,0)
+  PBase = input(58,0)
+  PL = input(46,0)
+  SB = input(29,0)
+  Nselect = input(45,0)
+  Pselect = input(44,0)
+  PO2 = input(56,0)
+  HR = input(34,0)
+  Contact = input(25,0)
+  ContactPoly = input(47,0)
+  ContactActive = input(48,0)
+  ContactPoly2 = input(55, 0)
+  CT = Contact + ContactPoly + ContactActive + ContactPoly2
+  M1 = input(49,0)
+  V1 = input(50,0)
+  M2 = input(51,0)
+  V2 = input(61,0)
+  M3 = input(62,0)
+  V3 = input(30,0)
+  M4 = input(31,0)
+  CTM = input(35,0)
+  V4 = input(32,0)
+  M5 = input(33,0)
+  V5 = input(36,0)
+  M6 = input(37,0)
+  Glass = input(52,0)
+  Pads = input(26,0)
+
+# layers processing
+########################
+info("Layers processing")
+#CHIP = extent.sized(1.0)
+NP = AA &amp; Nselect
+PP = AA &amp; Pselect
+NSTP = NP.and(NW)
+PSTP = PP.not(NW)
+GATE = PL &amp; AA
+
+# DRC section
+########################
+info("DRC section")
+
+### Deep NWell
+DNW.ongrid(0.5*LAMBDA).output("DNW_offgrid", "Offgrid vertex on DNW")
+DNW.with_angle(0 .. 45).output("DNW_angle", "Non 45 degree angle DNW")
+DNW.edges.and(PW).output("DNW_PW","DNW cannot cross PWell")
+DNW.width(R31_1, euclidian).output("31.1 DNW_width", "31.1 : Min. DNW width : #{R31_1}um")
+DNW.isolated(R31_2, euclidian).output("31.2 DNW_space", "31.2 : Min. DNW spacing : #{R31_2}um")
+NW.enclosing(DNW, R31_3, euclidian).output("31.3 NW_enc_DNW", "31.3 : Min. NWell enclosing DNW : #{R31_3}um")
+DNW.enclosing(NW, R31_4, euclidian).output("31.4 DNW_enc_NW", "31.4 : Min. DNW enclosing NWell : #{R31_4}um")
+DNW.separation(NW, R31_5, euclidian).output("31.5 DNW_sep_NW", "31.5 : Min. DNW separation NWell : #{R31_5}um")
+DNW.not(NW).enclosing(NP, R31_6, euclidian).output("31.6 DNW_enc_NP", "31.6 : Min. PW in DNW enclosing N+ : #{R31_6}um")
+DNW.separation(NP, R31_7, euclidian).output("31.7 DNW_sep_NP", "31.7 : Min. DNW separation N+ : #{R31_7}um")
+
+### Nwell / Pwell
+NW.ongrid(0.5*LAMBDA).output("NW_offgrid", "Offgrid vertex on NWell")
+NW.with_angle(0 .. 45).output("NW_angle", "Non 45 degree angle NWell")
+NW.and(PW).output("NW_PW","NW over PW not allowed")
+NW.width(R1_1, euclidian).output("1.1 NW_width", "1.1 : Min. NWell width : #{R1_1}um")
+NW.isolated(R1_2, euclidian).output("1.2 NW_space", "1.2 : Min. NWell spacing : #{R1_2}um")
+NW.and(TA).isolated(18, euclidian).output("1.3 NW_TA_space", "1.3 : Min. NWell-TA spacing : #{R1_3}um")
+PW.width(R1_1, euclidian).output("1.1 PW_width", "1.1 : Min. PWell width : #{R1_1}um")
+PW.isolated(R1_2, euclidian).output("1.2 PW_space", "1.2 : Min. PWell spacing : #{R1_2}um")
+PW.and(TA).isolated(R1_3, euclidian).output("1.3 PW_TA_space", "1.3 : Min. PWell-TA spacing : #{R1_3}um")
+
+### Active
+AA.ongrid(0.5*LAMBDA).output("AA_offgrid", "Offgrid vertex on AA")
+AA.with_angle(0 .. 45).output("AA_angle", "Non 45 degree angle AA")
+AA.width(R2_1, euclidian).output("2.1 AA_width", "2.1 : Min. active width : #{R2_1}um")
+AA.space(R2_2, euclidian).output("2.2 AA_space", "2.2 : Min. active spacing : #{R2_2}3um")
+NW.enclosing(PP.interacting(GATE), R2_3, euclidian).output("2.3 NW_enc_PP", "2.3 : Min. NWell enclosing Source/Drain : #{R2_3}um")
+PW.enclosing(NP.interacting(GATE), R2_3, euclidian).output("2.3 PW_enc_NP", "2.3 : Min. PWell enclosing Source/Drain : #{R2_3}um")
+NW.enclosing(NP, R2_4, euclidian).output("2.4 NW_enc_NP", "2.4 : Min. NWell enclosing Nstrap : #{R2_4}um")
+PW.enclosing(PP, R2_4, euclidian).output("2.4 PW_enc_PP", "2.4 : Min. PWell enclosing Pstrap : #{R2_4}um")
+NP.separation(PP, R2_5, euclidian).polygons.without_area(0).output("2.5 NP_space_PP", "2.5 : Min. N+ space P+ : #{R2_5}um (if not abutted)")
+
+### TA Thick Active
+TA.ongrid(0.5*LAMBDA).output("TA_offgrid", "Offgrid vertex on TA")
+TA.with_angle(0 .. 45).output("TA_angle", "Non 45 degree angle TA")
+TA.width(R24_1, euclidian).output("24.1 TA_width", "24.1 : Min. TA width : #{R24_1}um")
+TA.space(R24_2, euclidian).output("24.2 TA_space", "24.2 : Min. TA spacing : #{R24_2}um")
+TA.enclosing(AA, R24_3, euclidian).output("24.3 TA_enc_AA", "24.3 : Min. TA enclosing Active : #{R24_3}um")
+TA.separation(AA, R24_4, euclidian).output("24.4 TA_space_AA", "24.4 : Min. TA spacing Active : #{R24_4}um")
+TA.and(GATE).width(R24_5, euclidian).output("24.5 TA_gate_width", "24.5 : Min. TA Gate width : #{R24_5}um")
+AA.edges.and(TA).output("24.6 AA_in_TA","24.6 : Active edge cannot cross TA")
+
+### Poly
+PL.ongrid(0.5*LAMBDA).output("POLY_offgrid", "Offgrid vertex on Poly")
+PL.with_angle(0 .. 45).output("POLY_angle", "Non 45 degree angle Poly")
+PL.width(R3_1, euclidian).output("3.1 POLY_width", "3.1 : Min. Poly width : #{R3_1}um")
+PL.space(R3_2, euclidian).output("3.2 Poly_space", "3.2 : Min. Poly spacing : #{R3_2}um")
+GATE.space(R3_2_a, euclidian).output("3.2a Gate_space", "3.2a : Min. Gate spacing : #{R3_2_a}um")
+PL.enclosing(GATE, R3_3, projection).polygons.without_area(0).output("3.3 PL_enc_GATE", "3.3 : Min. Poly extention Gate : #{R3_3}um")
+AA.enclosing(GATE, R3_4, projection).polygons.without_area(0).output("3.4 AA_enc_GATE", "3.4 : Min. Source/Drain length : #{R3_4}um")
+PL.not(AA).separation(AA, 1, euclidian).polygons.without_area(0).output("3.5 PL_space_AA", "3.5 : Min. Poly on Field spacing Active : #{R3_5}um")
+
+### Poly2
+if !DEEP
+PO2.ongrid(0.5*LAMBDA).output("POLY2_offgrid", "Offgrid vertex on Poly2")
+PO2.with_angle(0 .. 45).output("POLY2_angle", "Non 45 degree angle Poly2")
+PO2.width(R12_1, euclidian).output("12.1 POLY2_width", "12.1 : Min. Poly2 width : #{R12_1}um")
+PO2.space(R12_2, euclidian).output("12.2 POLY2_space", "12.2 : Min. Poly2 space : #{R12_2}um")
+# rule R12.3 not coded
+PO2.not(AA).separation(AA, R12_4, euclidian).output("12.4 POLY2_space_AA"," 12.4 :  Min. Poly2 on Field spacing Active : #{R12_4}um")
+PO2.not(PL).separation(PL, R12_5, euclidian).output("12.5 POLY2_space_PL"," 12.5 :  Min. Poly2 spacing Poly : #{R12_5}um")
+PO2.enclosing(PL, R12_5, euclidian).output("12.5 POLY2_overlap_PL"," 12.5 :  Min. Poly2 overlap of Poly : #{R12_5}um")
+PO2.separation(AA.or(PL).and(CT), R12_6, euclidian).output("12.6 POLY2_space_CT"," 12.5 :  Min. Poly2 spacing Poly or Active contact: #{R12_6}um")
+PO2cap = PL &amp; PO2
+PO2cap.width(R11_1, euclidian).output("11.1 POLY2CAP_width", "11.1 : Min. Poly2 Capacitor width : #{R11_1}um")
+PO2cap.space(R11_2, euclidian).output("11.2 POLY2CAP_space", "11.2 : Min. Poly2 Capacitor space : #{R11_2}um")
+PL.enclosing(PO2cap, R11_3, euclidian).output("12.3 PL_overlap_POLY2CAP"," 11.3 :  Min. Poly overlap of Poly2 Capacitor : #{R11_3}um")
+PO2cap.edges.separation(AA.or(NW).edges, R11_4, euclidian).output("11.4 POLY2CAP_space_AA/NW"," 11.4 :  Min. Poly2 Capacitor spacing Active or Well: #{R11_4}um")
+PO2cap.separation(PL.and(CT), R11_5, euclidian).output("11.5 POLY2CAP_space_PLCT"," 11.5 :  Min. Poly2 Capacitor spacing Poly contact: #{R11_5}um")
+PO2cap.separation(M1.or(M2).or(M3), R11_6, euclidian).output("11.6 POLY2CAP_space_METAL"," 11.6 :  Min. Poly2 Capacitor spacing any Metal: #{R11_6}um")
+PO2cap.forget
+
+### Capacitor Well
+CW.ongrid(0.5*LAMBDA).output("CW_offgrid", "Offgrid vertex on CapacitorWell")
+CW.with_angle(0 .. 45).output("CW_angle", "Non 45 degree angle CapacitorWell")
+CW.width(R17_1, euclidian).output("17.1 CW_width", "17.1 : Min. CapacitorWell width : #{R17_1}um")
+CW.space(R17_2, euclidian).output("17.2 CW_space", "17.2 : Min. CapacitorWell space : #{R17_2}um")
+AA.not(CW).separation(CW, R17_3, euclidian).output("17.3 CW_space_AA"," 17.3 :  Min. CapacitorWell spacing Active : #{R17_3}um")
+CW.enclosing(AA, R17_4, euclidian).output("17.4 CW_overlap_AA"," 17.4 :  Min. CapacitorWell overlap of Active : #{R17_4}um")
+LinCap = PL &amp; CW
+LinCap.width(R18_1, euclidian).output("18.1 LC_width", "18.1 : Min. Linear Capacitor width : #{R18_1}um")
+LinCap.space(R18_2, euclidian).output("18.2 LC_space", "18.2 : Min. Linear Capacitor space : #{R18_2}um")
+LinCap.separation(AA.and(CT), R18_3, euclidian).output("18.3 LC_space_AACT"," 18.3 :  Min.  Linear Capacitor spacing Active contact : #{R18_3}um")
+LinCap.separation(PL.and(CT), R18_4, euclidian).output("18.4 LC_space_PLCT"," 18.4 :  Min.  Linear Capacitor spacing Poly contact : #{R18_4}um")
+LinCap.forget
+end
+
+### N+/P+ Select
+Nselect.ongrid(0.5*LAMBDA).output("NSel_offgrid", "Offgrid vertex on Nselect")
+Pselect.ongrid(0.5*LAMBDA).output("PSel_offgrid", "Offgrid vertex on Pselect")
+Nselect.with_angle(0 .. 45).output("N+_angle", "Non 45 degree angle Nselect")
+Pselect.with_angle(0 .. 45).output("N+_angle", "Non 45 degree angle Pselect")
+NP.enclosing(GATE, R4_1, projection).polygons.without_area(0).output("4.1 N+_enc_GATE", "4.1 : Min. N+ extention Gate on Source/Drain : #{R4_1}um")
+PP.enclosing(GATE, R4_1, projection).polygons.without_area(0).output("4.1 P+_enc_GATE", "4.1 : Min. P+ extention Gate on Source/Drain : #{R4_1}um")
+Nselect.enclosing(AA, R4_2, euclidian).output("4.2 N+_enc_AA", "4.2 : Min. N+ enclosing Active : #{R4_2}um")
+Pselect.enclosing(AA, R4_2, euclidian).output("4.2 P+_enc_AA", "4.2 : Min. P+ enclosing Active : #{R4_2}um")
+Nselect.enclosing(CT, R4_3, euclidian).output("4. N+_enc_CT", "4.3 : Min. N+ enclosing Contact : #{R4_3}um")
+Pselect.enclosing(CT, R4_3, euclidian).output("4.3 P+_enc_CT", "4.3 : Min. P+ enclosing Contact : #{R4_3}um")
+Nselect.width(R4_4,euclidian).output("4.4 N+_width", "4.4 : Min. N+ width : #{R4_4}um")
+Pselect.width(R4_4,euclidian).output("4.4 P+_width", "4.4 : Min. N+ width : #{R4_4}um")
+Nselect.space(R4_4,euclidian).output("4.4 N+_space", "4.4 : Min. N+ spacing : #{R4_4}um")
+Pselect.space(R4_4,euclidian).output("4.4 P+_space", "4.4 : Min. N+ spacing : #{R4_4}um")
+Nselect.and(Pselect).output("4.4 N+_and_P+", "4.4 : N+ over P+ not allowed")
+
+### HR - High Resistive
+HR.ongrid(0.5*LAMBDA).output("HR_offgrid", "Offgrid vertex on HighRes")
+HR.with_angle(0 .. 45).output("HR_angle", "Non 45 degree angle HighRes")
+HR.width(R27_1, euclidian).output("27.1 HR_width", "27.1 : Min. HiRes width : #{R27_1}um")
+HR.space(R27_2, euclidian).output("27.2 HR_space", "27.2 : Min. HiRes spacing : #{R27_2}um")
+HR.and(CT).output("27.3 CT_and_HR", "27.3 : Contact on HiRes not allowed")
+HR.separation(CT, R27_3, euclidian).output("27.3 HR_space_CT", "27.3 : Min. HiRes space to Contact : #{R27_3}um")
+HR.separation(AA, R27_5, euclidian).output("27.4 HR_space_AA", "27.4 : Min. HiRes space to Active : #{R27_4}um")
+HR.separation(PO2, R27_5, euclidian).output("27.5 HR_space_PO2", "27.5 : Min. HiRes space to Poly2 : #{R27_5}um")
+HR.and(PO2).and(AA).output("27.6 HR_and_active", "27.6 : HiRes Po2 over Active not allowed")
+HR.and(PO2).and(NW.or(PW)).output("27.6 HR_and_Well", "27.6 : HiRes Po2 over Well not allowed")
+HR.and(PO2).width(R27_7,euclidian).output("27.7 HRPO2_width", "27.7 : Min. HiRes Poly2 width : #{R27_7}um")
+HR.and(PO2).space(R27_8,euclidian).output("27.8 HRPO2_space", "27.8 : Min. HiRes Poly2 space : #{R27_8}um")
+HR.enclosing(PO2, R27_9, projection).output("27.9 HR_enc_PO2", "27.9 : Min. HiRes enclosing Poly2 : #{R27_9}um")
+
+### SB - Silicide block
+SB.ongrid(0.5*LAMBDA).output("SB_offgrid", "Offgrid vertex on Sil. Block")
+SB.with_angle(0 .. 45).output("SB_angle", "Non 45 degree angle Sil. Block")
+SB.width(R20_1, euclidian).output("20.1 SB_width", "20.1 : Min. Sil. Block width : #{R20_1}um")
+SB.space(R20_2, euclidian).output("20.2 SB_space", "20.2 : Min. Sil. Block spacing : #{R20_2}um")
+SB.separation(CT, R20_3, euclidian).output("20.3 SB_space_CT", "20.3 : Min. Sil. Block space to Contact : #{R20_3}um")
+SB.and(CT).output("20.3 SB_and_CT", "20.3 : Sil. Block over Contact not allowed")
+SB.separation(AA, R20_4, euclidian).output("20.4 SB_space_AA", "20.4 : Min. Sil. Block space to Active : #{R20_4}um")
+SB.separation(PL, R20_5, euclidian).output("20.5 SB_space_PL", "20.5 : Min. Sil. Block space to Poly : #{R20_5}um")
+SB.and(GATE).output("20.6 SBres_overAA","20.6 : SB resistor over Active not allowed")
+SB.and(PL).and(Nselect.or(Pselect)).output("20.6 SBres_over_WELL","20.6 : SB resistor over Well not allowed")
+SB.and(PL).width(R20_7,euclidian).output("20.6 SBres_width", "20.7 : Min. SB resistor width : #{R20_7}um")
+SB.and(PL).space(R20_7,euclidian).output("20.7 SBres_space", "20.7 : Min. SB resistor space : #{R20_7}um")
+SB.enclosing(AA, R20_8, projection).polygons.without_area(0).output("20.8 SB_enc_AA", "20.8 : Min. Sil. Block enclosing Active : #{R20_8}um")
+AA.enclosing(SB, R20_9, projection).polygons.without_area(0).output("20.9 AA_enc_SB", "20.9 : Min. Active enclosing Sil. Block : #{R20_9}um")
+SB.enclosing(PL, R20_9, projection).output("20.8 SB_enc_PL", "20.8 : Min. Sil. Block enclosing Poly : #{R20_8}um")
+PL.enclosing(SB, R20_8, projection).polygons.without_area(0).output("20.9 PL_enc_SB", "20.9 : Min. Poly enclosing Sil. Block : #{R20_9}um")
+SB.separation(GATE, R20_11, euclidian).output("20.11 SB_space_GATE", "20.11 : Min. Sil. Block space to Gate : #{R20_11}um")
+
+### Contact
+CT.ongrid(0.5*LAMBDA).output("CT_offgrid", "Offgrid vertex on Contact")
+CT.with_angle(0 .. 90).output("CT_angle", "Non 90 degree angle Contact")
+CT.and(GATE).output("CT_and_GATE", "Contact on Gate not allowed")
+CT.not(M1).output("CT_not_M1", "Contact without Metal1 not recommended")
+# CT.drc(length != R5_1).output("5.1 CT_width", "5.1 : Exact Contact width : #{R5_1}um")
+CT.width(R5_1).output("5.1 CT_width", "5.1 : Exact Contact width : #{R5_1}um")
+CT.without_area(R5_1*R5_1).output("5.1 CT_area", "5.1 : Exact Contact Area : #{R5_1*R5_1}um2")
+CT.space(R5_3, euclidian).output("5.3 CT_space", "5.3 : Contact spacing : #{R5_3}um")
+PL.enclosing(CT, R5_2_b, euclidian).output("5.2 PL_enc_CT", "5.2 : Min. Poly enclosing Contact : #{R5_2_b}um")
+AA.enclosing(CT, R6_2_b, euclidian).output("6.2 AA_enc_CT", "6.2 : Min. Active enclosing Contact : #{R6_2_b}um")
+PO2.enclosing(CT, R13_3, euclidian).output("13.3 PO2_enc_CT", "13.3 : Min. Poly2 enclosing Contact : #{R13_3}um")
+CT.and(AA).separation(GATE, R5_4, euclidian).output("5.4 CTAA_space_GATE", "5.4 : Min. ActiveContact space to Gate : #{R5_4}um")
+CT.and(PL).separation(PL, R5_5_b, euclidian).polygons.without_area(0).output("5.5.b CTPL_space_Poly", "5.5.b : Min. PolyContact space to Poly : #{R5_5_b}um")
+CT.and(PL).separation(AA, R5_6_b, euclidian).output("5.6.b CTPL_space_AA", "5.6.b : Min. PolyContact space to AA : #{R5_6_b}um")
+# rule 5.7.b not coded
+CT.and(AA).separation(AA, R6_5_b, euclidian).polygons.without_area(0).output("6.5.b CTAA_space_AA", "6.5.b : Min. ActiveContact space to AA : #{R6_5_b}um")
+CT.and(AA).separation(PL, R6_6_b, euclidian).output("6.6.b CTAA_space_PL", "6.6.b : Min. ActiveContact space to Poly : #{R6_6_b}um")
+CT.and(AA).separation(CT.and(PL), R6_7_b, euclidian).output("6.7.b CTAA_space_CTPL", "6.7.b : Min. ActiveContact space to PolyContact : #{R6_7_b}um")
+# rule 6.8.b not coded
+CT.and(PO2).separation(AA, R13_5, euclidian).output("13.5 CTPO2_space_AA", "13.5 : Min. Poly2Contact space to AA : #{R13_5}um")
+CT.and(PO2).separation(PL, R13_5, euclidian).output("13.5 CTPO2_space_PL", "13.5 : Min. Poly2Contact space to Poly : #{R13_5}um")
+M1.enclosing(CT, R7_3, euclidian).output("7.3 M1_enc_CT", "7.3 : Min. Metal1 enclosing Contact : #{R7_3}um")
+
+### Metal 1
+M1.ongrid(0.5*LAMBDA).output("M1_offgrid", "Offgrid vertex on ME1")
+M1.with_angle(0 .. 45).output("M1_angle", "Non 45 degree angle ME1")
+M1.holes.with_area(0 .. R7_1*R7_1).output("M1_holes", "Min. Metal1 holes area : #{R7_1*R7_1}um2")
+M1.width(R7_1, euclidian).output("7.1 M1_width", "7.1 : Min. Metal1 width : #{R7_1}um")
+M1.space(R7_2, euclidian).output("7.2 M1_space", "7.2 : Min. Metal1 spacing : #{R7_2}um")
+M1.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M1,R7_4,euclidian).polygons.without_area(0).output("7.4 M1_10_space", "7.4 : Space if at least one metal1 line width is &gt; #{10*LAMBDA}um : #{R7_4}um")
+
+### Via 1
+V1.ongrid(0.5*LAMBDA).output("V1_offgrid", "Offgrid vertex on Via1")
+V1.not(M1).output("V1_not_M1", "Via1 without Metal1 not allowed")
+V1.not(M2).output("V1_not_M2", "Via1 without Metal2 not allowed")
+V1.with_angle(0 .. 90).output("V1_angle", "Non 90 degree angle Via1")
+V1.width(R8_1,square).output("8.1 V1_width", "8.1 : Exact Via1 width : #{R8_1}um")
+V1.without_area(R8_1*R8_1).output("8.1 V1_width", "8.1 : Exact Via1 width : #{R8_1}um2")
+V1.space(R8_2,euclidian).output("8.2 V1_space", "8.2 : Via1 spacing : #{R8_2}um")
+M1.enclosing(V1, R8_3, euclidian).output("8.3 M1_enc_V1", "8.3 : Min. Metal1 enclosing Via1 : #{R8_3}um")
+M2.enclosing(V1, R8_3, euclidian).output("9.3 M2_enc_V1", "9.3 : Min. Metal2 enclosing Via1 : #{R9_3}um")
+if !DEEP &amp;&amp; NBR_OF_METALS &lt; 4
+  V1.and(CT).or(V1.separation(CT, R8_4, euclidian).polygons).output("8.4 V1_space_CT", "8.4 : Via1 space CT : #{R8_4}um")
+  V1.separation(PL + AA, R8_5, euclidian).output("8.5 V1_space_PL/AAedges", "8.5 : Via1 space to Poly orActive edges : #{R8_5}um")
+end
+if DFM
+  M1.and(M2).not(V1).with_holes(1,1).output("2_V1", "Min. 2 Via1 are needed")
+end
+
+### Metal 2
+M2.ongrid(0.5*LAMBDA).output("M2_offgrid", "Offgrid vertex on ME2")
+M2.with_angle(0 .. 45).output("M2_angle", "Non 45 degree angle ME2")
+M2.width(R9_1, euclidian).output("9.1 M2_width", "9.1 : Min. Metal2 width : #{R9_1}um")
+M2.space(R9_2, euclidian).output("9.2 M2_space", "9.2 : Min. Metal2 spacing : #{R9_2}um")
+M2.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M2,R9_4,euclidian).polygons.without_area(0).output("9.4 M2_10_space", "9.4 : Space if at least one metal2 line width is &gt; #{10*LAMBDA}um : #{R9_4}um")
+
+### Via 2
+V2.ongrid(0.5*LAMBDA).output("V2_offgrid", "Offgrid vertex on Via2")
+V2.not(M3).output("V2_not_M3", "Via2 without Metal3 not allowed")
+V2.not(M2).output("V2_not_M2", "Via2 without Metal2 not allowed")
+V2.with_angle(0 .. 90).output("V2_angle", "Non 90 degree angle Via2")
+V2.width(R14_1, square).output("14.1 V2_width", "14.1 : Exact Via2 width : #{R14_1}um")
+V2.without_area(R14_1*R14_1).output("14.1 V2_width", "14.1 : Exact Via2 width : #{R14_1}um2")
+V2.space(R14_2, euclidian).output("14.2 V2_space", "14.2 : Via2 spacing : #{R14_2}um")
+M2.enclosing(V2, R14_3, euclidian).output("14.3 M2_enc_V2", "14.3 : Min. Metal2 enclosing Via2 : #{R14_3}um")
+M3.enclosing(V2, R15_3, euclidian).output("15.3 M3_enc_V2", "15.3 : Min. Metal3 enclosing Via2 : #{R15_3}um")
+if !DEEP &amp;&amp; NBR_OF_METALS &lt; 4
+  V2.and(V1).or(V2.separation(V1, R14_4, euclidian).polygons).output("14.4 V2_space_V1", "14.4 : Via2 space Via1 : #{R14_4}um")
+end
+if DFM
+  M2.and(M3).not(V2).with_holes(1,1).output("2_V2", "Min. 2 Via2 are needed")
+end
+
+### Metal 3
+M3.ongrid(0.5*LAMBDA).output("M3_offgrid", "Offgrid vertex on ME3")
+M3.with_angle(0 .. 45).output("M3_angle", "Non 45 degree angle ME3")
+M3.width(R15_1, euclidian).output("15.1 M3_width", "15.1 : Min. Metal3 width : #{R15_1}um")
+M3.space(R15_2, euclidian).output("15.2 M3_space", "15.2 : Min. Metal3 spacing : #{R15_2}um")
+M3.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M3, R15_4, euclidian).polygons.without_area(0).output("15.4 M3_10_space", "15.4 : Space if at least one metal3 line width is &gt; #{10*LAMBDA}um : #{R15_4}um")
+
+### Cap Top Metal
+if SUBM || DEEP
+CTM.ongrid(0.5*LAMBDA).output("CTM_offgrid", "Offgrid vertex on CTM")
+CTM.with_angle(0 .. 45).output("CTM_angle", "Non 45 degree angle CTM")
+CTM.width(R28_1, euclidian).output("28.1 CTM_width", "28.1 : Min. Cap Top Metal width : #{R28_1}um")
+CTM.space(R28_2, euclidian).output("28.2 CTM_space", "28.2 : Min. Cap Top Metal spacing : #{R28_2}um")
+if NBR_OF_METALS == 4
+  TM = M4
+  VT = V3
+  TB = V2
+end
+if NBR_OF_METALS == 5
+  TM = M5
+  VT = V4
+  VB = V3
+end
+if NBR_OF_METALS == 6
+  TM = M6
+  VT = V5
+  VB = V4
+end
+TM.enclosing(CTM, R28_3, euclidian).output("28.3 TM_overlap_CTM", "28.3 : Min. Top Metal overlap Cap Top Metal : #{R28_3}um")
+CTM.enclosing(VT, R28_4, euclidian).output("28.4 CTM_overlap_VT", "28.4 : Min. Cap Top Metal overlap Top Via : #{R28_4}um")
+CTM.separation(VB, R28_5, euclidian).output("28.5 CTM_space_VB", "28.5 : Min. Cap Top Metal space Bottom Via : #{R28_5}um")
+CTM.separation(VT, R28_5, euclidian).output("28.5 CTM_space_VT", "28.5 : Min. Cap Top Metal space Top Via : #{R28_5}um")
+TM.enclosing(VB, R28_6, euclidian).output("28.6 TM_overlap_VB", "28.6 : Min. Top Metal overlap Bottom Via : #{R28_6}um")
+# rule 28.7 not coded
+CTM.not_interacting(VT).width(R28_8, euclidian).output("28.8 CTMdummies_width", "28.8 : Min. dummies Cap Top Metal width : #{R28_8}um")
+TM.interacting(CTM).space(R28_9, euclidian).output("28.9 VT_space", "28.9 : Min. Top Metal spacing : #{R28_9}um")
+VT.interacting(CTM).space(R28_10, euclidian).output("28.10 VT_space", "28.10 : Min. Top Via spacing : #{R28_10}um")
+VB.interacting(TM.interacting(CTM)).space(R28_11, euclidian).output("28.11 VB_space", "28.11 : Min. Bottom Via spacing : #{R28_11}um")
+CTM.sized(-15.um).sized(15.um).output("28.12 CTM_width", "28.12 : Max. CTM width/length : 30um")
+TM.interacting(CTM).sized(-17.5.um).sized(17.5.um).output("28.13 TM_width", "28.13 : Max. Top Metal width/length : 35um")
+CTM.and(VB).output("28.14 CTM_VB", "28.14 : no VB under CTM allowed")
+CTM.and(AA.or(PL)).output("28.15 CTM_AA", "28.15 : no active or passive circuitry under CTM allowed")
+end
+
+### Via 3
+if NBR_OF_METALS &gt; 3
+V3.ongrid(0.5*LAMBDA).output("V3_offgrid", "Offgrid vertex on Via3")
+V3.not(M3).output("V3_not_M3", "Via3 without Metal3 not allowed")
+V3.not(M4).output("V3_not_M4", "Via3 without Metal4 not allowed")
+V3.with_angle(0 .. 90).output("V3_angle", "Non 90 degree angle Via3")
+V3.width(R21_1, square).output("21.1 V3_width", "21.1 : Exact Via3 width : #{R21_1}um")
+V3.without_area(R21_1*R21_1).output("21.1 V3_width", "21.1 : Exact Via3 width : #{R21_1}um2")
+V3.space(R21_2, euclidian).output("21.2 V3_space", "21.2 : Via3 spacing : #{R21_2}um")
+M3.enclosing(V3, R21_3, euclidian).output("21.3 M3_enc_V3", "21.3 : Min. Metal3 enclosing Via3 : #{R21_3}um")
+M4.enclosing(V3, R22_3, euclidian).output("22.3 M4_enc_V3", "22.3 : Min. Metal4 enclosing Via3 : #{R22_3}um")
+if DFM
+  M3.and(M4).not(V3).with_holes(1,1).output("2_V3", "Min. 2 Via3 are needed")
+end
+
+### Metal 4
+M4.ongrid(0.5*LAMBDA).output("M4_offgrid", "Offgrid vertex on ME4")
+M4.with_angle(0 .. 45).output("M4_angle", "Non 45 degree angle ME4")
+M4.width(R22_1, euclidian).output("22.1 M4_width", "22.1 : Min. Metal4 width : #{R22_1}um")
+M4.space(R22_2, euclidian).output("22.2 M4_space", "22.2 : Min. Metal4 spacing : #{R22_2}um")
+M4.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M4, R22_4, euclidian).polygons.without_area(0).output("22.4 M4_10_space", "22.4 : Space if at least one metal4 line width is &gt; #{10*LAMBDA}um : #{R22_4}um")
+
+### Via 4
+if NBR_OF_METALS &gt; 4
+V4.ongrid(0.5*LAMBDA).output("V4_offgrid", "Offgrid vertex on Via4")
+V4.not(M5).output("V4_not_M5", "Via4 without Metal5 not allowed")
+V4.not(M4).output("V4_not_M4", "Via4 without Metal4 not allowed")
+V4.with_angle(0 .. 90).output("V4_angle", "Non 90 degree angle Via4")
+V4.width(R25_1, square).output("25.1 V4_width", "25.1 : Exact Via4 width : #{R25_1}um")
+V4.without_area(R25_1*R25_1).output("25.1 V4_width", "25.1 : Via4 width : #{R25_1}um2")
+V4.space(R25_2, euclidian).output("25.2 V4_space", "25.2 : Exact Via4 spacing : #{R25_2}um")
+M4.enclosing(V4, R25_3, euclidian).output("25.3 M4_enc_V4", "25.3 : Min. Metal4 enclosing Via4 : #{R25_3}um")
+M5.enclosing(V4, R26_3, euclidian).output("26.3 M5_enc_V4", "26.3 : Min. Metal5 enclosing Via4 : #{R26_3}um")
+if DFM
+  M4.and(M5).not(V4).with_holes(1,1).output("2_V4", "Min. 2 Via4 are needed")
+end
+
+### Metal 5
+M5.ongrid(0.5*LAMBDA).output("M5_offgrid", "Offgrid vertex on ME5")
+M5.with_angle(0 .. 45).output("M5_angle", "Non 45 degree angle ME5")
+M5.width(R26_1, euclidian).output("26.1 M5_width", "26.1 : Min. Metal5 width : #{R26_1}um")
+M5.space(R26_2, euclidian).output("26.2 M5_space", "26.2 : Min. Metal5 spacing : #{R26_2}um")
+M5.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M5,  R26_4, euclidian).polygons.without_area(0).output("26.4 M5_10_space", "26 .4 : Space if at least one metal5 line width is &gt; #{10*LAMBDA}um : #{R26_4}um")
+
+### Via 5
+if NBR_OF_METALS &gt; 5
+V5.ongrid(0.5*LAMBDA).output("V5_offgrid", "Offgrid vertex on Via5")
+V5.not(M5).output("V5_not_M5", "Via5 without Metal5 not allowed")
+V5.not(M6).output("V5_not_M6", "Via5 without Metal6 not allowed")
+V5.with_angle(0 .. 90).output("V4_angle", "Non 90 degree angle Via5")
+V5.width(R29_1, square).output("29.1 V5_width", "29.1 : Exact Via5 width : #{R29_1}um")
+V5.without_area(R29_1*R29_1).output("29.1 V5_width", "29.1 : Exact Via5 width : #{R29_1}um2")
+V5.space(R29_2, euclidian).output("29.2 V5_space", "29.2 : Via5 spacing : #{R29_2}um")
+M5.enclosing(V5, R29_3, euclidian).output("29.3 M5_enc_V5", "29.3 : Min. Metal5 enclosing Via5 : #{R29_3}um")
+M6.enclosing(V5, R30_3, euclidian).output("30.3 M3_enc_V5", "30.3 : Min. Metal6 enclosing Via5 : #{R30_3}um")
+if DFM
+  M5.and(M6).not(V5).with_holes(1,1).output("2_V5", "Min. 2 Via5 are needed")
+end
+
+### Metal 6
+M6.ongrid(0.5*LAMBDA).output("M6_offgrid", "Offgrid vertex on ME6")
+M6.with_angle(0 .. 45).output("M6_angle", "Non 45 degree angle ME5")
+M6.width(R30_1, euclidian).output("30.1 M6_width", "30.1 : Min. Metal6 width : #{R30_1}um")
+M6.space(R30_2, euclidian).output("30.2 M6_space", "30.2 : Min. Metal6 spacing : #{R30_2}um")
+M6.sized(-10*LAMBDA).sized(10*LAMBDA).separation(M5, 10, euclidian).polygons.without_area(0).output("30.4 M6_10_space", "30.4 : Space if at least one metal6 line width is &gt; #{10*LAMBDA}um : #{R30_4}um")
+
+end
+end
+end
+
+# time spent for the DRC
+time = Time.now
+hours = ((time - tstart)/3600).to_i
+minutes = ((time - tstart)/60 - hours * 60).to_i
+seconds = ((time - tstart) - (minutes * 60 + hours * 3600)).to_i
+$stdout.write "DRC finished at : #{time.hour}:#{time.min}:#{time.sec}  -  DRC duration =  #{hours} hrs. #{minutes} min. #{seconds} sec.\n"</text>
+</klayout-macro>

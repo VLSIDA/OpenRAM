@@ -81,9 +81,9 @@ class sky130_replica_column(sky130_bitcell_base_array):
     def add_pins(self):
 
         self.create_all_bitline_names()
-        self.create_all_wordline_names(self.row_size+2)
+        #self.create_all_wordline_names(self.row_size+2)
         # +2 to add fake wl pins for colends
-
+        self.create_all_wordline_names(self.row_size+1, 1)
         self.add_pin_list(self.all_bitline_names, "OUTPUT")
         self.add_pin_list(self.all_wordline_names, "INPUT")
 
@@ -132,8 +132,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
                     self.cell_inst[row]=self.add_inst(name=name, mod=self.replica_cell)
                     self.connect_inst(self.get_bitcell_pins(row, 0))
                     row_layout.append(self.strap2)
-                    self.add_inst(name=name + "_strap", mod=self.strap2)
-                    self.connect_inst(self.get_strap_pins(row, 0))
+                    self.add_inst(name=name + "_strap_p", mod=self.strap2)
+                    self.connect_inst(self.get_strap_pins(row, 0, name + "_strap_p"))
                     alternate_bitcell = 1
 
                 else:
@@ -141,24 +141,24 @@ class sky130_replica_column(sky130_bitcell_base_array):
                     self.cell_inst[row]=self.add_inst(name=name, mod=self.replica_cell2)
                     self.connect_inst(self.get_bitcell_pins(row, 0))
                     row_layout.append(self.strap2)
-                    self.add_inst(name=name + "_strap", mod=self.strap2)
-                    self.connect_inst(self.get_strap_pins(row, 0))
+                    self.add_inst(name=name + "_strap_p", mod=self.strap2)
+                    self.connect_inst(self.get_strap_pins(row, 0, name + "_strap_p"))
                     alternate_bitcell = 0
 
             elif (row == 0):
                 row_layout.append(self.colend)
                 self.cell_inst[row]=self.add_inst(name=name, mod=self.colend)
-                self.connect_inst(self.get_col_cap_p_pins(row, 0))
+                self.connect_inst(self.get_col_cap_pins(row, 0))
                 row_layout.append(self.colend_p_cent)
                 self.add_inst(name=name + "_cap", mod=self.colend_p_cent)
-                self.connect_inst(self.get_col_cap_pins(row, 0))
+                self.connect_inst(self.get_col_cap_p_pins(row, 0))
             elif (row == self.total_size - 1):
                 row_layout.append(self.colenda)
                 self.cell_inst[row]=self.add_inst(name=name, mod=self.colenda)
-                self.connect_inst(self.get_col_cap_p_pins(row, 0))
+                self.connect_inst(self.get_col_cap_pins(row, 0))
                 row_layout.append(self.colenda_p_cent)
                 self.add_inst(name=name + "_cap", mod=self.colenda_p_cent)
-                self.connect_inst(self.get_col_cap_pins(row, 0))
+                self.connect_inst(self.get_col_cap_p_pins(row, 0))
 
             self.array_layout.append(row_layout)
 

@@ -77,21 +77,24 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
         return bitcell_pins
 
-    def get_strap_pins(self, row, col):
+    def get_strap_pins(self, row, col, name=""):
         """
         Creates a list of connections in the strap cell,
         indexed by column and row, for instance use in bitcell_array
         """
-        strap_pins = ["vdd"]
-        return strap_pins
-
-    def get_col_cap_pins(self, row, col):
-        """
-        """
-        strap_pins = ["gnd", "gnd", "vdd"]
+        if name and "_p" in name:
+            strap_pins = ["gnd"]
+        else:
+            strap_pins = ["vdd"]
         return strap_pins
 
     def get_col_cap_p_pins(self, row, col):
+        """
+        """
+        strap_pins = ["gnd", "vdd", "gnd"]
+        return strap_pins
+
+    def get_col_cap_pins(self, row, col):
         """
         """
         strap_pins = []

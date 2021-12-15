@@ -104,6 +104,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
         self.add_mod(self.strap1)
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
         self.add_mod(self.strap2)
+        self.strap3 = factory.create(module_type="internal", version="wlstrapa_p")
+        self.add_mod(self.strap3)
 
         self.colend = factory.create(module_type="col_cap", version="colend")
         self.edge_cell = self.colend
@@ -140,8 +142,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
                     row_layout.append(self.replica_cell2)
                     self.cell_inst[row]=self.add_inst(name=name, mod=self.replica_cell2)
                     self.connect_inst(self.get_bitcell_pins(row, 0))
-                    row_layout.append(self.strap2)
-                    self.add_inst(name=name + "_strap", mod=self.strap2)
+                    row_layout.append(self.strap3)
+                    self.add_inst(name=name + "_strap", mod=self.strap3)
                     self.connect_inst(self.get_strap_pins(row, 0))
                     alternate_bitcell = 0
 

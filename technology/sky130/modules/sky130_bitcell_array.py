@@ -38,17 +38,11 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         """ Add the modules used in this design """
         # Bitcell for port names only
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
-        self.add_mod(self.cell)
         self.cell2 = factory.create(module_type=OPTS.bitcell, version="opt1a")
-        self.add_mod(self.cell2)
         self.strap = factory.create(module_type="internal", version="wlstrap")
-        self.add_mod(self.strap)
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
-        self.add_mod(self.strap2)
         self.strap3 = factory.create(module_type="internal", version="wlstrapa")
-        self.add_mod(self.strap3)
         self.strap4 = factory.create(module_type="internal", version="wlstrapa_p")
-        self.add_mod(self.strap4)
 
     def create_instances(self):
         """ Create the module instances used in this design """

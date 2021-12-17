@@ -39,6 +39,7 @@ MAG_FILES := $(sort $(wildcard $(SRAM_LIBRARY)/cells/*/*.mag))
 SPICE_SUFFIX := spice
 SPICE_LVS_SUFFIX := lvs.$(SPICE_SUFFIX)
 SPICE_CALIBRE_SUFFIX := lvs.calibre.$(SPICE_SUFFIX)
+SPICE_KLAYOUT_SUFFIX := lvs.klayout.$(SPICE_SUFFIX)
 SPICE_BASE_SUFFIX := base.$(SPICE_SUFFIX)
 ALL_SPICE_FILES := $(sort $(wildcard $(SRAM_LIBRARY)/cells/*/*.$(SPICE_SUFFIX)))
 
@@ -50,7 +51,7 @@ MAGICRC_FILE := $(OPEN_PDKS)/libs.tech/magic/sky130A.magicrc
 ALL_FILES := $(ALL_SPICE_FILES) $(GDS_FILES) $(MAG_FILES) $(MAGLEF_FILES)
 
 
-INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib lef_lib maglef_lib
+INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_lib lef_lib maglef_lib
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
@@ -132,6 +133,18 @@ $(INSTALL_BASE)/calibre_lvs_lib: $(filter %.$(SPICE_CALIBRE_SUFFIX),$(ALL_SPICE_
 	done
 	@echo "=================================================================="
 	@echo
+
+$(INSTALL_BASE)/klayout_lvs_lib: $(filter %.$(SPICE_KLAYOUT_SUFFIX),$(ALL_SPICE_FILES))
+	@echo
+	@echo "Setting up klayout LVS library for OpenRAM."
+	@echo "=================================================================="
+	mkdir -p $@
+	@for SP in $?; do \
+		cp -va $$SP $@/$$(basename $$SP .$(SPICE_KLAYOUT_SUFFIX)).sp; \
+	done
+	@echo "=================================================================="
+	@echo
+
 
 $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUFFIX),$(ALL_SPICE_FILES))
 	@echo

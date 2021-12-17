@@ -15,6 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
+
 class and3_dec_test(openram_test):
 
     def runTest(self):
@@ -28,7 +29,16 @@ class and3_dec_test(openram_test):
         OPTS.num_w_ports = 0
         globals.setup_bitcell()
 
-        debug.info(2, "Testing and3_dec gate")
+        debug.info(2, "Testing and3_dec 1rw/1r gate")
+        a = factory.create(module_type="and3_dec")
+        self.local_check(a)
+
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 0
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+
+        debug.info(2, "Testing and3_dec 1rw gate")
         a = factory.create(module_type="and3_dec")
         self.local_check(a)
 

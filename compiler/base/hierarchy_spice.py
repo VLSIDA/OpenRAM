@@ -17,6 +17,7 @@ from wire_spice_model import wire_spice_model
 from power_data import power_data
 import logical_effort
 
+
 class spice():
     """
     This provides a set of useful generic types for hierarchy
@@ -36,14 +37,15 @@ class spice():
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         try:
-            lvs_subdir = tech.lvs_lib
-        except AttributeError:
-            lvs_subdir = "lvs_lib"
-        lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+            from tech import lvs_name
+            lvs_dir = OPTS.openram_tech + lvs_name + "_lvs_lib/"
+        except ImportError:
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
+        if not os.path.exists(lvs_dir):
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
 
-        if os.path.exists(lvs_dir):
-            self.lvs_file = lvs_dir + cell_name + ".sp"
-        else:
+        self.lvs_file = lvs_dir + cell_name + ".sp"
+        if not os.path.exists(self.lvs_file):
             self.lvs_file = self.sp_file
 
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
@@ -277,7 +279,10 @@ class spice():
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
             debug.check(lvs_pins == self.pins,
-                        "Spice netlists for LVS and simulation have port mismatches: {0} (LVS) vs {1} (sim)".format(lvs_pins, self.pins))
+                        "Spice netlists for LVS and simulation have port mismatches:\n{0} (LVS {1})\nvs\n{2} (sim {3})".format(lvs_pins,
+                                                                                                                               self.lvs_file,
+                                                                                                                               self.pins,
+                                                                                                                               self.sp_file))
 
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
@@ -419,7 +424,7 @@ class spice():
         self.cacti_params = cacti_params
         # Get the r_on the the tx
         rd = self.get_on_resistance()
-        # Calculate the intrinsic capacitance 
+        # Calculate the intrinsic capacitance
         c_intrinsic = self.get_intrinsic_capacitance()
         # Get wire values
         c_wire = self.module_wire_c()
@@ -453,13 +458,13 @@ class spice():
 
     def module_wire_c(self):
         """All devices assumed to have ideal capacitance (0).
-           Non-ideal cases should have this function re-defined. 
+           Non-ideal cases should have this function re-defined.
         """
         return 0
 
     def module_wire_r(self):
         """All devices assumed to have ideal resistance (0).
-           Non-ideal cases should have this function re-defined. 
+           Non-ideal cases should have this function re-defined.
         """
         return 0
 
@@ -517,19 +522,19 @@ class spice():
                               self.cell_name))
         return 0
 
-    def cacti_rc_delay(self, 
+    def cacti_rc_delay(self,
                  inputramptime, # input rise time
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
                  vs2,           # threshold voltage
                  rise,          # whether input rises or fall
-                 extra_param_dict=None):         
+                 extra_param_dict=None):
         """By default, CACTI delay uses horowitz for gate delay.
            Can be overriden in cases like bitline if equation is different.
         """
         return self.horowitz(inputramptime, tf, vs1, vs2, rise)
-        
-    def horowitz(self, 
+
+    def horowitz(self,
                  inputramptime, # input rise time
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
@@ -549,17 +554,17 @@ class spice():
             td = tf * math.sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
 
         return td
-  
-    def tr_r_on(self, width, is_nchannel, stack, _is_cell):      
-        
+
+    def tr_r_on(self, width, is_nchannel, stack, _is_cell):
+
         restrans = self.cacti_params["r_nch_on"] if is_nchannel else self.cacti_params["r_pch_on"]
         return stack * restrans / width
 
     def gate_c(self, width):
-    
+
         return (tech.spice["c_g_ideal"] + tech.spice["c_overlap"] + 3*tech.spice["c_fringe"])*width +\
                tech.drc["minlength_channel"]*tech.spice["cpolywire"]
-    
+
     def drain_c_(self,
                  width,
                  stack,
@@ -570,10 +575,10 @@ class spice():
         c_fringe = 2*tech.spice["c_overlap"]
         c_overlap = 2*tech.spice["c_fringe"]
         drain_C_metal_connecting_folded_tr = 0
-            
+
         w_folded_tr = width/folds
         num_folded_tr = folds
-        
+
         # Re-created some logic contact to get minwidth as importing the contact
         # module causes a failure
         if "minwidth_contact" in tech.drc:
@@ -595,10 +600,10 @@ class spice():
 
             if num_folded_tr%2 == 0:
                 drain_h_for_sidewall = 0
-        
+
             total_drain_height_for_cap_wrt_gate *= num_folded_tr
             drain_C_metal_connecting_folded_tr   = tech.spice["wire_c_per_um"] * total_drain_w
-      
+
 
         drain_C_area     = c_junc_area * total_drain_w * w_folded_tr
         drain_C_sidewall = c_junc_sidewall * (drain_h_for_sidewall + 2 * total_drain_w)

@@ -92,28 +92,20 @@ class sky130_replica_column(sky130_bitcell_base_array):
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell_1port", version="opt1")
-        self.add_mod(self.replica_cell)
         self.cell = self.replica_cell
         self.replica_cell2 = factory.create(module_type="replica_bitcell_1port", version="opt1a")
-        self.add_mod(self.replica_cell2)
 
         self.dummy_cell = factory.create(module_type="dummy_bitcell_1port", version="opt1")
         self.dummy_cell2 = factory.create(module_type="dummy_bitcell_1port", version="opt1")
 
         self.strap1 = factory.create(module_type="internal", version="wlstrap")
-        self.add_mod(self.strap1)
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
-        self.add_mod(self.strap2)
 
         self.colend = factory.create(module_type="col_cap", version="colend")
         self.edge_cell = self.colend
-        self.add_mod(self.colend)
         self.colenda = factory.create(module_type="col_cap", version="colenda")
-        self.add_mod(self.colenda)
         self.colend_p_cent = factory.create(module_type="col_cap", version="colend_p_cent")
-        self.add_mod(self.colend_p_cent)
         self.colenda_p_cent = factory.create(module_type="col_cap", version="colenda_p_cent")
-        self.add_mod(self.colenda_p_cent)
 
     def create_instances(self):
         self.cell_inst = {}

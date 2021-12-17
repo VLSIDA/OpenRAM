@@ -45,13 +45,9 @@ class sky130_dummy_array(sky130_bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell, version="opt1")
-        self.add_mod(self.dummy_cell)
         self.dummy_cell2 = factory.create(module_type=OPTS.dummy_bitcell, version="opt1a")
-        self.add_mod(self.dummy_cell2)
         self.strap = factory.create(module_type="internal", version="wlstrap")
-        self.add_mod(self.strap)
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
-        self.add_mod(self.strap2)
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 
     def create_instances(self):

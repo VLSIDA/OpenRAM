@@ -51,24 +51,16 @@ class sky130_row_cap_array(sky130_bitcell_base_array):
         """ Add the modules used in this design """
         if self.column_offset == 0:
             self.top_corner = factory.create(module_type="corner", location="ul")
-            self.add_mod(self.top_corner)
             self.bottom_corner =factory.create(module_type="corner", location="ll")
-            self.add_mod(self.bottom_corner)
             self.rowend1 = factory.create(module_type="row_cap", version="rowend_replica")
-            self.add_mod(self.rowend1)
             self.rowend2 = factory.create(module_type="row_cap", version="rowenda_replica")
-            self.add_mod(self.rowend2)
 
         else:
             self.top_corner = factory.create(module_type="corner", location="ur")
-            self.add_mod(self.top_corner)
             self.bottom_corner = factory.create(module_type="corner", location="lr")
-            self.add_mod(self.bottom_corner)
 
             self.rowend1 = factory.create(module_type="row_cap", version="rowend")
-            self.add_mod(self.rowend1)
             self.rowend2 = factory.create(module_type="row_cap", version="rowenda")
-            self.add_mod(self.rowend2)
 
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 

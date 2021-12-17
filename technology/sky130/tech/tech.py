@@ -460,6 +460,7 @@ drc["grid"] = 0.005
 NDA_PDK_ROOT = os.environ.get("NDA_PDK_ROOT", False)
 use_calibre = bool(NDA_PDK_ROOT)
 use_calibre = False
+use_klayout = False
 if use_calibre:
     # Correct order according to s8
     pin_purpose = 16
@@ -747,8 +748,10 @@ if use_calibre:
     drc_name = "calibre"
     lvs_name = "calibre"
     pex_name = "calibre"
-    # Calibre automatically scales to micron to SI units and requires mult parameter
-    lvs_lib = "calibre_lvs_lib"
+elif use_klayout:
+    drc_name = "klayout"
+    lvs_name = "klayout"
+    pex_name = "klayout"
 else:
     drc_name = "magic"
     lvs_name = "netgen"

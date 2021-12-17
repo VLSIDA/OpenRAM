@@ -156,13 +156,18 @@ class ptx(design.design):
             #                                                                        self.tx_width,
             #                                                                        drc("minwidth_poly"))
             # TEMP FIX: Use old device names if using Calibre.
-            
+
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult=1".format("nshort" if self.tx_type == "nmos" else "pshort",
                                                                                  self.mults,
                                                                                  self.tx_width,
                                                                                  drc("minwidth_poly"))
+
+        elif OPTS.lvs_exe and OPTS.lvs_exe[0] == "klayout":
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3}".format(spice[self.tx_type],
+                                                                          self.mults,
+                                                                          self.tx_width,
+                                                                          drc("minwidth_poly"))
         elif cell_props.ptx.model_is_subckt:
-            # sky130 requires mult parameter too
             self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
                                                                             self.mults,
                                                                             self.tx_width,
@@ -550,7 +555,7 @@ class ptx(design.design):
 
     def is_non_inverting(self):
         """Return input to output polarity for module"""
-        
+
         return True
 
     def get_on_resistance(self):
@@ -558,14 +563,14 @@ class ptx(design.design):
         is_nchannel = (self.tx_type == "nmos")
         stack = 1
         is_cell = False
-        return self.tr_r_on(self.tx_width, is_nchannel, stack, is_cell)    
-        
+        return self.tr_r_on(self.tx_width, is_nchannel, stack, is_cell)
+
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
-        return self.gate_c(self.tx_width)   
+        return self.gate_c(self.tx_width)
 
     def get_intrinsic_capacitance(self):
         """Get the drain capacitances of the TXs in the gate."""
-        return self.drain_c_(self.tx_width*self.mults, 
+        return self.drain_c_(self.tx_width*self.mults,
                              1,
                              self.mults)

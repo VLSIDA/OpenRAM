@@ -23,7 +23,8 @@ TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # Skywater PDK SRAM library
 #SRAM_LIBRARY ?= $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_bd_sram
-SRAM_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
+#SRAM_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
+SRAM_GIT_REPO ?= git@github.com:VLSIDA/sky130_fd_bd_sram.git
 SRAM_LIBRARY ?= $(TOP_DIR)/sky130_fd_bd_sram
 
 # Open PDKs

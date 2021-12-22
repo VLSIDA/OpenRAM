@@ -49,18 +49,12 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
         """ Add the modules used in this design """
         if self.location == "top":
             self.colend1 = factory.create(module_type="col_cap", version="colend")
-            self.add_mod(self.colend1)
             self.colend2 = factory.create(module_type="col_cap", version="colend_p_cent")
-            self.add_mod(self.colend2)
             self.colend3 = factory.create(module_type="col_cap", version="colend_cent")
-            self.add_mod(self.colend3)
         elif self.location == "bottom":
             self.colend1 = factory.create(module_type="col_cap", version="colenda")
-            self.add_mod(self.colend1)
             self.colend2 = factory.create(module_type="col_cap", version="colenda_p_cent")
-            self.add_mod(self.colend2)
             self.colend3 = factory.create(module_type="col_cap", version="colenda_cent")
-            self.add_mod(self.colend3)
 
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 

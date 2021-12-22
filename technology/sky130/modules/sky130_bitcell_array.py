@@ -42,6 +42,7 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         self.strap = factory.create(module_type="internal", version="wlstrap")
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
         self.strap3 = factory.create(module_type="internal", version="wlstrapa")
+        self.strap4 = factory.create(module_type="internal", version="wlstrapa_p")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -66,10 +67,14 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
                 self.connect_inst(self.get_bitcell_pins(row, col))
                 if col != self.column_size - 1:
                     if alternate_strap:
-                        name="row_{}_col_{}_wlstrap_p".format(row, col)
-                        row_layout.append(self.strap2)
-                        self.add_inst(name=name.format(row, col),
-                                      mod=self.strap2)
+                        if row % 2:
+                            row_layout.append(self.strap4)
+                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                              mod=self.strap4)
+                        else:
+                            row_layout.append(self.strap2)
+                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                              mod=self.strap2)
                         alternate_strap = 0
                     else:
                         if row % 2:

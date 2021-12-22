@@ -382,7 +382,6 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",
                                                 mod=self.bitcell_array)
         self.connect_inst(self.all_bitline_names + self.all_wordline_names + self.supplies)
-        print("running\n\n\n")
         # Replica columns
         self.replica_col_insts = []
         for port in self.all_ports:
@@ -414,7 +413,7 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
         self.dummy_col_insts = []
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
                                                     mod=self.row_cap_left))
-        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + ["gnd"] + self.replica_array_wordline_names + ["gnd"] + self.supplies)
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
                                                     mod=self.row_cap_right))
-        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + ["gnd"] + self.replica_array_wordline_names + ["gnd"] + self.supplies)

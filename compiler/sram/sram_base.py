@@ -468,11 +468,9 @@ class sram_base(design, verilog, lef):
         self.msb_address = dff_buf_array(name="msb_address",
                                          rows=1,
                                          columns=self.num_banks / 2)
-        self.add_mod(self.msb_address)
 
         if self.num_banks>2:
             self.msb_decoder = self.bank.decoder.pre2_4
-            self.add_mod(self.msb_decoder)
 
     def add_modules(self):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
@@ -480,30 +478,24 @@ class sram_base(design, verilog, lef):
 
         # Create the bank module (up to four are instantiated)
         self.bank = factory.create("bank", sram_config=self.sram_config, module_name="bank")
-        self.add_mod(self.bank)
 
         self.num_spare_cols = self.bank.num_spare_cols
 
         # Create the address and control flops (but not the clk)
         self.row_addr_dff = factory.create("dff_array", module_name="row_addr_dff", rows=self.row_addr_size, columns=1)
-        self.add_mod(self.row_addr_dff)
 
         if self.col_addr_size > 0:
             self.col_addr_dff = factory.create("dff_array", module_name="col_addr_dff", rows=1, columns=self.col_addr_size)
-            self.add_mod(self.col_addr_dff)
         else:
             self.col_addr_dff = None
 
         self.data_dff = factory.create("dff_array", module_name="data_dff", rows=1, columns=self.word_size + self.num_spare_cols)
-        self.add_mod(self.data_dff)
 
         if self.write_size:
             self.wmask_dff = factory.create("dff_array", module_name="wmask_dff", rows=1, columns=self.num_wmasks)
-            self.add_mod(self.wmask_dff)
 
         if self.num_spare_cols:
             self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
-            self.add_mod(self.spare_wen_dff)
 
         # Create bank decoder
         if(self.num_banks > 1):
@@ -515,30 +507,27 @@ class sram_base(design, verilog, lef):
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
         # Create the control logic module for each port type
-        if len(self.readwrite_ports)>0:
+        if len(self.readwrite_ports) > 0:
             self.control_logic_rw = self.mod_control_logic(num_rows=self.num_rows,
                                                            words_per_row=self.words_per_row,
                                                            word_size=self.word_size,
                                                            spare_columns=self.num_spare_cols,
                                                            sram=self,
                                                            port_type="rw")
-            self.add_mod(self.control_logic_rw)
-        if len(self.writeonly_ports)>0:
+        if len(self.writeonly_ports) > 0:
             self.control_logic_w = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
                                                           spare_columns=self.num_spare_cols,
                                                           sram=self,
                                                           port_type="w")
-            self.add_mod(self.control_logic_w)
-        if len(self.readonly_ports)>0:
+        if len(self.readonly_ports) > 0:
             self.control_logic_r = self.mod_control_logic(num_rows=self.num_rows,
                                                           words_per_row=self.words_per_row,
                                                           word_size=self.word_size,
                                                           spare_columns=self.num_spare_cols,
                                                           sram=self,
                                                           port_type="r")
-            self.add_mod(self.control_logic_r)
 
     def create_bank(self, bank_num):
         """ Create a bank  """
@@ -779,13 +768,13 @@ class sram_base(design, verilog, lef):
         Clears the bit exclusions
         """
         self.bank.clear_exclude_bits()
-        
+
     def graph_exclude_column_mux(self, column_include_num, port):
         """
         Excludes all columns muxes unrelated to the target bit being simulated.
         """
         self.bank.graph_exclude_column_mux(column_include_num, port)
-    
+
     def graph_clear_column_mux(self, port):
         """
         Clear mux exclusions to allow different bit tests.

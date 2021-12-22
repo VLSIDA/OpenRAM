@@ -37,14 +37,13 @@ class row_cap_array(bitcell_base_array):
 
         self.width = max([x.rx() for x in self.insts])
         self.height = max([x.uy() for x in self.insts])
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
-        self.add_mod(self.dummy_cell)
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 
@@ -114,4 +113,3 @@ class row_cap_array(bitcell_base_array):
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
                         self.copy_power_pin(pin)
-

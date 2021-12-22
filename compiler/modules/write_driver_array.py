@@ -94,7 +94,6 @@ class write_driver_array(design.design):
 
     def add_modules(self):
         self.driver = factory.create(module_type="write_driver")
-        self.add_mod(self.driver)
 
         # This is just used for measurements,
         # so don't add the module
@@ -259,4 +258,3 @@ class write_driver_array(design.design):
                                 layer="m1",
                                 offset=inst.get_pin(inst.mod.en_name).ll().scale(0, 1),
                                 width=self.width)
-

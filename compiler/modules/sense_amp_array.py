@@ -91,7 +91,6 @@ class sense_amp_array(design.design):
 
     def add_modules(self):
         self.amp = factory.create(module_type="sense_amp")
-        self.add_mod(self.amp)
 
         # This is just used for measurements,
         # so don't add the module

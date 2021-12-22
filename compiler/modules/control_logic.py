@@ -91,17 +91,13 @@ class control_logic(design.design):
                                              rows=self.num_control_signals,
                                              columns=1)
 
-        self.add_mod(self.ctrl_dff_array)
-
         self.and2 = factory.create(module_type="pand2",
                                    size=12,
                                    height=dff_height)
-        self.add_mod(self.and2)
 
         self.rbl_driver = factory.create(module_type="pbuf",
                                          size=self.num_cols,
                                          height=dff_height)
-        self.add_mod(self.rbl_driver)
 
         # clk_buf drives a flop for every address
         addr_flops = math.log(self.num_words, 2) + math.log(self.words_per_row, 2)
@@ -114,8 +110,6 @@ class control_logic(design.design):
                                              fanout=clock_fanout,
                                              height=dff_height)
 
-        self.add_mod(self.clk_buf_driver)
-
         # We will use the maximum since this same value is used to size the wl_en
         # and the p_en_bar drivers
         # max_fanout = max(self.num_rows, self.num_cols)
@@ -126,25 +120,21 @@ class control_logic(design.design):
         self.wl_en_driver = factory.create(module_type="pdriver",
                                            size_list=size_list,
                                            height=dff_height)
-        self.add_mod(self.wl_en_driver)
 
         # w_en drives every write driver
         self.wen_and = factory.create(module_type="pand3",
-                                       size=self.word_size + 8,
-                                       height=dff_height)
-        self.add_mod(self.wen_and)
+                                      size=self.word_size + 8,
+                                      height=dff_height)
 
         # s_en drives every sense amp
         self.sen_and3 = factory.create(module_type="pand3",
                                        size=self.word_size + self.num_spare_cols,
                                        height=dff_height)
-        self.add_mod(self.sen_and3)
 
         # used to generate inverted signals with low fanout
         self.inv = factory.create(module_type="pinv",
                                   size=1,
                                   height=dff_height)
-        self.add_mod(self.inv)
 
         # p_en_bar drives every column in the bitcell array
         # but it is sized the same as the wl_en driver with
@@ -152,17 +142,14 @@ class control_logic(design.design):
         self.p_en_bar_driver = factory.create(module_type="pdriver",
                                               fanout=self.num_cols,
                                               height=dff_height)
-        self.add_mod(self.p_en_bar_driver)
 
         self.nand2 = factory.create(module_type="pnand2",
                                     height=dff_height)
-        self.add_mod(self.nand2)
 
         debug.check(OPTS.delay_chain_stages % 2,
                     "Must use odd number of delay chain stages for inverting delay chain.")
         self.delay_chain=factory.create(module_type="delay_chain",
                                         fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ])
-        self.add_mod(self.delay_chain)
 
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
         """Determine the size of the delay chain used for the Sense Amp Enable using path delays"""

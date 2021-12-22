@@ -42,14 +42,13 @@ class col_cap_array(bitcell_base_array):
 
         self.height = self.dummy_cell.height
         self.width = self.column_size * self.cell.width
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
-        self.add_mod(self.dummy_cell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -101,4 +100,3 @@ class col_cap_array(bitcell_base_array):
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
                         self.copy_power_pin(pin)
-

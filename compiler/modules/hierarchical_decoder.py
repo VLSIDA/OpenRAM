@@ -69,14 +69,11 @@ class hierarchical_decoder(design.design):
     def add_modules(self):
         self.and2 = factory.create(module_type="and2_dec",
                                    height=self.cell_height)
-        self.add_mod(self.and2)
 
         self.and3 = factory.create(module_type="and3_dec",
                                    height=self.cell_height)
-        self.add_mod(self.and3)
         # TBD
         # self.and4 = factory.create(module_type="and4_dec")
-        # self.add_mod(self.and4)
 
         self.add_decoders()
 
@@ -84,15 +81,12 @@ class hierarchical_decoder(design.design):
         """ Create the decoders based on the number of pre-decodes """
         self.pre2_4 = factory.create(module_type="hierarchical_predecode2x4",
                                      height=self.cell_height)
-        self.add_mod(self.pre2_4)
 
         self.pre3_8 = factory.create(module_type="hierarchical_predecode3x8",
                                      height=self.cell_height)
-        self.add_mod(self.pre3_8)
 
         self.pre4_16 = factory.create(module_type="hierarchical_predecode4x16",
                                       height=self.cell_height)
-        self.add_mod(self.pre4_16)
 
     def determine_predecodes(self, num_inputs):
         """

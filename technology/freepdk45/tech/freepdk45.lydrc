@@ -110,8 +110,9 @@ end
 #   Wells
 nwell.and(pwell).output("WELL.1", "WELL.1 : nwell/pwell must not overlap")
 # the rule "WELL.2 : Minimum spacing of well at different potential : 225nm" was not coded : see : https://www.klayout.de/forum/discussion/comment/6021
-nwell.space(135.nm, euclidian).output("WELL.3", "WELL.3 : Minimum spacing of nwell at same potential : 135nm")
-pwell.space(135.nm, euclidian).output("WELL.3", "WELL.3 : Minimum spacing of pwell at same potential : 135nm")
+# the rule WELL.3 was not detected in the original FreePDK45 rule deck
+#nwell.space(135.nm, euclidian).output("WELL.3", "WELL.3 : Minimum spacing of nwell at same potential : 135nm")
+#pwell.space(135.nm, euclidian).output("WELL.3", "WELL.3 : Minimum spacing of pwell at same potential : 135nm")
 well.separation(well, 200.nm, euclidian).output("WELL.4", "WELL.4 : Minimum width of nwell/pwell : 200nm")
 vtg.not(well).output("VT.1","VT.1 : Vtg adjust layers must coincide with well")
 vth.not(well).output("VT.1","VT.1 : Vth adjust layers must coincide with well")

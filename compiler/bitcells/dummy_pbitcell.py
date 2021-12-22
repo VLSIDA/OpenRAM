@@ -56,7 +56,6 @@ class dummy_pbitcell(design.design):
     def add_modules(self):
         self.prbc = factory.create(module_type="pbitcell",
                                    dummy_bitcell=True)
-        self.add_mod(self.prbc)
 
         self.height = self.prbc.height
         self.width = self.prbc.width

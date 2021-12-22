@@ -46,7 +46,6 @@ class tri_gate_array(design.design):
 
     def add_modules(self):
         self.tri = factory.create(module_type="tri_gate")
-        self.add_mod(self.tri)
 
     def add_pins(self):
         """create the name of pins depend on the word size"""

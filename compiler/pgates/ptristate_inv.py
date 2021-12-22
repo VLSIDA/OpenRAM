@@ -85,13 +85,11 @@ class ptristate_inv(pgate.pgate):
                                    width=self.nmos_width,
                                    mults=1,
                                    tx_type="nmos")
-        self.add_mod(self.nmos)
 
         self.pmos = factory.create(module_type="ptx",
                                    width=self.pmos_width,
                                    mults=1,
                                    tx_type="pmos")
-        self.add_mod(self.pmos)
 
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """

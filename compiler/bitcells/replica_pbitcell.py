@@ -58,7 +58,6 @@ class replica_pbitcell(design.design):
     def add_modules(self):
         self.prbc = factory.create(module_type="pbitcell",
                                    replica_bitcell=True)
-        self.add_mod(self.prbc)
 
         self.height = self.prbc.height
         self.width = self.prbc.width
@@ -88,4 +87,3 @@ class replica_pbitcell(design.design):
             self.copy_layout_pin(self.prbc_inst, "wl{}".format(port))
         self.copy_layout_pin(self.prbc_inst, "vdd")
         self.copy_layout_pin(self.prbc_inst, "gnd")
-

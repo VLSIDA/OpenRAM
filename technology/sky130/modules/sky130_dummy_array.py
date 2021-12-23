@@ -94,7 +94,7 @@ class sky130_dummy_array(sky130_bitcell_base_array):
                                 self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
                                               mod=self.strap3)
                         alternate_strap = 1
-                    self.connect_inst(self.get_strap_pins(row, col, name))
+                    self.connect_inst(self.get_strap_pins(row, col))
             if alternate_bitcell == 0:
                 alternate_bitcell = 1
             else:
@@ -103,11 +103,11 @@ class sky130_dummy_array(sky130_bitcell_base_array):
 
     def add_pins(self):
         # bitline pins are not added because they are floating
-        for bl_name in self.get_bitline_names():
-            self.add_pin(bl_name, "INOUT")
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
-
+        for bl in range(self.column_size):
+            self.add_pin("dummy_bl_{}".format(bl))
+            self.add_pin("dummy_br_{}".format(bl))
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 

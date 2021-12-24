@@ -22,6 +22,8 @@ class sky130_internal(design.design):
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrap_p"
         elif version == "wlstrapa":
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrapa"
+        elif version == "wlstrapa_p":
+            self.name = "sky130_fd_bd_sram__sram_sp_wlstrapa_p"
         else:
             debug.error("Invalid version", -1)
         design.design.__init__(self, name=self.name)

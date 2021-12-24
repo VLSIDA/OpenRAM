@@ -100,7 +100,7 @@ cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'gnd': 'GND'}
 
 cell_properties.col_cap_1port_bitcell = cell(['br', 'vdd', 'gnd', 'bl'],
-                                             ['INPUT', 'INPUT', 'GROUND', 'POWER'],
+                                             ['INPUT', 'POWER', 'GROUND', 'INPUT'],
                                              {'bl': 'BL0',
                                               'br': 'BL1',
                                               'vdd': 'VPWR',

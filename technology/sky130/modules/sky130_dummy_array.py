@@ -48,6 +48,8 @@ class sky130_dummy_array(sky130_bitcell_base_array):
         self.dummy_cell2 = factory.create(module_type=OPTS.dummy_bitcell, version="opt1a")
         self.strap = factory.create(module_type="internal", version="wlstrap")
         self.strap2 = factory.create(module_type="internal", version="wlstrap_p")
+        self.strap3 = factory.create(module_type="internal", version="wlstrapa")
+        self.strap4 = factory.create(module_type="internal", version="wlstrapa_p")
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 
     def create_instances(self):
@@ -73,15 +75,24 @@ class sky130_dummy_array(sky130_bitcell_base_array):
                 self.connect_inst(self.get_bitcell_pins(row, col))
                 if col != self.column_size - 1:
                     if alternate_strap:
-                        row_layout.append(self.strap2)
-                        self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
-                                      mod=self.strap2)
+                        if col % 2:
+                            row_layout.append(self.strap4)
+                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                        mod=self.strap4) 
+                        else:
+                            row_layout.append(self.strap4)
+                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                        mod=self.strap4)
                         alternate_strap = 0
                     else:
-
-                        row_layout.append(self.strap)
-                        self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
-                                      mod=self.strap)
+                        if col % 2:
+                                row_layout.append(self.strap)
+                                self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                              mod=self.strap)
+                        else:
+                                row_layout.append(self.strap3)
+                                self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                                              mod=self.strap3)
                         alternate_strap = 1
                     self.connect_inst(self.get_strap_pins(row, col))
             if alternate_bitcell == 0:

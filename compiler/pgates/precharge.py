@@ -236,7 +236,7 @@ class precharge(design.design):
                       height=self.height)
 
         # TSMC18 gate port hack
-        if OPTS.tech_name in ["tsmc18", "lapis20"]:
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
             # Body connection
             min_area = drc["minarea_{}".format(self.active_stack[0])]
             height = round_to_grid(self.well_contact.mod.first_layer_width)
@@ -354,7 +354,7 @@ class precharge(design.design):
                                       to_layer=self.bitline_layer,
                                       offset=lower_pin.center(),
                                       directions=("V", "V"))
-            if OPTS.tech_name in ["tsmc18", "lapis20"]:
+            if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
                 self.helper_areas(lower_pin.layer, self.bitline_layer, lower_pin.center())
 
         # BR
@@ -363,7 +363,7 @@ class precharge(design.design):
                                       to_layer=self.bitline_layer,
                                       offset=upper_pin.center(),
                                       directions=("V", "V"))
-            if OPTS.tech_name in ["tsmc18", "lapis20"]:
+            if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
                 self.helper_areas(lower_pin.layer, self.bitline_layer, upper_pin.center())
 
     def connect_pmos(self, pmos_pin, bit_xoffset):

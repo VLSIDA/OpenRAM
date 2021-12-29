@@ -337,7 +337,7 @@ drc.add_enclosure("m2",
 # VIA2-3.2 Minimum spacing of Via[2-3]
 drc.add_layer("via2",
               width=0.065,
-              spacing=0.075)
+              spacing=0.085)
 
 # METALINT.1 Minimum width of intermediate metal
 # METALINT.2 Minimum spacing of intermediate metal
@@ -480,6 +480,7 @@ spice["sa_transconductance"] = (spice["mobility_n"])*spice["cox"]*(parameter["sa
 #drc_name = "calibre"
 #lvs_name = "calibre"
 #pex_name = "calibre"
+
 drc_name = "klayout"
 lvs_name = "klayout"
 pex_name = "klayout"

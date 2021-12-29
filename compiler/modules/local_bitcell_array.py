@@ -73,12 +73,10 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                                             rbl=self.rbl,
                                             left_rbl=self.left_rbl,
                                             right_rbl=self.right_rbl)
-        self.add_mod(self.bitcell_array)
 
         self.wl_array = factory.create(module_type="wordline_buffer_array",
                                        rows=self.rows + 1,
                                        cols=self.cols)
-        self.add_mod(self.wl_array)
 
     def add_pins(self):
         # Outputs from the wordline driver (by port)

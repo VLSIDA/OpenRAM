@@ -43,9 +43,6 @@ class and2_dec(design.design):
                                   height=self.height,
                                   size=self.size)
 
-        self.add_mod(self.nand)
-        self.add_mod(self.inv)
-
     def create_layout(self):
 
         if "li" in layer:

@@ -337,16 +337,25 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=
 
     # Netlists match uniquely.
     test = re.compile("match uniquely.")
-    correct = list(filter(test.search, final_results))
+    uniquely = list(filter(test.search, final_results))
+
+    # Netlists match uniquely.
+    test = re.compile("match correctly.")
+    correctly = list(filter(test.search, final_results))
+
     # Fail if they don't match. Something went wrong!
-    if len(correct) == 0:
+    if len(uniquely) == 0 and len(correctly) == 0:
         total_errors += 1
+
+    if len(uniquely) == 0 and len(correctly) > 0:
+        debug.warning("{0}\tLVS matches but not uniquely".format(cell_name))
 
     if total_errors>0:
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,resultsfile))
+        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,
+                                                                resultsfile))
     else:
         debug.info(1, "{0}\tLVS matches".format(cell_name))
 

@@ -65,17 +65,14 @@ class pinvbuf(pgate.pgate):
         self.inv = factory.create(module_type="pinv",
                                   size=input_size,
                                   height=self.row_height)
-        self.add_mod(self.inv)
 
         self.inv1 = factory.create(module_type="pinv",
                                    size=self.predriver_size,
                                    height=self.row_height)
-        self.add_mod(self.inv1)
 
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.size,
                                    height=self.row_height)
-        self.add_mod(self.inv2)
 
     def create_insts(self):
         # Create INV1 (capacitance shield)

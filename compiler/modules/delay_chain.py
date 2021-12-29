@@ -47,7 +47,7 @@ class delay_chain(design.design):
         self.height = self.rows * self.inv.height
         # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list) + 1) * self.inv.width
-        
+
         self.place_inverters()
         self.route_inverters()
         self.route_supplies()
@@ -66,10 +66,9 @@ class delay_chain(design.design):
 
         self.dff = factory.create(module_type="dff_buf")
         dff_height = self.dff.height
-        
+
         self.inv = factory.create(module_type="pinv",
                                   height=dff_height)
-        self.add_mod(self.inv)
 
     def create_inverters(self):
         """ Create the inverters and connect them based on the stage list """
@@ -199,7 +198,7 @@ class delay_chain(design.design):
                                         to_layer="m2",
                                         offset=mid_loc)
         self.add_path(a_pin.layer, [a_pin.center(), mid_loc])
-        
+
         self.add_layout_pin_rect_center(text="in",
                                         layer="m2",
                                         offset=mid_loc)
@@ -213,4 +212,3 @@ class delay_chain(design.design):
         self.add_layout_pin_rect_center(text="out",
                                         layer="m1",
                                         offset=a_pin.center())
-        

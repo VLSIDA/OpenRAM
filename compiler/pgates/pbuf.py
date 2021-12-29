@@ -52,13 +52,11 @@ class pbuf(pgate.pgate):
         self.inv1 = factory.create(module_type="pinv",
                                    size=input_size,
                                    height=self.height)
-        self.add_mod(self.inv1)
 
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.size,
                                    height=self.height,
                                    add_wells=False)
-        self.add_mod(self.inv2)
 
     def create_insts(self):
         self.inv1_inst = self.add_inst(name="buf_inv1",
@@ -96,4 +94,3 @@ class pbuf(pgate.pgate):
                                         offset=a_pin.center(),
                                         width=a_pin.width(),
                                         height=a_pin.height())
-

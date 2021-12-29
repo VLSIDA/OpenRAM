@@ -66,19 +66,16 @@ class pwrite_driver(design.design):
 
         # Tristate inverter
         self.tri = factory.create(module_type="ptristate_inv", height="min")
-        self.add_mod(self.tri)
         debug.check(self.tri.width<self.width,
                     "Could not create tristate inverter to match bitcell width")
 
         #self.tbuf = factory.create(module_type="ptristate_buf",
         #height="min")
-        #self.add_mod(self.tbuf)
         #debug.check(self.tbuf.width<self.width,
         #"Could not create tristate buffer to match bitcell width")
 
         # Inverter for din and en
         self.inv = factory.create(module_type="pinv", under_rail_vias=True)
-        self.add_mod(self.inv)
 
     def create_insts(self):
         # Enable inverter

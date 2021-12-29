@@ -64,7 +64,6 @@ class wordline_buffer_array(design.design):
         self.wl_driver = factory.create(module_type="inv_dec",
                                         size=self.cols,
                                         height=b.height)
-        self.add_mod(self.wl_driver)
 
     def route_vdd_gnd(self):
         """

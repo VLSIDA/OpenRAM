@@ -82,7 +82,6 @@ class pnand4(pgate.pgate):
                                           tx_type="nmos",
                                           add_source_contact="active",
                                           add_drain_contact="active")
-        self.add_mod(self.nmos_center)
 
         self.nmos_right = factory.create(module_type="ptx",
                                          width=self.nmos_width,
@@ -90,7 +89,6 @@ class pnand4(pgate.pgate):
                                          tx_type="nmos",
                                          add_source_contact="active",
                                          add_drain_contact=self.route_layer)
-        self.add_mod(self.nmos_right)
 
         self.nmos_left = factory.create(module_type="ptx",
                                         width=self.nmos_width,
@@ -98,7 +96,6 @@ class pnand4(pgate.pgate):
                                         tx_type="nmos",
                                         add_source_contact=self.route_layer,
                                         add_drain_contact="active")
-        self.add_mod(self.nmos_left)
 
         self.pmos_left = factory.create(module_type="ptx",
                                         width=self.pmos_width,
@@ -106,7 +103,6 @@ class pnand4(pgate.pgate):
                                         tx_type="pmos",
                                         add_source_contact=self.route_layer,
                                         add_drain_contact=self.route_layer)
-        self.add_mod(self.pmos_left)
 
         self.pmos_center = factory.create(module_type="ptx",
                                           width=self.pmos_width,
@@ -114,7 +110,6 @@ class pnand4(pgate.pgate):
                                           tx_type="pmos",
                                           add_source_contact=self.route_layer,
                                           add_drain_contact=self.route_layer)
-        self.add_mod(self.pmos_center)
 
         self.pmos_right = factory.create(module_type="ptx",
                                          width=self.pmos_width,
@@ -122,7 +117,6 @@ class pnand4(pgate.pgate):
                                          tx_type="pmos",
                                          add_source_contact=self.route_layer,
                                          add_drain_contact=self.route_layer)
-        self.add_mod(self.pmos_right)
 
     def setup_layout_constants(self):
         """ Pre-compute some handy layout parameters. """

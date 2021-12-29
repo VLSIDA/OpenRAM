@@ -17,6 +17,11 @@ OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.156
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
+# Skywater PDK
+SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
+SKY130_PDKS_GIT_REPO ?= https://github.com/google/skywater-pdk.git
+SKY130_PDKS_GIT_COMMIT ?= main
+
 # Create lists of all the files to copy/link
 GDS_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.gds))
 MAG_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.mag))
@@ -39,35 +44,52 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib maglef_lib
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
-$(OPEN_PDKS_DIR):
+check-pdk-root:
+ifndef PDK_ROOT
+	$(error PDK_ROOT is undefined, please export it before running make)
+endif
+
+$(SKY130_PDKS_DIR): check-pdk-root 
+	git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
+	cd $(SKY130_PDKS_DIR) && \
+		git checkout main && git pull && \
+		git checkout -qf $(SKY130_PDKS_GIT_COMMIT) && \
+		git submodule update --init libraries/sky130_fd_pr/latest
+
+$(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 	@echo "Cloning open_pdks..."
 	git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)
 	cd $(OPEN_PDKS_DIR) && git checkout $(OPEN_PDKS_GIT_COMMIT)
 
 $(SKY130_PDK): $(OPEN_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	cd $(OPEN_PDKS_DIR) &&\
-	./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries  \
-	--disable-openlane --disable-irsim --disable-xschem --disable-qflow &&\
+	cd $(OPEN_PDKS_DIR) && \
+	./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) --enable-sram-sky130=$(INSTALL_SRAM) && \
 	cd sky130 && \
 	make veryclean && \
 	make && \
 	make SHARED_PDKS_PATH=$(PDK_ROOT) install
 
-install: $(SRAM_LIB_DIR) $(SKY130_PDK) $(INSTALL_DIRS)
+$(SRAM_LIB_DIR): check-pdk-root
+	@[ -d $(SRAM_LIB_DIR) ] || (\
+		echo "Cloning SRAM library..." && git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR) && \
+		cd $(SRAM_LIB_DIR) && git checkout $(SRAM_LIB_GIT_COMMIT))
+
+install: $(SRAM_LIB_DIR) 
+	@[ -d $(PDK_ROOT)/sky130A ] || \
+		(echo "Warning: $(PDK_ROOT)/sky130A not found!! Run make pdk first." &&  false)
+	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
+		(echo "Warning: $(PDK_ROOT)/skywater-pdk not found!! Run make pdk first." && false)
 	@echo "Installing sky130 SRAM PDK..."
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIB_DIR='$(SRAM_LIB_DIR)'"
 	@echo "SKY130_PDK='$(SKY130_PDK)'"
-	@true
+	@make $(INSTALL_DIRS)
 .PHONY: install
 
-$(SRAM_LIB_DIR):
-	@echo "Cloning SRAM library..."
-	git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR)
-	cd $(SRAM_LIB_DIR) && git checkout $(SRAM_LIB_GIT_COMMIT)
-
-.PHONY: $(INSTALL_DIRS)
+pdk: $(SKY130_PDK)
+	@true
+.PHONY: pdk
 
 $(INSTALL_BASE)/gds_lib: $(GDS_FILES)
 	@echo
@@ -171,9 +193,14 @@ uninstall: clean
 
 # wipe the entire repos
 wipe: uninstall
-	@echo "Wiping PDK repos in 5 sec... (ctrl-c to quit)"
+	@echo $(SKY130_PDK)
+	@echo $(SRAM_LIB_DIR)
+	@echo $(OPEN_PDKS_DIR)
+	@echo  $(SKY130_PDKS_DIR)
+	@echo "Wiping above PDK repos in 5 sec... (ctrl-c to quit)"
 	@sleep 5
-	rm -rf $(SKY130_PDK)
-	rm -rf $(SRAM_LIB_DIR)
-	rm -rf $(OPEN_PDKS_DIR)
+	@rm -rf $(SKY130_PDK)
+	@rm -rf $(SRAM_LIB_DIR)
+	@rm -rf $(OPEN_PDKS_DIR)
+	@rm -rf $(SKY130_PDKS_DIR)
 .PHONY: wipe

@@ -103,6 +103,10 @@ class sky130_bitcell_base_array(bitcell_base_array):
         strap_pins.extend(["vdd", "gnd"])
         for port in self.all_ports:
             strap_pins.extend([x for x in self.get_bitline_names(port) if "br" in x and x.endswith("_{0}".format(col))])
+        if row == 0:
+            strap_pins.extend(["gate_top"])
+        else:
+            strap_pins.extend(["gate_bottom"])
         return strap_pins
 
     def get_row_cap_pins(self, row, col):

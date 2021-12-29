@@ -99,12 +99,13 @@ cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'vdd': 'VDD',
                                           'gnd': 'GND'}
 
-cell_properties.col_cap_1port_bitcell = cell(['br', 'vdd', 'gnd', 'bl'],
-                                             ['INPUT', 'POWER', 'GROUND', 'INPUT'],
+cell_properties.col_cap_1port_bitcell = cell(['br', 'vdd', 'gnd', 'bl', 'gate'],
+                                             ['INPUT', 'POWER', 'GROUND', 'INPUT', 'INPUT'],
                                              {'bl': 'BL0',
                                               'br': 'BL1',
                                               'vdd': 'VPWR',
-                                              'gnd': 'VGND'})
+                                              'gnd': 'VGND',
+                                              'gate': 'gate'})
 cell_properties.col_cap_1port_bitcell.boundary_layer = "mem"
 
 cell_properties.col_cap_1port_strap_power = cell(['vdd', 'vpb', 'vnb'],

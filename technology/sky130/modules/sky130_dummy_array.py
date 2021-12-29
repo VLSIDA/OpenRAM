@@ -8,7 +8,8 @@
 from sky130_bitcell_base_array import sky130_bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
-
+import geometry
+from tech import layer
 
 class sky130_dummy_array(sky130_bitcell_base_array):
     """
@@ -37,7 +38,7 @@ class sky130_dummy_array(sky130_bitcell_base_array):
         self.place_array("dummy_r{0}_c{1}", self.mirror)
 
         self.add_layout_pins()
-
+        self.add_supply_pins()
         self.add_boundary()
 
         self.DRC_LVS()
@@ -76,25 +77,29 @@ class sky130_dummy_array(sky130_bitcell_base_array):
                 if col != self.column_size - 1:
                     if alternate_strap:
                         if col % 2:
+                            name="row_{}_col_{}_wlstrap_p".format(row, col)
                             row_layout.append(self.strap4)
-                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
+                            self.add_inst(name=name,
                                         mod=self.strap4) 
                         else:
-                            row_layout.append(self.strap4)
-                            self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
-                                        mod=self.strap4)
+                            name="row_{}_col_{}_wlstrapa_p".format(row, col)
+                            row_layout.append(self.strap2)
+                            self.add_inst(name=name,
+                                        mod=self.strap2)
                         alternate_strap = 0
                     else:
                         if col % 2:
-                                row_layout.append(self.strap)
-                                self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
-                                              mod=self.strap)
+                            name="row_{}_col_{}_wlstrap".format(row, col)
+                            row_layout.append(self.strap)
+                            self.add_inst(name=name,
+                                            mod=self.strap)
                         else:
-                                row_layout.append(self.strap3)
-                                self.add_inst(name="row_{}_col_{}_wlstrap".format(row, col),
-                                              mod=self.strap3)
+                            name="row_{}_col_{}_wlstrapa".format(row, col)
+                            row_layout.append(self.strap3)
+                            self.add_inst(name=name,
+                                            mod=self.strap3)
                         alternate_strap = 1
-                    self.connect_inst(self.get_strap_pins(row, col))
+                    self.connect_inst(self.get_strap_pins(row, col, name))
             if alternate_bitcell == 0:
                 alternate_bitcell = 1
             else:
@@ -106,10 +111,12 @@ class sky130_dummy_array(sky130_bitcell_base_array):
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
         for bl in range(self.column_size):
-            self.add_pin("dummy_bl_{}".format(bl))
-            self.add_pin("dummy_br_{}".format(bl))
+            self.add_pin("bl_0_{}".format(bl))
+            self.add_pin("br_0_{}".format(bl))
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
+        #self.add_pin("vpb", "BIAS")
+        #Sself.add_pin("vnb", "BIAS")
 
     def add_layout_pins(self):
         """ Add the layout pins """
@@ -153,6 +160,32 @@ class sky130_dummy_array(sky130_bitcell_base_array):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
+
+    def add_supply_pins(self):
+        for row in range(self.row_size):
+            for col in range(self.column_size):
+                inst = self.cell_inst[row, col]
+                if 'VPB' in self.cell_inst[row, col].mod.pins:
+                    pin = inst.get_pin("vpb")
+                    self.objs.append(geometry.rectangle(layer["nwell"],
+                                                        pin.ll(),
+                                                        pin.width(),
+                                                        pin.height()))
+                    self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
+
+                if 'VNB' in self.cell_inst[row, col].mod.pins:
+                    try:
+                        from tech import layer_override
+                        if layer_override['VNB']:
+                            pin = inst.get_pin("vnb")
+                            self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
+                            self.objs.append(geometry.rectangle(layer["pwellp"],
+                                                                pin.ll(),
+                                                                pin.width(),
+                                                                pin.height()))
+                    except:
+                        pin = inst.get_pin("vnb")
+                        self.add_label("vdd", pin.layer, pin.center())
 
     def input_load(self):
         # FIXME: This appears to be old code from previous characterization. Needs to be updated.

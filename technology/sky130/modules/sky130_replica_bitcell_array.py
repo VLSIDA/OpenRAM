@@ -99,8 +99,6 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
 
     def add_pins(self):
         super().add_pins()
-        self.add_pin("vpb", "BIAS")
-        self.add_pin("vnb", "BIAS")
 
     def add_replica_columns(self):
         """ Add replica columns on left and right of array """
@@ -284,7 +282,7 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
                             #           start_layer=pin.layer)
 
         min_area = drc["minarea_{}".format('m3')]
-        for track,supply, offset in zip(range(1,5),['vdd','vpb','vnb','gnd'],[min_area * 6,min_area * 6, 0, 0]):
+        for track,supply, offset in zip(range(1,5),['vdd','vdd','gnd','gnd'],[min_area * 6,min_area * 6, 0, 0]):
             y_offset = track * (pin_height + drc_width*2)
             self.add_segment_center('m2', vector(0,-y_offset), vector(self.width, -y_offset), drc["minwidth_{}".format('m2')])
             self.add_segment_center('m2', vector(0,self.height + y_offset), vector(self.width, self.height + y_offset), drc["minwidth_{}".format('m2')])
@@ -388,7 +386,7 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
             if port in self.rbls:
                 self.replica_col_insts.append(self.add_inst(name="replica_col_{}".format(port),
                                                             mod=self.replica_columns[port]))
-                self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + self.supplies)
+                self.connect_inst(self.rbl_bitline_names[port] + self.replica_array_wordline_names + self.supplies + ["gnd"] + ["gnd"])
             else:
                 self.replica_col_insts.append(None)
         
@@ -404,10 +402,10 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                   mod=self.col_cap_bottom))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies + ["gnd"])
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies + ["gnd"])
 
         # Left/right Dummy columns
         self.dummy_col_insts = []

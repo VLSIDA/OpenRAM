@@ -3,7 +3,7 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := regress
 
-ARGS ?= ""
+ARGS ?= "-k"
 
 TEST_DIR = $(TOP_DIR)/compiler/tests
 TEST_SRCS=$(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))

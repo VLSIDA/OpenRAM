@@ -161,7 +161,7 @@ class pnand2(pgate.pgate):
         # Now, this function is called before the extend_wells
         # So we need to do the same as the extends well would do
         if OPTS.tech_name == "rohm180":
-            mos_list = [(self.pmos_left, self.pmos1_pos, self.nmos_left, self.nmos1_pos),
+            mos_list = [(self.pmos_left, pmos1_pos, self.nmos_left, nmos1_pos),
                         (self.pmos_right, self.pmos2_pos, self.nmos_right, self.nmos2_pos)]
             for pmos,pmos_pos,nmos,nmos_pos in mos_list:
                 nwell_yoffset = 0.48 * self.height

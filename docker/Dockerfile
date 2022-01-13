@@ -34,7 +34,7 @@ RUN ./build.sh -qt5 \
 RUN rm -rf /root/klayout
 
 ### Magic ###
-ARG MAGIC_COMMIT=8.3.197
+ARG MAGIC_COMMIT=8.3.254
 WORKDIR /root
 RUN git clone git://opencircuitdesign.com/magic-8.3 magic
 WORKDIR /root/magic

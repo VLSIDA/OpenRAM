@@ -11,6 +11,7 @@ from tech import drc, parameter, spice
 from vector import vector
 from sram_factory import factory
 from tech import cell_properties as cell_props
+from globals import OPTS
 
 
 class pnor2(pgate.pgate):
@@ -157,18 +158,46 @@ class pnor2(pgate.pgate):
         self.top_bottom_space = max(contact_to_vdd_rail_space,
                                     poly_to_poly_gate_space)
 
-        pmos1_pos = vector(self.pmos_right.active_offset.x,
+        self.pmos1_pos = vector(self.pmos_right.active_offset.x,
                            self.height - self.pmos_right.active_height - self.top_bottom_space)
-        self.pmos1_inst.place(pmos1_pos)
+        self.pmos1_inst.place(self.pmos1_pos)
 
-        self.pmos2_pos = pmos1_pos + self.overlap_offset
+        self.pmos2_pos = self.pmos1_pos + self.overlap_offset
         self.pmos2_inst.place(self.pmos2_pos)
 
-        nmos1_pos = vector(self.pmos_right.active_offset.x, self.top_bottom_space)
-        self.nmos1_inst.place(nmos1_pos)
+        self.nmos1_pos = vector(self.pmos_right.active_offset.x, self.top_bottom_space)
+        self.nmos1_inst.place(self.nmos1_pos)
 
-        self.nmos2_pos = nmos1_pos + self.overlap_offset
+        self.nmos2_pos = self.nmos1_pos + self.overlap_offset
         self.nmos2_inst.place(self.nmos2_pos)
+
+        # Special requirement for rohm180 (Possibly for another ones is ok to put this)
+        # We need to extend the implants to the same point as the well
+        # Now, this function is called before the extend_wells
+        # So we need to do the same as the extends well would do
+        if OPTS.tech_name == "rohm180":
+            mos_list = [(self.pmos_left, self.pmos1_pos, self.nmos_left, self.nmos1_pos),
+                        (self.pmos_right, self.pmos2_pos, self.nmos_right, self.nmos2_pos)]
+            for pmos,pmos_pos,nmos,nmos_pos in mos_list:
+                nwell_yoffset = 0.48 * self.height
+                # PMOS phase
+                r1 = pmos.implant
+                pimp_width = r1.width
+                pimp_position = vector(r1.offset.x + pmos_pos.x, nwell_yoffset)
+                pimp_height = pmos_pos.y + r1.offset.y - nwell_yoffset
+                self.add_rect(layer="pimplant",
+                              offset=pimp_position,
+                              width=pimp_width,
+                              height=pimp_height)
+                # NMOS phase
+                r1 = nmos.implant
+                nimp_width = r1.width
+                nimp_position = nmos_pos + r1.offset + vector(0, r1.height)
+                nimp_height = nwell_yoffset - nimp_position.y
+                self.add_rect(layer="nimplant",
+                              offset=nimp_position,
+                              width=nimp_width,
+                              height=nimp_height)
 
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """

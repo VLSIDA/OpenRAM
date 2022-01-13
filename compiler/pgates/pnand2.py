@@ -13,6 +13,7 @@ import logical_effort
 from sram_factory import factory
 import contact
 from tech import cell_properties as cell_props
+from globals import OPTS
 
 
 class pnand2(pgate.pgate):
@@ -154,6 +155,34 @@ class pnand2(pgate.pgate):
 
         self.nmos2_pos = nmos1_pos + self.overlap_offset
         self.nmos2_inst.place(self.nmos2_pos)
+
+        # Special requirement for rohm180 (Possibly for another ones is ok to put this)
+        # We need to extend the implants to the same point as the well
+        # Now, this function is called before the extend_wells
+        # So we need to do the same as the extends well would do
+        if OPTS.tech_name == "rohm180":
+            mos_list = [(self.pmos_left, self.pmos1_pos, self.nmos_left, self.nmos1_pos),
+                        (self.pmos_right, self.pmos2_pos, self.nmos_right, self.nmos2_pos)]
+            for pmos,pmos_pos,nmos,nmos_pos in mos_list:
+                nwell_yoffset = 0.48 * self.height
+                # PMOS phase
+                r1 = pmos.implant
+                pimp_width = r1.width
+                pimp_position = vector(r1.offset.x + pmos_pos.x, nwell_yoffset)
+                pimp_height = pmos_pos.y + r1.offset.y - nwell_yoffset
+                self.add_rect(layer="pimplant",
+                              offset=pimp_position,
+                              width=pimp_width,
+                              height=pimp_height)
+                # NMOS phase
+                r1 = nmos.implant
+                nimp_width = r1.width
+                nimp_position = nmos_pos + r1.offset + vector(0, r1.height)
+                nimp_height = nwell_yoffset - nimp_position.y
+                self.add_rect(layer="nimplant",
+                              offset=nimp_position,
+                              width=nimp_width,
+                              height=nimp_height)
 
     def add_well_contacts(self):
         """

@@ -333,7 +333,7 @@ style  lambda=0.20(p)
  templayer TCSB nwsd,nwsc
  grow 40
  and-not TNWR
- 
+
  layer CSB nwsd,nwsc,nwr
  grow 140
  and-not TCSB
@@ -375,7 +375,7 @@ style  lambda=0.20(p)
  bloat-or pdiff,apres,rpd,pdc/a * 40 nsd,nsc/a 0
  or TPS
 
-#final pselect 
+#final pselect
  templayer FSP
  bloat-or pdiff,apres,rpd,pfet,psd,pdc/a,psc/a,pfet * 40 ndiff,anres,rnd,ndc/a,nsd,nsc/a,nfet 0
  or XDP
@@ -772,7 +772,7 @@ style  lambda=0.20(cp)
  templayer TCSB nwsd,nwsc
  grow 40
  and-not TNWR
- 
+
  layer CSB nwsd,nwsc,nwr
  grow 140
  and-not TCSB
@@ -814,7 +814,7 @@ style  lambda=0.20(cp)
  bloat-or pdiff,apres,rpd,pdc/a * 40 nsd,nsc/a 0
  or TPS
 
-#final pselect 
+#final pselect
  templayer FSP
  bloat-or pdiff,apres,rpd,pfet,psd,pdc/a,psc/a,pfet * 40 ndiff,anres,rnd,ndc/a,nsd,nsc/a,nfet 0
  or XDP
@@ -1119,7 +1119,7 @@ style  lambda=0.20(c)
  templayer TCSB nwsd,nwsc
  grow 40
  and-not TNWR
- 
+
  layer CSB nwsd,nwsc,nwr
  grow 140
  and-not TCSB
@@ -1151,7 +1151,7 @@ style  lambda=0.20(c)
  bloat-or pdiff,apres,rpd,pdc/a * 40 nsd,nsc/a 0
  or TPS
 
-#final pselect 
+#final pselect
  templayer FSP
  bloat-or pdiff,apres,rpd,pfet,psd,pdc/a,psc/a,pfet * 40 ndiff,anres,rnd,ndc/a,nsd,nsc/a,nfet 0
  or XDP
@@ -1456,7 +1456,7 @@ style  lambda=0.20()
  templayer TCSB nwsd,nwsc
  grow 40
  and-not TNWR
- 
+
  layer CSB nwsd,nwsc,nwr
  grow 140
  and-not TCSB
@@ -1488,7 +1488,7 @@ style  lambda=0.20()
  bloat-or pdiff,apres,rpd,pdc/a * 40 nsd,nsc/a 0
  or TPS
 
-#final pselect 
+#final pselect
  templayer FSP
  bloat-or pdiff,apres,rpd,pfet,psd,pdc/a,psc/a,pfet * 40 ndiff,anres,rnd,ndc/a,nsd,nsc/a,nfet 0
  or XDP
@@ -6471,7 +6471,7 @@ end
 
 mzrouter
  style irouter
-#		layer	hCost	vCost	jogCost	hintCost 
+#		layer	hCost	vCost	jogCost	hintCost
  layer		metal4	2	1	2	1
  layer		metal3	1	2	2	1
  layer		metal2	2	1	2	1
@@ -6944,7 +6944,7 @@ drc
  "Silicide-Block overlap of Silicide-Block polyR/activeR < 2 (Mosis #20.15)"
 
  edge4way sb,pres,anres,apres diff,ndiff,rnd,nfet,nsd,nwsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,nwsc/a,pdc/a,psc/a 3 diff,ndiff,rnd,nfet,nsd,nwsd,pdiff,rpd,pfet,psd,ndc/a,nsc/a,nwsc/a,pdc/a,psc/a 0 0 \
- "Diffusion overhang of Silicide-Block < 3 (Mosis #20.17) 
+ "Diffusion overhang of Silicide-Block < 3 (Mosis #20.17)
 
  spacing gv3 gv3 3 touching_ok \
  "GV3 via spacing < 3 (Mosis #21.2)"
@@ -7145,7 +7145,7 @@ drc
  spacing m4p m4p 4 touching_ok \
  "Metal4 PIN spacing < 4 (do_pins)"
 
-#CC cifstyle  lambda=0.20(p) 
+#CC cifstyle  lambda=0.20(p)
 #CC cifwidth CWN 240 \
 #CC "generated CIF layer CWN width will be < 12 (';cif see CWN')"
 #CC cifspacing CWN CWN 120 touching_ok \
@@ -7223,6 +7223,7 @@ extract
  resist (m2,fm2,rm2,m2c,m3c,m3c)/metal2  70
  resist (m3,fm3,rm3,m3c,m4c,m4c)/metal3  80
  resist (m4,fm4,rm4,m4c,pad)/metal4  40
+ resist bb None
 
  contact ndc 4 4100
  contact pdc 4 3400
@@ -7288,25 +7289,25 @@ extract
  sideoverlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~space/w   2.226 ~space/a
 
 #rnw
- overlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw,nwr/active   1.666 
- sideoverlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw,nwr/active   2.226 
+ overlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw,nwr/active   1.666
+ sideoverlap (m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,pdc,pc,m2c)/metal1 rnw,nwr/active   2.226
 
-#metal1-diff blocked by 
- overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (ndiff,anres,rnd,ndc)/active   1.640 
- sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (ndiff,anres,rnd,ndc)/active   2.226 
- overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (pdiff,apres,rpd,pdc)/active   1.640 
- sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (pdiff,apres,rpd,pdc)/active   2.226 
+#metal1-diff blocked by
+ overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (ndiff,anres,rnd,ndc)/active   1.640
+ sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (ndiff,anres,rnd,ndc)/active   2.226
+ overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (pdiff,apres,rpd,pdc)/active   1.640
+ sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (pdiff,apres,rpd,pdc)/active   2.226
 
-#metal1-poly blocked by 
- overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (poly,fp,pres,rp,pc,nfet,pfet,fet)/active   1.687 
- sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (poly,fp,pres,rp,pc,nfet,pfet,fet)/active   2.250 
- sideoverlap (poly,fp,pres,rp,pc,nfet,pfet,fet)/active ~(poly,fp,pres,rp,pc,nfet,pfet,fet)/active (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1   2.250 
+#metal1-poly blocked by
+ overlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (poly,fp,pres,rp,pc,nfet,pfet,fet)/active   1.687
+ sideoverlap (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 ~(m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1 (poly,fp,pres,rp,pc,nfet,pfet,fet)/active   2.250
+ sideoverlap (poly,fp,pres,rp,pc,nfet,pfet,fet)/active ~(poly,fp,pres,rp,pc,nfet,pfet,fet)/active (m1,fm1,rm1,ndc,nsc,nwsc,pdc,psc,pc,m2c)/metal1   2.250
 
 #metal2
  sidewall (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 (m2,fm2,rm2,m2c,m3c)/metal2  23.532
  areacap (m2,fm2,rm2,m3c)/metal2   0.581
 
-#metal2-sub blocked by 
+#metal2-sub blocked by
  overlap (m2,fm2,rm2,m3c)/metal2 ~space/w   0.581 ~space/a,~space/m1
  perimc (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2   0.836
  sideoverlap (m2,fm2,rm2,m2c,m3c)/metal2 ~(m2,fm2,rm2,m2c,m3c)/metal2 ~space/w   0.836 ~space/a,~space/m1
@@ -7732,4 +7733,3 @@ style gremlin
  pc/a,ndc/a,pdc/a,psc/a,nsc/a,nwsc/a,gc,gc,gc,gv1 X
 
 end
-

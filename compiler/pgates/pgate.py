@@ -162,7 +162,7 @@ class pgate(design.design):
                 if cur_layer != "poly":
                     min_area = drc["minarea_{}".format(cur_layer)]
                     min_width = drc["minwidth_{}".format(cur_layer)]
-                    width = round_to_grid(math.sqrt(min_area))
+                    width = round_to_grid(math.sqrt(min_area) * 1.2)
                     height = round_to_grid(min_area / width)
                     dir = preferred_directions[cur_layer]
                     # TODO: This is very hackish. We literally just put the rect a little up

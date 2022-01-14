@@ -14,6 +14,7 @@ from sram_factory import factory
 import contact
 from tech import cell_properties as cell_props
 from globals import OPTS
+from utils import round_to_grid
 
 
 class pnand4(pgate.pgate):
@@ -214,7 +215,7 @@ class pnand4(pgate.pgate):
                         (self.pmos_center, pmos3_pos, self.nmos_center, nmos3_pos),
                         (self.pmos_right, self.pmos4_pos, self.nmos_right, self.nmos4_pos)]
             for pmos,pmos_pos,nmos,nmos_pos in mos_list:
-                nwell_yoffset = 0.48 * self.height
+                nwell_yoffset = round_to_grid(0.48 * self.height)
                 # PMOS phase
                 r1 = pmos.implant
                 pimp_width = r1.width

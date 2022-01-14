@@ -261,7 +261,7 @@ class pinv(pgate.pgate):
         if OPTS.tech_name == "rohm180":
             mos_list = [(self.pmos, self.pmos_pos, self.nmos, self.nmos_pos)]
             for pmos,pmos_pos,nmos,nmos_pos in mos_list:
-                nwell_yoffset = 0.48 * self.height
+                nwell_yoffset = round_to_grid(0.48 * self.height)
                 # PMOS phase
                 r1 = pmos.implant
                 pimp_width = r1.width

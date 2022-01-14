@@ -177,8 +177,8 @@ class pnor2(pgate.pgate):
         # Now, this function is called before the extend_wells
         # So we need to do the same as the extends well would do
         if OPTS.tech_name == "rohm180":
-            mos_list = [(self.pmos_left, pmos1_pos, self.nmos_left, nmos1_pos),
-                        (self.pmos_right, self.pmos2_pos, self.nmos_right, self.nmos2_pos)]
+            mos_list = [(self.pmos_left, pmos1_pos.snap_to_grid(), self.nmos_left, nmos1_pos.snap_to_grid()),
+                        (self.pmos_right, self.pmos2_pos.snap_to_grid(), self.nmos_right, self.nmos2_pos.snap_to_grid())]
             for pmos,pmos_pos,nmos,nmos_pos in mos_list:
                 nwell_yoffset = round_to_grid(0.48 * self.height)
                 # PMOS phase

@@ -258,8 +258,10 @@ class pnand3(pgate.pgate):
                                   active_to_poly_contact2)
 
         # TODO: There has to be a better way for this
-        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+        if OPTS.tech_name in ["tsmc18", "lapis20"]:
             self.inputA_yoffset += self.m1_pitch
+        elif OPTS.tech_name in ["rohm180"]:
+            self.inputA_yoffset += self.m1_width
 
         apin = self.route_input_gate(self.pmos1_inst,
                                      self.nmos1_inst,

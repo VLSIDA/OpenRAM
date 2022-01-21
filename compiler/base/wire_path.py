@@ -9,12 +9,12 @@ from tech import drc
 from tech import layer as techlayer
 import debug
 from vector import vector
-from utils import snap_to_grid
+from utils import snap_to_unit
 
 def create_rectilinear_route(my_list):
     """ Add intermediate nodes if it isn't rectilinear. Also skip
         repeated nodes. Also, convert to vector if the aren't."""
-    pl = [snap_to_grid(x) for x in my_list]
+    pl = [snap_to_unit(x) for x in my_list]
 
     my_list = []
     for index in range(len(pl) - 1):

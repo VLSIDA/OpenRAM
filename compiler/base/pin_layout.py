@@ -33,6 +33,12 @@ class pin_layout:
 
         # These are the valid pin layers
         valid_layers = {x: layer[x] for x in layer_indices.keys()}
+        # search for the "+p" pins also
+        valid_pin_layers = {}
+        for x in layer_indices.keys():
+            y = x + "p"
+            if y in layer:
+                valid_pin_layers[x] = layer[y]
 
         # if it's a string, use the name
         if type(layer_name_pp) == str:
@@ -47,17 +53,24 @@ class pin_layout:
                     break
                 
             else:
-                try:
-                    from tech import layer_override
-                    from tech import layer_override_name
-                    if layer_override[name]:
-                       self.lpp = layer_override[name]
-                       self.layer = "pwellp"
-                       self._recompute_hash()
-                       return
-                except:
-                    debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
-        
+                for (layer_name, lpp) in valid_pin_layers.items():
+                    if not lpp:
+                        continue
+                    if self.same_lpp(layer_name_pp, lpp):
+                        self._layer = layer_name
+                        break
+                else:
+                    try:
+                        from tech import layer_override
+                        from tech import layer_override_name
+                        if layer_override[name]:
+                           self.lpp = layer_override[name]
+                           self.layer = "pwellp"
+                           self._recompute_hash()
+                           return
+                    except:
+                        debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
+
         self.lpp = layer[self.layer]
         self._recompute_hash()
 
@@ -186,32 +199,15 @@ class pin_layout:
 
     def xoverlaps(self, other):
         """ Check if shape has x overlap """
-        (ll, ur) = self.rect
-        (oll, our) = other.rect
-        x_overlaps = False
-        # check if self is within other x range
-        if (ll.x >= oll.x and ll.x <= our.x) or (ur.x >= oll.x and ur.x <= our.x):
-            x_overlaps = True
-        # check if other is within self x range
-        if (oll.x >= ll.x and oll.x <= ur.x) or (our.x >= ll.x and our.x <= ur.x):
-            x_overlaps = True
-
-        return x_overlaps
+        a = self.rect
+        b = other.rect
+        return a[0].x < b[1].x and a[1].x > b[0].x
 
     def yoverlaps(self, other):
         """ Check if shape has x overlap """
-        (ll, ur) = self.rect
-        (oll, our) = other.rect
-        y_overlaps = False
-
-        # check if self is within other y range
-        if (ll.y >= oll.y and ll.y <= our.y) or (ur.y >= oll.y and ur.y <= our.y):
-            y_overlaps = True
-        # check if other is within self y range
-        if (oll.y >= ll.y and oll.y <= ur.y) or (our.y >= ll.y and our.y <= ur.y):
-            y_overlaps = True
-
-        return y_overlaps
+        a = self.rect
+        b = other.rect
+        return a[0].y < b[1].y and a[1].y > b[0].y
 
     def xcontains(self, other):
         """ Check if shape contains the x overlap """
@@ -416,6 +412,7 @@ class pin_layout:
         except ImportError:
             label_purpose = purpose
 
+
         newLayout.addBox(layerNumber=layer_num,
                          purposeNumber=purpose,
                          offsetInMicrons=self.ll(),
@@ -437,11 +434,19 @@ class pin_layout:
             zoom = GDS["zoom"]
         except KeyError:
             zoom = None
-        newLayout.addText(text=self.name,
-                          layerNumber=layer_num,
-                          purposeNumber=label_purpose,
-                          magnification=zoom,
-                          offsetInMicrons=self.center())
+        # Draw a second pin text too if it is different
+        if pin_layer_num != layer_num:
+            newLayout.addText(text=self.name,
+                              layerNumber=pin_layer_num,
+                              purposeNumber=pin_purpose,
+                              magnification=zoom,
+                              offsetInMicrons=self.center())
+        else:
+            newLayout.addText(text=self.name,
+                              layerNumber=layer_num,
+                              purposeNumber=label_purpose,
+                              magnification=zoom,
+                              offsetInMicrons=self.center())
 
     def compute_overlap(self, other):
         """ Calculate the rectangular overlap of two rectangles. """
@@ -511,7 +516,7 @@ class pin_layout:
                 (p1, p2) = intersections
                 return math.sqrt(pow(p1[0]-p2[0], 2) + pow(p1[1]-p2[1], 2))
             else:
-                # This is where we had a corner intersection or none
+                # This is where we had a corner intersection or none (1 or 0)
                 return 0
 
 
@@ -566,9 +571,9 @@ class pin_layout:
         Given three co-linear points, determine if q lies on segment pr
         """
         if q.x <= max(p.x, r.x) and \
-           q.x >= min(p.x, r.x) and \
-           q.y <= max(p.y, r.y) and \
-           q.y >= min(p.y, r.y):
+                q.x >= min(p.x, r.x) and \
+                q.y <= max(p.y, r.y) and \
+                q.y >= min(p.y, r.y):
             return True
 
         return False

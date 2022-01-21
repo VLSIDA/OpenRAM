@@ -501,8 +501,8 @@ class rectangle(geometry):
         self.name = "rect"
         self.offset = vector(offset).snap_to_grid()
         self.size = vector(width, height).snap_to_grid()
-        self.width = round_to_grid(self.size.x)
-        self.height = round_to_grid(self.size.y)
+        self.width = self.size.x # round_to_grid(self.size.x) # NOTE: snap_to_grid already do this!
+        self.height = self.size.y # round_to_grid(self.size.y)
         self.compute_boundary(offset, "", 0)
 
         debug.info(4, "creating rectangle (" + str(self.layerNumber) + "): "

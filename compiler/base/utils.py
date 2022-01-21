@@ -47,6 +47,25 @@ def snap_to_grid(offset):
     return [round_to_grid(offset[0]),
             round_to_grid(offset[1])]
 
+# NOTE: To snap to the unit instead of the grid. Grid is for geometries, unit is for routes or wires.
+def round_to_unit(number):
+    """
+    Rounds an arbitrary number to the unit.
+    """
+    grid = tech.GDS["unit"][0]
+    # this gets the nearest integer value
+    number_grid = int(round(round((number / grid), 2), 0))
+    number_off = number_grid * grid
+    return number_off
+
+
+def snap_to_unit(offset):
+    """
+    Changes the coodrinate to match the unit settings
+    """
+    return [round_to_unit(offset[0]),
+            round_to_unit(offset[1])]
+
 
 def pin_center(boundary):
     """

@@ -149,6 +149,12 @@ class ptx(design.design):
         self.spice_device = main_str + area_str
         self.spice.append("\n* spice ptx " + self.spice_device)
 
+        # For LVS devices, the name may change
+        try:
+            from tech import lvs_spice
+        except:
+            lvs_spice = spice
+
         if cell_props.ptx.model_is_subckt and OPTS.lvs_exe and OPTS.lvs_exe[0] == "calibre":
             # sky130 requires mult parameter too. It is not the same as m, but I don't understand it.
             # self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2} l={3} mult=1".format(spice[self.tx_type],
@@ -163,12 +169,12 @@ class ptx(design.design):
                                                                                  drc("minwidth_poly"))
         elif cell_props.ptx.model_is_subckt:
             # sky130 requires mult parameter too
-            self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
+            self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(lvs_spice[self.tx_type],
                                                                             self.mults,
                                                                             self.tx_width,
                                                                             drc("minwidth_poly"))
         else:
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(lvs_spice[self.tx_type],
                                                                              self.mults,
                                                                              self.tx_width,
                                                                              drc("minwidth_poly"))
@@ -370,11 +376,12 @@ class ptx(design.design):
         # If the implant must enclose the active, shift offset
         # and increase width/height
         enclose_width = self.implant_enclose_active
-        enclose_offset = [enclose_width] * 2
+        enclose_height = max(self.implant_enclose_active, drc("implant_to_channel"))
+        enclose_offset = vector(enclose_width, enclose_height)
         self.implant = self.add_rect(layer="{}implant".format(self.implant_type),
                                      offset=self.active_offset - enclose_offset,
                                      width=self.active_width + 2 * enclose_width,
-                                     height=self.active_height + 2 * enclose_width)
+                                     height=self.active_height + 2 * enclose_height)
 
     def add_well_implant(self):
         """

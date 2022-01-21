@@ -34,7 +34,7 @@ class router(router_tech):
         route on top of this. The blockages from the gds/module will be
         considered.
         """
-        
+
         router_tech.__init__(self, layers, route_track_width)
 
         self.cell = design
@@ -91,7 +91,7 @@ class router(router_tech):
 
     def get_bbox(self):
         return self.bbox
-    
+
     def create_routing_grid(self, router_type):
         """
         Create a sprase routing grid with A* expansion functions.
@@ -345,12 +345,16 @@ class router(router_tech):
                 bigger.grids.remove(adj)
                 bigger.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
+                if adj in bigger.blockages:
+                    bigger.blockages.remove(adj)
             elif adj in smaller.secondary_grids:
                 debug.info(3,"Removing {} from smaller secondary {}".format(adj,
                                                                             smaller))
                 smaller.grids.remove(adj)
                 smaller.secondary_grids.remove(adj)
                 self.blocked_grids.add(adj)
+                if adj in smaller.blockages:
+                    smaller.blockages.remove(adj)
             else:
                 # If we couldn't remove from a secondary grid,
                 # we must remove from the primary
@@ -359,15 +363,19 @@ class router(router_tech):
                     debug.info(3,"Removing {} from bigger primary {}".format(adj,
                                                                              bigger))
                     bigger.grids.remove(adj)
+                    if adj in bigger.blockages:
+                        bigger.blockages.remove(adj)
                 elif adj in smaller.grids:
                     debug.info(3,"Removing {} from smaller primary {}".format(adj,
                                                                               smaller))
                     smaller.grids.remove(adj)
+                    if adj in smaller.blockages:
+                        smaller.blockages.remove(adj)
 
     def set_supply_rail_blocked(self, value):
         # This is just a virtual function
         pass
-    
+
     def prepare_blockages(self):
         """
         Reset and add all of the blockages in the design.
@@ -376,7 +384,7 @@ class router(router_tech):
 
         # Start fresh. Not the best for run-time, but simpler.
         self.clear_all_blockages()
-        
+
         # This adds the initial blockges of the design
         # which includes all blockages due to non-pin shapes
         # print("BLOCKING:", self.blocked_grids)
@@ -443,7 +451,7 @@ class router(router_tech):
         """
         blockage_grids = {y for x in self.pin_groups[pin_name] for y in x.blockages}
         self.set_blockages(blockage_grids, False)
-        
+
     def clear_all_blockages(self):
         """
         Clear all blockages on the grid.
@@ -504,7 +512,7 @@ class router(router_tech):
             new_shape = pin_layout("blockage{}".format(len(self.blockages)),
                                    rect,
                                    lpp)
-            
+
             # If there is a rectangle that is the same in the pins,
             # it isn't a blockage!
             if new_shape not in self.all_pins and not self.pin_contains(new_shape):
@@ -515,7 +523,7 @@ class router(router_tech):
             if pin.contains(shape):
                 return True
         return False
-        
+
     def convert_point_to_units(self, p):
         """
         Convert a path set of tracks to center line path.
@@ -529,7 +537,7 @@ class router(router_tech):
         Convert a wave to a set of center points
         """
         return [self.convert_point_to_units(i) for i in wave]
-        
+
     def convert_shape_to_tracks(self, shape):
         """
         Convert a rectangular shape into track units.
@@ -670,12 +678,13 @@ class router(router_tech):
                                   pin.inflate(0.5 * self.track_space),
                                   pin.layer)
 
-        overlap_length = pin.overlap_length(track_pin)
+        inter=lambda a,b: math.inf if a[0].x < b[1].x and a[1].x > b[0].x and a[0].y < b[1].y and a[1].y > b[0].y else 0
+        overlap_length = inter(pin.rect, track_pin.rect) #pin.overlap_length(track_pin)
         debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  pin.rect,
                                                                  track_pin,
                                                                  overlap_length))
-        inflated_overlap_length = inflated_pin.overlap_length(track_pin)
+        inflated_overlap_length = inter(inflated_pin.rect, track_pin.rect) #inflated_pin.overlap_length(track_pin)
         debug.info(4,"Check overlap: {0} {1} . {2} = {3}".format(coord,
                                                                  inflated_pin.rect,
                                                                  track_pin,
@@ -1257,7 +1266,7 @@ class router(router_tech):
         self.cell.add_label(text="{0},{1}".format(g[0], g[1]),
                             layer="text",
                             offset=shape[0])
-             
+
     def del_router_info(self):
         """
         Erase all of the comments on the current level.
@@ -1335,7 +1344,7 @@ class router(router_tech):
                 # Else if we came from a different layer, we can only add
                 # a signle grid
                 return self.convert_track_to_pin(v)
-                
+
         return None
 
     def get_ll_pin(self, pin_name):
@@ -1349,7 +1358,7 @@ class router(router_tech):
                 else:
                     if pin.lx() <= keep_pin.lx() and pin.by() <= keep_pin.by():
                         keep_pin = pin
-                        
+
         return keep_pin
     
     def check_all_routed(self, pin_name):
@@ -1359,8 +1368,8 @@ class router(router_tech):
         for pg in self.pin_groups[pin_name]:
             if not pg.is_routed():
                 return False
-    
-    
+
+
 # FIXME: This should be replaced with vector.snap_to_grid at some point
 def snap_to_grid(offset):
     """

@@ -21,7 +21,7 @@ class supply_grid_router(router):
     routes a grid to connect the supply on the two layers.
     """
 
-    def __init__(self, layers, design, bbox=None, pin_type=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None, margin=0):
         """
         This will route on layers in design. It will get the blockages from
         either the gds file name or the design itself (by saving to a gds file).
@@ -31,7 +31,16 @@ class supply_grid_router(router):
         # Power rail width in minimum wire widths
         self.route_track_width = 1
 
-        router.__init__(self, layers, design, bbox=bbox, margin=margin, route_track_width=self.route_track_width)
+        # The pin escape router already made the bounding box big enough,
+        # so we can use the regular bbox here.
+        if pin_type:
+            debug.check(pin_type in ["left", "right", "top", "bottom", "single", "ring", "multiple"],
+                        "Invalid pin type {}".format(pin_type))
+        self.pin_type = pin_type
+        if not bbox:
+            router.__init__(self, layers, design, bbox=bbox, margin=margin, route_track_width=self.route_track_width)
+        else:
+            router.__init__(self, layers, design, bbox=bbox, margin=margin) # The bbox should be already aligned.
 
         # The list of supply rails (grid sets) that may be routed
         self.supply_rails = {}
@@ -61,19 +70,28 @@ class supply_grid_router(router):
         start_time = datetime.now()
         self.find_pins_and_blockages([self.vdd_name, self.gnd_name])
         print_time("Finding pins and blockages", datetime.now(), start_time, 3)
+
+        # Add side pins if enabled
+        if self.pin_type in ["left", "right", "top", "bottom"]:
+            self.add_side_supply_pin(self.vdd_name, side=self.pin_type)
+            self.add_side_supply_pin(self.gnd_name, side=self.pin_type)
+        elif self.pin_type == "ring":
+            self.add_ring_supply_pin(self.vdd_name)
+            self.add_ring_supply_pin(self.gnd_name)
+
         # Add the supply rails in a mesh network and connect H/V with vias
         start_time = datetime.now()
         # Block everything
         self.prepare_blockages()
         self.clear_blockages(self.gnd_name)
-        
-        
+
+
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 
         # Block everything
         self.prepare_blockages()
-        self.clear_blockages(self.vdd_name)        
+        self.clear_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)
@@ -83,11 +101,16 @@ class supply_grid_router(router):
         self.route_simple_overlaps(gnd_name)
         print_time("Simple overlap routing", datetime.now(), start_time, 3)
 
+        start_time = datetime.now()
+        self.route_1step(vdd_name)
+        self.route_1step(gnd_name)
+        print_time("1 step routing", datetime.now(), start_time, 3)
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
-        self.route_pins_to_rails(vdd_name)
-        self.route_pins_to_rails(gnd_name)
+        #self.route_pins_to_rails(vdd_name)
+        #self.route_pins_to_rails(gnd_name)
         print_time("Maze routing supplies", datetime.now(), start_time, 3)
         # self.write_debug_gds("final.gds", False)
 
@@ -123,6 +146,46 @@ class supply_grid_router(router):
             # Else, if we overlap some of the space track, we can patch it with an enclosure
             # pg.create_simple_overlap_enclosure(pg.grids)
             # pg.add_enclosure(self.cell)
+
+        debug.info(1, "Routed {} simple overlap pins".format(routed_count))
+
+    def route_1step(self, pin_name):
+        """
+        This will check 1-step easy routes. This is mainly created for faster routes and avoid the full-fledged
+        router.
+        """
+        debug.info(1, "Routing 1 step pins for {0}".format(pin_name))
+
+        dirs = [vector3d(1, 0, 0), vector3d(-1, 0, 0), vector3d(0, 1, 0), vector3d(0, -1, 0), vector3d(0, 0, 1), vector3d(0, 0, -1)]
+        # These are the wire tracks
+        wire_tracks = self.supply_rail_tracks[pin_name]
+        routed_count=0
+        for i, pg in enumerate(self.pin_groups[pin_name]):
+            if pg.is_routed():
+                continue
+
+            # Explore all grids
+            for grid in pg.grids:
+                # Explore all directions
+                for dir in dirs:
+                    pt = grid + dir
+                    debug.info(3, "    trying pt {0}".format(pt))
+                    if pt in wire_tracks and pt not in self.blocked_grids:
+                        # Contruct the path
+                        path = [grid, pt]
+                        abs_path = [self.convert_point_to_units(x) for x in path]
+                        debug.info(3, "  Adding easy route {0} {1}->{2}, {3}".format(pin_name, grid, pt, abs_path))
+                        routed_count += 1
+                        pg.set_routed()
+                        self.cell.add_route(layers=self.layers,
+                                            coordinates=abs_path,
+                                            layer_widths=self.layer_widths)
+                        # Add just the grid here in the pingroup
+                        self.pin_groups[pin_name][i].grids.add(pt)
+                        break
+                else:
+                    continue
+                break
 
         debug.info(1, "Routed {} simple overlap pins".format(routed_count))
 
@@ -196,17 +259,39 @@ class supply_grid_router(router):
         This is after the paths have been pruned and only include rails that are
         connected with vias.
         """
+
+        max_yoffset = self.rg.ur.y
+        max_xoffset = self.rg.ur.x
+        min_yoffset = self.rg.ll.y
+        min_xoffset = self.rg.ll.x
+
+        # Remove the current pins in the layout. Only leave the new ones
+        self.cell.remove_layout_pin(name)
+
         for rail in self.supply_rails[name]:
             ll = grid_utils.get_lower_left(rail)
             ur = grid_utils.get_upper_right(rail)
             z = ll.z
             pin = self.compute_pin_enclosure(ll, ur, z, name)
-            debug.info(3, "Adding supply rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
-            self.cell.add_layout_pin(text=name,
-                                     layer=pin.layer,
-                                     offset=pin.ll(),
-                                     width=pin.width(),
-                                     height=pin.height())
+            # Determinate if this rail is actually part of the very corner. This is to avoid
+            # large intersections, but only keeping the short ones
+            # TODO: The way to know that is horizontal or vertical, is just looking at z
+            avoid = (z == 0 and (ll.y <= min_yoffset or ur.y >= max_yoffset)) or \
+                    (z == 1 and (ll.x <= min_xoffset or ur.x >= max_xoffset))
+            # Add the ones only in the perimeter
+            if (ll.x <= min_xoffset or ll.y <= min_yoffset or ur.x >= max_xoffset or ur.y >= max_yoffset) and not avoid:
+                debug.info(3, "Adding supply pin rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
+                self.cell.add_layout_pin(text=name,
+                                         layer=pin.layer,
+                                         offset=pin.ll(),
+                                         width=pin.width(),
+                                         height=pin.height())
+            else:
+                debug.info(3, "Adding supply norm rail {0} {1}->{2} {3}".format(name, ll, ur, pin))
+                self.cell.add_rect(layer=pin.layer,
+                                   offset=pin.ll(),
+                                   width=pin.width(),
+                                   height=pin.height())
 
     def compute_supply_rails(self, name, supply_number):
         """
@@ -228,7 +313,7 @@ class supply_grid_router(router):
             # Seed the function at the location with the given width
             wave = [vector3d(min_xoffset, offset, 0)]
             # While we can keep expanding east in this horizontal track
-            while wave and wave[0].x < max_xoffset:
+            while wave and wave[0].x <= max_xoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.EAST)
                 if not added_rail:
                     # Just seed with the next one
@@ -243,7 +328,7 @@ class supply_grid_router(router):
             # Seed the function at the location with the given width
             wave = [vector3d(offset, min_yoffset, 1)]
             # While we can keep expanding north in this vertical track
-            while wave and wave[0].y < max_yoffset:
+            while wave and wave[0].y <= max_yoffset:
                 added_rail = self.find_supply_rail(name, wave, direction.NORTH)
                 if not added_rail:
                     # Just seed with the next one
@@ -286,15 +371,19 @@ class supply_grid_router(router):
         if not wave_path:
             return None
 
+        # NOTE: Why? The trimmings are kinda useless for escape routing
+        # The escape routing is already done at this point
+        # this will be ignored for now.
+
         # drop the first and last steps to leave escape routing room
         # around the blockage that stopped the probe
         # except, don't drop the first if it is the first in a row/column
-        if (direct==direction.NORTH and start_wave[0].y>0):
-            wave_path.trim_first()
-        elif (direct == direction.EAST and start_wave[0].x>0):
-            wave_path.trim_first()
+        #if (direct==direction.NORTH and start_wave[0].y>0):
+        #    wave_path.trim_first()
+        #elif (direct == direction.EAST and start_wave[0].x>0):
+        #    wave_path.trim_first()
 
-        wave_path.trim_last()
+        #wave_path.trim_last()
 
         return wave_path
 
@@ -359,7 +448,6 @@ class supply_grid_router(router):
             # easier to debug.
             self.prepare_blockages()
             self.clear_blockages(self.vdd_name)
-            
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name, index)
@@ -370,6 +458,7 @@ class supply_grid_router(router):
 
             # Actually run the A* router
             if not self.run_router(detour_scale=5):
+                debug.warning("Component not routed. Location: {0}. Writting a debug gds.".format(str(pg.grids)))
                 self.write_debug_gds("debug_route.gds")
 
             # if index==3 and pin_name=="vdd":

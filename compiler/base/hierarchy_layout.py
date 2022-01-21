@@ -1296,6 +1296,16 @@ class layout():
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
+        elif OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            min_width = drc["minwidth_{}".format(self.pwr_grid_layer)]
+            dir = preferred_directions[self.pwr_grid_layer]
+            if dir == "V":
+                width = round_to_grid(min_width)
+                height = round_to_grid(min_area / width)
+            else:
+                height = round_to_grid(min_width)
+                width = round_to_grid(min_area / height)
         else:
             width = None
             height = None
@@ -1339,6 +1349,16 @@ class layout():
             min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
+        elif OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            min_width = drc["minwidth_{}".format(self.pwr_grid_layer)]
+            dir = preferred_directions[self.pwr_grid_layer]
+            if dir == "V":
+                width = round_to_grid(min_width)
+                height = round_to_grid(min_area / width)
+            else:
+                height = round_to_grid(min_width)
+                width = round_to_grid(min_area / height)
         else:
             width = None
             height = None

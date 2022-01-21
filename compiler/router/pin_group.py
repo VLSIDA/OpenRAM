@@ -465,6 +465,12 @@ class pin_group:
         # Compute the enclosure pin_layout list of the set of tracks
         self.enclosures = self.compute_enclosures()
 
+        # for pin in self.pins:
+        #     lx = pin.lx()
+        #     ly = pin.by()
+        #     if  lx > 61.1 and lx < 62.0 and ly > 56.2 and ly < 56.7:
+        #         breakpoint()
+
         # Find a connector to every pin and add it to the enclosures
         for pin in self.pins:
 
@@ -546,7 +552,11 @@ class pin_group:
                         connected_set.add(cur_shape)
 
         # Remove the original shape
-        connected_set.remove(shape)
+        # NOTE: Normally the shape_list has only 1 shape, and "shape" is the same
+        # That means we do not need to remove the original shape
+        # Is highly improbable, but has happened in tsmc18 and lapis20
+        if shape in connected_set and len(connected_set) > 1:
+            connected_set.remove(shape)
 
         # if len(connected_set)<len(shape_list):
         #     import pprint
@@ -624,7 +634,7 @@ class pin_group:
         # for pin in self.pins:
         #     lx = pin.lx()
         #     ly = pin.by()
-        #     if  lx > 87.9 and lx < 87.99 and ly > 18.56 and ly < 18.6:
+        #     if  lx > 61.1 and lx < 62.0 and ly > 56.2 and ly < 56.7:
         #         breakpoint()
         for pin in self.pins:
             debug.info(4, "  Converting {0}".format(pin))

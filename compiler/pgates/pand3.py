@@ -9,6 +9,8 @@ import debug
 from vector import vector
 import pgate
 from sram_factory import factory
+from globals import OPTS
+from tech import drc
 
 
 class pand3(pgate.pgate):
@@ -86,6 +88,31 @@ class pand3(pgate.pgate):
         else:
             # Add INV to the right
             self.inv_inst.place(offset=vector(self.nand_inst.rx(), 0))
+
+            # Extension of the imp in both n and p for tsmc18
+            if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+                pmos_rightmost_nand = self.nand_inst.mod.pmos3_pos
+                pmos_leftmost_inv = self.inv_inst.mod.inv_inst_list[0].mod.pmos_pos + vector(self.nand_inst.rx(), 0)
+                nmos_rightmost_nand = self.nand_inst.mod.nmos3_pos
+                nmos_leftmost_inv = self.inv_inst.mod.inv_inst_list[0].mod.nmos_pos + vector(self.nand_inst.rx(), 0)
+                pleft = pmos_rightmost_nand.x + self.nand_inst.mod.pmos_right.active_width + drc("implant_enclose_active")
+                pright = pmos_leftmost_inv.x - drc("implant_enclose_active")
+                ptop = pmos_rightmost_nand.y + self.nand_inst.mod.pmos_right.active_height + \
+                       max(drc("implant_enclose_active"), drc("implant_to_channel"))
+                pbottom = pmos_rightmost_nand.y - max(drc("implant_enclose_active"), drc("implant_to_channel"))
+                self.add_rect(layer="pimplant",
+                              offset=vector(pleft, pbottom),
+                              width=pright - pleft,
+                              height=ptop - pbottom)
+                nleft = nmos_rightmost_nand.x + self.nand_inst.mod.nmos_right.active_width + drc("implant_enclose_active")
+                nright = nmos_leftmost_inv.x - drc("implant_enclose_active")
+                ntop = nmos_rightmost_nand.y + self.nand_inst.mod.nmos_right.active_height + \
+                       max(drc("implant_enclose_active"), drc("implant_to_channel"))
+                nbottom = nmos_rightmost_nand.y - max(drc("implant_enclose_active"), drc("implant_to_channel"))
+                self.add_rect(layer="nimplant",
+                              offset=vector(nleft, nbottom),
+                              width=nright - nleft,
+                              height=ntop - nbottom)
 
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top, (middle), and bottom. """

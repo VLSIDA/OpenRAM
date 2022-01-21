@@ -41,6 +41,8 @@ class sram_base(design, verilog, lef):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
+        # For assigning only once the bbox
+        self.bbox = None
         try:
             from tech import power_grid
             self.supply_stack = power_grid
@@ -372,6 +374,7 @@ class sram_base(design, verilog, lef):
                    design=self,
                    bbox=bbox)
         rtr.escape_route(pins_to_route)
+        self.bbox = (rtr.ll, rtr.ur) # Capture the bbox after done with the escape routes, as can increase
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

@@ -11,9 +11,12 @@ import debug
 import math
 from bisect import bisect_left
 from tech import layer, drc
+from tech import layer_indices
+from tech import layer_stacks, preferred_directions
 from vector import vector
 from globals import OPTS
 from tech import cell_properties as cell_props
+from utils import round_to_grid
 if cell_props.ptx.bin_spice_models:
     from tech import nmos_bins, pmos_bins
 
@@ -135,6 +138,43 @@ class pgate(design.design):
                                         offset=contact_offset,
                                         directions=directions)
 
+        # TSMC18 gate port hack
+        width = via.mod.second_layer_width
+        height = via.mod.second_layer_height
+        offset = contact_offset
+        # TODO: Put this in a function?
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            cur_layer = "poly"
+            while cur_layer != self.route_layer:
+                from_id = layer_indices[cur_layer]
+                to_id   = layer_indices[self.route_layer]
+
+                if from_id < to_id: # grow the stack up
+                    search_id = 0
+                    next_id = 2
+                else: # grow the stack down
+                    search_id = 2
+                    next_id = 0
+
+                curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+                cur_layer = curr_stack[next_id]
+                # print("Putting {}".format(cur_layer))
+                if cur_layer != "poly":
+                    min_area = drc["minarea_{}".format(cur_layer)]
+                    min_width = drc["minwidth_{}".format(cur_layer)]
+                    width = round_to_grid(math.sqrt(min_area) * 1.2)
+                    height = round_to_grid(min_area / width)
+                    dir = preferred_directions[cur_layer]
+                    # TODO: This is very hackish. We literally just put the rect a little up
+                    # This is caused by the nand3 and 4, whose pitches are a mess
+                    offset = contact_offset
+                    if(dir == "H"):
+                        offset = contact_offset + vector(0.0, -(height - min_width)/2)
+                    self.add_rect_center(layer=cur_layer,
+                                         offset=offset,
+                                         width=width,
+                                         height=height)
+
         self.add_layout_pin_rect_center(text=name,
                                         layer=self.route_layer,
                                         offset=contact_offset,
@@ -201,8 +241,18 @@ class pgate(design.design):
         layer_stack = self.active_stack
 
         # To the right a spacing away from the pmos right active edge
+        # Also, avoid to do intersection of nimp and pimp
+        # The pimplant_to_nimplant is new
+        pimp_to_nimp = 0
+        imp_to_active = 0
+        try:
+            pimp_to_nimp = drc("pimplant_to_nimplant")
+            imp_to_active = drc("implant_to_active")
+        except:
+            pass
         contact_xoffset = pmos_pos.x + pmos.active_width \
-                          + self.active_space
+                          + max(self.active_space, 2*drc("implant_enclose_active") + pimp_to_nimp,
+                                imp_to_active + drc("implant_enclose_active"))
 
         # Must be at least an well enclosure of active down
         # from the top of the well
@@ -246,6 +296,28 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
+
+        # TSMC18 gate port hack
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            min_area = drc["minarea_{}".format(self.active_stack[0])]
+            width = round_to_grid(self.nwell_contact.mod.first_layer_width)
+            height = round_to_grid(min_area / width)
+            width_impl = width + 2 * drc("implant_enclose_active")
+            height_impl = height + 2 * drc("implant_enclose_active") # contact.py:250
+            width_well = width + 2 * self.nwell_contact.mod.well_enclose_active
+            height_well = height + 2 * self.nwell_contact.mod.well_enclose_active # contact.py:264
+            self.add_rect_center(layer=self.active_stack[0],
+                                 offset=contact_offset,
+                                 width=width,
+                                 height=height)
+            self.add_rect_center(layer="nimplant",
+                                 offset=contact_offset,
+                                 width=width_impl,
+                                 height=height_impl)
+            self.add_rect_center(layer="nwell",
+                                 offset=contact_offset,
+                                 width=width_well,
+                                 height=height_well)
 
         # Return the top of the well
 
@@ -301,8 +373,20 @@ class pgate(design.design):
         layer_stack = self.active_stack
 
         # To the right a spacing away from the nmos right active edge
+        # Also, avoid to do intersection of nimp and pimp
+        # Also, there should be a distance between channel and implant
+        # The pimplant_to_nimplant is new.
+        pimp_to_nimp = 0
+        imp_to_active = 0
+        try:
+            pimp_to_nimp = drc("pimplant_to_nimplant")
+            imp_to_active = drc("implant_to_active")
+        except:
+            pass
         contact_xoffset = nmos_pos.x + nmos.active_width \
-                          + self.active_space
+                          + max(self.active_space,
+                                2*drc("implant_enclose_active") + pimp_to_nimp,
+                                imp_to_active + drc("implant_enclose_active"))
         # Must be at least an well enclosure of active up
         # from the bottom of the well
         contact_yoffset = max(nmos_pos.y,
@@ -343,6 +427,28 @@ class pgate(design.design):
         #               offset=implant_offset,
         #               width=implant_width,
         #               height=implant_height)
+
+        # TSMC18 gate port hack
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            min_area = drc["minarea_{}".format(self.active_stack[0])]
+            width = round_to_grid(self.pwell_contact.mod.first_layer_width)
+            height = round_to_grid(min_area / width)
+            width_impl = width + 2 * drc("implant_enclose_active")
+            height_impl = height + 2 * drc("implant_enclose_active") # contact.py:250
+            width_well = width + 2 * self.pwell_contact.mod.well_enclose_active
+            height_well = height + 2 * self.pwell_contact.mod.well_enclose_active # contact.py:264
+            self.add_rect_center(layer=self.active_stack[0],
+                                 offset=contact_offset,
+                                 width=width,
+                                 height=height)
+            self.add_rect_center(layer="pimplant",
+                                 offset=contact_offset,
+                                 width=width_impl,
+                                 height=height_impl)
+            self.add_rect_center(layer="pwell",
+                                 offset=contact_offset,
+                                 width=width_well,
+                                 height=height_well)
 
     def route_supply_rails(self):
         """ Add vdd/gnd rails to the top and bottom. """

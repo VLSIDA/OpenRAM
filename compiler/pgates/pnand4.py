@@ -13,6 +13,8 @@ import logical_effort
 from sram_factory import factory
 import contact
 from tech import cell_properties as cell_props
+from globals import OPTS
+from utils import round_to_grid
 
 
 class pnand4(pgate.pgate):
@@ -31,8 +33,8 @@ class pnand4(pgate.pgate):
         # We have trouble pitch matching a 3x sizes to the bitcell...
         # If we relax this, we could size this better.
         self.size = size
-        self.nmos_size = 2 * size
-        self.pmos_size = parameter["beta"] * size
+        self.nmos_size = size
+        self.pmos_size = parameter["beta"] * size / 2.0
         self.nmos_width = self.nmos_size * drc("minwidth_tx")
         self.pmos_width = self.pmos_size * drc("minwidth_tx")
 
@@ -197,6 +199,36 @@ class pnand4(pgate.pgate):
         self.nmos4_pos = nmos3_pos + self.ptx_offset
         self.nmos4_inst.place(self.nmos4_pos)
 
+        # Special requirement for rohm180 (Possibly for another ones is ok to put this)
+        # We need to extend the implants to the same point as the well
+        # Now, this function is called before the extend_wells
+        # So we need to do the same as the extends well would do
+        if OPTS.tech_name == "rohm180":
+            mos_list = [(self.pmos_left, pmos1_pos.snap_to_grid(), self.nmos_left, nmos1_pos.snap_to_grid()),
+                        (self.pmos_center, pmos2_pos.snap_to_grid(), self.nmos_center, nmos2_pos.snap_to_grid()),
+                        (self.pmos_center, pmos3_pos.snap_to_grid(), self.nmos_center, nmos3_pos.snap_to_grid()),
+                        (self.pmos_right, self.pmos4_pos.snap_to_grid(), self.nmos_right, self.nmos4_pos.snap_to_grid())]
+            for pmos,pmos_pos,nmos,nmos_pos in mos_list:
+                nwell_yoffset = round_to_grid(0.48 * self.height)
+                # PMOS phase
+                r1 = pmos.implant
+                pimp_width = r1.width
+                pimp_position = vector(r1.offset.x + pmos_pos.x, nwell_yoffset)
+                pimp_height = pmos_pos.y + r1.offset.y - nwell_yoffset
+                self.add_rect(layer="pimplant",
+                              offset=pimp_position,
+                              width=pimp_width,
+                              height=pimp_height)
+                # NMOS phase
+                r1 = nmos.implant
+                nimp_width = r1.width
+                nimp_position = nmos_pos + r1.offset + vector(0, r1.height)
+                nimp_height = nwell_yoffset - nimp_position.y
+                self.add_rect(layer="nimplant",
+                              offset=nimp_position,
+                              width=nimp_width,
+                              height=nimp_height)
+
     def add_well_contacts(self):
         """ Add n/p well taps to the layout and connect to supplies """
 
@@ -234,6 +266,10 @@ class pnand4(pgate.pgate):
         self.inputA_yoffset = max(active_contact_to_poly_contact,
                                   active_to_poly_contact,
                                   active_to_poly_contact2)
+
+        # TODO: There has to be a better way for this
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            self.inputA_yoffset += self.m1_pitch
 
         apin = self.route_input_gate(self.pmos1_inst,
                                      self.nmos1_inst,

@@ -12,6 +12,7 @@ from vector import vector
 from sram_factory import factory
 from tech import cell_properties as cell_props
 from globals import OPTS
+from utils import round_to_grid
 
 
 class column_mux(pgate.pgate):
@@ -231,7 +232,7 @@ class column_mux(pgate.pgate):
         active_pos = vector(rbc_width,
                             self.nmos_upper.by() - 0.5 * self.poly_space)
 
-        self.add_via_center(layers=self.active_stack,
+        self.well_contact = self.add_via_center(layers=self.active_stack,
                             offset=active_pos,
                             implant_type="p",
                             well_type="p")
@@ -251,3 +252,27 @@ class column_mux(pgate.pgate):
                           offset=vector(0, 0),
                           width=rbc_width,
                           height=self.height)
+
+        # TSMC18 gate port hack
+        if OPTS.tech_name in ["tsmc18", "lapis20", "rohm180"]:
+            # Body connection
+            min_area = drc["minarea_{}".format(self.active_stack[0])]
+            width = round_to_grid(self.well_contact.mod.first_layer_width)
+            height = round_to_grid(min_area / width)
+            width_impl = width + 2 * drc("implant_enclose_active")
+            height_impl = height + 2 * drc("implant_enclose_active") # contact.py:250
+            self.add_rect_center(layer=self.active_stack[0],
+                                 offset=active_pos,
+                                 width=width,
+                                 height=height)
+            self.add_rect_center(layer="pimplant",
+                                 offset=active_pos,
+                                 width=width_impl,
+                                 height=height_impl)
+            if "pwell" in layer:
+                width_well = width + 2 * self.well_contact.mod.well_enclose_active
+                height_well = height + 2 * self.well_contact.mod.well_enclose_active # contact.py:264
+                self.add_rect_center(layer="pwell",
+                                 offset=active_pos,
+                                 width=width_well,
+                                 height=height_well)

@@ -4,21 +4,12 @@ module multibank # (
   ADDR_WIDTH= 8,
   NUM_BANKS=2
 )(
-#<RW_PORTS
     clk,
     addr,
     din,
     csb,
     web,
     dout
-#>RW_PORTS
-#<R_PORTS
-    clk,
-    addr,
-    csb,
-    web,
-    dout
-#>R_PORTS
   );
 
   parameter RAM_DEPTH = 1 << ADDR_WIDTH;
@@ -34,39 +25,40 @@ module multibank # (
   input web;
   output reg [DATA_WIDTH - 1 : 0] dout;
 
-#!PORT_NUM!0#
-#<BANK_DEFS
-  reg csb#$PORT_NUM$#;
-  reg web#$PORT_NUM$#;
-  reg [DATA_WIDTH - 1 : 0] dout#$PORT_NUM$#;
-#!PORT_NUM!PORT_NUM+1#
-#>BANK_DEFS
+  reg csb0;
+  reg web0;
+  reg [DATA_WIDTH - 1 : 0] dout0;
+  reg csb1;
+  reg web1;
+  reg [DATA_WIDTH - 1 : 0] dout1;
 
-#!PORT_NUM!0#
-#<BANK_INIT
-  bank #(DATA_WIDTH, ADDR_WIDTH) bank#$PORT_NUM$# (
-#<BANK_RW_PORTS
+  bank #(DATA_WIDTH, ADDR_WIDTH) bank0 (
     .clk(clk),
     .addr(addr[ADDR_WIDTH - BANK_SEL - 1 : 0]),
     .din(din),
-    .csb(csb#$PORT_NUM$#),
-    .web(web#$PORT_NUM$#),
-    .dout(dout#$PORT_NUM$#)
-#!PORT_NUM!PORT_NUM+1#
-#>BANK_RW_PORTS
+    .csb(csb0),
+    .web(web0),
+    .dout(dout0)
   );
-#>BANK_INIT
+  bank #(DATA_WIDTH, ADDR_WIDTH) bank1 (
+    .clk(clk),
+    .addr(addr[ADDR_WIDTH - BANK_SEL - 1 : 0]),
+    .din(din),
+    .csb(csb1),
+    .web(web1),
+    .dout(dout1)
+  );
 
 always @(posedge clk) begin
     case (addr[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL])
-#!PORT_NUM!0#
-#<BANK_CASE
-        #$PORT_NUM$#: begin
-            dout <= dout#$PORT_NUM$#;
-            web#$PORT_NUM$# <= web;
+        0: begin
+            dout <= dout0;
+            web0 <= web;
         end
-#!PORT_NUM!PORT_NUM+1#
-#>BANK_CASE
+        1: begin
+            dout <= dout1;
+            web1 <= web;
+        end
     endcase
 end
 

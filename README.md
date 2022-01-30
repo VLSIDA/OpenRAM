@@ -95,9 +95,9 @@ nominal_corner_only = True
 # Process corners to characterize
 # process_corners = ["SS", "TT", "FF"]
 # Voltage corners to characterize
-# supply_voltages = [ 3.0, 3.3, 3.5 ]
+# supply_voltages = [3.0, 3.3, 3.5]
 # Temperature corners to characterize
-# temperatures = [ 0, 25 100]
+# temperatures = [0, 25, 100]
 
 # Output directory for the results
 output_path = "temp"

@@ -4,7 +4,9 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/ga
 export SWROOT=/software
 
 # Klayout
-export PATH=$PATH:/usr/local/klayout
+export KLAYOUT_HOME=/usr/local/klayout
+export PATH=$PATH:$KLAYOUT_HOME
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KLAYOUT_HOME
 
 # Xyce
 export XYCE_HOME=$SWROOT/Xyce/Parallel

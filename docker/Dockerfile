@@ -95,5 +95,6 @@ RUN mkdir /home/cad-user
 RUN useradd cad-user
 RUN chown -R cad-user /home/cad-user
 RUN chgrp -R cad-user /home/cad-user
+ADD set-paths.sh /home/cad-user/.bashrc
 USER cad-user
 WORKDIR /home/cad-user

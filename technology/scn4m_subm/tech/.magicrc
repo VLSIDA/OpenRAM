@@ -6,3 +6,4 @@ tech load SCN4M_SUBM.20 -noprompt
 scalegrid 1 4
 set GND gnd
 set VDD vdd
+set SUB gnd

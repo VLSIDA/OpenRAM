@@ -25,9 +25,9 @@ if 'PDK_ROOT' in os.environ:
 else:
     raise SystemError("Unable to find open_pdks tech file. Set PDK_ROOT.")
 
-spice_model_dir = os.path.join(open_pdks, "SIMULATOR",)
+# The ngspice models work with Xyce too now
+spice_model_dir = os.path.join(open_pdks, "ngspice")
 sky130_lib_ngspice = os.path.join(open_pdks, "ngspice", "sky130.lib.spice")
-# We may end up using Xyce but check if at least ngspice exists
 if not os.path.exists(sky130_lib_ngspice):
     raise SystemError("Did not find {} under {}".format(sky130_lib_ngspice, open_pdks))
 os.environ["SPICE_MODEL_DIR"] = spice_model_dir

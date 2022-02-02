@@ -208,8 +208,9 @@ class pgate(design.design):
         # from the top of the well
         # OR align the active with the top of PMOS active.
         max_y_offset = self.height + 0.5 * self.m1_width
-        contact_yoffset = min(pmos_pos.y + pmos.active_height - pmos.active_contact.first_layer_height,
-                              max_y_offset - pmos.active_contact.first_layer_height / 2 - self.nwell_enclose_active)
+        contact_yoffset = self.height - 0.5 * self.implant_width \
+                          - pmos.active_contact.first_layer_height \
+                          - self.implant_enclose_active
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
@@ -276,24 +277,34 @@ class pgate(design.design):
                                rightx=rightx,
                                topy=self.height)
 
-        try:
-            ntap_insts = [self.nwell_contact]
-            self.add_enclosure(ntap_insts,
-                               layer="nimplant",
-                               extend=self.implant_enclose_active,
-                               rightx=self.width,
-                               topy=self.height)
-        except AttributeError:
-            pass
-        try:
-            ptap_insts = [self.pwell_contact]
-            self.add_enclosure(ptap_insts,
-                               layer="pimplant",
-                               extend=self.implant_enclose_active,
-                               rightx=self.width,
-                               boty=0)
-        except AttributeError:
-            pass
+        self.add_rect(layer="pimplant",
+                      offset=vector(0, self.height - 0.5 * self.implant_width),
+                      width=self.width,
+                      height=self.implant_width)
+        self.add_rect(layer="nimplant",
+                      offset=vector(0, -0.5 * self.implant_width),
+                      width=self.width,
+                      height=self.implant_width)
+
+
+#        try:
+#            ntap_insts = [self.nwell_contact]
+#            self.add_enclosure(ntap_insts,
+#                               layer="nimplant",
+#                               extend=self.implant_enclose_active,
+#                               rightx=self.width,
+#                               topy=self.height)
+#        except AttributeError:
+#            pass
+#        try:
+#            ptap_insts = [self.pwell_contact]
+#            self.add_enclosure(ptap_insts,
+#                               layer="pimplant",
+#                               extend=self.implant_enclose_active,
+#                               rightx=self.width,
+#                               boty=0)
+#        except AttributeError:
+#            pass
 
     def add_pwell_contact(self, nmos, nmos_pos):
         """ Add an pwell contact next to the given nmos device. """
@@ -303,11 +314,8 @@ class pgate(design.design):
         # To the right a spacing away from the nmos right active edge
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
-        # Must be at least an well enclosure of active up
-        # from the bottom of the well
-        contact_yoffset = max(nmos_pos.y,
-                              self.nwell_enclose_active \
-                              - nmos.active_contact.first_layer_height / 2)
+        # Allow an nimplant below it under the rail
+        contact_yoffset = 0.5 * self.implant_width + self.implant_enclose_active
         contact_offset = vector(contact_xoffset, contact_yoffset)
 
         # Offset by half a contact

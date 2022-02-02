@@ -3,7 +3,6 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := all
 
-RM ?= "rm -rf"
 ARGS ?=
 TECH ?= scn4m_subm
 TECHS = scn4m_subm freepdk45
@@ -105,7 +104,7 @@ $(TEST_BASES):
 		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
-	$(RM) $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
+	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
 # Mount environment for debug

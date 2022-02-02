@@ -70,7 +70,7 @@ WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
 
 # Run all technologies
 all: $(WORKING_TECH_TEST_STAMPS)
-	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls $(TOP_DIR)/compiler/tests/results/*/*.bad && exit 1
+	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls $(TOP_DIR)/compiler/tests/results/*/*.bad && sed -e "s/^.*\/results\///" && exit 1
 .PHONY: all
 
 # Run a given technology

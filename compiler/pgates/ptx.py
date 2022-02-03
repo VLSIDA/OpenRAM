@@ -161,12 +161,6 @@ class ptx(design.design):
                                                                                  self.mults,
                                                                                  self.tx_width,
                                                                                  drc("minwidth_poly"))
-
-        elif OPTS.lvs_exe and OPTS.lvs_exe[0] == "klayout":
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3}".format(spice[self.tx_type],
-                                                                          self.mults,
-                                                                          self.tx_width,
-                                                                          drc("minwidth_poly"))
         elif cell_props.ptx.model_is_subckt:
             self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
                                                                             self.mults,

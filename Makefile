@@ -41,7 +41,7 @@ MAGICRC_FILE := $(SKY130_PDK)/libs.tech/magic/sky130A.magicrc
 ALL_FILES := $(ALL_SPICE_FILES) $(GDS_FILES) $(MAG_FILES) $(MAGLEF_FILES)
 
 
-INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_lib lef_lib maglef_lib
+INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_lib maglef_lib
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 

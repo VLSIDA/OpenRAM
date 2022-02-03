@@ -42,15 +42,13 @@ tests:
 %.ok: %.py
 	@echo "Running $*"
 	@mkdir -p $(TOP_DIR)/compiler/tests/results/$*
-	@docker run -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
-		-e OPENRAM_TMP=/openram/compiler/tests/results/$* \
+	@docker run \
+		-v $(TOP_DIR):/openram \
+		-v $(FREEPDK45):/pdk/freepdk45\
+		-v $(PDK_ROOT):/pdk \
 		--user $(UID):$(GID) \
-                vlsida/openram-ubuntu:latest \
-		python3 -u /openram/compiler/tests/$*.py $(ARGS) && touch $@
+        vlsida/openram-ubuntu:latest \
+		sh -c ". ~/.bashrc && python3 -u /openram/compiler/tests/$*.py $(ARGS) && touch $@"
 
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
@@ -58,17 +56,37 @@ TECHS := scn4m_subm freepdk45
 #sky130
 
 $(TECHS):
-	@docker run -v $(TOP_DIR):/openram \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
+	docker run \
+		-v $(TOP_DIR):/openram \
+		-v $(FREEPDK45):/pdk/freepdk45 \
+		-v $(PDK_ROOT):/pdk \
 		--user $(UID):$(GID) \
 		-e OPENRAM_TMP=/openram/compiler/tests/tmp_$@/$* \
 		vlsida/openram-ubuntu:latest \
-                sh -c "python3 -u /openram/compiler/tests/regress.py $(ARGS) -t $@"
+        sh -c ". ~/.bashrc && python3 -u /openram/compiler/tests/regress.py $(ARGS) -t $@"
 .PHONY: $(TECHS)
 
 regress: $(TECHS)
 .PHONY: regress
+
+foo:
+	docker run \
+		-v $(TOP_DIR):/openram \
+		-v $(FREEPDK45):/pdk/freepdk45 \
+		-v $(PDK_ROOT):/pdk \
+		--user $(UID):$(GID) \
+        vlsida/openram-ubuntu:latest \
+		sh -c ". ~/.bashrc && env"
+.PHONY: foo
+
+mount:
+	docker run -it \
+		-v $(TOP_DIR):/openram \
+		-v $(FREEPDK45):/pdk/freepdk45 \
+		-v $(PDK_ROOT):/pdk \
+		--user $(UID):$(GID) \
+        vlsida/openram-ubuntu:latest
+.PHONY: mount
 
 clean:
 	@rm -rf $(TEST_STAMPS)

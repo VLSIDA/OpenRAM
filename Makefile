@@ -186,10 +186,11 @@ mount:
 	@docker run -it -v $(TOP_DIR):/openram \
 		-v $(SKY130_PDK):$(SKY130_PDK) \
 		-e PDK_ROOT=$(PDK_ROOT) \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
+        -e OPENRAM_HOME=/openram/compiler \
+        -e OPENRAM_TECH=/openram/technology \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
-                vlsida/openram-ubuntu:latest
+        vlsida/openram-ubuntu:latest
 .PHONY: mount
 
 clean:

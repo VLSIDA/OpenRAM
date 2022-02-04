@@ -1,44 +1,56 @@
 name: ci
 on: [push]
 jobs:
-  scn4me_subm:
+  regress:
     runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-      - name: SCMOS test
+      - name: Docker pull
+        run: docker pull vlsida/openram-ubuntu:latest
+      - name: PDK Install
         run: |
-         . /home/github-runner/setup-paths.sh
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
-         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
+         export OPENRAM_TECH="${{ github.workspace }}/technology"
+         #cd $OPENRAM_HOME/tests
+         #export PDK_ROOT="${{ github.workspace }}/pdk"
+         #make pdk
+         #make install
+      - name: Regress
+        run: |
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology"
+         #cd $OPENRAM_HOME/.. && make pdk && make install
+         #export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
-         $OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
+         #$OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
+         cd $OPENRAM_HOME/tests
+         make -j 36
       - name: Archive
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
-         name: scn4me_subm Archives
-         path: ${{ github.workspace }}/*.zip
-  freepdk45:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
-      - name: FreePDK45 test
-        run: |
-         . /home/github-runner/setup-paths.sh
-         export OPENRAM_HOME="${{ github.workspace }}/compiler"
-         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
-         export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
-         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
-         $OPENRAM_HOME/tests/regress.py -j 24 -t freepdk45
-      - name: Archive
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v2
-        with:
-         name: FreePDK45 Archives
-         path: ${{ github.workspace }}/*.zip
+         name: Regress Archives
+         path: ${{ github.workspace }}/compiler/tests/results/*.zip
+#  freepdk45:
+#    runs-on: self-hosted
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v1
+#      - name: FreePDK45 test
+#        run: |
+#         . /home/github-runner/setup-paths.sh
+#         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+#         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
+#         export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
+#         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
+#         $OPENRAM_HOME/tests/regress.py -j 24 -t freepdk45
+#      - name: Archive
+#        if: ${{ failure() }}
+#        uses: actions/upload-artifact@v2
+#        with:
+#         name: FreePDK45 Archives
+#         path: ${{ github.workspace }}/*.zip
   # coverage_stats:
   #   if: ${{ always() }}
   #   needs: [scn4me_subm, freepdk45]

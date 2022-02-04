@@ -3,9 +3,9 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := all
 
-ARGS ?= 
+ARGS ?=
 TECH ?= scn4m_subm
-TECHS := scn4m_subm freepdk45
+TECHS = scn4m_subm freepdk45
 # sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
@@ -13,10 +13,10 @@ TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
 TEST_BASES = $(basename $(TEST_SRCS))
 TEST_STAMPS= $(addsuffix .ok,$(TEST_BASES))
 
-OPENRAM_DIR := /openram/compiler/tests
-RESULTS_DIR := $(OPENRAM_DIR)/results
+OPENRAM_DIR = /openram/compiler/tests
+RESULTS_DIR = $(OPENRAM_DIR)/results
 
-TEST_BROKEN := \
+TEST_BROKEN = \
 	50_riscv_1k_1rw1r_func_test.py \
 	50_riscv_1k_1rw_func_test.py \
 	50_riscv_1rw1r_func_test.py \
@@ -36,18 +36,19 @@ TEST_BROKEN := \
 WORKING_TEST_STAMPS=$(filter-out $(addsuffix .ok, (TEST_BROKEN)), $(TEST_STAMPS))
 
 
-$(TEST_BASES):
-	@$(MAKE) --no-print-directory $@.ok
-
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
 WORKING_TECH_TEST_STAMPS=$(foreach T, $(TECHS),$(addprefix $T/,$(WORKING_TEST_STAMPS)))
 
 all: $(WORKING_TECH_TEST_STAMPS)
+.PHONY: all
 
-# To run individual tests
-%.ok: %.py
-	@$(MAKE) --no-print-directory $(TECH)/$*.ok
+# Targets for each individual test
+# e.g. make 04_pinv_1x_test
+$(TEST_BASES):
+#	@echo "Running $(TECH) $@ ... "
+	@$(MAKE) --no-print-directory $(TECH)/$@.ok
+.PHONY: $(TEST_BASES)
 
 # To run a test in a given technology
 %.ok:
@@ -64,6 +65,8 @@ all: $(WORKING_TECH_TEST_STAMPS)
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
+# This would use the regress.py script to run in parallel instead of 
+# the Makefile.
 #$(TECHS):
 #	@echo "Running $*"
 #	docker run \
@@ -78,6 +81,7 @@ all: $(WORKING_TECH_TEST_STAMPS)
 #regress: $(TECHS)
 #.PHONY: regress
 
+# Mount environment for debug
 mount:
 	docker run -it \
 		-v $(TOP_DIR):/openram \

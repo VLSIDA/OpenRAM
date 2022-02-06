@@ -41,6 +41,7 @@ getfile = $(word 2,$(subst /, ,$*))
 WORKING_TECH_TEST_STAMPS=$(foreach T, $(TECHS),$(addprefix $T/,$(WORKING_TEST_STAMPS)))
 
 all: $(WORKING_TECH_TEST_STAMPS)
+	@test -f $(TOP_DIR)/compiler/tests/results/*.bad && echo "Regression had a failure." && exit 1 || "Regression passed."
 .PHONY: all
 
 # Targets for each individual test

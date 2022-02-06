@@ -16,6 +16,7 @@ from sram_factory import factory
 import debug
 
 
+@unittest.skip("SKIPPING 21_ngspice_delay_global_test")
 class timing_sram_test(openram_test):
 
     def runTest(self):

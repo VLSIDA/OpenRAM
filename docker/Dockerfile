@@ -67,30 +67,78 @@ RUN ./configure \
  && make install
 RUN rm -rf /root/netgen
 
-#ARG XYCE_COMMIT=b7bb12d81f11d8b50141262537299b09d64b5565
-#ARG TRILINOS_COMIT=
+### Trilinos ###
+ARG TRILINOS_COMMIT=trilinos-release-12-12-1
+WORKDIR /root
+RUN apt-get install --no-install-recommends -y cmake libfftw3-dev mpich libblas-dev liblapack-dev libsuitesparse-dev libfl-dev openmpi-bin libopenmpi-dev gfortran
+RUN git clone --depth 1 --branch ${TRILINOS_COMMIT} https://github.com/trilinos/Trilinos.git
+RUN mkdir /root/Trilinos/build
+WORKDIR /root/Trilinos/build
+RUN cmake \
+    -G "Unix Makefiles" \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpic++ \
+    -DCMAKE_Fortran_COMPILER=mpif77 \
+    -DCMAKE_CXX_FLAGS="-O3 -fPIC" \
+    -DCMAKE_C_FLAGS="-O3 -fPIC" \
+    -DCMAKE_Fortran_FLAGS="-O3 -fPIC" \
+    -DCMAKE_INSTALL_PREFIX=/usr/local/XyceLibs/Parallel \
+    -DCMAKE_MAKE_PROGRAM="make" \
+    -DTrilinos_ENABLE_NOX=ON \
+    -DNOX_ENABLE_LOCA=ON \
+    -DTrilinos_ENABLE_EpetraExt=ON \
+    -DEpetraExt_BUILD_BTF=ON \
+    -DEpetraExt_BUILD_EXPERIMENTAL=ON \
+    -DEpetraExt_BUILD_GRAPH_REORDERINGS=ON \
+    -DTrilinos_ENABLE_TrilinosCouplings=ON \
+    -DTrilinos_ENABLE_Ifpack=ON \
+    -DTrilinos_ENABLE_ShyLU=ON \
+    -DTrilinos_ENABLE_Isorropia=ON \
+    -DTrilinos_ENABLE_AztecOO=ON \
+    -DTrilinos_ENABLE_Belos=ON \
+    -DTrilinos_ENABLE_Teuchos=ON \
+    -DTeuchos_ENABLE_COMPLEX=ON \
+    -DTrilinos_ENABLE_Amesos=ON \
+    -DAmesos_ENABLE_KLU=ON \
+    -DTrilinos_ENABLE_Sacado=ON \
+    -DTrilinos_ENABLE_Kokkos=ON \
+    -DTrilinos_ENABLE_Zoltan=ON \
+    -DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF \
+    -DTrilinos_ENABLE_CXX11=ON \
+    -DTPL_ENABLE_AMD=ON \
+    -DAMD_LIBRARY_DIRS="/usr/lib" \
+    -DTPL_AMD_INCLUDE_DIRS="/usr/include/suitesparse" \
+    -DTPL_ENABLE_BLAS=ON \
+    -DTPL_ENABLE_LAPACK=ON \
+    -DTPL_ENABLE_MPI=ON \
+    /root/Trilinos
+RUN make -j 4 
+RUN make install
+
+ARG XYCE_COMMIT=b7bb12d81f11d8b50141262537299b09d64b5565
+WORKDIR /root
+RUN git clone https://github.com/Xyce/Xyce.git
+WORKDIR /root/Xyce
+RUN git checkout ${XYCE_COMMIT}
+RUN ./bootstrap
+RUN mkdir /root/Xyce/build
+WORKDIR /root/Xyce/build
+RUN ../configure CXXFLAGS="-O3 -std=c++11" \
+    ARCHDIR="/usr/local/XyceLibs/Parallel" \
+    CPPFLAGS="-I/usr/include/suitesparse" \
+    --enable-mpi CXX=mpicxx CC=mpicc F77=mpif77 \
+    --prefix=/usr/local/Xyce/Parallel --enable-shared --enable-xyce-shareable 
+RUN make -j 4 install
 
 ### CLEAN UP ###
 # Remove development tools to save space
-RUN apt-get remove -y build-essential autoconf automake libtool bison flex  tcl-dev tk-dev
+RUN apt-get remove -y build-essential autoconf automake libtool bison flex  tcl-dev tk-dev cmake
 # Cleanup to save some space
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 
 # ### SET UP A GENERIC USER ###
-# WORKDIR /p
-# RUN echo "cd ~" >> /etc/skel/.bashrc
-# RUN echo "source /set-paths.sh" >> /etc/skel/.bashrc
-# ADD set-paths.sh /set-paths.sh
-# RUN chmod 755 /set-paths.sh
-
-### ADD ENTRY POINT ###
-# COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-# RUN chmod 755 /usr/local/bin/entrypoint.sh
-# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-# CMD ["/bin/bash"]
-
 RUN mkdir /home/cad-user
 RUN useradd cad-user
 RUN chown -R cad-user /home/cad-user

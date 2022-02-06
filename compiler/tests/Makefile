@@ -41,6 +41,7 @@ getfile = $(word 2,$(subst /, ,$*))
 WORKING_TECH_TEST_STAMPS=$(foreach T, $(TECHS),$(addprefix $T/,$(WORKING_TEST_STAMPS)))
 
 all: $(WORKING_TECH_TEST_STAMPS)
+	@ls $(TOP_DIR)/compiler/tests/results/*.bad 1> /dev/null 2>&1 && echo "REGRESSION FAIL" && exit 1 || echo "REGRESSION PASS"
 .PHONY: all
 
 # Targets for each individual test
@@ -53,19 +54,21 @@ $(TEST_BASES):
 # To run a test in a given technology
 %.ok:
 #	@echo "Running $(gettech) $(getfile) ... "
-	@mkdir -p results/$*
+	@mkdir -p results/$*/tmp
 	@docker run \
 		-v $(TOP_DIR):/openram \
 		-v $(FREEPDK45):/pdk/freepdk45\
 		-v $(PDK_ROOT):/pdk \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
-		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$* \
+		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
         vlsida/openram-ubuntu:latest \
-		sh -c ". ~/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py -t $(gettech) -k $(ARGS) > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok"
-	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
+		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
+		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
+	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
-# This would use the regress.py script to run in parallel instead of 
+# This would use the regress.py script to run in parallel instead of
 # the Makefile.
 #$(TECHS):
 #	@echo "Running $*"
@@ -76,7 +79,7 @@ $(TEST_BASES):
 #		--user $(UID):$(GID) \
 #		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$@ \
 #		vlsida/openram-ubuntu:latest \
-#        sh -c ". ~/.bashrc && python3 -u $(OPENRAM_DIR)/regress.py -t $@ $(ARGS)"
+#        sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/regress.py -t $@ $(ARGS)"
 #.PHONY: $(TECHS)
 #regress: $(TECHS)
 #.PHONY: regress
@@ -87,6 +90,7 @@ mount:
 		-v $(TOP_DIR):/openram \
 		-v $(FREEPDK45):/pdk/freepdk45 \
 		-v $(PDK_ROOT):/pdk \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
         vlsida/openram-ubuntu:latest
 .PHONY: mount

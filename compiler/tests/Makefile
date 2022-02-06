@@ -64,7 +64,7 @@ $(TEST_BASES):
         vlsida/openram-ubuntu:latest \
 		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
-	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
+	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && rm -rf $(OPENRAM_DIR)/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
 # This would use the regress.py script to run in parallel instead of

@@ -6,7 +6,7 @@ include $(TOP_DIR)/openram.mk
 ARGS ?=
 TECH ?= scn4m_subm
 TECHS = scn4m_subm freepdk45
-# sky130
+ALL_TECHS = scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
 TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
@@ -40,14 +40,20 @@ gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
 WORKING_TECH_TEST_STAMPS=$(foreach T, $(TECHS),$(addprefix $T/,$(WORKING_TEST_STAMPS)))
 
+# Run all technologies
 all: $(WORKING_TECH_TEST_STAMPS)
 	@ls $(TOP_DIR)/compiler/tests/results/*.bad 1> /dev/null 2>&1 && echo "REGRESSION FAIL" && exit 1 || echo "REGRESSION PASS"
 .PHONY: all
 
+# Run a given technology
+# e.g. make freepdk45
+$(ALL_TECHS):
+	@$(MAKE) --no-print-directory $(addprefix $@/,$(WORKING_TEST_STAMPS))
+.PHONY: $(TECHS)
+
 # Targets for each individual test
 # e.g. make 04_pinv_1x_test
 $(TEST_BASES):
-#	@echo "Running $(TECH) $@ ... "
 	@$(MAKE) --no-print-directory $(TECH)/$@.ok
 .PHONY: $(TEST_BASES)
 
@@ -68,23 +74,8 @@ $(TEST_BASES):
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
-# This would use the regress.py script to run in parallel instead of
-# the Makefile.
-#$(TECHS):
-#	@echo "Running $*"
-#	docker run \
-#		-v $(TOP_DIR):/openram \
-#		-v $(FREEPDK45):/pdk/freepdk45 \
-#		-v $(PDK_ROOT):/pdk \
-#		--user $(UID):$(GID) \
-#		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$@ \
-#		vlsida/openram-ubuntu:latest \
-#        sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/regress.py -t $@ $(ARGS)"
-#.PHONY: $(TECHS)
-#regress: $(TECHS)
-#.PHONY: regress
-
 # Mount environment for debug
+#
 mount:
 	docker run -it \
 		-v $(TOP_DIR):/openram \

@@ -15,7 +15,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$XYCE_LIB
 export XYCE_NO_TRACKING="anything at all"
 
 # PDKs
-export FREEPDK45=/PDK/freepdk45
+export FREEPDK45=/pdk/freepdk45
 # Set to the PDK you want to use
 export PDK_DIR=$FREEPDK45
 

@@ -130,6 +130,8 @@ RUN ../configure CXXFLAGS="-O3 -std=c++11" \
     --prefix=/usr/local/Xyce/Parallel --enable-shared --enable-xyce-shareable 
 RUN make -j 4 install
 
+RUN apt-get install --no-install-recommends -y iverilog
+
 ### CLEAN UP ###
 # Remove development tools to save space
 RUN apt-get remove -y build-essential autoconf automake libtool bison flex  tcl-dev tk-dev cmake

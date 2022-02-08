@@ -42,7 +42,7 @@ WORKING_TECH_TEST_STAMPS=$(foreach T, $(TECHS),$(addprefix $T/,$(WORKING_TEST_ST
 
 # Run all technologies
 all: $(WORKING_TECH_TEST_STAMPS)
-	@ls $(TOP_DIR)/compiler/tests/results/*.bad 1> /dev/null 2>&1 && echo "REGRESSION FAIL" && exit 1 || echo "REGRESSION PASS"
+	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "REGRESSION FAIL" && exit 1 || echo "REGRESSION PASS"
 .PHONY: all
 
 # Run a given technology

@@ -66,7 +66,10 @@ $(TEST_BASES):
 	@docker run \
 		-v $(TOP_DIR):/openram \
 		-v $(FREEPDK45):/pdk/freepdk45\
+		-e FREEPDK45=/pdk/freepdk45\
 		-v $(PDK_ROOT):/pdk \
+		-e PDK_ROOT=/pdk \
+		-e PDKPATH=/pdk/sky130A \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
 		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
@@ -83,6 +86,8 @@ mount:
 		-v $(TOP_DIR):/openram \
 		-v $(FREEPDK45):/pdk/freepdk45 \
 		-v $(PDK_ROOT):/pdk \
+		-e PDK_ROOT=/pdk \
+		-e PDKPATH=/pdk/sky130A \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
         vlsida/openram-ubuntu:latest

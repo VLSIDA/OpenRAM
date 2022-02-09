@@ -25,6 +25,7 @@ jobs:
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
          #$OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
          cd $OPENRAM_HOME/tests
+         make clean
          make -k -j 48
       - name: Archive
         if: ${{ failure() }}

@@ -4,9 +4,8 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
-TECH ?= scn4m_subm
-TECHS = scn4m_subm freepdk45
-ALL_TECHS = scn4m_subm freepdk45 sky130
+TEST_TECHS ?= scn4m_subm freepdk45
+TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
 TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
@@ -26,6 +25,7 @@ BROKEN_STAMPS = \
 	sky130/04_dummy_pbitcell_test.ok \
 	sky130/04_pbitcell_test.ok \
 	sky130/04_pnand4_test.ok \
+	sky130/04_pand4_test.ok \
 	sky130/04_precharge_pbitcell_test.ok \
 	sky130/04_replica_pbitcell_test.ok \
 	sky130/05_pbitcell_array_test.ok \
@@ -62,7 +62,7 @@ BROKEN_STAMPS = \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
-TECH_TEST_STAMPS=$(foreach T, $(TECHS), $(addprefix $T/, $(TEST_STAMPS)))
+TECH_TEST_STAMPS=$(foreach T, $(TEST_TECHS), $(addprefix $T/, $(TEST_STAMPS)))
 
 # Filter out the tests after creating the tech stamps
 WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
@@ -70,24 +70,25 @@ WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
 
 # Run all technologies
 all: $(WORKING_TECH_TEST_STAMPS)
-	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls $(TOP_DIR)/compiler/tests/results/*/*.bad && exit 1
+	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls $(TOP_DIR)/compiler/tests/results/*/*.bad && sed -e "s/^.*\/results\///" && exit 1
 .PHONY: all
 
 # Run a given technology
 # e.g. make freepdk45
-$(ALL_TECHS):
+$(TECHS):
 	@$(MAKE) --no-print-directory $(filter-out $(BROKEN_STAMPS), $(addprefix $@/, $(TEST_STAMPS)))
 .PHONY: $(TECHS)
 
-# Targets for each individual test
+# Targets for each individual test in all technologies
 # e.g. make 04_pinv_1x_test
 $(TEST_BASES):
-	@$(MAKE) --no-print-directory $(TECH)/$@.ok
+	@$(MAKE) --no-print-directory $(foreach T, $(TECHS), $(addprefix $T/, $@.ok))
 .PHONY: $(TEST_BASES)
 
 # To run a test in a given technology
 %.ok:
 #	@echo "Running $(gettech) $(getfile) ... "
+	@rm -rf results/$*
 	@mkdir -p results/$*/tmp
 	@docker run \
 		-v $(TOP_DIR):/openram \
@@ -102,7 +103,8 @@ $(TEST_BASES):
         vlsida/openram-ubuntu:latest \
 		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
-	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
+	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
+	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
 # Mount environment for debug

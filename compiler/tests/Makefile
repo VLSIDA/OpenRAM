@@ -4,9 +4,8 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
-TECH ?= scn4m_subm
-TECHS = scn4m_subm freepdk45
-ALL_TECHS = scn4m_subm freepdk45 sky130
+TEST_TECHS = scn4m_subm freepdk45
+TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
 TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
@@ -62,7 +61,7 @@ BROKEN_STAMPS = \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
-TECH_TEST_STAMPS=$(foreach T, $(TECHS), $(addprefix $T/, $(TEST_STAMPS)))
+TECH_TEST_STAMPS=$(foreach T, $(TEST_TECHS), $(addprefix $T/, $(TEST_STAMPS)))
 
 # Filter out the tests after creating the tech stamps
 WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
@@ -75,14 +74,14 @@ all: $(WORKING_TECH_TEST_STAMPS)
 
 # Run a given technology
 # e.g. make freepdk45
-$(ALL_TECHS):
+$(TECHS):
 	@$(MAKE) --no-print-directory $(filter-out $(BROKEN_STAMPS), $(addprefix $@/, $(TEST_STAMPS)))
 .PHONY: $(TECHS)
 
-# Targets for each individual test
+# Targets for each individual test in all technologies
 # e.g. make 04_pinv_1x_test
 $(TEST_BASES):
-	@$(MAKE) --no-print-directory $(TECH)/$@.ok
+	@$(MAKE) --no-print-directory $(foreach T, $(TECHS), $(addprefix $T/, $@.ok))
 .PHONY: $(TEST_BASES)
 
 # To run a test in a given technology

@@ -4,7 +4,7 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
-TEST_TECHS = scn4m_subm freepdk45
+TEST_TECHS ?= scn4m_subm freepdk45
 TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
@@ -25,6 +25,7 @@ BROKEN_STAMPS = \
 	sky130/04_dummy_pbitcell_test.ok \
 	sky130/04_pbitcell_test.ok \
 	sky130/04_pnand4_test.ok \
+	sky130/04_pand4_test.ok \
 	sky130/04_precharge_pbitcell_test.ok \
 	sky130/04_replica_pbitcell_test.ok \
 	sky130/05_pbitcell_array_test.ok \

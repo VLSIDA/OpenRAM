@@ -29,7 +29,6 @@ MAG_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.mag))
 SPICE_SUFFIX := spice
 SPICE_LVS_SUFFIX := lvs.$(SPICE_SUFFIX)
 SPICE_CALIBRE_SUFFIX := lvs.calibre.$(SPICE_SUFFIX)
-SPICE_KLAYOUT_SUFFIX := lvs.klayout.$(SPICE_SUFFIX)
 SPICE_BASE_SUFFIX := base.$(SPICE_SUFFIX)
 ALL_SPICE_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.$(SPICE_SUFFIX)))
 
@@ -50,7 +49,7 @@ ifndef PDK_ROOT
 	$(error PDK_ROOT is undefined, please export it before running make)
 endif
 
-$(SKY130_PDKS_DIR): check-pdk-root 
+$(SKY130_PDKS_DIR): check-pdk-root
 	git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
 	cd $(SKY130_PDKS_DIR) && \
 		git checkout main && git pull && \
@@ -148,18 +147,6 @@ $(INSTALL_BASE)/calibre_lvs_lib: $(filter %.$(SPICE_CALIBRE_SUFFIX),$(ALL_SPICE_
 	done
 	@echo "=================================================================="
 	@echo
-
-$(INSTALL_BASE)/klayout_lvs_lib: $(filter %.$(SPICE_KLAYOUT_SUFFIX),$(ALL_SPICE_FILES))
-	@echo
-	@echo "Setting up klayout LVS library for OpenRAM."
-	@echo "=================================================================="
-	mkdir -p $@
-	@for SP in $?; do \
-		cp -va $$SP $@/$$(basename $$SP .$(SPICE_KLAYOUT_SUFFIX)).sp; \
-	done
-	@echo "=================================================================="
-	@echo
-
 
 $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUFFIX),$(ALL_SPICE_FILES))
 	@echo

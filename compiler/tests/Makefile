@@ -70,7 +70,7 @@ WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
 
 # Run all technologies
 all: $(WORKING_TECH_TEST_STAMPS)
-	@ls $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls $(TOP_DIR)/compiler/tests/results/*/*.bad && sed -e "s/^.*\/results\///" && exit 1
+	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
 .PHONY: all
 
 # Run a given technology
@@ -89,6 +89,7 @@ $(TEST_BASES):
 %.ok:
 #	@echo "Running $(gettech) $(getfile) ... "
 	@rm -rf results/$*
+	@rm -rf results/$*.*
 	@mkdir -p results/$*/tmp
 	@docker run \
 		-v $(TOP_DIR):/openram \

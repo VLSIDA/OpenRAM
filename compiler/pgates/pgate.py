@@ -208,9 +208,10 @@ class pgate(design.design):
         # from the top of the well
         # OR align the active with the top of PMOS active.
         max_y_offset = self.height + 0.5 * self.m1_width
-        contact_yoffset = self.height - 0.5 * self.implant_width \
-                          - pmos.active_contact.first_layer_height \
-                          - self.implant_enclose_active
+        contact_yoffset = min(self.height - 0.5 * self.implant_width,
+                              self.get_tx_insts("pmos")[0].uy()) \
+                             - pmos.active_contact.first_layer_height \
+                             - self.implant_enclose_active
         contact_offset = vector(contact_xoffset, contact_yoffset)
         # Offset by half a contact in x and y
         contact_offset += vector(0.5 * pmos.active_contact.first_layer_width,
@@ -315,7 +316,8 @@ class pgate(design.design):
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
         # Allow an nimplant below it under the rail
-        contact_yoffset = 0.5 * self.implant_width + self.implant_enclose_active
+        contact_yoffset = max(0.5 * self.implant_width + self.implant_enclose_active, 
+                              self.get_tx_insts("nmos")[0].by())
         contact_offset = vector(contact_xoffset, contact_yoffset)
 
         # Offset by half a contact

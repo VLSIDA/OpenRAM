@@ -692,7 +692,7 @@ class hierarchical_decoder(design.design):
             drc_error = 0
             for and_input in self.predecode_bus_rail_pos:
                 if and_input.x == rail_pos.x:
-                    if (abs(y_offset - and_input.y) < total_buffer_space) or (abs(y_offset - and_input.y) < via.height):
+                    if (abs(y_offset - and_input.y) < total_buffer_space) or (abs(y_offset - and_input.y) < via.height) or (abs(y_offset - drc("minwidth_{}".format(cur_layer)) - pin_pos.y - via.height/2) < drc("{0}_to_{0}".format(cur_layer)) ):
                         drc_error = 1
             if drc_error == 0:
                 break

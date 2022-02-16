@@ -48,7 +48,7 @@ g.print_time("Start", start_time)
 g.report_status()
 
 from sram_config import sram_config
-
+from sram import sram
 
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
@@ -73,9 +73,10 @@ for path in output_files:
     debug.print_raw(path)
 
 
-from sram import sram
-s = sram(sram_config=c,
-         name=OPTS.output_name)
+s = sram(name=OPTS.output_name, sram_config=c)
+
+# Actually build the SRAM
+s.create()
 
 # Output the files for the resulting SRAM
 s.save()
@@ -83,5 +84,3 @@ s.save()
 # Delete temp files etc.
 g.end_openram()
 g.print_time("End", datetime.datetime.now(), start_time)
-
-

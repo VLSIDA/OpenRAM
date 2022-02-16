@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2016-2021 Regents of the University of California and The Board
@@ -15,6 +15,7 @@ corner, but should probably be extended.
 
 import sys
 from globals import *
+from importlib import reload
 
 (OPTS, args) = parse_args()
 
@@ -41,36 +42,30 @@ slew = float(args[3])
 import debug
 
 init_openram(config_file=config_file, is_unit_test=False)
+
+from sram_config import sram_config
+c = sram_config(word_size=OPTS.word_size,
+                num_words=OPTS.num_words,
+                write_size=OPTS.write_size,
+                num_banks=OPTS.num_banks,
+                words_per_row=OPTS.words_per_row,
+                num_spare_rows=OPTS.num_spare_rows,
+                num_spare_cols=OPTS.num_spare_cols)
+
+OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
 # Put the temp output in the output path since it is what we want to generate!
 old_openram_temp = OPTS.openram_temp
 OPTS.openram_temp = OPTS.output_path
 
-
-
-import sram
-class fake_sram(sram.sram):
-    """ This is an SRAM that doesn't actually create itself, just computes
-    the sizes. """
-    def __init__(self, word_size, num_words, num_banks, name, num_spare_rows):
-        self.name = name
-        self.word_size = word_size
-        self.num_words = num_words
-        self.num_banks = num_banks
-        self.num_spare_rows = num_spare_rows
-        c = reload(__import__(OPTS.bitcell))
-        self.mod_bitcell = getattr(c, OPTS.bitcell)
-        self.bitcell = self.mod_bitcell()
-        # to get the row, col, etc.
-        self.compute_sizes()
-
-sram = fake_sram(OPTS.word_size, OPTS.num_words, OPTS.num_banks, OPTS.output_name)
-sp_file = OPTS.output_path+OPTS.output_name + ".sp"
+from sram import sram
+s = sram(name=OPTS.output_name, sram_config=c)
+s.create()
 
 from characterizer import delay
 import tech
 # Set up the delay and set to the nominal corner
-d = delay.delay(sram, sp_file, ("TT", tech.spice["nom_supply_voltage"], tech.spice["nom_temperature"]))
+d = delay(s, s.get_sp_name(), ("TT", tech.spice["nom_supply_voltage"], tech.spice["nom_temperature"]))
 # Set the period
 d.period = period
 # Set the load of outputs and slew of inputs
@@ -91,4 +86,3 @@ print("Output files are:\n{0}stim.sp\n{0}sram.sp\n{0}reduced.sp".format(OPTS.out
 OPTS.openram_temp = old_openram_temp
 # Delete temp files, remove the dir, etc.
 end_openram()
-

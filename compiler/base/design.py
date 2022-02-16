@@ -318,4 +318,3 @@ class design(hierarchy_design):
 
 design.setup_drc_constants()
 design.setup_layer_constants()
-

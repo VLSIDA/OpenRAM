@@ -7,7 +7,7 @@
 #
 import datetime
 import debug
-from math import log, ceil
+from math import log
 from importlib import reload
 from vector import vector
 from globals import OPTS, print_time
@@ -20,8 +20,7 @@ from tech import spice
 
 class sram_base(design, verilog, lef):
     """
-    Dynamically generated SRAM by connecting banks to control logic. The
-    number of banks should be 1 , 2 or 4
+    Dynamically generated SRAM by connecting banks to control logic.
     """
     def __init__(self, name, sram_config):
         design.__init__(self, name)
@@ -30,16 +29,9 @@ class sram_base(design, verilog, lef):
 
         self.sram_config = sram_config
         sram_config.set_local_config(self)
+        sram_config.compute_sizes()
 
         self.bank_insts = []
-
-        if self.write_size:
-            self.num_wmasks = int(ceil(self.word_size / self.write_size))
-        else:
-            self.num_wmasks = 0
-
-        if not self.num_spare_cols:
-            self.num_spare_cols = 0
 
         try:
             from tech import power_grid

@@ -91,21 +91,48 @@ module #$MODULE_NAME$# (
   reg [DATA_WIDTH-1:0]  din#$PORT_NUM$#_reg;
   reg [DATA_WIDTH-1:0]  dout#$PORT_NUM$#;
 #<REGS
+#<FLOPS
   // All inputs are registers
-  always @(posedge clk0)
+  always @(posedge clk#$PORT_NUM$#)
   begin
-    csb0_reg = csb0;
-    web0_reg = web0;
-    addr0_reg = addr0;
-    din0_reg = din0;
-    #(T_HOLD) dout0 = 2'bx;
+    csb#$PORT_NUM$#_reg = csb#$PORT_NUM$#;
+#<WEB_FLOP
+    web#$PORT_NUM$#_reg = web#$PORT_NUM$#;
+#>WEB_FLOP
+#<W_MASK_FLOP
+    w_mask#$PORT_NUM$#_reg = w_mask#$PORT_NUM$#;
+#>W_MASK_FLOP
+#<SPARE_WEN_FLOP
+    spare_wen#$PORT_NUM$#_reg = spare_wen#$PORT_NUM$#;
+#>SPARE_WEN_FLOP
+    addr#$PORT_NUM$#_reg = addr#$PORT_NUM$#;
+#<RW_CHECKS
+    if (#$WPORT_CONTROL$# && #$RPORT_CONTROL$# && (addr#$WPORT$# == addr#$RPORT$#))
+      $display($time," WARNING: Writing and reading addr{0}=%b and addr{1}=%b simultaneously!",addr#$WPORT$#,addr#$RPORT$#);
+#>RW_CHECKS
     if ( !csb0_reg && web0_reg && VERBOSE )
       $display($time," Reading %m addr0=%b dout0=%b",addr0_reg,mem[addr0_reg]);
     if ( !csb0_reg && !web0_reg && VERBOSE )
       $display($time," Writing %m addr0=%b din0=%b",addr0_reg,din0_reg);
+#>FLOPS
+#<DIN_FLOP
+    din#$PORT_NUM$#_reg = din#$PORT_NUM$#;
+#>DIN_FLOP
+#<DOUT_FLOP
+    #(T_HOLD) dout#$PORT_NUM$# = #$WORD_SIZE$#'bx;
+#>DOUT_FLOP
+#<RW_VERBOSE
+    if ( !csb#$PORT_NUM$#_reg && web#$PORT_NUM$#_reg && VERBOSE )
+      $display($time," Reading %m addr#$PORT_NUM$#=%b dout#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,mem[addr#$PORT_NUM$#_reg]);
+#>RW_VERBOSE
+#<R_VERBOSE
+if ( !csb{0}_reg && VERBOSE )
+  $display($time," Reading %m addr{0}=%b dout{0}=%b",addr{0}_reg,mem[addr{0}_reg]);
+#>R_VERBOSE
+#<W_VERBOSE
+
+#>W_VERBOSE
   end
-
-
   // Memory Write Block Port 0
   // Write Operation : When web0 = 0, csb0 = 0
   always @ (negedge clk0)

@@ -126,5 +126,3 @@ class design(hierarchy_design):
         for inst in self.insts:
             total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
-
-

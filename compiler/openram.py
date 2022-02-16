@@ -83,5 +83,3 @@ s.save()
 # Delete temp files etc.
 g.end_openram()
 g.print_time("End", datetime.datetime.now(), start_time)
-
-

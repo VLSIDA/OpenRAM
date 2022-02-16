@@ -49,7 +49,6 @@ g.report_status()
 
 from modules import sram_config
 
-
 # Configure the SRAM organization
 c = sram_config(word_size=OPTS.word_size,
                 num_words=OPTS.num_words,
@@ -71,7 +70,6 @@ output_files = ["{0}{1}.{2}".format(OPTS.output_path,
 debug.print_raw("Output files are: ")
 for path in output_files:
     debug.print_raw(path)
-
 
 from modules import sram
 s = sram(name=OPTS.output_name,

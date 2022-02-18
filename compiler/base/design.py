@@ -68,6 +68,14 @@ class design(hierarchy_design):
 
         self.setup_multiport_constants()
 
+        try:
+            from tech import power_grid
+            self.supply_stack = power_grid
+        except ImportError:
+            # if no power_grid is specified by tech we use sensible defaults
+            # Route a M3/M4 grid
+            self.supply_stack = self.m3_stack
+
     def check_pins(self):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)

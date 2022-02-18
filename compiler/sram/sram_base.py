@@ -41,13 +41,6 @@ class sram_base(design, verilog, lef):
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 
-        try:
-            from tech import power_grid
-            self.supply_stack = power_grid
-        except ImportError:
-            # if no power_grid is specified by tech we use sensible defaults
-            # Route a M3/M4 grid
-            self.supply_stack = self.m3_stack
 
     def add_pins(self):
         """ Add pins for entire SRAM. """

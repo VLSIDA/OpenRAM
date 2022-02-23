@@ -75,6 +75,8 @@ class sense_amp_array(design.design):
         self.width = self.local_insts[-1].rx()
 
         self.add_layout_pins()
+        self.route_horizontal_pin("vdd")
+        self.route_horizontal_pin("gnd")
         self.route_rails()
 
         self.add_boundary()
@@ -149,12 +151,6 @@ class sense_amp_array(design.design):
     def add_layout_pins(self):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
-
-            for gnd_pin in inst.get_pins("gnd"):
-                self.copy_power_pin(gnd_pin)
-
-            for vdd_pin in inst.get_pins("vdd"):
-                self.copy_power_pin(vdd_pin)
 
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())

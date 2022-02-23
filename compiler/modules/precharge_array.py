@@ -93,12 +93,13 @@ class precharge_array(design.design):
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer=self.en_bar_layer,
                                       offset=inst.get_pin("en_bar").center())
-            self.copy_layout_pin(inst, "vdd")
+        self.route_horizontal_pin("vdd")
 
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             self.copy_layout_pin(inst, "bl", "bl_{0}".format(i))
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
+
 
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""

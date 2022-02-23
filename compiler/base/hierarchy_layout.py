@@ -422,6 +422,35 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
+    def route_horizontal_pin(self, name):
+        """
+        Route together all of the pins of a given name that horizontally align.
+        """
+        bins = {}
+
+        for i in range(len(self.local_insts)):
+            inst = self.local_insts[i]
+            for pin in inst.get_pins(name):
+                try:
+                    bins[pin.cy()].append(pin)
+                except KeyError:
+                    bins[pin.cy()] = [pin]
+
+        for y, v in bins.items():
+            left_x = min([x.lx() for x in v])
+            right_x = max([x.rx() for x in v])
+
+            last_via = None
+            for pin in v:
+                last_via = self.add_via_stack_center(from_layer=pin.layer,
+                                                     to_layer=self.supply_stack[0],
+                                                     offset=pin.center())
+
+            self.add_layout_pin_segment_center(text=name,
+                                               layer=self.supply_stack[0],
+                                               start=vector(left_x, y),
+                                               end=vector(right_x, y))
+
     def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """
         Creates a path like pin with center-line convention
@@ -450,8 +479,8 @@ class layout():
         return self.add_layout_pin(text=text,
                                    layer=layer,
                                    offset=ll_offset,
-                                   width=bbox_width,
-                                   height=bbox_height)
+                                   width=max(bbox_width, layer_width),
+                                   height=max(bbox_height, layer_width))
 
     def add_layout_pin_rect_center(self, text, layer, offset, width=None, height=None):
         """ Creates a path like pin with center-line convention """

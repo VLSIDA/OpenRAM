@@ -32,7 +32,7 @@ class pand2(pgate.pgate):
     def create_modules(self):
         self.nand = factory.create(module_type="pnand2",
                                    height=self.height,
-                                   add_wells=self.vertical)
+                                   add_wells=self.add_wells)
 
         self.inv = factory.create(module_type="pdriver",
                                   size_list=[self.size],

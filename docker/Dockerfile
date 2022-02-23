@@ -97,18 +97,6 @@ RUN ../configure CXXFLAGS="-O3 -std=c++11" \
     --prefix=/usr/local/Xyce/Parallel --enable-shared --enable-xyce-shareable 
 RUN make -j 4 install
 
-
-### Magic ###
-ARG MAGIC_COMMIT=8.3.260
-WORKDIR /root
-RUN git clone https://github.com/RTimothyEdwards/magic.git magic
-WORKDIR /root/magic
-RUN git checkout ${MAGIC_COMMIT}
-RUN ./configure \
- && make \
- && make install
-RUN rm -rf /root/magic
-
 ### Ngspice ###
 ARG NGSPICE_COMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
 WORKDIR /root
@@ -122,7 +110,8 @@ RUN ./autogen.sh \
 RUN rm -rf /root/ngspice
 
 ### Netgen ###
-ARG NETGEN_COMMIT=1.5.219
+#ARG NETGEN_COMMIT=1.5.219
+ARG NETGEN_COMMIT=88d53fab15eb611cffc024eebf8743fae5cf8cb7
 WORKDIR /root
 RUN git clone https://github.com/RTimothyEdwards/netgen.git netgen
 WORKDIR /root/netgen
@@ -134,6 +123,19 @@ RUN rm -rf /root/netgen
 
 ### iVerilog ###
 RUN apt-get install --no-install-recommends -y iverilog
+
+### Magic ###
+ARG MAGIC_COMMIT=8.3.260
+#ARG MAGIC_COMMIT=8.3.254
+WORKDIR /root
+RUN git clone https://github.com/RTimothyEdwards/magic.git magic
+WORKDIR /root/magic
+RUN git checkout ${MAGIC_COMMIT}
+RUN ./configure \
+ && make \
+ && make install
+RUN rm -rf /root/magic
+
 
 ### CLEAN UP ###
 # Remove development tools to save space

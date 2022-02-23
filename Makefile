@@ -8,13 +8,15 @@ PDK_ROOT ?= $(TOP_DIR)
 
 # Skywater PDK SRAM library
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
-SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
+SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
+#SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 SRAM_LIB_GIT_COMMIT ?= main
 
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
 OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
-OPEN_PDKS_GIT_COMMIT ?= 1.0.156
+#OPEN_PDKS_GIT_COMMIT ?= 1.0.156
+OPEN_PDKS_GIT_COMMIT ?= master
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
 # Skywater PDK
@@ -50,7 +52,7 @@ ifndef PDK_ROOT
 	$(error PDK_ROOT is undefined, please export it before running make)
 endif
 
-$(SKY130_PDKS_DIR): check-pdk-root 
+$(SKY130_PDKS_DIR): check-pdk-root
 	git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
 	cd $(SKY130_PDKS_DIR) && \
 		git checkout main && git pull && \

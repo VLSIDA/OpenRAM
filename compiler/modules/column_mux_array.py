@@ -173,14 +173,12 @@ class column_mux_array(design.design):
             sel_index = col % self.words_per_row
             # Add the column x offset to find the right select bit
             gate_offset = self.mux_inst[col].get_pin("sel").bc()
-            # height to connect the gate to the correct horizontal row
-            # sel_height = self.get_pin("sel_{}".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate
             
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
 
-            bl_offset = offset + vector((self.mux_inst[col].get_pin("br_out").bc().x - self.mux_inst[col].get_pin("bl_out").bc().x)/2, 0)
+            bl_offset = offset.scale(0, 1) + vector((self.mux_inst[col].get_pin("br_out").cx() + self.mux_inst[col].get_pin("bl_out").cx())/2, 0)
             self.add_via_stack_center(from_layer="poly",
                                       to_layer=self.sel_layer,
                                       offset=bl_offset,

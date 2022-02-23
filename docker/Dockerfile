@@ -24,7 +24,7 @@ RUN apt-get install --no-install-recommends -y libx11-dev libcairo2-dev
 RUN apt-get install --no-install-recommends -y  qt5-default qtcreator ruby-full ruby-dev python3-dev qtmultimedia5-dev libqt5multimediawidgets5 libqt5multimedia5-plugins libqt5multimedia5 libqt5svg5-dev libqt5designer5 libqt5designercomponents5 libqt5xmlpatterns5-dev qttools5-dev
 
 ### Klayout ###
-ARG KLAYOUT_COMMIT=ea1bf40a1ee1c1c934e47a0020417503ab3d7e7e
+ARG KLAYOUT_COMMIT=v0.27.8
 WORKDIR /root
 RUN git clone https://github.com/KLayout/klayout
 WORKDIR /root/klayout
@@ -33,43 +33,10 @@ RUN ./build.sh -qt5 \
  && cp -r bin-release /usr/local/klayout
 RUN rm -rf /root/klayout
 
-### Magic ###
-ARG MAGIC_COMMIT=8.3.254
-WORKDIR /root
-RUN git clone git://opencircuitdesign.com/magic-8.3 magic
-WORKDIR /root/magic
-RUN git checkout ${MAGIC_COMMIT}
-RUN ./configure \
- && make \
- && make install
-RUN rm -rf /root/magic
-
-### Ngspice ###
-ARG NGSPICE_COMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
-WORKDIR /root
-RUN git clone git://git.code.sf.net/p/ngspice/ngspice
-WORKDIR /root/ngspice
-RUN git checkout ${NGSPICE_COMMIT}
-RUN ./autogen.sh \
- && ./configure --enable-openmp --with-readline \
- && make \
- && make install
-RUN rm -rf /root/ngspice
-
-### Netgen ###
-ARG NETGEN_COMMIT=88d53fab15eb611cffc024eebf8743fae5cf8cb7
-WORKDIR /root
-RUN git clone git://opencircuitdesign.com/netgen-1.5 netgen
-WORKDIR /root/netgen
-RUN git checkout ${NETGEN_COMMIT}
-RUN ./configure \
- && make -j$(nproc) \
- && make install
-RUN rm -rf /root/netgen
-
 ### Trilinos ###
 ARG TRILINOS_COMMIT=trilinos-release-12-12-1
 WORKDIR /root
+RUN apt-get update
 RUN apt-get install --no-install-recommends -y cmake libfftw3-dev mpich libblas-dev liblapack-dev libsuitesparse-dev libfl-dev openmpi-bin libopenmpi-dev gfortran
 RUN git clone --depth 1 --branch ${TRILINOS_COMMIT} https://github.com/trilinos/Trilinos.git
 RUN mkdir /root/Trilinos/build
@@ -130,6 +97,42 @@ RUN ../configure CXXFLAGS="-O3 -std=c++11" \
     --prefix=/usr/local/Xyce/Parallel --enable-shared --enable-xyce-shareable 
 RUN make -j 4 install
 
+
+### Magic ###
+ARG MAGIC_COMMIT=8.3.260
+WORKDIR /root
+RUN git clone https://github.com/RTimothyEdwards/magic.git magic
+WORKDIR /root/magic
+RUN git checkout ${MAGIC_COMMIT}
+RUN ./configure \
+ && make \
+ && make install
+RUN rm -rf /root/magic
+
+### Ngspice ###
+ARG NGSPICE_COMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
+WORKDIR /root
+RUN git clone git://git.code.sf.net/p/ngspice/ngspice
+WORKDIR /root/ngspice
+RUN git checkout ${NGSPICE_COMMIT}
+RUN ./autogen.sh \
+ && ./configure --enable-openmp --with-readline \
+ && make \
+ && make install
+RUN rm -rf /root/ngspice
+
+### Netgen ###
+ARG NETGEN_COMMIT=1.5.219
+WORKDIR /root
+RUN git clone https://github.com/RTimothyEdwards/netgen.git netgen
+WORKDIR /root/netgen
+RUN git checkout ${NETGEN_COMMIT}
+RUN ./configure \
+ && make -j$(nproc) \
+ && make install
+RUN rm -rf /root/netgen
+
+### iVerilog ###
 RUN apt-get install --no-install-recommends -y iverilog
 
 ### CLEAN UP ###

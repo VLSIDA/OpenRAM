@@ -21,16 +21,17 @@ class column_mux_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(1, "Testing sample for 2-way column_mux_array")
-        a = factory.create(module_type="column_mux_array", columns=16, word_size=8)
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 1
+        OPTS.num_w_ports = 0
+        globals.setup_bitcell()
+
+        debug.info(1, "Testing sample for 2-way column_mux_array port 0")
+        a = factory.create(module_type="column_mux_array", columns=8, word_size=4, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(a)
 
-        debug.info(1, "Testing sample for 4-way column_mux_array")
-        a = factory.create(module_type="column_mux_array", columns=16, word_size=4)
-        self.local_check(a)
-
-        debug.info(1, "Testing sample for 8-way column_mux_array")
-        a = factory.create(module_type="column_mux_array", columns=32, word_size=4)
+        debug.info(1, "Testing sample for 2-way column_mux_array port 1")
+        a = factory.create(module_type="column_mux_array", columns=8, word_size=4, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(a)
 
         globals.end_openram()

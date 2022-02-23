@@ -7,6 +7,7 @@
 #
 import math
 from tech import spice
+import verilog_template
 
 
 class verilog:
@@ -15,7 +16,8 @@ class verilog:
     This is inherited by the sram_base class.
     """
     def __init__(self):
-        pass
+        self.template = verilog_template('verilog_template.v')
+        self.template.readTemplate()
 
     def verilog_write(self, verilog_name):
         """ Write a behavioral Verilog model. """

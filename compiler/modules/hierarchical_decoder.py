@@ -495,11 +495,11 @@ class hierarchical_decoder(design.design):
         if (self.num_inputs >= 4):
             # This leaves an offset for the predecoder output jogs
             input_bus_names = ["predecode_{0}".format(i) for i in range(self.total_number_of_predecoder_outputs)]
-            self.predecode_bus = self.create_vertical_pin_bus(layer=self.bus_layer,
-                                                              pitch=self.bus_pitch,
-                                                              offset=vector(self.bus_pitch, 0),
-                                                              names=input_bus_names,
-                                                              length=self.height)
+            self.predecode_bus = self.create_vertical_bus(layer=self.bus_layer,
+                                                          pitch=self.bus_pitch,
+                                                          offset=vector(self.bus_pitch, 0),
+                                                          names=input_bus_names,
+                                                          length=self.height)
             self.route_bus_to_decoder()
             self.route_predecodes_to_bus()
 

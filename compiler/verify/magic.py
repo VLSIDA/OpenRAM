@@ -122,6 +122,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
     f.write(pre + "extract\n")
+    f.write(pre + "select top cell\n")
+    f.write(pre + "feedback why\n")
     f.write('puts "Finished extract"\n')
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
@@ -141,6 +143,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # but they all seem compatible enough.
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
+    f.write(pre + "select top cell\n")
+    f.write(pre + "feedback why\n")
     f.write('puts "Finished ext2spice"\n')
 
     f.write("quit -noprompt\n")

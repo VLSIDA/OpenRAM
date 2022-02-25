@@ -422,10 +422,12 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
-    def route_horizontal_pin(self, name):
+    def route_horizontal_pin(self, name, layer=None):
         """
         Route together all of the pins of a given name that horizontally align.
         """
+
+
         bins = {}
 
         for i in range(len(self.local_insts)):
@@ -442,14 +444,24 @@ class layout():
 
             last_via = None
             for pin in v:
+                if layer:
+                    pin_layer = layer
+                else:
+                    pin_layer = self.supply_stack[0]
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
-                                                     to_layer=self.supply_stack[0],
+                                                     to_layer=pin_layer,
                                                      offset=pin.center())
 
+            if last_via:
+                via_height=last_via.mod.second_layer_height
+            else:
+                via_height=None
+
             self.add_layout_pin_segment_center(text=name,
-                                               layer=self.supply_stack[0],
+                                               layer=pin_layer,
                                                start=vector(left_x, y),
-                                               end=vector(right_x, y))
+                                               end=vector(right_x, y),
+                                               width=via_height)
 
     def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """

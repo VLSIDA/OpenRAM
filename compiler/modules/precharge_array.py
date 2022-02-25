@@ -81,18 +81,20 @@ class precharge_array(design.design):
 
     def add_layout_pins(self):
 
-        en_pin = self.pc_cell.get_pin("en_bar")
-        start_offset = en_pin.lc().scale(0, 1)
-        end_offset = start_offset + vector(self.width, 0)
-        self.add_layout_pin_segment_center(text="en_bar",
-                                           layer=self.en_bar_layer,
-                                           start=start_offset,
-                                           end=end_offset)
+#        en_pin = self.pc_cell.get_pin("en_bar")
+#        start_offset = en_pin.lc().scale(0, 1)
+#        end_offset = start_offset + vector(self.width, 0)
+#        self.add_layout_pin_segment_center(text="en_bar",
+#                                           layer=self.en_bar_layer,
+#                                           start=start_offset,
+#                                           end=end_offset)
 
-        for inst in self.local_insts:
-            self.add_via_stack_center(from_layer=en_pin.layer,
-                                      to_layer=self.en_bar_layer,
-                                      offset=inst.get_pin("en_bar").center())
+#        for inst in self.local_insts:
+#            self.add_via_stack_center(from_layer=en_pin.layer,
+#                                      to_layer=self.en_bar_layer,
+#                                      offset=inst.get_pin("en_bar").center())
+            
+        self.route_horizontal_pin("en_bar", layer=self.en_bar_layer)
         self.route_horizontal_pin("vdd")
 
         for i in range(len(self.local_insts)):

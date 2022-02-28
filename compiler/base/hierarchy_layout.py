@@ -434,23 +434,24 @@ class layout():
             inst = self.local_insts[i]
             for pin in inst.get_pins(name):
                 try:
-                    bins[pin.cy()].append(pin)
+                    bins[pin.cy()].append((inst,pin))
                 except KeyError:
-                    bins[pin.cy()] = [pin]
+                    bins[pin.cy()] = [(inst,pin)]
 
         for y, v in bins.items():
-            left_x = min([x.lx() for x in v])
-            right_x = max([x.rx() for x in v])
+            left_x = min([inst.lx() for (inst,pin) in v])
+            right_x = max([inst.rx() for (inst,pin) in v])
 
             last_via = None
-            for pin in v:
+            for inst,pin in v:
                 if layer:
                     pin_layer = layer
                 else:
                     pin_layer = self.supply_stack[0]
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
                                                      to_layer=pin_layer,
-                                                     offset=pin.center())
+                                                     offset=pin.center(),
+                                                     min_area=True)
 
             if last_via:
                 via_height=last_via.mod.second_layer_height

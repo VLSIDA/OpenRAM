@@ -121,7 +121,7 @@ $(TEST_BASES):
 		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
         	vlsida/openram-ubuntu:latest \
 		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
-		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
+		-t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
 	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)

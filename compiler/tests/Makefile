@@ -38,7 +38,7 @@ BROKEN_STAMPS = \
 	sky130/19_bank_select_pbitcell_test.ok \
 	%/19_single_bank_16mux_1rw_1r_test.ok \
 	%/19_single_bank_16mux_test.ok \
-	%/20_sram_1bank_16mux_1rw_1w_test.ok \
+	%/20_sram_1bank_16mux_1rw_1r_test.ok \
 	%/20_sram_1bank_16mux_test.ok \
 	%/20_psram_1bank_2mux_1rw_1w_test.ok \
 	%/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \

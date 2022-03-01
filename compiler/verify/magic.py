@@ -94,6 +94,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("set SUB gnd\n")
     #f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
+    # Flatten the transistors
+    f.write("gds flatglob *_?mos_m*\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
     # they appear to be disconnected.

@@ -189,8 +189,9 @@ class replica_column(bitcell_base_array):
         for (index, inst) in enumerate(self.cell_inst):
             for pin_name in ["vdd", "gnd"]:
                 if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
-                    for pin in inst.get_pins(pin_name):
-                        self.copy_power_pin(pin)
+                    #for pin in inst.get_pins(pin_name):
+                    #    self.copy_power_pin(pin)
+                    self.copy_power_pins(inst, pin_name)
                 else:
                     self.copy_layout_pin(inst, pin_name)
 

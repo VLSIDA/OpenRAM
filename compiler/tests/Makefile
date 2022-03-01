@@ -36,12 +36,14 @@ BROKEN_STAMPS = \
 	sky130/19_pmulti_bank_test.ok \
 	sky130/19_psingle_bank_test.ok \
 	sky130/19_bank_select_pbitcell_test.ok \
+	%/19_single_bank_16mux_1rw_1r_test.ok \
+	%/19_single_bank_16mux_test.ok \
 	%/20_sram_1bank_16mux_1rw_1w_test.ok \
 	%/20_sram_1bank_16mux_test.ok \
-	sky130/20_psram_1bank_2mux_1rw_1w_test.ok \
-	sky130/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \
-	sky130/20_psram_1bank_2mux_1w_1r_test.ok \
-	sky130/20_psram_1bank_2mux_test.ok \
+	%/20_psram_1bank_2mux_1rw_1w_test.ok \
+	%/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \
+	%/20_psram_1bank_2mux_1w_1r_test.ok \
+	%/20_psram_1bank_2mux_test.ok \
 	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
 	sky130/22_psram_1bank_2mux_func_test.ok \
 	sky130/22_psram_1bank_4mux_func_test.ok \
@@ -85,13 +87,13 @@ WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
 
 
 # Run all technologies
-all: $(WORKING_TECH_TEST_STAMPS)
+all: docker-pull $(WORKING_TECH_TEST_STAMPS)
 	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
 .PHONY: all
 
 # Run a given technology
 # e.g. make freepdk45
-$(TECHS):
+$(TECHS): docker-pull
 	@$(MAKE) --no-print-directory $(filter-out $(BROKEN_STAMPS), $(addprefix $@/, $(TEST_STAMPS)))
 .PHONY: $(TECHS)
 
@@ -102,7 +104,7 @@ $(TEST_BASES):
 .PHONY: $(TEST_BASES)
 
 # To run a test in a given technology
-%.ok:
+%.ok: 
 #	@echo "Running $(gettech) $(getfile) ... "
 	@rm -rf results/$*
 	@rm -rf results/$*.*
@@ -117,12 +119,16 @@ $(TEST_BASES):
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
 		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
-        vlsida/openram-ubuntu:latest \
+        	vlsida/openram-ubuntu:latest \
 		sh -c ". /home/cad-user/.bashrc && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
 	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
 .DELETE_ON_ERROR: $(TEST_STAMPS)
+
+.PHONY: docker-pull
+docker-pull:
+	docker pull vlsida/openram-ubuntu:latest
 
 # Mount environment for debug
 #

@@ -25,6 +25,7 @@ class sram():
 
         self.name = name
         self.config = sram_config
+        sram_config.setup_multiport_constants()
         sram_config.set_local_config(self)
 
         self.sp_name = OPTS.output_path + self.name + ".sp"
@@ -120,6 +121,8 @@ class sram():
         start_time = datetime.datetime.now()
         debug.print_raw("SP: Writing to {0}".format(self.sp_name))
         self.sp_write(self.sp_name)
+
+        # Save a functional simulation file with default period
         functional(self.s,
                    os.path.basename(self.sp_name),
                    cycles=200,
@@ -163,8 +166,6 @@ class sram():
             # Output the extracted design if requested
             verify.run_pex(self.s.name, self.gds_name, self.sp_name, output=self.pex_name)
             print_time("Extraction", datetime.datetime.now(), start_time)
-
-        # Save a functional simulation file
 
         # Characterize the design
         start_time = datetime.datetime.now()

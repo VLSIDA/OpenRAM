@@ -44,6 +44,8 @@ BROKEN_STAMPS = \
 	%/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \
 	%/20_psram_1bank_2mux_1w_1r_test.ok \
 	%/20_psram_1bank_2mux_test.ok \
+	%/21_hspice_delay_test.ok \
+	%/21_hspice_setuphold_test.ok \
 	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
 	sky130/22_psram_1bank_2mux_func_test.ok \
 	sky130/22_psram_1bank_4mux_func_test.ok \
@@ -63,6 +65,7 @@ BROKEN_STAMPS = \
 	%/22_sram_1bank_nomux_sparecols_func_test.ok \
 	%/22_sram_1bank_wmask_1rw_1r_func_test.ok \
 	%/22_sram_wmask_func_test.ok \
+	%/26_hspice_pex_pinv_test.ok \
 	%/50_riscv_1k_1rw1r_func_test.ok \
 	%/50_riscv_1k_1rw_func_test.ok \
 	%/50_riscv_1rw1r_func_test.ok \

@@ -59,7 +59,7 @@ lib(out_dir=OPTS.output_path, sram=s.s, sp_file=s.get_sp_name())
 print_time("Characterization", datetime.datetime.now(), start_time)
 
 # Output info about this run
-print("Output file is:\n{0}.lib".format(OPTS.output_path))
+print("Output files are:\n{0}*.lib".format(OPTS.output_path))
 #report_status() #could modify this function to provide relevant info
 
 # Delete temp files, remove the dir, etc.

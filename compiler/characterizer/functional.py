@@ -36,9 +36,6 @@ class functional(simulation):
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
 
-        if period:
-            self.period = period
-
         if not output_path:
             self.output_path = OPTS.openram_temp
         else:
@@ -72,6 +69,10 @@ class functional(simulation):
         self.set_corner(corner)
         self.set_spice_constants()
         self.set_stimulus_variables()
+
+        # Override default period
+        if period:
+            self.period = period
 
         # For the debug signal names
         self.wordline_row = 0

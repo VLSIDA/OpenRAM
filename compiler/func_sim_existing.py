@@ -21,18 +21,23 @@ from importlib import reload
 (OPTS, args) = parse_args()
 
 # Override the usage
-USAGE = "Usage: {} [options] <config file>\nUse -h for help.\n".format(__file__)
+USAGE = "Usage: {} [options] <config file> <cycles> <period>\nUse -h for help.\n".format(__file__)
 
 # Check that we are left with a single configuration file as argument.
-if len(args) != 1:
+if len(args) != 3:
     print(USAGE)
     sys.exit(2)
+
+# Parse argument
+config_file = args[0]
+cycles = int(args[1])
+period = float(args[2])
 
 # These depend on arguments, so don't load them until now.
 import debug
 
 # Parse config file and set up all the options
-init_openram(config_file=args[0], is_unit_test=False)
+init_openram(config_file=config_file, is_unit_test=False)
 
 print_banner()
 
@@ -51,16 +56,15 @@ from sram import sram
 s = sram(name=OPTS.output_name, sram_config=c)
 s.create()
 
-# Characterize the design
+# Generate stimulus and run functional simulation on the design
 start_time = datetime.datetime.now()
-from characterizer import lib
-debug.print_raw("LIB: Characterizing... ")
-lib(out_dir=OPTS.output_path, sram=s.s, sp_file=s.get_sp_name())
-print_time("Characterization", datetime.datetime.now(), start_time)
+from characterizer import functional
+debug.print_raw("Functional simulation... ")
+f = functional(s.s, cycles=cycles, spfile=s.get_sp_name(), period=period, output_path=OPTS.openram_temp)
+(fail, error) = f.run()
+print_time("Functional simulation", datetime.datetime.now(), start_time)
+print(error)
 
-# Output info about this run
-print("Output file is:\n{0}.lib".format(OPTS.output_path))
-#report_status() #could modify this function to provide relevant info
-
-# Delete temp files, remove the dir, etc.
-end_openram()
+# Delete temp files, remove the dir, etc. after success
+if fail:
+    end_openram()

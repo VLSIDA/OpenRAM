@@ -6,8 +6,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-      - name: Docker pull
-        run: docker pull vlsida/openram-ubuntu:latest
+      - name: Docker build
+        run: |
+         cd ${{ github.workspace }}/docker
+         make build
       - name: PDK Install
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"

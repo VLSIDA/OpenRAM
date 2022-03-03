@@ -260,7 +260,7 @@ class sram_1bank(sram_base):
             if add_vias:
                 pin_layer = None
             else:
-                pin_layer = self.pwr_grid_layer
+                pin_layer = self.pwr_grid_layers[0]
 
             # Connect the control pins as inputs
             for signal in self.control_logic_inputs[port]:

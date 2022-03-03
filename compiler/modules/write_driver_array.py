@@ -206,11 +206,6 @@ class write_driver_array(design.design):
 
             self.route_horizontal_pins("vdd")
             self.route_horizontal_pins("gnd")
-# Old pin routing
-#            for n in ["vdd", "gnd"]:
-#                pin_list = self.local_insts[i].get_pins(n)
-#                for pin in pin_list:
-#                    self.copy_power_pin(pin, directions=("V", "V"))
 
         if self.write_size:
             for bit in range(self.num_wmasks):

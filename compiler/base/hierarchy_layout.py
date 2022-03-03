@@ -67,9 +67,9 @@ class layout():
 
         try:
             from tech import power_grid
-            self.pwr_grid_layer = power_grid[0]
+            self.pwr_grid_layers = [power_grid[0], power_grid[2]]
         except ImportError:
-            self.pwr_grid_layer = "m3"
+            self.pwr_grid_layers = ["m3", "m4"]
 
     ############################################################
     # GDS layout
@@ -1373,7 +1373,7 @@ class layout():
         for pin in pins:
             if new_name == "":
                 new_name = pin.name
-            if pin.layer == self.pwr_grid_layer:
+            if pin.layer in self.pwr_grid_layers:
                 self.add_layout_pin(new_name,
                                     pin.layer,
                                     pin.ll(),
@@ -1398,22 +1398,22 @@ class layout():
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         # Hack for min area
         if OPTS.tech_name == "sky130":
-            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            min_area = drc["minarea_{}".format(self.pwr_grid_layers[2])]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
         else:
             width = None
             height = None
 
-        if start_layer == self.pwr_grid_layer:
+        if start_layer in self.pwr_grid_layers:
             self.add_layout_pin_rect_center(text=name,
-                                            layer=self.pwr_grid_layer,
+                                            layer=start_layer,
                                             offset=loc,
                                             width=width,
                                             height=height)
         else:
             via = self.add_via_stack_center(from_layer=start_layer,
-                                            to_layer=self.pwr_grid_layer,
+                                            to_layer=self.pwr_grid_layers[0],
                                             offset=loc,
                                             directions=directions)
 
@@ -1422,7 +1422,7 @@ class layout():
             if not height:
                 height = via.height
             self.add_layout_pin_rect_center(text=name,
-                                            layer=self.pwr_grid_layer,
+                                            layer=self.pwr_grid_layers[0],
                                             offset=loc,
                                             width=width,
                                             height=height)
@@ -1441,22 +1441,22 @@ class layout():
 
         # Hack for min area
         if OPTS.tech_name == "sky130":
-            min_area = drc["minarea_{}".format(self.pwr_grid_layer)]
+            min_area = drc["minarea_{}".format(self.pwr_grid_layers[1])]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
         else:
             width = None
             height = None
 
-        if pin.layer == self.pwr_grid_layer:
+        if pin.layer in self.pwr_grid_layers:
             self.add_layout_pin_rect_center(text=new_name,
-                                            layer=self.pwr_grid_layer,
+                                            layer=pin.layer,
                                             offset=loc,
                                             width=width,
                                             height=height)
         else:
             via = self.add_via_stack_center(from_layer=pin.layer,
-                                            to_layer=self.pwr_grid_layer,
+                                            to_layer=self.pwr_grid_layers[0],
                                             offset=loc,
                                             directions=directions)
 
@@ -1465,7 +1465,7 @@ class layout():
             if not height:
                 height = via.height
             self.add_layout_pin_rect_center(text=new_name,
-                                            layer=self.pwr_grid_layer,
+                                            layer=self.pwr_grid_layers[0],
                                             offset=loc,
                                             width=width,
                                             height=height)

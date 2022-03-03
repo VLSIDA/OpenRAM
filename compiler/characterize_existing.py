@@ -49,7 +49,6 @@ c = sram_config(word_size=OPTS.word_size,
 # Initialize and create the sram object
 from sram import sram
 s = sram(name=OPTS.output_name, sram_config=c)
-s.create()
 
 # Characterize the design
 start_time = datetime.datetime.now()

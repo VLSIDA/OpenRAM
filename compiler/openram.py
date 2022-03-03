@@ -72,13 +72,10 @@ debug.print_raw("Output files are: ")
 for path in output_files:
     debug.print_raw(path)
 
-
+# Initialize the SRAM
 s = sram(name=OPTS.output_name, sram_config=c)
 
-# Actually build the SRAM
-s.create()
-
-# Output the files for the resulting SRAM
+# Generate and output the files for the resulting SRAM
 s.save()
 
 # Delete temp files etc.

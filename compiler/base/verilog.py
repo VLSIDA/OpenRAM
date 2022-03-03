@@ -21,15 +21,8 @@ class verilog:
 
     def verilog_write(self, verilog_name):
         """ Write a behavioral Verilog model. """
-        self.vf = open(verilog_name, "w")
-
-        self.vf.write("// OpenRAM SRAM model\n")
-        self.vf.write("// Words: {0}\n".format(self.num_words))
-        self.vf.write("// Word size: {0}\n".format(self.word_size))
         if self.write_size:
-            self.vf.write("// Write size: {0}\n\n".format(self.write_size))
-        else:
-            self.vf.write("\n")
+            self.template.setSectionRepeat('WRITE_SIZE_CMT', 1)
 
         try:
             self.vdd_name = spice["power"]
@@ -40,11 +33,9 @@ class verilog:
         except KeyError:
             self.gnd_name = "gnd"
 
-        self.vf.write("module {0}(\n".format(self.name))
-        self.vf.write("`ifdef USE_POWER_PINS\n")
-        self.vf.write("    {},\n".format(self.vdd_name))
-        self.vf.write("    {},\n".format(self.gnd_name))
-        self.vf.write("`endif\n")
+        self.template.setTextDict('MODULE_NAME', self.name)
+        self.template.setTextDict('VDD', self.vdd_name)
+        self.template.setTextDict('GND', self.gnd_name)
 
         for port in self.all_ports:
             if port in self.readwrite_ports:
@@ -136,6 +127,10 @@ class verilog:
         self.vf.write("  reg [ADDR_WIDTH-1:0]  addr{0}_reg;\n".format(port))
         if port in self.write_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  din{0}_reg;\n".format(port))
+        self.vf.write("`ifdef USE_POWER_PINS\n")
+        self.vf.write("    {},\n".format(self.vdd_name))
+        self.vf.write("    {},\n".format(self.gnd_name))
+        self.vf.write("`endif\n")
         if port in self.read_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  dout{0};\n".format(port))
 

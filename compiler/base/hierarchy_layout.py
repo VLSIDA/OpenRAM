@@ -1398,7 +1398,7 @@ class layout():
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         # Hack for min area
         if OPTS.tech_name == "sky130":
-            min_area = drc["minarea_{}".format(self.pwr_grid_layers[2])]
+            min_area = drc["minarea_{}".format(self.pwr_grid_layers[1])]
             width = round_to_grid(sqrt(min_area))
             height = round_to_grid(min_area / width)
         else:

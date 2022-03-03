@@ -127,7 +127,8 @@ RUN apt-get install --no-install-recommends -y iverilog
 
 ### Magic ###
 #ARG MAGIC_COMMIT=db4fa65bfc096e63954b37b188ea27b90ab31839
-ARG MAGIC_COMMIT=8.3.274
+#ARG MAGIC_COMMIT=8.3.274
+ARG MAGIC_COMMIT=8.3.211
 WORKDIR /root
 #RUN git clone https://github.com/RTimothyEdwards/magic.git magic
 RUN git clone git://opencircuitdesign.com/magic magic

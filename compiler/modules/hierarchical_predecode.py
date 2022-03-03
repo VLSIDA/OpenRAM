@@ -413,7 +413,9 @@ class hierarchical_predecode(design.design):
                                                 end=vector(self.width, and_pin.cy()))
 
                         # Add pins in two locations
-                        for xoffset in [self.inv_inst[0].lx() - self.bus_space,
-                                        self.and_inst[0].lx() - self.bus_space]:
-                            pin_pos = vector(xoffset, and_pin.cy())
-                            self.copy_power_pin(and_pin, loc=pin_pos)
+                        if n == "vdd":
+                            xoffset = self.and_inst[0].lx() - self.bus_space
+                        else:
+                            xoffset = self.inv_inst[0].lx() - self.bus_space
+                        pin_pos = vector(xoffset, and_pin.cy())
+                        self.copy_power_pin(and_pin, loc=pin_pos)

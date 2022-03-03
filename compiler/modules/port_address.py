@@ -77,8 +77,8 @@ class port_address(design.design):
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
         for inst in [self.wordline_driver_array_inst, self.row_decoder_inst]:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
 
         for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
             if layer_props.port_address.supply_offset:

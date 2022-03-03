@@ -44,9 +44,9 @@ class wordline_driver_array(design.design):
             self.route_layer = "m1"
         self.place_drivers()
         self.route_layout()
-        self.route_vdd_gnd()
         self.offset_x_coordinates()
         self.add_boundary()
+        self.route_vdd_gnd()
         self.DRC_LVS()
 
     def add_pins(self):
@@ -67,35 +67,23 @@ class wordline_driver_array(design.design):
 
     def route_vdd_gnd(self):
         """
-        Add a pin for each row of vdd/gnd which
-        are must-connects next level up.
+        Add vertical power rails.
         """
         if layer_props.wordline_driver.vertical_supply:
-            for name in ["vdd", "gnd"]:
-                supply_pins = self.wld_inst[0].get_pins(name)
-                for pin in supply_pins:
-                    self.add_layout_pin_segment_center(text=name,
-                                                       layer=pin.layer,
-                                                       start=pin.bc(),
-                                                       end=vector(pin.cx(), self.height))
+            self.route_vertical_pins("vdd", insts=self.wld_inst)
+            self.route_vertical_pins("gnd", insts=self.wld_inst)
         else:
-            # Find the x offsets for where the vias/pins should be placed
-            xoffset_list = [self.wld_inst[0].rx()]
-            for num in range(self.rows):
-                # this will result in duplicate polygons for rails, but who cares
+            self.route_vertical_pins("vdd", insts=self.wld_inst, side="left")
+            self.route_vertical_pins("gnd", insts=self.wld_inst, side="right")
 
-                # use the inverter offset even though it will be the and's too
-                (gate_offset, y_dir) = self.get_gate_offset(0,
-                                                            self.wl_driver.height,
-                                                            num)
-                # Route both supplies
+            # Widen the rails to cover any gap
+            for num in range(self.rows):
                 for name in ["vdd", "gnd"]:
                     supply_pin = self.wld_inst[num].get_pin(name)
+                    self.add_segment_center(layer=supply_pin.layer,
+                                            start=vector(0, supply_pin.cy()),
+                                            end=vector(self.width, supply_pin.cy()))
 
-                    # Add pins in two locations
-                    for xoffset in xoffset_list:
-                        pin_pos = vector(xoffset, supply_pin.cy())
-                        self.copy_power_pin(supply_pin, loc=pin_pos)
 
     def create_drivers(self):
         self.wld_inst = []
@@ -105,8 +93,8 @@ class wordline_driver_array(design.design):
             # add and2
             self.wld_inst.append(self.add_inst(name=name_and,
                                                 mod=self.wl_driver))
-            self.connect_inst(["in_{0}".format(row),
-                               "en",
+            self.connect_inst(["en",
+                               "in_{0}".format(row),
                                "wl_{0}".format(row),
                                "vdd", "gnd"])
 
@@ -135,24 +123,25 @@ class wordline_driver_array(design.design):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_pin = self.wld_inst[0].get_pin("B")
-        en_bottom_pos = vector(en_pin.lx(), 0)
-        en_pin = self.add_layout_pin(text="en",
-                                     layer="m2",
-                                     offset=en_bottom_pos,
-                                     height=self.height)
+        en_pin = self.wld_inst[0].get_pin("A")
+        en_bottom_pos = vector(en_pin.cx(), 0)
+        en_top_pos = vector(en_pin.cx(), self.height)
+        en_pin = self.add_layout_pin_segment_center(text="en",
+                                                    layer="m2",
+                                                    start=en_bottom_pos,
+                                                    end=en_top_pos) 
 
         for row in range(self.rows):
             and_inst = self.wld_inst[row]
 
             # Drop a via
-            b_pin = and_inst.get_pin("B")
+            b_pin = and_inst.get_pin("A")
             self.add_via_stack_center(from_layer=b_pin.layer,
                                       to_layer="m2",
                                       offset=b_pin.center())
 
             # connect the decoder input pin to and2 A
-            self.copy_layout_pin(and_inst, "A", "in_{0}".format(row))
+            self.copy_layout_pin(and_inst, "B", "in_{0}".format(row))
 
             # output each WL on the right
             wl_offset = and_inst.get_pin("Z").rc()

@@ -422,25 +422,36 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
-    def route_vertical_pins(self, name, layer=None):
+    def route_vertical_pins(self, name, insts=None, layer=None, side=None):
         """
         Route together all of the pins of a given name that vertically align.
+        Uses local_insts if insts not specified.
+        Uses center of pin by default, or right or left if specified.
         """
 
 
         bins = {}
+        if not insts:
+            insts = self.local_insts
 
-        for i in range(len(self.local_insts)):
-            inst = self.local_insts[i]
+        for inst in insts:
             for pin in inst.get_pins(name):
+
+                if side == "right":
+                    x = pin.rx()
+                elif side == "left":
+                    x = pin.lx()
+                else:
+                    x = pin.cx()
+
                 try:
-                    bins[pin.cx()].append((inst,pin))
+                    bins[x].append((inst,pin))
                 except KeyError:
-                    bins[pin.cx()] = [(inst,pin)]
+                    bins[x] = [(inst,pin)]
 
         for x, v in bins.items():
-            bot_x = min([inst.by() for (inst,pin) in v])
-            top_x = max([inst.uy() for (inst,pin) in v])
+            bot_y = min([inst.by() for (inst,pin) in v])
+            top_y = max([inst.uy() for (inst,pin) in v])
 
             last_via = None
             for inst,pin in v:
@@ -450,7 +461,7 @@ class layout():
                     pin_layer = self.supply_stack[2]
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
                                                      to_layer=pin_layer,
-                                                     offset=pin.center(),
+                                                     offset=vector(x, pin.cy()),
                                                      min_area=True)
 
             if last_via:
@@ -464,21 +475,31 @@ class layout():
                                                end=vector(x, top_y),
                                                width=via_width)
 
-    def route_horizontal_pins(self, name, layer=None):
+    def route_horizontal_pins(self, name, insts=None, layer=None, side=None):
         """
         Route together all of the pins of a given name that horizontally align.
+        Uses local_insts if insts not specified.
+        Uses center of pin by default, or top or botom if specified.
         """
 
 
         bins = {}
+        if not insts:
+            insts = self.local_insts
 
-        for i in range(len(self.local_insts)):
-            inst = self.local_insts[i]
+        for inst in insts:
             for pin in inst.get_pins(name):
+                if side == "top":
+                    y = pin.uy()
+                elif side == "bottom":
+                    y = pin.by()
+                else:
+                    y = pin.cy()
+
                 try:
-                    bins[pin.cy()].append((inst,pin))
+                    bins[y].append((inst,pin))
                 except KeyError:
-                    bins[pin.cy()] = [(inst,pin)]
+                    bins[y] = [(inst,pin)]
 
         for y, v in bins.items():
             left_x = min([inst.lx() for (inst,pin) in v])
@@ -492,7 +513,7 @@ class layout():
                     pin_layer = self.supply_stack[0]
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
                                                      to_layer=pin_layer,
-                                                     offset=pin.center(),
+                                                     offset=vector(pin.cx(), y),
                                                      min_area=True)
 
             if last_via:

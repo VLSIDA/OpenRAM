@@ -60,7 +60,6 @@ OPTS.openram_temp = OPTS.output_path
 
 from sram import sram
 s = sram(name=OPTS.output_name, sram_config=c)
-s.create()
 
 from characterizer import delay
 import tech

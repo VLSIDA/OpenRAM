@@ -39,6 +39,8 @@ class sram():
         from base import design
         design.name_map=[]
 
+        self.create()
+
     def create(self):
         debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size,
                                                                                        self.num_words,

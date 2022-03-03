@@ -1,0 +1,2 @@
+ERROR: file magic.py: line 358: sram	LVS mismatch (results in /tmp/openram_bugra_12868_temp/sram.lvs.report)
+

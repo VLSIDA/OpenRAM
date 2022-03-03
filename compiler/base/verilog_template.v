@@ -108,13 +108,8 @@ module #$MODULE_NAME$# (
     addr#$PORT_NUM$#_reg = addr#$PORT_NUM$#;
 #<RW_CHECKS
     if (#$WPORT_CONTROL$# && #$RPORT_CONTROL$# && (addr#$WPORT$# == addr#$RPORT$#))
-      $display($time," WARNING: Writing and reading addr{0}=%b and addr{1}=%b simultaneously!",addr#$WPORT$#,addr#$RPORT$#);
+      $display($time," WARNING: Writing and reading addr#$WPORT$#=%b and addr#$RPORT$#=%b simultaneously!",addr#$WPORT$#,addr#$RPORT$#);
 #>RW_CHECKS
-    if ( !csb0_reg && web0_reg && VERBOSE )
-      $display($time," Reading %m addr0=%b dout0=%b",addr0_reg,mem[addr0_reg]);
-    if ( !csb0_reg && !web0_reg && VERBOSE )
-      $display($time," Writing %m addr0=%b din0=%b",addr0_reg,din0_reg);
-#>FLOPS
 #<DIN_FLOP
     din#$PORT_NUM$#_reg = din#$PORT_NUM$#;
 #>DIN_FLOP
@@ -124,30 +119,71 @@ module #$MODULE_NAME$# (
 #<RW_VERBOSE
     if ( !csb#$PORT_NUM$#_reg && web#$PORT_NUM$#_reg && VERBOSE )
       $display($time," Reading %m addr#$PORT_NUM$#=%b dout#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,mem[addr#$PORT_NUM$#_reg]);
+    if ( !csb#$PORT_NUM$#_reg && !web#$PORT_NUM$#_reg && VERBOSE )
+#<RW_WMASK
+      $display($time," Writing %m addr#$PORT_NUM$#=%b din#$PORT_NUM$#=%b wmask#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,din#$PORT_NUM$#_reg,wmask#$PORT_NUM$#_reg);
+#>RW_WMASK
+#<RW_NO_WMASK
+      $display($time," Writing %m addr#$PORT_NUM$#=%b din#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,din#$PORT_NUM$#_reg);
+#>RW_NO_WMASK
 #>RW_VERBOSE
 #<R_VERBOSE
-if ( !csb{0}_reg && VERBOSE )
-  $display($time," Reading %m addr{0}=%b dout{0}=%b",addr{0}_reg,mem[addr{0}_reg]);
+    if ( !csb#$PORT_NUM$#_reg && VERBOSE )
+      $display($time," Reading %m addr#$PORT_NUM$#=%b dout#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,mem[addr#$PORT_NUM$#_reg]);
 #>R_VERBOSE
 #<W_VERBOSE
-
+if ( !csb#$PORT_NUM$#_reg && VERBOSE )
+#<W_WMASK
+      $display($time," Writing %m addr#$PORT_NUM$#=%b din#$PORT_NUM$#=%b wmask#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,din#$PORT_NUM$#_reg,wmask#$PORT_NUM$#_reg);
+#>W_WMASK
+#<W_NO_WMASK
+      $display($time," Writing %m addr#$PORT_NUM$#=%b din#$PORT_NUM$#=%b",addr#$PORT_NUM$#_reg,din#$PORT_NUM$#_reg);
+#>W_NO_WMASK
 #>W_VERBOSE
   end
-  // Memory Write Block Port 0
-  // Write Operation : When web0 = 0, csb0 = 0
-  always @ (negedge clk0)
-  begin : MEM_WRITE0
-    if ( !csb0_reg && !web0_reg ) begin
-        mem[addr0_reg][1:0] = din0_reg[1:0];
+#>FLOPS
+#<W_BLOCK
+  // Memory Write Block Port #$PORT_NUM$#
+  // Write Operation : When web#$PORT_NUM$# = #$PORT_NUM$#, csb#$PORT_NUM$# = #$PORT_NUM$#
+  always @ (negedge clk#$PORT_NUM$#)
+  begin : MEM_WRITE#$PORT_NUM$#
+#<READ
+    if ( !csb#$PORT_NUM$#_reg && !web#$PORT_NUM$#_reg ) begin
+#>READ  
+#<NO_READ
+    if ( !csb#$PORT_NUM$#_reg ) begin
+#>NO_READ
+#<W_MASK
+      if (wmask#$PORT_NUM$#_reg[#$MASK$#])
+              mem[addr#$PORT_NUM$#_reg][#$UPPER$#:#$LOWER$#] = din#$PORT_NUM$#_reg[#$UPPER$#:#$LOWER$#];
+#>W_MASK
+#<NO_W_MASK
+      mem[addr#$PORT_NUM$#_reg][1:#$PORT_NUM$#] = din#$PORT_NUM$#_reg[1:#$PORT_NUM$#];
+#<NO_WMASK
+#<ONE_SPARE_COL
+      if (spare_wen#$PORT_NUM$#_reg)
+        mem[addr#$PORT_NUM$#_reg][#$WORD_SIZE$#] = din#$PORT_NUM$#_reg[#$WORD_SIZE$#];
+#>ONE_SPARE_COL
+#!NUM!0#
+#<SPARE_COLS
+      if (spare_wen#$PORT_NUM$#_reg[#$NUM$#])
+        mem[addr#$PORT_NUM$#_reg][#$NUM$# + #$WORD_SIZE$#] = din#$PORT_NUM$#_reg[#$NUM$#];
+#>SPARE_COLS
     end
   end
-
-  // Memory Read Block Port 0
-  // Read Operation : When web0 = 1, csb0 = 0
-  always @ (negedge clk0)
-  begin : MEM_READ0
-    if (!csb0_reg && web0_reg)
-       dout0 <= #(DELAY) mem[addr0_reg];
+#>W_BLOCK
+#<R_BLOCK
+  // Memory Read Block Port #$PORT_NUM$#
+  // Read Operation : When web#$PORT_NUM$# = 1, csb#$PORT_NUM$# = #$PORT_NUM$#
+  always @ (negedge clk#$PORT_NUM$#)
+  begin : MEM_READ#$PORT_NUM$#
+#<WRITE
+    if (!csb#$PORT_NUM$#_reg && web#$PORT_NUM$#_reg)
+#>WRITE
+#<NO_WRITE
+    if (!csb#$PORT_NUM$#_reg)
+#>NO_WRITE
+       dout#$PORT_NUM$# <= #(DELAY) mem[addr#$PORT_NUM$#_reg];
   end
-
-e
+#>R_BLOCK
+endmodule

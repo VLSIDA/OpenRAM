@@ -123,7 +123,7 @@ class wordline_driver_array(design.design):
         """ Route all of the signals """
 
         # Wordline enable connection
-        en_pin = self.wld_inst[0].get_pin("A")
+        en_pin = self.wld_inst[0].get_pin("B")
         en_bottom_pos = vector(en_pin.cx(), 0)
         en_top_pos = vector(en_pin.cx(), self.height)
         en_pin = self.add_layout_pin_segment_center(text="en",
@@ -141,7 +141,7 @@ class wordline_driver_array(design.design):
                                       offset=b_pin.center())
 
             # connect the decoder input pin to and2 A
-            self.copy_layout_pin(and_inst, "B", "in_{0}".format(row))
+            self.copy_layout_pin(and_inst, "A", "in_{0}".format(row))
 
             # output each WL on the right
             wl_offset = and_inst.get_pin("Z").rc()

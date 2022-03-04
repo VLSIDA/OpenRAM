@@ -60,18 +60,27 @@ You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
 
 ```
   export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
-```
 
 We include the tech files necessary for [SCMOS] SCN4M_SUBM,
-[FreePDK45], and [Sky130]. The [SCMOS] spice models, however, are
+[FreePDK45]. The [SCMOS] spice models, however, are
 generic and should be replaced with foundry models. You may get the
 entire [FreePDK45 PDK here][FreePDK45].
 
-To install [Sky130], simply run:
 ```
-make install
-```
+### Sky130 Setup
 
+To install [Sky130], you must have the open_pdks files installed in $PDK_ROOT. 
+To install this automatically, you can run:
+
+  cd $HOME/openram
+  make pdk
+
+Then you must also install the [Sky130] SRAM build space and the appropriate cell views
+by running:
+
+  cd $HOME/openram
+  make install
+```
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line
@@ -80,7 +89,6 @@ using a single configuration file written in Python.
 For example, create a file called *myconfig.py* specifying the following
 parameters for your memory:
 
-```
 # Data word size
 word_size = 2
 # Number of words in the memory
@@ -130,23 +138,24 @@ use the following command to run all regression tests:
 
 ```
 cd openram/compiler/tests
-make regress
+make -j 3
 ```
+The -j can run with 3 threads. By default, this will run in all technologies.
 
 To run a specific test:
 ```
 ce openram/compiler/tests
 make 05_bitcell_array_test
-```
+
+To run a specific technology:
+
+cd openram/compiler/tests
+TECHS=scn4m_subm make 05_bitcell_array_test
 
 To increase the verbosity of the test, add one (or more) -v options and
 pass it as an argument to OpenRAM:
 ```
-make 05_bitcell_array_test ARGS="-v -t scn4m_subm"
-```
-To specify a particular technology use "-t <techname>" such as
-"-t freepdk45". The default for a unit test is scn4m_subm.
-The default for openram.py is specified in the configuration file.
+ARGS="-v" make 05_bitcell_array_test
 
 # Get Involved
 

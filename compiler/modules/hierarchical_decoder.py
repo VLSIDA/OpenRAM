@@ -596,10 +596,10 @@ class hierarchical_decoder(design.design):
         """
         if layer_props.hierarchical_decoder.vertical_supply:
             pre_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
-            self.route_vertical_pins("vdd", insts=pre_insts)
-            self.route_vertical_pins("gnd", insts=pre_insts)
-            self.route_vertical_pins("vdd", insts=self.and_inst)
-            self.route_vertical_pins("gnd", insts=self.and_inst)
+            self.route_vertical_pins("vdd", insts=pre_insts, yside="by")
+            self.route_vertical_pins("gnd", insts=pre_insts, yside="by")
+            self.route_vertical_pins("vdd", insts=self.and_inst, yside="by")
+            self.route_vertical_pins("gnd", insts=self.and_inst, yside="by")
             return
             for n in ["vdd", "gnd"]:
                 pins = self.and_inst[0].get_pins(n)
@@ -622,8 +622,8 @@ class hierarchical_decoder(design.design):
             pre_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
             self.route_vertical_pins("vdd", insts=pre_insts)
             self.route_vertical_pins("gnd", insts=pre_insts)
-            self.route_vertical_pins("vdd", insts=self.and_inst, side="right")
-            self.route_vertical_pins("gnd", insts=self.and_inst, side="left")
+            self.route_vertical_pins("vdd", insts=self.and_inst, xside="rx")
+            self.route_vertical_pins("gnd", insts=self.and_inst, xside="lx")
 
             # Widen the rails to cover any gap
             for inst in self.and_inst:

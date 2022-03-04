@@ -228,17 +228,15 @@ class port_address(design.design):
         wordline_driver_array_offset = vector(self.row_decoder_inst.rx(), 0)
         self.wordline_driver_array_inst.place(wordline_driver_array_offset)
 
-        # The wordline driver also had an extra gap on the right, so use this offset
-        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
-        x_offset = self.wordline_driver_array_inst.rx() - well_gap - self.rbl_driver.width
+        # This m4_pitch corresponds to the offset space for jog routing in the
+        # wordline_driver_array
+        rbl_driver_offset = wordline_driver_array_offset + vector(self.m4_pitch, 0)
 
         if self.port == 0:
-            rbl_driver_offset = vector(x_offset,
-                                       0)
             self.rbl_driver_inst.place(rbl_driver_offset, "MX")
         else:
-            rbl_driver_offset = vector(x_offset,
-                                       self.wordline_driver_array.height)
+            rbl_driver_offset += vector(0,
+                                        self.wordline_driver_array.height)
             self.rbl_driver_inst.place(rbl_driver_offset)
 
         # Pass this up

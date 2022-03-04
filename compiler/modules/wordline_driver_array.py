@@ -42,9 +42,16 @@ class wordline_driver_array(design.design):
             self.route_layer = "li"
         else:
             self.route_layer = "m1"
+
         self.place_drivers()
         self.route_layout()
-        self.offset_x_coordinates()
+        self.offset_x_coordinates(vector(-self.m4_pitch, 0))
+
+        # Leave a well gap to separate the bitcell array well from this well
+        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
+        self.width = self.wld_inst[-1].rx() + well_gap
+        self.height = self.wld_inst[-1].uy()
+
         self.add_boundary()
         self.route_vdd_gnd()
         self.DRC_LVS()
@@ -73,8 +80,8 @@ class wordline_driver_array(design.design):
             self.route_vertical_pins("vdd", insts=self.wld_inst)
             self.route_vertical_pins("gnd", insts=self.wld_inst)
         else:
-            self.route_vertical_pins("vdd", insts=self.wld_inst, side="left")
-            self.route_vertical_pins("gnd", insts=self.wld_inst, side="right")
+            self.route_vertical_pins("vdd", insts=self.wld_inst, xside="lx")
+            self.route_vertical_pins("gnd", insts=self.wld_inst, xside="rx")
 
             # Widen the rails to cover any gap
             for num in range(self.rows):
@@ -93,8 +100,8 @@ class wordline_driver_array(design.design):
             # add and2
             self.wld_inst.append(self.add_inst(name=name_and,
                                                 mod=self.wl_driver))
-            self.connect_inst(["en",
-                               "in_{0}".format(row),
+            self.connect_inst(["in_{0}".format(row),
+                               "en",
                                "wl_{0}".format(row),
                                "vdd", "gnd"])
 
@@ -114,18 +121,13 @@ class wordline_driver_array(design.design):
             self.wld_inst[row].place(offset=and2_offset,
                                      mirror=inst_mirror)
 
-        # Leave a well gap to separate the bitcell array well from this well
-        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
-        self.width = self.wl_driver.width + well_gap
-        self.height = self.wl_driver.height * self.rows
-
     def route_layout(self):
         """ Route all of the signals """
 
         # Wordline enable connection
         en_pin = self.wld_inst[0].get_pin("B")
         en_bottom_pos = vector(en_pin.cx(), 0)
-        en_top_pos = vector(en_pin.cx(), self.height)
+        en_top_pos = vector(en_pin.cx(), self.wld_inst[-1].uy())
         en_pin = self.add_layout_pin_segment_center(text="en",
                                                     layer="m2",
                                                     start=en_bottom_pos,
@@ -135,7 +137,7 @@ class wordline_driver_array(design.design):
             and_inst = self.wld_inst[row]
 
             # Drop a via
-            b_pin = and_inst.get_pin("A")
+            b_pin = and_inst.get_pin("B")
             self.add_via_stack_center(from_layer=b_pin.layer,
                                       to_layer="m2",
                                       offset=b_pin.center())

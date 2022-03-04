@@ -21,7 +21,7 @@ class sram():
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, sram_config, name):
+    def __init__(self, name, sram_config):
 
         self.name = name
         self.config = sram_config

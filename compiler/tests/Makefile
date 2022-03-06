@@ -32,6 +32,7 @@ BROKEN_STAMPS = \
 	sky130/05_bitcell_array_test.ok \
 	sky130/05_bitcell_array_1rw_1r_test.ok \
 	sky130/05_dummy_array_test.ok \
+	%/06_hierarchical_decoder_4096row_test.ok \
 	sky130/07_column_mux_array_pbitcell_test.ok \
 	sky130/19_pmulti_bank_test.ok \
 	sky130/19_psingle_bank_test.ok \
@@ -65,6 +66,11 @@ BROKEN_STAMPS = \
 	%/22_sram_1bank_nomux_sparecols_func_test.ok \
 	%/22_sram_1bank_wmask_1rw_1r_func_test.ok \
 	%/22_sram_wmask_func_test.ok \
+	sky130/23_lib_sram_linear_regression_test.ok \
+	sky130/23_lib_sram_model_corners_test.ok \
+	sky130/23_lib_sram_model_test.ok \
+	sky130/23_lib_sram_prune_test.ok \
+	sky131/23_lib_sram_test.ok \
 	%/26_hspice_pex_pinv_test.ok \
 	%/50_riscv_1k_1rw1r_func_test.ok \
 	%/50_riscv_1k_1rw_func_test.ok \

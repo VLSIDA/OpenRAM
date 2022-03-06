@@ -86,17 +86,17 @@ getfile = $(word 2,$(subst /, ,$*))
 TECH_TEST_STAMPS=$(foreach T, $(TEST_TECHS), $(addprefix $T/, $(TEST_STAMPS)))
 
 # Filter out the tests after creating the tech stamps
-WORKING_TECH_TEST_STAMPS=$(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS))
+WORKING_TECH_TEST_STAMPS=$(shell shuf -e -- $(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS)))
 
 
 # Run all technologies
-all: docker-pull $(WORKING_TECH_TEST_STAMPS)
+all: $(WORKING_TECH_TEST_STAMPS)
 	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
 .PHONY: all
 
 # Run a given technology
 # e.g. make freepdk45
-$(TECHS): docker-pull
+$(TECHS): 
 	@$(MAKE) --no-print-directory $(filter-out $(BROKEN_STAMPS), $(addprefix $@/, $(TEST_STAMPS)))
 .PHONY: $(TECHS)
 

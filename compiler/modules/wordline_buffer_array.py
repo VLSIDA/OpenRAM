@@ -43,7 +43,7 @@ class wordline_buffer_array(design.design):
             self.route_layer = "m1"
         self.place_drivers()
         self.route_layout()
-        self.route_vdd_gnd()
+        self.route_supplies()
         self.offset_all_coordinates()
         self.add_boundary()
         self.DRC_LVS()
@@ -65,7 +65,7 @@ class wordline_buffer_array(design.design):
                                         size=self.cols,
                                         height=b.height)
 
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.

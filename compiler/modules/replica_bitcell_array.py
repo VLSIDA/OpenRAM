@@ -462,20 +462,33 @@ class replica_bitcell_array(bitcell_base_array):
         # replica column should only have a vdd/gnd in the dummy cell on top/bottom
         supply_insts = self.dummy_col_insts + self.dummy_row_insts
 
-        for pin_name in self.supplies:
-            #self.route_vertical_pins(name=pin_name, insts=supply_insts)
-            self.route_horizontal_pins(name=pin_name, insts=supply_insts)
 
-            #self.route_vertical_pins(name=pin_name, insts=self.replica_col_insts)
-            #self.route_horizontal_pins(name=pin_name, insts=self.replica_col_insts)
-            for inst in supply_insts:
-                pin_list = inst.get_pins(pin_name)
-                for pin in pin_list:
-                    self.copy_power_pin(pin)
+        if OPTS.experimental_power:
+            for pin_name in self.supplies:
+                #self.route_vertical_pins(name=pin_name, insts=supply_insts)
+                self.route_horizontal_pins(name=pin_name, insts=supply_insts)
 
-            for inst in self.replica_col_insts:
-                if inst:
-                    self.copy_layout_pin(inst, pin_name)
+                #self.route_vertical_pins(name=pin_name, insts=self.replica_col_insts)
+                #self.route_horizontal_pins(name=pin_name, insts=self.replica_col_insts)
+                for inst in supply_insts:
+                    pin_list = inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.copy_power_pin(pin)
+
+                for inst in self.replica_col_insts:
+                    if inst:
+                        self.copy_layout_pin(inst, pin_name)
+        else:
+            for pin_name in self.supplies:
+                for inst in supply_insts:
+                    pin_list = inst.get_pins(pin_name)
+                    for pin in pin_list:
+                        self.copy_power_pin(pin)
+
+                for inst in self.replica_col_insts:
+                    if inst:
+                        self.copy_layout_pin(inst, pin_name)
+
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

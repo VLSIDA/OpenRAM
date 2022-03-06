@@ -45,7 +45,7 @@ class wordline_driver_array(design.design):
 
         self.place_drivers()
         self.route_layout()
-        self.offset_x_coordinates(vector(-self.m4_pitch, 0))
+        self.offset_x_coordinates(vector(-2*self.m4_pitch, 0))
 
         # Leave a well gap to separate the bitcell array well from this well
         well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
@@ -76,20 +76,50 @@ class wordline_driver_array(design.design):
         """
         Add vertical power rails.
         """
-        if layer_props.wordline_driver.vertical_supply:
-            self.route_vertical_pins("vdd", insts=self.wld_inst)
-            self.route_vertical_pins("gnd", insts=self.wld_inst)
-        else:
-            self.route_vertical_pins("vdd", insts=self.wld_inst, xside="lx")
-            self.route_vertical_pins("gnd", insts=self.wld_inst, xside="rx")
 
-            # Widen the rails to cover any gap
-            for num in range(self.rows):
+        # Experiment with power straps
+        if OPTS.experimental_power:
+            if layer_props.wordline_driver.vertical_supply:
+                self.route_vertical_pins("vdd", insts=self.wld_inst)
+                self.route_vertical_pins("gnd", insts=self.wld_inst)
+            else:
+                self.route_vertical_pins("vdd", insts=self.wld_inst, xside="lx")
+                self.route_vertical_pins("gnd", insts=self.wld_inst, xside="rx")
+
+                # Widen the rails to cover any gap
+                for num in range(self.rows):
+                    for name in ["vdd", "gnd"]:
+                        supply_pin = self.wld_inst[num].get_pin(name)
+                        self.add_segment_center(layer=supply_pin.layer,
+                                                start=vector(0, supply_pin.cy()),
+                                                end=vector(self.width, supply_pin.cy()))
+        else:
+            if layer_props.wordline_driver.vertical_supply:
                 for name in ["vdd", "gnd"]:
-                    supply_pin = self.wld_inst[num].get_pin(name)
-                    self.add_segment_center(layer=supply_pin.layer,
-                                            start=vector(0, supply_pin.cy()),
-                                            end=vector(self.width, supply_pin.cy()))
+                    supply_pins = self.wld_inst[0].get_pins(name)
+                    for pin in supply_pins:
+                        self.add_layout_pin_segment_center(text=name,
+                                                           layer=pin.layer,
+                                                           start=pin.bc(),
+                                                           end=vector(pin.cx(), self.height))
+            else:
+                # Find the x offsets for where the vias/pins should be placed
+                xoffset_list = [self.wld_inst[0].rx()]
+                for num in range(self.rows):
+                    # this will result in duplicate polygons for rails, but who cares
+
+                    # use the inverter offset even though it will be the and's too
+                    (gate_offset, y_dir) = self.get_gate_offset(0,
+                                                                self.wl_driver.height,
+                                                                num)
+                    # Route both supplies
+                    for name in ["vdd", "gnd"]:
+                        supply_pin = self.wld_inst[num].get_pin(name)
+
+                        # Add pins in two locations
+                        for xoffset in xoffset_list:
+                            pin_pos = vector(xoffset, supply_pin.cy())
+                            self.copy_power_pin(supply_pin, loc=pin_pos)
 
 
     def create_drivers(self):

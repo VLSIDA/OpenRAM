@@ -230,7 +230,7 @@ class port_address(design.design):
 
         # This m4_pitch corresponds to the offset space for jog routing in the
         # wordline_driver_array
-        rbl_driver_offset = wordline_driver_array_offset + vector(self.m4_pitch, 0)
+        rbl_driver_offset = wordline_driver_array_offset + vector(2 * self.m4_pitch, 0)
 
         if self.port == 0:
             self.rbl_driver_inst.place(rbl_driver_offset, "MX")

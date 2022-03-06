@@ -189,7 +189,7 @@ class hierarchical_predecode(design.design):
         self.route_output_inverters()
         self.route_inputs_to_rails()
         self.route_output_ands()
-        self.route_vdd_gnd()
+        self.route_supplies()
 
     def route_inputs_to_rails(self):
         """ Route the uninverted inputs to the second set of rails """
@@ -378,7 +378,7 @@ class hierarchical_predecode(design.design):
                                           offset=pin_pos,
                                           directions=direction)
 
-    def route_vdd_gnd(self):
+    def route_supplies(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
         # We may ahve vertical power supply rails

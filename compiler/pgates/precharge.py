@@ -71,7 +71,7 @@ class precharge(design.design):
         self.connect_poly()
         self.route_en()
         self.place_nwell_and_contact()
-        self.route_vdd()
+        self.route_supplies()
         self.route_bitlines()
         self.connect_to_bitlines()
         self.add_boundary()
@@ -91,28 +91,51 @@ class precharge(design.design):
                                    mults=self.ptx_mults,
                                    tx_type="pmos")
 
-    def route_vdd(self):
+    def route_supplies(self):
         """
         Adds a vdd rail at the top of the cell
         """
 
-        pmos_pin = self.upper_pmos2_inst.get_pin("S")
-        pmos_pos = pmos_pin.center()
-        self.add_path(pmos_pin.layer, [pmos_pos, self.well_contact_pos])
+        if OPTS.experimental_power:
+            pmos_pin = self.upper_pmos2_inst.get_pin("S")
+            pmos_pos = pmos_pin.center()
+            self.add_path(pmos_pin.layer, [pmos_pos, self.well_contact_pos])
 
-        self.add_via_stack_center(from_layer=pmos_pin.layer,
-                                  to_layer=self.supply_stack[0],
-                                  offset=self.well_contact_pos,
-                                  directions=("V", "V"))
-
-        self.add_min_area_rect_center(layer=self.en_layer,
+            self.add_via_stack_center(from_layer=pmos_pin.layer,
+                                      to_layer=self.supply_stack[0],
                                       offset=self.well_contact_pos,
-                                      width=self.well_contact.mod.second_layer_width)
+                                      directions=("V", "V"))
 
-        self.add_layout_pin_rect_center(text="vdd",
-                                        layer=self.supply_stack[0],
-                                        offset=self.well_contact_pos)
+            self.add_min_area_rect_center(layer=self.en_layer,
+                                          offset=self.well_contact_pos,
+                                          width=self.well_contact.mod.second_layer_width)
 
+            self.add_layout_pin_rect_center(text="vdd",
+                                            layer=self.supply_stack[0],
+                                            offset=self.well_contact_pos)
+        else:
+            # Adds the rail across the width of the cell
+            vdd_position = vector(0.5 * self.width, self.height)
+            layer_width = drc("minwidth_" + self.en_layer)
+            self.add_rect_center(layer=self.en_layer,
+                                 offset=vdd_position,
+                                 width=self.width,
+                                 height=layer_width)
+
+            pmos_pin = self.upper_pmos2_inst.get_pin("S")
+
+            # center of vdd rail
+            pmos_vdd_pos = vector(pmos_pin.cx(), vdd_position.y)
+            self.add_path(self.en_layer, [pmos_pin.center(), pmos_vdd_pos])
+
+            self.add_power_pin("vdd",
+                               self.well_contact_pos,
+                               directions=("V", "V"))
+
+            self.add_via_stack_center(from_layer=pmos_pin.layer,
+                                      to_layer=self.en_layer,
+                                      offset=pmos_pin.center(),
+                                      directions=("V", "V"))
 
     def create_ptx(self):
         """

@@ -478,17 +478,17 @@ class layout():
 
             top_pos = vector(x, top_y)
             bot_pos = vector(x, bot_y)
-            self.add_segment_center(layer=pin_layer,
-                                    start=bot_pos,
-                                    end=top_pos,
-                                    width=via_width)
-
-            self.add_layout_pin_rect_center(text=name, 
-                                            layer=pin_layer,
-                                            offset=top_pos)
+            rect = self.add_layout_pin_rect_center(text=name, 
+                                                   layer=pin_layer,
+                                                   offset=top_pos)
 #            self.add_layout_pin_rect_center(text=name, 
 #                                            layer=pin_layer,
 #                                            offset=bot_pos)
+            self.add_segment_center(layer=pin_layer,
+                                    start=vector(rect.cx(), bot_pos.y),
+                                    end=rect.bc(),
+                                    width=via_width)
+
 
 
     def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy"):
@@ -543,17 +543,21 @@ class layout():
 
             left_pos = vector(left_x, y)
             right_pos = vector(right_x, y)
-            self.add_segment_center(layer=pin_layer,
-                                    start=left_pos,
-                                    end=right_pos,
-                                    width=via_height)
 
-            self.add_layout_pin_rect_center(text=name, 
-                                            layer=pin_layer,
-                                            offset=left_pos)
+            rect = self.add_layout_pin_rect_center(text=name, 
+                                                   layer=pin_layer,
+                                                   offset=left_pos)
 #            self.add_layout_pin_rect_center(text=name, 
 #                                            layer=pin_layer,
 #                                            offset=right_pos)
+            # This is made to not overlap with the pin above
+            # so that the power router will only select a small pin.
+            # Otherwise it adds big blockages over the rails.
+            self.add_segment_center(layer=pin_layer,
+                                    start=rect.rc(),
+                                    end=vector(right_pos.x, rect.cy()),
+                                    width=via_height)
+
 
     def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """

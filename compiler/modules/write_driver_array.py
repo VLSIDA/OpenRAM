@@ -72,6 +72,7 @@ class write_driver_array(design.design):
         self.width = self.local_insts[-1].rx()
         self.height = self.driver.height
         self.add_layout_pins()
+        self.route_supplies()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -204,9 +205,6 @@ class write_driver_array(design.design):
                                 width=br_pin.width(),
                                 height=br_pin.height())
 
-            self.route_horizontal_pins("vdd")
-            self.route_horizontal_pins("gnd")
-
         if self.write_size:
             for bit in range(self.num_wmasks):
                 inst = self.local_insts[bit * self.write_size]
@@ -256,3 +254,17 @@ class write_driver_array(design.design):
                                 layer="m1",
                                 offset=inst.get_pin(inst.mod.en_name).ll().scale(0, 1),
                                 width=self.width)
+
+    def route_supplies(self):
+        if OPTS.experimental_power:
+            self.route_horizontal_pins("vdd")
+            self.route_horizontal_pins("gnd")
+        else:
+            for i in range(self.word_size + self.num_spare_cols):
+                inst = self.local_insts[i]
+                for n in ["vdd", "gnd"]:
+                    pin_list = inst.get_pins(n)
+                    for pin in pin_list:
+                        self.copy_power_pin(pin, directions=("V", "V"))
+
+

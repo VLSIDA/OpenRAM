@@ -17,3 +17,6 @@ export XYCE_NO_TRACKING="anything at all"
 # OpenRAM
 export OPENRAM_HOME=/openram/compiler
 export OPENRAM_TECH=/openram/technology
+
+# FreePDK45
+export FREEPDK45=/freepdk45

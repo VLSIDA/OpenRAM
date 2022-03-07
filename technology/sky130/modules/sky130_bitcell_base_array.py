@@ -61,7 +61,7 @@ class sky130_bitcell_base_array(bitcell_base_array):
         self.width = max([x.rx() for x in self.insts])
         self.height = max([x.uy() for x in self.insts])
 
-    def get_bitcell_pins(self, row, col):
+    def get_bitcell_pins(self, row, col, swap = False):
         """
         Creates a list of connections in the bitcell,
         indexed by column and row, for instance use in bitcell_array
@@ -69,6 +69,14 @@ class sky130_bitcell_base_array(bitcell_base_array):
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
+        if swap:
+            swap_pins = []
+            for pin in bitcell_pins:
+                if "bl" in pin:
+                    swap_pins.append(pin.replace("bl", "br"))
+                elif "br" in pin:
+                    swap_pins.append(pin.replace("br", "bl"))
+            bitcell_pins = swap_pins
         bitcell_pins.append("gnd") # gnd
         bitcell_pins.append("vdd") # vdd
         bitcell_pins.append("vdd") # vpb
@@ -104,9 +112,9 @@ class sky130_bitcell_base_array(bitcell_base_array):
         for port in self.all_ports:
             strap_pins.extend([x for x in self.get_bitline_names(port) if "br" in x and x.endswith("_{0}".format(col))])
         if row == 0:
-            strap_pins.extend(["gate_top"])
+            strap_pins.extend(["top_gate"])
         else:
-            strap_pins.extend(["gate_bottom"])
+            strap_pins.extend(["bot_gate"])
         return strap_pins
 
     def get_row_cap_pins(self, row, col):
@@ -152,3 +160,26 @@ class sky130_bitcell_base_array(bitcell_base_array):
                         except:
                             pin = inst.get_pin("vnb")
                             self.add_label("vdd", pin.layer, pin.center())
+
+    def add_bitline_pins(self):
+        bitline_names = self.cell.get_all_bitline_names()
+        for col in range(self.column_size):
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                text = "bl_{0}_{1}".format(port, col)
+                if "Y" in self.cell_inst[0, col].mirror:
+                    text = text.replace("bl", "br")
+                self.add_layout_pin(text=text,
+                                    layer=bl_pin.layer,
+                                    offset=bl_pin.ll().scale(1, 0),
+                                    width=bl_pin.width(),
+                                    height=self.height)
+                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                text = "br_{0}_{1}".format(port, col)
+                if "Y" in self.cell_inst[0, col].mirror:
+                    text = text.replace("br", "bl")
+                self.add_layout_pin(text=text,
+                                    layer=br_pin.layer,
+                                    offset=br_pin.ll().scale(1, 0),
+                                    width=br_pin.width(),
+                                    height=self.height)

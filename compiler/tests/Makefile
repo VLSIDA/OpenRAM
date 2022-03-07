@@ -96,7 +96,7 @@ WORKING_TECH_TEST_STAMPS=$(shell shuf -e -- $(filter-out $(BROKEN_STAMPS), $(TEC
 
 
 # Run all technologies
-all: $(WORKING_TECH_TEST_STAMPS)
+all: clean $(WORKING_TECH_TEST_STAMPS)
 	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
 .PHONY: all
 
@@ -120,8 +120,8 @@ $(TEST_BASES):
 	@mkdir -p results/$*/tmp
 	@docker run \
 		-v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/pdk/freepdk45\
-		-e FREEPDK45=/pdk/freepdk45\
+		-v $(FREEPDK45):/freepdk45\
+		-e FREEPDK45=/freepdk45\
 		-v $(PDK_ROOT):/pdk \
 		-e PDK_ROOT=/pdk \
 		-e PDKPATH=/pdk/sky130A \
@@ -144,7 +144,8 @@ docker-pull:
 mount:
 	docker run -it \
 		-v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/pdk/freepdk45 \
+		-v $(FREEPDK45):/freepdk45 \
+		-e FREEPDK45=/freepdk45\
 		-v $(PDK_ROOT):/pdk \
 		-e PDK_ROOT=/pdk \
 		-e PDKPATH=/pdk/sky130A \

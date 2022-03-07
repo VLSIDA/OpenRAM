@@ -32,9 +32,18 @@ class sram_1bank_4mux_func_test(openram_test):
         reload(characterizer)
         from characterizer import functional
         from sram_config import sram_config
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
         c = sram_config(word_size=4,
                         num_words=128,
-                        num_banks=1)
+                        num_banks=1,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
         c.words_per_row=4
         c.recompute_sizes()
         debug.info(1, "Functional test for sram with "

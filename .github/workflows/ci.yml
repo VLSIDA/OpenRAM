@@ -35,37 +35,3 @@ jobs:
         with:
          name: Regress Archives
          path: ${{ github.workspace }}/compiler/tests/results/*
-#  freepdk45:
-#    runs-on: self-hosted
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v1
-#      - name: FreePDK45 test
-#        run: |
-#         . /home/github-runner/setup-paths.sh
-#         export OPENRAM_HOME="${{ github.workspace }}/compiler"
-#         export OPENRAM_TECH="${{ github.workspace }}/technology:/software/PDKs/skywater-tech"
-#         export OPENRAM_TMP="${{ github.workspace }}/freepdk45_temp"
-#         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t freepdk45
-#         $OPENRAM_HOME/tests/regress.py -j 24 -t freepdk45
-#      - name: Archive
-#        if: ${{ failure() }}
-#        uses: actions/upload-artifact@v2
-#        with:
-#         name: FreePDK45 Archives
-#         path: ${{ github.workspace }}/*.zip
-  # coverage_stats:
-  #   if: ${{ always() }}
-  #   needs: [scn4me_subm, freepdk45]
-  #   runs-on: self-hosted
-  #   steps:
-  #     - name: Coverage stats
-  #       run: |
-  #        python3-coverage combine
-  #        python3-coverage report
-  #        python3-coverage html -d ${{ github.workspace }}/coverage_html
-  #     - name: Archive coverage
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #        name: code-coverage-report
-  #        path: ${{ github.workspace }}/coverage_html/

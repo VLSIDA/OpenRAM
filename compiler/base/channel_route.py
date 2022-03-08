@@ -99,6 +99,8 @@ class channel_route(design.design):
         channel_route.unique_id += 1
         super().__init__(name)
 
+        if self.name == "cr_7":
+            breakpoint()
         self.netlist = netlist
         self.offset = offset
         self.layer_stack = layer_stack
@@ -242,12 +244,12 @@ class channel_route(design.design):
                     if self.vertical:
                         self.add_vertical_trunk_route(net.pins,
                                                       current_offset,
-                                                      self.vertical_nonpref_pitch)
+                                                      self.horizontal_pitch)
                         current_offset = vector(current_offset.x, net.max_value + self.horizontal_nonpref_pitch)
                     else:
                         self.add_horizontal_trunk_route(net.pins,
                                                         current_offset,
-                                                        self.horizontal_nonpref_pitch)
+                                                        self.vertical_pitch)
                         current_offset = vector(net.max_value + self.vertical_nonpref_pitch, current_offset.y)
 
                     # Remove the net from other constriants in the VCG

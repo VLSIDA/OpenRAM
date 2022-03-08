@@ -99,8 +99,6 @@ class channel_route(design.design):
         channel_route.unique_id += 1
         super().__init__(name)
 
-        if self.name == "cr_7":
-            breakpoint()
         self.netlist = netlist
         self.offset = offset
         self.layer_stack = layer_stack

@@ -6,6 +6,7 @@
 #>WRITE_SIZE_CMT
 
 module #$MODULE_NAME$# (
+#<PORTS
 `ifdef USE_POWER_PINS
     #$VDD$#,
     #$GND$#,
@@ -28,6 +29,7 @@ module #$MODULE_NAME$# (
 // Port #$PORT_NUM$#: W
     clk#$PORT_NUM#$,csb#$PORT_NUM$#,web$#PORT_NUM$#,addr#PORT_NUM$#,din#PORT_NUM$#
 #>W_PORT
+#>PORTS
   );
 #<WMASK_PAR
   parameter NUM_WMASK = #$NUM_WMASK#$ ;

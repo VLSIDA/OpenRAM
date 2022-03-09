@@ -43,6 +43,8 @@ class verilog:
         self.vf.write("`endif\n")
 
         for port in self.all_ports:
+            self.template.cloneSection("PORTS", "PORTS" + str(port))
+            
             if port in self.readwrite_ports:
                 self.vf.write("// Port {0}: RW\n".format(port))
             elif port in self.read_ports:

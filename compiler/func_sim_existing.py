@@ -61,8 +61,8 @@ from characterizer import functional
 debug.print_raw("Functional simulation... ")
 f = functional(s.s, cycles=cycles, spfile=s.get_sp_name(), period=period, output_path=OPTS.openram_temp)
 (fail, error) = f.run()
+debug.print_raw(error)
 print_time("Functional simulation", datetime.datetime.now(), start_time)
-print(error)
 
 # Delete temp files, remove the dir, etc. after success
 if fail:

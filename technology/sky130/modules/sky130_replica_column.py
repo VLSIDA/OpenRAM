@@ -90,8 +90,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        self.add_pin("gate_top", "BIAS")
-        self.add_pin("gate_bottom", "BIAS")
+        self.add_pin("top_gate", "INPUT")
+        self.add_pin("bot_gate", "INPUT")
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell_1port", version="opt1")
@@ -214,7 +214,7 @@ class sky130_replica_column(sky130_bitcell_base_array):
         for port in self.all_ports:
             for row in range(row_range_min, row_range_max):
                 wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
-                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row_range_max-row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,

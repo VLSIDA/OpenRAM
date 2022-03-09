@@ -9,6 +9,7 @@ class text_section:
         self.sectionPos = []
         self.lineNum = 0
         self.repeat = 1
+        self.index = -1
 
     def addLine(self, line):
         self.lines.append(line)
@@ -17,6 +18,14 @@ class text_section:
     def addSection(self, section):
         self.sections.append(section)
         self.sectionPos.append(self.lineNum)
+        section.index = len(self.sections) - 1
+
+    def clone(self, cloneName):
+        other = text_section(cloneName, self.parent)
+        other.sections = self.sections.copy()
+        other.sectionPos = self.sectionPos.copy()
+        other.repeat = self.repeat
+        self.parent.sections.insert(self.index + 1, other)
 
     def expand(self):
         expanded = []
@@ -101,3 +110,6 @@ class verilog_template:
 
     def setTextDict(self, label, value):
         self.textDict[label] = value
+
+    def cloneSection(self, name, cloneName):
+        self.sections[name].clone(cloneName)

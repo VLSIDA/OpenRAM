@@ -30,8 +30,8 @@ WORKDIR /root
 RUN git clone https://github.com/KLayout/klayout
 WORKDIR /root/klayout
 RUN git checkout ${KLAYOUT_COMMIT}
-RUN ./build.sh -qt5 -j 8 \
- && cp -r bin-release /usr/local/klayout
+RUN ./build.sh -qt5 -debug -j 8 \
+ && cp -r bin-debug /usr/local/klayout
 RUN rm -rf /root/klayout
 
 ### Trilinos ###

@@ -120,8 +120,8 @@ $(TEST_BASES):
 	@mkdir -p results/$*/tmp
 	@docker run \
 		-v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/freepdk45\
-		-e FREEPDK45=/freepdk45\
+		-v $(FREEPDK45):/freepdk45 \
+		-e FREEPDK45=/freepdk45 \
 		-v $(PDK_ROOT):/pdk \
 		-e PDK_ROOT=/pdk \
 		-e PDKPATH=/pdk/sky130A \

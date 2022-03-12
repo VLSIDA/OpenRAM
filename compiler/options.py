@@ -166,10 +166,6 @@ class options(optparse.Values):
 
     keep_temp = False
 
-    # Add a prefix of the root cell before every structure in the GDS
-    # after outputting the GDS2
-    uniquify = False
-
     # These are the default modules that can be over-riden
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"

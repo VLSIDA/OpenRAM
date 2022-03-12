@@ -8,6 +8,7 @@
 import hierarchy_layout
 import hierarchy_spice
 import debug
+import os
 from globals import OPTS
 
 
@@ -21,6 +22,15 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
     def __init__(self, name, cell_name):
         self.drc_errors = "skipped"
         self.lvs_errors = "skipped"
+
+        # Flag for library cells which is recomputed in hierachy_layout
+        gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
+        is_library_cell = os.path.isfile(gds_file)
+        # Uniquify names to address the flat GDS namespace
+        # except for the top/output name
+        if not is_library_cell and name != OPTS.output_name:
+            name = OPTS.output_name + "_" + name
+            cell_name = name
 
         hierarchy_spice.spice.__init__(self, name, cell_name)
         hierarchy_layout.layout.__init__(self, name, cell_name)

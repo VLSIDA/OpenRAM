@@ -42,6 +42,7 @@ class layout():
         self.cell_name = cell_name
 
         self.gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
+        self.is_library_cell = os.path.isfile(self.gds_file)
 
         self.width = None
         self.height = None
@@ -60,8 +61,6 @@ class layout():
         self.pin_map = {}
         # List of modules we have already visited
         self.visited = []
-        # Flag for library cells
-        self.is_library_cell = False
 
         self.gds_read()
 
@@ -902,10 +901,6 @@ class layout():
     def gds_read(self):
         """Reads a GDSII file in the library and checks if it exists
            Otherwise, start a new layout for dynamic generation."""
-
-        # This must be done for netlist only mode too
-        if os.path.isfile(self.gds_file):
-            self.is_library_cell = True
 
         if OPTS.netlist_only:
             self.gds = None

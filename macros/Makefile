@@ -33,15 +33,15 @@ configs:
 
 .PHONY: configs
 
-BROKEN := \
-	sky130_sram_1kbyte_1r1w_8x1024_8 \
-	sky130_sram_1kbyte_1rw_32x256_8 \
-	sky130_sram_2kbyte_1rw_32x512_8 \
-	sky130_sram_4kbyte_1rw_32x1024_8 \
+BROKEN := 
 
 WORKING_STAMPS=$(filter-out $(addsuffix .ok, $(BROKEN)), $(STAMPS))
+EXAMPLE_STAMPS=$(filter example%, $(WORKING_STAMPS))
+SKY130_STAMPS=$(filter sky130%, $(WORKING_STAMPS))
+FREEPDK45_STAMPS=$(filter freepdk45%, $(WORKING_STAMPS))
+SCN4M_SUBM_STAMPS=$(filter scn4m_subm%, $(WORKING_STAMPS))
 
-all: | configs
+all: | configs 
 	@echo
 	@echo "Building following working configs"
 	@for S in $(WORKING_STAMPS); do echo " - $$S"; done
@@ -49,6 +49,18 @@ all: | configs
 	$(MAKE) $(WORKING_STAMPS)
 	@echo "Built all macros."
 
+example: $(EXAMPLE_STAMPS)
+.PHONY: example
+
+sky130: $(SKY130_STAMPS)
+.PHONY: sky130
+
+freepdk45: $(FREEPDK45_STAMPS)
+.PHONY: freepdk45
+
+scn4m_subm: $(SCN4M_SUBM_STAMPS)
+.PHONY: scn4m_subm
+	
 %.ok: configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*

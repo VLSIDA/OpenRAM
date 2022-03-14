@@ -1,3 +1,4 @@
+num_banks=2
 word_size = 32
 num_words = 8192
 write_size = 8

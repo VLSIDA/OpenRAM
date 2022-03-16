@@ -95,7 +95,7 @@ class precharge_array(design.design):
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
 
     def route_supplies(self):
-        if OPTS.experimental_power:
+        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
             self.route_horizontal_pins("vdd")
         else:
             for inst in self.local_insts:

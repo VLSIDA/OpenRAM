@@ -596,7 +596,7 @@ class hierarchical_decoder(design.design):
         """
 
         # This is an experiment with power rails
-        if OPTS.experimental_power:
+        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
             if layer_props.hierarchical_decoder.vertical_supply:
                 pre_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
                 self.route_vertical_pins("vdd", insts=pre_insts, yside="by")

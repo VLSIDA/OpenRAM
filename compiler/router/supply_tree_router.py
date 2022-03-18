@@ -171,7 +171,7 @@ class supply_tree_router(router):
 
                 # This is inefficient since it is non-incremental, but it was
                 # easier to debug.
-                self.prepare_blockages()
+                self.prepare_blockages(src=(pin_name, src_idx), dest=(pin_name, dest_idx))
                 if unblock_routes:
                     msg = "Unblocking supply self blockages to improve access (may cause DRC errors):\n{0}\n{1})"
                     debug.warning(msg.format(pin_name,
@@ -189,8 +189,8 @@ class supply_tree_router(router):
                 # Actually run the A* router
                 if self.run_router(detour_scale=detour_scale):
                     return
-                if detour_scale > 2:
-                    self.write_debug_gds("route_{0}_{1}_d{2}.gds".format(src_idx, dest_idx, detour_scale), False)
+                #if detour_scale > 2:
+                #    self.write_debug_gds("route_{0}_{1}_d{2}.gds".format(src_idx, dest_idx, detour_scale), False)
 
         self.write_debug_gds("debug_route.gds", True)
 

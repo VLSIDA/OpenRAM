@@ -375,9 +375,10 @@ class router(router_tech):
         # This is just a virtual function
         pass
     
-    def prepare_blockages(self):
+    def prepare_blockages(self, src=None, dest=None):
         """
         Reset and add all of the blockages in the design.
+        Skip adding blockages from src and dest component if specified as a tuple of name,component.
         """
         debug.info(3, "Preparing blockages.")
 
@@ -400,8 +401,14 @@ class router(router_tech):
         # Now go and block all of the blockages due to pin shapes.
         # Some of these will get unblocked later if they are the source/target.
         for name in self.pin_groups:
-            # This should be a superset of the grids...
-            blockage_grids = {y for x in self.pin_groups[name] for y in x.blockages}
+            blockage_grids = []
+            for component_idx, component in enumerate(self.pin_groups[name]):
+                # Skip adding source or dest blockages
+                if src and src[0] == name and src[1] == component_idx:
+                    continue
+                if dest and dest[0] == name and dest[1] == component_idx:
+                    continue
+                blockage_grids.extend(component.blockages)
             self.set_blockages(blockage_grids, True)
 
         # If we have paths that were recently routed, add them as blockages as well.

@@ -939,7 +939,7 @@ class router(router_tech):
 
         self.new_pins[name] = pg.pins
         
-    def add_ring_supply_pin(self, name, width=3, space=2):
+    def add_ring_supply_pin(self, name, width=3, space=3):
         """
         Adds a ring supply pin that goes outside the given bbox.
         """

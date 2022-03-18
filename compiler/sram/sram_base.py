@@ -243,6 +243,7 @@ class sram_base(design, verilog, lef):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
 
+        # Pick the router type
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
@@ -250,6 +251,7 @@ class sram_base(design, verilog, lef):
             from supply_grid_router import supply_grid_router as router
         else:
             from supply_tree_router import supply_tree_router as router
+
         rtr=router(layers=self.supply_stack,
                    design=self,
                    bbox=bbox,
@@ -257,6 +259,8 @@ class sram_base(design, verilog, lef):
 
         rtr.route()
 
+        # This removes the original pre-supply routing pins and replaces them
+        # with the ring or peripheral power pins
         if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
             # Find the lowest leftest pin for vdd and gnd
             for pin_name in ["vdd", "gnd"]:

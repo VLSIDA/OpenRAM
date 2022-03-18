@@ -78,7 +78,7 @@ class wordline_driver_array(design.design):
         """
 
         # Experiment with power straps
-        if OPTS.experimental_power:
+        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
             if layer_props.wordline_driver.vertical_supply:
                 self.route_vertical_pins("vdd", insts=self.wld_inst)
                 self.route_vertical_pins("gnd", insts=self.wld_inst)

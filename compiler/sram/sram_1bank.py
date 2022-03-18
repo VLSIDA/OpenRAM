@@ -336,31 +336,27 @@ class sram_1bank(sram_base):
         # Some technologies have an isolation
         self.add_dnwell(inflate=2.5)
 
+        # Route the supplies together and/or to the ring/stripes.
+        # This is done with the original bbox since the escape routes need to 
+        # be outside of the ring for OpenLane
+        rt = router_tech(self.supply_stack, 1)
+        init_bbox = self.get_bbox(side="ring",
+                                  margin=rt.track_width)
+
         # We need the initial bbox for the supply rings later
         # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
-        pre_bbox = None
         if OPTS.perimeter_pins:
-            rt = router_tech(self.supply_stack, 1)
-
-            if OPTS.supply_pin_type in ["ring", "left", "right", "top", "bottom"]:
-                big_margin = 12 * rt.track_width
-                little_margin = 2 * rt.track_width
-            else:
-                big_margin = 6 * rt.track_width
-                little_margin = 0
-
-            pre_bbox = self.get_bbox(side="ring",
-                                     big_margin=rt.track_width)
-
-            bbox = self.get_bbox(side=OPTS.supply_pin_type,
-                                 big_margin=big_margin,
-                                 little_margin=little_margin)
+            # We now route the escape routes far enough out so that they will
+            # reach past the power ring or stripes on the sides
+            # The power rings are 4 tracks wide with 2 tracks spacing, so space it
+            # 11 tracks out
+            bbox = self.get_bbox(side="ring",
+                                 margin=11*rt.track_width)
             self.route_escape_pins(bbox)
 
-        # Route the supplies first since the MST is not blockage aware
-        # and signals can route to anywhere on sides (it is flexible)
-        self.route_supplies(pre_bbox)
+        self.route_supplies(init_bbox)
+
 
     def route_dffs(self, add_routes=True):
 

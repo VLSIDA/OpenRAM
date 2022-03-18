@@ -1322,7 +1322,7 @@ class layout():
 
         self.bbox = [self.bounding_box.ll(), self.bounding_box.ur()]
 
-    def get_bbox(self, side="all", big_margin=0, little_margin=0):
+    def get_bbox(self, side="all", margin=0):
         """
         Get the bounding box from the GDS
         """
@@ -1349,27 +1349,18 @@ class layout():
         ll_offset = vector(0, 0)
         ur_offset = vector(0, 0)
         if side in ["ring", "top", "all"]:
-            ur_offset += vector(0, big_margin)
-        else:
-            ur_offset += vector(0, little_margin)
+            ur_offset += vector(0, margin)
         if side in ["ring", "bottom", "all"]:
-            ll_offset += vector(0, big_margin)
-        else:
-            ll_offset += vector(0, little_margin)
+            ll_offset += vector(0, margin)
         if side in ["ring", "left", "all"]:
-            ll_offset += vector(big_margin, 0)
-        else:
-            ll_offset += vector(little_margin, 0)
+            ll_offset += vector(margin, 0)
         if side in ["ring", "right", "all"]:
-            ur_offset += vector(big_margin, 0)
-        else:
-            ur_offset += vector(little_margin, 0)
+            ur_offset += vector(margin, 0)
         bbox = (ll - ll_offset, ur + ur_offset)
         size = ur - ll
-        debug.info(1, "Size: {0} x {1} with perimeter big margin {2} little margin {3}".format(size.x,
+        debug.info(1, "Size: {0} x {1} with perimeter margin {2}".format(size.x,
                                                                                                size.y,
-                                                                                               big_margin,
-                                                                                               little_margin))
+                                                                                               margin))
 
         return bbox
 

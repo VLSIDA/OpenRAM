@@ -92,12 +92,19 @@ class router(router_tech):
     def get_bbox(self):
         return self.bbox
     
-    def create_routing_grid(self, router_type):
+    def create_routing_grid(self, router_type=None):
         """
-        Create a sprase routing grid with A* expansion functions.
+        Create (or recreate) a sprase routing grid with A* expansion functions.
         """
+        debug.check(router_type or hasattr(self, "router_type"), "Must specify a routing grid type.")
+
         self.init_bbox(self.bbox, self.margin)
-        self.rg = router_type(self.ll, self.ur, self.track_width)
+
+        if router_type:
+            self.router_type = router_type
+            self.rg = router_type(self.ll, self.ur, self.track_width)
+        else:
+            self.rg = self.router_type(self.ll, self.ur, self.track_width)
 
     def clear_pins(self):
         """
@@ -927,40 +934,34 @@ class router(router_tech):
         
     def add_ring_supply_pin(self, name, width=3, space=2):
         """
-        Adds a ring supply pin that goes inside the given bbox.
+        Adds a ring supply pin that goes outside the given bbox.
         """
         pg = pin_group(name, [], self)
-        # Offset two spaces inside and one between the rings
-        # Units are in routing grids
-        if name == "gnd":
-            offset = width + 2 * space
-        else:
-            offset = space
 
         # LEFT
         left_grids = set(self.rg.get_perimeter_list(side="left_ring",
                                                     width=width,
                                                     margin=self.margin,
-                                                    offset=offset,
+                                                    offset=space,
                                                     layers=[1]))
 
         # RIGHT
         right_grids = set(self.rg.get_perimeter_list(side="right_ring",
                                                      width=width,
                                                      margin=self.margin,
-                                                     offset=offset,
+                                                     offset=space,
                                                      layers=[1]))
         # TOP
         top_grids = set(self.rg.get_perimeter_list(side="top_ring",
                                                    width=width,
                                                    margin=self.margin,
-                                                   offset=offset,
+                                                   offset=space,
                                                    layers=[0]))
         # BOTTOM
         bottom_grids = set(self.rg.get_perimeter_list(side="bottom_ring",
                                                       width=width,
                                                       margin=self.margin,
-                                                      offset=offset,
+                                                      offset=space,
                                                       layers=[0]))
 
         horizontal_layer_grids = left_grids | right_grids
@@ -972,6 +973,7 @@ class router(router_tech):
 
         # Add vias in the overlap points
         horizontal_corner_grids = vertical_layer_grids & horizontal_layer_grids
+        corners = []
         for g in horizontal_corner_grids:
             self.add_via(g)
 
@@ -983,6 +985,15 @@ class router(router_tech):
         self.cell.pin_map[name].update(pg.pins)
         self.pin_groups[name].append(pg)
         self.new_pins[name] = pg.pins
+
+        # Update the bbox so that it now includes the new pins
+        for p in pg.pins:
+            if p.lx() < self.ll.x or p.by() < self.ll.y:
+                self.ll = p.ll()
+            if p.rx() > self.ur.x or p.uy() > self.ur.y:
+                self.ur = p.ur()
+        self.bbox = (self.ll, self.ur)
+        self.create_routing_grid()
 
     def get_new_pins(self, name):
         return self.new_pins[name]
@@ -1274,10 +1285,17 @@ class router(router_tech):
         """
         debug.info(2, "Adding router info")
 
+        show_bbox = False
         show_blockages = False
         show_blockage_grids = False
         show_enclosures = False
         show_all_grids = True
+
+        if show_bbox:
+            self.cell.add_rect(layer="text",
+                               offset=vector(self.ll.x, self.ll.y),
+                               width=self.ur.x - self.ll.x,
+                               height=self.ur.y - self.ll.y)
 
         if show_all_grids:
             for g in self.rg.map:

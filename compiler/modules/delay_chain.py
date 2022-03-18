@@ -177,15 +177,18 @@ class delay_chain(design.design):
         # The routing to connect the loads is over the first and last cells
         # We have an even number of drivers and must only do every other
         # supply rail
+        if OPTS.experimental_power:
+            self.route_horizontal_pins("vdd")
+            self.route_horizontal_pins("gnd")
+        else:
+            for inst in self.driver_inst_list:
+                load_list = self.load_inst_map[inst]
+                for pin_name in ["vdd", "gnd"]:
+                    pin = load_list[0].get_pin(pin_name)
+                    self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
-        for inst in self.driver_inst_list:
-            load_list = self.load_inst_map[inst]
-            for pin_name in ["vdd", "gnd"]:
-                pin = load_list[0].get_pin(pin_name)
-                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
-
-                pin = load_list[-2].get_pin(pin_name)
-                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
+                    pin = load_list[-2].get_pin(pin_name)
+                    self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
     def add_layout_pins(self):
 

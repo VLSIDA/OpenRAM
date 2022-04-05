@@ -46,6 +46,8 @@ class bitcell_array(bitcell_base_array):
 
         self.add_layout_pins()
 
+        self.route_supplies()
+
         self.add_boundary()
 
         self.DRC_LVS()

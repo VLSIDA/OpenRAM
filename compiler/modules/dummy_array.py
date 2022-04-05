@@ -36,6 +36,8 @@ class dummy_array(bitcell_base_array):
 
         self.add_layout_pins()
 
+        self.route_supplies()
+
         self.add_boundary()
 
         self.DRC_LVS()
@@ -97,6 +99,8 @@ class dummy_array(bitcell_base_array):
                                         offset=wl_pin.ll().scale(0, 1),
                                         width=self.width,
                                         height=wl_pin.height())
+
+    def route_supplies(self):
 
         # Copy a vdd/gnd layout pin from every cell
         for row in range(self.row_size):

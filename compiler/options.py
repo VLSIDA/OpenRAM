@@ -195,4 +195,4 @@ class options(optparse.Values):
     write_mask_and_array = "write_mask_and_array"
 
     # Non-public options
-    experimental_power = False
+    experimental_power = True

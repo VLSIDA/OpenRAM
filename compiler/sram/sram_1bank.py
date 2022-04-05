@@ -349,8 +349,6 @@ class sram_1bank(sram_base):
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            # The power rings are 4 tracks wide with 2 tracks spacing, so space it
-            # 11 tracks out
             bbox = self.get_bbox(side="ring",
                                  margin=11*rt.track_width)
             self.route_escape_pins(bbox)

@@ -28,7 +28,6 @@ class hierarchical_decoder(design.design):
         self.pre2x4_inst = []
         self.pre3x8_inst = []
         self.pre4x16_inst = []
-        self.local_insts = []
 
         b = factory.create(module_type=OPTS.bitcell)
         self.cell_height = b.height
@@ -591,65 +590,20 @@ class hierarchical_decoder(design.design):
 
     def route_supplies(self):
         """
-        Add a pin for each row of vdd/gnd which are
-        must-connects next level up.
         """
 
-        # This is an experiment with power rails
-        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
-            if layer_props.hierarchical_decoder.vertical_supply:
-                pre_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
-                self.route_vertical_pins("vdd", insts=pre_insts, yside="by")
-                self.route_vertical_pins("gnd", insts=pre_insts, yside="by")
-                self.route_vertical_pins("vdd", insts=self.and_inst, yside="by")
-                self.route_vertical_pins("gnd", insts=self.and_inst, yside="by")
-            else:
-                pre_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
-                self.route_vertical_pins("vdd", insts=pre_insts)
-                self.route_vertical_pins("gnd", insts=pre_insts)
-                self.route_vertical_pins("vdd", insts=self.and_inst, xside="rx")
-                self.route_vertical_pins("gnd", insts=self.and_inst, xside="lx")
+        # Leave these to route in the port_address
+        all_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
+        for inst in all_insts:
+            self.copy_layout_pin(inst, "vdd") 
+            self.copy_layout_pin(inst, "gnd") 
 
-                # Widen the rails to cover any gap
-                for inst in self.and_inst:
-                    for name in ["vdd", "gnd"]:
-                        supply_pin = inst.get_pin(name)
-                        self.add_segment_center(layer=supply_pin.layer,
-                                                start=vector(0, supply_pin.cy()),
-                                                end=vector(self.width, supply_pin.cy()))
-        else:
-            if layer_props.hierarchical_decoder.vertical_supply:
-                for n in ["vdd", "gnd"]:
-                    pins = self.and_inst[0].get_pins(n)
-                    for pin in pins:
-                        self.add_rect(layer=pin.layer,
-                                      offset=pin.ll() + vector(0, self.bus_space),
-                                      width=pin.width(),
-                                      height=self.height - 2 * self.bus_space)
+        for inst in self.and_inst:
+            for pin in inst.get_pins("vdd"):
+                self.add_power_pin("vdd", pin.rc())
+            for pin in inst.get_pins("gnd"):
+                self.add_power_pin("gnd", pin.lc())
 
-                    # This adds power vias at the top of each cell
-                    # (except the last to keep them inside the boundary)
-                    for i in self.and_inst[:-1]:
-                        pins = i.get_pins(n)
-                        for pin in pins:
-                            self.copy_power_pin(pin, loc=pin.uc())
-
-                    for i in self.pre2x4_inst + self.pre3x8_inst:
-                        self.copy_layout_pin(i, n)
-            else:
-                # The vias will be placed at the right of the cells.
-                xoffset = max(x.rx() for x in self.and_inst) + 0.5 * self.m1_space
-                for row in range(0, self.num_outputs):
-                    for pin_name in ["vdd", "gnd"]:
-                        # The nand and inv are the same height rows...
-                        supply_pin = self.and_inst[row].get_pin(pin_name)
-                        pin_pos = vector(xoffset, supply_pin.cy())
-                        self.copy_power_pin(supply_pin, loc=pin_pos)
-
-                    # Copy the pins from the predecoders
-                    for pre in self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst:
-                        for pin_name in ["vdd", "gnd"]:
-                            self.copy_layout_pin(pre, pin_name)
 
     def route_predecode_bus_outputs(self, rail_name, pin, row):
         """

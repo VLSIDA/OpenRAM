@@ -156,18 +156,15 @@ class bitcell_base_array(design.design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-    def add_supply_pins(self):
-        for row in range(self.row_size):
-            for col in range(self.column_size):
-                inst = self.cell_inst[row, col]
-                for pin_name in ["vdd", "gnd"]:
-                    self.copy_layout_pin(inst, pin_name)
+    def route_supplies(self):
+        for inst in self.cell_inst.values():
+            for pin_name in ["vdd", "gnd"]:
+                self.copy_layout_pin(inst, pin_name)
 
     def add_layout_pins(self):
         """ Add the layout pins """
         self.add_bitline_pins()
         self.add_wl_pins()
-        self.add_supply_pins()
         
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset

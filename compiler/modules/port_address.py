@@ -76,15 +76,21 @@ class port_address(design.design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-        for inst in [self.wordline_driver_array_inst, self.row_decoder_inst]:
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
-
-        for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
-            if layer_props.port_address.supply_offset:
-                self.copy_power_pin(rbl_vdd_pin)
-            else:
-                self.copy_power_pin(rbl_vdd_pin, loc=rbl_vdd_pin.lc())
+        self.route_vertical_pins("vdd", [self.row_decoder_inst])
+        self.route_vertical_pins("gnd", [self.row_decoder_inst])
+        self.route_vertical_pins("vdd", [self.wordline_driver_array_inst])
+        if layer_props.wordline_driver.vertical_supply:
+            self.route_vertical_pins("gnd", [self.wordline_driver_array_inst])
+            self.copy_layout_pin(self.rbl_driver_inst, "vdd")
+        else:
+            rbl_pos = self.rbl_driver_inst.get_pin("vdd").rc()
+            self.add_power_pin("vdd", rbl_pos)
+            self.add_path("m4", [rbl_pos, self.wordline_driver_array_inst.get_pins("vdd")[0].rc()])
+            
+            vdd_pins = self.row_decoder_inst.get_pins("vdd") + self.wordline_driver_array_inst.get_pins("vdd")
+            self.connect_row_pins(self.route_layer, vdd_pins)
+            gnd_pins = self.row_decoder_inst.get_pins("gnd") + self.wordline_driver_array_inst.get_pins("gnd")
+            self.connect_row_pins(self.route_layer, gnd_pins)
 
         # Also connect the B input of the RBL and_dec to vdd
         if OPTS.local_array_size == 0:

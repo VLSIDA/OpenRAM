@@ -305,19 +305,18 @@ class replica_bitcell_array(bitcell_base_array):
 
     def create_layout(self):
 
-        # We will need unused wordlines grounded, so we need to know their layer
-        # and create a space on the left and right for the vias to connect to ground
-        pin = self.cell.get_pin(self.cell.get_all_wl_names()[0])
-        pin_layer = pin.layer
-        self.unused_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
-        self.unused_offset = vector(self.unused_pitch, 0)
+        # This creates space for the unused wordline connections as well as the
+        # row-based or column based power and ground lines.
+        self.vertical_pitch = getattr(self, "{}_pitch".format(self.supply_stack[0]))
+        self.horizontal_pitch = getattr(self, "{}_pitch".format(self.supply_stack[2]))
+        self.unused_offset = vector(2 * self.horizontal_pitch, 2 * self.vertical_pitch)
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
         self.col_end_offset = vector(self.cell.width, self.cell.height)
         self.row_end_offset = vector(self.cell.width, self.cell.height)
 
-        # Everything is computed with the main array at (self.unused_pitch, 0) to start
+        # Everything is computed with the main array
         self.bitcell_array_inst.place(offset=self.unused_offset)
 
         self.add_replica_columns()
@@ -335,6 +334,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.height = self.dummy_row_insts[1].uy()
 
         self.add_layout_pins()
+
+        self.route_supplies()
 
         self.route_unused_wordlines()
 
@@ -458,23 +459,82 @@ class replica_bitcell_array(bitcell_base_array):
                                         width=pin.width(),
                                         height=self.height)
 
-        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
-            self.route_vertical_pins(name="gnd", insts=self.replica_col_insts)
-            self.route_horizontal_pins(name="vdd", insts=self.dummy_row_insts)
-        else:
-            # vdd/gnd are only connected in the perimeter cells
-            # replica column should only have a vdd/gnd in the dummy cell on top/bottom
-            supply_insts = self.dummy_col_insts + self.dummy_row_insts
+    def route_supplies(self):
 
-            for pin_name in self.supplies:
-                for inst in supply_insts:
-                    pin_list = inst.get_pins(pin_name)
-                    for pin in pin_list:
-                        self.copy_power_pin(pin)
+        # vdd/gnd are only connected in the perimeter cells
+        # replica column should only have a vdd/gnd in the dummy cell on top/bottom
+        supply_insts = self.dummy_col_insts + self.dummy_row_insts
 
-                for inst in self.replica_col_insts:
-                    if inst:
-                        self.copy_layout_pin(inst, pin_name)
+        vdd_leftx = 0
+        vdd_rightx = 0
+        gnd_leftx = 0
+        gnd_rightx = 0
+
+        for inst in supply_insts:
+            for pin in inst.get_pins("vdd"):
+                (vdd_leftx, vdd_rightx) = self.connect_pin(pin, 2.5)
+            for pin in inst.get_pins("gnd"):
+                (gnd_leftx, gnd_rightx) = self.connect_pin(pin)
+
+
+        self.add_layout_end_pin_segment_center(text="vdd",
+                                               layer=self.supply_stack[2],
+                                               start=vector(vdd_leftx, 0),
+                                               end=vector(vdd_leftx, self.height))
+        self.add_layout_end_pin_segment_center(text="vdd",
+                                               layer=self.supply_stack[2],
+                                               start=vector(vdd_rightx, 0),
+                                               end=vector(vdd_rightx, self.height))
+        self.add_layout_end_pin_segment_center(text="gnd",
+                                               layer=self.supply_stack[2],
+                                               start=vector(gnd_leftx, 0),
+                                               end=vector(gnd_leftx, self.height))
+        self.add_layout_end_pin_segment_center(text="gnd",
+                                               layer=self.supply_stack[2],
+                                               start=vector(gnd_rightx, 0),
+                                               end=vector(gnd_rightx, self.height))
+
+
+    def route_unused_wordlines(self):
+        """ Connect the unused RBL and dummy wordlines to gnd """
+        # This grounds all the dummy row word lines
+        for inst in self.dummy_row_insts:
+            for wl_name in self.col_cap_top.get_wordline_names():
+                pin = inst.get_pin(wl_name)
+                self.connect_pin(pin)
+
+        # Ground the unused replica wordlines
+        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
+            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
+                if wl_name in self.gnd_wordline_names:
+                    pin = inst.get_pin(pin_name)
+                    self.connect_pin(pin)
+
+
+    def connect_pin(self, pin, offset_multiple=1):
+
+        pin_layer = pin.layer
+
+        left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
+        right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
+
+        # Place the pins a track outside of the array
+        left_loc = left_pin_loc - vector(offset_multiple * self.horizontal_pitch, 0)
+        right_loc = right_pin_loc + vector(offset_multiple * self.horizontal_pitch, 0)
+        self.add_via_stack_center(offset=left_loc, 
+                                  from_layer=pin_layer,
+                                  to_layer=self.supply_stack[2],
+                                  directions=("H", "H"))
+        self.add_via_stack_center(offset=right_loc, 
+                                  from_layer=pin_layer,
+                                  to_layer=self.supply_stack[2],
+                                  directions=("H", "H"))
+
+        # Add a path to connect to the array
+        self.add_path(pin_layer, [left_loc, right_loc])
+
+        return (left_loc.x, right_loc.x)
+
 
 
     def analytical_power(self, corner, load):
@@ -494,34 +554,6 @@ class replica_bitcell_array(bitcell_base_array):
                                         cell_power.leakage * self.column_size * self.row_size)
         return total_power
 
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-        # This grounds all the dummy row word lines
-        for inst in self.dummy_row_insts:
-            for wl_name in self.col_cap_top.get_wordline_names():
-                self.ground_pin(inst, wl_name)
-
-        # Ground the unused replica wordlines
-        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                if wl_name in self.gnd_wordline_names:
-                    self.ground_pin(inst, pin_name)
-
-    def ground_pin(self, inst, name):
-        pin = inst.get_pin(name)
-        pin_layer = pin.layer
-
-        left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
-        right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
-
-        # Place the pins a track outside of the array
-        left_loc = left_pin_loc - vector(self.unused_pitch, 0)
-        right_loc = right_pin_loc + vector(self.unused_pitch, 0)
-        self.add_power_pin("gnd", left_loc, directions=("H", "H"))
-        self.add_power_pin("gnd", right_loc, directions=("H", "H"))
-
-        # Add a path to connect to the array
-        self.add_path(pin_layer, [left_loc, right_loc], width=pin.height())
 
     def gen_bl_wire(self):
         if OPTS.netlist_only:

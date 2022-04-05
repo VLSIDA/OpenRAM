@@ -407,8 +407,8 @@ class layout():
         """
         pins = instance.get_pins(pin_name)
 
-        debug.check(len(pins) > 0,
-                    "Could not find pin {}".format(pin_name))
+        if len(pins) == 0:
+            debug.warning("Could not find pin {0} on {1}".format(pin_name, instance.mod.name))
 
         for pin in pins:
             if new_name == "":
@@ -427,11 +427,194 @@ class layout():
         for pin_name in self.pin_map.keys():
             self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
-    def route_vertical_pins(self, name, insts=None, layer=None, xside="cx", yside="cy"):
+    def connect_row_locs(self, from_layer, to_layer, locs, name=None, full=False):
+        """
+        Connects left/right rows that are aligned on the given layer.
+        """
+        bins = {}
+        for loc in locs:
+                y = pin.y
+                try:
+                    bins[y].append(loc)
+                except KeyError:
+                    bins[y] = [loc]
+
+        for y, v in bins.items():
+            # Not enough to route a pin, so just copy them
+            if len(v) < 2:
+                continue
+
+            if full:
+                left_x = 0
+                right_x = self.width
+            else:
+                left_x = min([loc.x for loc in v])
+                right_x = max([loc.x for loc in v])
+
+            left_pos = vector(left_x, y)
+            right_pos = vector(right_x, y)
+
+            # Make sure to add vias to the new route
+            for loc in v:
+                self.add_via_stack_center(from_layer=from_layer,
+                                          to_layer=to_layer,
+                                          offset=loc,
+                                          min_area=True)
+
+            if name:
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=to_layer,
+                                                   start=left_pos,
+                                                   end=right_pos)
+            else:
+                self.add_segment_center(layer=to_layer,
+                                        start=left_pos,
+                                        end=right_pos)
+
+    def connect_row_pins(self, layer, pins, name=None, full=False):
+        """
+        Connects left/right rows that are aligned.
+        """
+        bins = {}
+        for pin in pins:
+                y = pin.cy()
+                try:
+                    bins[y].append(pin)
+                except KeyError:
+                    bins[y] = [pin]
+
+        for y, v in bins.items():
+            # Not enough to route a pin, so just copy them
+            if len(v) < 2:
+                continue
+
+            if full:
+                left_x = 0
+                right_x = self.width
+            else:
+                left_x = min([pin.lx() for pin in v])
+                right_x = max([pin.rx() for pin in v])
+
+            left_pos = vector(left_x, y)
+            right_pos = vector(right_x, y)
+
+            # Make sure to add vias to the new route
+            for pin in v:
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=layer,
+                                          offset=pin.center(),
+                                          min_area=True)
+
+            if name:
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=layer,
+                                                   start=left_pos,
+                                                   end=right_pos)
+            else:
+                self.add_segment_center(layer=layer,
+                                        start=left_pos,
+                                        end=right_pos)
+
+    def connect_col_locs(self, from_layer, to_layer, locs, name=None, full=False):
+        """
+        Connects top/bot columns that are aligned.
+        """
+        bins = {}
+        for loc in locs:
+                x = loc.x
+                try:
+                    bins[x].append(loc)
+                except KeyError:
+                    bins[x] = [loc]
+
+        for x, v in bins.items():
+            # Not enough to route a pin, so just copy them
+            if len(v) < 2:
+                continue
+
+            if full:
+                bot_y = 0
+                top_y = self.height
+            else:
+                bot_y = min([loc.y for loc in v])
+                top_y = max([loc.y for loc in v])
+
+            top_pos = vector(x, top_y)
+            bot_pos = vector(x, bot_y)
+
+            # Make sure to add vias to the new route
+            for loc in v:
+                self.add_via_stack_center(from_layer=from_layer,
+                                          to_layer=to_layer,
+                                          offset=loc,
+                                          min_area=True)
+
+            if name:
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=to_layer,
+                                                   start=top_pos,
+                                                   end=bot_pos)
+            else:
+                self.add_segment_center(layer=to_layer,
+                                        start=top_pos,
+                                        end=bot_pos)
+
+
+    def connect_col_pins(self, layer, pins, name=None, full=False):
+        """
+        Connects top/bot columns that are aligned.
+        """
+        bins = {}
+        for pin in pins:
+                x = pin.cx()
+                try:
+                    bins[x].append(pin)
+                except KeyError:
+                    bins[x] = [pin]
+
+        for x, v in bins.items():
+            # Not enough to route a pin, so just copy them
+            if len(v) < 2:
+                continue
+
+            if full:
+                bot_y = 0
+                top_y = self.height
+            else:
+                bot_y = min([pin.by() for pin in v])
+                top_y = max([pin.uy() for pin in v])
+
+            top_pos = vector(x, top_y)
+            bot_pos = vector(x, bot_y)
+
+            # Make sure to add vias to the new route
+            for pin in v:
+                self.add_via_stack_center(from_layer=pin.layer,
+                                          to_layer=layer,
+                                          offset=pin.center(),
+                                          min_area=True)
+
+            if name:
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=layer,
+                                                   start=top_pos,
+                                                   end=bot_pos)
+            else:
+                self.add_segment_center(layer=layer,
+                                        start=top_pos,
+                                        end=bot_pos)
+
+
+
+
+
+    def route_vertical_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", num_pins=2, full_width=True):
         """
         Route together all of the pins of a given name that vertically align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or right or left if specified.
+        num_pins specifies whether to add a single pin or multiple pins (equally spaced)
+        TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
 
@@ -451,7 +634,7 @@ class layout():
         for x, v in bins.items():
             # Not enough to route a pin, so just copy them
             if len(v) < 2:
-                debug.warning("Copying pins instead of connecting with pin.")
+                debug.warning("Pins don't align well so copying pins instead of connecting with pin.")
                 for inst,pin in v:
                     self.add_layout_pin(pin.name,
                                         pin.layer,
@@ -460,10 +643,8 @@ class layout():
                                         pin.height())
                 continue
 
-            bot_y = min([pin.by() for (inst,pin) in v])
-            top_y = max([pin.uy() for (inst,pin) in v])
-
             last_via = None
+            pin_layer = None
             for inst,pin in v:
                 if layer:
                     pin_layer = layer
@@ -482,31 +663,57 @@ class layout():
             else:
                 via_width=None
 
+            if full_width:
+                bot_y = 0
+                top_y = self.height
+            else:
+                bot_y = min([pin.by() for (inst,pin) in v])
+                top_y = max([pin.uy() for (inst,pin) in v])
             top_pos = vector(x, top_y)
             bot_pos = vector(x, bot_y)
-#            top_rect = self.add_layout_pin_rect_center(text=name, 
-#                                                       layer=pin_layer,
-#                                                       offset=top_pos)
-            #bot_rect = self.add_layout_pin_rect_center(text=name, 
-            #                                           layer=pin_layer,
-            #                                           offset=bot_pos)
-#            self.add_segment_center(layer=pin_layer,
-#                                    start=vector(top_rect.cx(), bot_pos.y),
-#                                    end=top_rect.bc(),
-#                                    width=via_width)
-            self.add_layout_pin_segment_center(text=name,
-                                               layer=pin_layer,
-                                               start=top_pos,
-                                               end=bot_pos,
-                                               width=via_width)
+
+            if num_pins==2:
+                self.add_layout_pin_rect_ends(name=name, 
+                                              layer=pin_layer, 
+                                              start=top_pos, 
+                                              end=bot_pos,
+                                              width=via_width)
+            else:
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=pin_layer,
+                                                   start=top_pos,
+                                                   end=bot_pos,
+                                                   width=via_width)
 
 
+    def add_layout_pin_rect_ends(self, name, layer, start, end, width=None):
 
-    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy"):
+        # This adds pins on the end connected by a segment
+        top_rect = self.add_layout_pin_rect_center(text=name, 
+                                                   layer=layer,
+                                                   offset=start)
+        bot_rect = self.add_layout_pin_rect_center(text=name, 
+                                                   layer=layer,
+                                                   offset=end)
+        # This is made to not overlap with the pin above
+        # so that the power router will only select a small pin.
+        # Otherwise it adds big blockages over the rails.
+        if start.y != end.y:
+            self.add_segment_center(layer=layer,
+                                    start=bot_rect.uc(),
+                                    end=top_rect.bc())
+        else:
+            self.add_segment_center(layer=layer,
+                                    start=bot_rect.rc(),
+                                    end=top_rect.lc())
+
+    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", num_pins=2, full_width=True):
         """
         Route together all of the pins of a given name that horizontally align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or top or botom if specified.
+        num_pins specifies whether to add a single pin or multiple pins (equally spaced)
+        TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
 
@@ -527,7 +734,7 @@ class layout():
 
         for y, v in bins.items():
             if len(v) < 2:
-                debug.warning("Copying pins instead of connecting with pin.")
+                debug.warning("Pins don't align well so copying pins instead of connecting with pin.")
                 for inst,pin in v:
                     self.add_layout_pin(pin.name,
                                         pin.layer,
@@ -536,10 +743,8 @@ class layout():
                                         pin.height())
                 continue
 
-            left_x = min([pin.lx() for (inst,pin) in v])
-            right_x = max([pin.rx() for (inst,pin) in v])
-
             last_via = None
+            pin_layer = None
             for inst,pin in v:
                 if layer:
                     pin_layer = layer
@@ -550,7 +755,7 @@ class layout():
 
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
                                                      to_layer=pin_layer,
-                                                     offset=vector(pin.cx(), y),
+                                                     offset=vector(x, y),
                                                      min_area=True)
 
             if last_via:
@@ -558,29 +763,56 @@ class layout():
             else:
                 via_height=None
 
+            if full_width:
+                left_x = 0
+                right_x = self.width
+            else:
+                left_x = min([pin.lx() for (inst,pin) in v])
+                right_x = max([pin.rx() for (inst,pin) in v])
             left_pos = vector(left_x, y)
             right_pos = vector(right_x, y)
 
-#            left_rect = self.add_layout_pin_rect_center(text=name, 
-#                                                        layer=pin_layer,
-#                                                        offset=left_pos)
-            #right_rect = self.add_layout_pin_rect_center(text=name, 
-            #                                            layer=pin_layer,
-            #                                            offset=right_pos)
-            # This is made to not overlap with the pin above
-            # so that the power router will only select a small pin.
-            # Otherwise it adds big blockages over the rails.
-#            self.add_segment_center(layer=pin_layer,
-#                                    start=left_rect.rc(),
-#                                    end=vector(right_pos.x, left_rect.cy()),
-#                                    width=via_height)
+            if num_pins==2:
+                self.add_layout_pin_rect_ends(name=name, 
+                                              layer=pin_layer, 
+                                              start=left_pos, 
+                                              end=right_pos,
+                                              width=via_height)
+            else:
+                # This adds a single big pin
+                self.add_layout_pin_segment_center(text=name,
+                                                   layer=pin_layer,
+                                                   start=left_pos,
+                                                   end=right_pos,
+                                                   width=via_height)
 
-            self.add_layout_pin_segment_center(text=name,
-                                               layer=pin_layer,
-                                               start=left_pos,
-                                               end=right_pos,
-                                               width=via_height)
+    def add_layout_end_pin_segment_center(self, text, layer, start, end):
+        """
+        Creates a path with two pins on the end that don't overlap.
+        """
 
+        start_pin = self.add_layout_pin_rect_center(text=text,
+                                                    layer=layer,
+                                                    offset=start)
+        end_pin = self.add_layout_pin_rect_center(text=text,
+                                                  layer=layer,
+                                                  offset=end)
+
+        if start.x != end.x and start.y != end.y:
+            file_name = "non_rectilinear.gds"
+            self.gds_write(file_name)
+            debug.error("Cannot have a non-manhatten layout pin: {}".format(file_name), -1)
+        elif start.x != end.x:
+            self.add_segment_center(layer=layer,
+                                    start=start_pin.rc(),
+                                    end=end_pin.lc())
+        elif start.y != end.y:
+            self.add_segment_center(layer=layer,
+                                    start=start_pin.uc(),
+                                    end=end_pin.bc())
+        else:
+            debug.error("Cannot have a point pin.", -1)
+            
 
     def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """
@@ -1447,12 +1679,13 @@ class layout():
             width = None
             height = None
 
+        pin = None
         if start_layer in self.pwr_grid_layers:
-            self.add_layout_pin_rect_center(text=name,
-                                            layer=start_layer,
-                                            offset=loc,
-                                            width=width,
-                                            height=height)
+            pin = self.add_layout_pin_rect_center(text=name,
+                                                   layer=start_layer,
+                                                   offset=loc,
+                                                   width=width,
+                                                   height=height)
         else:
             via = self.add_via_stack_center(from_layer=start_layer,
                                             to_layer=self.pwr_grid_layers[0],
@@ -1463,11 +1696,13 @@ class layout():
                 width = via.width
             if not height:
                 height = via.height
-            self.add_layout_pin_rect_center(text=name,
-                                            layer=self.pwr_grid_layers[0],
-                                            offset=loc,
-                                            width=width,
-                                            height=height)
+            pin = self.add_layout_pin_rect_center(text=name,
+                                                  layer=self.pwr_grid_layers[0],
+                                                  offset=loc,
+                                                  width=width,
+                                                  height=height)
+
+        return pin
 
     def copy_power_pin(self, pin, loc=None, directions=None, new_name=""):
         """

@@ -83,7 +83,7 @@ class precharge_array(design.design):
     def add_layout_pins(self):
 
         en_pin = self.pc_cell.get_pin("en_bar")
-        self.route_horizontal_pins("en_bar", layer=self.en_bar_layer)
+        self.route_horizontal_pins("en_bar", layer=self.en_bar_layer, num_pins=1)
         for inst in self.local_insts:
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer=self.en_bar_layer,
@@ -95,11 +95,7 @@ class precharge_array(design.design):
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
 
     def route_supplies(self):
-        if OPTS.tech_name=="sky130" or OPTS.experimental_power:
-            self.route_horizontal_pins("vdd")
-        else:
-            for inst in self.local_insts:
-                self.copy_layout_pin(inst, "vdd")
+        self.route_horizontal_pins("vdd")
 
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""

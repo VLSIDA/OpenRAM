@@ -52,6 +52,7 @@ c = sram_config(word_size=OPTS.word_size,
                 num_spare_cols=OPTS.num_spare_cols)
 
 OPTS.netlist_only = True
+OPTS.check_lvsdrc = False
 
 # Initialize and create the sram object
 from sram import sram

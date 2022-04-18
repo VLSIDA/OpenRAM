@@ -141,7 +141,7 @@ $(INSTALL_BASE)/sp_lib: $(filter-out %.$(SPICE_LVS_SUFFIX) %.$(SPICE_CALIBRE_SUF
 	@echo
 
 clean:
-	rm -f $(SRAM_LIBRARY)
+	rm -rf $(SRAM_LIBRARY)
 	rm -f $(INSTALL_BASE)/tech/.magicrc
 	rm -f $(INSTALL_BASE)/mag_lib/.magicrc
 	rm -f $(INSTALL_BASE)/lef_lib/.magicrc

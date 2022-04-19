@@ -31,7 +31,6 @@ tech_modules = module_type()
 # Custom cell properties
 ###################################################
 cell_properties = cell_properties()
-cell_properties.bitcell_power_pin_directions = ("V", "V")
 
 ###################################################
 # Custom cell properties

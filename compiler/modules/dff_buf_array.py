@@ -145,6 +145,15 @@ class dff_buf_array(design.design):
         return dout_bar_name
 
     def route_supplies(self):
+        for row in range(self.rows):
+            vdd0_pin=self.dff_insts[row, 0].get_pin("vdd")
+            vddn_pin=self.dff_insts[row, self.columns - 1].get_pin("vdd")
+            self.add_path(vdd0_pin.layer, [vdd0_pin.lc(), vddn_pin.rc()], width=vdd0_pin.height())
+
+            gnd0_pin=self.dff_insts[row, 0].get_pin("gnd")
+            gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
+            self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
+
         if OPTS.experimental_power and self.rows > 1:
             # Vertical straps on ends if multiple rows
             left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]

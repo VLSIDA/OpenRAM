@@ -74,9 +74,8 @@ for path in output_files:
 
 
 from sram import sram
-s = sram(name=OPTS.output_name, 
+s = sram(name=OPTS.output_name,
          sram_config=c)
-         
 
 # Output the files for the resulting SRAM
 s.save()

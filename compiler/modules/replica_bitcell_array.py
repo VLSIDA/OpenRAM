@@ -6,7 +6,8 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
-from tech import drc, spice, cell_properties
+from tech import drc, spice, preferred_directions
+from tech import cell_properties as props
 from vector import vector
 from globals import OPTS
 from sram_factory import factory
@@ -309,7 +310,7 @@ class replica_bitcell_array(bitcell_base_array):
         # row-based or column based power and ground lines.
         self.vertical_pitch = getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = getattr(self, "{}_pitch".format(self.supply_stack[2]))
-        self.unused_offset = vector(2 * self.horizontal_pitch, 2 * self.vertical_pitch)
+        self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
@@ -461,38 +462,67 @@ class replica_bitcell_array(bitcell_base_array):
 
     def route_supplies(self):
 
+        bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
+
+        wl_layer = bitcell.wl_layer
+        wl_dir = bitcell.wl_dir
+
+        bl_layer = bitcell.bl_layer
+        bl_dir = bitcell.bl_dir
+
+        vdd_layer = bitcell.vdd_layer
+        vdd_dir = bitcell.vdd_dir
+
+        gnd_layer = bitcell.gnd_layer
+        gnd_dir = bitcell.gnd_dir
+
         # vdd/gnd are only connected in the perimeter cells
-        # replica column should only have a vdd/gnd in the dummy cell on top/bottom
         supply_insts = self.dummy_col_insts + self.dummy_row_insts
 
-        vdd_leftx = 0
-        vdd_rightx = 0
-        gnd_leftx = 0
-        gnd_rightx = 0
+        # For the wordlines
+        top_bot_mult = 1
+        left_right_mult = 1
+
+        vdd_locs = []
+        gnd_locs = []
+        # There are always vertical pins for the WLs on the left/right if we have unused wordlines
+        self.left_gnd_locs = self.route_side_pin("gnd", "left", left_right_mult)
+        self.right_gnd_locs = self.route_side_pin("gnd","right", left_right_mult)
+        left_right_mult = 3
+
+        if gnd_dir == "V":
+            self.top_gnd_locs = self.route_side_pin("gnd", "top", top_bot_mult)
+            self.bot_gnd_locs = self.route_side_pin("gnd", "bot", top_bot_mult)
+            top_bot_mult = 3
+
+        if vdd_dir == "V":
+            self.top_vdd_locs = self.route_side_pin("vdd", "top", top_bot_mult)
+            self.bot_vdd_locs = self.route_side_pin("vdd", "bot", top_bot_mult)
+        elif vdd_dir == "H":
+            self.left_vdd_locs = self.route_side_pin("vdd", "left", left_right_mult)
+            self.right_vdd_locs = self.route_side_pin("vdd", "right", left_right_mult)
+        else:
+            debug.error("Invalid vdd direction {}".format(vdd_dir), -1)
+
 
         for inst in supply_insts:
             for pin in inst.get_pins("vdd"):
-                (vdd_leftx, vdd_rightx) = self.connect_pin(pin, 2.5)
+                if vdd_dir == "V":
+                    self.connect_side_pin(pin, "top", self.top_vdd_locs[0].y)
+                    self.connect_side_pin(pin, "bot", self.bot_vdd_locs[0].y)
+                elif vdd_dir == "H":
+                    self.connect_side_pin(pin, "left", self.left_vdd_locs[0].x)
+                    self.connect_side_pin(pin, "right", self.right_vdd_locs[0].x)
+
+
+        for inst in supply_insts:
             for pin in inst.get_pins("gnd"):
-                (gnd_leftx, gnd_rightx) = self.connect_pin(pin)
-
-
-        self.add_layout_end_pin_segment_center(text="vdd",
-                                               layer=self.supply_stack[2],
-                                               start=vector(vdd_leftx, 0),
-                                               end=vector(vdd_leftx, self.height))
-        self.add_layout_end_pin_segment_center(text="vdd",
-                                               layer=self.supply_stack[2],
-                                               start=vector(vdd_rightx, 0),
-                                               end=vector(vdd_rightx, self.height))
-        self.add_layout_end_pin_segment_center(text="gnd",
-                                               layer=self.supply_stack[2],
-                                               start=vector(gnd_leftx, 0),
-                                               end=vector(gnd_leftx, self.height))
-        self.add_layout_end_pin_segment_center(text="gnd",
-                                               layer=self.supply_stack[2],
-                                               start=vector(gnd_rightx, 0),
-                                               end=vector(gnd_rightx, self.height))
+                if gnd_dir == "V":
+                    self.connect_side_pin(pin, "top", self.top_gnd_locs[0].y)
+                    self.connect_side_pin(pin, "bot", self.bot_gnd_locs[0].y)
+                elif gnd_dir == "H":
+                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
+                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
 
 
     def route_unused_wordlines(self):
@@ -501,41 +531,120 @@ class replica_bitcell_array(bitcell_base_array):
         for inst in self.dummy_row_insts:
             for wl_name in self.col_cap_top.get_wordline_names():
                 pin = inst.get_pin(wl_name)
-                self.connect_pin(pin)
+                self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
+                self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
 
         # Ground the unused replica wordlines
         for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
             for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
                 if wl_name in self.gnd_wordline_names:
                     pin = inst.get_pin(pin_name)
-                    self.connect_pin(pin)
+                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
+                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
 
+    def route_side_pin(self, name, side, offset_multiple=1):
+        """
+        Routes a vertical or horizontal pin on the side of the bbox.
+        The multiple specifies how many track offsets to be away from the side assuming
+        (0,0) (self.width, self.height)
+        """
+        if side in ["left", "right"]:
+            return self.route_vertical_side_pin(name, side, offset_multiple)
+        elif side in ["top", "bottom", "bot"]:
+            return self.route_horizontal_side_pin(name, side, offset_multiple)
+        else:
+            debug.error("Invalid side {}".format(side), -1)
 
-    def connect_pin(self, pin, offset_multiple=1):
+    def route_vertical_side_pin(self, name, side, offset_multiple=1):
+        """
+        Routes a vertical pin on the side of the bbox.
+        """
+        if side == "left":
+            bot_loc = vector(-offset_multiple * self.vertical_pitch, 0)
+            top_loc = vector(-offset_multiple * self.vertical_pitch, self.height)
+        elif side == "right":
+            bot_loc = vector(self.width + offset_multiple * self.vertical_pitch, 0)
+            top_loc = vector(self.width + offset_multiple * self.vertical_pitch, self.height)
 
-        pin_layer = pin.layer
+        layer = self.supply_stack[2]
+        self.add_path(layer, [bot_loc, top_loc])
 
-        left_pin_loc = vector(self.dummy_col_insts[0].lx(), pin.cy())
-        right_pin_loc = vector(self.dummy_col_insts[1].rx(), pin.cy())
+        self.add_layout_pin_rect_center(text=name,
+                                        layer=layer,
+                                        offset=top_loc)
+        self.add_layout_pin_rect_center(text=name,
+                                        layer=layer,
+                                        offset=bot_loc)
+
+        return (bot_loc, top_loc)
+
+    def route_horizontal_side_pin(self, name, side, offset_multiple=1):
+        """
+        Routes a horizontal pin on the side of the bbox.
+        """
+        if side in ["bottom", "bot"]:
+            left_loc = vector(0, -offset_multiple * self.horizontal_pitch)
+            right_loc = vector(self.width, -offset_multiple * self.horizontal_pitch)
+        elif side == "top":
+            left_loc = vector(0, self.height + offset_multiple * self.horizontal_pitch)
+            right_loc = vector(self.width, self.height + offset_multiple * self.horizontal_pitch)
+
+        layer = self.supply_stack[0]
+        self.add_path(layer, [left_loc, right_loc])
+
+        self.add_layout_pin_rect_center(text=name,
+                                        layer=layer,
+                                        offset=left_loc)
+        self.add_layout_pin_rect_center(text=name,
+                                        layer=layer,
+                                        offset=right_loc)
+
+        return (left_loc, right_loc)
+
+    def connect_side_pin(self, pin, side, offset):
+        """
+        Used to connect horizontal layers of pins to the left/right straps
+        locs provides the offsets of the pin strip end points.
+        """
+        if side in ["left", "right"]:
+            self.connect_vertical_side_pin(pin, side, offset)
+        elif side in ["top", "bottom", "bot"]:
+            self.connect_horizontal_side_pin(pin, side, offset)
+        else:
+            debug.error("Invalid side {}".format(side), -1)
+
+    def connect_horizontal_side_pin(self, pin, side, yoffset):
+        """
+        Used to connect vertical layers of pins to the top/bottom horizontal straps
+        """
+        cell_loc = pin.center()
+        pin_loc = vector(cell_loc.x, yoffset)
 
         # Place the pins a track outside of the array
-        left_loc = left_pin_loc - vector(offset_multiple * self.horizontal_pitch, 0)
-        right_loc = right_pin_loc + vector(offset_multiple * self.horizontal_pitch, 0)
-        self.add_via_stack_center(offset=left_loc, 
-                                  from_layer=pin_layer,
-                                  to_layer=self.supply_stack[2],
-                                  directions=("H", "H"))
-        self.add_via_stack_center(offset=right_loc, 
-                                  from_layer=pin_layer,
+        self.add_via_stack_center(offset=pin_loc,
+                                  from_layer=pin.layer,
+                                  to_layer=self.supply_stack[0],
+                                  directions=("V", "V"))
+
+        # Add a path to connect to the array
+        self.add_path(pin.layer, [cell_loc, pin_loc])
+
+
+    def connect_vertical_side_pin(self, pin, side, xoffset):
+        """
+        Used to connect vertical layers of pins to the top/bottom vertical straps
+        """
+        cell_loc = pin.center()
+        pin_loc = vector(xoffset, cell_loc.y)
+
+        # Place the pins a track outside of the array
+        self.add_via_stack_center(offset=pin_loc,
+                                  from_layer=pin.layer,
                                   to_layer=self.supply_stack[2],
                                   directions=("H", "H"))
 
         # Add a path to connect to the array
-        self.add_path(pin_layer, [left_loc, right_loc])
-
-        return (left_loc.x, right_loc.x)
-
-
+        self.add_path(pin.layer, [cell_loc, pin_loc])
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

@@ -673,9 +673,9 @@ class layout():
             bot_pos = vector(x, bot_y)
 
             if num_pins==2:
-                self.add_layout_pin_rect_ends(name=name, 
-                                              layer=pin_layer, 
-                                              start=top_pos, 
+                self.add_layout_pin_rect_ends(name=name,
+                                              layer=pin_layer,
+                                              start=top_pos,
                                               end=bot_pos,
                                               width=via_width)
             else:
@@ -689,10 +689,10 @@ class layout():
     def add_layout_pin_rect_ends(self, name, layer, start, end, width=None):
 
         # This adds pins on the end connected by a segment
-        top_rect = self.add_layout_pin_rect_center(text=name, 
+        top_rect = self.add_layout_pin_rect_center(text=name,
                                                    layer=layer,
                                                    offset=start)
-        bot_rect = self.add_layout_pin_rect_center(text=name, 
+        bot_rect = self.add_layout_pin_rect_center(text=name,
                                                    layer=layer,
                                                    offset=end)
         # This is made to not overlap with the pin above
@@ -773,9 +773,9 @@ class layout():
             right_pos = vector(right_x, y)
 
             if num_pins==2:
-                self.add_layout_pin_rect_ends(name=name, 
-                                              layer=pin_layer, 
-                                              start=left_pos, 
+                self.add_layout_pin_rect_ends(name=name,
+                                              layer=pin_layer,
+                                              start=left_pos,
                                               end=right_pos,
                                               width=via_height)
             else:
@@ -812,7 +812,6 @@ class layout():
                                     end=end_pin.bc())
         else:
             debug.error("Cannot have a point pin.", -1)
-            
 
     def add_layout_pin_segment_center(self, text, layer, start, end, width=None):
         """

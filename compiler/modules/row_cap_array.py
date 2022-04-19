@@ -106,10 +106,13 @@ class row_cap_array(bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # Add vdd/gnd via stacks
         for row in range(1, self.row_size - 1):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.copy_power_pin(pin)
+                        self.add_layout_pin(text=pin_name,
+                                            layer=pin.layer,
+                                            offset=pin.ll(),
+                                            width=pin.width(),
+                                            height=pin.height())

@@ -30,6 +30,8 @@ tech_modules = module_type()
 # Custom cell properties
 ###################################################
 cell_properties = cell_properties()
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "V"
 
 ###################################################
 # Custom cell properties

@@ -12,7 +12,7 @@ from globals import OPTS
 from sram_factory import factory
 
 
-class delay_chain(design.design):
+class multi_delay_chain(design.design):
     """
     Generate a delay chain with the given number of stages, fanout, and output pins.
     Fanout list contains the electrical effort (fanout) of each stage.
@@ -36,7 +36,7 @@ class delay_chain(design.design):
         self.rows = len(self.fanout_list)
         
         # defaults to signle output at end of delay chain
-        if len(self.pinout_list) == 0:
+        if len(pinout_list) == 0:
             self.pinout_list = [self.rows] # TODO: check for off-by-one here
         else:
             self.pinout_list = pinout_list

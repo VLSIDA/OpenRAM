@@ -14,7 +14,7 @@ from globals import OPTS
 import logical_effort
 
 
-class control_logic(design.design):
+class control_logic_delay(design.design):
     """
     Dynamically generated Control logic for the total SRAM circuit.
     Variant: delay-based
@@ -96,10 +96,6 @@ class control_logic(design.design):
                                    size=12,
                                    height=dff_height)
 
-        self.rbl_driver = factory.create(module_type="pbuf",
-                                         size=self.num_cols,
-                                         height=dff_height)
-
         # clk_buf drives a flop for every address
         addr_flops = math.log(self.num_words, 2) + math.log(self.words_per_row, 2)
         # plus data flops and control flops
@@ -154,8 +150,9 @@ class control_logic(design.design):
 
         debug.check(OPTS.delay_chain_stages % 2,
                     "Must use odd number of delay chain stages for inverting delay chain.")
-        self.delay_chain=factory.create(module_type="delay_chain",
-                                        fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ])
+        self.multi_delay_chain=factory.create(module_type = "multi_delay_chain",
+                                              fanout_list = OPTS.delay_chain_stages * [ OPTS.delay_chain_fanout_per_stage ],
+                                              pinout_list = [1, 6, 7, 14]) # TODO: generate this list programatically
 
     # not being used
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
@@ -302,13 +299,14 @@ class control_logic(design.design):
         self.create_clk_buf_row()
         self.create_gated_clk_bar_row()
         self.create_gated_clk_buf_row()
+        self.create_delay()
+        self.create_glitches()
+        self.create_glitch3_additional_invs()
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
-            self.create_rbl_delay_row()
             self.create_wen_row()
         if (self.port_type == "rw") or (self.port_type == "r"):
             self.create_sen_row()
-        self.create_delay()
         self.create_pen_row()
 
     def place_instances(self):
@@ -380,11 +378,10 @@ class control_logic(design.design):
         self.route_supply()
 
     def create_delay(self):
-        """ Create the replica bitline """
-        self.delay_inst=self.add_inst(name="delay_chain",
-                                      mod=self.delay_chain)
-        # rbl_bl_delay is asserted (1) when the bitline has been discharged
-        self.connect_inst(["rbl_bl", "rbl_bl_delay", "vdd", "gnd"])
+        """ Create the delay chain """
+        self.delay_inst=self.add_inst(name="multi_delay_chain",
+                                      mod=self.multi_delay_chain)
+        self.connect_inst(["gated_clk_buf", "out1", "out6", "out7", "out14", "vdd", "gnd"])
 
     def place_delay(self, row):
         """ Place the replica bitline """
@@ -416,28 +413,28 @@ class control_logic(design.design):
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
     def create_glitches(self):
-        self.glitch1_inv = self.add_inst(name="inv_glitch1",
-                                         mod=self.inv)
+        self.glitch1_inv_inst = self.add_inst(name="inv_glitch1",
+                                              mod=self.inv)
         self.connect_inst(["out6", "g1_end", "vdd", "gnd"])
 
-        self.glitch2_inv = self.add_inst(name="inv_glitch2",
-                                         mod=self.inv)
+        self.glitch2_inv_inst = self.add_inst(name="inv_glitch2",
+                                              mod=self.inv)
         self.connect_inst(["out7", "g2_end", "vdd", "gnd"])
 
-        self.glitch3_inv = self.add_inst(name="inv_glitch3",
-                                         mod=self.inv)
+        self.glitch3_inv_inst = self.add_inst(name="inv_glitch3",
+                                              mod=self.inv)
         self.connect_inst(["out14", "g3_end", "vdd", "gnd"])
 
-        self.glitch1_nand = self.add_inst(name="nand2_glitch1",
-                                          mod=self.nand2)
+        self.glitch1_nand_inst = self.add_inst(name="nand2_glitch1",
+                                               mod=self.nand2)
         self.connect_inst(["out1", "g1_end", "glitch1_bar", "vdd", "gnd"])
 
-        self.glitch2_nand = self.add_inst(name="nand2_glitch2",
-                                          mod=self.nand2)
+        self.glitch2_nand_inst = self.add_inst(name="nand2_glitch2",
+                                               mod=self.nand2)
         self.connect_inst(["gated_clk_buf", "g2_end", "glitch2_bar", "vdd", "gnd"])
 
-        self.glitch3_nand = self.add_inst(name="nand2_glitch3",
-                                          mod=self.nand2)
+        self.glitch3_nand_inst = self.add_inst(name="nand2_glitch3",
+                                               mod=self.nand2)
         self.connect_inst(["out6", "g3_end", "glitch3_bar", "vdd", "gnd"])
 
     def create_clk_buf_row(self):
@@ -544,10 +541,13 @@ class control_logic(design.design):
                                   offset=z_pin.center())
 
     def create_wlen_row(self):
-        # input pre_p_en, output: wl_en
+        self.wl_en_unbuf_and_inst = self.add_inst(name="and_wl_en_unbuf",
+                                                  mod=self.wl_en_and)
+        self.connect_inst(["cs", "glitch2_bar", "wl_en_unbuf", "vdd", "gnd"])
+
         self.wl_en_inst=self.add_inst(name="buf_wl_en",
                                       mod=self.wl_en_driver)
-        self.connect_inst(["gated_clk_bar", "wl_en", "vdd", "gnd"])
+        self.connect_inst(["wl_en_unbuf", "wl_en", "vdd", "gnd"])
 
     def place_wlen_row(self, row):
         x_offset = self.control_x_offset
@@ -563,15 +563,13 @@ class control_logic(design.design):
         self.connect_output(self.wl_en_inst, "Z", "wl_en")
 
     def create_pen_row(self):
-        self.p_en_bar_nand_inst=self.add_inst(name="nand_p_en_bar",
-                                              mod=self.nand2)
+        # FIXME: comment below
         # We use the rbl_bl_delay here to ensure that the p_en is only asserted when the
         # bitlines have already been discharged. Otherwise, it is a combination loop.
-        self.connect_inst(["gated_clk_buf", "rbl_bl_delay", "p_en_bar_unbuf", "vdd", "gnd"])
 
         self.p_en_bar_driver_inst=self.add_inst(name="buf_p_en_bar",
                                                 mod=self.p_en_bar_driver)
-        self.connect_inst(["p_en_bar_unbuf", "p_en_bar", "vdd", "gnd"])
+        self.connect_inst(["glitch1_bar", "p_en_bar", "vdd", "gnd"])
 
     def place_pen_row(self, row):
         x_offset = self.control_x_offset
@@ -597,6 +595,16 @@ class control_logic(design.design):
 
         self.connect_output(self.p_en_bar_driver_inst, "Z", "p_en_bar")
 
+    def create_glitch3_additional_invs(self):
+        """ A pair of inverters to create additional signals from and buffer glitch 3"""
+        self.glitch3_buf_inv_inst = self.add_inst(name="inv_glitch3_buf",
+                                                  mod=self.inv)
+        self.connect_inst(["glitch3_bar", "glitch3_buf", "vdd", "gnd"])
+
+        self.pre_sen_inv = self.add_inst(name="inv_pre_sen",
+                                         mod=self.inv)
+        self.connect_inst(["gltich3_buf", "pre_sen", "vdd", "gnd"])
+
     def create_sen_row(self):
         """ Create the sense enable buffer. """
         if self.port_type=="rw":
@@ -604,12 +612,13 @@ class control_logic(design.design):
         else:
             input_name = "cs"
         # GATE FOR S_EN
-        self.s_en_gate_inst = self.add_inst(name="buf_s_en_and",
+        self.s_en_gate_inst = self.add_inst(name="and_s_en",
                                             mod=self.sen_and3)
+        # FIXME: comment below
         # s_en is asserted in the second half of the cycle during a read.
         # we also must wait until the bitline has been discharged enough for proper sensing
         # hence we use rbl_bl_delay as well.
-        self.connect_inst(["rbl_bl_delay", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
+        self.connect_inst(["pre_sen", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
 
     def place_sen_row(self, row):
         x_offset = self.control_x_offset
@@ -640,10 +649,10 @@ class control_logic(design.design):
             input_name = "cs"
 
         # GATE THE W_EN
-        self.w_en_gate_inst = self.add_inst(name="w_en_and",
+        self.w_en_gate_inst = self.add_inst(name="and_w_en",
                                             mod=self.wen_and)
         # Only drive the writes in the second half of the clock cycle during a write operation.
-        self.connect_inst([input_name, "rbl_bl_delay_bar", "gated_clk_bar", "w_en", "vdd", "gnd"])
+        self.connect_inst([input_name, "glitch2_bar", "glitch3_buf", "w_en", "vdd", "gnd"])
 
     def place_wen_row(self, row):
         x_offset = self.control_x_offset

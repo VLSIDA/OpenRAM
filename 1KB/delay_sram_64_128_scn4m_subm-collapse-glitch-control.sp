@@ -13930,17 +13930,17 @@ Xnand2_glitch3 out6 g3_end glitch3_bar vdd gnd pnand2
 Xinv_glitch3_buf glitch3_bar glitch3_buf vdd gnd pinv_11
 * is cs_buf needed on larger memories? I don't remember why I needed this for small mems. Some timing bs surely
 * I have a feeling this was another misguided workaround to proper gate sizing smh my head bruh
-Xbuf_cs cs cs_buf vdd gnd pdriver_0
+*Xbuf_cs cs cs_buf vdd gnd pdriver_0
 Xclkbuf clk clk_buf vdd gnd pdriver_0
 Xinv_clk_bar clk_buf clk_bar vdd gnd pinv_17
 Xand2_gated_clk_bar clk_bar cs gated_clk_bar vdd gnd pand2
 Xand2_gated_clk_buf clk_buf cs gated_clk_buf vdd gnd pand2
 * uhhhh do I really need this?? can't I just roll this into one gate with the next?
-Xinv_pre_s glitch3_buf pre_s vdd gnd pinv_11
+Xinv_pre_sen glitch3_buf pre_sen vdd gnd pinv_11
 * I'm an idiot and the following two and3 gates are not supposed to be the same size smh
-Xand_s_en we_bar gated_clk_bar pre_s s_en vdd gnd pand3
+Xand_s_en we_bar gated_clk_bar pre_sen s_en vdd gnd pand3
 Xand_w_en we glitch2_bar glitch3_buf w_en vdd gnd pand3
-Xand_wl_en_unbuf cs_buf glitch2_bar wl_en_unbuf vdd gnd pand2
+Xand_wl_en_unbuf cs glitch2_bar wl_en_unbuf vdd gnd pand2
 * Xbuf_wl_en is an untested addition, probably too slow but honestly hard to say because the 
 * fanout was so horrible on wl_en without it that maybe it's actually better now ¯\_(ツ)_/¯
 Xbuf_wl_en wl_en_unbuf wl_en vdd gnd pdriver_1

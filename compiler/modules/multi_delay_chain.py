@@ -40,7 +40,7 @@ class multi_delay_chain(design.design):
             self.pinout_list = [self.rows] # TODO: check for off-by-one here
         else:
             # Set() to sort in ascending order and remove duplicates
-            self.pinout_list = set(pinout_list)
+            self.pinout_list = list(set(pinout_list))
 
         # Check pinout bounds
         debug.check(self.pinout_list[-1] <= self.rows, 

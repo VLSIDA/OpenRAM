@@ -444,7 +444,7 @@ class control_logic_delay(design.design):
                                           mod=self.clk_buf_driver)
         self.connect_inst(["clk", "clk_buf", "vdd", "gnd"])
 
-    def create_clk_buf_row(self):
+    def create_cs_buf_row(self):
         """ Create the multistage and gated chip select buffer  """
         self.cs_buf_inst = self.add_inst(name="csbuf",
                                           mod=self.clk_buf_driver)

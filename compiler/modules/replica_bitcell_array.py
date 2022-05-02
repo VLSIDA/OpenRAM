@@ -331,6 +331,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.translate_all(array_offset.scale(-1, -1))
 
         # Add extra width on the left and right for the unused WLs
+
         self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
         self.height = self.dummy_row_insts[1].uy()
 
@@ -339,6 +340,12 @@ class replica_bitcell_array(bitcell_base_array):
         self.route_supplies()
 
         self.route_unused_wordlines()
+
+        lower_left = self.find_lowest_coords()
+        upper_right = self.find_highest_coords()
+        self.width = upper_right.x - lower_left.x
+        self.height = upper_right.y - lower_left.y
+        self.translate_all(lower_left)
 
         self.add_boundary()
 
@@ -355,6 +362,18 @@ class replica_bitcell_array(bitcell_base_array):
 
     def get_main_array_right(self):
         return self.bitcell_array_inst.rx()
+
+    def get_replica_top(self):
+        return max([x.uy() for x in self.replica_col_insts if x] + [self.get_main_array_top()])
+
+    def get_replica_bottom(self):
+        return min([x.by() for x in self.replica_col_insts if x] + [self.get_main_array_bottom()])
+
+    def get_replica_left(self):
+        return min([x.lx() for x in self.replica_col_insts if x] + [self.get_main_array_left()])
+
+    def get_replica_right(self):
+        return min([x.rx() for x in self.replica_col_insts if x] + [self.get_main_array_right()])
 
     def get_column_offsets(self):
         """
@@ -567,14 +586,15 @@ class replica_bitcell_array(bitcell_base_array):
             top_loc = vector(self.width + offset_multiple * self.vertical_pitch, self.height)
 
         layer = self.supply_stack[2]
-        self.add_path(layer, [bot_loc, top_loc])
 
-        self.add_layout_pin_rect_center(text=name,
-                                        layer=layer,
-                                        offset=top_loc)
-        self.add_layout_pin_rect_center(text=name,
-                                        layer=layer,
-                                        offset=bot_loc)
+#        self.add_layout_pin_rect_ends(text=name,
+#                                      layer=layer,
+#                                      start=bot_loc,
+#                                      end=top_loc)
+        self.add_layout_pin_segment_center(text=name,
+                                           layer=layer,
+                                           start=bot_loc,
+                                           end=top_loc)
 
         return (bot_loc, top_loc)
 
@@ -590,14 +610,15 @@ class replica_bitcell_array(bitcell_base_array):
             right_loc = vector(self.width, self.height + offset_multiple * self.horizontal_pitch)
 
         layer = self.supply_stack[0]
-        self.add_path(layer, [left_loc, right_loc])
 
-        self.add_layout_pin_rect_center(text=name,
-                                        layer=layer,
-                                        offset=left_loc)
-        self.add_layout_pin_rect_center(text=name,
-                                        layer=layer,
-                                        offset=right_loc)
+#        self.add_layout_pin_rect_ends(text=name,
+#                                      layer=layer,
+#                                      start=left_loc,
+#                                      end=right_loc)
+        self.add_layout_pin_segment_center(text=name,
+                                           layer=layer,
+                                           start=left_loc,
+                                           end=right_loc)
 
         return (left_loc, right_loc)
 

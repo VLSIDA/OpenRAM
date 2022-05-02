@@ -77,11 +77,12 @@ class wordline_driver_array(design.design):
         Add vertical power rails.
         """
 
-        for inst in self.wld_inst:
-            for pin in inst.get_pins("vdd"):
-                self.add_power_pin("vdd", pin.rc())
-            #self.copy_layout_pin(inst, "vdd") 
-            self.copy_layout_pin(inst, "gnd") 
+        if layer_props.wordline_driver.vertical_supply:
+            self.route_vertical_pins("vdd", self.wld_inst)
+            self.route_vertical_pins("gnd", self.wld_inst)
+        else:
+            self.route_vertical_pins("vdd", self.wld_inst, xside="rx",)
+            self.route_vertical_pins("gnd", self.wld_inst, xside="lx",)
 
 
     def create_drivers(self):

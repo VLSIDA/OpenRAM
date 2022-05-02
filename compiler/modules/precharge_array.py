@@ -83,7 +83,7 @@ class precharge_array(design.design):
     def add_layout_pins(self):
 
         en_pin = self.pc_cell.get_pin("en_bar")
-        self.route_horizontal_pins("en_bar", layer=self.en_bar_layer, num_pins=1)
+        self.route_horizontal_pins("en_bar", layer=self.en_bar_layer)
         for inst in self.local_insts:
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer=self.en_bar_layer,

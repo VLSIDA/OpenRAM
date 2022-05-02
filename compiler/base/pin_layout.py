@@ -174,6 +174,10 @@ class pin_layout:
 
     def intersection(self, other):
         """ Check if a shape overlaps with a rectangle  """
+
+        if not self.overlaps(other):
+            return None
+
         (ll, ur) = self.rect
         (oll, our) = other.rect
 
@@ -181,6 +185,9 @@ class pin_layout:
         max_x = min(ur.x, our.x)
         min_y = max(ll.y, oll.y)
         max_y = min(ur.y, our.y)
+
+        if max_x - min_x == 0 or max_y - min_y == 0:
+            return None
 
         return [vector(min_x, min_y), vector(max_x, max_y)]
 

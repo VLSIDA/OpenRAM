@@ -172,25 +172,9 @@ class delay_chain(design.design):
                 self.add_path("m2", [z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])
 
     def route_supplies(self):
-        # Add power and ground to all the cells except:
-        # the fanout driver, the right-most load
-        # The routing to connect the loads is over the first and last cells
-        # We have an even number of drivers and must only do every other
-        # supply rail
-        if True or OPTS.experimental_power:
-            left_load_insts = [self.load_inst_map[x][0] for x in self.driver_inst_list]
-            right_load_insts = [self.load_inst_map[x][-1] for x in self.driver_inst_list]
-            self.route_vertical_pins("vdd", left_load_insts, xside="lx")
-            self.route_vertical_pins("gnd", right_load_insts, xside="rx")
-        else:
-            for inst in self.driver_inst_list:
-                load_list = self.load_inst_map[inst]
-                for pin_name in ["vdd", "gnd"]:
-                    pin = load_list[0].get_pin(pin_name)
-                    self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
-
-                    pin = load_list[-2].get_pin(pin_name)
-                    self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
+        self.route_vertical_pins("vdd", self.driver_inst_list, xside="lx")
+        right_load_insts = [self.load_inst_map[x][-1] for x in self.driver_inst_list]
+        self.route_vertical_pins("gnd", right_load_insts, xside="rx")
 
     def add_layout_pins(self):
 

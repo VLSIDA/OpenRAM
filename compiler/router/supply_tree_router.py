@@ -154,7 +154,7 @@ class supply_tree_router(router):
                 print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
                 self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)
 
-        #self.write_debug_gds("final_tree_router_{}.gds".format(pin_name), False)
+        self.write_debug_gds("final_tree_router_{}.gds".format(pin_name), False)
         #return
 
     def route_signal(self, pin_name, src_idx, dest_idx):
@@ -180,11 +180,11 @@ class supply_tree_router(router):
 
                 # Add the single component of the pin as the source
                 # which unmarks it as a blockage too
-                self.add_pin_component_source(pin_name, src_idx)
+                self.set_pin_component_source(pin_name, src_idx)
 
                 # Marks all pin components except index as target
                 # which unmarks it as a blockage too
-                self.add_pin_component_target(pin_name, dest_idx)
+                self.set_pin_component_target(pin_name, dest_idx)
 
                 # Actually run the A* router
                 if self.run_router(detour_scale=detour_scale):

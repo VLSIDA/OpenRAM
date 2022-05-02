@@ -419,13 +419,6 @@ class layout():
                                 pin.width(),
                                 pin.height())
 
-    def copy_layout_pins(self, instance, prefix=""):
-        """
-        Create a copied version of the layout pin at the current level.
-        You can optionally rename the pin to a new name.
-        """
-        for pin_name in self.pin_map.keys():
-            self.copy_layout_pin(instance, pin_name, prefix + pin_name)
 
     def connect_row_locs(self, from_layer, to_layer, locs, name=None, full=False):
         """
@@ -608,12 +601,11 @@ class layout():
 
 
 
-    def route_vertical_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", num_pins=2, full_width=True):
+    def route_vertical_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True):
         """
         Route together all of the pins of a given name that vertically align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or right or left if specified.
-        num_pins specifies whether to add a single pin or multiple pins (equally spaced)
         TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
@@ -660,8 +652,10 @@ class layout():
 
             if last_via:
                 via_width=last_via.mod.second_layer_width
+                via_height=last_via.mod.second_layer_height
             else:
                 via_width=None
+                via_height=0
 
             if full_width:
                 bot_y = 0
@@ -669,21 +663,19 @@ class layout():
             else:
                 bot_y = min([pin.by() for (inst,pin) in v])
                 top_y = max([pin.uy() for (inst,pin) in v])
-            top_pos = vector(x, top_y)
-            bot_pos = vector(x, bot_y)
+            top_pos = vector(x, top_y + 0.5 * via_height)
+            bot_pos = vector(x, bot_y - 0.5 * via_height)
 
-            if num_pins==2:
-                self.add_layout_pin_rect_ends(name=name,
-                                              layer=pin_layer,
-                                              start=top_pos,
-                                              end=bot_pos,
-                                              width=via_width)
-            else:
-                self.add_layout_pin_segment_center(text=name,
-                                                   layer=pin_layer,
-                                                   start=top_pos,
-                                                   end=bot_pos,
-                                                   width=via_width)
+#            self.add_layout_pin_rect_ends(name=name,
+#                                          layer=pin_layer,
+#                                          start=top_pos,
+#                                          end=bot_pos,
+#                                          width=via_width)
+            self.add_layout_pin_segment_center(text=name,
+                                               layer=pin_layer,
+                                               start=top_pos,
+                                               end=bot_pos,
+                                               width=via_width)
 
 
     def add_layout_pin_rect_ends(self, name, layer, start, end, width=None):
@@ -707,12 +699,13 @@ class layout():
                                     start=bot_rect.rc(),
                                     end=top_rect.lc())
 
-    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", num_pins=2, full_width=True):
+        return (bot_rect, top_rect)
+
+    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True):
         """
         Route together all of the pins of a given name that horizontally align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or top or botom if specified.
-        num_pins specifies whether to add a single pin or multiple pins (equally spaced)
         TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
@@ -760,8 +753,10 @@ class layout():
 
             if last_via:
                 via_height=last_via.mod.second_layer_height
+                via_width=last_via.mod.second_layer_width
             else:
                 via_height=None
+                via_width=0
 
             if full_width:
                 left_x = 0
@@ -769,22 +764,19 @@ class layout():
             else:
                 left_x = min([pin.lx() for (inst,pin) in v])
                 right_x = max([pin.rx() for (inst,pin) in v])
-            left_pos = vector(left_x, y)
-            right_pos = vector(right_x, y)
+            left_pos = vector(left_x + 0.5 * via_width, y)
+            right_pos = vector(right_x + 0.5 * via_width, y)
 
-            if num_pins==2:
-                self.add_layout_pin_rect_ends(name=name,
-                                              layer=pin_layer,
-                                              start=left_pos,
-                                              end=right_pos,
-                                              width=via_height)
-            else:
-                # This adds a single big pin
-                self.add_layout_pin_segment_center(text=name,
-                                                   layer=pin_layer,
-                                                   start=left_pos,
-                                                   end=right_pos,
-                                                   width=via_height)
+#            self.add_layout_pin_rect_ends(name=name,
+#                                          layer=pin_layer,
+#                                          start=left_pos,
+#                                          end=right_pos,
+#                                          width=via_height)
+            self.add_layout_pin_segment_center(text=name,
+                                               layer=pin_layer,
+                                               start=left_pos,
+                                               end=right_pos,
+                                               width=via_height)
 
     def add_layout_end_pin_segment_center(self, text, layer, start, end):
         """
@@ -1123,7 +1115,6 @@ class layout():
         Add a minimum area retcangle at the given point.
         Either width or height should be fixed.
         """
-
         min_area = drc("minarea_{}".format(layer))
         if min_area == 0:
             return

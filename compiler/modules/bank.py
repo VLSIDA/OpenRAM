@@ -229,7 +229,7 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array above the predecoders and control logic
-        x_offset = self.m2_gap + self.port_address[port].width
+        x_offset = self.decoder_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -272,7 +272,7 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # To the right of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address[port].width + self.m2_gap
+        x_offset = self.bitcell_array_right + self.port_address[port].width + self.decoder_gap
         self.port_address_offsets[port] = vector(x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -364,9 +364,9 @@ class bank(design.design):
             self.num_col_addr_lines = 0
         self.col_addr_bus_width = self.m2_pitch * self.num_col_addr_lines
 
-        # A space for wells or jogging m2
-        self.m2_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
-                          3 * self.m2_pitch,
+        # Gap between decoder and array
+        self.decoder_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
+                          2 * self.m2_pitch,
                           drc("nwell_to_nwell"))
 
     def add_modules(self):
@@ -400,11 +400,10 @@ class bank(design.design):
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
         for port in self.all_ports:
-            temp_pre = factory.create(module_type="port_data",
-                                      sram_config=self.sram_config,
-                                      port=port,
-                                      bit_offsets=self.bit_offsets)
-            self.port_data.append(temp_pre)
+            self.port_data.append(factory.create(module_type="port_data",
+                                                 sram_config=self.sram_config,
+                                                 port=port,
+                                                 bit_offsets=self.bit_offsets))
 
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
@@ -606,15 +605,22 @@ class bank(design.design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+
         # Copy only the power pins already on the power layer
         # (this won't add vias to internal bitcell pins, for example)
-        for inst in self.insts:
-            self.copy_power_pins(inst, "vdd", add_vias=False)
-            self.copy_power_pins(inst, "gnd", add_vias=False)
+
+        # This avoids getting copy errors on vias and other instances
+        all_insts = [self.bitcell_array_inst] + self.port_address_inst + self.port_data_inst
+        if hasattr(self, "column_decoder_inst"):
+            all_insts += self.column_decoder_inst
+
+        for inst in all_insts:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
 
         if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
             for pin_name, supply_name in zip(['vnb','vpb'],['gnd','vdd']):
-                self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
+                self.copy_layout_pin(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.
         # Other decoders already have them.

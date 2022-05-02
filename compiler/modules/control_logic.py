@@ -715,12 +715,17 @@ class control_logic(design.design):
         pin_layer = self.dff.get_pin("vdd").layer
         supply_layer = self.supply_stack[2]
 
+
+        # FIXME: We should be able to replace this with route_vertical_pins instead
+        # but we may have to make the logic gates a separate module so that they
+        # have row pins of the same width
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
         min_row_x_loc = self.control_x_offset
 
         vdd_pin_locs = []
         gnd_pin_locs = []
 
+        last_via = None
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
@@ -728,10 +733,10 @@ class control_logic(design.design):
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
                     vdd_pin_locs.append(pin_loc)
-                    self.add_via_stack_center(from_layer=pin_layer,
-                                              to_layer=supply_layer,
-                                              offset=pin_loc,
-                                              min_area=True)
+                    last_via = self.add_via_stack_center(from_layer=pin_layer,
+                                                         to_layer=supply_layer,
+                                                         offset=pin_loc,
+                                                         min_area=True)
                     self.add_path(pin_layer, [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
@@ -740,29 +745,38 @@ class control_logic(design.design):
                     row_loc = pin.rc()
                     pin_loc = vector(min_row_x_loc, pin.rc().y)
                     gnd_pin_locs.append(pin_loc)
-                    self.add_via_stack_center(from_layer=pin_layer,
-                                              to_layer=supply_layer,
-                                              offset=pin_loc,
-                                              min_area=True)
+                    last_via = self.add_via_stack_center(from_layer=pin_layer,
+                                                         to_layer=supply_layer,
+                                                         offset=pin_loc,
+                                                         min_area=True)
                     self.add_path(pin_layer, [row_loc, pin_loc])
+
+        if last_via:
+            via_height=last_via.mod.second_layer_height
+            via_width=last_via.mod.second_layer_width
+        else:
+            via_height=None
+            via_width=0
         
         min_y = min([x.y for x in vdd_pin_locs])
         max_y = max([x.y for x in vdd_pin_locs])
-        bot_pos = vector(max_row_x_loc, min_y)
-        top_pos = vector(max_row_x_loc, max_y)
+        bot_pos = vector(max_row_x_loc, min_y - 0.5 * via_height)
+        top_pos = vector(max_row_x_loc, max_y + 0.5 * via_height)
         self.add_layout_pin_segment_center(text="vdd",
                                            layer=supply_layer,
                                            start=bot_pos,
-                                           end=top_pos)
+                                           end=top_pos,
+                                           width=via_width)
 
         min_y = min([x.y for x in gnd_pin_locs])
         max_y = max([x.y for x in gnd_pin_locs])
-        bot_pos = vector(min_row_x_loc, min_y)
-        top_pos = vector(min_row_x_loc, max_y)
+        bot_pos = vector(min_row_x_loc, min_y - 0.5 * via_height)
+        top_pos = vector(min_row_x_loc, max_y + 0.5 * via_height)
         self.add_layout_pin_segment_center(text="gnd",
                                            layer=supply_layer,
                                            start=bot_pos,
-                                           end=top_pos)
+                                           end=top_pos,
+                                           width=via_width)
 
         self.copy_layout_pin(self.delay_inst, "gnd")
         self.copy_layout_pin(self.delay_inst, "vdd")

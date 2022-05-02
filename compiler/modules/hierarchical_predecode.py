@@ -395,7 +395,7 @@ class hierarchical_predecode(design.design):
                                       height=top_pin.uy() - self.bus_pitch)
                 # This adds power vias at the top of each cell
                 # (except the last to keep them inside the boundary)
-                for i in self.inv_inst[:-1:2] + self.and_inst[:-1:2]:
+                for i in [self.inv_inst[0], self.inv_inst[-2], self.and_inst[0], self.and_inst[-2]]:
                     pins = i.get_pins(n)
                     for pin in pins:
                         self.copy_power_pin(pin, loc=pin.uc())

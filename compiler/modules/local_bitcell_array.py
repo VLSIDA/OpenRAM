@@ -162,14 +162,15 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
         # FIXME: Replace this with a tech specific paramter
         driver_to_array_spacing = 3 * self.m3_pitch
 
-        self.wl_insts[0].place(vector(0, self.cell.height))
+        self.wl_insts[0].place(vector(0,
+                                      self.bitcell_array.get_replica_bottom() + self.cell.height))
 
         self.bitcell_array_inst.place(vector(self.wl_insts[0].rx() + driver_to_array_spacing,
                                              0))
 
         if len(self.all_ports) > 1:
             self.wl_insts[1].place(vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                                          2 * self.cell.height + self.wl_array.height),
+                                          self.bitcell_array.get_replica_top() + self.cell.height),
                                    mirror="XY")
 
         self.height = self.bitcell_array.height

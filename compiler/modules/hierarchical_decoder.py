@@ -595,14 +595,12 @@ class hierarchical_decoder(design.design):
         # Leave these to route in the port_address
         all_insts = self.pre2x4_inst + self.pre3x8_inst + self.pre4x16_inst
         for inst in all_insts:
-            self.copy_layout_pin(inst, "vdd") 
-            self.copy_layout_pin(inst, "gnd") 
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
+            
+        self.route_vertical_pins("vdd", self.and_inst, xside="rx",)
+        self.route_vertical_pins("gnd", self.and_inst, xside="lx",)
 
-        for inst in self.and_inst:
-            for pin in inst.get_pins("vdd"):
-                self.add_power_pin("vdd", pin.rc())
-            for pin in inst.get_pins("gnd"):
-                self.add_power_pin("gnd", pin.lc())
 
 
     def route_predecode_bus_outputs(self, rail_name, pin, row):

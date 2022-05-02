@@ -154,7 +154,7 @@ class supply_tree_router(router):
                 print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
                 self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)
 
-        self.write_debug_gds("final_tree_router_{}.gds".format(pin_name), False)
+        #self.write_debug_gds("final_tree_router_{}.gds".format(pin_name), False)
         #return
 
     def route_signal(self, pin_name, src_idx, dest_idx):

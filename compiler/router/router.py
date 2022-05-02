@@ -674,16 +674,26 @@ class router(router_tech):
         """
         Return a list of pin shape parts that are in the tracks.
         """
+        # If pin is smaller than a track, just return it.
+        track_pin = self.convert_track_to_shape_pin(list(tracks)[0])
+        if pin.width() < track_pin.width() and pin.height() < track_pin.height():
+            return [pin]
+
         overlap_pins = []
         for track in tracks:
             track_pin = self.convert_track_to_shape_pin(track)
             overlap_rect = track_pin.intersection(pin)
             if not overlap_rect:
                 continue
+            overlap_pin = pin_layout(pin.name,
+                                     overlap_rect,
+                                     pin.layer)
+
+            # If pin is smaller than minwidth, in one dimension, skip it.
+            min_pin_width = drc("minwidth_{0}". format(pin.layer))
+            if overlap_pin.width() < min_pin_width and overlap_pin.height() < min_pin_width:
+                continue
             else:
-                overlap_pin = pin_layout(pin.name,
-                                         overlap_rect,
-                                         pin.layer)
                 overlap_pins.append(overlap_pin)
 
         return overlap_pins

@@ -172,9 +172,11 @@ class delay_chain(design.design):
                 self.add_path("m2", [z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])
 
     def route_supplies(self):
-        self.route_vertical_pins("vdd", self.driver_inst_list, xside="lx")
+        # These pins get routed in one cell from the left/right
+        # because the input signal gets routed on M3 and can interfere with the delay input.
+        self.route_vertical_pins("vdd", self.driver_inst_list, xside="rx")
         right_load_insts = [self.load_inst_map[x][-1] for x in self.driver_inst_list]
-        self.route_vertical_pins("gnd", right_load_insts, xside="rx")
+        self.route_vertical_pins("gnd", right_load_insts, xside="lx")
 
     def add_layout_pins(self):
 

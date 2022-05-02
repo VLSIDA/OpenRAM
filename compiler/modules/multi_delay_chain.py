@@ -21,7 +21,7 @@ class multi_delay_chain(design.design):
     Supplying an empty pinout list will result in an output on the last stage.
     """
 
-    def __init__(self, name, fanout_list, pinout_list):
+    def __init__(self, name, fanout_list, pinout_list = None):
         """init function"""
         super().__init__(name)
         debug.info(1, "creating delay chain {0}".format(str(fanout_list)))
@@ -36,10 +36,17 @@ class multi_delay_chain(design.design):
         self.rows = len(self.fanout_list)
         
         # defaults to signle output at end of delay chain
-        if len(pinout_list) == 0:
+        if not pinout_list:
             self.pinout_list = [self.rows] # TODO: check for off-by-one here
         else:
-            self.pinout_list = pinout_list
+            # Set() to sort in ascending order and remove duplicates
+            self.pinout_list = set(pinout_list)
+
+        # Check pinout bounds
+        debug.check(self.pinout_list[-1] <= self.rows, 
+                    "Ouput pin cannot exceed delay chain length.")
+        debug.check(self.pinout_list[0] > 0, 
+                    "Delay chain output pin numbers must be positive")
 
         self.create_netlist()
         if not OPTS.netlist_only:

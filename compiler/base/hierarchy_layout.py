@@ -657,12 +657,13 @@ class layout():
                 via_width=None
                 via_height=0
 
+            bot_y = min([pin.by() for (inst,pin) in v])
+            top_y = max([pin.uy() for (inst,pin) in v])
+
             if full_width:
-                bot_y = 0
-                top_y = self.height
-            else:
-                bot_y = min([pin.by() for (inst,pin) in v])
-                top_y = max([pin.uy() for (inst,pin) in v])
+                bot_y = min(0, bot_y)
+                top_y = max(self.height, top_y)
+
             top_pos = vector(x, top_y + 0.5 * via_height)
             bot_pos = vector(x, bot_y - 0.5 * via_height)
 
@@ -758,12 +759,13 @@ class layout():
                 via_height=None
                 via_width=0
 
+            left_x = min([pin.lx() for (inst,pin) in v])
+            right_x = max([pin.rx() for (inst,pin) in v])
+
             if full_width:
-                left_x = 0
-                right_x = self.width
-            else:
-                left_x = min([pin.lx() for (inst,pin) in v])
-                right_x = max([pin.rx() for (inst,pin) in v])
+                left_x = min(0, left_x)
+                right_x = max(self.width, right_x)
+
             left_pos = vector(left_x + 0.5 * via_width, y)
             right_pos = vector(right_x + 0.5 * via_width, y)
 

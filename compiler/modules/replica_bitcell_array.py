@@ -507,12 +507,14 @@ class replica_bitcell_array(bitcell_base_array):
         # There are always vertical pins for the WLs on the left/right if we have unused wordlines
         self.left_gnd_locs = self.route_side_pin("gnd", "left", left_right_mult)
         self.right_gnd_locs = self.route_side_pin("gnd","right", left_right_mult)
-        left_right_mult = 3
+        # This needs to be big enough so that they aren't in the same supply routing grid
+        left_right_mult = 4
 
         if gnd_dir == "V":
             self.top_gnd_locs = self.route_side_pin("gnd", "top", top_bot_mult)
             self.bot_gnd_locs = self.route_side_pin("gnd", "bot", top_bot_mult)
-            top_bot_mult = 3
+            # This needs to be big enough so that they aren't in the same supply routing grid
+            top_bot_mult = 4
 
         if vdd_dir == "V":
             self.top_vdd_locs = self.route_side_pin("vdd", "top", top_bot_mult)

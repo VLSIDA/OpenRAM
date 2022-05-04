@@ -175,7 +175,7 @@ ARGS="-v" make 05_bitcell_array_test
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-+ [Mastodon]: <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
++ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
 
 # License
 

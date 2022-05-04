@@ -215,4 +215,6 @@ If I forgot to add you, please let me know!
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 [Sky130]:                https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 
-[Slack]:                 https://join.slack.com/t/openram/shared_invite/enQtNDgxMjc3NzU5NTI1LWZiYWMwNjNkZThmYTdkODc3NDE1NDhjNzUxNDhmMDQ4ZTM3NDgwNWFlNjM5NWFiZDkyMzBlNzc1NTg3ZjllNTY
+[Slack]:                 https://join.slack.com/t/openram/shared_invite/zt-onim74ue-zlttW5XI30xvdBlJGJF6JA
+[Mastodon]:              <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
+

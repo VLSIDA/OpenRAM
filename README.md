@@ -146,16 +146,18 @@ To run a specific test:
 ```
 ce openram/compiler/tests
 make 05_bitcell_array_test
-
+```
 To run a specific technology:
-
+```
 cd openram/compiler/tests
 TECHS=scn4m_subm make 05_bitcell_array_test
+```
 
 To increase the verbosity of the test, add one (or more) -v options and
 pass it as an argument to OpenRAM:
 ```
 ARGS="-v" make 05_bitcell_array_test
+```
 
 # Get Involved
 
@@ -173,6 +175,7 @@ ARGS="-v" make 05_bitcell_array_test
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
++ [Mastodon]: <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
 
 # License
 
@@ -216,5 +219,5 @@ If I forgot to add you, please let me know!
 [Sky130]:                https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 
 [Slack]:                 https://join.slack.com/t/openram/shared_invite/zt-onim74ue-zlttW5XI30xvdBlJGJF6JA
-[Mastodon]:              <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
+
 

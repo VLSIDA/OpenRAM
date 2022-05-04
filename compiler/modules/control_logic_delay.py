@@ -617,7 +617,7 @@ class control_logic_delay(design.design):
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
-            input_name = "cs"
+            input_name = "cs_buf"
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="and_s_en",
                                             mod=self.sen_and3)

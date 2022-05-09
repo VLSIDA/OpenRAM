@@ -6,6 +6,7 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
+from contact import contact
 from tech import drc, spice, preferred_directions
 from tech import cell_properties as props
 from vector import vector
@@ -588,6 +589,9 @@ class replica_bitcell_array(bitcell_base_array):
             top_loc = vector(self.width + offset_multiple * self.vertical_pitch, self.height)
 
         layer = self.supply_stack[2]
+        top_via = contact(layer_stack=self.supply_stack,
+                          directions=("H", "H"))
+
 
 #        self.add_layout_pin_rect_ends(text=name,
 #                                      layer=layer,
@@ -596,7 +600,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_layout_pin_segment_center(text=name,
                                            layer=layer,
                                            start=bot_loc,
-                                           end=top_loc)
+                                           end=top_loc,
+                                           width=top_via.second_layer_width)
 
         return (bot_loc, top_loc)
 
@@ -612,6 +617,8 @@ class replica_bitcell_array(bitcell_base_array):
             right_loc = vector(self.width, self.height + offset_multiple * self.horizontal_pitch)
 
         layer = self.supply_stack[0]
+        side_via = contact(layer_stack=self.supply_stack,
+                           directions=("V", "V"))
 
 #        self.add_layout_pin_rect_ends(text=name,
 #                                      layer=layer,
@@ -620,7 +627,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_layout_pin_segment_center(text=name,
                                            layer=layer,
                                            start=left_loc,
-                                           end=right_loc)
+                                           end=right_loc,
+                                           width=side_via.first_layer_height)
 
         return (left_loc, right_loc)
 

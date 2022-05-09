@@ -670,6 +670,17 @@ class router(router_tech):
 
         return set([best_coord])
 
+    def break_on_grids(self, tracks, xvals, yvals):
+        track_list = []
+        for x in xvals:
+            for y in yvals:
+                track_list.append(vector3d(x, y, 0))
+                track_list.append(vector3d(x, y, 1))
+
+        for current in tracks:
+            if current in track_list:
+                breakpoint()
+
     def divide_pin_to_tracks(self, pin, tracks):
         """
         Return a list of pin shape parts that are in the tracks.
@@ -682,16 +693,11 @@ class router(router_tech):
         overlap_pins = []
         for track in tracks:
             track_pin = self.convert_track_to_shape_pin(track)
-            overlap_rect = track_pin.intersection(pin)
-            if not overlap_rect:
-                continue
-            overlap_pin = pin_layout(pin.name,
-                                     overlap_rect,
-                                     pin.layer)
+            overlap_pin = track_pin.intersection(pin)
 
             # If pin is smaller than minwidth, in one dimension, skip it.
             min_pin_width = drc("minwidth_{0}". format(pin.layer))
-            if overlap_pin.width() < min_pin_width and overlap_pin.height() < min_pin_width:
+            if not overlap_pin or (overlap_pin.width() < min_pin_width and overlap_pin.height() < min_pin_width):
                 continue
             else:
                 overlap_pins.append(overlap_pin)
@@ -1173,16 +1179,26 @@ class router(router_tech):
         if len(path_tracks) == 0 or len(components) == 0:
             return
 
+        # Find the track pin
+        track_pins = [self.convert_tracks_to_pin(x) for x in path_tracks]
+
         # Convert the off-grid pin into parts in each routing grid
         offgrid_pin_parts = []
         for component in components:
             pg = self.pin_groups[pin_name][component]
             for pin in pg.pins:
+                # Layer min with
+                min_width = drc("minwidth_{}".format(pin.layer))
+
+                # If we intersect, by a min_width, we are done!
+                for track_pin in track_pins:
+                    intersection = pin.intersection(track_pin)
+                    if intersection and intersection.width() > min_width and intersection.height() > min_width:
+                        return
+
+                #self.break_on_grids(pg.grids, xvals=[68], yvals=range(93,100))
                 partial_pin_parts = self.divide_pin_to_tracks(pin, pg.grids)
                 offgrid_pin_parts.extend(partial_pin_parts)
-
-        # Find the track pin
-        track_pins = [self.convert_tracks_to_pin(x) for x in path_tracks]
 
         # Find closest part
         closest_track_pin, closest_part_pin = self.find_closest_pin(track_pins, offgrid_pin_parts)

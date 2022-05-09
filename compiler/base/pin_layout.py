@@ -189,7 +189,7 @@ class pin_layout:
         if max_x - min_x == 0 or max_y - min_y == 0:
             return None
 
-        return [vector(min_x, min_y), vector(max_x, max_y)]
+        return pin_layout("", [vector(min_x, min_y), vector(max_x, max_y)], self.layer)
 
     def xoverlaps(self, other):
         """ Check if shape has x overlap """

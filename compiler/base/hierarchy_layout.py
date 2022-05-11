@@ -597,8 +597,14 @@ class layout():
                                         start=top_pos,
                                         end=bot_pos)
 
+    def get_metal_layers(self, from_layer, to_layer):
 
+        from_id = layer_indices[from_layer]
+        to_id   = layer_indices[to_layer]
 
+        layer_list = [x for x in layer_indices.keys() if layer_indices[x] >= from_id and layer_indices[x] < to_id]
+
+        return layer_list
 
 
     def route_vertical_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True):
@@ -647,8 +653,7 @@ class layout():
 
                 last_via = self.add_via_stack_center(from_layer=pin.layer,
                                                      to_layer=pin_layer,
-                                                     offset=vector(x, y),
-                                                     min_area=True)
+                                                     offset=vector(x, y))
 
             if last_via:
                 via_width=last_via.mod.second_layer_width
@@ -1076,6 +1081,8 @@ class layout():
                                  offset=offset)
             return None
 
+        intermediate_layers = self.get_metal_layers(from_layer, to_layer)
+    
         via = None
         cur_layer = from_layer
         while cur_layer != to_layer:
@@ -1098,7 +1105,9 @@ class layout():
                                       implant_type=implant_type,
                                       well_type=well_type)
 
-            if cur_layer != from_layer or min_area:
+            # Only add the enclosure if we are in an intermediate layer
+            # or we are forced to
+            if min_area or cur_layer in intermediate_layers:
                 self.add_min_area_rect_center(cur_layer,
                                               offset,
                                               via.mod.first_layer_width,
@@ -1124,14 +1133,18 @@ class layout():
         min_width = drc("minwidth_{}".format(layer))
 
         if preferred_directions[layer] == "V":
-            height = max(min_area / width, min_width)
+            new_height = max(min_area / width, min_width)
+            new_width = width
         else:
-            width = max(min_area / height, min_width)
+            new_width = max(min_area / height, min_width)
+            new_height = height
+
+        debug.check(min_area <= round_to_grid(new_height*new_width), "Min area violated.")
 
         self.add_rect_center(layer=layer,
                              offset=offset,
-                             width=width,
-                             height=height)
+                             width=new_width,
+                             height=new_height)
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""

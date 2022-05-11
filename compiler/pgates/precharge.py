@@ -100,16 +100,8 @@ class precharge(design.design):
         pmos_pos = pmos_pin.center()
         self.add_path(pmos_pin.layer, [pmos_pos, self.well_contact_pos])
 
-        self.add_via_stack_center(from_layer=pmos_pin.layer,
-                                  to_layer=self.supply_stack[0],
-                                  offset=self.well_contact_pos)
-
-        self.add_min_area_rect_center(layer=self.en_layer,
-                                      offset=self.well_contact_pos,
-                                      width=self.well_contact.mod.second_layer_width)
-
         self.add_layout_pin_rect_center(text="vdd",
-                                        layer=self.supply_stack[0],
+                                        layer=pmos_pin.layer,
                                         offset=self.well_contact_pos)
 
     def create_ptx(self):

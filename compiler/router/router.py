@@ -702,6 +702,8 @@ class router(router_tech):
             else:
                 overlap_pins.append(overlap_pin)
 
+        debug.check(len(overlap_pins) > 0, "No pins overlapped the tracks.")
+
         return overlap_pins
 
 
@@ -1200,8 +1202,12 @@ class router(router_tech):
                 partial_pin_parts = self.divide_pin_to_tracks(pin, pg.grids)
                 offgrid_pin_parts.extend(partial_pin_parts)
 
+        debug.check(len(offgrid_pin_parts) > 0, "No offgrid pin parts found.")
+
         # Find closest part
         closest_track_pin, closest_part_pin = self.find_closest_pin(track_pins, offgrid_pin_parts)
+
+        debug.check(closest_track_pin and closest_part_pin, "Found no closest pins.")
     
         # Find the bbox of the on-grid track and the off-grid pin part
         closest_track_pin.bbox([closest_part_pin])
@@ -1217,13 +1223,13 @@ class router(router_tech):
         Find the closest pin in the lists. Does a stupid O(n^2).
         """
         min_dist = None
-        min_item = None
+        min_item = (None, None)
         for pin1 in first_list:
             for pin2 in second_list:
                 if pin1.layer != pin2.layer:
                     continue
                 new_dist = pin1.distance(pin2)
-                if not min_item or new_dist < min_dist:
+                if not min_dist or new_dist < min_dist:
                     min_item = (pin1, pin2)
                     min_dist = new_dist
 

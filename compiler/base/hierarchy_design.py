@@ -28,7 +28,7 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         is_library_cell = os.path.isfile(gds_file)
         # Uniquify names to address the flat GDS namespace
         # except for the top/output name
-        if not is_library_cell and name != OPTS.output_name:
+        if not is_library_cell and name != OPTS.output_name and not name.startswith(OPTS.output_name):
             name = OPTS.output_name + "_" + name
             cell_name = name
 

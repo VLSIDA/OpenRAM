@@ -353,28 +353,36 @@ class replica_bitcell_array(bitcell_base_array):
         self.DRC_LVS()
 
     def get_main_array_top(self):
+        """ Return the top of the main bitcell array. """
         return self.bitcell_array_inst.uy()
 
     def get_main_array_bottom(self):
+        """ Return the bottom of the main bitcell array. """
         return self.bitcell_array_inst.by()
 
     def get_main_array_left(self):
+        """ Return the left of the main bitcell array. """
         return self.bitcell_array_inst.lx()
 
     def get_main_array_right(self):
+        """ Return the right of the main bitcell array. """
         return self.bitcell_array_inst.rx()
 
     def get_replica_top(self):
-        return max([x.uy() for x in self.replica_col_insts if x] + [self.get_main_array_top()])
+        """ Return the top of all replica columns. """
+        return self.dummy_row_insts[0].by()
 
     def get_replica_bottom(self):
-        return min([x.by() for x in self.replica_col_insts if x] + [self.get_main_array_bottom()])
+        """ Return the bottom of all replica columns. """
+        return self.dummy_row_insts[0].uy()
 
     def get_replica_left(self):
-        return min([x.lx() for x in self.replica_col_insts if x] + [self.get_main_array_left()])
+        """ Return the left of all replica columns. """
+        return self.dummy_col_insts[0].rx()
 
     def get_replica_right(self):
-        return min([x.rx() for x in self.replica_col_insts if x] + [self.get_main_array_right()])
+        """ Return the right of all replica columns. """
+        return self.dummy_col_insts[1].rx()
 
     def get_column_offsets(self):
         """

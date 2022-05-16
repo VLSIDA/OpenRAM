@@ -9,7 +9,7 @@
 import os
 from design_rules import *
 from module_type import *
-from custom_cell_properties import cell_properties, cell
+from custom_cell_properties import cell_properties
 from custom_layer_properties import layer_properties
 
 """

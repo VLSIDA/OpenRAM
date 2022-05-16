@@ -6,6 +6,7 @@
 
 import debug
 from bitcell_base_array import bitcell_base_array
+from pbitcell import pbitcell
 from contact import contact
 from tech import drc, spice, preferred_directions
 from tech import cell_properties as props
@@ -490,7 +491,10 @@ class replica_bitcell_array(bitcell_base_array):
 
     def route_supplies(self):
 
-        bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
+        if OPTS.bitcell == "pbitcell":
+            bitcell = factory.create(module_type="pbitcell")
+        else:
+            bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
 
         wl_layer = bitcell.wl_layer
         wl_dir = bitcell.wl_dir

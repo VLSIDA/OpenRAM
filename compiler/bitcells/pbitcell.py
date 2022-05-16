@@ -33,6 +33,18 @@ class pbitcell(bitcell_base.bitcell_base):
         self.mirror = props.bitcell_1port.mirror
         self.end_caps = props.bitcell_1port.end_caps
 
+        self.wl_layer = "m1"
+        self.wl_dir = "H"
+
+        self.bl_layer = "m2"
+        self.bl_dir = "V"
+
+        self.vdd_layer = "m1"
+        self.vdd_dir = "H"
+
+        self.gnd_layer = "m1"
+        self.gnd_dir = "H"
+
         bitcell_base.bitcell_base.__init__(self, name)
         fmt_str = "{0} rw ports, {1} w ports and {2} r ports"
         info_string = fmt_str.format(self.num_rw_ports,

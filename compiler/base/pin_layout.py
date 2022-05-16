@@ -517,6 +517,13 @@ class pin_layout:
             if len(intersections) == 2:
                 (p1, p2) = intersections
                 return math.sqrt(pow(p1[0]-p2[0], 2) + pow(p1[1]-p2[1], 2))
+            # If we have a rectangular overlap region
+            elif len(intersections) == 4:
+                points = intersections
+                ll = vector(min(p.x for p in points), min(p.y for p in points))
+                ur = vector(max(p.x for p in points), max(p.y for p in points))
+                new_shape = pin_layout("", [ll, ur], self.lpp)
+                return max(new_shape.height(), new_shape.width())
             else:
                 # This is where we had a corner intersection or none
                 return 0

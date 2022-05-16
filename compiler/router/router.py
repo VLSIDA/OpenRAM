@@ -574,20 +574,18 @@ class router(router_tech):
         debug.info(3, "Converting pin [ {0} , {1} ]".format(ll, ur))
 
         # scale the size bigger to include neaby tracks
-        ll = ll.scale(self.track_factor).floor()
-        ur = ur.scale(self.track_factor).ceil()
+        ll_scaled = ll.scale(self.track_factor).floor()
+        ur_scaled = ur.scale(self.track_factor).ceil()
 
         # Keep tabs on tracks with sufficient and insufficient overlap
         sufficient_list = set()
         insufficient_list = set()
 
         zindex = self.get_zindex(pin.lpp)
-        for x in range(int(ll[0]) - expansion, int(ur[0]) + 1 + expansion):
-            for y in range(int(ll[1] - expansion), int(ur[1]) + 1 + expansion):
-                (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin,
-                                                                                   vector3d(x,
-                                                                                            y,
-                                                                                            zindex))
+        for x in range(int(ll_scaled[0]) - expansion, int(ur_scaled[0]) + 1 + expansion):
+            for y in range(int(ll_scaled[1] - expansion), int(ur_scaled[1]) + 1 + expansion):
+                cur_grid = vector3d(x, y, zindex)
+                (full_overlap, partial_overlap) = self.convert_pin_coord_to_tracks(pin, cur_grid)
                 if full_overlap:
                     sufficient_list.update([full_overlap])
                 if partial_overlap:

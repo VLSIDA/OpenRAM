@@ -1227,7 +1227,7 @@ class router(router_tech):
                 if pin1.layer != pin2.layer:
                     continue
                 new_dist = pin1.distance(pin2)
-                if not min_dist or new_dist < min_dist:
+                if min_dist == None or new_dist < min_dist:
                     min_item = (pin1, pin2)
                     min_dist = new_dist
 

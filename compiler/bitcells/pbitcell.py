@@ -99,7 +99,7 @@ class pbitcell(bitcell_base.bitcell_base):
 
         self.route_wordlines()
         self.route_bitlines()
-        self.route_supply()
+        self.route_supplies()
 
         if self.replica_bitcell:
             self.route_rbc_short()
@@ -424,13 +424,14 @@ class pbitcell(bitcell_base.bitcell_base):
 
     def route_rails(self):
         """ Adds gnd and vdd rails and connects them to the inverters """
+
         # Add rails for vdd and gnd
         gnd_ypos = self.m1_offset - self.total_ports * self.m1_nonpref_pitch
         self.gnd_position = vector(0, gnd_ypos)
-        self.add_rect_center(layer="m1",
-                             offset=self.gnd_position,
-                             width=self.width)
-        self.add_power_pin("gnd", vector(0, gnd_ypos), directions=("H", "H"))
+        self.add_layout_pin_rect_center(text="gnd",
+                                       layer="m1",
+                                       offset=self.gnd_position,
+                                       width=self.width)
 
         vdd_ypos = self.inverter_nmos_ypos \
                    + self.inverter_nmos.active_height \
@@ -438,10 +439,10 @@ class pbitcell(bitcell_base.bitcell_base):
                    + self.inverter_pmos.active_height \
                    + self.vdd_offset
         self.vdd_position = vector(0, vdd_ypos)
-        self.add_rect_center(layer="m1",
-                             offset=self.vdd_position,
-                             width=self.width)
-        self.add_power_pin("vdd", vector(0, vdd_ypos), directions=("H", "H"))
+        self.add_layout_pin_rect_center(text="vdd",
+                                        layer="m1",
+                                        offset=self.vdd_position,
+                                        width=self.width)
 
     def create_readwrite_ports(self):
         """
@@ -910,7 +911,7 @@ class pbitcell(bitcell_base.bitcell_base):
             self.add_path("m2",
                           [port_contact_offest, br_offset], width=contact.m1_via.height)
 
-    def route_supply(self):
+    def route_supplies(self):
         """ Route inverter nmos and read-access nmos to gnd. Route inverter pmos to vdd. """
         # route inverter nmos and read-access nmos to gnd
         nmos_contact_positions = []

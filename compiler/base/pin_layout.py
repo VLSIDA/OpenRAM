@@ -511,7 +511,7 @@ class pin_layout:
         elif other.contains(self):
             return math.inf
         else:
-            intersections = self.compute_overlap_segment(other)
+            intersections = set(self.compute_overlap_segment(other))
             # This is the common case where two pairs of edges overlap
             # at two points, so just find the distance between those two points
             if len(intersections) == 2:

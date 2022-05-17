@@ -24,7 +24,7 @@ class column_decoder(design.design):
 
         self.col_addr_size = col_addr_size
         self.num_inputs = col_addr_size
-        self.num_outputs = pow(col_addr_size, 2)
+        self.num_outputs = pow(2, col_addr_size)
         debug.info(2,
                    "create column decoder of {0} inputs and {1} outputs".format(self.num_inputs,
                                                                                 self.num_outputs))
@@ -68,11 +68,16 @@ class column_decoder(design.design):
     def route_layout_pins(self):
         """ Add the pins. """
 
-        for i in range(self.num_inputs):
-            self.copy_layout_pin(self.column_decoder_inst, "in_{0}".format(i))
+        if self.col_addr_size == 1:
+            self.copy_layout_pin(self.column_decoder_inst, "A", "in_0")
+            self.copy_layout_pin(self.column_decoder_inst, "Zb", "out_0")
+            self.copy_layout_pin(self.column_decoder_inst, "Z", "out_1")
+        elif self.col_addr_size > 1:
+            for i in range(self.num_inputs):
+                self.copy_layout_pin(self.column_decoder_inst, "in_{0}".format(i))
 
-        for i in range(self.num_outputs):
-            self.copy_layout_pin(self.column_decoder_inst, "out_{0}".format(i))
+            for i in range(self.num_outputs):
+                self.copy_layout_pin(self.column_decoder_inst, "out_{0}".format(i))
 
     def route_layout(self):
         """ Create routing among the modules """
@@ -81,9 +86,12 @@ class column_decoder(design.design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-
-        self.route_vertical_pins("vdd", self.insts, xside="rx",)
-        self.route_vertical_pins("gnd", self.insts, xside="lx",)
+        if self.col_addr_size == 1:
+            self.copy_power_pins(self.column_decoder_inst, "vdd")
+            self.copy_power_pins(self.column_decoder_inst, "gnd")
+        else:
+            self.route_vertical_pins("vdd", self.insts, xside="rx",)
+            self.route_vertical_pins("gnd", self.insts, xside="lx",)
 
     def add_modules(self):
 

@@ -87,8 +87,8 @@ class column_decoder(design.design):
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
         if self.col_addr_size == 1:
-            self.copy_power_pins(self.column_decoder_inst, "vdd")
-            self.copy_power_pins(self.column_decoder_inst, "gnd")
+            self.copy_layout_pin(self.column_decoder_inst, "vdd")
+            self.copy_layout_pin(self.column_decoder_inst, "gnd")
         else:
             self.route_vertical_pins("vdd", self.insts, xside="rx",)
             self.route_vertical_pins("gnd", self.insts, xside="lx",)

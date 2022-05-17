@@ -108,22 +108,23 @@ class dff_array(design.design):
         return dout_name
 
     def route_supplies(self):
-        if OPTS.experimental_power and self.rows > 1:
+        if self.rows > 1:
             # Vertical straps on ends if multiple rows
             left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]
             right_dff_insts = [self.dff_insts[x, self.columns-1] for x in range(self.rows)]
             self.route_vertical_pins("vdd", left_dff_insts, xside="lx", yside="cy")
             self.route_vertical_pins("gnd", right_dff_insts, xside="rx", yside="cy")
         else:
-            for row in range(self.rows):
-                for col in range(self.columns):
-                    # Continous vdd rail along with label.
-                    vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                    self.copy_power_pin(vdd_pin)
 
-                    # Continous gnd rail along with label.
-                    gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                    self.copy_power_pin(gnd_pin)
+            # Add connections every 4 cells
+            for col in range(1, self.columns, 4):
+                vdd_pin=self.dff_insts[0, col].get_pin("vdd")
+                self.add_power_pin("vdd", vdd_pin.lc())
+
+            # Add connections every 4 cells
+            for col in range(1, self.columns, 4):
+                gnd_pin=self.dff_insts[0, col].get_pin("gnd")
+                self.add_power_pin("gnd", gnd_pin.rc())
 
     def add_layout_pins(self):
         for row in range(self.rows):

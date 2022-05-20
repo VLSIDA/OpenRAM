@@ -167,8 +167,8 @@ class sky130_bitcell_base_array(bitcell_base_array):
             for port in self.all_ports:
                 bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
                 text = "bl_{0}_{1}".format(port, col)
-                if "Y" in self.cell_inst[0, col].mirror:
-                    text = text.replace("bl", "br")
+                #if "Y" in self.cell_inst[0, col].mirror:
+                #    text = text.replace("bl", "br")
                 self.add_layout_pin(text=text,
                                     layer=bl_pin.layer,
                                     offset=bl_pin.ll().scale(1, 0),
@@ -176,8 +176,8 @@ class sky130_bitcell_base_array(bitcell_base_array):
                                     height=self.height)
                 br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
                 text = "br_{0}_{1}".format(port, col)
-                if "Y" in self.cell_inst[0, col].mirror:
-                    text = text.replace("br", "bl")
+                #if "Y" in self.cell_inst[0, col].mirror:
+                #    text = text.replace("br", "bl")
                 self.add_layout_pin(text=text,
                                     layer=br_pin.layer,
                                     offset=br_pin.ll().scale(1, 0),

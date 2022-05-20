@@ -325,16 +325,16 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
                 for (bl_name, pin_name) in zip(names, pin_names):
                     pin = inst.get_pin(pin_name)
                     if 'rbl_bl' in bl_name:
-                        if mirror != "MY":
-                            bl_name = bl_name.replace("rbl_bl","rbl_br")
+                    #    if mirror != "MY":
+                    #        bl_name = bl_name.replace("rbl_bl","rbl_br")
                         self.add_layout_pin(text=bl_name,
                                             layer=pin.layer,
                                             offset=pin.ll().scale(1, 0),
                                             width=pin.width(),
                                             height=self.height)
                     elif 'rbl_br' in bl_name:
-                        if mirror != "MY":
-                            bl_name = bl_name.replace("rbl_br","rbl_bl")
+                    #    if mirror != "MY":
+                    #        bl_name = bl_name.replace("rbl_br","rbl_bl")
                         self.add_layout_pin(text=bl_name,
                                             layer=pin.layer,
                                             offset=pin.ll().scale(1, 0) + vector(0,(pin_height + drc_width*2)),

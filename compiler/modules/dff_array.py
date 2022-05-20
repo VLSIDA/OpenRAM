@@ -42,6 +42,7 @@ class dff_array(design.design):
         self.height = self.rows * self.dff.height
 
         self.place_dff_array()
+        self.route_supplies()
         self.add_layout_pins()
         self.add_boundary()
         self.DRC_LVS()
@@ -106,17 +107,26 @@ class dff_array(design.design):
 
         return dout_name
 
+    def route_supplies(self):
+        if self.rows > 1:
+            # Vertical straps on ends if multiple rows
+            left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]
+            right_dff_insts = [self.dff_insts[x, self.columns-1] for x in range(self.rows)]
+            self.route_vertical_pins("vdd", left_dff_insts, xside="lx", yside="cy")
+            self.route_vertical_pins("gnd", right_dff_insts, xside="rx", yside="cy")
+        else:
+
+            # Add connections every 4 cells
+            for col in range(0, self.columns, 4):
+                vdd_pin=self.dff_insts[0, col].get_pin("vdd")
+                self.add_power_pin("vdd", vdd_pin.lc())
+
+            # Add connections every 4 cells
+            for col in range(0, self.columns, 4):
+                gnd_pin=self.dff_insts[0, col].get_pin("gnd")
+                self.add_power_pin("gnd", gnd_pin.rc())
+
     def add_layout_pins(self):
-        for row in range(self.rows):
-            for col in range(self.columns):
-                # Continous vdd rail along with label.
-                vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                self.copy_power_pin(vdd_pin)
-
-                # Continous gnd rail along with label.
-                gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                self.copy_power_pin(gnd_pin)
-
         for row in range(self.rows):
             for col in range(self.columns):
                 din_pin = self.dff_insts[row, col].get_pin("D")

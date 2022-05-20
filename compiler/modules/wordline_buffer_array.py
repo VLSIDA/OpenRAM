@@ -44,7 +44,10 @@ class wordline_buffer_array(design.design):
         self.place_drivers()
         self.route_layout()
         self.route_supplies()
-        self.offset_all_coordinates()
+
+        # Don't offset these because some cells use standard cell style drivers
+        #self.offset_all_coordinates()
+
         self.add_boundary()
         self.DRC_LVS()
 
@@ -71,31 +74,11 @@ class wordline_buffer_array(design.design):
         are must-connects next level up.
         """
         if layer_props.wordline_driver.vertical_supply:
-            for name in ["vdd", "gnd"]:
-                supply_pins = self.wld_inst[0].get_pins(name)
-                for pin in supply_pins:
-                    self.add_layout_pin_segment_center(text=name,
-                                                       layer=pin.layer,
-                                                       start=pin.bc(),
-                                                       end=vector(pin.cx(), self.height))
+            self.route_vertical_pins("vdd", self.wld_inst)
+            self.route_vertical_pins("gnd", self.wld_inst)
         else:
-            # Find the x offsets for where the vias/pins should be placed
-            xoffset_list = [self.wld_inst[0].rx()]
-            for num in range(self.rows):
-                # this will result in duplicate polygons for rails, but who cares
-
-                # use the inverter offset even though it will be the and's too
-                (gate_offset, y_dir) = self.get_gate_offset(0,
-                                                            self.wl_driver.height,
-                                                            num)
-                # Route both supplies
-                for name in ["vdd", "gnd"]:
-                    supply_pin = self.wld_inst[num].get_pin(name)
-
-                    # Add pins in two locations
-                    for xoffset in xoffset_list:
-                        pin_pos = vector(xoffset, supply_pin.cy())
-                        self.copy_power_pin(supply_pin, loc=pin_pos)
+            self.route_vertical_pins("vdd", self.wld_inst, xside="rx",)
+            self.route_vertical_pins("gnd", self.wld_inst, xside="lx",)
 
     def create_drivers(self):
         self.wld_inst = []

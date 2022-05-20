@@ -159,17 +159,20 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def place(self):
         """ Place the bitcelll array to the right of the wl driver. """
-        # FIXME: Replace this with a tech specific paramter
+
+        # FIXME: Replace this with a tech specific parameter
         driver_to_array_spacing = 3 * self.m3_pitch
 
-        self.wl_insts[0].place(vector(0, self.cell.height))
+        wl_offset = vector(0, self.bitcell_array.get_replica_bottom())
+        self.wl_insts[0].place(wl_offset)
 
-        self.bitcell_array_inst.place(vector(self.wl_insts[0].rx() + driver_to_array_spacing,
-                                             0))
+        bitcell_array_offset = vector(self.wl_insts[0].rx() + driver_to_array_spacing, 0)
+        self.bitcell_array_inst.place(bitcell_array_offset)
 
         if len(self.all_ports) > 1:
-            self.wl_insts[1].place(vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                                          2 * self.cell.height + self.wl_array.height),
+            wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
+                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
+            self.wl_insts[1].place(wl_offset, 
                                    mirror="XY")
 
         self.height = self.bitcell_array.height

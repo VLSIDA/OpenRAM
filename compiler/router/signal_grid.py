@@ -119,10 +119,11 @@ class signal_grid(grid):
         # Expand all directions.
         neighbors = curpath.expand_dirs()
 
+        # Filter the out of region ones
         # Filter the blocked ones
-        unblocked_neighbors = [x for x in neighbors if not self.is_blocked(x)]
+        valid_neighbors = [x for x in neighbors if self.is_inside(x) and not self.is_blocked(x)]
 
-        return unblocked_neighbors
+        return valid_neighbors
 
     def hpwl(self, src, dest):
         """

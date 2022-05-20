@@ -154,15 +154,23 @@ class dff_buf_array(design.design):
             gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
             self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
 
-        for row in range(self.rows):
-            for col in range(self.columns):
-                # Continous vdd rail along with label.
-                vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                self.copy_power_pin(vdd_pin, loc=vdd_pin.lc())
+        if OPTS.experimental_power and self.rows > 1:
+            # Vertical straps on ends if multiple rows
+            left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]
+            right_dff_insts = [self.dff_insts[x, self.columns-1] for x in range(self.rows)]
+            self.route_vertical_pins("vdd", left_dff_insts, xside="lx", yside="cy")
+            self.route_vertical_pins("gnd", right_dff_insts, xside="rx", yside="cy")
+        else:
+            for row in range(self.rows):
+                for col in range(self.columns):
+                    # Continous vdd rail along with label.
+                    vdd_pin=self.dff_insts[row, col].get_pin("vdd")
+                    self.copy_power_pin(vdd_pin)
 
-                # Continous gnd rail along with label.
-                gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                self.copy_power_pin(gnd_pin, loc=gnd_pin.lc())
+                    # Continous gnd rail along with label.
+                    gnd_pin=self.dff_insts[row, col].get_pin("gnd")
+                    self.copy_power_pin(gnd_pin)
+
 
     def add_layout_pins(self):
 

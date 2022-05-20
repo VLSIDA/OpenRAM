@@ -280,7 +280,8 @@ class control_logic(design.design):
     def route_rails(self):
         """ Add the input signal inverted tracks """
         height = self.control_logic_center.y - self.m2_pitch
-        offset = vector(self.ctrl_dff_array.width, 0)
+        # DFF spacing plus the power routing
+        offset = vector(self.ctrl_dff_array.width + self.m4_pitch, 0)
 
         self.input_bus = self.create_vertical_bus("m2",
                                                   offset,
@@ -312,7 +313,8 @@ class control_logic(design.design):
         self.place_dffs()
 
         # All of the control logic is placed to the right of the DFFs and bus
-        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width
+        # as well as the power supply stripe
+        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width + self.m4_pitch
 
         row = 0
         # Add the logic on the right of the bus
@@ -368,7 +370,7 @@ class control_logic(design.design):
         self.route_clk_buf()
         self.route_gated_clk_bar()
         self.route_gated_clk_buf()
-        self.route_supply()
+        self.route_supplies()
 
     def create_delay(self):
         """ Create the replica bitline """
@@ -707,28 +709,74 @@ class control_logic(design.design):
                                            start=out_pos,
                                            end=right_pos)
 
-    def route_supply(self):
+    def route_supplies(self):
         """ Add vdd and gnd to the instance cells """
 
-        supply_layer = self.dff.get_pin("vdd").layer
+        pin_layer = self.dff.get_pin("vdd").layer
+        supply_layer = self.supply_stack[2]
 
+
+        # FIXME: We should be able to replace this with route_vertical_pins instead
+        # but we may have to make the logic gates a separate module so that they
+        # have row pins of the same width
         max_row_x_loc = max([inst.rx() for inst in self.row_end_inst])
+        min_row_x_loc = self.control_x_offset
+
+        vdd_pin_locs = []
+        gnd_pin_locs = []
+
+        last_via = None
         for inst in self.row_end_inst:
             pins = inst.get_pins("vdd")
             for pin in pins:
-                if pin.layer == supply_layer:
+                if pin.layer == pin_layer:
                     row_loc = pin.rc()
                     pin_loc = vector(max_row_x_loc, pin.rc().y)
-                    self.add_power_pin("vdd", pin_loc, start_layer=pin.layer)
-                    self.add_path(supply_layer, [row_loc, pin_loc])
+                    vdd_pin_locs.append(pin_loc)
+                    last_via = self.add_via_stack_center(from_layer=pin_layer,
+                                                         to_layer=supply_layer,
+                                                         offset=pin_loc,
+                                                         min_area=True)
+                    self.add_path(pin_layer, [row_loc, pin_loc])
 
             pins = inst.get_pins("gnd")
             for pin in pins:
-                if pin.layer == supply_layer:
+                if pin.layer == pin_layer:
                     row_loc = pin.rc()
-                    pin_loc = vector(max_row_x_loc, pin.rc().y)
-                    self.add_power_pin("gnd", pin_loc, start_layer=pin.layer)
-                    self.add_path(supply_layer, [row_loc, pin_loc])
+                    pin_loc = vector(min_row_x_loc, pin.rc().y)
+                    gnd_pin_locs.append(pin_loc)
+                    last_via = self.add_via_stack_center(from_layer=pin_layer,
+                                                         to_layer=supply_layer,
+                                                         offset=pin_loc,
+                                                         min_area=True)
+                    self.add_path(pin_layer, [row_loc, pin_loc])
+
+        if last_via:
+            via_height=last_via.mod.second_layer_height
+            via_width=last_via.mod.second_layer_width
+        else:
+            via_height=None
+            via_width=0
+        
+        min_y = min([x.y for x in vdd_pin_locs])
+        max_y = max([x.y for x in vdd_pin_locs])
+        bot_pos = vector(max_row_x_loc, min_y - 0.5 * via_height)
+        top_pos = vector(max_row_x_loc, max_y + 0.5 * via_height)
+        self.add_layout_pin_segment_center(text="vdd",
+                                           layer=supply_layer,
+                                           start=bot_pos,
+                                           end=top_pos,
+                                           width=via_width)
+
+        min_y = min([x.y for x in gnd_pin_locs])
+        max_y = max([x.y for x in gnd_pin_locs])
+        bot_pos = vector(min_row_x_loc, min_y - 0.5 * via_height)
+        top_pos = vector(min_row_x_loc, max_y + 0.5 * via_height)
+        self.add_layout_pin_segment_center(text="gnd",
+                                           layer=supply_layer,
+                                           start=bot_pos,
+                                           end=top_pos,
+                                           width=via_width)
 
         self.copy_layout_pin(self.delay_inst, "gnd")
         self.copy_layout_pin(self.delay_inst, "vdd")
@@ -781,7 +829,7 @@ class control_logic(design.design):
         # Connect this at the bottom of the buffer
         out_pin = inst.get_pin("Z")
         out_pos = out_pin.center()
-        mid1 = vector(out_pos.x, out_pos.y - 0.4 * inst.mod.height)
+        mid1 = vector(out_pos.x, out_pos.y - 0.3 * inst.mod.height)
         mid2 = vector(self.input_bus[name].cx(), mid1.y)
         bus_pos = self.input_bus[name].center()
         self.add_wire(self.m2_stack[::-1], [out_pos, mid1, mid2, bus_pos])

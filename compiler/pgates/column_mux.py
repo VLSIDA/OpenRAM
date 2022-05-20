@@ -240,10 +240,9 @@ class column_mux(pgate.pgate):
         self.add_via_center(layers=self.col_mux_stack,
                             offset=active_pos)
 
-        # Add the M1->..->power_grid_layer stack
-        self.add_power_pin(name="gnd",
-                           loc=active_pos,
-                           start_layer="m1")
+        self.add_layout_pin_rect_center(text="gnd",
+                                        layer="m1",
+                                        offset=active_pos)
 
         # Add well enclosure over all the tx and contact
         if "pwell" in layer:

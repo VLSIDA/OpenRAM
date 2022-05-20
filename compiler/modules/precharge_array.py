@@ -95,11 +95,7 @@ class precharge_array(design.design):
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
 
     def route_supplies(self):
-        if OPTS.experimental_power:
-            self.route_horizontal_pins("vdd")
-        else:
-            for inst in self.local_insts:
-                self.copy_layout_pin(inst, "vdd")
+        self.route_horizontal_pins("vdd")
 
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""

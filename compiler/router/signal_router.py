@@ -59,7 +59,7 @@ class signal_router(router):
             self.write_debug_gds(stop_program=False)
             return False
 
-        self.write_debug_gds(stop_program=False)
+        #self.write_debug_gds(stop_program=False)
         return True
 
 

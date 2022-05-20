@@ -63,7 +63,7 @@ class signal_escape_router(router):
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
-        # self.write_debug_gds("final_escape_router.gds",False)
+        #self.write_debug_gds("final_escape_router.gds",False)
         
         return True
 

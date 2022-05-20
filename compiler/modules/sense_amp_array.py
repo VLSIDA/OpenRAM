@@ -174,18 +174,8 @@ class sense_amp_array(design.design):
                                 height=dout_pin.height())
 
     def route_supplies(self):
-        if OPTS.experimental_power:
-            self.route_horizontal_pins("vdd")
-            self.route_horizontal_pins("gnd")
-        else:
-            for i in range(len(self.local_insts)):
-                inst = self.local_insts[i]
-
-                for gnd_pin in inst.get_pins("gnd"):
-                    self.copy_power_pin(gnd_pin)
-
-                for vdd_pin in inst.get_pins("vdd"):
-                    self.copy_power_pin(vdd_pin)
+        self.route_horizontal_pins("vdd")
+        self.route_horizontal_pins("gnd")
 
     def route_rails(self):
         # Add enable across the array

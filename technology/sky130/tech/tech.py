@@ -86,6 +86,13 @@ cell_properties.bitcell_1port.port_map = {'bl': 'BL',
                                           'vpb': 'VPB',
                                           'gnd': 'VGND'}
 
+cell_properties.bitcell_1port.wl_layer = "m2"
+cell_properties.bitcell_1port.bl_layer = "m1"
+cell_properties.bitcell_1port.vdd_layer = "m1"
+cell_properties.bitcell_1port.vdd_dir = "V"
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "H"
+
 cell_properties.bitcell_2port.mirror.x = True
 cell_properties.bitcell_2port.mirror.y = True
 cell_properties.bitcell_2port.end_caps = True
@@ -98,6 +105,16 @@ cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'wl1': 'WL1',
                                           'vdd': 'VDD',
                                           'gnd': 'GND'}
+cell_properties.bitcell_1port.wl_layer = "m2"
+cell_properties.bitcell_1port.vdd_layer = "m2"
+cell_properties.bitcell_1port.vdd_dir = "H"
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "H"
+cell_properties.bitcell_2port.wl_layer = "m2"
+cell_properties.bitcell_2port.vdd_layer = "m1"
+cell_properties.bitcell_2port.vdd_dir = "H"
+cell_properties.bitcell_2port.gnd_layer = "m2"
+cell_properties.bitcell_2port.gnd_dir = "H"
 
 cell_properties.col_cap_1port_bitcell = cell(['br', 'vdd', 'gnd', 'bl', 'gate'],
                                              ['INPUT', 'POWER', 'GROUND', 'INPUT', 'INPUT'],

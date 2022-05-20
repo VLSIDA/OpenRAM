@@ -1,18 +1,19 @@
+num_banks=2
 word_size = 32
-num_words = 1024
+num_words = 8192
 write_size = 8
 
-local_array_size = 16
+local_array_size = 32
 
 num_rw_ports = 1
-num_r_ports = 0
+num_r_ports = 1
 num_w_ports = 0
 
-tech_name = "sky130"
+tech_name = "scn4m_subm"
 nominal_corner_only = True
 
 route_supplies = False
-check_lvsdrc = True
+check_lvsdrc = False
 perimeter_pins = False
 #netlist_only = True
 #analytical_delay = False

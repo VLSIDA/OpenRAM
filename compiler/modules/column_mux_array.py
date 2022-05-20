@@ -147,13 +147,14 @@ class column_mux_array(design.design):
                                 offset=offset,
                                 height=self.height - offset.y)
 
-        for inst in self.mux_inst:
-            self.copy_layout_pin(inst, "gnd")
+    def route_supplies(self):
+        self.route_horizontal_pins("gnd", self.insts)
 
     def add_routing(self):
         self.add_horizontal_input_rail()
         self.add_vertical_poly_rail()
         self.route_bitlines()
+        self.route_supplies()
 
     def add_horizontal_input_rail(self):
         """ Create address input rails below the mux transistors  """

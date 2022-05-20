@@ -24,13 +24,14 @@ RUN apt-get install --no-install-recommends -y libx11-dev libcairo2-dev
 RUN apt-get install --no-install-recommends -y  qt5-default qtcreator ruby-full ruby-dev python3-dev qtmultimedia5-dev libqt5multimediawidgets5 libqt5multimedia5-plugins libqt5multimedia5 libqt5svg5-dev libqt5designer5 libqt5designercomponents5 libqt5xmlpatterns5-dev qttools5-dev
 
 ### Klayout ###
-ARG KLAYOUT_COMMIT=v0.27.8
+#ARG KLAYOUT_COMMIT=v0.27.8
+ARG KLAYOUT_COMMIT=ea1bf40a1ee1c1c934e47a0020417503ab3d7e7e
 WORKDIR /root
 RUN git clone https://github.com/KLayout/klayout
 WORKDIR /root/klayout
 RUN git checkout ${KLAYOUT_COMMIT}
-RUN ./build.sh -qt5 -j 8 \
- && cp -r bin-release /usr/local/klayout
+RUN ./build.sh -qt5 -debug -j 8 \
+ && cp -r bin-debug /usr/local/klayout
 RUN rm -rf /root/klayout
 
 ### Trilinos ###

@@ -166,15 +166,12 @@ class options(optparse.Values):
 
     keep_temp = False
 
-    # Add a prefix of the root cell before every structure in the GDS
-    # after outputting the GDS2
-    uniquify = False
-
     # These are the default modules that can be over-riden
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
     buf_dec = "pbuf"
+    column_decoder = "column_decoder"
     column_mux_array = "column_mux_array"
     control_logic = "control_logic"
     decoder = "hierarchical_decoder"
@@ -199,4 +196,4 @@ class options(optparse.Values):
     write_mask_and_array = "write_mask_and_array"
 
     # Non-public options
-    experimental_power = False
+    experimental_power = True

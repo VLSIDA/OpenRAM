@@ -381,7 +381,7 @@ class hierarchical_predecode(design.design):
     def route_supplies(self):
         """ Add a pin for each row of vdd/gnd which are must-connects next level up. """
 
-        # We may ahve vertical power supply rails
+        # We may have vertical power supply rails
         if layer_props.hierarchical_predecode.vertical_supply and not self.column_decoder:
             for n in ["vdd", "gnd"]:
                 # This makes a wire from top to bottom for both inv and and gates
@@ -395,7 +395,7 @@ class hierarchical_predecode(design.design):
                                       height=top_pin.uy() - self.bus_pitch)
                 # This adds power vias at the top of each cell
                 # (except the last to keep them inside the boundary)
-                for i in self.inv_inst[:-1:2] + self.and_inst[:-1:2]:
+                for i in [self.inv_inst[0], self.inv_inst[-2], self.and_inst[0], self.and_inst[-2]]:
                     pins = i.get_pins(n)
                     for pin in pins:
                         self.copy_power_pin(pin, loc=pin.uc())
@@ -403,8 +403,6 @@ class hierarchical_predecode(design.design):
         # In other techs, we are using standard cell decoder cells with horizontal power
         else:
             for num in range(0, self.number_of_outputs):
-
-                # Route both supplies
                 for n in ["vdd", "gnd"]:
                     and_pins = self.and_inst[num].get_pins(n)
                     for and_pin in and_pins:
@@ -418,4 +416,4 @@ class hierarchical_predecode(design.design):
                         else:
                             xoffset = self.inv_inst[0].lx() - self.bus_space
                         pin_pos = vector(xoffset, and_pin.cy())
-                        self.copy_power_pin(and_pin, loc=pin_pos)
+                        self.add_power_pin(n, pin_pos)

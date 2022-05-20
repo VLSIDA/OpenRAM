@@ -377,7 +377,6 @@ def read_config(config_file, is_unit_test=True):
                                                          ports,
                                                          OPTS.tech_name)
 
-
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()

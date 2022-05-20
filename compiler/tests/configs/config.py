@@ -14,3 +14,6 @@ tech_name = OPTS.tech_name
 nominal_corner_only = True
 check_lvsdrc = True
 
+#route_supplies = False
+
+output_name = "sram"

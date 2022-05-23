@@ -154,7 +154,7 @@ class dff_buf_array(design.design):
             gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
             self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
 
-        if OPTS.experimental_power and self.rows > 1:
+        if self.rows > 1:
             # Vertical straps on ends if multiple rows
             left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]
             right_dff_insts = [self.dff_insts[x, self.columns-1] for x in range(self.rows)]

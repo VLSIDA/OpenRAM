@@ -256,15 +256,7 @@ class write_driver_array(design.design):
                                 width=self.width)
 
     def route_supplies(self):
-        if OPTS.experimental_power:
-            self.route_horizontal_pins("vdd")
-            self.route_horizontal_pins("gnd")
-        else:
-            for i in range(self.word_size + self.num_spare_cols):
-                inst = self.local_insts[i]
-                for n in ["vdd", "gnd"]:
-                    pin_list = inst.get_pins(n)
-                    for pin in pin_list:
-                        self.copy_power_pin(pin, directions=("V", "V"))
+        self.route_horizontal_pins("vdd")
+        self.route_horizontal_pins("gnd")
 
 

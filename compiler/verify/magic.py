@@ -349,6 +349,14 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=
     test = re.compile("match correctly.")
     correctly = list(filter(test.search, final_results))
 
+    # Top level pins mismatch
+    test = re.compile("The top level cell failed pin matching.")
+    pins_incorrectly = list(filter(test.search, final_results))
+
+    # Fail if the pins mismatched
+    if len(pins_incorrectly) > 0:
+        total_errors += 1
+
     # Fail if they don't match. Something went wrong!
     if len(uniquely) == 0 and len(correctly) == 0:
         total_errors += 1

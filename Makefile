@@ -10,19 +10,19 @@ PDK_ROOT ?= $(TOP_DIR)
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
 SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= main
+SRAM_LIB_GIT_COMMIT ?= 95287ef89556505b2cdf17912c025cb74d9288a7
 
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
 OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 #OPEN_PDKS_GIT_COMMIT ?= 1.0.156
-OPEN_PDKS_GIT_COMMIT ?= master
+OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
 SKY130_PDKS_GIT_REPO ?= https://github.com/google/skywater-pdk.git
-SKY130_PDKS_GIT_COMMIT ?= main
+SKY130_PDKS_GIT_COMMIT ?= f70d8ca46961ff92719d8870a18a076370b85f6c
 
 # Create lists of all the files to copy/link
 GDS_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.gds))

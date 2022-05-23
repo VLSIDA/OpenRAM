@@ -91,6 +91,8 @@ class options(optparse.Values):
     sim_data_path = None
     # A list of load/slew tuples
     use_specified_load_slew = None
+    # Spice simulation raw file
+    spice_raw_file = None
 
     ###################
     # Run-time vs accuracy options.

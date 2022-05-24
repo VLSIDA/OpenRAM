@@ -69,14 +69,6 @@ class sky130_bitcell_base_array(bitcell_base_array):
         bitcell_pins = []
         for port in self.all_ports:
             bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
-        if swap:
-            swap_pins = []
-            for pin in bitcell_pins:
-                if "bl" in pin:
-                    swap_pins.append(pin.replace("bl", "br"))
-                elif "br" in pin:
-                    swap_pins.append(pin.replace("br", "bl"))
-            bitcell_pins = swap_pins
         bitcell_pins.append("gnd") # gnd
         bitcell_pins.append("vdd") # vdd
         bitcell_pins.append("vdd") # vpb

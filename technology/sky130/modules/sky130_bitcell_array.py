@@ -63,10 +63,7 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
                     row_layout.append(self.cell2)
                     self.cell_inst[row, col]=self.add_inst(name="row_{}_col_{}_bitcell".format(row, col),
                                                            mod=self.cell2)
-                if col % 2 == 1:
-                    self.connect_inst(self.get_bitcell_pins(row, col, swap=True))
-                else:
-                    self.connect_inst(self.get_bitcell_pins(row, col, swap=False))
+                self.connect_inst(self.get_bitcell_pins(row, col))
                 if col != self.column_size - 1:
                     if alternate_strap:
                         if row % 2:

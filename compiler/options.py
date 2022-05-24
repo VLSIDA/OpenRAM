@@ -194,6 +194,3 @@ class options(optparse.Values):
     write_driver_array = "write_driver_array"
     write_driver = "write_driver"
     write_mask_and_array = "write_mask_and_array"
-
-    # Non-public options
-    experimental_power = True

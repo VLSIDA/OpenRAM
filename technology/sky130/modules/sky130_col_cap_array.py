@@ -89,10 +89,10 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
             elif col % 4 == 2:
                 row_layout.append(self.colend1)
                 self.cell_inst[col]=self.add_inst(name=name, mod=self.colend1)
-                pins.append("fake_br_{}".format(bitline))
+                pins.append("fake_bl_{}".format(bitline))
                 pins.append("vdd")
                 pins.append("gnd")
-                pins.append("fake_bl_{}".format(bitline))
+                pins.append("fake_br_{}".format(bitline))
                 pins.append("gate")
                 bitline += 1
             elif col % 4 ==3:
@@ -194,7 +194,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
 
                 elif col % 4 == 2:
                     pin = self.cell_inst[col].get_pin("bl")
-                    text = "fake_br_{}".format(int(col/2))
+                    text = "fake_bl_{}".format(int(col/2))
                     self.add_layout_pin(text=text,
                             layer=pin.layer,
                             offset=pin.ll().scale(1, 0),
@@ -202,7 +202,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                             height=pin.height())
                     
                     pin = self.cell_inst[col].get_pin("br")
-                    text = "fake_bl_{}".format(int(col/2))
+                    text = "fake_br_{}".format(int(col/2))
                     self.add_layout_pin(text=text,
                             layer=pin.layer,
                             offset=pin.ll().scale(1, 0),

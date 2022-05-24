@@ -22,9 +22,19 @@ class sram_1bank_8mux_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
         from sram_config import sram_config
+
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
         c = sram_config(word_size=2,
                         num_words=128,
-                        num_banks=1)
+                        num_banks=1,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
 
         c.words_per_row=8
         c.recompute_sizes()

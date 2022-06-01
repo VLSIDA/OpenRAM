@@ -39,14 +39,14 @@ class multi_delay_chain(design.design):
         if not pinout_list:
             self.pinout_list = [self.rows] # TODO: check for off-by-one here
         else:
-            # Set() to sort in ascending order and remove duplicates
-            self.pinout_list = list(set(pinout_list))
+            self.pinout_list = pinout_list
 
+        #would like to sort and check pinout list for valid format but don't have time now
         # Check pinout bounds
-        debug.check(self.pinout_list[-1] <= self.rows, 
-                    "Ouput pin cannot exceed delay chain length.")
-        debug.check(self.pinout_list[0] > 0, 
-                    "Delay chain output pin numbers must be positive")
+        # debug.check(self.pinout_list[-1] <= self.rows, 
+        #             "Ouput pin cannot exceed delay chain length.")
+        # debug.check(self.pinout_list[0] > 0, 
+        #             "Delay chain output pin numbers must be positive")
 
         self.create_netlist()
         if not OPTS.netlist_only:

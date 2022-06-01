@@ -717,7 +717,8 @@ class sram_base(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-            temp.append("rbl_bl{}".format(port))
+            if OPTS.control_logic != "control_logic_delay":
+                temp.append("rbl_bl{}".format(port))
 
             # Outputs
             if port in self.read_ports:

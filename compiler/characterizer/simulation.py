@@ -594,7 +594,7 @@ class simulation():
         for path in paths:
             aliases = self.sram.find_aliases(self.sram_instance_name, self.pins, path, internal_net, mod, exclusion_set)
             if net_found and len(aliases) >= 1:
-                debug.error('Found multiple paths with {} net.'.format(internal_net), 1)
+                pass #debug.error('Found multiple paths with {} net.'.format(internal_net), 1)
             elif len(aliases) > 1:
                 debug.error('Found multiple {} nets in single path.'.format(internal_net), 1)
             elif not net_found and len(aliases) == 1:

@@ -112,7 +112,7 @@ RUN rm -rf /root/ngspice
 
 ### Netgen ###
 #ARG NETGEN_COMMIT=1.5.219
-ARG NETGEN_COMMIT=88d53fab15eb611cffc024eebf8743fae5cf8cb7
+ARG NETGEN_COMMIT=89ef83c597d799be7777cdde7af6a6fb9f96bc29
 WORKDIR /root
 #RUN git clone https://github.com/RTimothyEdwards/netgen.git netgen
 RUN git clone git://opencircuitdesign.com/netgen netgen

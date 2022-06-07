@@ -8,7 +8,7 @@ num_words = 1024
 human_byte_size = "{:.0f}kbytes".format((word_size * num_words)/1024/8)
 
 # Allow byte writes
-#write_size = 8 # Bits
+write_size = 8 # Bits
 
 # Dual port
 num_rw_ports = 0

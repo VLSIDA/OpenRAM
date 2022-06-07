@@ -10,7 +10,7 @@ PDK_ROOT ?= $(TOP_DIR)
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
 SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= 95287ef89556505b2cdf17912c025cb74d9288a7
+SRAM_LIB_GIT_COMMIT ?= 9d452eea52cde23f0a5b03e1c5ccf1ca27dd771a 
 
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks

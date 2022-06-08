@@ -111,8 +111,7 @@ RUN ./autogen.sh \
 RUN rm -rf /root/ngspice
 
 ### Netgen ###
-#ARG NETGEN_COMMIT=1.5.219
-#ARG NETGEN_COMMIT=88d53fab15eb611cffc024eebf8743fae5cf8cb7
+#ARG NETGEN_COMMIT=1.5.195
 ARG NETGEN_COMMIT=1.5.221
 WORKDIR /root
 #RUN git clone https://github.com/RTimothyEdwards/netgen.git netgen
@@ -129,8 +128,9 @@ RUN apt-get install --no-install-recommends -y iverilog
 
 ### Magic ###
 #ARG MAGIC_COMMIT=db4fa65bfc096e63954b37b188ea27b90ab31839
-#ARG MAGIC_COMMIT=8.3.211
-ARG MAGIC_COMMIT=8.3.309
+#ARG MAGIC_COMMIT=8.3.274
+#ARG MAGIC_COMMIT=8.3.310
+ARG MAGIC_COMMIT=d099562e85e16654ef4573f1eb26c89d1b3d1ee2
 WORKDIR /root
 #RUN git clone https://github.com/RTimothyEdwards/magic.git magic
 RUN git clone git://opencircuitdesign.com/magic magic

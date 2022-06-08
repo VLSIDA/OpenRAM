@@ -3,9 +3,6 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := install
 
-# Keep it locally if they didn't specify
-PDK_ROOT ?= $(TOP_DIR)
-
 # Skywater PDK SRAM library
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
 SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
@@ -15,8 +12,8 @@ SRAM_LIB_GIT_COMMIT ?= 9d452eea52cde23f0a5b03e1c5ccf1ca27dd771a
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
 OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
-#OPEN_PDKS_GIT_COMMIT ?= 1.0.156
-OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
+OPEN_PDKS_GIT_COMMIT ?= 1.0.311
+#OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
 # Skywater PDK

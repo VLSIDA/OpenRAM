@@ -95,6 +95,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     #f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
     # Flatten the transistors
+    # Bug in Netgen 1.5.194 when using this...
     f.write("gds flatglob *_?mos_m*\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
@@ -118,12 +119,13 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         pre = "#"
     else:
         pre = ""
-    if final_verification and OPTS.route_supplies:
-        f.write(pre + "extract unique all\n")
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
-    f.write(pre + "extract\n")
+    if final_verification and OPTS.route_supplies:
+        f.write(pre + "extract unique all\n")
+    else:
+        f.write(pre + "extract all\n")
     f.write(pre + "select top cell\n")
     f.write(pre + "feedback why\n")
     f.write('puts "Finished extract"\n')

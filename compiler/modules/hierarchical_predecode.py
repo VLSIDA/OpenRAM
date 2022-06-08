@@ -416,4 +416,4 @@ class hierarchical_predecode(design.design):
                         else:
                             xoffset = self.inv_inst[0].lx() - self.bus_space
                         pin_pos = vector(xoffset, and_pin.cy())
-                        self.add_power_pin(n, pin_pos)
+                        self.add_power_pin(n, pin_pos, start_layer=and_pin.layer)

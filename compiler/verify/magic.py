@@ -124,8 +124,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         f.write(pre + "extract style ngspice(si)\n")
     if final_verification and OPTS.route_supplies:
         f.write(pre + "extract unique all\n")
-    else:
-        f.write(pre + "extract all\n")
+    f.write(pre + "extract all\n")
     f.write(pre + "select top cell\n")
     f.write(pre + "feedback why\n")
     f.write('puts "Finished extract"\n')

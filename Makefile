@@ -183,8 +183,9 @@ macros:
 
 mount:
 	@docker run -it -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
+		-v $(PDK_ROOT):/pdk \
+		-e PDK_ROOT=/pdk \
+		-e PDKPATH=/pdk/sky130A \
         -e OPENRAM_HOME=/openram/compiler \
         -e OPENRAM_TECH=/openram/technology \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \

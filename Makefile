@@ -181,18 +181,6 @@ macros:
 
 .PHONY: macros
 
-mount:
-	@docker run -it -v $(TOP_DIR):/openram \
-		-v $(PDK_ROOT):/pdk \
-		-e PDK_ROOT=/pdk \
-		-e PDKPATH=/pdk/sky130A \
-        -e OPENRAM_HOME=/openram/compiler \
-        -e OPENRAM_TECH=/openram/technology \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-		--user $(UID):$(GID) \
-        vlsida/openram-ubuntu:latest
-.PHONY: mount
-
 clean:
 	@rm -f *.zip
 .PHONE: clean

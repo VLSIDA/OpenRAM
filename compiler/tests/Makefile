@@ -139,21 +139,6 @@ $(TEST_BASES):
 docker-pull:
 	docker pull vlsida/openram-ubuntu:latest
 
-# Mount environment for debug
-#
-mount:
-	docker run -it \
-		-v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/freepdk45 \
-		-e FREEPDK45=/freepdk45\
-		-v $(PDK_ROOT):/pdk \
-		-e PDK_ROOT=/pdk \
-		-e PDKPATH=/pdk/sky130A \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-		--user $(UID):$(GID) \
-        vlsida/openram-ubuntu:latest
-.PHONY: mount
-
 clean:
 	@rm -rf $(TOP_DIR)/compiler/tests/results
 .PHONE: clean

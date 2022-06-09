@@ -124,7 +124,7 @@ class dff_array(design.design):
             # Add connections every 4 cells
             for col in range(0, self.columns, 4):
                 gnd_pin=self.dff_insts[0, col].get_pin("gnd")
-                self.add_power_pin("gnd", gnd_pin.rc(), start_layer=vdd_pin.layer)
+                self.add_power_pin("gnd", gnd_pin.rc(), start_layer=gnd_pin.layer)
 
     def add_layout_pins(self):
         for row in range(self.rows):

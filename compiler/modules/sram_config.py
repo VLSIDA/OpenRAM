@@ -72,8 +72,8 @@ class sram_config:
 
         bitcell = factory.create(module_type=OPTS.bitcell)
 
-        debug.check(self.num_banks in [1, 2, 4],
-                    "Valid number of banks are 1 , 2 and 4.")
+        debug.check(ceil(log(self.num_banks, 2)) == log(self.num_banks, 2) ,
+                    "Number of banks should be power of 2.")
 
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank

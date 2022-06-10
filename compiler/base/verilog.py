@@ -7,7 +7,7 @@
 #
 import math
 from tech import spice
-import verilog_template
+from verilog_template import verilog_template
 
 
 class verilog:

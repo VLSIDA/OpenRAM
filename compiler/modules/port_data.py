@@ -511,9 +511,6 @@ class port_data(design.design):
         wdriver_inst = self.write_driver_array_inst
 
         for bit in range(self.num_wmasks):
-            # Bring write mask AND array output pin to port data level
-            self.copy_layout_pin(wmask_inst, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
-
             wmask_out_pin = wmask_inst.get_pin("wmask_out_{0}".format(bit))
             wdriver_en_pin = wdriver_inst.get_pin("en_{0}".format(bit))
 

@@ -37,14 +37,15 @@ class sram():
 
         self.name = name
 
-        if self.num_banks == 1:
-            from sram_1bank import sram_1bank as sram
-        elif self.num_banks == 2:
-            from sram_2bank import sram_2bank as sram
-        else:
-            debug.error("Invalid number of banks.", -1)
+        from sram_1bank import sram_1bank as sram
 
         self.s = sram(name, sram_config)
+
+        if self.num_banks != 1:
+            from sram_multibank import sram_multibank
+            mb = sram_multibank(s)
+            mb.verilog_write()
+
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()

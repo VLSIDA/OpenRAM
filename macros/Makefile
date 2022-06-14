@@ -74,17 +74,6 @@ scn4m_subm: $(SCN4M_SUBM_STAMPS)
 		vlsida/openram-ubuntu:latest \
 		python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
 
-mount:
-	docker run -it -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
-		-e OPENRAM_HOME=/openram/compiler \
-		-e OPENRAM_TECH=/openram/technology \
-		--user $(UID):$(GID) \
-		vlsida/openram-ubuntu:latest
-.PHONY: mount
-
-
 .DELETE_ON_ERROR: $(STAMPS)
 
 $(DIRS):

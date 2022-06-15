@@ -13,8 +13,6 @@ class baseSection:
     It is also used as the top most section.
     """
 
-    children = []
-
     def expand(self, dict, fd):
         for c in self.children:
             c.expand(dict, fd)
@@ -25,7 +23,9 @@ class loopSection(baseSection):
     This section is for looping elements. It will repeat the children
     sections based on the key list.
     """
+
     def __init__(self, var, key):
+        self.children = []
         self.var = var
         self.key = key
 

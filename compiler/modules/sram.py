@@ -40,14 +40,11 @@ class sram():
 
         self.s = sram(name, sram_config)
 
-<<<<<<< HEAD
-=======
         if self.num_banks != 1:
             from sram_multibank import sram_multibank
             mb = sram_multibank(s)
             mb.verilog_write()
 
->>>>>>> 3dd65b1a (modified template engine & sram multibank class)
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()

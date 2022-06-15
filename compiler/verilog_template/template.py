@@ -1,11 +1,13 @@
 import re
 
+
 class baseSection:
     children = []
 
     def expand(self, dict, fd):
         for c in self.children:
             c.expand(dict, fd)
+
 
 class loopSection(baseSection):
 
@@ -22,18 +24,20 @@ class loopSection(baseSection):
         if self.var in dict:
             del dict[self.var]
 
+
 class textSection(baseSection):
-    
+
     def __init__(self, text):
         self.text = text
 
-    def expand(self, dict):
+    def expand(self, dict, fd):
         var_re = re.compile('\{\{ (\S*) \}\}')
         vars = var_re.finditer(self.text)
         newText = self.text
         for var in vars:
             newText = newText.replace('{{ ' + var.group(1) + ' }}', str(dict[var.group(1)]))
         print(newText, end='', file=fd)
+
 
 class template:
 
@@ -69,4 +73,3 @@ class template:
         self.readTemplate()
         self.baseSectionSection.expand(self.dict, fd)
         fd.close()
-

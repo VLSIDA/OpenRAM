@@ -44,10 +44,10 @@ class bank(design):
         # The local control signals are gated when we have bank select logic,
         # so this prefix will be added to all of the input signals to create
         # the internal gated signals.
-        if self.num_banks>1:
-            self.prefix="gated_"
-        else:
-            self.prefix=""
+        #if self.num_banks>1:
+        #    self.prefix="gated_"
+        #else:
+        self.prefix=""
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -98,9 +98,9 @@ class bank(design):
 
         # For more than one bank, we have a bank select and name
         # the signals gated_*.
-        if self.num_banks > 1:
-            for port in self.all_ports:
-                self.add_pin("bank_sel{}".format(port), "INPUT")
+        #if self.num_banks > 1:
+        #    for port in self.all_ports:
+        #        self.add_pin("bank_sel{}".format(port), "INPUT")
         for port in self.read_ports:
             self.add_pin("s_en{0}".format(port), "INPUT")
         for port in self.all_ports:
@@ -128,8 +128,8 @@ class bank(design):
             self.route_port_address(port)
             self.route_column_address_lines(port)
             self.route_control_lines(port)
-            if self.num_banks > 1:
-                self.route_bank_select(port)
+            #if self.num_banks > 1:
+            #    self.route_bank_select(port)
 
         self.route_supplies()
 
@@ -171,7 +171,7 @@ class bank(design):
         self.create_port_data()
         self.create_port_address()
         self.create_column_decoder()
-        self.create_bank_select()
+        #self.create_bank_select()
 
     def compute_instance_offsets(self):
         """
@@ -252,8 +252,8 @@ class bank(design):
             y_offset = min(self.column_decoder_offsets[port].y, self.port_data[port].column_mux_offset.y)
         else:
             y_offset = self.port_address_offsets[port].y
-        if self.num_banks > 1:
-            y_offset += self.bank_select.height + drc("well_to_well")
+        #if self.num_banks > 1:
+        #    y_offset += self.bank_select.height + drc("well_to_well")
         self.bank_select_offsets[port] = vector(-x_offset, -y_offset)
 
     def compute_instance_port1_offsets(self):
@@ -311,20 +311,24 @@ class bank(design):
         self.place_port_address(self.port_address_offsets)
 
         self.place_column_decoder(self.column_decoder_offsets)
-        self.place_bank_select(self.bank_select_offsets)
+        #self.place_bank_select(self.bank_select_offsets)
 
     def compute_sizes(self):
         """  Computes the required sizes to create the bank """
 
-        self.num_cols = int(self.words_per_row * self.word_size)
-        self.num_rows_temp = int(self.num_words / self.words_per_row)
-        self.num_rows = self.num_rows_temp + self.num_spare_rows
 
+        self.num_words_per_bank = self.num_words / self.num_banks
+        self.num_bits_per_bank = self.word_size * self.num_words_per_bank
+
+        self.num_cols = int(self.words_per_row * self.word_size)
+        self.num_rows_temp = int(self.num_words_per_bank / self.words_per_row)
+        self.num_rows = self.num_rows_temp + self.num_spare_rows
+        
         self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.addr_size = self.col_addr_size + self.row_addr_size
 
-        debug.check(self.num_rows_temp * self.num_cols==self.word_size * self.num_words,
+        debug.check(self.num_rows_temp * self.num_cols * self.num_banks ==self.word_size * self.num_words,
                     "Invalid bank sizes.")
         debug.check(self.addr_size==self.col_addr_size + self.row_addr_size,
                     "Invalid address break down.")
@@ -351,10 +355,10 @@ class bank(design):
         # These will be outputs of the gaters if this is multibank, if not, normal signals.
         self.control_signals = []
         for port in self.all_ports:
-            if self.num_banks > 1:
-                self.control_signals.append(["gated_" + str for str in self.input_control_signals[port]])
-            else:
-                self.control_signals.append(self.input_control_signals[port])
+            #if self.num_banks > 1:
+            #    self.control_signals.append(["gated_" + str for str in self.input_control_signals[port]])
+            #else:
+            self.control_signals.append(self.input_control_signals[port])
 
 
         # The central bus is the column address (one hot) and row address (binary)
@@ -405,8 +409,8 @@ class bank(design):
                                                  port=port,
                                                  bit_offsets=self.bit_offsets))
 
-        if(self.num_banks > 1):
-            self.bank_select = factory.create(module_type="bank_select")
+        #if(self.num_banks > 1):
+        #    self.bank_select = factory.create(module_type="bank_select")
 
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
@@ -560,7 +564,7 @@ class bank(design):
     def create_bank_select(self):
         """ Create the bank select logic. """
 
-        if not self.num_banks > 1:
+        if not self.num_banks < 2:
             return
 
         self.bank_select_inst = [None] * len(self.all_ports)
@@ -578,7 +582,7 @@ class bank(design):
     def place_bank_select(self, offsets):
         """ Place the bank select logic. """
 
-        if not self.num_banks > 1:
+        if not self.num_banks < 2:
             return
 
         debug.check(len(offsets)>=len(self.all_ports),
@@ -684,7 +688,8 @@ class bank(design):
                                            names=self.control_signals[0],
                                            length=control_bus_length,
                                            vertical=True,
-                                           make_pins=(self.num_banks==1),
+                                           #make_pins=(self.num_banks==1),
+                                           make_pins=(True),
                                            pitch=self.m3_pitch)
 
         self.copy_layout_pin(self.port_address_inst[0], "wl_en", self.prefix + "wl_en0")
@@ -701,7 +706,8 @@ class bank(design):
                                                names=list(reversed(self.control_signals[1])),
                                                length=control_bus_length,
                                                vertical=True,
-                                               make_pins=(self.num_banks==1),
+                                               #make_pins=(self.num_banks==1),
+                                               make_pins=(True),
                                                pitch=self.m3_pitch)
 
             self.copy_layout_pin(self.port_address_inst[1], "wl_en", self.prefix + "wl_en1")

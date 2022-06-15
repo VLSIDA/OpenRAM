@@ -126,7 +126,7 @@ module {{ module_name }}  (
   end
 {% endfor %}
 
-{% for port in ports %}
+{% for port in rw_ports %}
   always @(*) begin
 {% for bank in banks %}
     csb{{ port }}_bank{{ bank }} = 1'b1;
@@ -143,4 +143,35 @@ module {{ module_name }}  (
   end
 {% endfor %}
 
+{% for port in w_ports %}
+  always @(*) begin
+{% for bank in banks %}
+    csb{{ port }}_bank{{ bank }} = 1'b1;
+    web{{ port }}_bank{{ bank }} = 1'b1;
+{% endfor %}
+    case (addr{{ port }}[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL])
+{% for bank in banks %}
+      {{ bank }}: begin
+        web{{ port }}_bank{{ bank }} = web{{ port }};
+        csb{{ port }}_bank{{ bank }} = csb{{ port }};
+      end
+{% endfor %}
+    endcase
+  end
+{% endfor %}
+
+{% for port in r_ports %}
+  always @(*) begin
+{% for bank in banks %}
+    csb{{ port }}_bank{{ bank }} = 1'b1;
+{% endfor %}
+    case (addr{{ port }}[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL])
+{% for bank in banks %}
+      {{ bank }}: begin
+        csb{{ port }}_bank{{ bank }} = csb{{ port }};
+      end
+{% endfor %}
+    endcase
+  end
+{% endfor %}
 endmodule

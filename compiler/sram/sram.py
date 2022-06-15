@@ -41,11 +41,6 @@ class sram():
 
         self.s = sram(name, sram_config)
 
-        if self.num_banks != 1:
-            from sram_multibank import sram_multibank
-            mb = sram_multibank(s)
-            mb.verilog_write()
-
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
@@ -83,7 +78,11 @@ class sram():
             shutil.move(unique_name, name)
 
     def verilog_write(self, name):
-        self.s.verilog_write(name)
+        self.s.verilog_write(name + '_1bank.v')
+        if self.num_banks != 1:
+            from sram_multibank import sram_multibank
+            mb = sram_multibank(self.s)
+            mb.verilog_write(name + '.v')
 
     def extended_config_write(self, name):
         """Dump config file with all options.
@@ -184,7 +183,7 @@ class sram():
 
         # Write a verilog model
         start_time = datetime.datetime.now()
-        vname = OPTS.output_path + self.s.name + ".v"
+        vname = OPTS.output_path + self.s.name
         debug.print_raw("Verilog: Writing to {0}".format(vname))
         self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

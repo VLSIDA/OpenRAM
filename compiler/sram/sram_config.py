@@ -121,7 +121,8 @@ class sram_config:
         self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
-        self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
+        #self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
+        self.addr_size = self.bank_addr_size
         debug.info(1, "Row addr size: {}".format(self.row_addr_size)
                    + " Col addr size: {}".format(self.col_addr_size)
                    + " Bank addr size: {}".format(self.bank_addr_size))

@@ -1,3 +1,0 @@
-ERROR: file design.py: line 47: Custom cell pin names do not match spice file:
-['D', 'Q', 'CLK', 'VDD', 'GND'] vs []
-

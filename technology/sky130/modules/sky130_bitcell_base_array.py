@@ -107,6 +107,7 @@ class sky130_bitcell_base_array(bitcell_base_array):
             strap_pins.extend(["top_gate"])
         else:
             strap_pins.extend(["bot_gate"])
+        strap_pins.extend(["vdd", "gnd"])
         return strap_pins
 
     def get_row_cap_pins(self, row, col):
@@ -131,7 +132,7 @@ class sky130_bitcell_base_array(bitcell_base_array):
                     self.copy_layout_pin(inst, pin_name)
                 if row == 2: #add only 1 label per col
 
-                    if 'VPB' in self.cell_inst[row, col].mod.pins:
+                    if 'VPB' or 'vpb' in self.cell_inst[row, col].mod.pins:
                         pin = inst.get_pin("vpb")
                         self.objs.append(geometry.rectangle(layer["nwell"],
                                                             pin.ll(),
@@ -139,7 +140,7 @@ class sky130_bitcell_base_array(bitcell_base_array):
                                                             pin.height()))
                         self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
-                    if 'VNB' in self.cell_inst[row, col].mod.pins:
+                    if 'VNB' or 'vnb'in self.cell_inst[row, col].mod.pins:
                         try:
                             from tech import layer_override
                             if layer_override['VNB']:

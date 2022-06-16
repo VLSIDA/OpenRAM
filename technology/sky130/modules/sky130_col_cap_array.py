@@ -42,7 +42,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
 
         self.place_array("dummy_r{0}_c{1}", self.mirror)
         self.add_layout_pins()
-        #self.add_supply_pins()
+        self.add_supply_pins()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -79,6 +79,8 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 pins.append("gnd")
                 pins.append("fake_br_{}".format(bitline))
                 pins.append("gate")
+                pins.append("vdd")
+                pins.append("gnd")
                 bitline += 1
             elif col % 4 == 1:
                 row_layout.append(self.colend2)
@@ -94,6 +96,8 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 pins.append("gnd")
                 pins.append("fake_br_{}".format(bitline))
                 pins.append("gate")
+                pins.append("vdd")
+                pins.append("gnd")
                 bitline += 1
             elif col % 4 ==3:
                 row_layout.append(self.colend2)
@@ -135,6 +139,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
         self.add_pin("gate", "BIAS")
+
 
     def add_layout_pins(self):
         """ Add the layout pins """
@@ -208,35 +213,36 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                             offset=pin.ll().scale(1, 0),
                             width=pin.width(),
                             height=pin.height())
-
-
-
-
         return
     
     def add_supply_pins(self):
-        for col in range(self.cols):
+        for col in range(len(self.insts)):
             inst = self.cell_inst[col]
-            if 'VPB' in self.cell_inst[col].mod.pins:
+
+            if 'VPB' or 'vnb' in self.cell_inst[col].mod.pins:
                 pin = inst.get_pin("vpb")
                 self.objs.append(geometry.rectangle(layer["nwell"],
-                                                    pin.ll(),
-                                                    pin.width(),
-                                                    pin.height()))
+                pin.ll(),
+                pin.width(),
+                pin.height()))
                 self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
-            if 'VNB' in self.cell_inst[col].mod.pins:
+                
+            if 'VNB' or 'vnb' in self.cell_inst[col].mod.pins:
                 try:
                     from tech import layer_override
                     if layer_override['VNB']:
                         pin = inst.get_pin("vnb")
                         self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
                         self.objs.append(geometry.rectangle(layer["pwellp"],
-                                                            pin.ll(),
-                                                            pin.width(),
-                                                            pin.height()))
+                        pin.ll(),
+                        pin.width(),
+                        pin.height()))
                 except:
                     pin = inst.get_pin("vnb")
+                    self.add_label("vdd", pin.layer, pin.center())
+
+
 
     def create_all_wordline_names(self, row_size=None):
         if row_size == None:

@@ -167,7 +167,7 @@ class sky130_dummy_array(sky130_bitcell_base_array):
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
-                if 'VPB' in self.cell_inst[row, col].mod.pins:
+                if 'VPB' or 'vpb' in self.cell_inst[row, col].mod.pins:
                     pin = inst.get_pin("vpb")
                     self.objs.append(geometry.rectangle(layer["nwell"],
                                                         pin.ll(),
@@ -175,7 +175,7 @@ class sky130_dummy_array(sky130_bitcell_base_array):
                                                         pin.height()))
                     self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
-                if 'VNB' in self.cell_inst[row, col].mod.pins:
+                if 'VNB' or 'vnb' in self.cell_inst[row, col].mod.pins:
                     try:
                         from tech import layer_override
                         if layer_override['VNB']:

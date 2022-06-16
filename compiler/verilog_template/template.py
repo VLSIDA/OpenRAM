@@ -1,7 +1,18 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2021 Regents of the University of California
+# Santa Cruz
+# All rights reserved.
+#
 import re
 
 
 class baseSection:
+    """
+    This is the base section class for other section classes to inherit.
+    It is also used as the top most section.
+    """
+
     children = []
 
     def expand(self, dict, fd):
@@ -10,9 +21,11 @@ class baseSection:
 
 
 class loopSection(baseSection):
-
+    """
+    This section is for looping elements. It will repeat the children
+    sections based on the key list.
+    """
     def __init__(self, var, key):
-        self.children = []
         self.var = var
         self.key = key
 
@@ -25,14 +38,33 @@ class loopSection(baseSection):
             del dict[self.var]
 
 
+class conditionalSection(baseSection):
+    """
+    This class will conditionally print it's children based on the 'cond'
+    element.
+    """
+    def __init__(self, cond):
+        self.cond = cond
+
+    def expand(self, dict, fd):
+        run = eval(self.cond, dict)
+        if run:
+            for c in self.children:
+                c.expand(dict, fd)
+
+
 class textSection(baseSection):
+    """
+    This is plain text section. It can contain parameters that can be
+    replaced based on the dictionary.
+    """
 
     def __init__(self, text):
         self.text = text
 
     def expand(self, dict, fd):
-        var_re = re.compile('\{\{ (\S*) \}\}')
-        vars = var_re.finditer(self.text)
+        varRE = re.compile('\{\{ (\S*) \}\}')
+        vars = varRE.finditer(self.text)
         newText = self.text
         for var in vars:
             newText = newText.replace('{{ ' + var.group(1) + ' }}', str(dict[var.group(1)]))
@@ -40,6 +72,10 @@ class textSection(baseSection):
 
 
 class template:
+    """
+    The template class will read a template and generate an output file
+    based on the template and the given dictionary.
+    """
 
     def __init__(self, template, dict):
         self.template = template
@@ -53,17 +89,26 @@ class template:
         self.baseSectionSection = baseSection()
         sections = []
         context = [self.baseSectionSection]
-        for_re = re.compile('\{% for (\S*) in (\S*) %\}')
-        end_re = re.compile('\{% endfor %\}')
+        forRE = re.compile('\{% for (\S*) in (\S*) %\}')
+        endforRE = re.compile('\{% endfor %\}')
+        ifRE = re.compile('\{% if (.*) %\}')
+        endifRE = re.compile('\{% endif %\}')
         for line in lines:
-            m = for_re.match(line)
+            m = forRE.match(line)
             if m:
                 section = loopSection(m.group(1), m.group(2))
                 sections.append(section)
                 context[-1].children.append(section)
                 context.append(section)
                 continue
-            if end_re.match(line):
+            m = ifRE.match(line)
+            if m:
+                section = conditionalSection(m.group(1))
+                section.append(section)
+                context[-1].children.append(section)
+                context.append(section)
+                continue
+            if endforRE.match(line) or endifRE.match(line):
                 context.pop()
             else:
                 context[-1].children.append(textSection(line))

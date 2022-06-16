@@ -5,9 +5,12 @@ include $(TOP_DIR)/openram.mk
 
 # Skywater PDK SRAM library
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
+# Use this for release
 SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
+# Use this for development
+#SRAM_LIB_GIT_REPO ?= git@github.com:VLSIDA/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= 9d452eea52cde23f0a5b03e1c5ccf1ca27dd771a 
+SRAM_LIB_GIT_COMMIT ?= a83b6468c48434d927b90058b22047843c58027b
 
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks

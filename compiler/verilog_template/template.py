@@ -25,7 +25,6 @@ class loopSection(baseSection):
     """
 
     def __init__(self, var, key):
-        self.children = []
         self.var = var
         self.key = key
 

@@ -152,7 +152,7 @@ class control_logic_delay(design.design):
                     "Must use odd number of delay chain stages for inverting delay chain.")
         self.multi_delay_chain=factory.create(module_type = "multi_delay_chain",
                                               fanout_list = 14 * [ OPTS.delay_chain_fanout_per_stage ],
-                                              pinout_list = [1, 6, 7, 14]) # TODO: generate this list programatically
+                                              pinout_list = [2, 12, 14, 28]) # TODO: generate this list programatically
 
     # not being used
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):

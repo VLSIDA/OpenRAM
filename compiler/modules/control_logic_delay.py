@@ -151,8 +151,8 @@ class control_logic_delay(design.design):
         debug.check(OPTS.delay_chain_stages % 2,
                     "Must use odd number of delay chain stages for inverting delay chain.")
         self.multi_delay_chain=factory.create(module_type = "multi_delay_chain",
-                                              fanout_list = 28 * [ OPTS.delay_chain_fanout_per_stage ], # TODO: generate this programatically
-                                              pinout_list = [2, 12, 14, 28]) # TODO: generate this list programatically
+                                              fanout_list = 29 * [ OPTS.delay_chain_fanout_per_stage ], # TODO: generate this programatically
+                                              pinout_list = [2, 12, 13, 15, 29]) # TODO: generate this list programatically
 
     # not being used
     def get_dynamic_delay_chain_size(self, previous_stages, previous_fanout):
@@ -260,9 +260,9 @@ class control_logic_delay(design.design):
 
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
         else:
-            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list) + 1) * self.m2_pitch
 
@@ -383,7 +383,7 @@ class control_logic_delay(design.design):
         """ Create the delay chain """
         self.delay_inst=self.add_inst(name="multi_delay_chain",
                                       mod=self.multi_delay_chain)
-        self.connect_inst(["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5", "vdd", "gnd"])
 
     def place_delay(self, row):
         """ Place the delay chain """
@@ -414,29 +414,17 @@ class control_logic_delay(design.design):
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
     def create_glitches(self):
-        self.glitch1_inv_inst = self.add_inst(name="inv_glitch1",
-                                              mod=self.inv)
-        self.connect_inst(["delay2", "g1_end", "vdd", "gnd"])
-
-        self.glitch2_inv_inst = self.add_inst(name="inv_glitch2",
-                                              mod=self.inv)
-        self.connect_inst(["delay3", "g2_end", "vdd", "gnd"])
-
-        self.glitch3_inv_inst = self.add_inst(name="inv_glitch3",
-                                              mod=self.inv)
-        self.connect_inst(["delay4", "g3_end", "vdd", "gnd"])
-
         self.glitch1_nand_inst = self.add_inst(name="nand2_glitch1",
                                                mod=self.nand2)
-        self.connect_inst(["delay1", "g1_end", "glitch1_bar", "vdd", "gnd"])
+        self.connect_inst(["delay1", "delay3", "glitch1_bar", "vdd", "gnd"])
 
         self.glitch2_nand_inst = self.add_inst(name="nand2_glitch2",
                                                mod=self.nand2)
-        self.connect_inst(["gated_clk_buf", "g2_end", "glitch2_bar", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_buf", "delay4", "glitch2_bar", "vdd", "gnd"])
 
         self.glitch3_nand_inst = self.add_inst(name="nand2_glitch3",
                                                mod=self.nand2)
-        self.connect_inst(["delay2", "g3_end", "glitch3_bar", "vdd", "gnd"])
+        self.connect_inst(["delay2", "delay5", "glitch3_bar", "vdd", "gnd"])
 
     def place_glitch1_row(self, row):
         x_offset = self.control_x_offset

@@ -135,7 +135,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
         for fake_bl in range(self.cols):
             self.add_pin("fake_bl_{}".format(fake_bl), "OUTPUT")
             self.add_pin("fake_br_{}".format(fake_bl), "OUTPUT")
-        self.add_pin("fake_wl", "INPUT")
+        #self.add_pin("fake_wl", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
         self.add_pin("gate", "BIAS")
@@ -150,26 +150,26 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 for pin in inst.get_pins(pin_name):
                     if inst.mod.cell_name == 'sky130_fd_bd_sram__sram_sp_colend' or 'sky130_fd_bd_sram__sram_sp_colenda':
                         if inst.mirror == "MY":
-                            if pin_name == "vdd":
+                            if pin_name == "vdd" and pin.layer == 'm1':
                                 self.add_layout_pin_rect_center(text="vdd",
                                                                 layer=pin.layer,
                                                                 offset=inst.lr(),
                                                                 width=pin.width(),
                                                                 height=pin.height())
-                            elif pin_name == "gnd":
+                            elif pin_name == "gnd" and pin.layer == 'm1':
                                 self.add_layout_pin_rect_center(text="gnd",
                                                                 layer=pin.layer,
                                                                 offset=inst.ll(),
                                                                 width=pin.width(),
                                                                 height=pin.height())
                         else:
-                            if pin_name == "vdd":
+                            if pin_name == "vdd" and pin.layer == 'm1':
                                 self.add_layout_pin_rect_center(text="vdd",
                                                                 layer=pin.layer,
                                                                 offset=inst.ll(),
                                                                 width=pin.width(),
                                                                 height=pin.height())
-                            elif pin_name == "gnd":
+                            elif pin_name == "gnd" and pin.layer == 'm1':
                                 self.add_layout_pin_rect_center(text="gnd",
                                                                 layer=pin.layer,
                                                                 offset=inst.lr(),

@@ -407,10 +407,10 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                   mod=self.col_cap_bottom))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies + ["gnd"])
+        self.connect_inst(self.all_bitline_names + self.supplies + ["gnd"])
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies + ["gnd"])
+        self.connect_inst(self.all_bitline_names + self.supplies + ["gnd"])
 
         # Left/right Dummy columns
         self.dummy_col_insts = []

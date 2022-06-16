@@ -225,28 +225,32 @@ class sky130_replica_column(sky130_bitcell_base_array):
             # add only 1 label per col
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)
-                if row == 2:
-                    if 'VPB' or 'vpb' in self.cell_inst[row].mod.pins:
-                        pin = inst.get_pin("vpb")
-                        self.objs.append(geometry.rectangle(layer["nwell"],
-                                                            pin.ll(),
-                                                            pin.width(),
-                                                            pin.height()))
-                        self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
+                #if row == 2:
+                if 'VPB' or 'vpb' in self.cell_inst[row].mod.pins:
+                    pin = inst.get_pin("vpb")
+                    self.objs.append(geometry.rectangle(layer["nwell"],
+                                                        pin.ll(),
+                                                        pin.width(),
+                                                        pin.height()))
+                    self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
-                    if 'VNB' or 'vnb' in self.cell_inst[row].mod.pins:
-                        try:
-                            from tech import layer_override
-                            if layer_override['VNB']:
-                                pin = inst.get_pin("vnb")
-                                self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
-                                self.objs.append(geometry.rectangle(layer["pwellp"],
-                                                                    pin.ll(),
-                                                                    pin.width(),
-                                                                    pin.height()))
-                        except:
+                if 'VNB' or 'vnb' in self.cell_inst[row].mod.pins:
+                    print("welling")
+                    try:
+                        from tech import layer_override
+                        if layer_override['VNB']:
                             pin = inst.get_pin("vnb")
-                            self.add_label("vdd", pin.layer, pin.center())
+                            self.add_label("gnd", pin.layer, pin.center())
+                            self.objs.append(geometry.rectangle(layer["pwellp"],
+                                pin.ll(),
+                                pin.width(),
+                                pin.height()))
+                            self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
+                            
+
+                    except:
+                        pin = inst.get_pin("vnb")
+                        self.add_label("gnd", pin.layer, pin.center())
 
     def exclude_all_but_replica(self):
         """

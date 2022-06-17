@@ -260,9 +260,9 @@ class control_logic_delay(design.design):
 
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
         else:
-            self.internal_bus_list = ["glitch1_bar", "glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch2_bar", "glitch3_bar", "pre_sen", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list) + 1) * self.m2_pitch
 
@@ -426,18 +426,9 @@ class control_logic_delay(design.design):
                                                mod=self.nand2)
         self.connect_inst(["delay2", "delay5", "glitch3_bar", "vdd", "gnd"])
 
-    def place_glitch1_row(self, row):
-        x_offset = self.control_x_offset
-
-        x_offset = self.place_util(self.glitch1_inv_inst, x_offset, row)
-        x_offset = self.place_util(self.glitch1_nand_inst, x_offset, row)
-
-        self.row_end_inst.append(self.glitch1_nand_inst)
-
     def place_glitch2_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.glitch2_inv_inst, x_offset, row)
         x_offset = self.place_util(self.glitch2_nand_inst, x_offset, row)
 
         self.row_end_inst.append(self.glitch3_nand_inst)
@@ -445,7 +436,6 @@ class control_logic_delay(design.design):
     def place_glitch3_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.glitch3_inv_inst, x_offset, row)
         x_offset = self.place_util(self.glitch3_nand_inst, x_offset, row)
 
         self.row_end_inst.append(self.glitch3_nand_inst)
@@ -596,7 +586,7 @@ class control_logic_delay(design.design):
     def place_pen_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.p_en_bar_nand_inst, x_offset, row)
+        x_offset = self.place_util(self.glitch1_nand_inst, x_offset, row)
         x_offset = self.place_util(self.p_en_bar_driver_inst, x_offset, row)
 
         self.row_end_inst.append(self.p_en_bar_driver_inst)
@@ -634,6 +624,9 @@ class control_logic_delay(design.design):
         x_offset = self.place_util(self.pre_sen_inv_inst, x_offset, row)
 
         self.row_end_inst.append(self.pre_sen_inv_inst)
+
+    def route_pre_sen(self): #TODO: this
+        pass
 
     def create_sen_row(self):
         """ Create the sense enable buffer. """

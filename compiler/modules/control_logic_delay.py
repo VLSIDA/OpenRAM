@@ -559,7 +559,7 @@ class control_logic_delay(design.design):
     def create_wlen_row(self):
         self.wl_en_unbuf_and_inst = self.add_inst(name="and_wl_en_unbuf",
                                                   mod=self.wl_en_and)
-        self.connect_inst(["cs_buf", "glitch2_bar", "wl_en_unbuf", "vdd", "gnd"])
+        self.connect_inst(["cs", "glitch2_bar", "wl_en_unbuf", "vdd", "gnd"])
 
         self.wl_en_inst=self.add_inst(name="buf_wl_en",
                                       mod=self.wl_en_driver)

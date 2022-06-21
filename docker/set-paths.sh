@@ -13,10 +13,3 @@ export PATH=$PATH:$XYCE_PATH
 export XYCE_LIB=$XYCE_HOME/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$XYCE_LIB
 export XYCE_NO_TRACKING="anything at all"
-
-# OpenRAM
-export OPENRAM_HOME=/openram/compiler
-export OPENRAM_TECH=/openram/technology
-
-# FreePDK45
-export FREEPDK45=/freepdk45

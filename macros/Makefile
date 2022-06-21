@@ -64,12 +64,16 @@ scn4m_subm: $(SCN4M_SUBM_STAMPS)
 %.ok: configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	docker run -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
+	@docker run -v $(TOP_DIR):/openram \
+		-v $(FREEPDK45):/freepdk45 \
+		-e FREEPDK45=/freepdk45 \
+		-v $(PDK_ROOT):/pdk \
+		-e PDK_ROOT=/pdk \
+		-e PDKPATH=/pdk/sky130A \
 		-e OPENRAM_HOME=/openram/compiler \
 		-e OPENRAM_TECH=/openram/technology \
 		-e OPENRAM_TMP=/openram/macros/$*/tmp \
+		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
 		vlsida/openram-ubuntu:latest \
 		python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@

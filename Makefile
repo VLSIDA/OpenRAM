@@ -18,6 +18,7 @@ OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.311
 #OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
+INSTALL_SRAM = false
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
@@ -53,32 +54,36 @@ ifndef PDK_ROOT
 endif
 
 $(SKY130_PDKS_DIR): check-pdk-root
-	git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
-	cd $(SKY130_PDKS_DIR) && \
+	@echo "Cloning skywater PDK..."
+	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
+		git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
+	@cd $(SKY130_PDKS_DIR) && \
 		git checkout main && git pull && \
 		git checkout -qf $(SKY130_PDKS_GIT_COMMIT) && \
 		git submodule update --init libraries/sky130_fd_pr/latest
 
 $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 	@echo "Cloning open_pdks..."
-	git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)
-	cd $(OPEN_PDKS_DIR) && git checkout $(OPEN_PDKS_GIT_COMMIT)
+	@[ -d $(OPEN_PDKS_DIR) ] || \
+		git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)
+	@cd $(OPEN_PDKS_DIR) && git pull && git checkout $(OPEN_PDKS_GIT_COMMIT)
 
-$(SKY130_PDK): $(OPEN_PDKS_DIR)
+$(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	cd $(OPEN_PDKS_DIR) && \
-	./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) --enable-sram-sky130=$(INSTALL_SRAM) && \
+	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
+	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk --enable-sram-sky130=$(INSTALL_SRAM) && \
 	cd sky130 && \
 	make veryclean && \
 	make && \
-	make SHARED_PDKS_PATH=$(PDK_ROOT) install
+	make SHARED_PDKS_PATH=/pdk install"
 
 $(SRAM_LIB_DIR): check-pdk-root
+	@echo "Cloning SRAM library..."
 	@[ -d $(SRAM_LIB_DIR) ] || (\
-		echo "Cloning SRAM library..." && git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR) && \
-		cd $(SRAM_LIB_DIR) && git checkout $(SRAM_LIB_GIT_COMMIT))
+		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR) && \
+		cd $(SRAM_LIB_DIR) && git pull && git checkout $(SRAM_LIB_GIT_COMMIT))
 
-install: $(SRAM_LIB_DIR) 
+install: $(SRAM_LIB_DIR) pdk
 	@[ -d $(PDK_ROOT)/sky130A ] || \
 		(echo "Warning: $(PDK_ROOT)/sky130A not found!! Run make pdk first." &&  false)
 	@[ -d $(PDK_ROOT)/skywater-pdk ] || \

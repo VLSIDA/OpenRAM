@@ -19,12 +19,3 @@ push:
 pull:
 	docker pull vlsida/openram-ubuntu:latest
 
-mount:
-	docker run -it -v $(TOP_DIR):/openram \
-		-v $(SKY130_PDK):$(SKY130_PDK) \
-		-e PDK_ROOT=$(PDK_ROOT) \
-                -e OPENRAM_HOME=/openram/compiler \
-                -e OPENRAM_TECH=/openram/technology \
-		--user $(UID):$(GID) \
-                vlsida/openram-ubuntu:latest
-.PHONY: mount

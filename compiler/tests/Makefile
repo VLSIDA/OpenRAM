@@ -118,18 +118,7 @@ $(TEST_BASES):
 	@rm -rf results/$*
 	@rm -rf results/$*.*
 	@mkdir -p results/$*/tmp
-	@docker run \
-		-v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/freepdk45 \
-		-e FREEPDK45=/freepdk45 \
-		-v $(PDK_ROOT):/pdk \
-		-e PDK_ROOT=/pdk \
-		-e PDKPATH=/pdk/sky130A \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-		--user $(UID):$(GID) \
-		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
-        	vlsida/openram-ubuntu:latest \
-		sh -c ". /home/cad-user/.bashrc && sleep 1 && python3 -u $(OPENRAM_DIR)/$(getfile).py \
+	@$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && sleep 1 && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
 	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"

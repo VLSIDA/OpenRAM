@@ -18,7 +18,6 @@ OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.311
 #OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
-INSTALL_SRAM = false
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
@@ -71,7 +70,7 @@ $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 $(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
 	@echo "Installing open_pdks..."
 	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
-	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk --enable-sram-sky130=$(INSTALL_SRAM) && \
+	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk && \
 	cd sky130 && \
 	make veryclean && \
 	make && \

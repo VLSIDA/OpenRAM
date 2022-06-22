@@ -26,6 +26,7 @@ SKY130_PDKS_GIT_COMMIT ?= f70d8ca46961ff92719d8870a18a076370b85f6c
 
 # Create lists of all the files to copy/link
 GDS_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.gds))
+GDS_FILES := $(GDS_FILES) $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_sc_hd/latest/cells/dlxtn/sky130_fd_sc_hd__dlxtn_1.gds
 MAG_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.mag))
 
 SPICE_SUFFIX := spice
@@ -34,6 +35,7 @@ SPICE_CALIBRE_SUFFIX := lvs.calibre.$(SPICE_SUFFIX)
 SPICE_KLAYOUT_SUFFIX := lvs.klayout.$(SPICE_SUFFIX)
 SPICE_BASE_SUFFIX := base.$(SPICE_SUFFIX)
 ALL_SPICE_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.$(SPICE_SUFFIX)))
+ALL_SPICE_FILES := $(ALL_SPICE_FILES) $(PDK_ROOT)/skywater-pdk/libraries/sky130_fd_sc_hd/latest/cells/dlxtn/sky130_fd_sc_hd__dlxtn_1.spice
 
 MAGLEF_SUFFIX := maglef
 MAGLEF_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.$(MAGLEF_SUFFIX)))
@@ -59,7 +61,7 @@ $(SKY130_PDKS_DIR): check-pdk-root
 	@cd $(SKY130_PDKS_DIR) && \
 		git checkout main && git pull && \
 		git checkout -qf $(SKY130_PDKS_GIT_COMMIT) && \
-		git submodule update --init libraries/sky130_fd_pr/latest
+		git submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
 
 $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 	@echo "Cloning open_pdks..."

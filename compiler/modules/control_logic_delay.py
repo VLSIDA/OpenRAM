@@ -293,7 +293,6 @@ class control_logic_delay(design.design):
         """ Create all the instances """
         self.create_dffs()
         self.create_clk_buf_row()
-        self.create_cs_buf_row()
         self.create_gated_clk_bar_row()
         self.create_gated_clk_buf_row()
         self.create_delay()

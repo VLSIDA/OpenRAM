@@ -112,7 +112,7 @@ class control_logic_delay(design.design):
         # max_fanout = max(self.num_rows, self.num_cols)
 
         # wl_en drives every row in the bank
-        # MRG 9/3/2021: Ensure that this is two stages to prevent race conditions with the write driver
+        # this calculation is from the rbl control logic, it may not be optimal in this circuit
         size_list = [max(int(self.num_rows / 9), 1), max(int(self.num_rows / 3), 1)]
         self.wl_en_driver = factory.create(module_type="pdriver",
                                            size_list=size_list,
@@ -120,7 +120,7 @@ class control_logic_delay(design.design):
 
         # wl_en_unbuf is the weak timing signal that feeds wl_en_driver
         self.wl_en_and = factory.create(module_type="pand2",
-                                        size=1, # FIXME: Minimum size??? Should even have this gate??
+                                        size=1, 
                                         height=dff_height)
 
         # w_en drives every write driver
@@ -297,7 +297,6 @@ class control_logic_delay(design.design):
         self.create_gated_clk_buf_row()
         self.create_delay()
         self.create_glitches()
-        self.create_pre_sen_invs()
         self.create_wlen_row()
         if (self.port_type == "rw") or (self.port_type == "w"):
             self.create_wen_row()
@@ -335,16 +334,12 @@ class control_logic_delay(design.design):
         row += 1
         self.place_wlen_row(row)
         row += 1
-        self.place_glitch1_row(row)
-        row += 1
         self.place_glitch2_row(row)
         row += 1
         self.place_glitch3_row(row)
         row += 1
-        self.place_pre_sen_row(row)
-        row += 1
 
-        control_center_y = self.pre_sen_inv_inst.uy() + self.m3_pitch
+        control_center_y = self.glitch3_nand_inst.uy() + self.m3_pitch
 
         # Delay chain always gets placed at row 4
         self.place_delay(4)
@@ -395,7 +390,7 @@ class control_logic_delay(design.design):
         offset = vector(0, y_off)
         self.delay_inst.place(offset, mirror="MX")
 
-    def route_delay(self): # TODO: this
+    def route_delay(self): # TODO
 
         out_pos = self.delay_inst.get_pin("out").center()
         # Connect to the rail level with the vdd rail
@@ -425,6 +420,8 @@ class control_logic_delay(design.design):
                                                mod=self.nand2)
         self.connect_inst(["delay2", "delay5", "glitch3_bar", "vdd", "gnd"])
 
+    # glitch1 is placed in place_pen_row()
+
     def place_glitch2_row(self, row):
         x_offset = self.control_x_offset
 
@@ -439,12 +436,12 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.glitch3_nand_inst)
     
-    def route_glitches(self): # TODO: this
+    def route_glitches(self): #TODO
         glitch1_map = zip(["A"], ["gated_clk_bar"])
 
-        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.input_bus)
+        self.connect_vertical_bus(wlen_map, self.wl_en_driver_inst, self.input_bus)
 
-        self.connect_output(self.wl_en_inst, "Z", "wl_en")
+        self.connect_output(self.wl_en_driver_inst, "Z", "wl_en")
 
     def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
@@ -554,22 +551,23 @@ class control_logic_delay(design.design):
                                                   mod=self.wl_en_and)
         self.connect_inst(["cs", "glitch2_bar", "wl_en_unbuf", "vdd", "gnd"])
 
-        self.wl_en_inst=self.add_inst(name="buf_wl_en",
+        self.wl_en_driver_inst=self.add_inst(name="buf_wl_en",
                                       mod=self.wl_en_driver)
         self.connect_inst(["wl_en_unbuf", "wl_en", "vdd", "gnd"])
 
     def place_wlen_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.wl_en_inst, x_offset, row)
+        x_offset = self.place_util(self.wl_en_unbuf_and_inst, x_offset, row)
+        x_offset = self.place_util(self.wl_en_driver_inst, x_offset, row)
 
-        self.row_end_inst.append(self.wl_en_inst)
+        self.row_end_inst.append(self.wl_en_driver_inst)
 
-    def route_wlen(self):
+    def route_wlen(self): #TODO
         wlen_map = zip(["A"], ["gated_clk_bar"])
-        self.connect_vertical_bus(wlen_map, self.wl_en_inst, self.input_bus)
+        self.connect_vertical_bus(wlen_map, self.wl_en_driver_inst, self.input_bus)
 
-        self.connect_output(self.wl_en_inst, "Z", "wl_en")
+        self.connect_output(self.wl_en_driver_inst, "Z", "wl_en")
 
     def create_pen_row(self):
         self.p_en_bar_driver_inst=self.add_inst(name="buf_p_en_bar",
@@ -584,7 +582,7 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.p_en_bar_driver_inst)
 
-    def route_pen(self):
+    def route_pen(self): #TODO
         in_map = zip(["A", "B"], ["gated_clk_buf", "rbl_bl_delay"])
         self.connect_vertical_bus(in_map, self.p_en_bar_nand_inst, self.input_bus)
 
@@ -600,34 +598,16 @@ class control_logic_delay(design.design):
 
         self.connect_output(self.p_en_bar_driver_inst, "Z", "p_en_bar")
 
-    def create_pre_sen_invs(self):
-        """ A pair of inverters to create additional signals from and buffer glitch 3"""
+    def create_sen_row(self):
         self.glitch3_buf_inv_inst = self.add_inst(name="inv_glitch3_buf",
                                                   mod=self.inv)
         self.connect_inst(["glitch3_bar", "glitch3_buf", "vdd", "gnd"])
 
-        self.pre_sen_inv_inst = self.add_inst(name="inv_pre_sen",
-                                         mod=self.inv)
-        self.connect_inst(["glitch3_buf", "pre_sen", "vdd", "gnd"])
-
-    def place_pre_sen_row(self, row):
-        x_offset = self.control_x_offset
-
-        x_offset = self.place_util(self.glitch3_buf_inv_inst, x_offset, row)
-        x_offset = self.place_util(self.pre_sen_inv_inst, x_offset, row)
-
-        self.row_end_inst.append(self.pre_sen_inv_inst)
-
-    def route_pre_sen(self): #TODO: this
-        pass
-
-    def create_sen_row(self):
-        """ Create the sense enable buffer. """
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
             input_name = "cs"
-        # GATE FOR S_EN
+
         self.s_en_gate_inst = self.add_inst(name="and_s_en",
                                             mod=self.sen_and3)
         self.connect_inst(["glitch3_bar", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
@@ -635,11 +615,12 @@ class control_logic_delay(design.design):
     def place_sen_row(self, row):
         x_offset = self.control_x_offset
 
+        x_offset = self.place_util(self.glitch3_buf_inv_inst, x_offset, row)
         x_offset = self.place_util(self.s_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.s_en_gate_inst)
 
-    def route_sen(self):
+    def route_sen(self): #TODO
 
         if self.port_type=="rw":
             input_name = "we_bar"
@@ -653,17 +634,13 @@ class control_logic_delay(design.design):
 
     def create_wen_row(self):
 
-        # input: we (or cs) output: w_en
         if self.port_type == "rw":
             input_name = "we"
         else:
-            # No we for write-only ports, so use cs
             input_name = "cs"
 
-        # GATE THE W_EN
         self.w_en_gate_inst = self.add_inst(name="and_w_en",
                                             mod=self.wen_and)
-        # Only drive the writes in the second half of the clock cycle during a write operation.
         self.connect_inst([input_name, "glitch2_bar", "glitch3_buf", "w_en", "vdd", "gnd"])
 
     def place_wen_row(self, row):
@@ -673,11 +650,10 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.w_en_gate_inst)
 
-    def route_wen(self):
+    def route_wen(self): #TODO
         if self.port_type == "rw":
             input_name = "we"
         else:
-            # No we for write-only ports, so use cs
             input_name = "cs"
 
         wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay_bar", "gated_clk_bar"])

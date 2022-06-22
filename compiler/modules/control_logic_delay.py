@@ -631,7 +631,7 @@ class control_logic_delay(design.design):
         # GATE FOR S_EN
         self.s_en_gate_inst = self.add_inst(name="and_s_en",
                                             mod=self.sen_and3)
-        self.connect_inst(["pre_sen", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
+        self.connect_inst(["glitch3_bar", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
 
     def place_sen_row(self, row):
         x_offset = self.control_x_offset

@@ -391,7 +391,8 @@ class control_logic_delay(design.design):
         self.delay_inst.place(offset, mirror="MX")
 
     def route_delay(self): # TODO
-
+	pass
+'''
         out_pos = self.delay_inst.get_pin("out").center()
         # Connect to the rail level with the vdd rail
         # Use gated clock since it is in every type of control logic
@@ -404,7 +405,7 @@ class control_logic_delay(design.design):
 
         # Input from RBL goes to the delay line for futher delay
         self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
-
+'''
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
     def create_glitches(self):
@@ -436,12 +437,14 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.glitch3_nand_inst)
     
-    def route_glitches(self): #TODO
-        glitch1_map = zip(["A"], ["gated_clk_bar"])
+    def route_glitches(self):
+        glitch2_map = zip(["Z"], ["glitch2"])
 
-        self.connect_vertical_bus(wlen_map, self.wl_en_driver_inst, self.input_bus)
+        self.connect_vertical_bus(glitch2_map, self.glitch2_nand_inst, self.input_bus)
 
-        self.connect_output(self.wl_en_driver_inst, "Z", "wl_en")
+        glitch3_map = zip(["Z"], ["glitch3"])
+
+        self.connect_vertical_bus(glitch3_map, self.glitch3_nand_inst, self.input_bus)
 
     def create_clk_buf_row(self):
         """ Create the multistage and gated clock buffer  """
@@ -563,10 +566,19 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.wl_en_driver_inst)
 
-    def route_wlen(self): #TODO
-        wlen_map = zip(["A"], ["gated_clk_bar"])
-        self.connect_vertical_bus(wlen_map, self.wl_en_driver_inst, self.input_bus)
+    def route_wlen(self):
+        in_map = zip(["A", "B"], ["cs", "glitch2"])
+        self.connect_vertical_bus(in_map, self.wl_en_unbuf_and_inst, self.input_bus)
 
+        out_pin = self.wl_en_unbuf_and_inst.get_pin("Z")
+        out_pos = out_pin.center()
+        in_pin = self.p_en_bar_driver_inst.get_pin("A")
+        in_pos = in_pin.center()
+        mid1 = vector(in_pos.x, out_pos.y)
+        self.add_path(out_pin.layer, [out_pos, mid1, in_pos])
+        self.add_via_stack_center(from_layer=out_pin.layer,
+                                  to_layer=in_pin.layer,
+                                  offset=in_pin.center())
         self.connect_output(self.wl_en_driver_inst, "Z", "wl_en")
 
     def create_pen_row(self):
@@ -582,11 +594,11 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.p_en_bar_driver_inst)
 
-    def route_pen(self): #TODO
-        in_map = zip(["A", "B"], ["gated_clk_buf", "rbl_bl_delay"])
-        self.connect_vertical_bus(in_map, self.p_en_bar_nand_inst, self.input_bus)
+    def route_pen(self):
+        in_map = zip(["A", "B"], ["delay1", "delay3"])
+        self.connect_vertical_bus(in_map, self.glitch1_nand_inst, self.input_bus)
 
-        out_pin = self.p_en_bar_nand_inst.get_pin("Z")
+        out_pin = self.glitch1_nand_inst.get_pin("Z") # same code here as wl_en, refactor?
         out_pos = out_pin.center()
         in_pin = self.p_en_bar_driver_inst.get_pin("A")
         in_pos = in_pin.center()
@@ -599,10 +611,6 @@ class control_logic_delay(design.design):
         self.connect_output(self.p_en_bar_driver_inst, "Z", "p_en_bar")
 
     def create_sen_row(self):
-        self.glitch3_bar_inv_inst = self.add_inst(name="inv_glitch3_bar",
-                                                  mod=self.inv)
-        self.connect_inst(["glitch3", "glitch3_bar", "vdd", "gnd"])
-
         if self.port_type=="rw":
             input_name = "we_bar"
         else:
@@ -615,24 +623,26 @@ class control_logic_delay(design.design):
     def place_sen_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.glitch3_bar_inv_inst, x_offset, row)
         x_offset = self.place_util(self.s_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.s_en_gate_inst)
 
-    def route_sen(self): #TODO
+    def route_sen(self):
 
-        if self.port_type=="rw":
+        if self.port_type=="rw": # this is repeated many times in here, refactor?
             input_name = "we_bar"
         else:
             input_name = "cs"
 
-        sen_map = zip(["A", "B", "C"], ["rbl_bl_delay", "gated_clk_bar", input_name])
+        sen_map = zip(["A", "B", "C"], ["glitch3", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.input_bus)
 
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
 
     def create_wen_row(self):
+        self.glitch3_bar_inv_inst = self.add_inst(name="inv_glitch3_bar",
+                                                  mod=self.inv)
+        self.connect_inst(["glitch3", "glitch3_bar", "vdd", "gnd"])
 
         if self.port_type == "rw":
             input_name = "we"
@@ -646,18 +656,29 @@ class control_logic_delay(design.design):
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
 
+	x_offset = self.place_util(self.
         x_offset = self.place_util(self.w_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.w_en_gate_inst)
 
-    def route_wen(self): #TODO
+    def route_wen(self): # w_en comes from a 3and but one of the inputs needs to be inverted, not sure if this implementation works.
         if self.port_type == "rw":
             input_name = "we"
         else:
             input_name = "cs"
 
-        wen_map = zip(["A", "B", "C"], [input_name, "rbl_bl_delay_bar", "gated_clk_bar"])
-        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus)
+        wen_map = zip(["A", "B"], [input_name, "glitch2"])
+        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus) # if there are problems, look here
+
+        out_pin = self.glitch3_bar_inv_inst.get_pin("Z")
+        out_pos = out_pin.center()
+        in_pin = self.w_en_gate_inst.get_pin("C")
+        in_pos = in_pin.center()
+        mid1 = vector(in_pos.x, out_pos.y)
+        self.add_path(out_pin.layer, [out_pos, mid1, in_pos])
+        self.add_via_stack_center(from_layer=out_pin.layer,
+                                  to_layer=in_pin.layer,
+                                  offset=in_pin.center())
 
         self.connect_output(self.w_en_gate_inst, "Z", "w_en")
 

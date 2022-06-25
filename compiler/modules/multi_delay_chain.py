@@ -217,10 +217,10 @@ class multi_delay_chain(design.design):
                                         layer="m2",
                                         offset=mid_loc)
 
-	delay_number = 1
-	for pin_number in pinout_list:
+        delay_number = 1
+        for pin_number in self.pinout_list:
             # output is A pin of last load/fanout inverter
-            output_driver_inst = self.driver_inst_list[pin_number]
+            output_driver_inst = self.driver_inst_list[pin_number - 1]
             a_pin = self.load_inst_map[output_driver_inst][-1].get_pin("A")
             self.add_via_stack_center(from_layer=a_pin.layer,
                                       to_layer="m1",
@@ -228,3 +228,4 @@ class multi_delay_chain(design.design):
             self.add_layout_pin_rect_center(text="delay{}".format(str(delay_number)),
                                             layer="m1",
                                             offset=a_pin.center())
+            delay_number += 1

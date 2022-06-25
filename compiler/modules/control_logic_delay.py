@@ -368,6 +368,7 @@ class control_logic_delay(design.design):
             self.route_sen()
         self.route_delay()
         self.route_pen()
+        self.route_glitches()
         self.route_clk_buf()
         self.route_gated_clk_bar()
         self.route_gated_clk_buf()
@@ -391,10 +392,10 @@ class control_logic_delay(design.design):
         self.delay_inst.place(offset, mirror="MX")
 
     def route_delay(self):
-	delay_map = zip(["in", "delay1", "delay2", "delay3", "delay4", "delay5"], 
+        delay_map = zip(["in", "delay1", "delay2", "delay3", "delay4", "delay5"], \
 			["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
 	
-	slef.connect_vertical_bus(delay_map, self.delay_inst, self.input_bus)
+        self.connect_vertical_bus(delay_map, self.delay_inst, self.input_bus)
 
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
@@ -646,7 +647,7 @@ class control_logic_delay(design.design):
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
 
-	x_offset = self.place_util(self.glitch3_bar_inv_inst, x_offset, row)
+        x_offset = self.place_util(self.glitch3_bar_inv_inst, x_offset, row)
         x_offset = self.place_util(self.w_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.w_en_gate_inst)

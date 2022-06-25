@@ -563,7 +563,7 @@ class control_logic_delay(design.design):
 
         out_pin = self.wl_en_unbuf_and_inst.get_pin("Z")
         out_pos = out_pin.center()
-        in_pin = self.p_en_bar_driver_inst.get_pin("A")
+        in_pin = self.wl_en_driver_inst.get_pin("A")
         in_pos = in_pin.center()
         mid1 = vector(in_pos.x, out_pos.y)
         self.add_path(out_pin.layer, [out_pos, mid1, in_pos])

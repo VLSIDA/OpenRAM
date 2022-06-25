@@ -390,22 +390,12 @@ class control_logic_delay(design.design):
         offset = vector(0, y_off)
         self.delay_inst.place(offset, mirror="MX")
 
-    def route_delay(self): # TODO
-	pass
-'''
-        out_pos = self.delay_inst.get_pin("out").center()
-        # Connect to the rail level with the vdd rail
-        # Use gated clock since it is in every type of control logic
-        vdd_ypos = self.gated_clk_buf_inst.get_pin("vdd").cy() + self.m1_pitch
-        in_pos = vector(self.input_bus["rbl_bl_delay"].cx(), vdd_ypos)
-        mid1 = vector(out_pos.x, in_pos.y)
-        self.add_wire(self.m1_stack, [out_pos, mid1, in_pos])
-        self.add_via_center(layers=self.m1_stack,
-                            offset=in_pos)
+    def route_delay(self):
+	delay_map = zip(["in", "delay1", "delay2", "delay3", "delay4", "delay5"], 
+			["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
+	
+	slef.connect_vertical_bus(delay_map, self.delay_inst, self.input_bus)
 
-        # Input from RBL goes to the delay line for futher delay
-        self.copy_layout_pin(self.delay_inst, "in", "rbl_bl")
-'''
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
     def create_glitches(self):
@@ -438,11 +428,11 @@ class control_logic_delay(design.design):
         self.row_end_inst.append(self.glitch3_nand_inst)
     
     def route_glitches(self):
-        glitch2_map = zip(["Z"], ["glitch2"])
+        glitch2_map = zip(["A", "B", "Z"], ["gated_clk_buf", "delay4", "glitch2"])
 
         self.connect_vertical_bus(glitch2_map, self.glitch2_nand_inst, self.input_bus)
 
-        glitch3_map = zip(["Z"], ["glitch3"])
+        glitch3_map = zip(["A", "B", "Z"], ["delay2", "delay5", "glitch3"])
 
         self.connect_vertical_bus(glitch3_map, self.glitch3_nand_inst, self.input_bus)
 
@@ -656,7 +646,7 @@ class control_logic_delay(design.design):
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
 
-	x_offset = self.place_util(self.
+	x_offset = self.place_util(self.glitch3_bar_inv_inst, x_offset, row)
         x_offset = self.place_util(self.w_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.w_en_gate_inst)

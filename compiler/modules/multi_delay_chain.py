@@ -18,7 +18,7 @@ class multi_delay_chain(design.design):
     Fanout list contains the electrical effort (fanout) of each stage.
     Usually, this will be constant, but it could have varied fanout.
     Pinout list contains the inverter stages which have an output pin attached.
-    Supplying an empty pinout list will result in an output on the last stage.
+    Supplying an empty pinout list will result in an output only on the last stage.
     """
 
     def __init__(self, name, fanout_list, pinout_list = None):
@@ -41,7 +41,7 @@ class multi_delay_chain(design.design):
         else:
             self.pinout_list = pinout_list
 
-        #would like to sort and check pinout list for valid format but don't have time now
+        # TODO: would like to sort and check pinout list for valid format but don't have time now
         # Check pinout bounds
         # debug.check(self.pinout_list[-1] <= self.rows, 
         #             "Ouput pin cannot exceed delay chain length.")
@@ -58,8 +58,9 @@ class multi_delay_chain(design.design):
         self.create_inverters()
 
     def create_layout(self):
-        # Each stage is a a row
+        # Each stage is a row
         self.height = self.rows * self.inv.height
+
         # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list) + 1) * self.inv.width
 
@@ -216,12 +217,14 @@ class multi_delay_chain(design.design):
                                         layer="m2",
                                         offset=mid_loc)
 
-        # output is A pin of last load/fanout inverter
-        last_driver_inst = self.driver_inst_list[-1]
-        a_pin = self.load_inst_map[last_driver_inst][-1].get_pin("A")
-        self.add_via_stack_center(from_layer=a_pin.layer,
-                                  to_layer="m1",
-                                  offset=a_pin.center())
-        self.add_layout_pin_rect_center(text="out",
-                                        layer="m1",
-                                        offset=a_pin.center())
+	delay_number = 1
+	for pin_number in pinout_list:
+            # output is A pin of last load/fanout inverter
+            output_driver_inst = self.driver_inst_list[pin_number]
+            a_pin = self.load_inst_map[output_driver_inst][-1].get_pin("A")
+            self.add_via_stack_center(from_layer=a_pin.layer,
+                                      to_layer="m1",
+                                      offset=a_pin.center())
+            self.add_layout_pin_rect_center(text="delay{}".format(str(delay_number)),
+                                            layer="m1",
+                                            offset=a_pin.center())

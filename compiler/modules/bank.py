@@ -124,7 +124,7 @@ class bank(design):
 
         for port in self.all_ports:
             self.route_bitlines(port)
-            self.route_rbl(port)
+            # self.route_rbl(port)
             self.route_port_address(port)
             self.route_column_address_lines(port)
             self.route_control_lines(port)

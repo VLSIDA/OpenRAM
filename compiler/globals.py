@@ -377,6 +377,14 @@ def read_config(config_file, is_unit_test=True):
                                                          ports,
                                                          OPTS.tech_name)
 
+<<<<<<< HEAD
+=======
+        # If write size is not defined, set it equal to word size
+        if OPTS.write_size == None:
+            OPTS.write_size = OPTS.word_size
+
+
+>>>>>>> 8438601a (Set write_size default to word_size)
 def end_openram():
     """ Clean up openram for a proper exit """
     cleanup_paths()

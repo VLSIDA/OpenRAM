@@ -45,7 +45,7 @@ class elmore(simulation):
             debug.warning("In analytical mode, all ports have the timing of the first read port.")
 
         # Probe set to 0th bit, does not matter for analytical delay.
-        self.set_probe('0' * self.addr_size, 0)
+        self.set_probe('0' * self.bank_addr_size, 0)
         self.create_graph()
         self.set_internal_spice_names()
         self.create_measurement_names()

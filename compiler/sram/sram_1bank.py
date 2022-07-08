@@ -57,7 +57,7 @@ class sram_1bank(design, verilog, lef):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}[{1}]".format(port, bit), "INPUT")
         for port in self.all_ports:
-            for bit in range(self.addr_size):
+            for bit in range(self.bank_addr_size):
                 self.add_pin("addr{0}[{1}]".format(port, bit), "INPUT")
 
         # These are used to create the physical pins
@@ -377,7 +377,7 @@ class sram_1bank(design, verilog, lef):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
 
         # address size + control signals + one-hot bank select signals
-        self.num_vertical_line = self.addr_size + self.control_size + 1# + log(self.num_banks, 2) + 1
+        self.num_vertical_line = self.bank_addr_size + self.control_size + 1# + log(self.num_banks, 2) + 1
         # data bus size
         self.num_horizontal_line = self.word_size
 
@@ -419,7 +419,7 @@ class sram_1bank(design, verilog, lef):
                                                                        names=self.control_bus_names[port],
                                                                        length=self.vertical_bus_height)
 
-            self.addr_bus_names=["A{0}[{1}]".format(port, i) for i in range(self.addr_size)]
+            self.addr_bus_names=["A{0}[{1}]".format(port, i) for i in range(self.bank_addr_size)]
             self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="m2",
                                                                                 pitch=self.m2_pitch,
                                                                                 offset=self.addr_bus_offset,

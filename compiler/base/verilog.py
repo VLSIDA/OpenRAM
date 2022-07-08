@@ -79,7 +79,7 @@ class verilog:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
             self.vf.write("  parameter NUM_WMASKS = {0} ;\n".format(self.num_wmasks))
         self.vf.write("  parameter DATA_WIDTH = {0} ;\n".format(self.word_size + self.num_spare_cols))
-        self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.addr_size))
+        self.vf.write("  parameter ADDR_WIDTH = {0} ;\n".format(self.bank_addr_size))
         self.vf.write("  parameter RAM_DEPTH = 1 << ADDR_WIDTH;\n")
         self.vf.write("  // FIXME: This delay is arbitrary.\n")
         self.vf.write("  parameter DELAY = 3 ;\n")

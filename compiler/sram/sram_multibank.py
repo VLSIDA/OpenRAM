@@ -21,7 +21,7 @@ class sram_multibank:
             'w_ports': w_ports,
             'banks': list(range(sram.num_banks)),
             'data_width': sram.word_size,
-            'addr_width': sram.addr_size + ceil(log(sram.num_banks, 2)),
+            'addr_width': sram.bank_addr_size + ceil(log(sram.num_banks, 2)),
             'bank_sel': ceil(log(sram.num_banks, 2)),
             'num_wmask': sram.num_wmasks
             }

@@ -93,7 +93,7 @@ class bank(design):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}_{1}".format(port, bit), "INPUT")
         for port in self.all_ports:
-            for bit in range(self.addr_size):
+            for bit in range(self.bank_addr_size):
                 self.add_pin("addr{0}_{1}".format(port, bit), "INPUT")
 
         # For more than one bank, we have a bank select and name
@@ -326,11 +326,11 @@ class bank(design):
         
         self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
-        self.addr_size = self.col_addr_size + self.row_addr_size
+        self.bank_addr_size = self.col_addr_size + self.row_addr_size
 
         debug.check(self.num_rows_temp * self.num_cols * self.num_banks ==self.word_size * self.num_words,
                     "Invalid bank sizes.")
-        debug.check(self.addr_size==self.col_addr_size + self.row_addr_size,
+        debug.check(self.bank_addr_size==self.col_addr_size + self.row_addr_size,
                     "Invalid address break down.")
 
         # The order of the control signals on the control bus:

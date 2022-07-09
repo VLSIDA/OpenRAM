@@ -58,11 +58,13 @@ class sram():
         self.s.gds_write(name)
 
     def verilog_write(self, name):
-        self.s.verilog_write(name + '_1bank.v')
         if self.num_banks != 1:
+            self.s.verilog_write(name[:-2] + '_1bank.v')
             from sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
-            mb.verilog_write(name + '.v')
+            mb.verilog_write(name)
+        else:
+            self.s.verilog_write(name)
 
     def extended_config_write(self, name):
         """Dump config file with all options.
@@ -163,7 +165,7 @@ class sram():
 
         # Write a verilog model
         start_time = datetime.datetime.now()
-        vname = OPTS.output_path + self.s.name
+        vname = OPTS.output_path + self.s.name + '.v'
         debug.print_raw("Verilog: Writing to {0}".format(vname))
         self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

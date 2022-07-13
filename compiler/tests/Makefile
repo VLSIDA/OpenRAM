@@ -72,6 +72,7 @@ BROKEN_STAMPS = \
 	sky130/23_lib_sram_prune_test.ok \
 	sky131/23_lib_sram_test.ok \
 	%/26_hspice_pex_pinv_test.ok \
+	%/27_verilog_multibank_test.ok \
 	%/50_riscv_1k_1rw1r_func_test.ok \
 	%/50_riscv_1k_1rw_func_test.ok \
 	%/50_riscv_1rw1r_func_test.ok \

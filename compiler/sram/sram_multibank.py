@@ -2,6 +2,7 @@ from template import template
 from globals import OPTS
 import os
 from math import ceil, log
+import re
 
 
 class sram_multibank:
@@ -23,10 +24,17 @@ class sram_multibank:
             'data_width': sram.word_size,
             'addr_width': sram.bank_addr_size + ceil(log(sram.num_banks, 2)),
             'bank_sel': ceil(log(sram.num_banks, 2)),
-            'num_wmask': sram.num_wmasks
+            'num_wmask': sram.num_wmasks,
+            'write_size': sram.write_size
             }
 
     def verilog_write(self, name):
         template_filename = os.path.join(os.path.abspath(os.environ["OPENRAM_HOME"]), "sram/sram_multibank_template.v")
         t = template(template_filename, self.dict)
         t.write(name)
+        with open(name, 'r') as f:
+            text = f.read()
+            badComma = re.compile(',(\s*\n\s*\);)')
+            text = badComma.sub(r'\1', text)
+        with open(name, 'w') as f:
+            f.write(text)

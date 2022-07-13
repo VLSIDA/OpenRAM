@@ -12,6 +12,8 @@ class baseSection:
     This is the base section class for other section classes to inherit.
     It is also used as the top most section.
     """
+    def __init__(self):
+        self.children = []
 
     def expand(self, dict, fd):
         for c in self.children:
@@ -25,6 +27,7 @@ class loopSection(baseSection):
     """
 
     def __init__(self, var, key):
+        baseSection.__init__(self)
         self.var = var
         self.key = key
 
@@ -43,6 +46,7 @@ class conditionalSection(baseSection):
     element.
     """
     def __init__(self, cond):
+        baseSection.__init__(self)
         self.cond = cond
 
     def expand(self, dict, fd):
@@ -86,24 +90,21 @@ class template:
             lines = f.readlines()
 
         self.baseSectionSection = baseSection()
-        sections = []
         context = [self.baseSectionSection]
-        forRE = re.compile('\{% for (\S*) in (\S*) %\}')
-        endforRE = re.compile('\{% endfor %\}')
-        ifRE = re.compile('\{% if (.*) %\}')
-        endifRE = re.compile('\{% endif %\}')
+        forRE = re.compile('\s*\{% for (\S*) in (\S*) %\}')
+        endforRE = re.compile('\s*\{% endfor %\}')
+        ifRE = re.compile('\s*{% if (.*) %\}')
+        endifRE = re.compile('\s*\{% endif %\}')
         for line in lines:
             m = forRE.match(line)
             if m:
                 section = loopSection(m.group(1), m.group(2))
-                sections.append(section)
                 context[-1].children.append(section)
                 context.append(section)
                 continue
             m = ifRE.match(line)
             if m:
                 section = conditionalSection(m.group(1))
-                section.append(section)
                 context[-1].children.append(section)
                 context.append(section)
                 continue

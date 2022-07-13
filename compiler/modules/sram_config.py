@@ -18,10 +18,10 @@ class sram_config:
         self.word_size = word_size
         self.num_words = num_words
         # Don't add a write mask if it is the same size as the data word
-        if write_size and write_size==word_size:
-            self.write_size = None
-        else:
+        if write_size:
             self.write_size = write_size
+        else:
+            self.write_size = word_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
         self.num_spare_cols = num_spare_cols

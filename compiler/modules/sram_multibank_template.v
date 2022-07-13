@@ -9,9 +9,9 @@ module {{ module_name }}  (
     addr{{ port }},
     din{{ port }},
     csb{{ port }},
-    {% if write_size > 1 %}
+{% if num_wmask > 1 %}
     wmask{{ port }},
-    {% endif %}
+{% endif %}
     web{{ port }},
     dout{{ port }},
 {% endfor %}
@@ -26,9 +26,9 @@ module {{ module_name }}  (
     addr{{ port }},
     din{{ port }},
     csb{{ port }},
-    {% if write_size > 1 %}
+{% if num_wmask > 1 %}
     wmask{{ port }},
-    {% endif %}
+{% endif %}
     web{{ port }},
 {% endfor %}
   );
@@ -49,9 +49,9 @@ module {{ module_name }}  (
   input [DATA_WIDTH - 1: 0] din{{ port }};
   input csb{{ port }};
   input web{{ port }};
-  {% if write_size > 1 %}
+{% if num_wmask > 1 %}
   input [NUM_WMASK - 1 : 0] wmask{{ port }};
-  {% endif %}
+{% endif %}
   output reg [DATA_WIDTH - 1 : 0] dout{{ port }};
 {% endfor %}
 {% for port in r_ports %}
@@ -66,9 +66,9 @@ module {{ module_name }}  (
   input [DATA_WIDTH - 1: 0] din{{ port }};
   input csb{{ port }};
   input web{{ port }};
-  {% if write_size > 1 %}
+{% if num_wmask > 1 %}
   input [NUM_WMASK - 1 : 0] wmask{{ port }};
-  {% endif %}
+{% endif %}
 {% endfor %}
 
 {% for port in ports %}
@@ -96,9 +96,9 @@ module {{ module_name }}  (
     .din{{ port }}(din{{ port }}),
     .csb{{ port }}(csb{{ port }}_bank{{ bank }}),
     .web{{ port }}(web{{ port }}_bank{{ bank }}),
-    {% if write_size > 1 %}
+{% if num_wmask > 1 %}
     .wmask{{ port }}(wmask{{ port }}),
-    {% endif %}
+{% endif %}
     .dout{{ port }}(dout{{ port }}_bank{{ bank }}),
 {% endfor %}
 {% for port in r_ports %}
@@ -112,9 +112,9 @@ module {{ module_name }}  (
     .addr{{ port }}(addr{{ port }}[ADDR_WIDTH - BANK_SEL - 1 : 0]),
     .din{{ port }}(din{{ port }}),
     .csb{{ port }}(csb{{ port }}_bank{{ bank }}),
-    {% if write_size > 1 %}
+{% if num_wmask > 1 %}
     .wmask{{ port }}(wmask{{ port }}),
-    {% endif %}
+{% endif %}
     .web{{ port }}(web{{ port }}_bank{{ bank }}),
 {% endfor %}
   );

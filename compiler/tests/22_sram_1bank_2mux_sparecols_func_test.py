@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -31,7 +31,7 @@ class sram_1bank_2mux_sparecols_func_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import functional
-        from sram_config import sram_config
+        from modules import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1

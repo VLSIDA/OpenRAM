@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import debug
-from vector3d import vector3d
-from grid_cell import grid_cell
+from base.vector3d import vector3d
+from .grid_cell import grid_cell
 
 
 class grid:

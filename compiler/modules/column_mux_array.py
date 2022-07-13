@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 from tech import layer, preferred_directions
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class column_mux_array(design.design):
+class column_mux_array(design):
     """
     Dynamically generated column mux array.
     Array of column mux to read the bitlines through the 6T.

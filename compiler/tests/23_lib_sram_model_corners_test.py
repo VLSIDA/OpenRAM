@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os,re
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 import debug
@@ -31,8 +31,8 @@ class lib_model_corners_lib_test(openram_test):
             num_spare_cols = 0
 
         from characterizer import lib
-        from sram import sram
-        from sram_config import sram_config
+        from modules import sram
+        from modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1,

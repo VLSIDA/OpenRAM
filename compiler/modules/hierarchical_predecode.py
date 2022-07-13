@@ -6,9 +6,9 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 import math
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer_properties as layer_props
@@ -18,7 +18,7 @@ from tech import preferred_directions
 from tech import drc
 
 
-class hierarchical_predecode(design.design):
+class hierarchical_predecode(design):
     """
     Pre 2x4 and 3x8 and TBD 4x16 decoder shared code.
     """

@@ -13,7 +13,7 @@ Run a regression test on a control_logic
 import unittest
 from testutils import header,openram_test
 import sys, os
-sys.path.append(os.path.join(sys.path[0],".."))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -24,8 +24,6 @@ class control_logic_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import control_logic
-        import tech
 
         # check control logic for multi-port
         OPTS.bitcell = "pbitcell"

@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import debug
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from tech import drc, spice
 from globals import OPTS
 from sram_factory import factory

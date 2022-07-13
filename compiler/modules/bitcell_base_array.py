@@ -6,12 +6,12 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 from sram_factory import factory
 from globals import OPTS
 
 
-class bitcell_base_array(design.design):
+class bitcell_base_array(design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy, replica
     """

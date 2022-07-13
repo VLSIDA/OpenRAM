@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 import debug
@@ -23,10 +23,10 @@ class pand2_test(openram_test):
         global verify
         import verify
 
-        import pand2
+        from modules import pand2
 
         debug.info(2, "Testing pand2 gate 4x")
-        a = pand2.pand2(name="pand2x4", size=4)
+        a = pand2(name="pand2x4", size=4)
         self.local_check(a)
 
         globals.end_openram()

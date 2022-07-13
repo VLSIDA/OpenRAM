@@ -5,15 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from hierarchy_design import hierarchy_design
-import utils
-import contact
+import debug
 from tech import GDS, layer
 from tech import preferred_directions
 from tech import cell_properties as props
 from globals import OPTS
-import re
-import debug
+from . import utils
+from .hierarchy_design import hierarchy_design
 
 
 class design(hierarchy_design):
@@ -82,201 +80,6 @@ class design(hierarchy_design):
             for pin in pins:
                 print(pin_name, pin)
 
-    @classmethod
-    def setup_drc_constants(design):
-        """
-        These are some DRC constants used in many places
-        in the compiler.
-        """
-        # Make some local rules for convenience
-        from tech import drc
-        for rule in drc.keys():
-            # Single layer width rules
-            match = re.search(r"minwidth_(.*)", rule)
-            if match:
-                if match.group(1) == "active_contact":
-                    setattr(design, "contact_width", drc(match.group(0)))
-                else:
-                    setattr(design, match.group(1) + "_width", drc(match.group(0)))
-
-            # Single layer area rules
-            match = re.search(r"minarea_(.*)", rule)
-            if match:
-                setattr(design, match.group(0), drc(match.group(0)))
-
-            # Single layer spacing rules
-            match = re.search(r"(.*)_to_(.*)", rule)
-            if match and match.group(1) == match.group(2):
-                setattr(design, match.group(1) + "_space", drc(match.group(0)))
-            elif match and match.group(1) != match.group(2):
-                if match.group(2) == "poly_active":
-                    setattr(design, match.group(1) + "_to_contact",
-                            drc(match.group(0)))
-                else:
-                    setattr(design, match.group(0), drc(match.group(0)))
-
-            match = re.search(r"(.*)_enclose_(.*)", rule)
-            if match:
-                setattr(design, match.group(0), drc(match.group(0)))
-
-            match = re.search(r"(.*)_extend_(.*)", rule)
-            if match:
-                setattr(design, match.group(0), drc(match.group(0)))
-
-        # Create the maximum well extend active that gets used
-        # by cells to extend the wells for interaction with other cells
-        from tech import layer
-        design.well_extend_active = 0
-        if "nwell" in layer:
-            design.well_extend_active = max(design.well_extend_active, design.nwell_extend_active)
-        if "pwell" in layer:
-            design.well_extend_active = max(design.well_extend_active, design.pwell_extend_active)
-
-        # The active offset is due to the well extension
-        if "pwell" in layer:
-            design.pwell_enclose_active = drc("pwell_enclose_active")
-        else:
-            design.pwell_enclose_active = 0
-        if "nwell" in layer:
-            design.nwell_enclose_active = drc("nwell_enclose_active")
-        else:
-            design.nwell_enclose_active = 0
-        # Use the max of either so that the poly gates will align properly
-        design.well_enclose_active = max(design.pwell_enclose_active,
-                                       design.nwell_enclose_active,
-                                       design.active_space)
-
-        # These are for debugging previous manual rules
-        if False:
-            print("poly_width", design.poly_width)
-            print("poly_space", design.poly_space)
-            print("m1_width", design.m1_width)
-            print("m1_space", design.m1_space)
-            print("m2_width", design.m2_width)
-            print("m2_space", design.m2_space)
-            print("m3_width", design.m3_width)
-            print("m3_space", design.m3_space)
-            print("m4_width", design.m4_width)
-            print("m4_space", design.m4_space)
-            print("active_width", design.active_width)
-            print("active_space", design.active_space)
-            print("contact_width", design.contact_width)
-            print("poly_to_active", design.poly_to_active)
-            print("poly_extend_active", design.poly_extend_active)
-            print("poly_to_contact", design.poly_to_contact)
-            print("active_contact_to_gate", design.active_contact_to_gate)
-            print("poly_contact_to_gate", design.poly_contact_to_gate)
-            print("well_enclose_active", design.well_enclose_active)
-            print("implant_enclose_active", design.implant_enclose_active)
-            print("implant_space", design.implant_space)
-            import sys
-            sys.exit(1)
-
-    @classmethod
-    def setup_layer_constants(design):
-        """
-        These are some layer constants used
-        in many places in the compiler.
-        """
-
-        from tech import layer_indices
-        import tech
-        for layer_id in layer_indices:
-            key = "{}_stack".format(layer_id)
-
-            # Set the stack as a local helper
-            try:
-                layer_stack = getattr(tech, key)
-                setattr(design, key, layer_stack)
-            except AttributeError:
-                pass
-
-            # Skip computing the pitch for non-routing layers
-            if layer_id in ["active", "nwell"]:
-                continue
-
-            # Add the pitch
-            setattr(design,
-                    "{}_pitch".format(layer_id),
-                    design.compute_pitch(layer_id, True))
-
-            # Add the non-preferrd pitch (which has vias in the "wrong" way)
-            setattr(design,
-                    "{}_nonpref_pitch".format(layer_id),
-                    design.compute_pitch(layer_id, False))
-
-        if False:
-            from tech import preferred_directions
-            print(preferred_directions)
-            from tech import layer_indices
-            for name in layer_indices:
-                if name == "active":
-                    continue
-                try:
-                    print("{0} width {1} space {2}".format(name,
-                                                           getattr(design, "{}_width".format(name)),
-                                                           getattr(design, "{}_space".format(name))))
-
-                    print("pitch {0} nonpref {1}".format(getattr(design, "{}_pitch".format(name)),
-                                                         getattr(design, "{}_nonpref_pitch".format(name))))
-                except AttributeError:
-                    pass
-            import sys
-            sys.exit(1)
-
-    @staticmethod
-    def compute_pitch(layer, preferred=True):
-
-        """
-        This is the preferred direction pitch
-        i.e. we take the minimum or maximum contact dimension
-        """
-        # Find the layer stacks this is used in
-        from tech import layer_stacks
-        pitches = []
-        for stack in layer_stacks:
-            # Compute the pitch with both vias above and below (if they exist)
-            if stack[0] == layer:
-                pitches.append(design.compute_layer_pitch(stack, preferred))
-            if stack[2] == layer:
-                pitches.append(design.compute_layer_pitch(stack[::-1], True))
-
-        return max(pitches)
-
-    @staticmethod
-    def get_preferred_direction(layer):
-        return preferred_directions[layer]
-
-    @staticmethod
-    def compute_layer_pitch(layer_stack, preferred):
-
-        (layer1, via, layer2) = layer_stack
-        try:
-            if layer1 == "poly" or layer1 == "active":
-                contact1 = getattr(contact, layer1 + "_contact")
-            else:
-                contact1 = getattr(contact, layer1 + "_via")
-        except AttributeError:
-            contact1 = getattr(contact, layer2 + "_via")
-
-        if preferred:
-            if preferred_directions[layer1] == "V":
-                contact_width = contact1.first_layer_width
-            else:
-                contact_width = contact1.first_layer_height
-        else:
-            if preferred_directions[layer1] == "V":
-                contact_width = contact1.first_layer_height
-            else:
-                contact_width = contact1.first_layer_width
-        layer_space = getattr(design, layer1 + "_space")
-
-        #print(layer_stack)
-        #print(contact1)
-        pitch = contact_width + layer_space
-
-        return utils.round_to_grid(pitch)
-
     def setup_multiport_constants(self):
         """
         These are contants and lists that aid multiport design.
@@ -324,6 +127,4 @@ class design(hierarchy_design):
             total_module_power += inst.mod.analytical_power(corner, load)
         return total_module_power
 
-design.setup_drc_constants()
-design.setup_layer_constants()
 

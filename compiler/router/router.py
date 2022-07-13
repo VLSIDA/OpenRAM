@@ -8,18 +8,18 @@
 
 import itertools
 import math
-import gdsMill
+from datetime import datetime
+from gdsMill import gdsMill
+import debug
+from globals import OPTS, print_time
 from tech import drc, GDS
 from tech import layer as techlayer
-import debug
-from router_tech import router_tech
-from pin_layout import pin_layout
-from pin_group import pin_group
-from vector import vector
-from vector3d import vector3d
-from globals import OPTS, print_time
-import grid_utils
-from datetime import datetime
+from base.vector import vector
+from base.vector3d import vector3d
+from base.pin_layout import pin_layout
+from .router_tech import router_tech
+from .pin_group import pin_group
+from . import grid_utils
 
 
 class router(router_tech):

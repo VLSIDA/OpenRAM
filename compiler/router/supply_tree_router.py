@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from globals import print_time
-from router import router
 from datetime import datetime
-import grid_utils
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-from signal_grid import signal_grid
+import debug
+from globals import print_time
+from .router import router
+from . import grid_utils
+from .signal_grid import signal_grid
 
 
 class supply_tree_router(router):

@@ -7,7 +7,6 @@
 #
 import unittest
 import sys, os, glob
-sys.path.append(os.getenv("OPENRAM_HOME"))
 from globals import OPTS
 import debug
 import pdb
@@ -140,8 +139,8 @@ class openram_test(unittest.TestCase):
         Reset everything after each test.
         """
         # Reset the static duplicate name checker for unit tests.
-        import hierarchy_design
-        hierarchy_design.hierarchy_design.name_map=[]
+        from base import hierarchy_design
+        hierarchy_design.name_map=[]
 
     def check_golden_data(self, data, golden_data, error_tolerance=1e-2):
         """

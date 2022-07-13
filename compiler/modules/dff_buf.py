@@ -6,14 +6,14 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 from tech import layer
-from vector import vector
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class dff_buf(design.design):
+class dff_buf(design):
     """
     This is a simple buffered DFF. The output is buffered
     with two inverters, of variable size, to provide q

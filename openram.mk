@@ -27,6 +27,7 @@ export DOCKER_CMD= docker run \
         -e OPENRAM_HOME=/openram/compiler \
         -e OPENRAM_TECH=/openram/technology \
 		-e OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp \
+        -e PYTHONPATH=/openram/compiler \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
         	vlsida/openram-ubuntu:latest
@@ -41,6 +42,7 @@ mount:
 		-e PDKPATH=/pdk/sky130A \
         -e OPENRAM_HOME=/openram/compiler \
         -e OPENRAM_TECH=/openram/technology \
+        -e PYTHONPATH=/openram/compiler \
 		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
 		--user $(UID):$(GID) \
         vlsida/openram-ubuntu:latest

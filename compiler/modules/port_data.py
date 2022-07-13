@@ -5,17 +5,17 @@
 #
 from tech import drc
 import debug
-import design
+from base import design
 import math
 from sram_factory import factory
 from collections import namedtuple
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import cell_properties
 from tech import layer_properties as layer_props
 
 
-class port_data(design.design):
+class port_data(design):
     """
     Create the data port (column mux, sense amps, write driver, etc.) for the given port number.
     Port 0 always has the RBL on the left while port 1 is on the right.

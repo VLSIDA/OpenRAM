@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -35,7 +35,7 @@ class psram_1bank_nomux_func_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import functional
-        from sram_config import sram_config
+        from modules import sram_config
         c = sram_config(word_size=4,
                         num_words=32,
                         num_banks=1)

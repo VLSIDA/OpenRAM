@@ -5,19 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys
-from tech import drc, parameter
-import debug
-import design
-import contact
-from pinv import pinv
-from pnand2 import pnand2
-from pnor2 import pnor2
-from vector import vector
+from tech import drc
+from base import design
+from base import vector
+from pgates import pinv
+from pgates import pnand2
+from pgates import pnor2
 from sram_factory import factory
 from globals import OPTS
 
-class bank_select(design.design):
+class bank_select(design):
     """Create a bank select signal that is combined with an array of
         NOR+INV gates to gate the control signals in case of multiple
         banks are created in upper level SRAM module

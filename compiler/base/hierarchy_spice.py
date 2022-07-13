@@ -12,10 +12,10 @@ import math
 import tech
 from globals import OPTS
 from pprint import pformat
-from delay_data import delay_data
-from wire_spice_model import wire_spice_model
-from power_data import power_data
-import logical_effort
+from .delay_data import delay_data
+from .wire_spice_model import wire_spice_model
+from .power_data import power_data
+from .logical_effort import convert_relative_c_to_farad, convert_farad_to_relative_c
 
 
 class spice():
@@ -443,7 +443,7 @@ class spice():
 
         # FIXME: Slew is not used in the model right now.
         # Can be added heuristically as linear factor
-        relative_cap = logical_effort.convert_farad_to_relative_c(load)
+        relative_cap = convert_farad_to_relative_c(load)
         stage_effort = self.get_stage_effort(relative_cap)
 
         # If it fails, then keep running with a valid object.
@@ -511,7 +511,7 @@ class spice():
         # Override this function within a module if a more accurate input capacitance is needed.
         # Input/outputs with differing capacitances is not implemented.
         relative_cap = self.input_load()
-        return logical_effort.convert_relative_c_to_farad(relative_cap)
+        return convert_relative_c_to_farad(relative_cap)
 
     def input_load(self):
         """Inform users undefined relative capacitance functions used for analytical delays."""

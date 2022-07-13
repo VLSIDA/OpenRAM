@@ -16,7 +16,7 @@ import re
 import shutil
 import debug
 from globals import OPTS
-from run_script import *
+from .run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0

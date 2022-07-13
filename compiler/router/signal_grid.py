@@ -8,10 +8,9 @@
 import debug
 from heapq import heappush,heappop
 from copy import deepcopy
-
-from grid import grid
-from grid_path import grid_path
-from vector3d import vector3d
+from base.vector3d import vector3d
+from .grid import grid
+from .grid_path import grid_path
 
 
 class signal_grid(grid):

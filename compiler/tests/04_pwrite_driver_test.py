@@ -10,7 +10,7 @@ import unittest
 from testutils import header, openram_test
 import sys
 import os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory

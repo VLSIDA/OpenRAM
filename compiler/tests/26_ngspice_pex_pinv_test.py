@@ -11,7 +11,7 @@ with Ngspice.
 import unittest
 from testutils import header,openram_test
 import sys, os
-sys.path.append(os.path.join(sys.path[0],".."))
+
 import globals
 from globals import OPTS
 import debug

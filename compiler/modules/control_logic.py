@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 from sram_factory import factory
 import math
-from vector import vector
+from base import vector
 from globals import OPTS
-import logical_effort
+from base import logical_effort
 
 
-class control_logic(design.design):
+class control_logic(design):
     """
     Dynamically generated Control logic for the total SRAM circuit.
     """
@@ -43,7 +43,7 @@ class control_logic(design.design):
         self.num_words = num_rows * words_per_row
 
         self.enable_delay_chain_resizing = False
-        self.inv_parasitic_delay = logical_effort.logical_effort.pinv
+        self.inv_parasitic_delay = logical_effort.pinv
 
         # Determines how much larger the sen delay should be. Accounts for possible error in model.
         # FIXME: This should be made a parameter

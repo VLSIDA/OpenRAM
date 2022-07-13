@@ -5,12 +5,11 @@
 #
 
 import debug
-from bitcell_base_array import bitcell_base_array
-from pbitcell import pbitcell
-from contact import contact
-from tech import drc, spice, preferred_directions
+from base import vector
+from base import contact
+from .bitcell_base_array import bitcell_base_array
+from tech import drc, spice
 from tech import cell_properties as props
-from vector import vector
 from globals import OPTS
 from sram_factory import factory
 

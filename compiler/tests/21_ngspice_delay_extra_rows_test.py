@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -29,7 +29,7 @@ class timing_sram_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import delay
-        from sram_config import sram_config
+        from modules import sram_config
         c = sram_config(word_size=1,
                         num_words=16,
                         num_banks=1,

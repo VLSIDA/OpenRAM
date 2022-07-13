@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 import math
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 
 
-class write_mask_and_array(design.design):
+class write_mask_and_array(design):
     """
     Array of AND gates to turn write mask signal on only when w_en is on.
     The write mask AND array goes between the write driver array and the sense amp array.

@@ -5,15 +5,15 @@
 #
 from math import log, ceil
 import debug
-import design
+from base import design
 from sram_factory import factory
-from vector import vector
+from base import vector
 from tech import layer, drc
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class port_address(design.design):
+class port_address(design):
     """
     Create the address port (row decoder and wordline driver)..
     """

@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -20,7 +20,7 @@ class replica_pbitcell_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import dummy_pbitcell
+        from modules import dummy_pbitcell
 
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
@@ -29,7 +29,7 @@ class replica_pbitcell_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
-        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        tx = dummy_pbitcell(name="rpbc")
         self.local_check(tx)
 
         OPTS.num_rw_ports = 1
@@ -38,7 +38,7 @@ class replica_pbitcell_test(openram_test):
 
         factory.reset()
         debug.info(2, "Checking dummy bitcell using pbitcell (large cell)")
-        tx = dummy_pbitcell.dummy_pbitcell(name="rpbc")
+        tx = dummy_pbitcell(name="rpbc")
         self.local_check(tx)
 
         globals.end_openram()

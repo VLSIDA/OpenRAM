@@ -4,9 +4,9 @@
 # All rights reserved.
 #
 import debug
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import layer_properties as layer_props
 

@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 
 
-class dff_array(design.design):
+class dff_array(design):
     """
     This is a simple row (or multiple rows) of flops.
     Unlike the data flops, these are never spaced out.

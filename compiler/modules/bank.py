@@ -6,16 +6,16 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
+from base import vector
 from sram_factory import factory
 from math import log, ceil, floor
 from tech import drc
-from vector import vector
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class bank(design.design):
+class bank(design):
     """
     Dynamically generated a single bank including bitcell array,
     hierarchical_decoder, precharge, (optional column_mux and column decoder),

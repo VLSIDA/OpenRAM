@@ -6,21 +6,21 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 from tech import layer
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class wordline_buffer_array(design.design):
+class wordline_buffer_array(design):
     """
     Creates a Wordline Buffer/Inverter array
     """
 
     def __init__(self, name, rows, cols):
-        design.design.__init__(self, name)
+        design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 

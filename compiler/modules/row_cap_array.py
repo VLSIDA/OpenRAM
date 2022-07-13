@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2021 Regents of the University of California
 # All rights reserved.
 #
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
 

@@ -8,8 +8,8 @@
 import collections
 import debug
 from tech import drc
-from vector import vector
-import design
+from .vector import vector
+from .design import design
 
 
 class channel_net():
@@ -75,7 +75,7 @@ class channel_net():
         return min_overlap or max_overlap
 
 
-class channel_route(design.design):
+class channel_route(design):
 
     unique_id = 0
 

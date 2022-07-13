@@ -6,10 +6,11 @@
 # All rights reserved.
 #
 import os
-from design_rules import *
-from module_type import *
-from custom_cell_properties import cell_properties
-from custom_layer_properties import layer_properties
+import drc as d
+#from drc.design_rules import design_rules
+#from drc.module_type import module_type
+#from drc.custom_cell_properties import cell_properties
+#from drc.custom_layer_properties import layer_properties
 
 """
 File containing the process technology parameters for FreePDK 45nm.
@@ -24,18 +25,18 @@ File containing the process technology parameters for FreePDK 45nm.
 # Using tech_modules['cellname'] you can override each class by providing a custom
 # implementation in '$OPENRAM_TECHDIR/modules/'
 # For example: tech_modules['contact'] = 'contact_freepdk45'
-tech_modules = module_type()
+tech_modules = d.module_type()
 
 
 ###################################################
 # Custom cell properties
 ###################################################
-cell_properties = cell_properties()
+cell_properties = d.cell_properties()
 
 ###################################################
 # Custom cell properties
 ###################################################
-layer_properties = layer_properties()
+layer_properties = d.layer_properties()
 
 ###################################################
 # GDS file info
@@ -185,7 +186,7 @@ parameter["6T_access_size"] = 0.135
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
-drc = design_rules("freepdk45")
+drc = d.design_rules("freepdk45")
 
 #grid size
 drc["grid"] = 0.0025
@@ -347,7 +348,7 @@ drc.add_layer("via2",
 # Minimum spacing of m3 wider than 1.5 & longer than 4.0=1.5
 drc.add_layer("m3",
               width=0.07,
-              spacing=drc_lut({(0.00, 0.0): 0.07,
+              spacing=d.drc_lut({(0.00, 0.0): 0.07,
                                  (0.09, 0.3): 0.09,
                                  (0.27, 0.9): 0.27,
                                  (0.50, 1.8): 0.5,
@@ -379,7 +380,7 @@ drc.add_layer("via3",
 # Minimum spacing of m4 wider than 1.5 & longer than 4.0=1.5
 drc.add_layer("m4",
               width=0.14,
-              spacing=drc_lut({(0.00, 0.0): 0.14,
+              spacing=d.drc_lut({(0.00, 0.0): 0.14,
                                  (0.27, 0.9): 0.27,
                                  (0.50, 1.8): 0.5,
                                  (0.90, 2.7): 0.9,

@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
-from vector import vector
+from base import vector
 import debug
 from numpy import cumsum
 from tech import layer_properties as layer_props
 
 
-class global_bitcell_array(bitcell_base_array.bitcell_base_array):
+class global_bitcell_array(bitcell_base_array):
     """
     Creates a global bitcell array.
     Rows is an integer number for all local arrays.

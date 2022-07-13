@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 import math
 from tech import drc
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 
 
-class write_driver_array(design.design):
+class write_driver_array(design):
     """
     Array of tristate drivers to write to the bitlines through the column mux.
     Dynamically generated write driver array of all bitlines.

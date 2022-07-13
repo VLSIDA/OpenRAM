@@ -6,8 +6,7 @@
 # All rights reserved.
 #
 from tech import drc
-import contact
-from wire_path import wire_path
+from .wire_path import wire_path
 from sram_factory import factory
 
 
@@ -69,15 +68,24 @@ class wire(wire_path):
         This is contact direction independent pitch,
         i.e. we take the maximum contact dimension
         """
+        
+        # This is here for the unit tests which may not have
+        # initialized the static parts of the layout class yet.
+        from base import layout
+        layout("fake", "fake")
+
         (layer1, via, layer2) = layer_stack
 
         if layer1 == "poly" or layer1 == "active":
-            contact1 = getattr(contact, layer1 + "_contact")
+            try:
+                contact1 = getattr(layout, layer1 + "_contact")
+            except AttributeError:
+                breakpoint()
         else:
             try:
-                contact1 = getattr(contact, layer1 + "_via")
+                contact1 = getattr(layout, layer1 + "_via")
             except AttributeError:
-                contact1 = getattr(contact, layer2 + "_via")
+                contact1 = getattr(layout, layer2 + "_via")
         max_contact = max(contact1.width, contact1.height)
 
         layer1_space = drc("{0}_to_{0}".format(layer1))

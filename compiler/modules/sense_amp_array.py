@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
-from vector import vector
+from base import design
+from base import vector
 from sram_factory import factory
 from tech import cell_properties
 import debug
 from globals import OPTS
 
 
-class sense_amp_array(design.design):
+class sense_amp_array(design):
     """
     Array of sense amplifiers to read the bitlines through the column mux.
     Dynamically generated sense amp array for all bitlines.

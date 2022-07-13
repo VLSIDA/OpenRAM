@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class dff_inv(design.design):
+class dff_inv(design):
     """
     This is a simple DFF with an inverted output. Some DFFs
     do not have Qbar, so this will create it.

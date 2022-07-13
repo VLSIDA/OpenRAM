@@ -252,7 +252,8 @@ def setup_bitcell():
                 
     # See if bitcell exists
     try:
-        __import__(OPTS.bitcell)
+        c = importlib.import_module("modules." + OPTS.bitcell)
+        mod = getattr(c, OPTS.bitcell)
     except ImportError:
         # Use the pbitcell if we couldn't find a custom bitcell
         # or its custom replica  bitcell
@@ -430,19 +431,12 @@ def setup_paths():
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
     except:
         debug.error("$OPENRAM_HOME is not properly defined.", 1)
+
     debug.check(os.path.isdir(OPENRAM_HOME),
                 "$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
 
-    # Add all of the subdirs to the python path
-    # These subdirs are modules and don't need
-    # to be added: characterizer, verify
-    subdirlist = [item for item in os.listdir(OPENRAM_HOME) if os.path.isdir(os.path.join(OPENRAM_HOME, item))]
-    for subdir in subdirlist:
-        full_path = "{0}/{1}".format(OPENRAM_HOME, subdir)
-        debug.check(os.path.isdir(full_path),
-                    "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir, full_path))
-        if "__pycache__" not in full_path:
-            sys.path.append("{0}".format(full_path))
+    if OPENRAM_HOME not in sys.path:
+        debug.error("Please add OPENRAM_HOME to the PYTHONPATH.", -1)
 
     # Use a unique temp subdirectory if multithreaded
     if OPTS.num_threads > 1 or OPTS.openram_temp == "/tmp":
@@ -569,18 +563,18 @@ def import_tech():
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 
-    # Add the tech directory
+    # Prepend the tech directory so it is sourced FIRST
     tech_path = OPTS.openram_tech
-    sys.path.append(tech_path)
+    sys.path.insert(0, tech_path)
     try:
         import tech
     except ImportError:
         debug.error("Could not load tech module.", -1)
 
-    # Add custom modules of the technology to the path, if they exist
+    # Prepend custom modules of the technology to the path, if they exist
     custom_mod_path = os.path.join(tech_path, "modules/")
     if os.path.exists(custom_mod_path):
-        sys.path.append(custom_mod_path)
+        sys.path.insert(0, custom_mod_path)
 
 
 def print_time(name, now_time, last_time=None, indentation=2):

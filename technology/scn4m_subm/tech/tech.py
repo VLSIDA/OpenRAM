@@ -6,10 +6,11 @@
 # All rights reserved.
 #
 import os
-from design_rules import *
-from module_type import *
-from custom_cell_properties import cell_properties
-from custom_layer_properties import layer_properties
+import drc as d
+#from drc.design_rules import design_rules
+#from drc.module_type import module_type
+#from drc.custom_cell_properties import cell_properties
+#from drc.custom_layer_properties import layer_properties
 
 """
 File containing the process technology parameters for SCMOS 4m, 0.35um
@@ -24,19 +25,19 @@ File containing the process technology parameters for SCMOS 4m, 0.35um
 # Using tech_modules['cellname'] you can override each class by providing a custom
 # implementation in '$OPENRAM_TECHDIR/modules/'
 # For example: tech_modules['contact'] = 'contact_scn4m'
-tech_modules = module_type()
+tech_modules = d.module_type()
 
 ###################################################
 # Custom cell properties
 ###################################################
-cell_properties = cell_properties()
+cell_properties = d.cell_properties()
 cell_properties.bitcell_1port.gnd_layer = "m2"
 cell_properties.bitcell_1port.gnd_dir = "V"
 
 ###################################################
 # Custom cell properties
 ###################################################
-layer_properties = layer_properties()
+layer_properties = d.layer_properties()
 
 ###################################################
 # GDS file info
@@ -160,7 +161,7 @@ parameter["6T_access_size"] = 4*_lambda_
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
-drc = design_rules("scn4me_sub")
+drc = d.design_rules("scn4me_sub")
 
 #grid size is 1/2 a lambda
 drc["grid"]=0.5*_lambda_

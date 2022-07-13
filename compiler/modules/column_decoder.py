@@ -5,16 +5,16 @@
 #
 from tech import drc
 import debug
-import design
+from base import design
 import math
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import cell_properties
 from tech import layer_properties as layer_props
 
 
-class column_decoder(design.design):
+class column_decoder(design):
     """
     Create the column mux decoder.
     """

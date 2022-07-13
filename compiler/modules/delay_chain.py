@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class delay_chain(design.design):
+class delay_chain(design):
     """
     Generate a delay chain with the given number of stages and fanout.
     Input is a list contains the electrical effort (fanout) of each stage.

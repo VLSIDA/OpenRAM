@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 
 
-class precharge_array(design.design):
+class precharge_array(design):
     """
     Dynamically generated precharge array of all bitlines.  Cols is number
     of bit line columns, height is the height of the bit-cell array.

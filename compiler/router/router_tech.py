@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 from tech import drc, layer, preferred_directions
-from contact import contact
-from vector import vector
+from base.contact import contact
+from base.vector import vector
 import debug
 import math
 

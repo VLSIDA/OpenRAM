@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import hierarchy_layout
-import hierarchy_spice
+from .hierarchy_layout import layout
+from .hierarchy_spice import spice
 import debug
 import os
 from globals import OPTS
 
 
-class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
+class hierarchy_design(spice, layout):
     """
     Design Class for all modules to inherit the base features.
     Class consisting of a set of modules and instances of these modules
@@ -32,8 +32,8 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
             name = OPTS.output_name + "_" + name
             cell_name = name
 
-        hierarchy_spice.spice.__init__(self, name, cell_name)
-        hierarchy_layout.layout.__init__(self, name, cell_name)
+        spice.__init__(self, name, cell_name)
+        layout.__init__(self, name, cell_name)
         self.init_graph_params()
 
     def get_layout_pins(self, inst):

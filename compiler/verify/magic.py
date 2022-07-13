@@ -25,7 +25,7 @@ import re
 import shutil
 import debug
 from globals import OPTS
-from run_script import *
+from .run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0
@@ -270,7 +270,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
             
         setup_file_object = open(output_path + "/setup.tcl", 'a')
         setup_file_object.write("# Increase the column sizes for ease of reading long names\n")
-        setup_file_object.write("::netgen::format 80\n")
+        setup_file_object.write("::netgen::format 120\n")
 
     else:
         setup_file = 'nosetup'

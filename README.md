@@ -26,28 +26,33 @@ things that need to be fixed.
 
 # Basic Setup
 
-## Docker
-
-We have a [docker setup](./docker) to run OpenRAM.
-
 ## Dependencies
 
-The OpenRAM compiler has very few dependencies:
-+ [Ngspice] 34 (or later) or HSpice I-2013.12-1 (or later) or CustomSim 2017 (or later) or [Xyce] 7.4 (or later)
+Please see the Dockerfile for the required versions of tools.
+
+In general, the OpenRAM compiler has very few dependencies:
++ Docker
++ Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
 + [Git]
 
-If you want to perform DRC and LVS, you will need either:
-+ Calibre (for [FreePDK45])
-+ [Magic] 8.3.197 or newer
-+ [Netgen] 1.5.195 or newer
+## Docker
+
+We have a [docker setup](./docker) to run OpenRAM. To use this, you should run:
+```
+cd openram/docker
+make build
+```
+This must be run once and will take a while to build all the tools.
+
+
+## Environment
 
 You must set two environment variables:
 + OPENRAM\_HOME should point to the compiler source directory.
 + OPENERAM\_TECH should point to one or more root technology directories (colon separated).
 
-## Environment
 
 For example add this to your .bashrc:
 
@@ -56,17 +61,23 @@ For example add this to your .bashrc:
   export OPENRAM_TECH="$HOME/openram/technology"
 ```
 
-You may also wish to add OPENRAM\_HOME to your PYTHONPATH:
+You should also add OPENRAM\_HOME to your PYTHONPATH:
 
 ```
-  export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"
+  export PYTHONPATH=$OPENRAM_HOME
+```
+Note that if you want symbols to resolve in your editor, you may also want to add the specific technology
+directory that you use and any custom technology modules as well. For example:
+```
+  export PYTHONPATH="$OPENRAM_HOME:$OPENRAM_TECH/sky130:$OPENRAM_TECH/sky130/custom"
+```
 
 We include the tech files necessary for [SCMOS] SCN4M_SUBM,
 [FreePDK45]. The [SCMOS] spice models, however, are
 generic and should be replaced with foundry models. You may get the
 entire [FreePDK45 PDK here][FreePDK45].
 
-```
+
 ### Sky130 Setup
 
 To install [Sky130], you must have the open_pdks files installed in $PDK_ROOT. 
@@ -80,7 +91,7 @@ by running:
 
   cd $HOME/openram
   make install
-```
+
 # Basic Usage
 
 Once you have defined the environment, you can run OpenRAM from the command line
@@ -88,7 +99,7 @@ using a single configuration file written in Python.
 
 For example, create a file called *myconfig.py* specifying the following
 parameters for your memory:
-
+```
 # Data word size
 word_size = 2
 # Number of words in the memory
@@ -142,9 +153,9 @@ make -j 3
 ```
 The -j can run with 3 threads. By default, this will run in all technologies.
 
-To run a specific test:
+To run a specific test in all technologies:
 ```
-ce openram/compiler/tests
+cd openram/compiler/tests
 make 05_bitcell_array_test
 ```
 To run a specific technology:
@@ -158,6 +169,14 @@ pass it as an argument to OpenRAM:
 ```
 ARGS="-v" make 05_bitcell_array_test
 ```
+
+Unit test results are put in a directory:
+```
+openram/compiler/tests/results/<technology>/<test>
+```
+If the test fails, there will be a tmp directory with intermediate results.
+If the test passes, this directory will be deleted to save space.
+You can view the .out file to see what the output of a test is in either case.
 
 # Get Involved
 
@@ -207,6 +226,7 @@ If I forgot to add you, please let me know!
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu
 [user-group-subscribe]:  mailto:openram-user-group+subscribe@ucsc.edu
 
+[Klayout]:               https://www.klayout.de/
 [Magic]:                 http://opencircuitdesign.com/magic/
 [Netgen]:                http://opencircuitdesign.com/netgen/
 [Qflow]:                 http://opencircuitdesign.com/qflow/history.html

@@ -10,7 +10,7 @@ import unittest
 from testutils import *
 import sys
 import os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 
 
@@ -19,9 +19,9 @@ class wire_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import wire
+        from base import wire
         import tech
-        import design
+        from base import design
 
         layer_stacks = [tech.poly_stack] + tech.beol_stacks
 
@@ -46,8 +46,8 @@ class wire_test(openram_test):
                                  [-1 * min_space, 4 * min_space],
                                  [-1 * min_space, 0]]
                 position_list  = [[x - min_space, y - min_space] for x, y in position_list]
-                w = design.design("wire_test_{}".format("_".join(layer_stack)))
-                wire.wire(w, layer_stack, position_list)
+                w = design("wire_test_{}".format("_".join(layer_stack)))
+                wire(w, layer_stack, position_list)
                 self.local_drc_check(w)
 
         globals.end_openram()

@@ -7,7 +7,7 @@
 #
 import debug
 from tech import GDS, drc
-from vector import vector
+from .vector import vector
 from tech import layer, layer_indices
 import math
 

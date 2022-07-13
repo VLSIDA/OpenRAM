@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
-from vector import vector
+from base import vector
 import debug
 from tech import layer_properties as layer_props
 
 
-class local_bitcell_array(bitcell_base_array.bitcell_base_array):
+class local_bitcell_array(bitcell_base_array):
     """
     A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL

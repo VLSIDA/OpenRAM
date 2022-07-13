@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from direction import direction
-from pin_layout import pin_layout
-from vector import vector
-from vector3d import vector3d
 import debug
+from base.vector import vector
+from base.vector3d import vector3d
+from base.pin_layout import pin_layout
+from .direction import direction
 
 
 class pin_group:

@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -31,8 +31,8 @@ class model_delay_test(openram_test):
         reload(characterizer)
         from characterizer import delay
         from characterizer import elmore
-        from sram import sram
-        from sram_config import sram_config
+        from modules import sram
+        from modules import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1

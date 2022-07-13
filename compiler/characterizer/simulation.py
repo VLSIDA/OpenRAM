@@ -10,7 +10,7 @@ import math
 import tech
 from globals import OPTS
 from sram_factory import factory
-import timing_graph
+from base import timing_graph
 
 
 class simulation():
@@ -572,7 +572,7 @@ class simulation():
             self.sram.graph_exclude_column_mux(self.bitline_column, port)
 
         # Generate new graph every analysis as edges might change depending on test bit
-        self.graph = timing_graph.timing_graph()
+        self.graph = timing_graph()
         self.sram_instance_name = "X{}".format(self.sram.name)
         self.sram.build_graph(self.graph, self.sram_instance_name, self.pins)
 

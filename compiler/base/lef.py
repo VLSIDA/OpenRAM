@@ -6,12 +6,12 @@
 # All rights reserved.
 #
 import debug
+from base import vector
+from base import pin_layout
 from tech import layer_names
 import os
 import shutil
 from globals import OPTS
-from vector import vector
-from pin_layout import pin_layout
 
 
 class lef:

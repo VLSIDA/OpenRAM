@@ -5,21 +5,26 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import geometry
-import gdsMill
-import debug
-from math import sqrt
-from tech import drc, GDS
-from tech import layer as techlayer
-from tech import layer_indices
-from tech import layer_stacks
-from tech import preferred_directions
 import os
 import sys
+import re
+from math import sqrt
+import debug
+from gdsMill import gdsMill
+import tech
+from tech import drc, GDS
+from tech import layer as tech_layer
+from tech import layer_indices as tech_layer_indices
+from tech import preferred_directions
+from tech import layer_stacks as tech_layer_stacks
+from tech import active_stack as tech_active_stack
+from sram_factory import factory
 from globals import OPTS
-from vector import vector
-from pin_layout import pin_layout
-from utils import round_to_grid
+from .vector import vector
+from .pin_layout import pin_layout
+from .utils import round_to_grid
+from . import geometry
+
 try:
     from tech import special_purposes
 except ImportError:
@@ -64,11 +69,241 @@ class layout():
 
         self.gds_read()
 
+        if "contact" not in self.name:
+            if not hasattr(layout, "_drc_constants"):
+                layout._drc_constants = True
+                layout.setup_drc_constants()
+                layout.setup_contacts()
+                layout.setup_layer_constants()
+
+
+    @classmethod
+    def setup_drc_constants(layout):
+        """
+        These are some DRC constants used in many places
+        in the compiler.
+        """
+
+        # Make some local rules for convenience
+        for rule in drc.keys():
+            # Single layer width rules
+            match = re.search(r"minwidth_(.*)", rule)
+            if match:
+                if match.group(1) == "active_contact":
+                    setattr(layout, "contact_width", drc(match.group(0)))
+                else:
+                    setattr(layout, match.group(1) + "_width", drc(match.group(0)))
+
+            # Single layer area rules
+            match = re.search(r"minarea_(.*)", rule)
+            if match:
+                setattr(layout, match.group(0), drc(match.group(0)))
+
+            # Single layer spacing rules
+            match = re.search(r"(.*)_to_(.*)", rule)
+            if match and match.group(1) == match.group(2):
+                setattr(layout, match.group(1) + "_space", drc(match.group(0)))
+            elif match and match.group(1) != match.group(2):
+                if match.group(2) == "poly_active":
+                    setattr(layout, match.group(1) + "_to_contact",
+                            drc(match.group(0)))
+                else:
+                    setattr(layout, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_enclose_(.*)", rule)
+            if match:
+                setattr(layout, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_extend_(.*)", rule)
+            if match:
+                setattr(layout, match.group(0), drc(match.group(0)))
+
+        # Create the maximum well extend active that gets used
+        # by cells to extend the wells for interaction with other cells
+        layout.well_extend_active = 0
+        if "nwell" in tech_layer:
+            layout.well_extend_active = max(layout.well_extend_active, layout.nwell_extend_active)
+        if "pwell" in tech_layer:
+            layout.well_extend_active = max(layout.well_extend_active, layout.pwell_extend_active)
+
+        # The active offset is due to the well extension
+        if "pwell" in tech_layer:
+            layout.pwell_enclose_active = drc("pwell_enclose_active")
+        else:
+            layout.pwell_enclose_active = 0
+        if "nwell" in tech_layer:
+            layout.nwell_enclose_active = drc("nwell_enclose_active")
+        else:
+            layout.nwell_enclose_active = 0
+        # Use the max of either so that the poly gates will align properly
+        layout.well_enclose_active = max(layout.pwell_enclose_active,
+                                       layout.nwell_enclose_active,
+                                       layout.active_space)
+
+        # These are for debugging previous manual rules
+        if False:
+            print("poly_width", layout.poly_width)
+            print("poly_space", layout.poly_space)
+            print("m1_width", layout.m1_width)
+            print("m1_space", layout.m1_space)
+            print("m2_width", layout.m2_width)
+            print("m2_space", layout.m2_space)
+            print("m3_width", layout.m3_width)
+            print("m3_space", layout.m3_space)
+            print("m4_width", layout.m4_width)
+            print("m4_space", layout.m4_space)
+            print("active_width", layout.active_width)
+            print("active_space", layout.active_space)
+            print("contact_width", layout.contact_width)
+            print("poly_to_active", layout.poly_to_active)
+            print("poly_extend_active", layout.poly_extend_active)
+            print("poly_to_contact", layout.poly_to_contact)
+            print("active_contact_to_gate", layout.active_contact_to_gate)
+            print("poly_contact_to_gate", layout.poly_contact_to_gate)
+            print("well_enclose_active", layout.well_enclose_active)
+            print("implant_enclose_active", layout.implant_enclose_active)
+            print("implant_space", layout.implant_space)
+            import sys
+            sys.exit(1)
+
+    @classmethod
+    def setup_layer_constants(layout):
+        """
+        These are some layer constants used
+        in many places in the compiler.
+        """
         try:
             from tech import power_grid
-            self.pwr_grid_layers = [power_grid[0], power_grid[2]]
+            layout.pwr_grid_layers = [power_grid[0], power_grid[2]]
         except ImportError:
-            self.pwr_grid_layers = ["m3", "m4"]
+            layout.pwr_grid_layers = ["m3", "m4"]
+
+        for layer_id in tech_layer_indices:
+            key = "{}_stack".format(layer_id)
+
+            # Set the stack as a local helper
+            try:
+                layer_stack = getattr(tech, key)
+                setattr(layout, key, layer_stack)
+            except AttributeError:
+                pass
+
+            # Skip computing the pitch for non-routing layers
+            if layer_id in ["active", "nwell"]:
+                continue
+
+            # Add the pitch
+            setattr(layout,
+                    "{}_pitch".format(layer_id),
+                    layout.compute_pitch(layer_id, True))
+
+            # Add the non-preferrd pitch (which has vias in the "wrong" way)
+            setattr(layout,
+                    "{}_nonpref_pitch".format(layer_id),
+                    layout.compute_pitch(layer_id, False))
+
+        if False:
+            for name in tech_layer_indices:
+                if name == "active":
+                    continue
+                try:
+                    print("{0} width {1} space {2}".format(name,
+                                                           getattr(layout, "{}_width".format(name)),
+                                                           getattr(layout, "{}_space".format(name))))
+
+                    print("pitch {0} nonpref {1}".format(getattr(layout, "{}_pitch".format(name)),
+                                                         getattr(layout, "{}_nonpref_pitch".format(name))))
+                except AttributeError:
+                    pass
+            import sys
+            sys.exit(1)
+
+    @staticmethod
+    def compute_pitch(layer, preferred=True):
+        """
+        This is the preferred direction pitch
+        i.e. we take the minimum or maximum contact dimension
+        """
+        # Find the layer stacks this is used in
+        pitches = []
+        for stack in tech_layer_stacks:
+            # Compute the pitch with both vias above and below (if they exist)
+            if stack[0] == layer:
+                pitches.append(layout.compute_layer_pitch(stack, preferred))
+            if stack[2] == layer:
+                pitches.append(layout.compute_layer_pitch(stack[::-1], True))
+
+        return max(pitches)
+
+    @staticmethod
+    def get_preferred_direction(layer):
+        return preferred_directions[layer]
+
+    @staticmethod
+    def compute_layer_pitch(layer_stack, preferred):
+
+        (layer1, via, layer2) = layer_stack
+        try:
+            if layer1 == "poly" or layer1 == "active":
+                contact1 = getattr(layout, layer1 + "_contact")
+            else:
+                contact1 = getattr(layout, layer1 + "_via")
+        except AttributeError:
+            contact1 = getattr(layout, layer2 + "_via")
+
+        if preferred:
+            if preferred_directions[layer1] == "V":
+                contact_width = contact1.first_layer_width
+            else:
+                contact_width = contact1.first_layer_height
+        else:
+            if preferred_directions[layer1] == "V":
+                contact_width = contact1.first_layer_height
+            else:
+                contact_width = contact1.first_layer_width
+        layer_space = getattr(layout, layer1 + "_space")
+
+        #print(layer_stack)
+        #print(contact1)
+        pitch = contact_width + layer_space
+
+        return round_to_grid(pitch)
+
+
+    @classmethod
+    def setup_contacts(layout):
+        # Set up a static for each layer to be used for measurements
+        # unless we are a contact class!
+
+        for layer_stack in tech_layer_stacks:
+            (layer1, via, layer2) = layer_stack
+            cont = factory.create(module_type="contact",
+                                  layer_stack=layer_stack)
+            module = sys.modules[__name__]
+            # Also create a contact that is just the first layer
+            if layer1 == "poly" or layer1 == "active":
+                setattr(layout, layer1 + "_contact", cont)
+            else:
+                setattr(layout, layer1 + "_via", cont)
+
+        # Set up a static for each well contact for measurements
+        if "nwell" in tech_layer:
+            cont = factory.create(module_type="contact",
+                                  layer_stack=tech_active_stack,
+                                  implant_type="n",
+                                  well_type="n")
+            module = sys.modules[__name__]
+            setattr(layout, "nwell_contact", cont)
+
+        if "pwell" in tech_layer:
+            cont = factory.create(module_type="contact",
+                                  layer_stack=tech_active_stack,
+                                  implant_type="p",
+                                  well_type="p")
+            module = sys.modules[__name__]
+            setattr(layout, "pwell_contact", cont)
+
+
 
     ############################################################
     # GDS layout
@@ -171,7 +406,7 @@ class layout():
         this layout on a layer
         """
         # Only consider the layer not the purpose for now
-        layerNumber = techlayer[layer][0]
+        layerNumber = tech_layer[layer][0]
         try:
             highestx = max(obj.rx() for obj in self.objs if obj.layerNumber == layerNumber)
         except ValueError:
@@ -195,7 +430,7 @@ class layout():
         this layout on a layer
         """
         # Only consider the layer not the purpose for now
-        layerNumber = techlayer[layer][0]
+        layerNumber = tech_layer[layer][0]
         try:
             lowestx = min(obj.lx() for obj in self.objs if obj.layerNumber == layerNumber)
         except ValueError:
@@ -273,7 +508,7 @@ class layout():
             width = drc["minwidth_{}".format(layer)]
         if not height:
             height = drc["minwidth_{}".format(layer)]
-        lpp = techlayer[layer]
+        lpp = tech_layer[layer]
         self.objs.append(geometry.rectangle(lpp,
                                             offset,
                                             width,
@@ -289,7 +524,7 @@ class layout():
             width = drc["minwidth_{}".format(layer)]
         if not height:
             height = drc["minwidth_{}".format(layer)]
-        lpp = techlayer[layer]
+        lpp = tech_layer[layer]
         corrected_offset = offset - vector(0.5 * width, 0.5 * height)
         self.objs.append(geometry.rectangle(lpp,
                                             corrected_offset,
@@ -599,10 +834,10 @@ class layout():
 
     def get_metal_layers(self, from_layer, to_layer):
 
-        from_id = layer_indices[from_layer]
-        to_id   = layer_indices[to_layer]
+        from_id = tech_layer_indices[from_layer]
+        to_id   = tech_layer_indices[to_layer]
 
-        layer_list = [x for x in layer_indices.keys() if layer_indices[x] >= from_id and layer_indices[x] < to_id]
+        layer_list = [x for x in tech_layer_indices.keys() if tech_layer_indices[x] >= from_id and tech_layer_indices[x] < to_id]
 
         return layer_list
 
@@ -938,22 +1173,22 @@ class layout():
     def add_label(self, text, layer, offset=[0, 0], zoom=None):
         """Adds a text label on the given layer,offset, and zoom level"""
         debug.info(5, "add label " + str(text) + " " + layer + " " + str(offset))
-        lpp = techlayer[layer]
+        lpp = tech_layer[layer]
         self.objs.append(geometry.label(text, lpp, offset, zoom))
         return self.objs[-1]
 
     def add_path(self, layer, coordinates, width=None):
         """Connects a routing path on given layer,coordinates,width."""
         debug.info(4, "add path " + str(layer) + " " + str(coordinates))
-        import wire_path
+        from . import wire_path
         # NOTE: (UNTESTED) add_path(...) is currently not used
-        # lpp = techlayer[layer]
+        # lpp = tech_layer[layer]
         # self.objs.append(geometry.path(lpp, coordinates, width))
 
-        wire_path.wire_path(obj=self,
-                            layer=layer,
-                            position_list=coordinates,
-                            width=width)
+        wire_path(obj=self,
+                  layer=layer,
+                  position_list=coordinates,
+                  width=width)
 
     def add_route(self, layers, coordinates, layer_widths):
         """Connects a routing path on given layer,coordinates,width. The
@@ -961,13 +1196,13 @@ class layout():
         preferred direction routing whereas this includes layers in
         the coordinates.
         """
-        import route
+        from . import route
         debug.info(4, "add route " + str(layers) + " " + str(coordinates))
         # add an instance of our path that breaks down into rectangles and contacts
-        route.route(obj=self,
-                    layer_stack=layers,
-                    path=coordinates,
-                    layer_widths=layer_widths)
+        route(obj=self,
+              layer_stack=layers,
+              path=coordinates,
+              layer_widths=layer_widths)
 
     def add_zjog(self, layer, start, end, first_direction="H", var_offset=0.5, fixed_offset=None):
         """
@@ -994,9 +1229,9 @@ class layout():
         else:
             debug.error("Invalid direction for jog -- must be H or V.")
 
-        if layer in layer_stacks:
+        if layer in tech_layer_stacks:
             self.add_wire(layer, [start, mid1, mid2, end])
-        elif layer in techlayer:
+        elif layer in tech_layer:
             self.add_path(layer, [start, mid1, mid2, end])
         else:
             debug.error("Could not find layer {}".format(layer))
@@ -1012,13 +1247,13 @@ class layout():
     def add_wire(self, layers, coordinates, widen_short_wires=True):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
-        import wire
+        from . import wire
         # add an instance of our path that breaks down
         # into rectangles and contacts
-        wire.wire(obj=self,
-                  layer_stack=layers,
-                  position_list=coordinates,
-                  widen_short_wires=widen_short_wires)
+        wire(obj=self,
+             layer_stack=layers,
+             position_list=coordinates,
+             widen_short_wires=widen_short_wires)
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
@@ -1086,8 +1321,8 @@ class layout():
         via = None
         cur_layer = from_layer
         while cur_layer != to_layer:
-            from_id = layer_indices[cur_layer]
-            to_id   = layer_indices[to_layer]
+            from_id = tech_layer_indices[cur_layer]
+            to_id   = tech_layer_indices[to_layer]
 
             if from_id < to_id: # grow the stack up
                 search_id = 0
@@ -1096,7 +1331,7 @@ class layout():
                 search_id = 2
                 next_id = 0
 
-            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, tech_layer_stacks), None)
 
             via = self.add_via_center(layers=curr_stack,
                                       size=size,
@@ -1209,9 +1444,9 @@ class layout():
         if not self.is_library_cell and not self.bounding_box:
             # If there is a boundary layer, and we didn't create one, add one.
             boundary_layers = []
-            if "boundary" in techlayer.keys():
+            if "boundary" in tech_layer.keys():
                 boundary_layers.append("boundary")
-            if "stdc" in techlayer.keys():
+            if "stdc" in tech_layer.keys():
                 boundary_layers.append("stdc")
             boundary = [self.find_lowest_coords(),
                         self.find_highest_coords()]
@@ -1221,7 +1456,7 @@ class layout():
             width = boundary[1][0] - boundary[0][0]
 
             for boundary_layer in boundary_layers:
-                (layer_number, layer_purpose) = techlayer[boundary_layer]
+                (layer_number, layer_purpose) = tech_layer[boundary_layer]
                 gds_layout.addBox(layerNumber=layer_number,
                                   purposeNumber=layer_purpose,
                                   offsetInMicrons=boundary[0],
@@ -1270,7 +1505,7 @@ class layout():
         Do not write the pins since they aren't obstructions.
         """
         if type(layer) == str:
-            lpp = techlayer[layer]
+            lpp = tech_layer[layer]
         else:
             lpp = layer
 
@@ -1514,8 +1749,8 @@ class layout():
         """
         Wrapper to create a vertical channel route
         """
-        import channel_route
-        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
+        from .channel_route import channel_route
+        cr = channel_route(netlist, offset, layer_stack, directions, vertical=True, parent=self)
         # This causes problem in magic since it sometimes cannot extract connectivity of isntances
         # with no active devices.
         # self.add_inst(cr.name, cr)
@@ -1526,8 +1761,8 @@ class layout():
         """
         Wrapper to create a horizontal channel route
         """
-        import channel_route
-        cr = channel_route.channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
+        from .channel_route import channel_route
+        cr = channel_route(netlist, offset, layer_stack, directions, vertical=False, parent=self)
         # This causes problem in magic since it sometimes cannot extract connectivity of isntances
         # with no active devices.
         # self.add_inst(cr.name, cr)
@@ -1540,9 +1775,9 @@ class layout():
             return
 
         boundary_layers = []
-        if "stdc" in techlayer.keys():
+        if "stdc" in tech_layer.keys():
             boundary_layers.append("stdc")
-        if "boundary" in techlayer.keys():
+        if "boundary" in tech_layer.keys():
             boundary_layers.append("boundary")
         # Save the last one as self.bounding_box
         for boundary_layer in boundary_layers:
@@ -1791,7 +2026,7 @@ class layout():
     def add_dnwell(self, bbox=None, inflate=1):
         """ Create a dnwell, along with nwell moat at border. """
 
-        if "dnwell" not in techlayer:
+        if "dnwell" not in tech_layer:
             return
 
         if not bbox:

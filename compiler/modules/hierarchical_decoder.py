@@ -6,17 +6,17 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 import math
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import layer_indices
 from tech import layer_stacks
 from tech import layer_properties as layer_props
 from tech import drc
 
-class hierarchical_decoder(design.design):
+class hierarchical_decoder(design):
     """
     Dynamically generated hierarchical decoder.
     """

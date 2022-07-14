@@ -61,22 +61,11 @@ freepdk45: $(FREEPDK45_STAMPS)
 scn4m_subm: $(SCN4M_SUBM_STAMPS)
 .PHONY: scn4m_subm
 	
+OPENRAM_TMP=/openram/macros/$*/tmp
 %.ok: configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	@docker run -v $(TOP_DIR):/openram \
-		-v $(FREEPDK45):/freepdk45 \
-		-e FREEPDK45=/freepdk45 \
-		-v $(PDK_ROOT):/pdk \
-		-e PDK_ROOT=/pdk \
-		-e PDKPATH=/pdk/sky130A \
-		-e OPENRAM_HOME=/openram/compiler \
-		-e OPENRAM_TECH=/openram/technology \
-		-e OPENRAM_TMP=/openram/macros/$*/tmp \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-		--user $(UID):$(GID) \
-		vlsida/openram-ubuntu:latest \
-		python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
+	@$(DOCKER_CMD) python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
 
 .DELETE_ON_ERROR: $(STAMPS)
 

@@ -202,30 +202,30 @@ class multi_delay_chain(design.design):
                 self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
 
     def add_layout_pins(self):
-
         # input is A pin of first inverter
-        # It gets routed to the left a bit to prevent pin access errors
-        # due to the output pin when going up to M3
+        # It gets routed down a bit to prevent overlapping adjacent
+        # M3 when connecting to vertical bus
         a_pin = self.driver_inst_list[0].get_pin("A")
-        mid_loc = vector(a_pin.cx() - self.m3_pitch, a_pin.cy())
+        mid_loc = vector(a_pin.cx(), a_pin.cy() - self.m3_pitch) # Not 100% sure correct
         self.add_via_stack_center(from_layer=a_pin.layer,
-                                        to_layer="m2",
+                                        to_layer="m3",
                                         offset=mid_loc)
-        self.add_path(a_pin.layer, [a_pin.center(), mid_loc])
+        self.add_path("m3", [a_pin.center(), mid_loc])
 
         self.add_layout_pin_rect_center(text="in",
-                                        layer="m2",
+                                        layer="m3",
                                         offset=mid_loc)
 
-        delay_number = 1
+        delay_index = 1
+
         for pin_number in self.pinout_list:
-            # output is A pin of last load/fanout inverter
+            # pin is A pin of right-most load/fanout inverter
             output_driver_inst = self.driver_inst_list[pin_number - 1]
             a_pin = self.load_inst_map[output_driver_inst][-1].get_pin("A")
             self.add_via_stack_center(from_layer=a_pin.layer,
-                                      to_layer="m1",
+                                      to_layer="m3",
                                       offset=a_pin.center())
-            self.add_layout_pin_rect_center(text="delay{}".format(str(delay_number)),
-                                            layer="m1",
+            self.add_layout_pin_rect_center(text="delay{}".format(str(delay_index)),
+                                            layer="m3",
                                             offset=a_pin.center())
-            delay_number += 1
+            delay_index += 1

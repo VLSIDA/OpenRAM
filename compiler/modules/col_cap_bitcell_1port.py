@@ -16,7 +16,7 @@ class col_cap_bitcell_1port(bitcell_base):
     """
 
     def __init__(self, name="col_cap_bitcell_1port"):
-        bitcell_base.bitcell_base.__init__(self, name, prop=props.col_cap_1port)
+        bitcell_base.__init__(self, name, prop=props.col_cap_1port)
         debug.info(2, "Create col_cap bitcell 1 port object")
 
         self.no_instances = True

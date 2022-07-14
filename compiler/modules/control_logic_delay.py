@@ -395,7 +395,10 @@ class control_logic_delay(design.design):
         delay_map = zip(["in", "delay1", "delay2", "delay3", "delay4", "delay5"], \
 			["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
 	
-        self.connect_vertical_bus(delay_map, self.delay_inst, self.input_bus)
+        self.connect_vertical_bus(delay_map, 
+                                  self.delay_inst, 
+                                  self.input_bus,
+                                  self.m2_stack[::-1])
 
     # glitch{1-3} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
@@ -652,15 +655,7 @@ class control_logic_delay(design.design):
 
         self.row_end_inst.append(self.w_en_gate_inst)
 
-    def route_wen(self): # w_en comes from a 3and but one of the inputs needs to be inverted, not sure if this implementation works.
-        if self.port_type == "rw":
-            input_name = "we"
-        else:
-            input_name = "cs"
-
-        wen_map = zip(["A", "B"], [input_name, "glitch2"])
-        self.connect_vertical_bus(wen_map, self.w_en_gate_inst, self.input_bus) # if there are problems, look here
-
+    def route_wen(self): # w_en comes from a 3and but one of the inputs needs to be inverted
         out_pin = self.glitch3_bar_inv_inst.get_pin("Z")
         out_pos = out_pin.center()
         in_pin = self.w_en_gate_inst.get_pin("C")
@@ -669,7 +664,29 @@ class control_logic_delay(design.design):
         self.add_path(out_pin.layer, [out_pos, mid1, in_pos])
         self.add_via_stack_center(from_layer=out_pin.layer,
                                   to_layer=in_pin.layer,
-                                  offset=in_pin.center())
+                                  offset=in_pos)
+
+        if self.port_type == "rw":
+            input_name = "we"
+        else:
+            input_name = "cs"
+
+        # This is the second gate over, so it needs to be on M3
+        wen_map = zip(["A", "B"], [input_name, "glitch2"])
+        self.connect_vertical_bus(wen_map,
+                                  self.w_en_gate_inst,
+                                  self.input_bus,
+                                  self.m2_stack[::-1])
+        # The pins are on M1, so we need more vias as well
+        a_pin = self.w_en_gate_inst.get_pin("A")
+        self.add_via_stack_center(from_layer=a_pin.layer,
+                                  to_layer="m3",
+                                  offset=a_pin.center())
+
+        b_pin = self.w_en_gate_inst.get_pin("B")
+        self.add_via_stack_center(from_layer=b_pin.layer,
+                                  to_layer="m3",
+                                  offset=b_pin.center())
 
         self.connect_output(self.w_en_gate_inst, "Z", "w_en")
 

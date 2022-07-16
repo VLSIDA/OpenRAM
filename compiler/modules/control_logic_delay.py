@@ -656,6 +656,9 @@ class control_logic_delay(design.design):
         self.row_end_inst.append(self.w_en_gate_inst)
 
     def route_wen(self): # w_en comes from a 3and but one of the inputs needs to be inverted
+        glitch3_map = zip(["A"], ["glitch3"])
+        self.connect_vertical_bus(glitch3_map, self.glitch3_bar_inv_inst, self.input_bus)
+
         out_pin = self.glitch3_bar_inv_inst.get_pin("Z")
         out_pos = out_pin.center()
         in_pin = self.w_en_gate_inst.get_pin("C")

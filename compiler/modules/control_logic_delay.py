@@ -282,7 +282,8 @@ class control_logic_delay(design.design):
     def route_rails(self):
         """ Add the input signal inverted tracks """
         height = self.control_logic_center.y - self.m2_pitch
-        offset = vector(self.ctrl_dff_array.width, 0)
+        # DFF spacing plus the power routing
+        offset = vector(self.ctrl_dff_array.width + self.m4_pitch, 0)
 
         self.input_bus = self.create_vertical_bus("m2",
                                                   offset,
@@ -353,7 +354,7 @@ class control_logic_delay(design.design):
         # Max of modules or logic rows
         self.width = max([inst.rx() for inst in self.row_end_inst])
         if (self.port_type == "rw") or (self.port_type == "r"): 
-            # TODO: why not w ports here?
+            # TODO: why not w ports here? Is this because there is no delay chain in w port?
             self.width = max(self.delay_inst.rx(), self.width)
         self.width += self.m2_pitch
 
@@ -680,6 +681,7 @@ class control_logic_delay(design.design):
                                   self.w_en_gate_inst,
                                   self.input_bus,
                                   self.m2_stack[::-1])
+
         # The pins are on M1, so we need more vias as well
         a_pin = self.w_en_gate_inst.get_pin("A")
         self.add_via_stack_center(from_layer=a_pin.layer,

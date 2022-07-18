@@ -315,7 +315,8 @@ class control_logic_delay(design.design):
         self.place_dffs()
 
         # All of the control logic is placed to the right of the DFFs and bus
-        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width
+        # as well as the power supply stripe
+        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width + self.m4_pitch
 
         row = 0
         # Add the logic on the right of the bus

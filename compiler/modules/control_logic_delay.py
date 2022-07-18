@@ -394,7 +394,10 @@ class control_logic_delay(design.design):
         self.delay_inst.place(offset, mirror="MX")
 
     def route_delay(self):
-        delay_map = zip(["in", "delay1", "delay2", "delay3", "delay4", "delay5"], \
+        # this is a bit of a hack because I would prefer to just name these pins delay in the layout
+        # instead I have this which duplicates the out_pin naming logic from multi_delay_chain.py
+        out_pins = ["out{}".format(str(pin)) for pin in self.multi_delay_chain.pinout_list]
+        delay_map = zip(["in", out_pins[0], out_pins[1], out_pins[2], out_pins[3], out_pins[4]], \
 			["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
 	
         self.connect_vertical_bus(delay_map, 

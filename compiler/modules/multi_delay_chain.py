@@ -210,7 +210,7 @@ class multi_delay_chain(design.design):
         self.add_via_stack_center(from_layer=a_pin.layer,
                                         to_layer="m3",
                                         offset=mid_loc)
-        self.add_path("m3", [a_pin.center(), mid_loc])
+        self.add_path("m2", [a_pin.center(), mid_loc])
 
         self.add_layout_pin_rect_center(text="in",
                                         layer="m3",

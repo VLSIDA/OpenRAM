@@ -573,7 +573,7 @@ class control_logic_delay(design.design):
         out_pos = out_pin.center()
         in_pin = self.wl_en_driver_inst.get_pin("A")
         in_pos = in_pin.center()
-        mid1 = vector(in_pos.x, out_pos.y)
+        mid1 = vector(out_pos.x, in_pos.y)
         self.add_path(out_pin.layer, [out_pos, mid1, in_pos])
         self.add_via_stack_center(from_layer=out_pin.layer,
                                   to_layer=in_pin.layer,

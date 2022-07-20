@@ -206,7 +206,7 @@ class multi_delay_chain(design.design):
         # It gets routed down a bit to prevent overlapping adjacent
         # M3 when connecting to vertical bus
         a_pin = self.driver_inst_list[0].get_pin("A")
-        mid_loc = vector(a_pin.cx(), a_pin.cy() - self.m3_pitch) # Not 100% sure correct
+        mid_loc = vector(a_pin.cx(), a_pin.cy() - self.m3_pitch)
         self.add_via_stack_center(from_layer=a_pin.layer,
                                         to_layer="m3",
                                         offset=mid_loc)

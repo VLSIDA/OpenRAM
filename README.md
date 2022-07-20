@@ -53,19 +53,16 @@ You must set two environment variables:
 + OPENRAM\_HOME should point to the compiler source directory.
 + OPENERAM\_TECH should point to one or more root technology directories (colon separated).
 
+You should also add OPENRAM\_HOME to your PYTHONPATH.
 
 For example add this to your .bashrc:
 
 ```
   export OPENRAM_HOME="$HOME/openram/compiler"
   export OPENRAM_TECH="$HOME/openram/technology"
-```
-
-You should also add OPENRAM\_HOME to your PYTHONPATH:
-
-```
   export PYTHONPATH=$OPENRAM_HOME
 ```
+
 Note that if you want symbols to resolve in your editor, you may also want to add the specific technology
 directory that you use and any custom technology modules as well. For example:
 ```

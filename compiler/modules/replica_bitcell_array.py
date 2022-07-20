@@ -309,8 +309,8 @@ class replica_bitcell_array(bitcell_base_array):
 
         # This creates space for the unused wordline connections as well as the
         # row-based or column based power and ground lines.
-        self.vertical_pitch = getattr(self, "{}_pitch".format(self.supply_stack[0]))
-        self.horizontal_pitch = getattr(self, "{}_pitch".format(self.supply_stack[2]))
+        self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
+        self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
         self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale
@@ -495,16 +495,7 @@ class replica_bitcell_array(bitcell_base_array):
         else:
             bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
 
-        wl_layer = bitcell.wl_layer
-        wl_dir = bitcell.wl_dir
-
-        bl_layer = bitcell.bl_layer
-        bl_dir = bitcell.bl_dir
-
-        vdd_layer = bitcell.vdd_layer
         vdd_dir = bitcell.vdd_dir
-
-        gnd_layer = bitcell.gnd_layer
         gnd_dir = bitcell.gnd_dir
 
         # vdd/gnd are only connected in the perimeter cells
@@ -514,8 +505,6 @@ class replica_bitcell_array(bitcell_base_array):
         top_bot_mult = 1
         left_right_mult = 1
 
-        vdd_locs = []
-        gnd_locs = []
         # There are always vertical pins for the WLs on the left/right if we have unused wordlines
         self.left_gnd_locs = self.route_side_pin("gnd", "left", left_right_mult)
         self.right_gnd_locs = self.route_side_pin("gnd","right", left_right_mult)

@@ -37,14 +37,21 @@ class multibank_verilog_test(openram_test):
 
         vfile = s.name + ".v"
         vname = OPTS.openram_temp + vfile
+
+        v1bfile = s.name + "_1bank.v"
+        v1bname = OPTS.openram_temp + v1bfile
+
         s.verilog_write(vname)
 
-
         # let's diff the result with a golden model
-        golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)
-        self.assertTrue(self.isdiff(vname, golden))
+        multi_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)
+        self.assertTrue(self.isdiff(vname, multi_golden))
+
+        one_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), v1bname)
+        self.assertTrue(self.isdiff(v1bname, one_golden))
 
         globals.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":

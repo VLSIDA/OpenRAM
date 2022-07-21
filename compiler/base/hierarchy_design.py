@@ -5,13 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import hierarchy_layout
-import hierarchy_spice
+from .hierarchy_layout import layout
+from .hierarchy_spice import spice
 import debug
+import os
 from globals import OPTS
 
 
-class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
+class hierarchy_design(spice, layout):
     """
     Design Class for all modules to inherit the base features.
     Class consisting of a set of modules and instances of these modules
@@ -22,8 +23,17 @@ class hierarchy_design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.drc_errors = "skipped"
         self.lvs_errors = "skipped"
 
-        hierarchy_spice.spice.__init__(self, name, cell_name)
-        hierarchy_layout.layout.__init__(self, name, cell_name)
+        # Flag for library cells which is recomputed in hierachy_layout
+        gds_file = OPTS.openram_tech + "gds_lib/" + cell_name + ".gds"
+        is_library_cell = os.path.isfile(gds_file)
+        # Uniquify names to address the flat GDS namespace
+        # except for the top/output name
+        if not is_library_cell and name != OPTS.output_name and not name.startswith(OPTS.output_name):
+            name = OPTS.output_name + "_" + name
+            cell_name = name
+
+        spice.__init__(self, name, cell_name)
+        layout.__init__(self, name, cell_name)
         self.init_graph_params()
 
     def get_layout_pins(self, inst):

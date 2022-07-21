@@ -13,13 +13,17 @@ the trunk
 
 import sys
 import os
+import debug
 
 TECHNOLOGY = "freepdk45"
 
 ##########################
 # FreePDK45 paths
 
-PDK_DIR=os.path.abspath(os.environ.get("FREEPDK45"))
+PDK_PATH=os.environ.get("FREEPDK45")
+if PDK_PATH==None:
+    debug.error("Must define FREEPDK45 to point to PDK.", -1)
+PDK_DIR=os.path.abspath(PDK_PATH)
 os.environ["PDK_DIR"] = PDK_DIR
 os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/ncsu_basekit/cdssetup".format(PDK_DIR)
 os.environ["CDS_SITE"] = PDK_DIR

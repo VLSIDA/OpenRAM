@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from direction import direction
-from pin_layout import pin_layout
-from vector import vector
-from vector3d import vector3d
 import debug
+from base.vector import vector
+from base.vector3d import vector3d
+from base.pin_layout import pin_layout
+from .direction import direction
 
 
 class pin_group:
@@ -158,7 +158,7 @@ class pin_group:
         # Now add the right name
         for pin in new_pin_list:
             pin.name = self.name
-            
+
         debug.check(len(new_pin_list) > 0,
                     "Did not find any enclosures.")
 
@@ -424,7 +424,7 @@ class pin_group:
         debug.check(len(self.grids) > 0, "Cannot seed an grid empty set.")
 
         common_blockages = self.router.get_blocked_grids() & self.grids
-        
+
         # Start with the ll and make the widest row
         row = [ll]
         # Move in dir1 while we can
@@ -641,7 +641,7 @@ class pin_group:
             # way than blockages.
             blockages = sufficient | insufficient | blockage_in_tracks
             self.blockages.update(blockages)
-            
+     
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already
         blocked_grids = self.router.get_blocked_grids()

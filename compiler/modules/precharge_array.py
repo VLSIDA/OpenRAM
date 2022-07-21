@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 
 
-class precharge_array(design.design):
+class precharge_array(design):
     """
     Dynamically generated precharge array of all bitlines.  Cols is number
     of bit line columns, height is the height of the bit-cell array.
@@ -68,6 +68,7 @@ class precharge_array(design.design):
         self.height = self.pc_cell.height
 
         self.add_layout_pins()
+        self.route_supplies()
         self.add_boundary()
         self.DRC_LVS()
 
@@ -76,30 +77,25 @@ class precharge_array(design.design):
                                       size=self.size,
                                       bitcell_bl=self.bitcell_bl,
                                       bitcell_br=self.bitcell_br)
-                                      
-        self.add_mod(self.pc_cell)
+
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def add_layout_pins(self):
 
         en_pin = self.pc_cell.get_pin("en_bar")
-        start_offset = en_pin.lc().scale(0, 1)
-        end_offset = start_offset + vector(self.width, 0)
-        self.add_layout_pin_segment_center(text="en_bar",
-                                           layer=self.en_bar_layer,
-                                           start=start_offset,
-                                           end=end_offset)
-
+        self.route_horizontal_pins("en_bar", layer=self.en_bar_layer)
         for inst in self.local_insts:
             self.add_via_stack_center(from_layer=en_pin.layer,
                                       to_layer=self.en_bar_layer,
                                       offset=inst.get_pin("en_bar").center())
-            self.copy_layout_pin(inst, "vdd")
 
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
             self.copy_layout_pin(inst, "bl", "bl_{0}".format(i))
             self.copy_layout_pin(inst, "br", "br_{0}".format(i))
+
+    def route_supplies(self):
+        self.route_horizontal_pins("vdd")
 
     def create_insts(self):
         """Creates a precharge array by horizontally tiling the precharge cell"""
@@ -130,5 +126,3 @@ class precharge_array(design.design):
 
             offset = vector(tempx, 0)
             self.local_insts[i].place(offset=offset, mirror=mirror)
-
-

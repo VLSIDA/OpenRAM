@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from tech import drc, spice
 from globals import OPTS
 from sram_factory import factory
@@ -47,7 +47,6 @@ class bitcell_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.cell = factory.create(module_type=OPTS.bitcell)
-        self.add_mod(self.cell)
 
     def create_instances(self):
         """ Create the module instances used in this design """

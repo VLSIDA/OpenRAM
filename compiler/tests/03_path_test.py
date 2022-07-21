@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 import debug
@@ -19,9 +19,9 @@ class path_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
-        import wire_path
+        from base import wire_path
         import tech
-        import design
+        from base import design
 
         min_space = 2 * tech.drc["minwidth_m1"]
         layer_stack = ("m1")
@@ -32,8 +32,8 @@ class path_test(openram_test):
                          [4 * min_space, 3 * min_space ],
                          [0, 3 * min_space ],
                          [0, 6 * min_space ]]
-        w = design.design("path_test0")
-        wire_path.wire_path(w,layer_stack, position_list)
+        w = design("path_test0")
+        wire_path(w,layer_stack, position_list)
         self.local_drc_check(w)
 
 
@@ -49,8 +49,8 @@ class path_test(openram_test):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
-        w = design.design("path_test1")
-        wire_path.wire_path(w,layer_stack, position_list)
+        w = design("path_test1")
+        wire_path(w,layer_stack, position_list)
         self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_m2"]
@@ -65,8 +65,8 @@ class path_test(openram_test):
                              [-1 * min_space, 4 * min_space],
                              [-1 * min_space, 0]]
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]
-        w = design.design("path_test2")
-        wire_path.wire_path(w, layer_stack, position_list)
+        w = design("path_test2")
+        wire_path(w, layer_stack, position_list)
         self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_m3"]
@@ -82,8 +82,8 @@ class path_test(openram_test):
                          [-1 * min_space, 0]]
         # run on the reverse list
         position_list.reverse()
-        w = design.design("path_test3")
-        wire_path.wire_path(w, layer_stack, position_list)
+        w = design("path_test3")
+        wire_path(w, layer_stack, position_list)
         self.local_drc_check(w)
 
         globals.end_openram()

@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
-from vector import vector
+from base import vector
 import debug
 from tech import layer_properties as layer_props
 
 
-class local_bitcell_array(bitcell_base_array.bitcell_base_array):
+class local_bitcell_array(bitcell_base_array):
     """
     A local bitcell array is a bitcell array with a wordline driver.
     This can either be a single aray on its own if there is no hierarchical WL
@@ -73,12 +73,10 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
                                             rbl=self.rbl,
                                             left_rbl=self.left_rbl,
                                             right_rbl=self.right_rbl)
-        self.add_mod(self.bitcell_array)
 
         self.wl_array = factory.create(module_type="wordline_buffer_array",
                                        rows=self.rows + 1,
                                        cols=self.cols)
-        self.add_mod(self.wl_array)
 
     def add_pins(self):
         # Outputs from the wordline driver (by port)
@@ -161,17 +159,20 @@ class local_bitcell_array(bitcell_base_array.bitcell_base_array):
 
     def place(self):
         """ Place the bitcelll array to the right of the wl driver. """
-        # FIXME: Replace this with a tech specific paramter
+
+        # FIXME: Replace this with a tech specific parameter
         driver_to_array_spacing = 3 * self.m3_pitch
 
-        self.wl_insts[0].place(vector(0, self.cell.height))
+        wl_offset = vector(0, self.bitcell_array.get_replica_bottom())
+        self.wl_insts[0].place(wl_offset)
 
-        self.bitcell_array_inst.place(vector(self.wl_insts[0].rx() + driver_to_array_spacing,
-                                             0))
+        bitcell_array_offset = vector(self.wl_insts[0].rx() + driver_to_array_spacing, 0)
+        self.bitcell_array_inst.place(bitcell_array_offset)
 
         if len(self.all_ports) > 1:
-            self.wl_insts[1].place(vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                                          2 * self.cell.height + self.wl_array.height),
+            wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
+                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
+            self.wl_insts[1].place(wl_offset, 
                                    mirror="XY")
 
         self.height = self.bitcell_array.height

@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from datetime import datetime
 import debug
 from globals import print_time
-from router import router
-from datetime import datetime
-from signal_grid import signal_grid
+from .router import router
+from .signal_grid import signal_grid
 
 
 class signal_escape_router(router):
@@ -63,7 +63,7 @@ class signal_escape_router(router):
             
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
-        # self.write_debug_gds("final_escape_router.gds",False)
+        #self.write_debug_gds("final_escape_router.gds",False)
         
         return True
 

@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from table_gen import *
+from .table_gen import *
 import os
 import base64
 from globals import OPTS

@@ -15,4 +15,5 @@ nominal_corner_only = True
 check_lvsdrc = True
 spice_name = "ngspice"
 
+output_name = "sram"
 

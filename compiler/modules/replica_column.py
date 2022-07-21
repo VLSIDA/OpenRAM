@@ -4,9 +4,9 @@
 # All rights reserved.
 #
 import debug
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import layer_properties as layer_props
 
@@ -37,7 +37,7 @@ class replica_column(bitcell_base_array):
         self.left_rbl = rbl[0]
         self.right_rbl = rbl[1]
         self.replica_bit = replica_bit
-        
+
         # Total size includes the replica rows and column cap rows
         self.total_size = self.left_rbl + rows + self.right_rbl + 2
 
@@ -63,11 +63,13 @@ class replica_column(bitcell_base_array):
 
     def create_layout(self):
         self.place_instances()
-        
+
         self.height = self.cell_inst[-1].uy()
         self.width = self.cell_inst[0].rx()
 
         self.add_layout_pins()
+
+        self.route_supplies()
 
         self.add_boundary()
         self.DRC_LVS()
@@ -85,15 +87,14 @@ class replica_column(bitcell_base_array):
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type=OPTS.replica_bitcell)
-        self.add_mod(self.replica_cell)
+
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
-        self.add_mod(self.dummy_cell)
+
         try:
             edge_module_type = ("col_cap" if self.cell.end_caps else "dummy")
         except AttributeError:
             edge_module_type = "dummy"
         self.edge_cell = factory.create(module_type=edge_module_type + "_" + OPTS.bitcell)
-        self.add_mod(self.edge_cell)
 
     def create_instances(self):
         self.cell_inst = []
@@ -103,7 +104,7 @@ class replica_column(bitcell_base_array):
             real_row = row
             if self.cell.end_caps:
                 real_row -= 1
-                
+
             # Regular array cells are replica cells
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             if (row == 0 or row == self.total_size - 1):
@@ -186,14 +187,11 @@ class replica_column(bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # Supplies are only connected in the ends
-        for (index, inst) in enumerate(self.cell_inst):
+    def route_supplies(self):
+
+        for inst in self.cell_inst:
             for pin_name in ["vdd", "gnd"]:
-                if inst in [self.cell_inst[0], self.cell_inst[self.total_size - 1]]:
-                    for pin in inst.get_pins(pin_name):
-                        self.copy_power_pin(pin)
-                else:
-                    self.copy_layout_pin(inst, pin_name)
+                self.copy_layout_pin(inst, pin_name)
 
     def get_bitline_names(self, port=None):
         if port == None:
@@ -238,4 +236,3 @@ class replica_column(bitcell_base_array):
         for row, cell in enumerate(self.cell_inst):
             if row != self.replica_bit:
                 self.graph_inst_exclude.add(cell)
-        

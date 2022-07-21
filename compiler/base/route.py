@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc
 import debug
-from design import design
+from .design import design
+from .vector import vector
+from .vector3d import vector3d
+from tech import drc
 from itertools import tee
-from vector import vector
-from vector3d import vector3d
 from sram_factory import factory
 
 class route(design):

@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -35,11 +35,20 @@ class sram_wmask_1w_1r_func_test(openram_test):
         import characterizer
         reload(characterizer)
         from characterizer import functional
-        from sram_config import sram_config
+        from modules import sram_config
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
         c = sram_config(word_size=8,
                         num_words=16,
                         write_size=2,
-                        num_banks=1)
+                        num_banks=1,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
         c.words_per_row = 1
         c.recompute_sizes()
         debug.info(1,

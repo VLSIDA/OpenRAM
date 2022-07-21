@@ -8,8 +8,8 @@
 import collections
 import debug
 from tech import drc
-from vector import vector
-import design
+from .vector import vector
+from .design import design
 
 
 class channel_net():
@@ -75,7 +75,7 @@ class channel_net():
         return min_overlap or max_overlap
 
 
-class channel_route(design.design):
+class channel_route(design):
 
     unique_id = 0
 
@@ -242,12 +242,12 @@ class channel_route(design.design):
                     if self.vertical:
                         self.add_vertical_trunk_route(net.pins,
                                                       current_offset,
-                                                      self.vertical_nonpref_pitch)
+                                                      self.horizontal_pitch)
                         current_offset = vector(current_offset.x, net.max_value + self.horizontal_nonpref_pitch)
                     else:
                         self.add_horizontal_trunk_route(net.pins,
                                                         current_offset,
-                                                        self.horizontal_nonpref_pitch)
+                                                        self.vertical_pitch)
                         current_offset = vector(net.max_value + self.vertical_nonpref_pitch, current_offset.y)
 
                     # Remove the net from other constriants in the VCG

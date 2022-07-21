@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>lvs</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>lvs_scripts</group-name>
+ <menu-path>tools_menu.lvs.end</menu-path>
+ <interpreter>dsl</interpreter>
+ <dsl-interpreter-name>lvs-dsl-xml</dsl-interpreter-name>
+ <text>#
+tstart = Time.now
+# Extraction for SKY130
+#
+############################
+
+# optionnal for a batch launch :   klayout -b -rd input=my_layout.gds -rd report=my_report.lyrdb -rd schematic=reference_netlist.cir -rd target_netlist=extracted_netlist.cir -r lvs_sky130.lvs
+if $input
+  source($input)
+end
+
+if $report
+  report_lvs($report)
+else
+  report_lvs("lvs_report.lvsdb")
+end
+
+if $schematic
+#reference netlist
+   schematic($schematic)
+else
+   schematic(RBA::CellView::active.filename.sub(/\.(oas|gds|oas.gz|gds.gz)$/, ".sp"))
+end
+
+# true: use net names instead of numbers
+# false: use numbers for nets
+spice_with_net_names = true
+
+# true: put in comments with details
+# false: no comments
+spice_with_comments = true
+
+if $target_netlist
+  target_netlist($target_netlist)
+else
+   target_netlist(File.join(File.dirname(RBA::CellView::active.filename), source.cell_name+"_extracted.cir"), write_spice(spice_with_net_names, spice_with_comments),  "Extracted by KLayout on : #{Time.now.strftime("%d/%m/%Y %H:%M")}")
+end
+
+# klayout setup
+########################
+# Hierarchical mode
+deep
+# Use 4 CPU cores
+threads(4)
+# Print details
+verbose(true)
+
+# layers definitions
+########################
+
+
+# LVS section
+########################
+info("LVS section")
+# layers definitions
+########################
+BOUND  = polygons(235, 4)
+DNWELL  = polygons(64, 18)
+PWRES  = polygons(64, 13)
+NWELL  = polygons(64, 20)
+NWELLTXT  = input(64, 5)
+NWELLPIN  = polygons(64, 16)
+SUBTXT  = input(122, 5)
+SUBPIN  = input(64, 59)
+DIFF  = polygons(65, 20)
+TAP  = polygons(65, 44)
+PSDM  = polygons(94, 20)
+NSDM  = polygons(93, 44)
+LVTN  = polygons(125, 44)
+HVTR  = polygons(18, 20)
+HVTP  = polygons(78, 44)
+SONOS  = polygons(80, 20)
+COREID  = polygons(81, 2)
+STDCELL  = polygons(81, 4)
+NPNID  = polygons(82, 20)
+PNPID  = polygons(82, 44)
+RPM  = polygons(86, 20)
+URPM  = polygons(79, 20)
+LDNTM  = polygons(11, 44)
+HVNTM  = polygons(125, 20)
+POLY  = polygons(66, 20)
+POLYTXT  = input(66, 5)
+POLYPIN  = polygons(66, 16)
+HVI  = polygons(75, 20)
+LICON  = polygons(66, 44)
+NPC  = polygons(95, 20)
+DIFFRES  = polygons(65, 13)
+POLYRES  = polygons(66, 13)
+POLYSHO  = polygons(66, 15)
+DIODE  = polygons(81, 23)
+LI  = polygons(67, 20)
+LITXT  = input(67, 5)
+LIPIN  = polygons(67, 16)
+LIRES  = polygons(67, 13)
+MCON  = polygons(67, 44)
+MET1  = polygons(68, 20)
+MET1TXT  = input(68, 5)
+MET1PIN  = polygons(68, 16)
+MET1RES  = polygons(68, 13)
+VIA1  = polygons(68, 44)
+MET2  = polygons(69, 20)
+MET2TXT  = input(69, 5)
+MET2PIN  = polygons(69, 16)
+MET2RES  = polygons(69, 13)
+VIA2  = polygons(69, 44)
+MET3  = polygons(70, 20)
+MET3TXT  = input(70, 5)
+MET3PIN  = polygons(70, 16)
+MET3RES  = polygons(70, 13)
+VIA3  = polygons(70, 44)
+MET4  = polygons(71, 20)
+MET4TXT  = input(71, 5)
+MET4PIN  = polygons(71, 16)
+MET4RES  = polygons(71, 13)
+VIA4  = polygons(71, 44)
+MET5  = polygons(72, 20)
+MET5TXT  = input(72, 5)
+MET5PIN  = polygons(72, 16)
+MET5RES  = polygons(72, 13)
+RDL  = polygons(74, 20)
+RDLTXT  = input(74, 5)
+RDLPIN  = polygons(74, 16)
+GLASS  = polygons(76, 20)
+CAPM  = polygons(89, 44)
+CAPM2  = polygons(97, 44)
+LOWTAPD  = polygons(81, 14)
+FILLOBSM1  = polygons(62, 24)
+FILLOBSM2  = polygons(105, 52)
+FILLOBSM3  = polygons(107, 24)
+FILLOBSM4  = polygons(112, 4)
+NCM = polygons(92, 44)
+
+# Bulk layer for terminal provisioning
+SUB = polygons(236, 0)
+# SUB = polygon_layer
+
+# Computed layers
+PDIFF = DIFF &amp; NWELL &amp; PSDM
+NTAP = TAP &amp; NWELL &amp; NSDM
+PGATE = PDIFF &amp; POLY
+PSD = PDIFF - PGATE
+CORE_PGATE = PGATE &amp; COREID
+STD_PGATE = PGATE - HVTP - NCM - HVI - COREID
+HVT_PGATE = PGATE &amp; HVTP - NCM - HVI
+HV5_PGATE = PGATE - HVTP - NCM &amp; HVI
+
+NDIFF = DIFF - NWELL &amp; NSDM
+PTAP = TAP - NWELL &amp; PSDM
+NGATE = NDIFF &amp; POLY
+NSD = NDIFF - NGATE
+CORE_NGATE = NGATE &amp; COREID
+STD_NGATE = NGATE - NCM - LVTN - HVI
+LVT_NGATE = NGATE - NCM &amp; LVTN - HVI
+HV5_NGATE = NGATE - NCM - LVTN &amp; HVI
+HV5NA_NGATE = NGATE - NCM &amp; LVTN &amp; HVI
+
+# drawing to physical
+device_scaling(1000000)
+
+# PMOS transistor device extraction
+extract_devices(mos4("sky130_fd_pr__special_pfet_latch"), { "SD" =&gt; PSD, "G" =&gt; CORE_PGATE, "tS" =&gt; PSD, "tD" =&gt; PSD, "tG" =&gt; POLY, "W" =&gt; NWELL })
+extract_devices(mos4("sky130_fd_pr__pfet_01v8"), { "SD" =&gt; PSD, "G" =&gt; STD_PGATE, "tS" =&gt; PSD, "tD" =&gt; PSD, "tG" =&gt; POLY, "W" =&gt; NWELL })
+extract_devices(mos4("sky130_fd_pr__pfet_01v8_hvt"), { "SD" =&gt; PSD, "G" =&gt; HVT_PGATE, "tS" =&gt; PSD, "tD" =&gt; PSD, "tG" =&gt; POLY, "W" =&gt; NWELL })
+extract_devices(mos4("sky130_fd_pr__pfet_g5v0d10v5"), { "SD" =&gt; PSD, "G" =&gt; HV5_PGATE, "tS" =&gt; PSD, "tD" =&gt; PSD, "tG" =&gt; POLY, "W" =&gt; NWELL })
+
+# NMOS transistor device extraction
+extract_devices(mos4("sky130_fd_pr__special_nfet_latch"), { "SD" =&gt; NSD, "G" =&gt; CORE_NGATE, "tS" =&gt; NSD, "tD" =&gt; NSD, "tG" =&gt; POLY, "W" =&gt; SUB })
+extract_devices(mos4("sky130_fd_pr__nfet_01v8"), { "SD" =&gt; NSD, "G" =&gt; STD_NGATE, "tS" =&gt; NSD, "tD" =&gt; NSD, "tG" =&gt; POLY, "W" =&gt; SUB })
+extract_devices(mos4("sky130_fd_pr__nfet_01v8_lvt"), { "SD" =&gt; NSD, "G" =&gt; LVT_NGATE, "tS" =&gt; NSD, "tD" =&gt; NSD, "tG" =&gt; POLY, "W" =&gt; SUB })
+extract_devices(mos4("sky130_fd_pr__nfet_g5v0d10v5"), { "SD" =&gt; NSD, "G" =&gt; HV5_NGATE, "tS" =&gt; NSD, "tD" =&gt; NSD, "tG" =&gt; POLY, "W" =&gt; SUB })
+extract_devices(mos4("sky130_fd_pr__nfet_01v8_nvt"), { "SD" =&gt; NSD, "G" =&gt; HV5NA_NGATE, "tS" =&gt; NSD, "tD" =&gt; NSD, "tG" =&gt; POLY, "W" =&gt; SUB })
+
+
+# Define connectivity for netlist extraction
+
+# Inter-layer
+connect(SUB,  PTAP)
+connect(NWELL,  NTAP)
+connect(LICON,   PTAP)
+connect(LICON,   NTAP)
+connect(PSD,    LICON)
+connect(NSD,    LICON)
+connect(POLY,   LICON)
+connect(LICON,   LI)
+connect(LI, MCON)
+connect(MCON,   MET1)
+connect(MET1,VIA1)
+connect(VIA1,   MET2)
+connect(MET2, VIA2)
+connect(VIA2,   MET3)
+connect(MET3, VIA3)
+connect(VIA3,   MET4)
+connect(MET4, VIA4)
+connect(VIA4,   MET5)
+# Attaching labels
+connect(SUB, SUBTXT)
+connect(SUB, SUBPIN)
+connect(NWELL, NWELLTXT)
+connect(POLY, POLYTXT)
+connect(LI, LITXT)
+connect(MET1, MET1TXT)
+connect(MET2, MET2TXT)
+connect(MET3, MET3TXT)
+connect(MET4, MET4TXT)
+connect(MET5, MET5TXT)
+
+# Global
+connect_global(SUB, "gnd")
+
+if $connect_supplies
+connect_implicit("*", "vdd")
+connect_implicit("*", "gnd")
+end
+
+#connect_global(pwell, "PWELL")
+#connect_global(nwell, "NWELL")
+#connect_global(bulk, "BULK")
+
+# Actually performs the extraction
+netlist # ... not really required
+
+# Flatten cells which are present in one netlist only
+align
+# SIMPLIFICATION of the netlist
+#netlist.make_top_level_pins
+#netlist.combine_devices
+#netlist.purge
+#netlist.purge_nets
+netlist.simplify
+#schematic.simplify
+
+# Tolerances for the devices extracted parameters
+#  tolerance(device_class_name, parameter_name [, :absolute =&gt; absolute_tolerance] [, :relative =&gt; relative_tolerance])
+tolerance("pfet_01v8", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("pfet_01v8", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("pfet_01v8_hvt", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("pfet_01v8_hvt", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("nfet_01v8", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("nfet_01v8", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("nfet_01v8_lvt", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("nfet_01v8_lvt", "L", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+
+#max_res(1000000)
+#min_caps(1e-15)
+
+max_branch_complexity(65536)
+max_depth(16)
+
+if ! compare
+  #raise "ERROR : Netlists don't match"
+  puts "ERROR : Netlists don't match"
+else
+  puts "CONGRATULATIONS! Netlists match."
+end
+
+# time spent for the LVS
+time = Time.now
+hours = ((time - tstart)/3600).to_i
+minutes = ((time - tstart)/60 - hours * 60).to_i
+seconds = ((time - tstart) - (minutes * 60 + hours * 3600)).to_i
+$stdout.write "LVS finished at : #{time.hour}:#{time.min}:#{time.sec}  -  LVS duration =  #{hours} hrs. #{minutes} min. #{seconds} sec.\n"</text>
+</klayout-macro>

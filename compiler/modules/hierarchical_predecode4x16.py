@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from hierarchical_predecode import hierarchical_predecode
+from .hierarchical_predecode import hierarchical_predecode
 from globals import OPTS
 
 

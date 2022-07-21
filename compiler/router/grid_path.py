@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from vector3d import vector3d
 from itertools import tee
-from grid import grid
-from direction import direction
+from base.vector3d import vector3d
+from .grid import grid
+from .direction import direction
 
 
 class grid_path:

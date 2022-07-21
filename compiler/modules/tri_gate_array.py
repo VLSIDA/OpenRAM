@@ -7,12 +7,12 @@
 #
 import debug
 from tech import drc
-import design
-from vector import vector
+from base import design
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 
-class tri_gate_array(design.design):
+class tri_gate_array(design):
     """
     Dynamically generated tri gate array of all bitlines.  words_per_row
     """
@@ -46,7 +46,6 @@ class tri_gate_array(design.design):
 
     def add_modules(self):
         self.tri = factory.create(module_type="tri_gate")
-        self.add_mod(self.tri)
 
     def add_pins(self):
         """create the name of pins depend on the word size"""

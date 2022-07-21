@@ -12,10 +12,11 @@ import math
 import tech
 from globals import OPTS
 from pprint import pformat
-from delay_data import delay_data
-from wire_spice_model import wire_spice_model
-from power_data import power_data
-import logical_effort
+from .delay_data import delay_data
+from .wire_spice_model import wire_spice_model
+from .power_data import power_data
+from .logical_effort import convert_relative_c_to_farad, convert_farad_to_relative_c
+
 
 class spice():
     """
@@ -36,19 +37,20 @@ class spice():
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         try:
-            lvs_subdir = tech.lvs_lib
-        except AttributeError:
-            lvs_subdir = "lvs_lib"
-        lvs_dir = OPTS.openram_tech + lvs_subdir + "/"
+            from tech import lvs_name
+            lvs_dir = OPTS.openram_tech + lvs_name + "_lvs_lib/"
+        except ImportError:
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
+        if not os.path.exists(lvs_dir):
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
 
-        if os.path.exists(lvs_dir):
-            self.lvs_file = lvs_dir + cell_name + ".sp"
-        else:
+        self.lvs_file = lvs_dir + cell_name + ".sp"
+        if not os.path.exists(self.lvs_file):
             self.lvs_file = self.sp_file
-        
+
         self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
-        self.mods = []
+        self.mods = set()
         # Holds the pins for this module (in order)
         self.pins = []
         # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
@@ -128,7 +130,7 @@ class spice():
 
         new_list = [input_list[x] for x in self.pin_indices]
         return new_list
-        
+
     def add_pin_types(self, type_list):
         """
         Add pin types for all the cell's pins.
@@ -140,7 +142,7 @@ class spice():
                       \n Module names={}\
                       ".format(self.name, self.pins, type_list), 1)
         self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
-    
+
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
         pin_type = self.pin_type[name]
@@ -187,10 +189,6 @@ class spice():
                 inout_list.append(pin)
         return inout_list
 
-    def add_mod(self, mod):
-        """Adds a subckt/submodule to the subckt hierarchy"""
-        self.mods.append(mod)
-
     def connect_inst(self, args, check=True):
         """
         Connects the pins of the last instance added
@@ -199,13 +197,13 @@ class spice():
         where we dynamically generate groups of connections after a
         group of modules are generated.
         """
-        
+
         num_pins = len(self.insts[-1].mod.pins)
         num_args = len(args)
 
         # Order the arguments if the hard cell has a custom port order
         ordered_args = self.get_ordered_inputs(args)
-        
+
         if (check and num_pins != num_args):
             if num_pins < num_args:
                 mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
@@ -281,7 +279,10 @@ class spice():
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
             debug.check(lvs_pins == self.pins,
-                        "Spice netlists for LVS and simulation have port mismatches: {0} (LVS) vs {1} (sim)".format(lvs_pins, self.pins))
+                        "Spice netlists for LVS and simulation have port mismatches:\n{0} (LVS {1})\nvs\n{2} (sim {3})".format(lvs_pins,
+                                                                                                                               self.lvs_file,
+                                                                                                                               self.pins,
+                                                                                                                               self.sp_file))
 
     def check_net_in_spice(self, net_name):
         """Checks if a net name exists in the current. Intended to be check nets in hand-made cells."""
@@ -372,15 +373,15 @@ class spice():
                 # these are wires and paths
                 if self.conns[i] == []:
                     continue
-                
+
                 # Instance with no devices in it needs no subckt/instance
                 if self.insts[i].mod.no_instances:
                     continue
-                
+
                 # If this is a trimmed netlist, skip it by adding comment char
                 if trim and self.insts[i].name in self.trim_insts:
                     sp.write("* ")
-                    
+
                 if lvs and hasattr(self.insts[i].mod, "lvs_device"):
                     sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
                                                                    " ".join(self.conns[i])))
@@ -423,7 +424,7 @@ class spice():
         self.cacti_params = cacti_params
         # Get the r_on the the tx
         rd = self.get_on_resistance()
-        # Calculate the intrinsic capacitance 
+        # Calculate the intrinsic capacitance
         c_intrinsic = self.get_intrinsic_capacitance()
         # Get wire values
         c_wire = self.module_wire_c()
@@ -442,7 +443,7 @@ class spice():
 
         # FIXME: Slew is not used in the model right now.
         # Can be added heuristically as linear factor
-        relative_cap = logical_effort.convert_farad_to_relative_c(load)
+        relative_cap = convert_farad_to_relative_c(load)
         stage_effort = self.get_stage_effort(relative_cap)
 
         # If it fails, then keep running with a valid object.
@@ -457,13 +458,13 @@ class spice():
 
     def module_wire_c(self):
         """All devices assumed to have ideal capacitance (0).
-           Non-ideal cases should have this function re-defined. 
+           Non-ideal cases should have this function re-defined.
         """
         return 0
 
     def module_wire_r(self):
         """All devices assumed to have ideal resistance (0).
-           Non-ideal cases should have this function re-defined. 
+           Non-ideal cases should have this function re-defined.
         """
         return 0
 
@@ -510,7 +511,7 @@ class spice():
         # Override this function within a module if a more accurate input capacitance is needed.
         # Input/outputs with differing capacitances is not implemented.
         relative_cap = self.input_load()
-        return logical_effort.convert_relative_c_to_farad(relative_cap)
+        return convert_relative_c_to_farad(relative_cap)
 
     def input_load(self):
         """Inform users undefined relative capacitance functions used for analytical delays."""
@@ -521,19 +522,19 @@ class spice():
                               self.cell_name))
         return 0
 
-    def cacti_rc_delay(self, 
+    def cacti_rc_delay(self,
                  inputramptime, # input rise time
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
                  vs2,           # threshold voltage
                  rise,          # whether input rises or fall
-                 extra_param_dict=None):         
+                 extra_param_dict=None):
         """By default, CACTI delay uses horowitz for gate delay.
            Can be overriden in cases like bitline if equation is different.
         """
         return self.horowitz(inputramptime, tf, vs1, vs2, rise)
-        
-    def horowitz(self, 
+
+    def horowitz(self,
                  inputramptime, # input rise time
                  tf,            # time constant of gate
                  vs1,           # threshold voltage
@@ -553,17 +554,17 @@ class spice():
             td = tf * math.sqrt(math.log(1.0 - vs1)*math.log(1.0 - vs1) + 2*a*b*(vs1)) + tf*(math.log(1.0 - vs1) - math.log(1.0 - vs2))
 
         return td
-  
-    def tr_r_on(self, width, is_nchannel, stack, _is_cell):      
-        
+
+    def tr_r_on(self, width, is_nchannel, stack, _is_cell):
+
         restrans = self.cacti_params["r_nch_on"] if is_nchannel else self.cacti_params["r_pch_on"]
         return stack * restrans / width
 
     def gate_c(self, width):
-    
+
         return (tech.spice["c_g_ideal"] + tech.spice["c_overlap"] + 3*tech.spice["c_fringe"])*width +\
                tech.drc["minlength_channel"]*tech.spice["cpolywire"]
-    
+
     def drain_c_(self,
                  width,
                  stack,
@@ -574,10 +575,10 @@ class spice():
         c_fringe = 2*tech.spice["c_overlap"]
         c_overlap = 2*tech.spice["c_fringe"]
         drain_C_metal_connecting_folded_tr = 0
-            
+
         w_folded_tr = width/folds
         num_folded_tr = folds
-        
+
         # Re-created some logic contact to get minwidth as importing the contact
         # module causes a failure
         if "minwidth_contact" in tech.drc:
@@ -599,10 +600,10 @@ class spice():
 
             if num_folded_tr%2 == 0:
                 drain_h_for_sidewall = 0
-        
+
             total_drain_height_for_cap_wrt_gate *= num_folded_tr
             drain_C_metal_connecting_folded_tr   = tech.spice["wire_c_per_um"] * total_drain_w
-      
+
 
         drain_C_area     = c_junc_area * total_drain_w * w_folded_tr
         drain_C_sidewall = c_junc_sidewall * (drain_h_for_sidewall + 2 * total_drain_w)

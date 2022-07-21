@@ -6,16 +6,16 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
+from base import vector
 from sram_factory import factory
 from math import log, ceil, floor
 from tech import drc
-from vector import vector
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class bank(design.design):
+class bank(design):
     """
     Dynamically generated a single bank including bitcell array,
     hierarchical_decoder, precharge, (optional column_mux and column decoder),
@@ -229,7 +229,7 @@ class bank(design.design):
 
         # UPPER LEFT QUADRANT
         # To the left of the bitcell array above the predecoders and control logic
-        x_offset = self.m2_gap + self.port_address[port].width
+        x_offset = self.decoder_gap + self.port_address[port].width
         self.port_address_offsets[port] = vector(-x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -272,7 +272,7 @@ class bank(design.design):
 
         # LOWER RIGHT QUADRANT
         # To the right of the bitcell array
-        x_offset = self.bitcell_array_right + self.port_address[port].width + self.m2_gap
+        x_offset = self.bitcell_array_right + self.port_address[port].width + self.decoder_gap
         self.port_address_offsets[port] = vector(x_offset,
                                                  self.main_bitcell_array_bottom)
 
@@ -364,9 +364,9 @@ class bank(design.design):
             self.num_col_addr_lines = 0
         self.col_addr_bus_width = self.m2_pitch * self.num_col_addr_lines
 
-        # A space for wells or jogging m2
-        self.m2_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
-                          3 * self.m2_pitch,
+        # Gap between decoder and array
+        self.decoder_gap = max(2 * drc("pwell_to_nwell") + drc("nwell_enclose_active"),
+                          2 * self.m2_pitch,
                           drc("nwell_to_nwell"))
 
     def add_modules(self):
@@ -389,7 +389,6 @@ class bank(design.design):
             self.bitcell_array = factory.create(module_type="replica_bitcell_array",
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows)
-        self.add_mod(self.bitcell_array)
 
         self.port_address = []
         for port in self.all_ports:
@@ -397,21 +396,17 @@ class bank(design.design):
                                                     cols=self.num_cols + self.num_spare_cols,
                                                     rows=self.num_rows,
                                                     port=port))
-            self.add_mod(self.port_address[port])
 
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
         for port in self.all_ports:
-            temp_pre = factory.create(module_type="port_data",
-                                      sram_config=self.sram_config,
-                                      port=port,
-                                      bit_offsets=self.bit_offsets)
-            self.port_data.append(temp_pre)
-            self.add_mod(self.port_data[port])
+            self.port_data.append(factory.create(module_type="port_data",
+                                                 sram_config=self.sram_config,
+                                                 port=port,
+                                                 bit_offsets=self.bit_offsets))
 
         if(self.num_banks > 1):
             self.bank_select = factory.create(module_type="bank_select")
-            self.add_mod(self.bank_select)
 
     def create_bitcell_array(self):
         """ Creating Bitcell Array """
@@ -528,26 +523,9 @@ class bank(design.design):
 
         if self.col_addr_size == 0:
             return
-        elif self.col_addr_size == 1:
-            self.column_decoder = factory.create(module_type="pinvbuf",
-                                                 height=self.dff.height)
-        elif self.col_addr_size == 2:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode2x4",
-                                                 column_decoder=True,
-                                                 height=self.dff.height)
-
-        elif self.col_addr_size == 3:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode3x8",
-                                                 column_decoder=True,
-                                                 height=self.dff.height)
-        elif self.col_addr_size == 4:
-            self.column_decoder = factory.create(module_type="hierarchical_predecode4x16",
-                                                 column_decoder=True,
-                                                 height=self.dff.height)
         else:
-            # No error checking before?
-            debug.error("Invalid column decoder?", -1)
-        self.add_mod(self.column_decoder)
+            self.column_decoder = factory.create(module_type="column_decoder",
+                                                 col_addr_size=self.col_addr_size)
 
         self.column_decoder_inst = [None] * len(self.all_ports)
         for port in self.all_ports:
@@ -611,15 +589,22 @@ class bank(design.design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
+
         # Copy only the power pins already on the power layer
         # (this won't add vias to internal bitcell pins, for example)
-        for inst in self.insts:
-            self.copy_power_pins(inst, "vdd", add_vias=False)
-            self.copy_power_pins(inst, "gnd", add_vias=False)
+
+        # This avoids getting copy errors on vias and other instances
+        all_insts = [self.bitcell_array_inst] + self.port_address_inst + self.port_data_inst
+        if hasattr(self, "column_decoder_inst"):
+            all_insts += self.column_decoder_inst
+
+        for inst in all_insts:
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
 
         if 'vpb' in self.bitcell_array_inst.mod.pins and 'vnb' in self.bitcell_array_inst.mod.pins:
             for pin_name, supply_name in zip(['vnb','vpb'],['gnd','vdd']):
-                self.copy_power_pins(self.bitcell_array_inst, pin_name, new_name=supply_name)
+                self.copy_layout_pin(self.bitcell_array_inst, pin_name, new_name=supply_name)
 
         # If we use the pinvbuf as the decoder, we need to add power pins.
         # Other decoders already have them.
@@ -926,23 +911,14 @@ class bank(design.design):
         stack = getattr(self, layer_props.bank.stack)
         pitch = getattr(self, layer_props.bank.pitch)
 
-        if self.col_addr_size == 1:
+        decode_names = []
+        for i in range(self.num_col_addr_lines):
+            decode_names.append("out_{}".format(i))
 
-            # Connect to sel[0] and sel[1]
-            decode_names = ["Zb", "Z"]
-
-            # The Address LSB
-            self.copy_layout_pin(self.column_decoder_inst[port], "A", "addr{}_0".format(port))
-
-        elif self.col_addr_size > 1:
-            decode_names = []
-            for i in range(self.num_col_addr_lines):
-                decode_names.append("out_{}".format(i))
-
-            for i in range(self.col_addr_size):
-                decoder_name = "in_{}".format(i)
-                addr_name = "addr{0}_{1}".format(port, i)
-                self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
+        for i in range(self.col_addr_size):
+            decoder_name = "in_{}".format(i)
+            addr_name = "addr{0}_{1}".format(port, i)
+            self.copy_layout_pin(self.column_decoder_inst[port], decoder_name, addr_name)
 
         if port % 2:
             offset = self.column_decoder_inst[port].ll() - vector((self.num_col_addr_lines + 1) * pitch, 0)

@@ -5,17 +5,17 @@
 #
 from tech import drc
 import debug
-import design
+from base import design
 import math
 from sram_factory import factory
 from collections import namedtuple
-from vector import vector
+from base import vector
 from globals import OPTS
 from tech import cell_properties
 from tech import layer_properties as layer_props
 
 
-class port_data(design.design):
+class port_data(design):
     """
     Create the data port (column mux, sense amps, write driver, etc.) for the given port number.
     Port 0 always has the RBL on the left while port 1 is on the right.
@@ -29,7 +29,7 @@ class port_data(design.design):
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
-        
+
         if num_spare_cols is not None:
                 self.num_spare_cols = num_spare_cols + self.num_spare_cols
         if self.num_spare_cols is None:
@@ -215,7 +215,6 @@ class port_data(design.design):
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port],
                                               column_offset=self.port - 1)
-        self.add_mod(self.precharge_array)
 
         if self.port in self.read_ports:
             # RBLs don't get a sense amp
@@ -224,7 +223,6 @@ class port_data(design.design):
                                                   offsets=self.bit_offsets,
                                                   words_per_row=self.words_per_row,
                                                   num_spare_cols=self.num_spare_cols)
-            self.add_mod(self.sense_amp_array)
         else:
             self.sense_amp_array = None
 
@@ -236,7 +234,6 @@ class port_data(design.design):
                                                    offsets=self.bit_offsets,
                                                    bitcell_bl=self.bl_names[self.port],
                                                    bitcell_br=self.br_names[self.port])
-            self.add_mod(self.column_mux_array)
         else:
             self.column_mux_array = None
 
@@ -248,7 +245,6 @@ class port_data(design.design):
                                                      offsets=self.bit_offsets,
                                                      write_size=self.write_size,
                                                      num_spare_cols=self.num_spare_cols)
-            self.add_mod(self.write_driver_array)
             if self.write_size is not None:
                 # RBLs don't get a write mask
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
@@ -256,7 +252,6 @@ class port_data(design.design):
                                                            offsets=self.bit_offsets,
                                                            word_size=self.word_size,
                                                            write_size=self.write_size)
-                self.add_mod(self.write_mask_and_array)
             else:
                 self.write_mask_and_array = None
 
@@ -516,9 +511,6 @@ class port_data(design.design):
         wdriver_inst = self.write_driver_array_inst
 
         for bit in range(self.num_wmasks):
-            # Bring write mask AND array output pin to port data level
-            self.copy_layout_pin(wmask_inst, "wmask_out_{0}".format(bit), "wdriver_sel_{0}".format(bit))
-
             wmask_out_pin = wmask_inst.get_pin("wmask_out_{0}".format(bit))
             wdriver_en_pin = wdriver_inst.get_pin("en_{0}".format(bit))
 
@@ -858,10 +850,10 @@ class port_data(design.design):
         """
         if self.column_mux_array:
             self.column_mux_array.graph_exclude_columns(column_include_num)
-            
+
     def graph_clear_column_mux(self):
         """
         Clear mux exclusions to allow different bit tests.
         """
         if self.column_mux_array:
-            self.column_mux_array.init_graph_params()       
+            self.column_mux_array.init_graph_params()

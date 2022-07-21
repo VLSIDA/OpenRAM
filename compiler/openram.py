@@ -47,7 +47,7 @@ g.print_time("Start", start_time)
 # Output info about this run
 g.report_status()
 
-from sram_config import sram_config
+from modules import sram_config
 
 
 # Configure the SRAM organization
@@ -73,9 +73,9 @@ for path in output_files:
     debug.print_raw(path)
 
 
-from sram import sram
-s = sram(sram_config=c,
-         name=OPTS.output_name)
+from modules import sram
+s = sram(name=OPTS.output_name,
+         sram_config=c)
 
 # Output the files for the resulting SRAM
 s.save()

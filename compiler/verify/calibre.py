@@ -18,12 +18,10 @@ Calibre means pointing the code to the proper DRC and LVS rule files.
 
 
 import os
-import shutil
 import re
 import debug
-import utils
 from globals import OPTS
-from run_script import run_script
+from .run_script import run_script
 
 # Keep track of statistics
 num_drc_runs = 0

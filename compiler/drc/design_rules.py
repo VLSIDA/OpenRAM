@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import debug
-from drc_value import *
-from drc_lut import *
+from .drc_value import *
+from .drc_lut import *
 
 
 class design_rules(dict):

@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class delay_chain(design.design):
+class delay_chain(design):
     """
     Generate a delay chain with the given number of stages and fanout.
     Input is a list contains the electrical effort (fanout) of each stage.
@@ -47,7 +47,7 @@ class delay_chain(design.design):
         self.height = self.rows * self.inv.height
         # The width is determined by the largest fanout plus the driver
         self.width = (max(self.fanout_list) + 1) * self.inv.width
-        
+
         self.place_inverters()
         self.route_inverters()
         self.route_supplies()
@@ -66,10 +66,9 @@ class delay_chain(design.design):
 
         self.dff = factory.create(module_type="dff_buf")
         dff_height = self.dff.height
-        
+
         self.inv = factory.create(module_type="pinv",
                                   height=dff_height)
-        self.add_mod(self.inv)
 
     def create_inverters(self):
         """ Create the inverters and connect them based on the stage list """
@@ -173,20 +172,11 @@ class delay_chain(design.design):
                 self.add_path("m2", [z_pin.center(), mid1_point, mid2_point, next_a_pin.center()])
 
     def route_supplies(self):
-        # Add power and ground to all the cells except:
-        # the fanout driver, the right-most load
-        # The routing to connect the loads is over the first and last cells
-        # We have an even number of drivers and must only do every other
-        # supply rail
-
-        for inst in self.driver_inst_list:
-            load_list = self.load_inst_map[inst]
-            for pin_name in ["vdd", "gnd"]:
-                pin = load_list[0].get_pin(pin_name)
-                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
-
-                pin = load_list[-2].get_pin(pin_name)
-                self.copy_power_pin(pin, loc=pin.rc() - vector(self.m1_pitch, 0))
+        # These pins get routed in one cell from the left/right
+        # because the input signal gets routed on M3 and can interfere with the delay input.
+        self.route_vertical_pins("vdd", self.driver_inst_list, xside="rx")
+        right_load_insts = [self.load_inst_map[x][-1] for x in self.driver_inst_list]
+        self.route_vertical_pins("gnd", right_load_insts, xside="lx")
 
     def add_layout_pins(self):
 
@@ -199,7 +189,7 @@ class delay_chain(design.design):
                                         to_layer="m2",
                                         offset=mid_loc)
         self.add_path(a_pin.layer, [a_pin.center(), mid_loc])
-        
+
         self.add_layout_pin_rect_center(text="in",
                                         layer="m2",
                                         offset=mid_loc)
@@ -213,4 +203,3 @@ class delay_chain(design.design):
         self.add_layout_pin_rect_center(text="out",
                                         layer="m1",
                                         offset=a_pin.center())
-        

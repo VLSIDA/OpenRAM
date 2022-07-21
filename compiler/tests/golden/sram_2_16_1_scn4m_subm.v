@@ -30,6 +30,8 @@ module sram_2_16_1_scn4m_subm(
   input [DATA_WIDTH-1:0]  din0;
   output [DATA_WIDTH-1:0] dout0;
 
+  reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];
+
   reg  csb0_reg;
   reg  web0_reg;
   reg [ADDR_WIDTH-1:0]  addr0_reg;
@@ -44,13 +46,12 @@ module sram_2_16_1_scn4m_subm(
     addr0_reg = addr0;
     din0_reg = din0;
     #(T_HOLD) dout0 = 2'bx;
-    if ( !csb0_reg && web0_reg && VERBOSE ) 
+    if ( !csb0_reg && web0_reg && VERBOSE )
       $display($time," Reading %m addr0=%b dout0=%b",addr0_reg,mem[addr0_reg]);
     if ( !csb0_reg && !web0_reg && VERBOSE )
       $display($time," Writing %m addr0=%b din0=%b",addr0_reg,din0_reg);
   end
 
-reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];
 
   // Memory Write Block Port 0
   // Write Operation : When web0 = 0, csb0 = 0

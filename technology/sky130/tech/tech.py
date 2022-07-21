@@ -7,10 +7,7 @@
 
 
 import os
-from design_rules import *
-from module_type import *
-from custom_cell_properties import cell_properties, cell
-from custom_layer_properties import layer_properties
+import drc as d
 
 """
 File containing the process technology parameters for Skywater 130nm.
@@ -25,7 +22,7 @@ File containing the process technology parameters for Skywater 130nm.
 # Using tech_modules['cellname'] you can override each class by providing a custom
 # implementation in '$OPENRAM_TECHDIR/modules/'
 # For example: tech_modules["contact"] = "contact_freepdk45"
-tech_modules = module_type()
+tech_modules = d.module_type()
 
 # These modules have been hand designed and provided in this repository.
 tech_modules["nand2_dec"] = "nand2_dec"
@@ -68,7 +65,7 @@ tech_modules["and4_dec"] = "and4_dec"
 ###################################################
 # Custom cell properties
 ###################################################
-cell_properties = cell_properties()
+cell_properties = d.cell_properties()
 
 cell_properties.bitcell_power_pin_directions = ("H", "H")
 
@@ -86,6 +83,13 @@ cell_properties.bitcell_1port.port_map = {'bl': 'BL',
                                           'vpb': 'VPB',
                                           'gnd': 'VGND'}
 
+cell_properties.bitcell_1port.wl_layer = "m2"
+cell_properties.bitcell_1port.bl_layer = "m1"
+cell_properties.bitcell_1port.vdd_layer = "m1"
+cell_properties.bitcell_1port.vdd_dir = "V"
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "H"
+
 cell_properties.bitcell_2port.mirror.x = True
 cell_properties.bitcell_2port.mirror.y = True
 cell_properties.bitcell_2port.end_caps = True
@@ -98,30 +102,43 @@ cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'wl1': 'WL1',
                                           'vdd': 'VDD',
                                           'gnd': 'GND'}
+cell_properties.bitcell_1port.wl_layer = "m2"
+cell_properties.bitcell_1port.vdd_layer = "m2"
+cell_properties.bitcell_1port.vdd_dir = "H"
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "H"
+cell_properties.bitcell_2port.wl_layer = "m2"
+cell_properties.bitcell_2port.vdd_layer = "m1"
+cell_properties.bitcell_2port.vdd_dir = "H"
+cell_properties.bitcell_2port.gnd_layer = "m2"
+cell_properties.bitcell_2port.gnd_dir = "H"
 
-cell_properties.col_cap_1port_bitcell = cell(['br', 'vdd', 'gnd', 'bl'],
-                                             ['INPUT', 'INPUT', 'GROUND', 'POWER'],
-                                             {'bl': 'BL0',
-                                              'br': 'BL1',
-                                              'vdd': 'VPWR',
-                                              'gnd': 'VGND'})
+cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'vdd', 'gnd', 'br', 'gate', 'vpb', 'vnb'],
+                                             ['INPUT', 'POWER', 'GROUND', 'INPUT', 'INPUT', 'BIAS', 'BIAS'],
+                                             {'bl': 'bl',
+                                              'br': 'br',
+                                              'vdd': 'vdd',
+                                              'gnd': 'gnd',
+                                              'gate': 'gate',
+                                              'vnb': 'vnb',
+                                              'vpb': 'vpb'})
 cell_properties.col_cap_1port_bitcell.boundary_layer = "mem"
 
-cell_properties.col_cap_1port_strap_power = cell(['vdd', 'vpb', 'vnb'],
+cell_properties.col_cap_1port_strap_power = d.cell(['vdd', 'vpb', 'vnb'],
                                                  ['POWER', 'BIAS', 'BIAS'],
                                                  {'vnb': 'VNB',
                                                   'vpb': 'VPB',
                                                   'vdd': 'VPWR'})
 cell_properties.col_cap_1port_strap_power.boundary_layer = "mem"
 
-cell_properties.col_cap_1port_strap_ground = cell(['gnd', 'vpb', 'vnb'],
+cell_properties.col_cap_1port_strap_ground = d.cell(['gnd', 'vpb', 'vnb'],
                                                   ['GROUND', 'BIAS', 'BIAS'],
                                                   {'vnb': 'VNB',
                                                    'vpb': 'VPB',
                                                    'gnd': 'VGND'})
 cell_properties.col_cap_1port_strap_ground.boundary_layer = "mem"
 
-cell_properties.row_cap_1port_cell = cell(['vdd', 'wl'],
+cell_properties.row_cap_1port_cell = d.cell(['vdd', 'wl'],
                                           ['POWER', 'INPUT'],
                                           {'wl': 'WL',
                                            'vdd': 'VPWR'})
@@ -215,10 +232,11 @@ cell_properties.names["write_driver"] = "sky130_fd_bd_sram__openram_write_driver
 
 array_row_multiple = 2
 array_col_multiple = 2
+
 ###################################################
 # Custom layer properties
 ###################################################
-layer_properties = layer_properties()
+layer_properties = d.layer_properties()
 layer_properties.hierarchical_decoder.bus_layer = "m1"
 layer_properties.hierarchical_decoder.bus_directions = "nonpref"
 layer_properties.hierarchical_decoder.input_layer = "li"
@@ -449,7 +467,7 @@ parameter["6T_inv_nmos_size"] = 0.205
 parameter["6T_inv_pmos_size"] = 0.09
 parameter["6T_access_size"] = 0.135
 
-drc = design_rules("sky130")
+drc = d.design_rules("sky130")
 
 # grid size
 drc["grid"] = 0.005
@@ -460,6 +478,7 @@ drc["grid"] = 0.005
 NDA_PDK_ROOT = os.environ.get("NDA_PDK_ROOT", False)
 use_calibre = bool(NDA_PDK_ROOT)
 use_calibre = False
+use_klayout = False
 if use_calibre:
     # Correct order according to s8
     pin_purpose = 16
@@ -747,8 +766,10 @@ if use_calibre:
     drc_name = "calibre"
     lvs_name = "calibre"
     pex_name = "calibre"
-    # Calibre automatically scales to micron to SI units and requires mult parameter
-    lvs_lib = "calibre_lvs_lib"
+elif use_klayout:
+    drc_name = "klayout"
+    lvs_name = "klayout"
+    pex_name = "klayout"
 else:
     drc_name = "magic"
     lvs_name = "netgen"

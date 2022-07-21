@@ -29,7 +29,7 @@ module sram  (
   input web0;
   output reg [DATA_WIDTH - 1 : 0] dout0;
 
-  reg [ADDR_WIDTH - 1 : 0] addr0_reg;
+  reg [BANK_SEL - 1 : 0] addr0_reg;
 
   wire [DATA_WIDTH - 1 : 0] dout0_bank0;
 
@@ -70,11 +70,11 @@ module sram  (
   );
 
   always @(posedge clk0) begin
-    addr0_reg <= addr0;
+    addr0_reg <= addr0[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL];
   end
 
   always @(*) begin
-    case (addr0_reg[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL])
+    case (addr0_reg)
       0: begin
         dout0 = dout0_bank0;
       end

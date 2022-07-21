@@ -72,7 +72,7 @@ module {{ module_name }}  (
 {% endfor %}
 
 {% for port in ports %}
-  reg [ADDR_WIDTH - 1 : 0] addr{{ port }}_reg;
+  reg [BANK_SEL - 1 : 0] addr{{ port }}_reg;
 
 {% for bank in banks %}
   wire [DATA_WIDTH - 1 : 0] dout{{ port }}_bank{{ bank }};
@@ -122,13 +122,13 @@ module {{ module_name }}  (
 
 {% for port in ports %}
   always @(posedge clk{{ port }}) begin
-    addr{{ port }}_reg <= addr{{ port }};
+    addr{{ port }}_reg <= addr{{ port }}[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL];
   end
 {% endfor %}
 
 {% for port in ports %}
   always @(*) begin
-    case (addr{{ port }}_reg[ADDR_WIDTH - 1 : ADDR_WIDTH - BANK_SEL])
+    case (addr{{ port }}_reg)
 {% for bank in banks %}
       {{ bank }}: begin
         dout{{ port }} = dout{{ port }}_bank{{ bank }};

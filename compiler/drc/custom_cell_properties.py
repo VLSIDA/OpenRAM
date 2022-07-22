@@ -11,14 +11,14 @@ class cell:
 
         # Some cells may have body bias (well taps) exposed as ports
         self._body_bias = body_bias
-        
+
         # Specifies if this is a hard (i.e. GDS) cell
         self._hard_cell = hard_cell
         self._boundary_layer = boundary_layer
 
         # Specifies the port directions
         self._port_types_map = {x: y for (x, y) in zip(port_order, port_types)}
-        
+
         # Specifies a map from OpenRAM names to cell names
         # by default it is 1:1
         if not port_map:
@@ -31,13 +31,13 @@ class cell:
 
         # Create an index array
         self._port_indices = [self._port_order.index(x) for x in self._original_port_order]
-        
+
         # Update ordered name list
         self._port_names = [self._port_map[x] for x in self._port_order]
-        
+
         # Update ordered type list
         self._port_types = [self._port_types_map[x] for x in self._port_order]
-        
+
     @property
     def hard_cell(self):
         return self._hard_cell
@@ -73,21 +73,21 @@ class cell:
     @property
     def port_indices(self):
         return self._port_indices
-        
+
     @property
     def port_map(self):
         return self._port_map
-    
+
     @port_map.setter
     def port_map(self, port_map):
         self._port_map = port_map
         # Update ordered name list to use the new names
         self._port_names = [self._port_map[x] for x in self._port_order]
-        
+
     @property
     def body_bias(self):
         return self._body_bias
-    
+
     @body_bias.setter
     def body_bias(self, body_bias):
         # It is assumed it is [nwell, pwell]
@@ -96,7 +96,7 @@ class cell:
         self._port_types['vnb'] = "GROUND"
         self._port_map['vpb'] = body_bias[1]
         self._port_types['vpb'] = "POWER"
-        
+
     @property
     def port_types(self):
         return self._port_types
@@ -108,7 +108,7 @@ class cell:
         self._port_types_map = {x: y for (x, y) in zip(self._port_order, self._port_types)}
         # Update ordered type list
         self._port_types = [self._port_types_map[x] for x in self._port_order]
-    
+
     @property
     def boundary_layer(self):
         return self._boundary_layer
@@ -116,8 +116,8 @@ class cell:
     @boundary_layer.setter
     def boundary_layer(self, x):
         self._boundary_layer = x
-        
-    
+
+
 class _pins:
     def __init__(self, pin_dict):
         # make the pins elements of the class to allow "." access.
@@ -148,7 +148,7 @@ class bitcell(cell):
         super().__init__(port_order, port_types, port_map)
 
         self.end_caps = end_caps
-        
+
         if not mirror:
             self.mirror = _mirror_axis(True, False)
         else:
@@ -166,7 +166,7 @@ class bitcell(cell):
         self.gnd_layer = "m1"
         self.gnd_dir = "H"
 
-    
+
 class cell_properties():
     """
     This contains meta information about the custom designed cells. For
@@ -194,16 +194,16 @@ class cell_properties():
 
         self._inv_dec = cell(["A", "Z", "vdd", "gnd"],
                               ["INPUT", "OUTPUT", "POWER", "GROUND"])
-        
+
         self._nand2_dec = cell(["A", "B", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
-        
+
         self._nand3_dec = cell(["A", "B", "C", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
-        
+
         self._nand4_dec = cell(["A", "B", "C", "D", "Z", "vdd", "gnd"],
                                 ["INPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "POWER", "GROUND"])
-        
+
         self._dff = cell(["D", "Q", "clk", "vdd", "gnd"],
                           ["INPUT", "OUTPUT", "INPUT", "POWER", "GROUND"])
 
@@ -230,7 +230,7 @@ class cell_properties():
 
         self._row_cap_2port = bitcell(["wl0", "wl1", "gnd"],
                                        ["INPUT", "INPUT", "POWER", "GROUND"])
-        
+
     @property
     def ptx(self):
         return self._ptx
@@ -246,15 +246,15 @@ class cell_properties():
     @property
     def nand2_dec(self):
         return self._nand2_dec
-    
+
     @property
     def nand3_dec(self):
         return self._nand3_dec
-    
+
     @property
     def nand4_dec(self):
         return self._nand4_dec
-    
+
     @property
     def dff(self):
         return self._dff
@@ -270,7 +270,7 @@ class cell_properties():
     @property
     def bitcell_1port(self):
         return self._bitcell_1port
-    
+
     @property
     def bitcell_2port(self):
         return self._bitcell_2port
@@ -282,7 +282,7 @@ class cell_properties():
     @property
     def row_cap_1port(self):
         return self._row_cap_1port
-    
+
     @property
     def col_cap_2port(self):
         return self._col_cap_2port
@@ -290,4 +290,3 @@ class cell_properties():
     @property
     def row_cap_2port(self):
         return self._row_cap_2port
-    

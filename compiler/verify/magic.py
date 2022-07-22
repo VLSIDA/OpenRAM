@@ -267,7 +267,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, output_path)
-            
+
         setup_file_object = open(output_path + "/setup.tcl", 'a')
         setup_file_object.write("# Increase the column sizes for ease of reading long names\n")
         setup_file_object.write("::netgen::format 120\n")

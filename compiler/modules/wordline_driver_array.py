@@ -124,7 +124,7 @@ class wordline_driver_array(design):
         en_pin = self.add_layout_pin_segment_center(text="en",
                                                     layer="m2",
                                                     start=en_bottom_pos,
-                                                    end=en_top_pos) 
+                                                    end=en_top_pos)
 
         for row in range(self.rows):
             and_inst = self.wld_inst[row]

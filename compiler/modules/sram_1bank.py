@@ -336,7 +336,7 @@ class sram_1bank(sram_base):
         self.add_dnwell(inflate=2.5)
 
         # Route the supplies together and/or to the ring/stripes.
-        # This is done with the original bbox since the escape routes need to 
+        # This is done with the original bbox since the escape routes need to
         # be outside of the ring for OpenLane
         rt = router_tech(self.supply_stack, 1)
         init_bbox = self.get_bbox(side="ring",

@@ -19,7 +19,7 @@ struct = layout.structures[layout.rootStructureName]
 for text in struct.texts:
     print(text.textString)
     text.magFactor=""
- 
+
 writer = gdsMill.Gds2writer(layout)
 writer.writeToFile(out_gds_file)
 

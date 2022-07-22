@@ -37,7 +37,7 @@ class signal_escape_router(router):
         y_dist = min(loc.y - self.ll.y, self.ur.y - loc.y)
 
         return min(x_dist, y_dist)
-    
+
     def escape_route(self, pin_names):
         """
         Takes a list of tuples (name, side) and routes them. After routing,
@@ -52,7 +52,7 @@ class signal_escape_router(router):
         # Order the routes by closest to the perimeter first
         # This prevents some pins near the perimeter from being blocked by other pins
         ordered_pin_names = sorted(pin_names, key=lambda x: self.perimeter_dist(x))
-        
+
         # Route the supply pins to the supply rails
         # Route vdd first since we want it to be shorter
         start_time = datetime.now()
@@ -60,18 +60,18 @@ class signal_escape_router(router):
             self.route_signal(pin_name)
             # if pin_name == "dout0[1]":
             #     self.write_debug_gds("postroute.gds", True)
-            
+
         print_time("Maze routing pins",datetime.now(), start_time, 3)
 
         #self.write_debug_gds("final_escape_router.gds",False)
-        
+
         return True
 
     def route_signal(self, pin_name, side="all"):
-        
+
         for detour_scale in [5 * pow(2, x) for x in range(5)]:
             debug.info(1, "Escape routing {0} with scale {1}".format(pin_name, detour_scale))
-            
+
             # Clear everything in the routing grid.
             self.rg.reinit()
 
@@ -86,11 +86,11 @@ class signal_escape_router(router):
 
             # Marks the grid cells all along the perimeter as a target
             self.add_perimeter_target(side)
-            
+
             # if pin_name == "dout0[3]":
             #     self.write_debug_gds("pre_route.gds", False)
             #     breakpoint()
-            
+
             # Actually run the A* router
             if self.run_router(detour_scale=detour_scale):
                 new_pin = self.get_perimeter_pin()
@@ -100,7 +100,5 @@ class signal_escape_router(router):
             # if pin_name == "dout0[3]":
             #     self.write_debug_gds("pre_route.gds", False)
             #     breakpoint()
-                
+
         self.write_debug_gds("debug_route.gds", True)
-
-

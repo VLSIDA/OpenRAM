@@ -96,7 +96,7 @@ class timing_sram_test(openram_test):
                             'slew_hl': [2.039655],
                             'slew_lh': [2.039655],
                             'write0_power': [19.31883],
-                            'write1_power': [15.297369999999999]} 
+                            'write1_power': [15.297369999999999]}
         else:
             self.assertTrue(False) # other techs fail
 

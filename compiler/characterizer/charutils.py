@@ -37,7 +37,7 @@ def parse_spice_list(filename, key):
     except IOError:
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
         debug.archive()
-        
+
     contents = f.read().lower()
     f.close()
     # val = re.search(r"{0}\s*=\s*(-?\d+.?\d*\S*)\s+.*".format(key), contents)

@@ -88,7 +88,7 @@ class port_address(design):
 
         self.copy_layout_pin(self.row_decoder_inst, "vdd")
         self.copy_layout_pin(self.row_decoder_inst, "gnd")
-            
+
         # Also connect the B input of the RBL and_dec to vdd
         if OPTS.local_array_size == 0:
             rbl_b_pin = self.rbl_driver_inst.get_pin("B")

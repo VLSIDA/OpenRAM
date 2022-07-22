@@ -81,8 +81,8 @@ class ngspice_pex_pinv_test(openram_test):
         test_sim = self.write_simulation(sim_file, test_module, top_level_name)
         test_sim.run_sim("stim.sp")
         delay = parse_spice_list(log_file_name, "pinv_delay")
-        
-        os.chdir(cwd)        
+
+        os.chdir(cwd)
         return delay
 
     def write_simulation(self, sim_file, cir_file, top_module_name):

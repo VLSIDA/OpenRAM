@@ -31,5 +31,5 @@ class bitcell_1port(bitcell_base):
 
     def is_non_inverting(self):
         """Return input to output polarity for module"""
-        
+
         return False

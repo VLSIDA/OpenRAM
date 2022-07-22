@@ -31,7 +31,7 @@ class datasheet():
         if OPTS.output_datasheet_info:
             datasheet_path = OPTS.output_path
         else:
-            datasheet_path = OPTS.openram_temp    
+            datasheet_path = OPTS.openram_temp
         with open(datasheet_path + "/datasheet.info") as info:
             self.html += '<!--'
             for row in info:

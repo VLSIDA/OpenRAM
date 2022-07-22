@@ -180,7 +180,7 @@ def check_versions():
     else:
         OPTS.coverage_exe = ""
         debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-        
+
     try:
         import coverage
         OPTS.coverage = 1
@@ -249,7 +249,7 @@ def setup_bitcell():
         OPTS.bitcell = "bitcell_{}port".format(OPTS.num_ports)
         OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-                
+
     # See if bitcell exists
     try:
         c = importlib.import_module("modules." + OPTS.bitcell)
@@ -388,7 +388,7 @@ def end_openram():
         verify.print_lvs_stats()
         verify.print_pex_stats()
 
-        
+
 def purge_temp():
     """ Remove the temp directory. """
     debug.info(1,
@@ -406,7 +406,7 @@ def purge_temp():
             os.remove(i)
         else:
             shutil.rmtree(i)
-    
+
 
 def cleanup_paths():
     """
@@ -420,7 +420,7 @@ def cleanup_paths():
     elif os.path.exists(OPTS.openram_temp):
         purge_temp()
 
-        
+
 def setup_paths():
     """ Set up the non-tech related paths. """
     debug.info(2, "Setting up paths...")
@@ -447,12 +447,12 @@ def setup_paths():
         # Only add the unique subdir one time
         if tempdir not in OPTS.openram_temp:
             OPTS.openram_temp += tempdir
-        
+
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-    
+
 def is_exe(fpath):
     """ Return true if the given is an executable file that exists. """
     return os.path.exists(fpath) and os.access(fpath, os.X_OK)
@@ -490,7 +490,7 @@ def init_paths():
     #from pprint import pprint
     #pprint(s)
     #print("Test {0} in dir {1}".format(s[2].filename, OPTS.openram_temp))
-                
+
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

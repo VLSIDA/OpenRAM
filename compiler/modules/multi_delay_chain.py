@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class multi_delay_chain(design.design):
+class multi_delay_chain(design):
     """
     Generate a delay chain with the given number of stages, fanout, and output pins.
     Fanout list contains the electrical effort (fanout) of each stage.
@@ -34,7 +34,7 @@ class multi_delay_chain(design.design):
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
         self.rows = len(self.fanout_list)
-        
+ 
         # defaults to signle output at end of delay chain
         if not pinout_list:
             self.pinout_list = [self.rows] # TODO: check for off-by-one here

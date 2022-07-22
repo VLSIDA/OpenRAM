@@ -92,7 +92,7 @@ def check_file_format_carriage(file_name):
         if len(key_positions)>10:
             line_numbers = key_positions[:10] + [" ..."]
         else:
-            line_numbers = key_positoins
+            line_numbers = key_positions
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' carriage returns in ' +
                    str(file_name) + ' (lines ' + ",".join(str(x) for x in line_numbers) + ')')
     f.close()

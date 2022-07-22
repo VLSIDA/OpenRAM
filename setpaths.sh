@@ -7,9 +7,3 @@
 export OPENRAM_HOME="`pwd`/compiler"
 export OPENRAM_TECH="`pwd`/technology"
 export PYTHONPATH=$OPENRAM_HOME
-for dir in `pwd`/compiler/*
-do
-	if [ -d $dir ]; then 
-		export PYTHONPATH=$PYTHONPATH:$dir
-	fi;
-done

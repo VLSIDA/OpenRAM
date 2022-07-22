@@ -51,7 +51,7 @@ def setup_files(path):
     files = []
     for (dir, _, current_files) in os.walk(path):
         for f in current_files:
-            files.append(os.getenv("OPENRAM_HOME"))
+            files.append(os.path.join(dir, f))
     nametest = re.compile("\.py$", re.IGNORECASE)
     select_files = list(filter(nametest.search, files))
     return select_files

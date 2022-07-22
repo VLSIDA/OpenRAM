@@ -757,7 +757,7 @@ class control_logic(design):
         else:
             via_height=None
             via_width=0
-        
+
         min_y = min([x.y for x in vdd_pin_locs])
         max_y = max([x.y for x in vdd_pin_locs])
         bot_pos = vector(max_row_x_loc, min_y - 0.5 * via_height)

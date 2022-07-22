@@ -58,7 +58,7 @@ class regression_model_test(openram_test):
         debug.info(1, "Probe address {0} probe data bit {1}".format(probe_address, probe_data))
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        
+
         #m = linear_regression(s.s, tempspice, corner)
         m = neural_network(s.s, tempspice, corner)
         only_test = ['rise_delay']

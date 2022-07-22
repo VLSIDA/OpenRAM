@@ -68,7 +68,7 @@ class wire(wire_path):
         This is contact direction independent pitch,
         i.e. we take the maximum contact dimension
         """
-        
+
         # This is here for the unit tests which may not have
         # initialized the static parts of the layout class yet.
         from base import layout

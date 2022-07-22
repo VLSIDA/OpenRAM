@@ -1317,7 +1317,7 @@ class layout():
             return None
 
         intermediate_layers = self.get_metal_layers(from_layer, to_layer)
-    
+
         via = None
         cur_layer = from_layer
         while cur_layer != to_layer:

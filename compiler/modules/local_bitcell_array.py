@@ -172,7 +172,7 @@ class local_bitcell_array(bitcell_base_array):
         if len(self.all_ports) > 1:
             wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
                                self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
-            self.wl_insts[1].place(wl_offset, 
+            self.wl_insts[1].place(wl_offset,
                                    mirror="XY")
 
         self.height = self.bitcell_array.height

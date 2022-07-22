@@ -78,7 +78,7 @@ class openram_back_end_test(openram_test):
             filename = "{0}{1}".format(out_path, out_file)
             debug.info(1, "Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename), True)
-            
+
         # Make sure there is any .lib file
         import glob
         files = glob.glob('{0}/*.lib'.format(out_path))

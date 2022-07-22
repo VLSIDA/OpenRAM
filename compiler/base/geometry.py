@@ -359,7 +359,7 @@ class instance(geometry):
                 for offset in range(len(normalized_br_offsets)):
                     for port in range(len(br_names)):
                         cell_br_meta.append([br_names[offset], row, col, port])
-                
+
                 if normalized_storage_nets == []:
                     debug.error("normalized storage nets should not be empty! Check if the GDS labels Q and Q_bar are correctly set on M1 of the cell",1)
                 Q_x = normalized_storage_nets[0][0]

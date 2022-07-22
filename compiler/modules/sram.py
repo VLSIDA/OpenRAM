@@ -78,7 +78,7 @@ class sram():
     def save(self):
         """ Save all the output files while reporting time to do it as well. """
 
-        # Import this at the last minute so that the proper tech file 
+        # Import this at the last minute so that the proper tech file
         # is loaded and the right tools are selected
         import verify
 

@@ -9,15 +9,15 @@
 from .simulation import simulation
 from globals import OPTS
 import debug
-import tech 
+import tech
 
 import math
 
-class cacti(simulation):    
+class cacti(simulation):
     """
     Delay model for the SRAM which which
     """
-    
+
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
 
@@ -33,8 +33,8 @@ class cacti(simulation):
         self.create_signal_names()
         self.add_graph_exclusions()
         self.set_params()
-        
-    def set_params(self):    
+
+    def set_params(self):
         """Set parameters specific to the corner being simulated"""
         self.params = {}
         # Set the specific functions to use for timing defined in the SRAM module
@@ -42,14 +42,14 @@ class cacti(simulation):
         # Only parameter right now is r_on which is dependent on Vdd
         self.params["r_nch_on"] = self.vdd_voltage / tech.spice["i_on_n"]
         self.params["r_pch_on"] = self.vdd_voltage / tech.spice["i_on_p"]
-    
+
     def get_lib_values(self, load_slews):
         """
         Return the analytical model results for the SRAM.
         """
         if OPTS.num_rw_ports > 1 or OPTS.num_w_ports > 0 and OPTS.num_r_ports > 0:
             debug.warning("In analytical mode, all ports have the timing of the first read port.")
-            
+
         # Probe set to 0th bit, does not matter for analytical delay.
         self.set_probe('0' * self.addr_size, 0)
         self.create_graph()
@@ -77,7 +77,7 @@ class cacti(simulation):
             slew = 0
             path_delays = self.graph.get_timing(bl_path, self.corner, slew, load_farad, self.params)
             total_delay = self.sum_delays(path_delays)
-            
+
             delay_ns = total_delay.delay/1e-9
             slew_ns = total_delay.slew/1e-9
             max_delay = max(max_delay, total_delay.delay)
@@ -95,7 +95,7 @@ class cacti(simulation):
                     elif "slew" in mname and port in self.read_ports:
                         port_data[port][mname].append(total_delay.slew / 1e-9)
 
-        # Margin for error in period. Calculated by averaging required margin for a small and large 
+        # Margin for error in period. Calculated by averaging required margin for a small and large
         # memory. FIXME: margin is quite large, should be looked into.
         period_margin = 1.85
         sram_data = {"min_period": (max_delay / 1e-9) * 2 * period_margin,
@@ -118,5 +118,3 @@ class cacti(simulation):
         debug.info(1, "Dynamic Power: {0} mW".format(power.dynamic))
         debug.info(1, "Leakage Power: {0} mW".format(power.leakage))
         return power
-        
-    

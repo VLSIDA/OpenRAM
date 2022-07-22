@@ -35,7 +35,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification=False, out
 
     if not output_path:
         output_path = OPTS.openram_temp
-        
+
     from tech import drc
     drc_rules = drc["drc_rules"]
 
@@ -125,7 +125,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
-                         
+
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -139,7 +139,7 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
 
     if not output_path:
         output_path = OPTS.openram_temp
-    
+
     if not output:
         output = cell_name + ".pex.sp"
 
@@ -443,14 +443,14 @@ def correct_port(name, output_file_name, ref_file_name):
     output_file.write(part2)
     output_file.close()
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

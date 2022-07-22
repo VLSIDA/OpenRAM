@@ -26,18 +26,17 @@ class linear_regression(regression_model):
         """
         Supervised training of model.
         """
-        
+
         #model = LinearRegression()
         model = self.get_model()
         model.fit(features, labels)
         return model
-        
-    def model_prediction(self, model, features):    
+
+    def model_prediction(self, model, features):
         """
         Have the model perform a prediction and unscale the prediction
         as the model is trained with scaled values.
         """
-        
+
         pred = model.predict(features)
         return pred
-        

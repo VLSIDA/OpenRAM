@@ -70,7 +70,7 @@ class pin_group:
     def add_pin(self, pin):
         self.pins.add(pin)
         self.remove_redundant_pins()
-        
+
     def __repr__(self):
         """ override repr function output """
         return str(self)
@@ -641,13 +641,13 @@ class pin_group:
             # way than blockages.
             blockages = sufficient | insufficient | blockage_in_tracks
             self.blockages.update(blockages)
-     
+
         # If we have a blockage, we must remove the grids
         # Remember, this excludes the pin blockages already
         blocked_grids = self.router.get_blocked_grids()
         pin_set.difference_update(blocked_grids)
         partial_set.difference_update(blocked_grids)
-        
+
         # At least one of the groups must have some valid tracks
         if (len(pin_set) == 0 and len(partial_set) == 0):
             # debug.warning("Pin is very close to metal blockage.\nAttempting to expand blocked pin {}".format(self.pins))

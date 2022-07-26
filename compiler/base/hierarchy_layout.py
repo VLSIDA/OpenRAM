@@ -141,30 +141,28 @@ class layout():
                                        layout.active_space)
 
         # These are for debugging previous manual rules
-        if False:
-            print("poly_width", layout.poly_width)
-            print("poly_space", layout.poly_space)
-            print("m1_width", layout.m1_width)
-            print("m1_space", layout.m1_space)
-            print("m2_width", layout.m2_width)
-            print("m2_space", layout.m2_space)
-            print("m3_width", layout.m3_width)
-            print("m3_space", layout.m3_space)
-            print("m4_width", layout.m4_width)
-            print("m4_space", layout.m4_space)
-            print("active_width", layout.active_width)
-            print("active_space", layout.active_space)
-            print("contact_width", layout.contact_width)
-            print("poly_to_active", layout.poly_to_active)
-            print("poly_extend_active", layout.poly_extend_active)
-            print("poly_to_contact", layout.poly_to_contact)
-            print("active_contact_to_gate", layout.active_contact_to_gate)
-            print("poly_contact_to_gate", layout.poly_contact_to_gate)
-            print("well_enclose_active", layout.well_enclose_active)
-            print("implant_enclose_active", layout.implant_enclose_active)
-            print("implant_space", layout.implant_space)
-            import sys
-            sys.exit(1)
+        level=99
+        debug.info(level, "poly_width".format(layout.poly_width))
+        debug.info(level, "poly_space".format(layout.poly_space))
+        debug.info(level, "m1_width".format(layout.m1_width))
+        debug.info(level, "m1_space".format(layout.m1_space))
+        debug.info(level, "m2_width".format(layout.m2_width))
+        debug.info(level, "m2_space".format(layout.m2_space))
+        debug.info(level, "m3_width".format(layout.m3_width))
+        debug.info(level, "m3_space".format(layout.m3_space))
+        debug.info(level, "m4_width".format(layout.m4_width))
+        debug.info(level, "m4_space".format(layout.m4_space))
+        debug.info(level, "active_width".format(layout.active_width))
+        debug.info(level, "active_space".format(layout.active_space))
+        debug.info(level, "contact_width".format(layout.contact_width))
+        debug.info(level, "poly_to_active".format(layout.poly_to_active))
+        debug.info(level, "poly_extend_active".format(layout.poly_extend_active))
+        debug.info(level, "poly_to_contact".format(layout.poly_to_contact))
+        debug.info(level, "active_contact_to_gate".format(layout.active_contact_to_gate))
+        debug.info(level, "poly_contact_to_gate".format(layout.poly_contact_to_gate))
+        debug.info(level, "well_enclose_active".format(layout.well_enclose_active))
+        debug.info(level, "implant_enclose_active".format(layout.implant_enclose_active))
+        debug.info(level, "implant_space".format(layout.implant_space))
 
     @classmethod
     def setup_layer_constants(layout):
@@ -202,21 +200,19 @@ class layout():
                     "{}_nonpref_pitch".format(layer_id),
                     layout.compute_pitch(layer_id, False))
 
-        if False:
-            for name in tech_layer_indices:
-                if name == "active":
-                    continue
-                try:
-                    print("{0} width {1} space {2}".format(name,
-                                                           getattr(layout, "{}_width".format(name)),
-                                                           getattr(layout, "{}_space".format(name))))
+        level=99
+        for name in tech_layer_indices:
+            if name == "active":
+                continue
+            try:
+                debug.info(level, "{0} width {1} space {2}".format(name,
+                                                       getattr(layout, "{}_width".format(name)),
+                                                       getattr(layout, "{}_space".format(name))))
 
-                    print("pitch {0} nonpref {1}".format(getattr(layout, "{}_pitch".format(name)),
-                                                         getattr(layout, "{}_nonpref_pitch".format(name))))
-                except AttributeError:
-                    pass
-            import sys
-            sys.exit(1)
+                debug.info(level, "pitch {0} nonpref {1}".format(getattr(layout, "{}_pitch".format(name)),
+                                                     getattr(layout, "{}_nonpref_pitch".format(name))))
+            except AttributeError:
+                pass
 
     @staticmethod
     def compute_pitch(layer, preferred=True):

@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
 import debug
 from sram_factory import factory
 import math
 from base import vector
 from globals import OPTS
-from base import logical_effort
+from .control_logic_base import control_logic_base
 
 
 class control_logic(control_logic_base):

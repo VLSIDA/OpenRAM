@@ -25,7 +25,7 @@ class port_data(design):
 
         sram_config.set_local_config(self)
         self.port = port
-        if self.write_size is not None:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -93,7 +93,7 @@ class port_data(design):
 
         if self.write_driver_array:
             self.create_write_driver_array()
-            if self.write_size is not None:
+            if self.write_size != self.word_size:
                 self.create_write_mask_and_array()
             else:
                 self.write_mask_and_array_inst = None
@@ -245,7 +245,7 @@ class port_data(design):
                                                      offsets=self.bit_offsets,
                                                      write_size=self.write_size,
                                                      num_spare_cols=self.num_spare_cols)
-            if self.write_size is not None:
+            if self.write_size != self.word_size:
                 # RBLs don't get a write mask
                 self.write_mask_and_array = factory.create(module_type="write_mask_and_array",
                                                            columns=self.num_cols,
@@ -391,13 +391,13 @@ class port_data(design):
             temp.append("sparebl_{0}".format(bit))
             temp.append("sparebr_{0}".format(bit))
 
-        if self.write_size is not None:
+        if self.write_size != self.word_size:
             for i in range(self.num_wmasks):
                 temp.append("wdriver_sel_{}".format(i))
             for i in range(self.num_spare_cols):
                 temp.append("bank_spare_wen{}".format(i))
 
-        elif self.num_spare_cols and not self.write_size:
+        elif self.num_spare_cols and self.write_size != self.word_size:
             temp.append("w_en")
             for i in range(self.num_spare_cols):
                 temp.append("bank_spare_wen{}".format(i))

@@ -27,7 +27,7 @@ class bank(design):
 
         self.sram_config = sram_config
         sram_config.set_local_config(self)
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -769,7 +769,7 @@ class bank(design):
             din_name = "din{0}_{1}".format(port, row)
             self.copy_layout_pin(self.port_data_inst[port], data_name, din_name)
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             for row in range(self.num_wmasks):
                 wmask_name = "bank_wmask_{}".format(row)
                 bank_wmask_name = "bank_wmask{0}_{1}".format(port, row)

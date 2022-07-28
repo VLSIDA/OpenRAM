@@ -36,7 +36,7 @@ class sram():
 
         self.name = name
 
-        from sram_1bank import sram_1bank as sram
+        from .sram_1bank import sram_1bank as sram
 
         self.s = sram(name, sram_config)
 

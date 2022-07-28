@@ -8,14 +8,14 @@
 from base import vector
 from base import channel_route
 from router import router_tech
-from globals import OPTS
+from globals import OPTS, print_time
 import datetime
 import debug
 from math import ceil
 from importlib import reload
-from design import design
-from verilog import verilog
-from lef import lef
+from base import design
+from base import verilog
+from base import lef
 from sram_factory import factory
 from tech import spice
 
@@ -34,7 +34,7 @@ class sram_1bank(design, verilog, lef):
 
         self.bank_insts = []
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -254,9 +254,9 @@ class sram_1bank(design, verilog, lef):
             # Do not route the power supply (leave as must-connect pins)
             return
         elif OPTS.route_supplies == "grid":
-            from supply_grid_router import supply_grid_router as router
+            from router import supply_grid_router as router
         else:
-            from supply_tree_router import supply_tree_router as router
+            from router import supply_tree_router as router
         rtr=router(layers=self.supply_stack,
                    design=self,
                    bbox=bbox,
@@ -356,7 +356,7 @@ class sram_1bank(design, verilog, lef):
                 pins_to_route.append("addr{0}[{1}]".format(port, bit + self.col_addr_size))
 
             if port in self.write_ports:
-                if self.write_size:
+                if self.write_size != self.word_size:
                     for bit in range(self.num_wmasks):
                         pins_to_route.append("wmask{0}[{1}]".format(port, bit))
 
@@ -367,7 +367,7 @@ class sram_1bank(design, verilog, lef):
                     for bit in range(self.num_spare_cols):
                         pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
-        from signal_escape_router import signal_escape_router as router
+        from router import signal_escape_router as router
         rtr=router(layers=self.m3_stack,
                    design=self,
                    bbox=bbox)
@@ -491,19 +491,15 @@ class sram_1bank(design, verilog, lef):
 
         self.data_dff = factory.create("dff_array", module_name="data_dff", rows=1, columns=self.word_size + self.num_spare_cols)
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.wmask_dff = factory.create("dff_array", module_name="wmask_dff", rows=1, columns=self.num_wmasks)
 
         if self.num_spare_cols:
             self.spare_wen_dff = factory.create("dff_array", module_name="spare_wen_dff", rows=1, columns=self.num_spare_cols)
 
-        # Create bank decoder
-#        if(self.num_banks > 1):
-#            self.add_multi_bank_modules()
-
         self.bank_count = 0
 
-        c = reload(__import__(OPTS.control_logic))
+        c = reload(__import__('modules.' + OPTS.control_logic))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
         # Create the control logic module for each port type
@@ -796,7 +792,7 @@ class sram_1bank(design, verilog, lef):
         if self.col_addr_dff:
             self.col_addr_dff_insts = self.create_col_addr_dff()
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.wmask_dff_insts = self.create_wmask_dff()
             self.data_dff_insts = self.create_data_dff()
         else:
@@ -940,7 +936,7 @@ class sram_1bank(design, verilog, lef):
             self.col_addr_pos[port] = vector(x_offset, 0)
 
         if port in self.write_ports:
-            if self.write_size:
+            if self.write_size != self.word_size:
                 # Add the write mask flops below the write mask AND array.
                 self.wmask_pos[port] = vector(x_offset,
                                               y_offset)
@@ -992,7 +988,7 @@ class sram_1bank(design, verilog, lef):
                     self.spare_wen_dff_insts[port].place(self.spare_wen_pos[port], mirror="MX")
                     x_offset = self.spare_wen_dff_insts[port].lx()
 
-                if self.write_size:
+                if self.write_size != self.word_size:
                     # Add the write mask flops below the write mask AND array.
                     self.wmask_pos[port] = vector(x_offset - self.wmask_dff_insts[port].width,
                                                   y_offset)
@@ -1059,7 +1055,7 @@ class sram_1bank(design, verilog, lef):
                                 start_layer=pin_layer)
 
             if port in self.write_ports:
-                if self.write_size:
+                if self.write_size != self.word_size:
                     for bit in range(self.num_wmasks):
                         self.add_io_pin(self.wmask_dff_insts[port],
                                         "din_{}".format(bit),
@@ -1371,7 +1367,7 @@ class sram_1bank(design, verilog, lef):
         # Data dffs and wmask dffs are only for writing so are not useful for evaluating read delay.
         for inst in self.data_dff_insts:
             self.graph_inst_exclude.add(inst)
-        if self.write_size:
+        if self.write_size != self.word_size:
             for inst in self.wmask_dff_insts:
                 self.graph_inst_exclude.add(inst)
         if self.num_spare_cols:

@@ -21,7 +21,7 @@ class elmore(simulation):
         # self.targ_read_ports = []
         # self.targ_write_ports = []
         # self.period = 0
-        # if self.write_size:
+        # if self.write_size != self.word_size:
             # self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         # else:
             # self.num_wmasks = 0

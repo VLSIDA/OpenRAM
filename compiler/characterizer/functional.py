@@ -44,7 +44,7 @@ class functional(simulation):
         else:
             self.output_path = output_path
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -133,7 +133,7 @@ class functional(simulation):
 
     def create_random_memory_sequence(self):
         # Select randomly, but have 3x more reads to increase probability
-        if self.write_size:
+        if self.write_size != self.word_size:
             rw_ops = ["noop", "write", "partial_write", "read", "read"]
             w_ops = ["noop", "write", "partial_write"]
         else:
@@ -440,7 +440,7 @@ class functional(simulation):
 
         # Generate wmask bits
         for port in self.write_ports:
-            if self.write_size:
+            if self.write_size != self.word_size:
                 self.sf.write("\n* Generation of wmask signals\n")
                 for bit in range(self.num_wmasks):
                     sig_name = "WMASK{0}_{1} ".format(port, bit)

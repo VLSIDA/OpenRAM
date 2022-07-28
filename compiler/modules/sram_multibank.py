@@ -26,7 +26,7 @@ class sram_multibank:
             'bank_sel': ceil(log(sram.num_banks, 2)),
             'num_wmask': sram.num_wmasks,
             'write_size': sram.write_size
-            }
+        }
 
     def verilog_write(self, name):
         template_filename = os.path.join(os.path.abspath(os.environ["OPENRAM_HOME"]), "sram/sram_multibank_template.v")

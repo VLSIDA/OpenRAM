@@ -42,7 +42,7 @@ class sram():
 
         if self.num_banks != 1:
             from sram_multibank import sram_multibank
-            mb = sram_multibank(s)
+            mb = sram_multibank(self.s)
             mb.verilog_write()
 
         self.s.create_netlist()

@@ -71,7 +71,7 @@ class control_logic_delay(control_logic_base):
 
         # wl_en_unbuf is the weak timing signal that feeds wl_en_driver
         self.wl_en_and = factory.create(module_type="pand2",
-                                        size=1, 
+                                        size=1,
                                         height=dff_height)
 
         # w_en drives every write driver
@@ -207,10 +207,10 @@ class control_logic_delay(control_logic_base):
         # instead I have this which duplicates the out_pin naming logic from multi_delay_chain.py
         out_pins = ["out{}".format(str(pin)) for pin in self.delay_chain.pinout_list]
         delay_map = zip(["in", out_pins[0], out_pins[1], out_pins[2], out_pins[3], out_pins[4]], \
-			["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
-	
-        self.connect_vertical_bus(delay_map, 
-                                  self.delay_inst, 
+            ["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
+
+        self.connect_vertical_bus(delay_map,
+                                  self.delay_inst,
                                   self.input_bus,
                                   self.m2_stack[::-1])
 
@@ -244,7 +244,7 @@ class control_logic_delay(control_logic_base):
         x_offset = self.place_util(self.glitch3_nand_inst, x_offset, row)
 
         self.row_end_inst.append(self.glitch3_nand_inst)
-    
+
     def route_glitches(self):
         glitch2_map = zip(["A", "B", "Z"], ["gated_clk_buf", "delay4", "glitch2"])
 

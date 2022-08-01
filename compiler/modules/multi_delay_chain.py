@@ -34,7 +34,7 @@ class multi_delay_chain(design):
         # number of inverters including any fanout loads.
         self.fanout_list = fanout_list
         self.rows = len(self.fanout_list)
- 
+
         # defaults to signle output at end of delay chain
         if not pinout_list:
             self.pinout_list = [self.rows] # TODO: check for off-by-one here
@@ -43,9 +43,9 @@ class multi_delay_chain(design):
 
         # TODO: would like to sort and check pinout list for valid format but don't have time now
         # Check pinout bounds
-        # debug.check(self.pinout_list[-1] <= self.rows, 
+        # debug.check(self.pinout_list[-1] <= self.rows,
         #             "Ouput pin cannot exceed delay chain length.")
-        # debug.check(self.pinout_list[0] > 0, 
+        # debug.check(self.pinout_list[0] > 0,
         #             "Delay chain output pin numbers must be positive")
 
         self.create_netlist()

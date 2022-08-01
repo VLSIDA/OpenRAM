@@ -153,21 +153,8 @@ class control_logic(control_logic_base):
         self.create_delay()
         self.create_pen_row()
 
-    def place_instances(self):
-        """ Place all the instances """
-        # Keep track of all right-most instances to determine row boundary
-        # and add the vdd/gnd pins
-        self.row_end_inst = []
-
-        # Add the control flops on the left of the bus
-        self.place_dffs()
-
-        # All of the control logic is placed to the right of the DFFs and bus
-        # as well as the power supply stripe
-        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width + self.m4_pitch
-
+    def place_logic_rows(self):
         row = 0
-        # Add the logic on the right of the bus
         self.place_clk_buf_row(row)
         row += 1
         self.place_gated_clk_bar_row(row)
@@ -186,24 +173,8 @@ class control_logic(control_logic_base):
             self.place_rbl_delay_row(row)
             row += 1
         self.place_wlen_row(row)
-        row += 1
 
-        control_center_y = self.wl_en_inst.uy() + self.m3_pitch
-
-        # Delay chain always gets placed at row 4
-        self.place_delay(4)
-        height = self.delay_inst.uy()
-
-        # This offset is used for placement of the control logic in the SRAM level.
-        self.control_logic_center = vector(self.ctrl_dff_inst.rx(), control_center_y)
-
-        # Extra pitch on top and right
-        self.height = height + 2 * self.m1_pitch
-        # Max of modules or logic rows
-        self.width = max([inst.rx() for inst in self.row_end_inst])
-        if (self.port_type == "rw") or (self.port_type == "r"):
-            self.width = max(self.delay_inst.rx(), self.width)
-        self.width += self.m2_pitch
+        self.control_center_y = self.wl_en_inst.uy() + self.m3_pitch
 
     def route_all(self):
         """ Routing between modules """

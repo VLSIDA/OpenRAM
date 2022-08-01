@@ -172,6 +172,36 @@ class control_logic_base(design):
                                                   self.internal_bus_list,
                                                   height)
 
+    def place_instances(self):
+        """ Place all the instances """
+        # Keep track of all right-most instances to determine row boundary
+        # and add the vdd/gnd pins
+        self.row_end_inst = []
+
+        # Add the control flops on the left of the bus
+        self.place_dffs()
+
+        # All of the control logic is placed to the right of the DFFs and bus
+        # as well as the power supply stripe
+        self.control_x_offset = self.ctrl_dff_array.width + self.internal_bus_width + self.m4_pitch
+
+        self.place_logic_rows()
+
+        # Delay chain always gets placed at row 4
+        self.place_delay(4)
+        height = self.delay_inst.uy()
+
+        # This offset is used for placement of the control logic in the SRAM level.
+        self.control_logic_center = vector(self.ctrl_dff_inst.rx(), self.control_center_y)
+
+        # Extra pitch on top and right
+        self.height = height + 2 * self.m1_pitch
+        # Max of modules or logic rows
+        self.width = max([inst.rx() for inst in self.row_end_inst])
+        if (self.port_type == "rw") or (self.port_type == "r"):
+            self.width = max(self.delay_inst.rx(), self.width)
+        self.width += self.m2_pitch
+
     def place_delay(self, row):
         """ Place the delay chain """
         debug.check(row % 2 == 0, "Must place delay chain at even row for supply alignment.")

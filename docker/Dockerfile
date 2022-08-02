@@ -102,7 +102,7 @@ RUN make -j 4 install
 ### Ngspice ###
 ARG NGSPICE_COMMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
 WORKDIR /root
-RUN git clone https://github.com/ngspice/ngspice
+RUN git clone git://git.code.sf.net/p/ngspice/ngspice
 WORKDIR /root/ngspice
 RUN git checkout ${NGSPICE_COMMIT}
 RUN ./autogen.sh

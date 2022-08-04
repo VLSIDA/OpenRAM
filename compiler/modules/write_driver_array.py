@@ -29,7 +29,10 @@ class write_driver_array(design):
 
         self.columns = columns
         self.word_size = word_size
-        self.write_size = write_size
+        if write_size is None:
+            self.write_size = word_size
+        else:
+            self.write_size = write_size
         self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)

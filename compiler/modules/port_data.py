@@ -397,7 +397,7 @@ class port_data(design):
             for i in range(self.num_spare_cols):
                 temp.append("bank_spare_wen{}".format(i))
 
-        elif self.num_spare_cols and self.write_size != self.word_size:
+        elif self.num_spare_cols and self.write_size == self.word_size:
             temp.append("w_en")
             for i in range(self.num_spare_cols):
                 temp.append("bank_spare_wen{}".format(i))

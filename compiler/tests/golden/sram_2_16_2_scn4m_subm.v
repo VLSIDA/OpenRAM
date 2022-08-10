@@ -16,7 +16,7 @@ module sram  (
   parameter ADDR_WIDTH= 4;
 
   parameter BANK_SEL = 1;
-  parameter NUM_WMASK = 1;
+  parameter NUM_WMASK = 0;
 
 `ifdef USE_POWER_PINS
   inout vdd;

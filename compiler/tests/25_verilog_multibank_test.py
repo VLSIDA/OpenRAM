@@ -23,8 +23,8 @@ class multibank_verilog_test(openram_test):
         OPTS.route_supplies=False
         OPTS.check_lvsdrc=False
         OPTS.netlist_only=True
-        from sram import sram
-        from sram_config import sram_config
+        from modules import sram
+        from modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=2)
@@ -47,7 +47,7 @@ class multibank_verilog_test(openram_test):
         multi_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)
         self.assertTrue(self.isdiff(vname, multi_golden))
 
-        one_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), v1bname)
+        one_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), v1bfile)
         self.assertTrue(self.isdiff(v1bname, one_golden))
 
         globals.end_openram()

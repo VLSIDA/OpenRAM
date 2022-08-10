@@ -1,4 +1,6 @@
 import sram_config
+import OPTS
+
 
 class fake_sram(sram_config.sram_config):
     """ This is an SRAM that doesn't actually create itself, just computes
@@ -12,10 +14,6 @@ class fake_sram(sram_config.sram_config):
         # TODO: Get width and height from gds bbox
         self.width = 0
         self.height = 0
-        #c = reload(__import__(OPTS.bitcell))
-        #self.mod_bitcell = getattr(c, OPTS.bitcell)
-        #self.bitcell = self.mod_bitcell()
-        # to get the row, col, etc.
         self.compute_sizes()
         self.setup_multiport_constants()
 

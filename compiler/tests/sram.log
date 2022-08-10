@@ -1,0 +1,59 @@
+ERROR: file testutils.py: line 266: Mismatching files:
+file1=/tmp/openram_bugra_979_temp//sram_2_16_1_scn4m_subm_TT_5p0V_25C.lib
+file2=/openram/compiler/tests/golden/sram_2_16_1_scn4m_subm_TT_5p0V_25C_analytical.lib
+
+ERROR: file testutils.py: line 268: MISMATCH Line (74):
+    type (wmask){
+!=
+cell (sram____scnm_subm){
+
+ERROR: file testutils.py: line 268: MISMATCH Line (75):
+    base_type : array;
+!=
+    memory(){ 
+
+ERROR: file testutils.py: line 268: MISMATCH Line (76):
+    data_type : bit;
+!=
+    type : ram;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (77):
+    bit_width : ;
+!=
+    address_width : ;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (78):
+    bit_from : ;
+!=
+    word_width : ;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (79):
+    bit_to : ;
+!=
+    }
+
+ERROR: file testutils.py: line 268: MISMATCH Line (80):
+    }
+!=
+    interface_timing : true;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (81):
+
+!=
+    dont_use  : true;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (82):
+cell (sram____scnm_subm){
+!=
+    map_only   : true;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (83):
+    memory(){ 
+!=
+    dont_touch : true;
+
+ERROR: file testutils.py: line 268: MISMATCH Line (84):
+    type : ram;
+!=
+    area : ;
+

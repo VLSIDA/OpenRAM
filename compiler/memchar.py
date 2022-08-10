@@ -49,8 +49,8 @@ c = sram_config(word_size=OPTS.word_size,
 OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
 
-# Initialize and create the sram object
-from sram import sram
+# Initialize and create a fake sram object
+import fake_sran as sram
 s = sram(name=OPTS.output_name, sram_config=c)
 
 # Characterize the design

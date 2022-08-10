@@ -43,6 +43,8 @@ class write_driver_array(design):
 
         if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
+        else:
+            self.num_wmasks = 0
 
         self.create_netlist()
         if not OPTS.netlist_only:

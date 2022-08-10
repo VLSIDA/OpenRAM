@@ -18,6 +18,7 @@ class sram_config:
         self.word_size = word_size
         self.num_words = num_words
         # Don't add a write mask if it is the same size as the data word
+        self.write_size_init = write_size
         if write_size:
             self.write_size = write_size
         else:
@@ -117,6 +118,12 @@ class sram_config:
         self.num_rows = self.num_rows_temp + self.num_spare_rows
         debug.info(1, "Rows: {} Cols: {}".format(self.num_rows_temp, self.num_cols))
 
+        # Fix the write_size
+        if self.write_size_init:
+            self.write_size = self.write_size_init
+        else:
+            self.write_size = self.word_size
+
         # Compute the address and bank sizes
         self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
@@ -126,8 +133,6 @@ class sram_config:
         debug.info(1, "Row addr size: {}".format(self.row_addr_size)
                    + " Col addr size: {}".format(self.col_addr_size)
                    + " Bank addr size: {}".format(self.bank_addr_size))
-
-
 
         num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports
         if num_ports == 1:

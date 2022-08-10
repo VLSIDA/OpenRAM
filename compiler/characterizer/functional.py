@@ -348,7 +348,7 @@ class functional(simulation):
     def gen_data(self):
         """ Generates a random word to write. """
         # Don't use 0 or max value
-        random_value = random.randint(1, self.max_data - 1)
+        random_value = random.randint(1, self.max_data)
         data_bits = binary_repr(random_value, self.word_size)
         if self.num_spare_cols>0:
             random_value = random.randint(0, self.max_col_data)

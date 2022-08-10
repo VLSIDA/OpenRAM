@@ -1,4 +1,4 @@
-from template import template
+from .template import template
 from globals import OPTS
 import os
 from math import ceil, log
@@ -29,7 +29,7 @@ class sram_multibank:
         }
 
     def verilog_write(self, name):
-        template_filename = os.path.join(os.path.abspath(os.environ["OPENRAM_HOME"]), "sram/sram_multibank_template.v")
+        template_filename = os.path.join(os.path.abspath(os.environ["OPENRAM_HOME"]), "modules/sram_multibank_template.v")
         t = template(template_filename, self.dict)
         t.write(name)
         with open(name, 'r') as f:

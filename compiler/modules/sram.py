@@ -40,11 +40,6 @@ class sram():
 
         self.s = sram(name, sram_config)
 
-        if self.num_banks != 1:
-            from sram_multibank import sram_multibank
-            mb = sram_multibank(self.s)
-            mb.verilog_write()
-
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
@@ -64,7 +59,7 @@ class sram():
     def verilog_write(self, name):
         if self.num_banks != 1:
             self.s.verilog_write(name[:-2] + '_1bank.v')
-            from sram_multibank import sram_multibank
+            from .sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
             mb.verilog_write(name)
         else:

@@ -24,7 +24,7 @@ class rom_array_test(openram_test):
 
         debug.info(2, "Testing 4x4 array for rom cell")
 
-        data = [[1, 1, 1, 1], [1, 1, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
+        data = [[1, 0, 0, 0], [0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]]
 
         a = factory.create(module_type="rom_base_array", cols=4, rows=4, bitmap=data)
         self.local_check(a)

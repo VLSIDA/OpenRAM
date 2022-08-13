@@ -40,7 +40,7 @@ class rom_base_array(bitcell_base_array):
         self.place_ptx()
         
         #self.route_horizontal_pins(insts=self.cell_inst.values(), layer=self.route_layer, name="S")
-        self.route_bitlines()
+        #self.route_bitlines()
         #self.route_wordlines()
 
         self.route_supplies()
@@ -51,17 +51,26 @@ class rom_base_array(bitcell_base_array):
         
     #def add_pins(self):
     def add_boundary(self):
-        self.width = self.nmos.width * self.column_size
-        self.height = self.nmos.height * self.row_size
+        self.width = self.cell.width * self.column_size
+        self.height = self.cell.height * self.row_size
         super().add_boundary()
 
     def add_modules(self):
 
-        self.nmos = factory.create(module_type="ptx", tx_type="nmos", add_source_contact=self.route_layer,
-                                   add_drain_contact=self.route_layer)
-        temp = self.nmos.width
-        self.nmos.width = self.nmos.height + self.nmos.poly_extend_active
-        self.nmos.height = temp 
+        # base cell, nmos tx that represents a 1
+        self.cell = factory.create(module_type="rom_base_cell")
+
+        # "dummy" cells represent 0
+
+        #dummy cell with no contacts
+        self.dummy_nc = factory.create(module_type="rom_dummy_cell")
+        #dummy cell with drain contact
+        self.dummy_dc = factory.create(module_type="rom_dummy_cell", drain_contact=True)
+        #dummy cell with source contact
+        self.dummy_sc = factory.create(module_type="rom_dummy_cell", source_contact=True)
+        #dummy cell with all contacts
+        self.dummy_ac = factory.create(module_type="rom_dummy_cell", source_contact=True, drain_contact=True)
+        
     def create_instances(self):
         self.cell_inst = {}
         self.cell_list = []
@@ -75,11 +84,31 @@ class rom_base_array(bitcell_base_array):
 
                 if(self.data[row][col] == 1):
                     self.cell_inst[row, col]=self.add_inst(name=name,
-                                                       mod=self.nmos, rotate=90)
+                                                           mod=self.cell)
 
-                    row_list.append(self.cell_inst[row, col])
-                    self.connect_inst(self.get_bitcell_pins(row, col))
-                else: row_list.append(None)
+                    
+                    
+                    self.connect_inst(["vdd", "gnd", "gnd"])
+                else: 
+
+                    if  col < self.column_size - 1 and col > 0 and self.data[row][col + 1] == 1 and self.data[row][col - 1] == 1:
+                         
+                        self.cell_inst[row, col]=self.add_inst(name=name, mod=self.dummy_ac)
+
+                    elif col > 0 and self.data[row][col - 1] == 1:
+                        self.cell_inst[row, col]=self.add_inst(name=name, mod=self.dummy_dc)
+
+                    elif col < self.column_size - 1 and self.data[row][col + 1] == 1: 
+                                       
+                        self.cell_inst[row, col]=self.add_inst(name=name, mod=self.dummy_sc)
+
+                    else:
+                        self.cell_inst[row, col]=self.add_inst(name=name, mod=self.dummy_nc)
+
+
+                    
+                    self.connect_inst([])
+                row_list.append(self.cell_inst[row, col])
             self.cell_list.append(row_list)
 
 
@@ -94,34 +123,40 @@ class rom_base_array(bitcell_base_array):
 
     def place_ptx(self):
         self.cell_pos = {}
-        for col in range(self.column_size):
-            for row in range(self.row_size):
+
+        # rows are bitlines
+        for row in range(self.row_size):
+            # columns are word lines
+            for col in range(self.column_size):
                 
-                #cell_x = (self.nmos.height + self.nmos.poly_extend_active) * col 
-                #cell_y = (self.nmos.width + 2 * self.nmos.active_contact_to_gate + self.nmos.contact_width)  * row
-                cell_x = self.nmos.width * col
-                cell_y = self.nmos.height * row
-                print(self.nmos.height + self.nmos.poly_extend_active)
+                cell_x = (self.cell.width)  * col 
+                cell_y = row * (self.cell.height)
+
+                self.cell_pos[row, col] = vector(cell_x, cell_y)
+                self.cell_inst[row, col].place(self.cell_pos[row, col])
+                #cell_x = self.cell.width  * col
+                #cell_y = self.cell.height * row
+                #print(self.nmos.height + self.nmos.poly_extend_active)
                 if(self.data[row][col] == 1):
 
+                    pass
                     
-                    self.cell_pos[row, col] = self.nmos.active_offset.scale(1, 0) \
-                        + vector(cell_x, cell_y)
                     
-                    self.cell_inst[row, col].place(self.cell_pos[row, col], rotate=90)
-                    self.add_label("S_{}_{}".format(row,col), self.route_layer, self.cell_inst[row, col].get_pin("S").center())
-                    self.add_label("D", self.route_layer, self.cell_inst[row, col].get_pin("D").center())
+                    
+                    
+                    #self.add_label("S_{}_{}".format(row,col), self.route_layer, self.cell_inst[row, col].center())
+                    #self.add_label("D", self.route_layer, self.cell_inst[row, col].center())
 
-                else:
+                #else:
                     
                     #poly_offset = (self.nmos.contact_offset + vector(0.5 * self.nmos.active_contact.width + 0.5 * self.nmos.poly_width + self.nmos.active_contact_to_gate, 0)) + (0, cell_y)
-                    poly_offset = (cell_x, cell_y)
+                    #poly_offset = (cell_x, cell_y)
                     #print(cell_x,cell_y)
-                    self.add_rect(layer="poly",
-                                 offset=poly_offset,
-                                 width=self.nmos.height + self.nmos.poly_extend_active,
-                                 height=self.nmos.poly_width
-                                 )
+                    #self.add_rect(layer="poly",
+                    #             offset=poly_offset,
+                    #             width=self.nmos.height + self.nmos.poly_extend_active,
+                    #             height=self.nmos.poly_width
+                    #             )
                     
 
 

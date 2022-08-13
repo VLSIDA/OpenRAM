@@ -66,12 +66,12 @@ class textSection(baseSection):
         self.text = text
 
     def expand(self, dict, fd):
-        varRE = re.compile('\{\{ (\S*) \}\}')
+        varRE = re.compile(r'\{\{ (\S*) \}\}')
         vars = varRE.finditer(self.text)
         newText = self.text
         for var in vars:
             newText = newText.replace('{{ ' + var.group(1) + ' }}', str(dict[var.group(1)]))
-        print(newText, end='', file=fd)
+        fd.write(newText)
 
 
 class template:
@@ -91,10 +91,10 @@ class template:
 
         self.baseSectionSection = baseSection()
         context = [self.baseSectionSection]
-        forRE = re.compile('\s*\{% for (\S*) in (\S*) %\}')
-        endforRE = re.compile('\s*\{% endfor %\}')
-        ifRE = re.compile('\s*{% if (.*) %\}')
-        endifRE = re.compile('\s*\{% endif %\}')
+        forRE = re.compile(r'\s*\{% for (\S*) in (\S*) %\}')
+        endforRE = re.compile(r'\s*\{% endfor %\}')
+        ifRE = re.compile(r'\s*{% if (.*) %\}')
+        endifRE = re.compile(r'\s*\{% endif %\}')
         for line in lines:
             m = forRE.match(line)
             if m:

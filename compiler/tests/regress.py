@@ -55,9 +55,9 @@ def fork_tests(num_threads):
     results = []
     test_partitions = partition_unit_tests(suite, num_threads)
     suite._tests[:] = []
-    
+
     def do_fork(suite):
-        
+
         for test_partition in test_partitions:
             test_suite = unittest.TestSuite(test_partition)
             test_partition[:] = []
@@ -103,9 +103,9 @@ if num_threads == 1:
     final_suite = suite
 else:
     final_suite = ConcurrentTestSuite(suite, fork_tests(num_threads))
-    
+
 test_result = test_runner.run(final_suite)
-    
+
 # import verify
 # verify.print_drc_stats()
 # verify.print_lvs_stats()

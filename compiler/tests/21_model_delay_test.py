@@ -92,8 +92,8 @@ class model_delay_test(openram_test):
         else:
             self.assertTrue(False) # other techs fail
 
-        print('spice_delays', spice_delays)
-        print('model_delays', model_delays)
+        debug.info(3, 'spice_delays {}'.fomrat(spice_delays))
+        debug.info(3, 'model_delays {}'.format(model_delays))
 
         # Check if no too many or too few results
         self.assertTrue(len(spice_delays.keys())==len(model_delays.keys()))

@@ -25,20 +25,19 @@ class neural_network(regression_model):
         """
         Training multilayer model
         """
-        
+
         flat_labels = np.ravel(labels)
         model = self.get_model()
         model.fit(features, flat_labels)
-        
+
         return model
-        
-    def model_prediction(self, model, features):    
+
+    def model_prediction(self, model, features):
         """
         Have the model perform a prediction and unscale the prediction
         as the model is trained with scaled values.
         """
-        
+
         pred = model.predict(features)
         reshape_pred = np.reshape(pred, (len(pred),1))
         return reshape_pred
-        

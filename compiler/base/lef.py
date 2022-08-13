@@ -75,7 +75,7 @@ class lef:
         #     return
 
         # To maintain the indent level easily
-        self.indent = "" 
+        self.indent = ""
 
         if OPTS.detailed_lef:
             debug.info(3, "Writing detailed LEF to {0}".format(lef_name))
@@ -88,7 +88,7 @@ class lef:
 
         for pin_name in self.pins:
             self.lef_write_pin(pin_name)
-            
+
         self.lef_write_obstructions(OPTS.detailed_lef)
         self.lef_write_footer()
         self.lef.close()
@@ -220,4 +220,3 @@ class lef:
                                                  round(item[1],
                                                        self.round_grid)))
             self.lef.write(" ;\n")
-

@@ -235,10 +235,10 @@ class delay(simulation):
         qbar_meas = voltage_at_measure("v_qbar_{0}".format(meas_tag), qbar_name)
 
         return {bit_polarity.NONINVERTING: q_meas, bit_polarity.INVERTING: qbar_meas}
-        
+
     def create_sen_and_bitline_path_measures(self):
         """Create measurements for the s_en and bitline paths for individual delays per stage."""
-        
+
         # FIXME: There should be a default_read_port variable in this case, pathing is done with this
         # but is never mentioned otherwise
         port = self.read_ports[0]
@@ -253,37 +253,37 @@ class delay(simulation):
         debug.check(len(bl_paths)==1, 'Found {0} paths which contain the bitline net.'.format(len(bl_paths)))
         sen_path = sen_paths[0]
         bitline_path = bl_paths[0]
-        
+
         # Get the measures
         self.sen_path_meas = self.create_delay_path_measures(sen_path)
         self.bl_path_meas = self.create_delay_path_measures(bitline_path)
         all_meas = self.sen_path_meas + self.bl_path_meas
-        
+
         # Paths could have duplicate measurements, remove them before they go to the stim file
         all_meas = self.remove_duplicate_meas_names(all_meas)
         # FIXME: duplicate measurements still exist in the member variables, since they have the same
         # name it will still work, but this could cause an issue in the future.
-        
-        return all_meas 
+
+        return all_meas
 
     def remove_duplicate_meas_names(self, measures):
         """Returns new list of measurements without duplicate names"""
-        
+
         name_set = set()
         unique_measures = []
         for meas in measures:
             if meas.name not in name_set:
                 name_set.add(meas.name)
                 unique_measures.append(meas)
-     
+
         return unique_measures
-        
+
     def create_delay_path_measures(self, path):
         """Creates measurements for each net along given path."""
 
         # Determine the directions (RISE/FALL) of signals
         path_dirs = self.get_meas_directions(path)
-        
+
         # Create the measurements
         path_meas = []
         for i in range(len(path) - 1):
@@ -297,26 +297,26 @@ class delay(simulation):
             # Some bitcell logic is hardcoded for only read zeroes, force that here as well.
             path_meas[-1].meta_str = sram_op.READ_ZERO
             path_meas[-1].meta_add_delay = True
-            
+
         return path_meas
-        
+
     def get_meas_directions(self, path):
         """Returns SPICE measurements directions based on path."""
-        
+
         # Get the edges modules which define the path
         edge_mods = self.graph.get_edge_mods(path)
-        
+
         # Convert to booleans based on function of modules (inverting/non-inverting)
         mod_type_bools = [mod.is_non_inverting() for mod in edge_mods]
-        
+
         # FIXME: obtuse hack to differentiate s_en input from bitline in sense amps
         if self.sen_name in path:
-            # Force the sense amp to be inverting for s_en->DOUT. 
+            # Force the sense amp to be inverting for s_en->DOUT.
             # bitline->DOUT is non-inverting, but the module cannot differentiate inputs.
             s_en_index = path.index(self.sen_name)
             mod_type_bools[s_en_index] = False
             debug.info(2, 'Forcing sen->dout to be inverting.')
-        
+
         # Use these to determine direction list assuming delay start on neg. edge of clock (FALL)
         # Also, use shorthand that 'FALL' == False, 'RISE' == True to simplify logic
         bool_dirs = [False]
@@ -324,9 +324,9 @@ class delay(simulation):
         for mod_bool in mod_type_bools:
             cur_dir = (cur_dir == mod_bool)
             bool_dirs.append(cur_dir)
-     
+
         # Convert from boolean to string
-        return ['RISE' if dbool else 'FALL' for dbool in bool_dirs]    
+        return ['RISE' if dbool else 'FALL' for dbool in bool_dirs]
 
     def set_load_slew(self, load, slew):
         """ Set the load and slew """
@@ -827,7 +827,7 @@ class delay(simulation):
                 debug.error("Failed to Measure Read Port Values:\n\t\t{0}".format(read_port_dict), 1)
 
             result[port].update(read_port_dict)
-            
+
             self.path_delays = self.check_path_measures()
 
         return (True, result)
@@ -932,7 +932,7 @@ class delay(simulation):
 
     def check_path_measures(self):
         """Get and check all the delays along the sen and bitline paths"""
-        
+
         # Get and set measurement, no error checking done other than prints.
         debug.info(2, "Checking measures in Delay Path")
         value_dict = {}
@@ -1179,7 +1179,7 @@ class delay(simulation):
         #char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
         self.alter_lh_char_data(char_port_data)
-           
+
         return (char_sram_data, char_port_data)
 
     def alter_lh_char_data(self, char_port_data):
@@ -1222,14 +1222,14 @@ class delay(simulation):
         for meas in self.sen_path_meas:
             sen_name_list.append(meas.name)
             sen_delay_list.append(value_dict[meas.name])
-        
+
         bl_name_list = []
         bl_delay_list = []
         for meas in self.bl_path_meas:
             bl_name_list.append(meas.name)
             bl_delay_list.append(value_dict[meas.name])
 
-        return sen_name_list, sen_delay_list, bl_name_list, bl_delay_list 
+        return sen_name_list, sen_delay_list, bl_name_list, bl_delay_list
 
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""

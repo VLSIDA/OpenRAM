@@ -73,8 +73,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("#!/bin/sh\n")
     f.write("assura {0} 2> {1} 1> {2}\n".format(drc_runset, drc_log_file, drc_log_file))
     f.close()
-    
-    
+
+
 def run_drc(name, gds_name, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
@@ -85,7 +85,7 @@ def run_drc(name, gds_name, final_verification=False):
     write_drc_script(name, gds_name, True, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(name, "drc")
-    
+
     # count and report errors
     errors = 0
     try:
@@ -168,7 +168,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_pa
     f.write("assura {0} 2> {1} 1> {2}\n".format(lvs_runset, lvs_log_file, lvs_log_file))
     f.close()
 
-    
+
 def run_lvs(name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
@@ -179,7 +179,7 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
     write_lvs_script(name, gds_name, sp_name, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(name, "drc")
-    
+
     errors = 0
     try:
         f = open(OPTS.openram_temp + name + ".csm", "r")
@@ -205,14 +205,14 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     global num_pex_runs
     num_pex_runs += 1
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

@@ -43,7 +43,7 @@ class library_lvs_test(openram_test):
         self.assertEqual(drc_errors + lvs_errors, 0)
         globals.end_openram()
 
-        
+
 def setup_files():
     gds_dir = OPTS.openram_tech + "/gds_lib"
     sp_dir = OPTS.openram_tech + "/lvs_lib"

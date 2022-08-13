@@ -28,7 +28,7 @@ class psram_1bank_2mux_1rw_1w_wmask_test(openram_test):
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 0
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=8,
                         write_size=4,
                         num_words=32,

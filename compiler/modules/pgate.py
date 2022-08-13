@@ -317,7 +317,7 @@ class pgate(design):
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
         # Allow an nimplant below it under the rail
-        contact_yoffset = max(0.5 * self.implant_width + self.implant_enclose_active, 
+        contact_yoffset = max(0.5 * self.implant_width + self.implant_enclose_active,
                               self.get_tx_insts("nmos")[0].by())
         contact_offset = vector(contact_xoffset, contact_yoffset)
 

@@ -78,7 +78,7 @@ class design(hierarchy_design):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
             for pin in pins:
-                print(pin_name, pin)
+                debug.info(0, "{0} {1}".format(pin_name, pin))
 
     def setup_multiport_constants(self):
         """

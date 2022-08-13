@@ -163,7 +163,7 @@ def get_gds_pins(pin_names, name, gds_filename, units):
                             if layer_override[pin_name]:
                                 lpp = layer_override[pin_name.textString]
                         except:
-                            pass                        
+                            pass
                         lpp = (lpp[0], None)
                     cell[str(pin_name)].append(pin_layout(pin_name, rect, lpp))
 

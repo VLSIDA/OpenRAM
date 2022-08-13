@@ -597,7 +597,7 @@ class hierarchical_decoder(design):
         for inst in all_insts:
             self.copy_layout_pin(inst, "vdd")
             self.copy_layout_pin(inst, "gnd")
-            
+
         self.route_vertical_pins("vdd", self.and_inst, xside="rx",)
         self.route_vertical_pins("gnd", self.and_inst, xside="lx",)
 

@@ -24,7 +24,7 @@ from importlib import reload
 USAGE = "Usage: {} [options] <config file>\nUse -h for help.\n".format(__file__)
 
 # Check that we are left with a single configuration file as argument.
-if len(args) != 1:
+if len(args) != 2:
     print(USAGE)
     sys.exit(2)
 
@@ -37,8 +37,9 @@ init_openram(config_file=args[0], is_unit_test=False)
 print_banner()
 
 # Configure the SRAM organization (duplicated from openram.py)
-from sram_config import sram_config
-c = sram_config(word_size=OPTS.word_size,
+from characterizer.fake_sram import fake_sram
+s = fake_sram(name=OPTS.output_name,
+                word_size=OPTS.word_size,
                 num_words=OPTS.num_words,
                 write_size=OPTS.write_size,
                 num_banks=OPTS.num_banks,
@@ -46,18 +47,17 @@ c = sram_config(word_size=OPTS.word_size,
                 num_spare_rows=OPTS.num_spare_rows,
                 num_spare_cols=OPTS.num_spare_cols)
 
+s.parse_html(args[1])
+s.setup_multiport_constants()
+
 OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
-
-# Initialize and create a fake sram object
-import fake_sran as sram
-s = sram(name=OPTS.output_name, sram_config=c)
 
 # Characterize the design
 start_time = datetime.datetime.now()
 from characterizer import lib
 debug.print_raw("LIB: Characterizing... ")
-lib(out_dir=OPTS.output_path, sram=s.s, sp_file=s.get_sp_name())
+lib(out_dir=OPTS.output_path, sram=s, sp_file=OPTS.output_path + OPTS.output_name + ".sp")
 print_time("Characterization", datetime.datetime.now(), start_time)
 
 # Output info about this run

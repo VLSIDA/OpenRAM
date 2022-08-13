@@ -1,21 +1,53 @@
-import sram_config
-import OPTS
+from modules import sram_config
+from math import ceil
+import re
 
 
-class fake_sram(sram_config.sram_config):
-    """ This is an SRAM that doesn't actually create itself, just computes
-    the sizes. """
-    def __init__(self, word_size, num_words, num_banks, name, num_spare_rows):
+class fake_sram(sram_config):
+    """
+    This is an SRAM class that doesn't actually create an instance.
+    It will read neccessary members from HTML file from a previous run.
+    """
+    def __init__(self, name, word_size, num_words, write_size=None, num_banks=1,
+                 words_per_row=None, num_spare_rows=0, num_spare_cols=0):
         self.name = name
         self.word_size = word_size
         self.num_words = num_words
+        # Don't add a write mask if it is the same size as the data word
+        if write_size and write_size==word_size:
+            self.write_size = None
+        else:
+            self.write_size = write_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
-        # TODO: Get width and height from gds bbox
-        self.width = 0
-        self.height = 0
+        self.num_spare_cols = num_spare_cols
+
+        try:
+            from tech import array_row_multiple
+            self.array_row_multiple = array_row_multiple
+        except ImportError:
+            self.array_row_multiple = 1
+        try:
+            from tech import array_col_multiple
+            self.array_col_multiple = array_col_multiple
+        except ImportError:
+            self.array_col_multiple = 1
+
+        if self.write_size:
+            self.num_wmasks = int(ceil(self.word_size / self.write_size))
+        else:
+            self.num_wmasks = 0
+
+        if not self.num_spare_cols:
+            self.num_spare_cols = 0
+
+        if not self.num_spare_rows:
+            self.num_spare_rows = 0
+
+        # This will get over-written when we determine the organization
+        self.words_per_row = words_per_row
+
         self.compute_sizes()
-        self.setup_multiport_constants()
 
     def setup_multiport_constants(self):
         """
@@ -27,7 +59,7 @@ class fake_sram(sram_config.sram_config):
         A first W port (with no RW ports) will be: clk0, csb0, addr0, data0
 
         """
-        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+        total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
 
         # These are the read/write port indices.
         self.readwrite_ports = []
@@ -44,91 +76,44 @@ class fake_sram(sram_config.sram_config):
 
         # The order is always fixed as RW, W, R
         port_number = 0
-        for port in range(OPTS.num_rw_ports):
+        for port in range(self.num_rw_ports):
             self.readwrite_ports.append(port_number)
             self.write_ports.append(port_number)
             self.read_ports.append(port_number)
             port_number += 1
-        for port in range(OPTS.num_w_ports):
+        for port in range(self.num_w_ports):
             self.write_ports.append(port_number)
             self.writeonly_ports.append(port_number)
             port_number += 1
-        for port in range(OPTS.num_r_ports):
+        for port in range(self.num_r_ports):
             self.read_ports.append(port_number)
             self.readonly_ports.append(port_number)
             port_number += 1
 
-    def parse_characterizer_csv(f, pages):
+    def parse_html(self, filename):
         """
-        Parses output data of the Liberty file generator in order to construct the timing and
-        current table
+        Parse the HTML file generated from previous SRAM generation
+        and populate the members
         """
-        #TODO: Func taken from datasheet_gen.py. Read datasheet.info and extract sram members
-        with open(f) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            for row in csv_reader:
-    
-                found = 0
-                col = 0
-    
-                # defines layout of csv file
-                NAME = row[col]
-                col += 1
-    
-                NUM_WORDS = row[col]
-                col += 1
-    
-                NUM_BANKS = row[col]
-                col += 1
-    
-                NUM_RW_PORTS = row[col]
-                col += 1
-    
-                NUM_W_PORTS = row[col]
-                col += 1
-    
-                NUM_R_PORTS = row[col]
-                col += 1
-    
-                TECH_NAME = row[col]
-                col += 1
-    
-                TEMP = row[col]
-                col += 1
-    
-                VOLT = row[col]
-                col += 1
-    
-                PROC = row[col]
-                col += 1
-    
-                MIN_PERIOD = row[col]
-                col += 1
-    
-                OUT_DIR = row[col]
-                col += 1
-    
-                LIB_NAME = row[col]
-                col += 1
-    
-                WORD_SIZE = row[col]
-                col += 1
-    
-                ORIGIN_ID = row[col]
-                col += 1
-    
-                DATETIME = row[col]
-                col += 1
-    
-                ANALYTICAL_MODEL = row[col]
-                col += 1
-    
-                DRC = row[col]
-                col += 1
-    
-                LVS = row[col]
-                col += 1
-    
-                AREA = row[col]
-                col += 1
-
+        with open(filename, 'r') as html:
+            for line in html:
+                if 'Ports and Configuration' in line:
+                    tableRE = re.compile(r'<tr><td>(\w*)</td><td>(\w*)</td></tr>')
+                    values = tableRE.finditer(line)
+                    for val in values:
+                        if val.group(1) == 'WORD_SIZE':
+                            self.word_size = int(val.group(2))
+                        elif val.group(1) == 'NUM_WORDS':
+                            self.num_words = int(val.group(2))
+                        elif val.group(1) == 'NUM_BANKS':
+                            self.num_banks = int(val.group(2))
+                        elif val.group(1) == 'NUM_RW_PORTS':
+                            self.num_rw_ports = int(val.group(2))
+                        elif val.group(1) == 'NUM_R_PORTS':
+                            self.num_r_ports = int(val.group(2))
+                        elif val.group(1) == 'NUM_W_PORTS':
+                            self.num_w_ports = int(val.group(2))
+                        elif val.group(1) == 'Area (&microm<sup>2</sup>)':
+                            self.height = int(val.group(2) ** 0.5)
+                            self.width = int(val.group(2) ** 0.5)
+                    break

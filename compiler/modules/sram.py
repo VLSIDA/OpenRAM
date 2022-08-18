@@ -58,10 +58,10 @@ class sram():
 
     def verilog_write(self, name):
         if self.num_banks != 1:
-            self.s.verilog_write(name[:-2] + '_1bank.v')
+            self.s.verilog_write(name)
             from .sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
-            mb.verilog_write(name)
+            mb.verilog_write(name[:-2] + '_top.v')
         else:
             self.s.verilog_write(name)
 

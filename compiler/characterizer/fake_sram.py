@@ -48,6 +48,7 @@ class fake_sram(sram_config):
         self.words_per_row = words_per_row
 
         self.compute_sizes()
+        self.pins = ['vdd', 'gnd', 'clk0'] # TODO: remove clk
 
     def setup_multiport_constants(self):
         """
@@ -90,6 +91,13 @@ class fake_sram(sram_config):
             self.readonly_ports.append(port_number)
             port_number += 1
 
+    def str_to_pins(self, s):
+        pinsRE = re.compile(r'^(\w+)\[(\d+):(\d+)\]')
+        match = pinsRE.match(s)
+        port, start, end = match.group(1, 2, 3)
+        pins = [port + '[' + str(p) + ']' for p in range(int(start) - int(end) + 1)]
+        return pins
+
     def parse_html(self, filename):
         """
         Parse the HTML file generated from previous SRAM generation
@@ -98,8 +106,8 @@ class fake_sram(sram_config):
         with open(filename, 'r') as html:
             for line in html:
                 if 'Ports and Configuration' in line:
-                    tableRE = re.compile(r'<tr><td>(\w*)</td><td>(\w*)</td></tr>')
-                    values = tableRE.finditer(line)
+                    configRE = re.compile(r'<tr><td>(\w*)</td><td>(\w*)</td></tr>')
+                    values = configRE.finditer(line)
                     for val in values:
                         if val.group(1) == 'WORD_SIZE':
                             self.word_size = int(val.group(2))
@@ -116,4 +124,15 @@ class fake_sram(sram_config):
                         elif val.group(1) == 'Area (&microm<sup>2</sup>)':
                             self.height = int(val.group(2) ** 0.5)
                             self.width = int(val.group(2) ** 0.5)
-                    break
+                if 'Timing Data' in line:
+                    timingRE = re.compile(r'<tr><td>([\w\[\]:]*) \w* \w*</td><td>[\w\.]*</td><td>[\w\.]*</td><td>\w*</td></tr>')
+                    values = timingRE.finditer(line)
+                    for val in values:
+                        if '[' in val.group(1):
+                            pins = self.str_to_pins(val.group(1))
+                            for pin in pins:
+                                if pin not in self.pins:
+                                    self.pins.append(pin)
+                        else:
+                            if val.group(1) not in self.pins:
+                                self.pins.append(val.group(1))

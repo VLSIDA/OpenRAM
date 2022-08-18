@@ -39,7 +39,7 @@ class verilog:
             self.gnd_name = "gnd"
 
         if self.num_banks > 1:
-            self.vf.write("module {0}(\n".format(self.name + '_1bank'))
+            self.vf.write("module {0}(\n".format(self.name))
         else:
             self.vf.write("module {0}(\n".format(self.name))
         self.vf.write("`ifdef USE_POWER_PINS\n")

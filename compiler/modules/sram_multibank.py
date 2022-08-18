@@ -12,8 +12,8 @@ class sram_multibank:
         r_ports = [i for i in sram.all_ports if i in sram.read_ports and i not in sram.write_ports]
         w_ports = [i for i in sram.all_ports if i not in sram.read_ports and i in sram.write_ports]
         self.dict = {
-            'module_name': OPTS.output_name,
-            'bank_module_name': OPTS.output_name + '_1bank',
+            'module_name': sram.name + '_top',
+            'bank_module_name': sram.name,
             'vdd': 'vdd',
             'gnd': 'gnd',
             'ports': sram.all_ports,
@@ -34,7 +34,7 @@ class sram_multibank:
         t.write(name)
         with open(name, 'r') as f:
             text = f.read()
-            badComma = re.compile(',(\s*\n\s*\);)')
+            badComma = re.compile(r',(\s*\n\s*\);)')
             text = badComma.sub(r'\1', text)
         with open(name, 'w') as f:
             f.write(text)

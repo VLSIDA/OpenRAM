@@ -57,13 +57,11 @@ class sram():
         self.s.gds_write(name)
 
     def verilog_write(self, name):
+        self.s.verilog_write(name)
         if self.num_banks != 1:
-            self.s.verilog_write(name)
             from .sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
             mb.verilog_write(name[:-2] + '_top.v')
-        else:
-            self.s.verilog_write(name)
 
     def extended_config_write(self, name):
         """Dump config file with all options.

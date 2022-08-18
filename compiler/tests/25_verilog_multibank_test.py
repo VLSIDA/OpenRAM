@@ -35,13 +35,13 @@ class multibank_verilog_test(openram_test):
         # it will just replaece the top-level module of the same name
         s = sram(c, "sram_2_16_2_{0}".format(OPTS.tech_name))
 
-        vfile = s.name + ".v"
+        vfile = s.name + "_top.v"
         vname = OPTS.openram_temp + vfile
 
-        v1bfile = s.name + "_1bank.v"
+        v1bfile = s.name + ".v"
         v1bname = OPTS.openram_temp + v1bfile
 
-        s.verilog_write(vname)
+        s.verilog_write(v1bname)
 
         # let's diff the result with a golden model
         multi_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), vfile)

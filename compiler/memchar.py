@@ -57,7 +57,7 @@ OPTS.check_lvsdrc = False
 start_time = datetime.datetime.now()
 from characterizer import lib
 debug.print_raw("LIB: Characterizing... ")
-lib(out_dir=OPTS.output_path, sram=s, sp_file=OPTS.output_path + OPTS.output_name + ".sp")
+lib(out_dir=OPTS.output_path, sram=s, sp_file=OPTS.output_path + OPTS.output_name + ".sp", use_model=False)
 print_time("Characterization", datetime.datetime.now(), start_time)
 
 # Output info about this run

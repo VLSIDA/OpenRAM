@@ -426,13 +426,6 @@ class sram_1bank(design, verilog, lef):
                                                                                 names=self.addr_bus_names,
                                                                                 length=self.addr_bus_height))
 
-            self.bank_sel_bus_names = ["bank_sel{0}_{1}".format(port, i) for i in range(1)]#range(self.num_banks)]
-            self.vert_control_bus_positions.update(self.create_vertical_pin_bus(layer="m2",
-                                                                                pitch=self.m2_pitch,
-                                                                                offset=self.bank_sel_bus_offset,
-                                                                                names=self.bank_sel_bus_names,
-                                                                                length=self.vertical_bus_height))
-
             # Horizontal data bus
             self.data_bus_names = ["DATA{0}[{1}]".format(port, i) for i in range(self.word_size)]
             self.data_bus_positions = self.create_horizontal_pin_bus(layer="m3",
@@ -461,16 +454,6 @@ class sram_1bank(design, verilog, lef):
                                                                               offset=self.control_bus_offset,
                                                                               names=self.control_bus_names[port],
                                                                               length=self.control_bus_width))
-
-    def add_multi_bank_modules(self):
-        """ Create the multibank address flops and bank decoder """
-        from dff_buf_array import dff_buf_array
-        self.msb_address = dff_buf_array(name="msb_address",
-                                         rows=1,
-                                         columns=self.num_banks / 2)
-
-        if self.num_banks>2:
-            self.msb_decoder = self.bank.decoder.pre2_4
 
     def add_modules(self):
         self.bitcell = factory.create(module_type=OPTS.bitcell)
@@ -542,9 +525,6 @@ class sram_1bank(design, verilog, lef):
         for port in self.all_ports:
             for bit in range(self.bank_addr_size):
                 temp.append("a{0}_{1}".format(port, bit))
-#        if(self.num_banks > 1):
-#            for port in self.all_ports:
-#                temp.append("bank_sel{0}_{1}".format(port, bank_num))
         for port in self.read_ports:
             temp.append("s_en{0}".format(port))
         for port in self.all_ports:

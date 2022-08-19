@@ -123,6 +123,8 @@ class options(optparse.Values):
     ###################
     # Tool options
     ###################
+    # Top process that was ran (openram, memchar, memfunc)
+    top_process = None
     # Variable to select the variant of spice
     spice_name = None
     # The spice executable being used which is derived from the user PATH.

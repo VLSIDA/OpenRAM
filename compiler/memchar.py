@@ -50,6 +50,7 @@ s = fake_sram(name=OPTS.output_name,
                 num_spare_cols=OPTS.num_spare_cols)
 
 s.parse_html(args[1])
+s.generate_pins()
 s.setup_multiport_constants()
 
 OPTS.netlist_only = True

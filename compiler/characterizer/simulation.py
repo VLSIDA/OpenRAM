@@ -493,11 +493,12 @@ class simulation():
 
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
-        self.sram.bank.graph_exclude_precharge()
-        self.sram.graph_exclude_addr_dff()
-        self.sram.graph_exclude_data_dff()
-        self.sram.graph_exclude_ctrl_dffs()
-        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
+        if OPTS.top_process != 'memchar':
+            self.sram.bank.graph_exclude_precharge()
+            self.sram.graph_exclude_addr_dff()
+            self.sram.graph_exclude_data_dff()
+            self.sram.graph_exclude_ctrl_dffs()
+            self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
 
     def set_internal_spice_names(self):
         """

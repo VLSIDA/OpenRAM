@@ -28,6 +28,8 @@ if len(args) != 3:
     print(USAGE)
     sys.exit(2)
 
+OPTS.top_process = 'memfunc'
+
 # Parse argument
 config_file = args[0]
 cycles = int(args[1])

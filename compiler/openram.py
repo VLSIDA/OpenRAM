@@ -27,6 +27,8 @@ if len(args) != 1:
     print(g.USAGE)
     sys.exit(2)
 
+# Set top process to openram
+OPTS.top_process = 'openram'
 
 # These depend on arguments, so don't load them until now.
 import debug

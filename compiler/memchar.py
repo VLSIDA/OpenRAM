@@ -28,6 +28,8 @@ if len(args) != 2:
     print(USAGE)
     sys.exit(2)
 
+OPTS.top_process = 'memchar'
+
 # These depend on arguments, so don't load them until now.
 import debug
 

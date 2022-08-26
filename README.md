@@ -57,8 +57,8 @@ You must set two environment variables:
 For example add this to your .bashrc:
 
 ```
-  export OPENRAM_HOME="$HOME/openram/compiler"
-  export OPENRAM_TECH="$HOME/openram/technology"
+  export OPENRAM_HOME="$HOME/OpenRAM/compiler"
+  export OPENRAM_TECH="$HOME/OpenRAM/technology"
 ```
 
 You should also add OPENRAM\_HOME to your PYTHONPATH:
@@ -83,14 +83,18 @@ entire [FreePDK45 PDK here][FreePDK45].
 To install [Sky130], you must have the open_pdks files installed in $PDK_ROOT. 
 To install this automatically, you can run:
 
-  cd $HOME/openram
-  make pdk
+```
+cd $HOME/OpenRAM
+make pdk
+```
 
 Then you must also install the [Sky130] SRAM build space and the appropriate cell views
 by running:
 
-  cd $HOME/openram
-  make install
+```
+cd $HOME/OpenRAM
+make install
+```
 
 # Basic Usage
 
@@ -137,7 +141,7 @@ $OPENRAM\_HOME/options.py
 
 To run designs in Docker, it is suggested to use, for example:
 ```
-cd openram/macros
+cd OpenRAM/macros
 make example_config_scn4m_subm
 ```
 
@@ -148,19 +152,19 @@ From the unit test directory ($OPENRAM\_HOME/tests),
 use the following command to run all regression tests:
 
 ```
-cd openram/compiler/tests
+cd OpenRAM/compiler/tests
 make -j 3
 ```
 The -j can run with 3 threads. By default, this will run in all technologies.
 
 To run a specific test in all technologies:
 ```
-cd openram/compiler/tests
+cd OpenRAM/compiler/tests
 make 05_bitcell_array_test
 ```
 To run a specific technology:
 ```
-cd openram/compiler/tests
+cd OpenRAM/compiler/tests
 TECHS=scn4m_subm make 05_bitcell_array_test
 ```
 
@@ -172,7 +176,7 @@ ARGS="-v" make 05_bitcell_array_test
 
 Unit test results are put in a directory:
 ```
-openram/compiler/tests/results/<technology>/<test>
+OpenRAM/compiler/tests/results/<technology>/<test>
 ```
 If the test fails, there will be a tmp directory with intermediate results.
 If the test passes, this directory will be deleted to save space.

@@ -41,7 +41,7 @@ In general, the OpenRAM compiler has very few dependencies:
 
 We have a [docker setup](./docker) to run OpenRAM. To use this, you should run:
 ```
-cd openram/docker
+cd OpenRAM/docker
 make build
 ```
 This must be run once and will take a while to build all the tools.

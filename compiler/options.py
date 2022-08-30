@@ -119,6 +119,8 @@ class options(optparse.Values):
     # Determines which analytical model to use.
     # Available Models: elmore, linear_regression
     model_name = "elmore"
+    # Write graph to a file
+    write_graph = False
 
     ###################
     # Tool options

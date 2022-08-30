@@ -9,6 +9,7 @@ import datetime
 import os
 import debug
 from characterizer import functional
+from base import timing_graph
 from globals import OPTS, print_time
 import shutil
 
@@ -187,3 +188,13 @@ class sram():
             debug.print_raw("Extended Config: Writing to {0}".format(oname))
             self.extended_config_write(oname)
             print_time("Extended Config", datetime.datetime.now(), start_time)
+
+        # Write the graph if specified
+        if OPTS.write_graph:
+            start_time = datetime.datetime.now()
+            oname = OPTS.output_path + OPTS.output_name + "_graph.json"
+            debug.print_raw("Graph: Writing to {0}".format(oname))
+            graph = timing_graph()
+            self.s.build_graph(graph, self.name, self.s.pins)
+            graph.write(oname)
+            print_time("Graph", datetime.datetime.now(), start_time)

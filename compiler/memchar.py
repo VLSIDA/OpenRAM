@@ -56,6 +56,9 @@ s.setup_multiport_constants()
 OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
 
+# TODO: remove this after adding trimmed netlist gen to sram run
+OPTS.trim_netlist = False
+
 # Characterize the design
 start_time = datetime.datetime.now()
 from characterizer import lib

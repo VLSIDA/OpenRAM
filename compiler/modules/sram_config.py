@@ -18,10 +18,11 @@ class sram_config:
         self.word_size = word_size
         self.num_words = num_words
         # Don't add a write mask if it is the same size as the data word
-        if write_size and write_size==word_size:
-            self.write_size = None
-        else:
+        self.write_size_init = write_size
+        if write_size:
             self.write_size = write_size
+        else:
+            self.write_size = word_size
         self.num_banks = num_banks
         self.num_spare_rows = num_spare_rows
         self.num_spare_cols = num_spare_cols
@@ -72,8 +73,8 @@ class sram_config:
 
         bitcell = factory.create(module_type=OPTS.bitcell)
 
-        debug.check(self.num_banks in [1, 2, 4],
-                    "Valid number of banks are 1 , 2 and 4.")
+        debug.check(ceil(log(self.num_banks, 2)) == log(self.num_banks, 2) ,
+                    "Number of banks should be power of 2.")
 
         self.num_words_per_bank = self.num_words / self.num_banks
         self.num_bits_per_bank = self.word_size * self.num_words_per_bank
@@ -117,11 +118,18 @@ class sram_config:
         self.num_rows = self.num_rows_temp + self.num_spare_rows
         debug.info(1, "Rows: {} Cols: {}".format(self.num_rows_temp, self.num_cols))
 
+        # Fix the write_size
+        if self.write_size_init:
+            self.write_size = self.write_size_init
+        else:
+            self.write_size = self.word_size
+
         # Compute the address and bank sizes
         self.row_addr_size = ceil(log(self.num_rows, 2))
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
+        #self.addr_size = self.bank_addr_size
         debug.info(1, "Row addr size: {}".format(self.row_addr_size)
                    + " Col addr size: {}".format(self.col_addr_size)
                    + " Bank addr size: {}".format(self.bank_addr_size))

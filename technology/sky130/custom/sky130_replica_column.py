@@ -90,8 +90,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        self.add_pin("top_gate", "INPUT")
-        self.add_pin("bot_gate", "INPUT")
+        #self.add_pin("top_gate", "INPUT")
+        #self.add_pin("bot_gate", "INPUT")
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell_1port", version="opt1")
@@ -220,6 +220,16 @@ class sky130_replica_column(sky130_bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
+        # for colend in [self.cell_inst[0], self.cell_inst[self.row_size]]:
+        #     inst = self.cell_inst[row]
+        #     for pin_name in ["top_gate", "bot_gate"]:
+        #         pin = inst.get_pin("gate")
+        #         self.add_layout_pin(text=pin_name,
+        #                             layer=pin.layer,
+        #                             offset=pin.ll(),
+        #                             width=pin.width(),
+        #                             height=pin.height())
+
         for row in range(self.row_size + 2):
             inst = self.cell_inst[row]
             # add only 1 label per col
@@ -235,7 +245,6 @@ class sky130_replica_column(sky130_bitcell_base_array):
                     self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
                 if 'VNB' or 'vnb' in self.cell_inst[row].mod.pins:
-                    print("welling")
                     try:
                         from tech import layer_override
                         if layer_override['VNB']:

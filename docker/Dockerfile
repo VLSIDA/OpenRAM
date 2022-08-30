@@ -11,6 +11,7 @@ RUN apt-get --no-install-recommends -y upgrade
 # General tools for building etc.
 RUN apt-get install --no-install-recommends -y build-essential git ssh vim gosu autoconf automake libtool bison flex
 # Use bash instead of dash
+# Must be on one line or else ln won't work without a shell!
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 # Needed by OpenRAM
 RUN apt-get install --no-install-recommends -y  python3 python3-numpy python3-scipy python3-pip python3-matplotlib python3-venv python3-sklearn python3-subunit python3-coverage
@@ -30,8 +31,8 @@ WORKDIR /root
 RUN git clone https://github.com/KLayout/klayout
 WORKDIR /root/klayout
 RUN git checkout ${KLAYOUT_COMMIT}
-RUN ./build.sh -qt5 -debug -j 8 \
- && cp -r bin-debug /usr/local/klayout
+RUN ./build.sh -qt5 -debug -j$(nproc)
+RUN cp -r bin-debug /usr/local/klayout
 RUN rm -rf /root/klayout
 
 ### Trilinos ###
@@ -99,15 +100,15 @@ RUN ../configure CXXFLAGS="-O3 -std=c++11" \
 RUN make -j 4 install
 
 ### Ngspice ###
-ARG NGSPICE_COMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
+ARG NGSPICE_COMMIT=032b1c32c4dbad45ff132bcfac1dbecadbd8abb0
 WORKDIR /root
 RUN git clone git://git.code.sf.net/p/ngspice/ngspice
 WORKDIR /root/ngspice
 RUN git checkout ${NGSPICE_COMMIT}
-RUN ./autogen.sh \
- && ./configure --enable-openmp --with-readline \
- && make \
- && make install
+RUN ./autogen.sh
+RUN ./configure --enable-openmp --with-readline
+RUN make
+RUN make install
 RUN rm -rf /root/ngspice
 
 ### Netgen ###
@@ -118,9 +119,9 @@ WORKDIR /root
 RUN git clone git://opencircuitdesign.com/netgen netgen
 WORKDIR /root/netgen
 RUN git checkout ${NETGEN_COMMIT}
-RUN ./configure \
- && make -j$(nproc) \
- && make install
+RUN ./configure
+RUN make -j$(nproc)
+RUN make install
 RUN rm -rf /root/netgen
 
 ### iVerilog ###
@@ -137,9 +138,9 @@ WORKDIR /root/magic
 RUN git checkout ${MAGIC_COMMIT}
 COPY mrg.patch /root/magic
 RUN git apply mrg.patch
-RUN ./configure \
- && make \
- && make install
+RUN ./configure
+RUN make
+RUN make install
 RUN rm -rf /root/magic
 
 

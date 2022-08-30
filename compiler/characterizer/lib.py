@@ -183,7 +183,8 @@ class lib:
             # set the read and write port as inputs.
             self.write_data_bus(port)
             self.write_addr_bus(port)
-            if self.sram.write_size and port in self.write_ports:
+            if self.sram.write_size != self.sram.word_size and \
+                    port in self.write_ports:
                 self.write_wmask_bus(port)
             # need to split this into sram and port control signals
             self.write_control_pins(port)
@@ -193,8 +194,8 @@ class lib:
 
     def write_footer(self):
         """ Write the footer """
-        self.lib.write("    }\n") #Closing brace for the cell
-        self.lib.write("}\n") #Closing brace for the library
+        self.lib.write("    }\n") # Closing brace for the cell
+        self.lib.write("}\n") # Closing brace for the library
 
     def write_header(self):
         """ Write the header information """
@@ -378,7 +379,7 @@ class lib:
         self.lib.write("    bit_to : 0;\n")
         self.lib.write("    }\n\n")
 
-        if self.sram.write_size:
+        if self.sram.write_size != self.sram.word_size:
             self.lib.write("    type (wmask){\n")
             self.lib.write("    base_type : array;\n")
             self.lib.write("    data_type : bit;\n")

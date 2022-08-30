@@ -125,6 +125,11 @@ def check_file_format_whitespace(file_name):
 def check_print_output(file_name):
     """Check if any files (except debug.py) call the _print_ function. We should
     use the debug output with verbosity instead!"""
+
+    skip_files = ["printGDS.py", "uniquifyGDS.py", "processGDS.py", "model_data_util.py"]
+    base_file_name = os.path.basename(file_name)
+    if base_file_name in skip_files:
+        return(0)
     file = open(file_name, "r+b")
     line = file.read().decode('utf-8')
     # skip comments with a hash

@@ -13,3 +13,6 @@ technology/freepdk45/ncsu_basekit
 technology/sky130/*_lib
 technology/sky130/tech/.magicrc
 .idea
+compiler/tests/results/
+sky*/
+open_pdks/

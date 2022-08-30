@@ -97,6 +97,10 @@ log.create_file = True
 
 def info(lev, str):
     from globals import OPTS
+    # 99 is a special never print level
+    if lev == 99:
+        return
+
     if (OPTS.verbose_level >= lev):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])

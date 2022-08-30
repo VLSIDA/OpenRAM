@@ -805,7 +805,7 @@ class router(router_tech):
         try:
             x = track[0]*self.track_width - 0.5*self.track_width
         except TypeError:
-            print(track[0], type(track[0]), self.track_width, type(self.track_width))
+            debug.warning("{} {} {} {}".format(track[0], type(track[0]), self.track_width, type(self.track_width)))
         y = track[1]*self.track_width - 0.5*self.track_width
         # offset lowest corner object to to (-track halo,-track halo)
         ll = snap_to_grid(vector(x, y))

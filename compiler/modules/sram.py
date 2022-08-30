@@ -36,14 +36,10 @@ class sram():
 
         self.name = name
 
-        if self.num_banks == 1:
-            from .sram_1bank import sram_1bank as sram
-        elif self.num_banks == 2:
-            from .sram_2bank import sram_2bank as sram
-        else:
-            debug.error("Invalid number of banks.", -1)
+        from .sram_1bank import sram_1bank as sram
 
         self.s = sram(name, sram_config)
+
         self.s.create_netlist()
         if not OPTS.netlist_only:
             self.s.create_layout()
@@ -62,6 +58,10 @@ class sram():
 
     def verilog_write(self, name):
         self.s.verilog_write(name)
+        if self.num_banks != 1:
+            from .sram_multibank import sram_multibank
+            mb = sram_multibank(self.s)
+            mb.verilog_write(name[:-2] + '_top.v')
 
     def extended_config_write(self, name):
         """Dump config file with all options.
@@ -166,7 +166,7 @@ class sram():
 
         # Write a verilog model
         start_time = datetime.datetime.now()
-        vname = OPTS.output_path + self.s.name + ".v"
+        vname = OPTS.output_path + self.s.name + '.v'
         debug.print_raw("Verilog: Writing to {0}".format(vname))
         self.verilog_write(vname)
         print_time("Verilog", datetime.datetime.now(), start_time)

@@ -29,7 +29,7 @@ def check(check, str):
 
         if globals.OPTS.debug:
             pdb.set_trace()
-            
+
         assert 0
 
 
@@ -108,7 +108,7 @@ def info(lev, str):
         print_raw("[{0}/{1}]: {2}".format(class_name,
                                           frm[0].f_code.co_name, str))
 
-        
+
 def archive():
     from globals import OPTS
     try:
@@ -121,7 +121,7 @@ def archive():
     info(0, "Archiving failed files to {}.zip".format(zip_file))
     shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
 
-    
+
 def bp():
     """
     An empty function so you can set soft breakpoints in pdb.
@@ -130,8 +130,7 @@ def bp():
     2) Run "python3 -m pdb openram.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
     3) When pdb starts, run "break debug.bp" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
     4) Then run "cont" to continue.
-    5) You can now set additional breakpoints or display commands 
+    5) You can now set additional breakpoints or display commands
     and whenever you encounter the debug.bp() they won't be "reset".
     """
     pass
-        

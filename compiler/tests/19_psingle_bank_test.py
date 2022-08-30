@@ -31,7 +31,7 @@ class psingle_bank_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
         globals.setup_bitcell()
-        
+
         c = sram_config(word_size=4,
                         num_words=16)
 

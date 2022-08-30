@@ -109,7 +109,7 @@ class grid:
         for k in self.map:
             self.map[k].target=False
         self.target = set()
-        
+
     def set_target(self, n):
         if not isinstance(n, vector3d):
             for item in n:
@@ -119,7 +119,7 @@ class grid:
             self.map[n].target=True
             self.map[n].blocked=False
             self.target.add(n)
-            
+
     def add_source(self, track_list):
         debug.info(3, "Adding source list={0}".format(str(track_list)))
         for n in track_list:
@@ -158,7 +158,7 @@ class grid:
                 for y in range(self.ll.y - ring_offset - margin - ring_width + 1, self.ur.y + ring_offset + margin + ring_width, 1):
                     for layer in layers:
                         perimeter_list.append(vector3d(x, y, layer))
-                
+
         if side=="all" or "right" in side:
             for x in range(self.ur.x + offset, self.ur.x + width + offset, 1):
                 for y in range(self.ll.y - ring_offset - margin - ring_width + 1, self.ur.y + ring_offset + margin + ring_width, 1):
@@ -181,14 +181,14 @@ class grid:
         self.add_map(perimeter_list)
 
         return perimeter_list
-    
+
     def add_perimeter_target(self, side="all", layers=[0, 1]):
         debug.info(3, "Adding perimeter target")
-        
+
         perimeter_list = self.get_perimeter_list(side, layers)
-        
+
         self.set_target(perimeter_list)
-                
+
     def is_target(self, point):
         """
         Point is in the target set, so we are done.
@@ -213,8 +213,3 @@ class grid:
         """
         path.set_path(False)
         path.set_blocked(True)
-
-
-
-
-

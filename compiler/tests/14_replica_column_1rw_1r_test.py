@@ -32,7 +32,7 @@ class replica_column_test(openram_test):
         debug.info(2, "Testing one right replica column for dual port")
         a = factory.create(module_type="replica_column", rows=4, rbl=[0, 1], replica_bit=5)
         self.local_check(a)
-        
+
         debug.info(2, "Testing two (left, right) replica columns for dual port")
         a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=1)
         self.local_check(a)
@@ -40,7 +40,7 @@ class replica_column_test(openram_test):
         debug.info(2, "Testing two (left, right) replica columns for dual port")
         a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=6)
         self.local_check(a)
-        
+
         globals.end_openram()
 
 # run the test from the command line

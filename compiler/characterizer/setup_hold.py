@@ -22,7 +22,7 @@ class setup_hold():
     def __init__(self, corner):
         # This must match the spice model order
         self.dff = factory.create(module_type=OPTS.dff)
-        
+
         self.period = tech.spice["feasible_period"]
 
         debug.info(2, "Feasible period from technology file: {0} ".format(self.period))
@@ -106,8 +106,8 @@ class setup_hold():
                           setup=0)
 
     def write_clock(self):
-        """ 
-        Create the clock signal for setup/hold analysis. 
+        """
+        Create the clock signal for setup/hold analysis.
         First period initializes the FF
         while the second is used for characterization.
         """
@@ -206,7 +206,7 @@ class setup_hold():
 
             self.stim.run_sim(self.stim_sp)
             clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
-            # We use a 1/2 speed clock for some reason...            
+            # We use a 1/2 speed clock for some reason...
             setuphold_time = (target_time - 2 * self.period)
             if mode == "SETUP": # SETUP is clk-din, not din-clk
                 passing_setuphold_time = -1 * setuphold_time

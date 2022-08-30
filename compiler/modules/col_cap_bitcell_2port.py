@@ -12,7 +12,7 @@ from .bitcell_base import bitcell_base
 
 class col_cap_bitcell_2port(bitcell_base):
     """
-    Column end cap cell. 
+    Column end cap cell.
     """
 
     def __init__(self, name="col_cap_bitcell_2port"):

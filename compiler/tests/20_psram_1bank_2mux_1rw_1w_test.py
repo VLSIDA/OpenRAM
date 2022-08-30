@@ -15,7 +15,7 @@ from globals import OPTS
 from sram_factory import factory
 import debug
 
-    
+
 class psram_1bank_2mux_1rw_1w_test(openram_test):
 
     def runTest(self):

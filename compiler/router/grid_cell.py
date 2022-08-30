@@ -20,7 +20,7 @@ class grid_cell:
 
     def reset(self):
         """
-        Reset the dynamic info about routing. 
+        Reset the dynamic info about routing.
         """
         self.min_cost=-1
         self.min_path=None
@@ -49,4 +49,3 @@ class grid_cell:
             type_string += "P"
 
         return type_string
-

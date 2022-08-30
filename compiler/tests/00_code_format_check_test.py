@@ -28,6 +28,7 @@ class code_format_test(openram_test):
                 continue
             errors += check_file_format_tab(code)
             errors += check_file_format_carriage(code)
+            errors += check_file_format_whitespace(code)
 
         for code in source_codes:
             if re.search("gdsMill", code):
@@ -51,7 +52,7 @@ def setup_files(path):
     files = []
     for (dir, _, current_files) in os.walk(path):
         for f in current_files:
-            files.append(os.getenv("OPENRAM_HOME"))
+            files.append(os.path.join(dir, f))
     nametest = re.compile("\.py$", re.IGNORECASE)
     select_files = list(filter(nametest.search, files))
     return select_files
@@ -92,9 +93,31 @@ def check_file_format_carriage(file_name):
         if len(key_positions)>10:
             line_numbers = key_positions[:10] + [" ..."]
         else:
-            line_numbers = key_positoins
+            line_numbers = key_positions
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' carriage returns in ' +
                    str(file_name) + ' (lines ' + ",".join(str(x) for x in line_numbers) + ')')
+    f.close()
+    return len(key_positions)
+
+
+def check_file_format_whitespace(file_name):
+    """
+    Check if file contains a line with whitespace at the end
+    and return the number of these lines.
+    """
+
+    f = open(file_name, "r")
+    key_positions = []
+    for num, line in enumerate(f.readlines()):
+        if re.match(r".*[ \t]$", line):
+            key_positions.append(num)
+    if len(key_positions) > 0:
+        if len(key_positions) > 10:
+            line_numbers = key_positions[:10] + [" ..."]
+        else:
+            line_numbers = key_positions
+        debug.info(0, "\nFound " + str(len(key_positions)) + " ending whitespace in " +
+                   str(file_name) + " (lines " + ",".join(str(x) for x in line_numbers) + ")")
     f.close()
     return len(key_positions)
 

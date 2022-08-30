@@ -2,7 +2,7 @@
 // Words: 16
 // Word size: 2
 
-module sram_2_16_2_scn4m_subm(
+module sram_2_16_2_freepdk45(
 `ifdef USE_POWER_PINS
     vdd,
     gnd,

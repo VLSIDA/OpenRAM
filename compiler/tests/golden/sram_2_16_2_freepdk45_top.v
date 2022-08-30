@@ -1,5 +1,5 @@
 
-module sram_2_16_2_scn4m_subm_top  (
+module sram_2_16_2_freepdk45_top  (
 `ifdef USE_POWER_PINS
     vdd,
     gnd,
@@ -44,7 +44,7 @@ module sram_2_16_2_scn4m_subm_top  (
   reg csb0_bank1;
 
 
-  sram_2_16_2_scn4m_subm bank0 (
+  sram_2_16_2_freepdk45 bank0 (
 `ifdef USE_POWER_PINS
     .vdd(vdd),
     .gnd(gnd),
@@ -56,7 +56,7 @@ module sram_2_16_2_scn4m_subm_top  (
     .web0(web0_bank0),
     .dout0(dout0_bank0)
   );
-  sram_2_16_2_scn4m_subm bank1 (
+  sram_2_16_2_freepdk45 bank1 (
 `ifdef USE_POWER_PINS
     .vdd(vdd),
     .gnd(gnd),

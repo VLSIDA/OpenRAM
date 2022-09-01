@@ -146,7 +146,6 @@ class functional(simulation):
         comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
-
         # 1. Write all the write ports 2x to seed a bunch of locations.
         for i in range(3):
             for port in self.write_ports:
@@ -268,7 +267,7 @@ class functional(simulation):
         self.read_check.append([word,
                                 "{0}{1}".format(self.dout_name, port),
                                 self.t_current + self.period,
-                                int(self.t_current/self.period)])
+                                int(self.t_current / self.period)])
 
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
@@ -319,8 +318,8 @@ class functional(simulation):
                                    cycle,
                                    self.read_results[i][2],
                                    check_name)
-                return(0, error)
-        return(1, "SUCCESS")
+                return (0, error)
+        return (1, "SUCCESS")
 
     def gen_wmask(self):
         wmask = ""

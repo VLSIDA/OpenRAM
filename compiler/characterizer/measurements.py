@@ -11,16 +11,18 @@ from abc import ABC, abstractmethod
 from .stimuli import *
 from .charutils import *
 
+
 class spice_measurement(ABC):
     """Base class for spice stimulus measurements."""
     def __init__(self, measure_name, measure_scale=None, has_port=True):
-        #Names must be unique for correct spice simulation, but not enforced here.
+        # Names must be unique for correct spice simulation, but not enforced here.
         self.name = measure_name
         self.measure_scale = measure_scale
-        self.has_port = has_port #Needed for error checking
-        #Some meta values used externally. variables are added here for consistency accross the objects
+        self.has_port = has_port # Needed for error checking
+        # Some meta values used externally. variables are added here for consistency accross the objects
         self.meta_str = None
         self.meta_add_delay = False
+
     @abstractmethod
     def get_measure_function(self):
         return None
@@ -31,27 +33,27 @@ class spice_measurement(ABC):
 
     def write_measure(self, stim_obj, input_tuple):
         measure_func = self.get_measure_function()
-        if measure_func == None:
-            debug.error("Did not set measure function",1)
+        if measure_func is None:
+            debug.error("Did not set measure function", 1)
         measure_vals = self.get_measure_values(*input_tuple)
         measure_func(stim_obj, *measure_vals)
 
     def retrieve_measure(self, port=None):
         self.port_error_check(port)
-        if port != None:
+        if port is not None:
             value = parse_spice_list("timing", "{0}{1}".format(self.name.lower(), port))
         else:
             value = parse_spice_list("timing", "{0}".format(self.name.lower()))
-        if type(value)!=float or self.measure_scale == None:
+        if type(value)!=float or self.measure_scale is None:
             return value
         else:
-            return value*self.measure_scale
+            return value * self.measure_scale
 
     def port_error_check(self, port):
-        if self.has_port and port == None:
-            debug.error("Cannot retrieve measurement, port input was expected.",1)
-        elif not self.has_port and port != None:
-            debug.error("Unexpected port input received during measure retrieval.",1)
+        if self.has_port and port is None:
+            debug.error("Cannot retrieve measurement, port input was expected.", 1)
+        elif not self.has_port and port is not None:
+            debug.error("Unexpected port input received during measure retrieval.", 1)
 
 
 class delay_measure(spice_measurement):
@@ -90,7 +92,7 @@ class delay_measure(spice_measurement):
         trig_val = self.trig_val_of_vdd * vdd_voltage
         targ_val = self.targ_val_of_vdd * vdd_voltage
 
-        if port != None:
+        if port is not None:
             # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             trig_name = self.trig_name_no_port.format(port)
@@ -120,7 +122,7 @@ class slew_measure(delay_measure):
             self.trig_val_of_vdd = 0.9
             self.targ_val_of_vdd = 0.1
         else:
-            debug.error("Unrecognised slew measurement direction={}".format(slew_dir_str),1)
+            debug.error("Unrecognised slew measurement direction={}".format(slew_dir_str), 1)
         self.trig_name_no_port = signal_name
         self.targ_name_no_port = signal_name
 
@@ -145,7 +147,7 @@ class power_measure(spice_measurement):
     def get_measure_values(self, t_initial, t_final, port=None):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
         self.port_error_check(port)
-        if port != None:
+        if port is not None:
             meas_name = "{}{}".format(self.name, port)
         else:
             meas_name = self.name
@@ -172,7 +174,7 @@ class voltage_when_measure(spice_measurement):
     def get_measure_values(self, trig_td, vdd_voltage, port=None):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
         self.port_error_check(port)
-        if port != None:
+        if port is not None:
             # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             trig_name = self.trig_name_no_port.format(port)
@@ -203,7 +205,7 @@ class voltage_at_measure(spice_measurement):
     def get_measure_values(self, time_at, port=None):
         """Constructs inputs to stimulus measurement function. Variant values are inputs here."""
         self.port_error_check(port)
-        if port != None:
+        if port is not None:
             # For dictionary indexing reasons, the name is formatted differently than the signals
             meas_name = "{}{}".format(self.name, port)
             targ_name = self.targ_name_no_port.format(port)

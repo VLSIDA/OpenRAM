@@ -605,8 +605,8 @@ class delay(simulation):
             return net
         original_net = net
         net = net[len(prefix):]
-        net = net.replace(".", "_").replace("[", "\[").replace("]", "\]")
-        for pattern in ["\sN_{}_[MXmx]\S+_[gsd]".format(net), net]:
+        net = net.replace(".", "_").replace("[", r"\[").replace("]", r"\]")
+        for pattern in [r"\sN_{}_[MXmx]\S+_[gsd]".format(net), net]:
             try:
                 match = check_output(["grep", "-m1", "-o", "-iE", pattern, self.sp_file])
                 return prefix + match.decode().strip()
@@ -616,8 +616,8 @@ class delay(simulation):
 
     def load_all_measure_nets(self):
         measurement_nets = set()
-        for port, meas in zip(self.targ_read_ports * len(self.read_meas_lists) +
-                              self.targ_write_ports * len(self.write_meas_lists),
+        for port, meas in zip(self.targ_read_ports * len(self.read_meas_lists)
+                              + self.targ_write_ports * len(self.write_meas_lists),
                               self.read_meas_lists + self.write_meas_lists):
             for measurement in meas:
                 visited = getattr(measurement, 'pex_visited', False)
@@ -791,7 +791,7 @@ class delay(simulation):
 
         for port in self.targ_write_ports:
             if not self.check_bit_measures(self.write_bit_meas, port):
-                return(False, {})
+                return (False, {})
 
             debug.info(2, "Checking write values for port {0}".format(port))
             write_port_dict = {}
@@ -805,7 +805,7 @@ class delay(simulation):
         for port in self.targ_read_ports:
             # First, check that the memory has the right values at the right times
             if not self.check_bit_measures(self.read_bit_meas, port):
-                return(False, {})
+                return (False, {})
 
             debug.info(2, "Checking read delay values for port {0}".format(port))
             # Check sen timing, then bitlines, then general measurements.
@@ -942,7 +942,7 @@ class delay(simulation):
             if type(val) != float or val > self.period / 2:
                 debug.info(1, 'Failed measurement:{}={}'.format(meas.name, val))
             value_dict[meas.name] = val
-        #debug.info(0, "value_dict={}".format(value_dict))
+        # debug.info(0, "value_dict={}".format(value_dict))
         return value_dict
 
     def run_power_simulation(self):
@@ -1145,7 +1145,7 @@ class delay(simulation):
         self.analysis_init(probe_address, probe_data)
         loads = []
         slews = []
-        for load,slew in load_slews:
+        for load, slew in load_slews:
             loads.append(load)
             slews.append(slew)
         self.load=max(loads)
@@ -1168,15 +1168,15 @@ class delay(simulation):
         # 4) At the minimum period, measure the delay, slew and power for all slew/load pairs.
         self.period = min_period
         char_port_data = self.simulate_loads_and_slews(load_slews, leakage_offset)
-        if OPTS.use_specified_load_slew != None and len(load_slews) > 1:
+        if OPTS.use_specified_load_slew is not None and len(load_slews) > 1:
             debug.warning("Path delay lists not correctly generated for characterizations of more than 1 load,slew")
         # Get and save the path delays
         bl_names, bl_delays, sen_names, sen_delays = self.get_delay_lists(self.path_delays)
         # Removed from characterization output temporarily
-        #char_sram_data["bl_path_measures"] = bl_delays
-        #char_sram_data["sen_path_measures"] = sen_delays
-        #char_sram_data["bl_path_names"] = bl_names
-        #char_sram_data["sen_path_names"] = sen_names
+        # char_sram_data["bl_path_measures"] = bl_delays
+        # char_sram_data["sen_path_measures"] = sen_delays
+        # char_sram_data["bl_path_names"] = bl_names
+        # char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
         self.alter_lh_char_data(char_port_data)
 
@@ -1185,7 +1185,7 @@ class delay(simulation):
     def alter_lh_char_data(self, char_port_data):
         """Copies high-to-low data to low-to-high data to make them consistent on the same clock edge."""
 
-       # This is basically a hack solution which should be removed/fixed later.
+        # This is basically a hack solution which should be removed/fixed later.
         for port in self.all_ports:
             char_port_data[port]['delay_lh'] = char_port_data[port]['delay_hl']
             char_port_data[port]['slew_lh'] = char_port_data[port]['slew_hl']
@@ -1194,7 +1194,6 @@ class delay(simulation):
         """Simulate all specified output loads and input slews pairs of all ports"""
 
         measure_data = self.get_empty_measure_data_dict()
-        path_dict = {}
         # Set the target simulation ports to all available ports. This make sims slower but failed sims exit anyways.
         self.targ_read_ports = self.read_ports
         self.targ_write_ports = self.write_ports
@@ -1352,9 +1351,9 @@ class delay(simulation):
         # Get any available read/write port in case only a single write or read ports is being characterized.
         cur_read_port = self.get_available_port(get_read_port=True)
         cur_write_port = self.get_available_port(get_read_port=False)
-        debug.check(cur_read_port != None,
+        debug.check(cur_read_port is not None,
                     "Characterizer requires at least 1 read port")
-        debug.check(cur_write_port != None,
+        debug.check(cur_write_port is not None,
                     "Characterizer requires at least 1 write port")
 
         # Create test cycles for specified target ports.

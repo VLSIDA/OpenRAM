@@ -19,8 +19,8 @@ from tech import drc
 
 class rom_base_cell(rom_dummy_cell):
 
-    def __init__(self, name="", cell_name=None):
-        super().__init__(name, cell_name)
+    def __init__(self, name="", cell_name=None, add_source_contact=False, add_drain_contact=False, route_layer="m1"):
+        super().__init__(name, cell_name, add_source_contact, add_drain_contact, route_layer)
         #self.route_layer= route_layer
         #self.create_netlist()
         #self.create_layout()
@@ -52,7 +52,7 @@ class rom_base_cell(rom_dummy_cell):
     def create_nmos(self):
         self.cell_inst = self.add_inst( name=self.name,
                                         mod=self.nmos, 
-                                        rotate=90)
+                                        )
         self.connect_inst(["bl_h", "wl", "bl_l", "gnd"])
 
         

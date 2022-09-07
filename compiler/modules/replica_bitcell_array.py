@@ -16,15 +16,15 @@ from sram_factory import factory
 
 class replica_bitcell_array(bitcell_base_array):
     """
-    Creates a bitcell arrow of cols x rows and then adds the replica
+    Creates a bitcell array of cols x rows and then adds the replica
     and dummy columns and rows.  Replica columns are on the left and
     right, respectively and connected to the given bitcell ports.
     Dummy are the outside columns/rows with WL and BL tied to gnd.
     Requires a regular bitcell array, replica bitcell, and dummy
-    bitcell (Bl/BR disconnected).
+    bitcell (BL/BR disconnected).
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name, rows, cols, column_offset=0)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
                                                                                              cols,
@@ -37,46 +37,21 @@ class replica_bitcell_array(bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
-        if rbl:
-            self.rbl = rbl
-        else:
-            self.rbl=[1, 1 if len(self.all_ports)>1 else 0]
+        self.rbl = rbl
         # This specifies which RBL to put on the left or right
         # by port number
         # This could be an empty list
-        if left_rbl != None:
-            self.left_rbl = left_rbl
-        else:
-            self.left_rbl = [0]
+        self.left_rbl = left_rbl
         # This could be an empty list
-        if right_rbl != None:
-            self.right_rbl = right_rbl
-        else:
-            self.right_rbl=[1] if len(self.all_ports) > 1 else []
+        self.right_rbl = right_rbl
         self.rbls = self.left_rbl + self.right_rbl
 
-        debug.check(sum(self.rbl) == len(self.all_ports),
-                    "Invalid number of RBLs for port configuration.")
         debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
                     "Invalid number of RBLs for port configuration.")
-
-        # Two dummy rows plus replica even if we don't add the column
-        self.extra_rows = sum(self.rbl)
-        # Two dummy cols plus replica if we add the column
-        self.extra_cols = len(self.left_rbl) + len(self.right_rbl)
-
-        # If we aren't using row/col caps, then we need to use the bitcell
-        if not self.cell.end_caps:
-            self.extra_rows += 2
-            self.extra_cols += 2
 
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-
-        # We don't offset this because we need to align
-        # the replica bitcell in the control logic
-        # self.offset_all_coordinates()
 
     def create_netlist(self):
         """ Create and connect the netlist """
@@ -109,7 +84,7 @@ class replica_bitcell_array(bitcell_base_array):
         """
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            column_offset=1 + len(self.left_rbl),
+                                            column_offset=len(self.left_rbl),
                                             cols=self.column_size,
                                             rows=self.row_size)
 
@@ -147,43 +122,6 @@ class replica_bitcell_array(bitcell_base_array):
                                             # dummy column + left replica column
                                             column_offset=1 + len(self.left_rbl),
                                             mirror=0)
-
-        # Dummy Row or Col Cap, depending on bitcell array properties
-        col_cap_module_type = ("col_cap_array" if self.cell.end_caps else "dummy_array")
-        self.col_cap_top = factory.create(module_type=col_cap_module_type,
-                                          cols=self.column_size,
-                                          rows=1,
-                                          # dummy column + left replica column(s)
-                                          column_offset=1 + len(self.left_rbl),
-                                          mirror=0,
-                                          location="top")
-
-        self.col_cap_bottom = factory.create(module_type=col_cap_module_type,
-                                             cols=self.column_size,
-                                             rows=1,
-                                             # dummy column + left replica column(s)
-                                             column_offset=1 + len(self.left_rbl),
-                                             mirror=0,
-                                             location="bottom")
-
-        # Dummy Col or Row Cap, depending on bitcell array properties
-        row_cap_module_type = ("row_cap_array" if self.cell.end_caps else "dummy_array")
-
-        self.row_cap_left = factory.create(module_type=row_cap_module_type,
-                                            cols=1,
-                                            column_offset=0,
-                                            rows=self.row_size + self.extra_rows,
-                                            mirror=(self.rbl[0] + 1) % 2)
-
-        self.row_cap_right = factory.create(module_type=row_cap_module_type,
-                                            cols=1,
-                                            #   dummy column
-                                            # + left replica column(s)
-                                            # + bitcell columns
-                                            # + right replica column(s)
-                                            column_offset=1 + len(self.left_rbl) + self.column_size + self.rbl[0],
-                                            rows=self.row_size + self.extra_rows,
-                                            mirror=(self.rbl[0] + 1) %2)
 
     def add_pins(self):
 
@@ -243,13 +181,11 @@ class replica_bitcell_array(bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
         for bit in range(self.rbl[0]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
@@ -260,9 +196,6 @@ class replica_bitcell_array(bitcell_base_array):
     def create_instances(self):
         """ Create the module instances used in this design """
         self.supplies = ["vdd", "gnd"]
-
-        # Used for names/dimensions only
-        self.cell = factory.create(module_type=OPTS.bitcell)
 
         # Main array
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",
@@ -287,24 +220,6 @@ class replica_bitcell_array(bitcell_base_array):
                                                                 mod=self.dummy_row))
             self.connect_inst(self.all_bitline_names + [x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
 
-        # Top/bottom dummy rows or col caps
-        self.dummy_row_insts = []
-        self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
-                                                  mod=self.col_cap_bottom))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
-        self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
-                                                  mod=self.col_cap_top))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
-
-        # Left/right Dummy columns
-        self.dummy_col_insts = []
-        self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
-                                                    mod=self.row_cap_left))
-        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
-        self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
-                                                    mod=self.row_cap_right))
-        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.replica_array_wordline_names + self.supplies)
-
     def create_layout(self):
 
         # This creates space for the unused wordline connections as well as the
@@ -323,24 +238,13 @@ class replica_bitcell_array(bitcell_base_array):
 
         self.add_replica_columns()
 
-        self.add_end_caps()
-
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
         array_offset = self.bitcell_offset.scale(1 + len(self.left_rbl), 1 + self.rbl[0])
         self.translate_all(array_offset.scale(-1, -1))
 
-        # Add extra width on the left and right for the unused WLs
-
-        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
-        self.height = self.dummy_row_insts[1].uy()
-
         self.add_layout_pins()
-
-        self.route_supplies()
-
-        self.route_unused_wordlines()
 
         lower_left = self.find_lowest_coords()
         upper_right = self.find_highest_coords()
@@ -416,30 +320,6 @@ class replica_bitcell_array(bitcell_base_array):
             self.dummy_row_replica_insts[self.rbl[0] + bit].place(offset=dummy_offset,
                                                                   mirror="MX" if (self.row_size + bit) % 2 else "R0")
 
-    def add_end_caps(self):
-        """ Add dummy cells or end caps around the array """
-
-        # Far top dummy row (first row above array is NOT flipped if even number of rows)
-        flip_dummy = (self.row_size + self.rbl[1]) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
-        self.dummy_row_insts[1].place(offset=dummy_row_offset,
-                                      mirror="MX" if flip_dummy else "R0")
-
-        # Far bottom dummy row (first row below array IS flipped)
-        flip_dummy = (self.rbl[0] + 1) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy) + self.unused_offset
-        self.dummy_row_insts[0].place(offset=dummy_row_offset,
-                                      mirror="MX" if flip_dummy else "R0")
-        # Far left dummy col
-        # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1)  + self.unused_offset
-        self.dummy_col_insts[0].place(offset=dummy_col_offset)
-
-        # Far right dummy col
-        # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] - 1) + self.bitcell_array_inst.lr()
-        self.dummy_col_insts[1].place(offset=dummy_col_offset)
-
     def add_layout_pins(self):
         """ Add the layout pins """
 
@@ -487,195 +367,6 @@ class replica_bitcell_array(bitcell_base_array):
                                         offset=pin.ll().scale(1, 0),
                                         width=pin.width(),
                                         height=self.height)
-
-    def route_supplies(self):
-
-        if OPTS.bitcell == "pbitcell":
-            bitcell = factory.create(module_type="pbitcell")
-        else:
-            bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
-
-        vdd_dir = bitcell.vdd_dir
-        gnd_dir = bitcell.gnd_dir
-
-        # vdd/gnd are only connected in the perimeter cells
-        supply_insts = self.dummy_col_insts + self.dummy_row_insts
-
-        # For the wordlines
-        top_bot_mult = 1
-        left_right_mult = 1
-
-        # There are always vertical pins for the WLs on the left/right if we have unused wordlines
-        self.left_gnd_locs = self.route_side_pin("gnd", "left", left_right_mult)
-        self.right_gnd_locs = self.route_side_pin("gnd","right", left_right_mult)
-        # This needs to be big enough so that they aren't in the same supply routing grid
-        left_right_mult = 4
-
-        if gnd_dir == "V":
-            self.top_gnd_locs = self.route_side_pin("gnd", "top", top_bot_mult)
-            self.bot_gnd_locs = self.route_side_pin("gnd", "bot", top_bot_mult)
-            # This needs to be big enough so that they aren't in the same supply routing grid
-            top_bot_mult = 4
-
-        if vdd_dir == "V":
-            self.top_vdd_locs = self.route_side_pin("vdd", "top", top_bot_mult)
-            self.bot_vdd_locs = self.route_side_pin("vdd", "bot", top_bot_mult)
-        elif vdd_dir == "H":
-            self.left_vdd_locs = self.route_side_pin("vdd", "left", left_right_mult)
-            self.right_vdd_locs = self.route_side_pin("vdd", "right", left_right_mult)
-        else:
-            debug.error("Invalid vdd direction {}".format(vdd_dir), -1)
-
-
-        for inst in supply_insts:
-            for pin in inst.get_pins("vdd"):
-                if vdd_dir == "V":
-                    self.connect_side_pin(pin, "top", self.top_vdd_locs[0].y)
-                    self.connect_side_pin(pin, "bot", self.bot_vdd_locs[0].y)
-                elif vdd_dir == "H":
-                    self.connect_side_pin(pin, "left", self.left_vdd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_vdd_locs[0].x)
-
-
-        for inst in supply_insts:
-            for pin in inst.get_pins("gnd"):
-                if gnd_dir == "V":
-                    self.connect_side_pin(pin, "top", self.top_gnd_locs[0].y)
-                    self.connect_side_pin(pin, "bot", self.bot_gnd_locs[0].y)
-                elif gnd_dir == "H":
-                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
-
-
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-        # This grounds all the dummy row word lines
-        for inst in self.dummy_row_insts:
-            for wl_name in self.col_cap_top.get_wordline_names():
-                pin = inst.get_pin(wl_name)
-                self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
-
-        # Ground the unused replica wordlines
-        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-            for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                if wl_name in self.gnd_wordline_names:
-                    pin = inst.get_pin(pin_name)
-                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
-
-    def route_side_pin(self, name, side, offset_multiple=1):
-        """
-        Routes a vertical or horizontal pin on the side of the bbox.
-        The multiple specifies how many track offsets to be away from the side assuming
-        (0,0) (self.width, self.height)
-        """
-        if side in ["left", "right"]:
-            return self.route_vertical_side_pin(name, side, offset_multiple)
-        elif side in ["top", "bottom", "bot"]:
-            return self.route_horizontal_side_pin(name, side, offset_multiple)
-        else:
-            debug.error("Invalid side {}".format(side), -1)
-
-    def route_vertical_side_pin(self, name, side, offset_multiple=1):
-        """
-        Routes a vertical pin on the side of the bbox.
-        """
-        if side == "left":
-            bot_loc = vector(-offset_multiple * self.vertical_pitch, 0)
-            top_loc = vector(-offset_multiple * self.vertical_pitch, self.height)
-        elif side == "right":
-            bot_loc = vector(self.width + offset_multiple * self.vertical_pitch, 0)
-            top_loc = vector(self.width + offset_multiple * self.vertical_pitch, self.height)
-
-        layer = self.supply_stack[2]
-        top_via = contact(layer_stack=self.supply_stack,
-                          directions=("H", "H"))
-
-
-#        self.add_layout_pin_rect_ends(text=name,
-#                                      layer=layer,
-#                                      start=bot_loc,
-#                                      end=top_loc)
-        self.add_layout_pin_segment_center(text=name,
-                                           layer=layer,
-                                           start=bot_loc,
-                                           end=top_loc,
-                                           width=top_via.second_layer_width)
-
-        return (bot_loc, top_loc)
-
-    def route_horizontal_side_pin(self, name, side, offset_multiple=1):
-        """
-        Routes a horizontal pin on the side of the bbox.
-        """
-        if side in ["bottom", "bot"]:
-            left_loc = vector(0, -offset_multiple * self.horizontal_pitch)
-            right_loc = vector(self.width, -offset_multiple * self.horizontal_pitch)
-        elif side == "top":
-            left_loc = vector(0, self.height + offset_multiple * self.horizontal_pitch)
-            right_loc = vector(self.width, self.height + offset_multiple * self.horizontal_pitch)
-
-        layer = self.supply_stack[0]
-        side_via = contact(layer_stack=self.supply_stack,
-                           directions=("V", "V"))
-
-#        self.add_layout_pin_rect_ends(text=name,
-#                                      layer=layer,
-#                                      start=left_loc,
-#                                      end=right_loc)
-        self.add_layout_pin_segment_center(text=name,
-                                           layer=layer,
-                                           start=left_loc,
-                                           end=right_loc,
-                                           width=side_via.first_layer_height)
-
-        return (left_loc, right_loc)
-
-    def connect_side_pin(self, pin, side, offset):
-        """
-        Used to connect horizontal layers of pins to the left/right straps
-        locs provides the offsets of the pin strip end points.
-        """
-        if side in ["left", "right"]:
-            self.connect_vertical_side_pin(pin, side, offset)
-        elif side in ["top", "bottom", "bot"]:
-            self.connect_horizontal_side_pin(pin, side, offset)
-        else:
-            debug.error("Invalid side {}".format(side), -1)
-
-    def connect_horizontal_side_pin(self, pin, side, yoffset):
-        """
-        Used to connect vertical layers of pins to the top/bottom horizontal straps
-        """
-        cell_loc = pin.center()
-        pin_loc = vector(cell_loc.x, yoffset)
-
-        # Place the pins a track outside of the array
-        self.add_via_stack_center(offset=pin_loc,
-                                  from_layer=pin.layer,
-                                  to_layer=self.supply_stack[0],
-                                  directions=("V", "V"))
-
-        # Add a path to connect to the array
-        self.add_path(pin.layer, [cell_loc, pin_loc])
-
-
-    def connect_vertical_side_pin(self, pin, side, xoffset):
-        """
-        Used to connect vertical layers of pins to the top/bottom vertical straps
-        """
-        cell_loc = pin.center()
-        pin_loc = vector(xoffset, cell_loc.y)
-
-        # Place the pins a track outside of the array
-        self.add_via_stack_center(offset=pin_loc,
-                                  from_layer=pin.layer,
-                                  to_layer=self.supply_stack[2],
-                                  directions=("H", "H"))
-
-        # Add a path to connect to the array
-        self.add_path(pin.layer, [cell_loc, pin_loc])
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

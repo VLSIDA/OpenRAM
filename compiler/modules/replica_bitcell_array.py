@@ -84,7 +84,7 @@ class replica_bitcell_array(bitcell_base_array):
         """
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            column_offset=len(self.left_rbl),
+                                            column_offset=1 + len(self.left_rbl),
                                             cols=self.column_size,
                                             rows=self.row_size)
 
@@ -181,11 +181,13 @@ class replica_bitcell_array(bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.all_ports))
         for bit in range(self.rbl[0]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
+        self.replica_array_wordline_names.extend(["gnd"] * len(self.all_ports))
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")

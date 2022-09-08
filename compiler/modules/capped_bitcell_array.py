@@ -92,9 +92,11 @@ class capped_bitcell_array(bitcell_base_array):
         """
 
         self.replica_bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                                    column_offset=1,
                                                     cols=self.column_size,
-                                                    rows=self.row_size)
+                                                    rows=self.row_size,
+                                                    rbl=self.rbl,
+                                                    left_rbl=self.left_rbl,
+                                                    right_rbl=self.right_rbl)
 
         # Dummy Row or Col Cap, depending on bitcell array properties
         col_cap_module_type = ("col_cap_array" if self.cell.end_caps else "dummy_array")
@@ -164,7 +166,7 @@ class capped_bitcell_array(bitcell_base_array):
 
         self.capped_array_wordline_names = []
         self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
-        self.capped_array_wordline_names.extend(self.all_wordline_names)
+        self.capped_array_wordline_names.extend(self.all_wordline_names) # TODO: I think I need rblwls here too
         self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
 
         self.add_pin_list(self.all_wordline_names, "INPUT")

@@ -22,7 +22,7 @@ from globals import OPTS
 class stimuli():
     """ Class for providing stimuli functions """
 
-    def __init__(self, stim_file, corner):
+    def __init__(self, stim_file, meas_file, corner):
         self.vdd_name = "vdd"
         self.gnd_name = "gnd"
         self.pmos_name = tech.spice["pmos"]
@@ -31,6 +31,7 @@ class stimuli():
         self.tx_length = tech.drc["minlength_channel"]
 
         self.sf = stim_file
+        self.mf = meas_file
 
         (self.process, self.voltage, self.temperature) = corner
         found = False
@@ -136,7 +137,7 @@ class stimuli():
                                           offset,
                                           t_rise,
                                           t_fall,
-                                          0.5*period-0.5*t_rise-0.5*t_fall,
+                                          0.5 * period - 0.5 * t_rise - 0.5 * t_fall,
                                           period))
 
     def gen_pwl(self, sig_name, clk_times, data_values, period, slew, setup):
@@ -181,7 +182,7 @@ class stimuli():
     def gen_meas_delay(self, meas_name, trig_name, targ_name, trig_val, targ_val, trig_dir, targ_dir, trig_td, targ_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} TRIG v({1}) VAL={2} {3}=1 TD={4}n TARG v({5}) VAL={6} {7}=1 TD={8}n\n\n"
-        self.sf.write(measure_string.format(meas_name.lower(),
+        self.mf.write(measure_string.format(meas_name.lower(),
                                             trig_name,
                                             trig_val,
                                             trig_dir,
@@ -194,7 +195,7 @@ class stimuli():
     def gen_meas_find_voltage(self, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
-        self.sf.write(measure_string.format(meas_name.lower(),
+        self.mf.write(measure_string.format(meas_name.lower(),
                                             targ_name,
                                             trig_name,
                                             trig_val,
@@ -204,7 +205,7 @@ class stimuli():
     def gen_meas_find_voltage_at_time(self, meas_name, targ_name, time_at):
         """ Creates the .meas statement for voltage at time"""
         measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
-        self.sf.write(measure_string.format(meas_name.lower(),
+        self.mf.write(measure_string.format(meas_name.lower(),
                                             targ_name,
                                             time_at))
 
@@ -215,15 +216,15 @@ class stimuli():
             power_exp = "power"
         else:
             power_exp = "par('(-1*v(" + str(self.vdd_name) + ")*I(v" + str(self.vdd_name) + "))')"
-        self.sf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name.lower(),
+        self.mf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name.lower(),
                                                                             power_exp,
                                                                             t_initial,
                                                                             t_final))
 
     def gen_meas_value(self, meas_name, dout, t_initial, t_final):
         measure_string=".meas tran {0} FIND v({1}) AT={2}n\n\n".format(meas_name.lower(), dout, (t_initial + t_final) / 2)
-        #measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
-        self.sf.write(measure_string)
+        # measure_string=".meas tran {0} AVG v({1}) FROM={2}n TO={3}n\n\n".format(meas_name.lower(), dout, t_initial, t_final)
+        self.mf.write(measure_string)
 
     def write_control(self, end_time, runlvl=4):
         """ Write the control cards to run and end the simulation """

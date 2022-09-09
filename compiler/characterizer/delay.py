@@ -388,12 +388,17 @@ class delay(simulation):
         temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
 
+        # creates and opens measure file for writing
+        self.delay_meas_sp = "delay_meas.sp"
+        temp_meas = "{0}/{1}".format(OPTS.openram_temp, self.delay_meas_sp)
+        self.mf = open(temp_meas, "w")
+
         if OPTS.spice_name == "spectre":
             self.sf.write("simulator lang=spice\n")
         self.sf.write("* Delay stimulus for period of {0}n load={1}fF slew={2}ns\n\n".format(self.period,
                                                                                              self.load,
                                                                                              self.slew))
-        self.stim = stimuli(self.sf, self.corner)
+        self.stim = stimuli(self.sf, self.mf, self.corner)
         # include files in stimulus file
         self.stim.write_include(self.trim_sp_file)
 
@@ -418,6 +423,7 @@ class delay(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
+        self.stim.write_include(temp_meas)
         # self.load_all_measure_nets()
         self.write_delay_measures()
         # self.write_simulation_saves()
@@ -426,6 +432,7 @@ class delay(simulation):
         self.stim.write_control(self.cycle_times[-1] + self.period)
 
         self.sf.close()
+        self.mf.close()
 
     def write_power_stimulus(self, trim):
         """ Creates a stimulus file to measure leakage power only.
@@ -439,6 +446,11 @@ class delay(simulation):
         self.sf = open(temp_stim, "w")
         self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
         self.stim = stimuli(self.sf, self.corner)
+
+        # creates and opens measure file for writing
+        self.power_meas_sp = "power_meas.sp"
+        temp_meas = "{0}/{1}".format(opts.openram_temp, self.power_meas_sp)
+        self.mf = open(temp_meas, "w")
 
         # include UNTRIMMED files in stimulus file
         if trim:
@@ -470,12 +482,14 @@ class delay(simulation):
         for port in self.all_ports:
             self.stim.gen_constant(sig_name="CLK{0}".format(port), v_val=0)
 
+        self.stim.write_include(temp_meas)
         self.write_power_measures()
 
         # run until the end of the cycle time
         self.stim.write_control(2 * self.period)
 
         self.sf.close()
+        self.mf.close()
 
     def get_measure_variants(self, port, measure_obj, measure_type=None):
         """
@@ -587,15 +601,15 @@ class delay(simulation):
         # Output some comments to aid where cycles start and
         # what is happening
         for comment in self.cycle_comments:
-            self.sf.write("* {0}\n".format(comment))
+            self.mf.write("* {0}\n".format(comment))
 
         self.sf.write("\n")
         for read_port in self.targ_read_ports:
-            self.sf.write("* Read ports {0}\n".format(read_port))
+            self.mf.write("* Read ports {0}\n".format(read_port))
             self.write_delay_measures_read_port(read_port)
 
         for write_port in self.targ_write_ports:
-            self.sf.write("* Write ports {0}\n".format(write_port))
+            self.mf.write("* Write ports {0}\n".format(write_port))
             self.write_delay_measures_write_port(write_port)
 
     def load_pex_net(self, net: str):

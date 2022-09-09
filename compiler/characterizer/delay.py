@@ -698,6 +698,8 @@ class delay(simulation):
         self.sf.write("\n* Measure statements for idle leakage power\n")
 
         # add measure statements for power
+        # TODO: Convert to measure statement insted of using stimuli
+        # measure = power_measure('leakage_power',
         t_initial = self.period
         t_final = 2 * self.period
         self.stim.gen_meas_power(meas_name="leakage_power",

@@ -484,6 +484,7 @@ class functional(simulation):
                                                                                 measure_name,
                                                                                 voltage_value,
                                                                                 eo_period))
+                # TODO: Convert to measurement statement instead of stimuli
                 self.stim.gen_meas_value(meas_name=measure_name,
                                          dout=signal_name,
                                          t_initial=t_initial,

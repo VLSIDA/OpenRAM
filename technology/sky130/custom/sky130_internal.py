@@ -5,29 +5,36 @@
 # All rights reserved.
 #
 
-import debug
-from base import design
-from base import get_libcell_size
-from tech import layer, GDS
+from copy import deepcopy
+from modules import internal_base
+from tech import cell_properties as props
 
-
-class sky130_internal(design):
+class sky130_internal(internal_base):
 
     def __init__(self, version, name=""):
-        super().__init__(name)
-
+        prop = deepcopy(props.internal)
+        prop.boundary_layer = "mem"
         if version == "wlstrap":
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrap"
+            prop.port_order = ["vdd"]
+            prop.port_types = ["POWER"]
+            prop.port_map = {'vdd': 'VPWR'}
         elif version == "wlstrap_p":
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrap_p"
+            prop.port_order = ["gnd"]
+            prop.port_types = ["GROUND"]
+            prop.port_map = {'gnd': 'VGND'}
         elif version == "wlstrapa":
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrapa"
+            prop.port_order = ["vdd"]
+            prop.port_types = ["POWER"]
+            prop.port_map = {'vdd': 'VPWR'}
         elif version == "wlstrapa_p":
             self.name = "sky130_fd_bd_sram__sram_sp_wlstrapa_p"
+            prop.port_order = ["gnd"]
+            prop.port_types = ["GROUND"]
+            prop.port_map = {'gnd': 'VGND'}
         else:
             debug.error("Invalid version", -1)
-        design.__init__(self, name=self.name)
-        (self.width, self.height) = get_libcell_size(self.name,
-                                                     GDS["unit"],
-                                                     layer["mem"])
-        # pin_map = get_libcell_pins(pin_names, self.name, GDS["unit"])
+            
+        super().__init__(name, cell_name=self.name, prop=prop)

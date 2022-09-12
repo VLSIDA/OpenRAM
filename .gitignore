@@ -14,5 +14,4 @@ technology/sky130/*_lib
 technology/sky130/tech/.magicrc
 .idea
 compiler/tests/results/
-sky*/
 open_pdks/

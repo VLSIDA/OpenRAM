@@ -186,11 +186,14 @@ class cell_properties():
         self.names["col_cap_bitcell_2port"] = "col_cap_cell_2rw"
         self.names["row_cap_bitcell_1port"] = "row_cap_cell_1rw"
         self.names["row_cap_bitcell_2port"] = "row_cap_cell_2rw"
+        self.names["internal"] = "internal"
+
         self.use_strap = False
         self._ptx = _ptx(model_is_subckt=False,
                          bin_spice_models=False)
 
         self._pgate = _pgate(add_implants=False)
+
 
         self._inv_dec = cell(["A", "Z", "vdd", "gnd"],
                               ["INPUT", "OUTPUT", "POWER", "GROUND"])
@@ -230,6 +233,12 @@ class cell_properties():
 
         self._row_cap_2port = bitcell(["wl0", "wl1", "gnd"],
                                        ["INPUT", "INPUT", "POWER", "GROUND"])
+        
+        self._internal = cell([],[])
+
+    @property
+    def internal(self):
+        return self._internal
 
     @property
     def ptx(self):

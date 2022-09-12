@@ -228,10 +228,6 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
                             self.add_via_stack_center(from_layer=pin.layer,
                                             to_layer='m2',
                                             offset=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0))
-                            #self.add_power_pin(name=pin_name,
-                            #           loc=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0),
-                            #           start_layer=pin.layer,
-                            #           end_layer='m2')
 
 
         # add well contacts to perimeter cells
@@ -277,9 +273,6 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
                             self.add_via_stack_center(from_layer=pin.layer,
                                             to_layer='m2',
                                             offset=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0))
-                            #self.add_power_pin(name=pin_name,
-                            #           loc=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0),
-                            #           start_layer=pin.layer)
 
         min_area = drc["minarea_{}".format('m3')]
         for track,supply, offset in zip(range(1,5),['vdd','vdd','gnd','gnd'],[min_area * 6,min_area * 6, 0, 0]):

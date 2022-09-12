@@ -29,10 +29,10 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         # This will create a default set of bitline/wordline names
         self.create_all_bitline_names()
         self.create_all_wordline_names()
-
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
+            self.add_supply_pins()
 
     def add_modules(self):
         """ Add the modules used in this design """

@@ -24,10 +24,6 @@ class spice_measurement(ABC):
         self.meta_add_delay = False
 
     @abstractmethod
-    def get_measure_function(self):
-        return None
-
-    @abstractmethod
     def measure_function(self):
         return None
 
@@ -37,7 +33,7 @@ class spice_measurement(ABC):
 
     def write_measure(self, stim_obj, input_tuple):
         measure_vals = self.get_measure_values(*input_tuple)
-        self.measure_func(stim_obj, *measure_vals)
+        self.measure_function(stim_obj, *measure_vals)
 
     def retrieve_measure(self, port=None):
         self.port_error_check(port)
@@ -153,7 +149,8 @@ class power_measure(spice_measurement):
         if OPTS.spice_name == "hspice":
             power_exp = "power"
         else:
-            power_exp = "par('(-1*v(" + str(self.vdd_name) + ")*I(v" + str(self.vdd_name) + "))')"
+            # FIXME: Obtain proper vdd and gnd name
+            power_exp = "par('(-1*v(" + "vdd" + ")*I(v" + "vdd" + "))')"
         stim_obj.mf.write(".meas tran {0} avg {1} from={2}n to={3}n\n\n".format(meas_name.lower(),
                                                                                  power_exp,
                                                                                  t_initial,
@@ -181,7 +178,7 @@ class voltage_when_measure(spice_measurement):
         spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(trig_name, targ_name, trig_dir_str, trig_vdd)
 
-    def gen_meas_find_voltage(self, stim_obj, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
+    def measure_function(self, stim_obj, meas_name, trig_name, targ_name, trig_val, trig_dir, trig_td):
         """ Creates the .meas statement for the measurement of delay """
         measure_string=".meas tran {0} FIND v({1}) WHEN v({2})={3}v {4}=1 TD={5}n \n\n"
         stim_obj.mf.write(measure_string.format(meas_name.lower(),
@@ -222,7 +219,7 @@ class voltage_at_measure(spice_measurement):
         spice_measurement.__init__(self, measure_name, measure_scale, has_port)
         self.set_meas_constants(targ_name)
 
-    def gen_meas_find_voltage_at_time(self, stim_obj, meas_name, targ_name, time_at):
+    def measure_function(self, stim_obj, meas_name, targ_name, time_at):
         """ Creates the .meas statement for voltage at time"""
         measure_string=".meas tran {0} FIND v({1}) AT={2}n \n\n"
         stim_obj.mf.write(measure_string.format(meas_name.lower(),

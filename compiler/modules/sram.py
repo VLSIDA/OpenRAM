@@ -8,7 +8,7 @@
 import datetime
 import os
 import debug
-from characterizer import functional
+from characterizer import functional, delay
 from base import timing_graph
 from globals import OPTS, print_time
 import shutil
@@ -115,6 +115,25 @@ class sram():
                    output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
 
+        # Save stimulus and measurement file
+        start_time = datetime.datetime.now()
+        debug.print_raw("DELAY: Writing stimulus...")
+        d = delay(self.s, self.get_sp_name(), ("TT", 5, 25), output_path=OPTS.output_path)
+        if (self.s.num_spare_rows == 0):
+            probe_address = "1" * self.s.addr_size
+        else:
+            probe_address = "0" + "1" * (self.s.addr_size - 1)
+        probe_data = self.s.word_size - 1
+        d.analysis_init(probe_address, probe_data)
+        d.targ_read_ports.extend(self.s.read_ports)
+        d.targ_write_ports = [self.s.write_ports[0]]
+        d.write_delay_stimulus()
+        print_time("DELAY", datetime.datetime.now(), start_time)
+
+        # Save trimmed spice file
+        temp_trim_sp = "{0}trimmed.sp".format(OPTS.output_path)
+        self.sp_write(temp_trim_sp, lvs=False, trim=True)
+
         if not OPTS.netlist_only:
             # Write the layout
             start_time = datetime.datetime.now()
@@ -188,13 +207,3 @@ class sram():
             debug.print_raw("Extended Config: Writing to {0}".format(oname))
             self.extended_config_write(oname)
             print_time("Extended Config", datetime.datetime.now(), start_time)
-
-        # Write the graph if specified
-        if OPTS.write_graph:
-            start_time = datetime.datetime.now()
-            oname = OPTS.output_path + OPTS.output_name + "_graph.json"
-            debug.print_raw("Graph: Writing to {0}".format(oname))
-            graph = timing_graph()
-            self.s.build_graph(graph, self.name, self.s.pins)
-            graph.write(oname)
-            print_time("Graph", datetime.datetime.now(), start_time)

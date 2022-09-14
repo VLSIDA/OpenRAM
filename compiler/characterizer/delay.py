@@ -37,7 +37,7 @@ class delay(simulation):
 
     """
 
-    def __init__(self, sram, spfile, corner):
+    def __init__(self, sram, spfile, corner, output_path=None):
         super().__init__(sram, spfile, corner)
 
         self.targ_read_ports = []
@@ -47,6 +47,12 @@ class delay(simulation):
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
+
+        if output_path is None:
+            self.output_path = OPTS.openram_temp
+        else:
+            self.output_path = output_path
+
         self.set_load_slew(0, 0)
         self.set_corner(corner)
         self.create_signal_names()
@@ -385,12 +391,12 @@ class delay(simulation):
 
         # creates and opens stimulus file for writing
         self.delay_stim_sp = "delay_stim.sp"
-        temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.delay_stim_sp)
+        temp_stim = "{0}/{1}".format(self.output_path, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
 
         # creates and opens measure file for writing
         self.delay_meas_sp = "delay_meas.sp"
-        temp_meas = "{0}/{1}".format(OPTS.openram_temp, self.delay_meas_sp)
+        temp_meas = "{0}/{1}".format(self.output_path, self.delay_meas_sp)
         self.mf = open(temp_meas, "w")
 
         if OPTS.spice_name == "spectre":
@@ -442,7 +448,7 @@ class delay(simulation):
 
         # creates and opens stimulus file for writing
         self.power_stim_sp = "power_stim.sp"
-        temp_stim = "{0}/{1}".format(OPTS.openram_temp, self.power_stim_sp)
+        temp_stim = "{0}/{1}".format(self.output_path, self.power_stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
         self.stim = stimuli(self.sf, self.corner)
@@ -1131,16 +1137,17 @@ class delay(simulation):
 
         # Set up to trim the netlist here if that is enabled
         if OPTS.trim_netlist:
-            self.trim_sp_file = "{0}trimmed.sp".format(OPTS.openram_temp)
+            self.trim_sp_file = "{0}trimmed.sp".format(self.output_path)
             self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
         else:
             # The non-reduced netlist file when it is disabled
-            self.trim_sp_file = "{0}sram.sp".format(OPTS.openram_temp)
+            self.trim_sp_file = "{0}sram.sp".format(self.output_path)
 
         # The non-reduced netlist file for power simulation
-        self.sim_sp_file = "{0}sram.sp".format(OPTS.openram_temp)
+        self.sim_sp_file = "{0}sram.sp".format(self.output_path)
         # Make a copy in temp for debugging
-        shutil.copy(self.sp_file, self.sim_sp_file)
+        if self.sp_file != self.sim_sp_file:
+            shutil.copy(self.sp_file, self.sim_sp_file)
 
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""

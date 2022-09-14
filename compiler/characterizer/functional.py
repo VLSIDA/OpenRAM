@@ -383,7 +383,10 @@ class functional(simulation):
         temp_stim = "{0}/{1}".format(self.output_path, self.stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Functional test stimulus file for {0}ns period\n\n".format(self.period))
-        self.stim = stimuli(self.sf, self.corner)
+        self.meas_sp = "functional_meas.sp"
+        temp_meas = "{0}/{1}".format(self.output_path, self.meas_sp)
+        self.mf = open(temp_meas, "w")
+        self.stim = stimuli(self.sf, self.mf, self.corner)
 
         # Write include statements
         self.stim.write_include(self.sp_file)

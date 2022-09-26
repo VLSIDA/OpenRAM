@@ -30,7 +30,7 @@ class replica_column_test(openram_test):
         a = factory.create(module_type="replica_column",
                            rows=4 + num_spare_rows,
                            rbl=[1, 0],
-                           replica_bit=1,
+                           replica_bit=0,
                            column_offset=num_spare_cols)
         self.local_check(a)
 

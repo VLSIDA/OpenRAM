@@ -26,19 +26,19 @@ class replica_column_test(openram_test):
         globals.setup_bitcell()
 
         debug.info(2, "Testing one left replica column for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=1)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=0)
         self.local_check(a)
 
         debug.info(2, "Testing one right replica column for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[0, 1], replica_bit=5)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[0, 1], replica_bit=4)
         self.local_check(a)
 
         debug.info(2, "Testing two (left, right) replica columns for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=1)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=0)
         self.local_check(a)
 
         debug.info(2, "Testing two (left, right) replica columns for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=6)
+        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=5)
         self.local_check(a)
 
         globals.end_openram()

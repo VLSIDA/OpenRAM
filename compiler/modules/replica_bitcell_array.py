@@ -96,7 +96,7 @@ class replica_bitcell_array(bitcell_base_array):
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the top (where the bitcell array starts ) down
-                replica_bit = self.rbl[0] - port
+                replica_bit = self.rbl[0] - port - 1
                 column_offset = self.rbl[0]
 
             elif port in self.right_rbl:
@@ -104,7 +104,7 @@ class replica_bitcell_array(bitcell_base_array):
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the bottom up
-                replica_bit = self.rbl[0] + self.row_size + port
+                replica_bit = self.rbl[0] + self.row_size + port - 1
                 column_offset = self.rbl[0] + self.column_size + 1
             else:
                 continue
@@ -181,13 +181,11 @@ class replica_bitcell_array(bitcell_base_array):
 
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.all_ports))
         for bit in range(self.rbl[0]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
             self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
-        self.replica_array_wordline_names.extend(["gnd"] * len(self.all_ports))
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
@@ -228,7 +226,6 @@ class replica_bitcell_array(bitcell_base_array):
         # row-based or column based power and ground lines.
         self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
-        self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
@@ -236,7 +233,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.row_end_offset = vector(self.cell.width, self.cell.height)
 
         # Everything is computed with the main array
-        self.bitcell_array_inst.place(offset=self.unused_offset)
+        self.bitcell_array_inst.place(offset=0)
 
         self.add_replica_columns()
 
@@ -302,18 +299,18 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Grow from left to right, toward the array
         for bit, port in enumerate(self.left_rbl):
-            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0] - 1) + self.unused_offset
+            offset = self.bitcell_offset.scale(-len(self.left_rbl) + bit, -self.rbl[0])
             self.replica_col_insts[bit].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit, port in enumerate(self.right_rbl):
-            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0] - 1)
+            offset = self.bitcell_array_inst.lr() + self.bitcell_offset.scale(bit, -self.rbl[0])
             self.replica_col_insts[self.rbl[0] + bit].place(offset)
 
         # Replica dummy rows
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array
         # These grow up, toward the array
         for bit in range(self.rbl[0]):
-            dummy_offset = self.bitcell_offset.scale(0, -self.rbl[0] + bit + (-self.rbl[0] + bit) % 2) + self.unused_offset
+            dummy_offset = self.bitcell_offset.scale(0, -self.rbl[0] + bit + (-self.rbl[0] + bit) % 2)
             self.dummy_row_replica_insts[bit].place(offset=dummy_offset,
                                                     mirror="MX" if (-self.rbl[0] + bit) % 2 else "R0")
         # These grow up, away from the array
@@ -332,7 +329,7 @@ class replica_bitcell_array(bitcell_base_array):
             for pin in pin_list:
                 self.add_layout_pin(text=pin_name,
                                     layer=pin.layer,
-                                    offset=pin.ll().scale(0, 1),
+                                    offset=pin.ll(),
                                     width=self.width,
                                     height=pin.height())
 
@@ -345,7 +342,7 @@ class replica_bitcell_array(bitcell_base_array):
                 pin = inst.get_pin(pin_name)
                 self.add_layout_pin(text=wl_name,
                                     layer=pin.layer,
-                                    offset=pin.ll().scale(0, 1),
+                                    offset=pin.ll(),
                                     width=self.width,
                                     height=pin.height())
 
@@ -354,7 +351,7 @@ class replica_bitcell_array(bitcell_base_array):
             for pin in pin_list:
                 self.add_layout_pin(text=pin_name,
                                     layer=pin.layer,
-                                    offset=pin.ll().scale(1, 0),
+                                    offset=pin.ll(),
                                     width=pin.width(),
                                     height=self.height)
 
@@ -366,7 +363,7 @@ class replica_bitcell_array(bitcell_base_array):
                     pin = inst.get_pin(pin_name)
                     self.add_layout_pin(text=bl_name,
                                         layer=pin.layer,
-                                        offset=pin.ll().scale(1, 0),
+                                        offset=pin.ll(),
                                         width=pin.width(),
                                         height=self.height)
 

@@ -1130,15 +1130,17 @@ class delay(simulation):
         Netlist reduced for simulation.
         """
         super().set_probe(probe_address, probe_data)
-        self.prepare_netlist()
 
     def prepare_netlist(self):
         """ Prepare a trimmed netlist and regular netlist. """
 
         # Set up to trim the netlist here if that is enabled
+        # TODO: Copy old netlist if memchar
         if OPTS.trim_netlist:
             self.trim_sp_file = "{0}trimmed.sp".format(self.output_path)
-            self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
+            # Only genrate spice when running openram process
+            if OPTS.top_process == "openram":
+                self.sram.sp_write(self.trim_sp_file, lvs=False, trim=True)
         else:
             # The non-reduced netlist file when it is disabled
             self.trim_sp_file = "{0}sram.sp".format(self.output_path)
@@ -1153,6 +1155,7 @@ class delay(simulation):
         """Sets values which are dependent on the data address/bit being tested."""
 
         self.set_probe(probe_address, probe_data)
+        self.prepare_netlist()
         self.create_graph()
         self.set_internal_spice_names()
         self.create_measurement_names()

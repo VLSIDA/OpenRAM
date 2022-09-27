@@ -10,44 +10,9 @@ class fake_sram(sram_config):
     """
     def __init__(self, name, word_size, num_words, write_size=None, num_banks=1,
                  words_per_row=None, num_spare_rows=0, num_spare_cols=0):
-        self.name = name
-        self.word_size = word_size
-        self.num_words = num_words
-        # Don't add a write mask if it is the same size as the data word
-        if write_size and write_size==word_size:
-            self.write_size = None
-        else:
-            self.write_size = write_size
-        self.num_banks = num_banks
-        self.num_spare_rows = num_spare_rows
-        self.num_spare_cols = num_spare_cols
-
-        try:
-            from tech import array_row_multiple
-            self.array_row_multiple = array_row_multiple
-        except ImportError:
-            self.array_row_multiple = 1
-        try:
-            from tech import array_col_multiple
-            self.array_col_multiple = array_col_multiple
-        except ImportError:
-            self.array_col_multiple = 1
-
-        if self.write_size:
-            self.num_wmasks = int(ceil(self.word_size / self.write_size))
-        else:
-            self.num_wmasks = 0
-
-        if not self.num_spare_cols:
-            self.num_spare_cols = 0
-
-        if not self.num_spare_rows:
-            self.num_spare_rows = 0
-
-        # This will get over-written when we determine the organization
-        self.words_per_row = words_per_row
-
-        self.compute_sizes()
+        sram_config.__init__(self, name, word_size, num_words, write_size=None,
+                             num_banks=1, words_per_row=None, num_spare_rows=0,
+                             num_spare_cols=0)
 
     def setup_multiport_constants(self):
         """

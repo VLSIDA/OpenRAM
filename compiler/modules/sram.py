@@ -48,11 +48,9 @@ class sram():
                                                                                        self.num_banks))
         start_time = datetime.datetime.now()
 
-        self.name = name
-
         from .sram_1bank import sram_1bank as sram
 
-        self.s = sram(name, sram_config)
+        self.s = sram(self.name, self.config)
 
         self.s.create_netlist()
         if not OPTS.netlist_only:

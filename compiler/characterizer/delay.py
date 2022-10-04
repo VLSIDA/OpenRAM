@@ -43,7 +43,7 @@ class delay(simulation):
         self.targ_read_ports = []
         self.targ_write_ports = []
         self.period = 0
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -348,7 +348,7 @@ class delay(simulation):
         except ValueError:
             debug.error("Probe Address is not of binary form: {0}".format(self.probe_address), 1)
 
-        if len(self.probe_address) != self.addr_size:
+        if len(self.probe_address) != self.bank_addr_size:
             debug.error("Probe Address's number of bits does not correspond to given SRAM", 1)
 
         if not isinstance(self.probe_data, int) or self.probe_data>self.word_size or self.probe_data<0:
@@ -473,7 +473,7 @@ class delay(simulation):
                 self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.din_name, write_port, i),
                                        v_val=0)
         for port in self.all_ports:
-            for i in range(self.addr_size):
+            for i in range(self.bank_addr_size):
                 self.stim.gen_constant(sig_name="{0}{1}_{2}".format(self.addr_name, port, i),
                                        v_val=0)
 
@@ -1416,7 +1416,7 @@ class delay(simulation):
         """
 
         for port in self.all_ports:
-            for i in range(self.addr_size):
+            for i in range(self.bank_addr_size):
                 sig_name = "{0}{1}_{2}".format(self.addr_name, port, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][i], self.period, self.slew, 0.05)
 

@@ -20,7 +20,7 @@ class simulation():
 
         self.name = self.sram.name
         self.word_size = self.sram.word_size
-        self.addr_size = self.sram.addr_size
+        self.bank_addr_size = self.sram.bank_addr_size
         self.write_size = self.sram.write_size
         self.num_spare_rows = self.sram.num_spare_rows
         if not self.sram.num_spare_cols:
@@ -39,7 +39,7 @@ class simulation():
         self.words_per_row = self.sram.words_per_row
         self.num_rows = self.sram.num_rows
         self.num_cols = self.sram.num_cols
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -80,7 +80,7 @@ class simulation():
         self.dout_name = "dout"
         self.pins = self.gen_pin_names(port_signal_names=(self.addr_name, self.din_name, self.dout_name),
                                        port_info=(len(self.all_ports), self.write_ports, self.read_ports),
-                                       abits=self.addr_size,
+                                       abits=self.bank_addr_size,
                                        dbits=self.word_size + self.num_spare_cols)
         debug.check(len(self.sram.pins) == len(self.pins),
                     "Number of pins generated for characterization \
@@ -103,7 +103,7 @@ class simulation():
         self.spare_wen_value = {port: [] for port in self.write_ports}
 
         # Three dimensional list to handle each addr and data bits for each port over the number of checks
-        self.addr_values = {port: [[] for bit in range(self.addr_size)] for port in self.all_ports}
+        self.addr_values = {port: [[] for bit in range(self.bank_addr_size)] for port in self.all_ports}
         self.data_values = {port: [[] for bit in range(self.word_size + self.num_spare_cols)] for port in self.write_ports}
         self.wmask_values = {port: [[] for bit in range(self.num_wmasks)] for port in self.write_ports}
         self.spare_wen_values = {port: [[] for bit in range(self.num_spare_cols)] for port in self.write_ports}
@@ -174,10 +174,10 @@ class simulation():
 
     def add_address(self, address, port):
         """ Add the array of address values """
-        debug.check(len(address)==self.addr_size, "Invalid address size.")
+        debug.check(len(address)==self.bank_addr_size, "Invalid address size.")
 
         self.addr_value[port].append(address)
-        bit = self.addr_size - 1
+        bit = self.bank_addr_size - 1
         for c in address:
             if c=="0":
                 self.addr_values[port][bit].append(0)
@@ -330,7 +330,7 @@ class simulation():
         try:
             self.add_address(self.addr_value[port][-1], port)
         except:
-            self.add_address("0" * self.addr_size, port)
+            self.add_address("0" * self.bank_addr_size, port)
 
         # If the port is also a readwrite then add
         # the same value as previous cycle
@@ -464,7 +464,7 @@ class simulation():
         for port in range(total_ports):
             pin_names.append("{0}{1}".format("clk", port))
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             for port in write_index:
                 for bit in range(self.num_wmasks):
                     pin_names.append("WMASK{0}_{1}".format(port, bit))

@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Library Cells
 This page of the documentation explains the library cells of OpenRAM.

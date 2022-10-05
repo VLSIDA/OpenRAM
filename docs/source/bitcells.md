@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Bitcells
 This page of the documentation explains the bitcells supported by OpenRAM.

@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Characterization
 This page of the documentation explains the characterization of OpenRAM.

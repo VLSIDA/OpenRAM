@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Control Logic and Timing
 This page of the documentation explains the control logic and timing of OpenRAM.

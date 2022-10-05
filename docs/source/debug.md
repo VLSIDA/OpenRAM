@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Debugging and Unit Testing
 This page of the documentation explains the debugging and unit testing of OpenRAM.

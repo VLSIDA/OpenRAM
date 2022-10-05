@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Results
 This page of the documentation explains the results of OpenRAM.

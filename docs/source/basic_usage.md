@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Basic Usage
 This page of the documentation explains the basic usage of OpenRAM.

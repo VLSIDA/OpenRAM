@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Tutorials
 This page of the documentation includes tutorials for OpenRAM.

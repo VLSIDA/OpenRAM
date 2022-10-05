@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Technology Setup
 This page of the documentation explains the technology setup of OpenRAM.

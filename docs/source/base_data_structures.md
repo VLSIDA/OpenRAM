@@ -1,4 +1,4 @@
-### [Go Back](./index.md)
+### [Go Back](./index.md#directory)
 
 # Base Data Structures
 This page of the documentation explains the base data structures of OpenRAM.

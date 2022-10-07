@@ -42,20 +42,19 @@ class rom_base_cell(rom_dummy_cell):
         print(self.height)
         print(self.width)
 
-    def add_pins(self):   
-        pin_list = ["bl_h", "bl_l", "wl"]
-        dir_list = ["INOUT", "GROUND", "INPUT"]
-
-        self.add_pin_list(pin_list, dir_list) 
-
 
     def create_nmos(self):
-        self.cell_inst = self.add_inst( name=self.name,
+        self.cell_inst = self.add_inst( name=self.name + "_nmos",
                                         mod=self.nmos, 
                                         )
         self.connect_inst(["bl_h", "wl", "bl_l", "gnd"])
 
         
+    def add_pins(self):   
+        pin_list = ["bl_h", "bl_l", "wl", "gnd"]
+        dir_list = ["INOUT", "INOUT", "INPUT", "GROUND"]
+
+        self.add_pin_list(pin_list, dir_list) 
 
     def place_nmos(self):
 

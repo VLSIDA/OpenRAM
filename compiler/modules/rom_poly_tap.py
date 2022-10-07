@@ -18,13 +18,12 @@ class rom_poly_tap(design):
 
         #for layout constants
         self.dummy = factory.create(module_type="rom_dummy_cell")
-        pass
 
     def create_layout(self):
 
         self.place_via()
         self.add_boundary()
-        if self.length < 0:
+        if self.length != 0:
             self.place_strap(self.length)
     
     def add_boundary(self):
@@ -36,7 +35,7 @@ class rom_poly_tap(design):
 
         contact_width = self.poly_contact.width
         
-        contact_x = contact_width * 0.5
+        contact_x = - contact_width * 0.5 - self.dummy.width
         contact_y = self.dummy.poly.offset.x + (self.poly_width * 0.5)
 
         contact_offset = vector(contact_x, contact_y)

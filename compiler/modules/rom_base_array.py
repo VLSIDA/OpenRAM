@@ -15,12 +15,13 @@ from sram_factory import factory
 
 class rom_base_array(bitcell_base_array):
 
-    def __init__(self, rows, cols, bitmap, name="", column_offset=0):
+    def __init__(self, rows, cols, strap_spacing, bitmap, name="", column_offset=0):
         super().__init__(name=name, rows=rows, cols=cols, column_offset=column_offset)
         
         #TODO: data is input in col-major order for ease of parsing, create a function to convert a row-major input to col-major 
         self.data = bitmap
         self.route_layer = 'm1'
+        self.strap_spacing = strap_spacing
         self.create_all_bitline_names()
         self.create_all_wordline_names()
         self.create_netlist()
@@ -33,22 +34,20 @@ class rom_base_array(bitcell_base_array):
         self.add_pins()
         
         self.create_instances()
-        self.create_taps()
+        
 
     def create_layout(self):
         #self.add_layout_pins()
         self.place_ptx()
-        self.place_tap(self.column_size)
-        self.place_tap(0)
+        self.place_taps()
+        self.place_rails()
         #self.route_horizo  ntal_pins(insts=self.cell_inst.values(), layer=self.route_layer, name="S")
         #self.route_bitlines()
         #self.route_wordlines()
 
-        self.route_supplies()
-
         self.add_boundary()
 
-        #self.DRC_LVS()
+        
         
     #def add_pins(self):
     def add_boundary(self):
@@ -58,67 +57,103 @@ class rom_base_array(bitcell_base_array):
 
     def add_modules(self):
 
-        # base cell, nmos tx that represents a 1
+        # dummy cell, # "dummy" cells represent 0
         self.dummy = factory.create(module_type="rom_dummy_cell", route_layer=self.route_layer)
 
-        # "dummy" cells represent 0
-
-        #dummy cell with no contacts
-        self.cell_nc = factory.create(module_type="rom_base_cell")
-        #dummy cell with drain contact
-        self.cell_dc = factory.create(module_type="rom_base_cell", add_drain_contact=self.route_layer)
-        #dummy cell with source contact
-        self.cell_sc = factory.create(module_type="rom_base_cell", add_source_contact=self.route_layer)
-        #dummy cell with all contacts
-        self.cell_ac = factory.create(module_type="rom_base_cell", add_source_contact=self.route_layer, add_drain_contact=self.route_layer)
-
-        self.poly_tap = factory.create(module_type="rom_poly_tap")
-
-
-    def create_taps(self):
-        self.tap_inst = {}
         
-        for()
+
+        #base cell with no contacts
+        self.cell_nc = factory.create(module_name="base_mod_0_contact", module_type="rom_base_cell")
+        #base cell with drain contact
+        self.cell_dc = factory.create(module_name="base_mod_d_contact", module_type="rom_base_cell", add_drain_contact=self.route_layer)
+        #base cell with source contact
+        self.cell_sc = factory.create(module_name="base_mod_s_contact", module_type="rom_base_cell", add_source_contact=self.route_layer)
+        #base cell with all contacts
+        self.cell_ac = factory.create(module_name="base_mod_sd_contact", module_type="rom_base_cell", add_source_contact=self.route_layer, add_drain_contact=self.route_layer)
+
+        self.poly_tap = factory.create(module_type="rom_poly_tap", strap_length=self.strap_spacing)
         
+        self.gnd_rail = factory.create(module_type="rom_array_gnd_tap", length=self.row_size)
 
     def create_instances(self):
+        self.tap_inst = {}
         self.cell_inst = {}
         self.cell_list = []
         self.current_row = 0
-        
-        #When rotated correctly rows are bit lines
+
+        #list of current bitline interconnect nets, starts as the same as the bitline list and is updated when new insts of cells are added
+        int_bl_list = self.bitline_names[0]
+        #When rotated correctly rows are word lines
         for row in range(self.row_size):
             row_list = []
 
-            
-            #when rotated correctly cols are word lines
+            #when rotated correctly cols are bit lines
             for col in range(self.column_size):
                 
                 name = "bit_r{0}_c{1}".format(row, col)
 
-                if(self.data[row][col] == 1):
-                    
-                    if  row < self.row_size - 1 and row > 0 and self.data[row + 1][col] == 0 and self.data[row - 1][col] == 0:
+                if self.data[row][col] == 1:
+                    # if dummy/0 cell above and below a 1, add a tx with contacts on both drain and source 
+                    # if the first row and a 0 above, add both contacts
+                    # if the last row and 0 below add both contacts
+                    #(row == 0 and self.data[row + 1][col] == 0): 
+                    if  (row < self.row_size - 1 and row > 0 and self.data[row + 1][col] == 0 and self.data[row - 1][col] == 0) or \
+                        (row == self.row_size - 1 and self.data[row - 1][col] == 0):
+                        
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_ac)
-
-                    elif row > 0 and self.data[row - 1][col] == 0:
+                
+                    # if dummy/0 is below and not above, add a source contact
+                    # if in the first row, add a source contact
+                    elif (row > 0 and self.data[row - 1][col] == 0):
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_sc)
 
-                    elif row < self.row_size - 1 and self.data[row + 1][col] == 0:            
+                    elif (row < self.row_size - 1 and self.data[row + 1][col] == 0) or \
+                         (row == self.row_size - 1):          
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_dc)
 
                     else:
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_nc)
+
+
+                    if row == self.row_size - 1 or self.get_next_cell_in_bl(row, col) == -1:
+                        print(self.cell_inst[row, col])
+                        bl_l = int_bl_list[col]
+                        bl_h = "gnd" 
+                    else:
+                        bl_l = int_bl_list[col]
+                        int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
+                        bl_h = int_bl_list[col]
                     
-                    self.connect_inst(["vdd", "gnd", "gnd"])
+                    
+
+                    self.connect_inst([bl_h, bl_l, self.wordline_names[0][row], "gnd"])                    
+                    
 
                 else: 
 
                     self.cell_inst[row, col]=self.add_inst(name=name,
                                                            mod=self.dummy)
                     self.connect_inst([])
+                    
+                # when col = 0 bl_h is connected to vdd, otherwise connect to previous bl connection
+                # when col = col_size - 1 connected to gnd otherwise create new bl connection
+                # 
+                
 
                 row_list.append(self.cell_inst[row, col])
+
+                if col % self.strap_spacing == 0:
+
+                    name = "tap_r{0}_c{1}".format(row, col)
+
+                    self.tap_inst[row, col]=self.add_inst(name=name, mod=self.poly_tap)
+                    self.connect_inst([])
+                
+            name = "tap_r{0}_c{1}".format(row, self.column_size)
+            #print(*row_list)
+            self.tap_inst[row, self.column_size]=self.add_inst(name=name, mod=self.poly_tap)
+            self.connect_inst([])
+
             self.cell_list.append(row_list)
 
 
@@ -130,19 +165,38 @@ class rom_base_array(bitcell_base_array):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
 
-    def place_tap(self, col):
+    def place_taps(self):
         
         self.tap_pos = {}
         for row in range(self.row_size):
+            for s_col in range(0, self.column_size, self.strap_spacing):
+                col = s_col * self.strap_spacing
 
-            tap_x = self.dummy.width * (col_offset)
+                tap_x = self.dummy.width * col
+                tap_y = self.dummy.height * row
+
+                self.tap_pos[row, col] = vector(tap_x, tap_y)
+                self.tap_inst[row, col].place(self.tap_pos[row, col])
+            tap_x = self.dummy.width * self.column_size + self.poly_tap.width
             tap_y = self.dummy.height * row
 
-            self.tap_pos[row, col] = vector(tap_x, tap_y)
-            self.tap_inst[row, col].place(self.tap_pos[row, col])
+            self.tap_pos[row, self.column_size] = vector(tap_x, tap_y)
+            self.tap_inst[row, self.column_size].place(self.tap_pos[row, self.column_size])
+        offset=vector(0, 0),
+        
 
+    def place_rails(self):
+        
+        #self.gnd_rail_inst = self.add_inst(name="gnd", mod=self.gnd_rail)
+        #self.connect_inst([])
+        print (self.mcon_width)
+        rail_start = vector(-self.dummy.width / 2 , self.cell_inst[self.row_size - 1,0].uy() )
+        rail_end = vector(self.dummy.height * (self.row_size ), self.cell_inst[self.row_size - 1,0].uy())
 
-
+        self.add_layout_pin_rect_ends(  name="gnd",
+                                        layer="m1",
+                                        start=rail_start,
+                                        end=rail_end)
 
     def place_ptx(self):
         self.cell_pos = {}

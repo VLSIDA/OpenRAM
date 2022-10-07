@@ -29,10 +29,9 @@ class rom_dummy_cell(design):
         #creates nmos for layout dimensions
         self.add_nmos()
 
-
         #set height and width such that the cell will tile perfectly by only ofsetting in the array by its width and height
         
-        
+    
 
     def create_layout(self):
         
@@ -47,6 +46,7 @@ class rom_dummy_cell(design):
         self.add_label("0,0", self.route_layer)
 
 
+    
 
 
     # Calculates offsets of cell width and height so that tiling of cells does not violate any drc rules
@@ -95,11 +95,11 @@ class rom_dummy_cell(design):
 
     def add_metal(self):
 
-        wire_x =  min(self.cell_diffusion_offset, 0) + min(self.poly_active_offset, 0)
+        wire_x =  min(self.cell_diffusion_offset, 0) + min(self.poly_active_offset, 0) - self.mcon_width * 0.5
         wire_y = 0.5 * (self.width - self.poly_extend_active_spacing)
 
         wire_start = vector( wire_x, wire_y )
-        wire_end = vector(self.height, wire_y)
+        wire_end = vector(self.height + self.mcon_width * 0.5, wire_y)
 
         # if self.route_layer == 'm1':
 
@@ -126,6 +126,7 @@ class rom_dummy_cell(design):
         # else:
         #     add_drain = self.route_layer
         self.nmos  = factory.create(module_type="ptx",
+                                    module_name="nmos_rom_mod",
                                     tx_type="nmos",
                                     add_source_contact=self.add_source_contact,
                                     add_drain_contact=self.add_drain_contact

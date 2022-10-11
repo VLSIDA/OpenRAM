@@ -165,14 +165,9 @@ class replica_bitcell_array(bitcell_base_array):
 
     def add_wordline_pins(self):
 
-        # Wordlines to ground
-        self.gnd_wordline_names = []
-
         for port in self.all_ports:
             for bit in self.all_ports:
                 self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
-                if bit != port:
-                    self.gnd_wordline_names.append("rbl_wl_{0}_{1}".format(port, bit))
 
         self.all_rbl_wordline_names = [x for sl in self.rbl_wordline_names for x in sl]
 
@@ -182,10 +177,10 @@ class replica_bitcell_array(bitcell_base_array):
         # All wordlines including dummy and RBL
         self.replica_array_wordline_names = []
         for bit in range(self.rbl[0]):
-            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[bit]])
+            self.replica_array_wordline_names.extend([x for x in self.rbl_wordline_names[bit]])
         self.replica_array_wordline_names.extend(self.all_wordline_names)
         for bit in range(self.rbl[1]):
-            self.replica_array_wordline_names.extend([x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[self.rbl[0] + bit]])
+            self.replica_array_wordline_names.extend([x for x in self.rbl_wordline_names[self.rbl[0] + bit]])
 
         for port in range(self.rbl[0]):
             self.add_pin(self.rbl_wordline_names[port][port], "INPUT")
@@ -218,7 +213,7 @@ class replica_bitcell_array(bitcell_base_array):
         for port in self.all_ports:
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
                                                                 mod=self.dummy_row))
-            self.connect_inst(self.all_bitline_names + [x if x not in self.gnd_wordline_names else "gnd" for x in self.rbl_wordline_names[port]] + self.supplies)
+            self.connect_inst(self.all_bitline_names + [x for x in self.rbl_wordline_names[port]] + self.supplies)
 
     def create_layout(self):
 
@@ -337,8 +332,6 @@ class replica_bitcell_array(bitcell_base_array):
         # even though the column is in another local bitcell array)
         for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
             for (wl_name, pin_name) in zip(names, self.dummy_row.get_wordline_names()):
-                if wl_name in self.gnd_wordline_names:
-                    continue
                 pin = inst.get_pin(pin_name)
                 self.add_layout_pin(text=wl_name,
                                     layer=pin.layer,

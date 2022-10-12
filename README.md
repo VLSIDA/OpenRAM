@@ -192,12 +192,21 @@ You can view the .out file to see what the output of a test is in either case.
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-+ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
 
 # License
 
 OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
+# Publications
+
++ M. R. Guthaus, J. E. Stine, S. Ataei, B. Chen, B. Wu, M. Sarwar, "OpenRAM: An Open-Source Memory Compiler," Proceedings of the 35th International Conference on Computer-Aided Design (ICCAD), 2016
++ S. Ataei, J. Stine, M. Guthaus, “A 64 kb differential single-port 12T SRAM design with a bit-interleaving scheme for low-voltage operation in 32 nm SOI CMOS,” International Conference on Computer Design (ICCD), 2016, pp. 499-506.
++ E. Ebrahimi, M. Guthaus, J. Renau, “Timing Speculative SRAM”, IEEE In- ternational Symposium on Circuits and Systems (ISCAS), 2017
++ B. Wu, J.E. Stine, M.R. Guthaus, "Fast and Area-Efficient Word-Line Optimization",  IEEE International Symposium on Circuits and Systems (ISCAS), 2019
++ B. Wu, M. Guthaus, "Bottom Up Approach for High Speed SRAM Word-line Buffer Insertion Optimization", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019
++ H. Nichols, M. Grimes, J. Sowash, J. Cirimelli-Low, M. Guthaus "Automated Synthesis of Multi-Port Memories and Control", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019
+
+ 
 # Contributors & Acknowledgment
 
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.

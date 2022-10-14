@@ -1,3 +1,5 @@
+### [Go Back](./index.md#directory)
+
 # Debugging
 
 When OpenRAM runs, it puts files in a temporary directory that is

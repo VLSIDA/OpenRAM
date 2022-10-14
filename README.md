@@ -194,12 +194,10 @@ You can view the .out file to see what the output of a test is in either case.
 
 # Further Help
 
-+ [Additional hints](./HINTS.md)
 + [Documentation][documentation]
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-+ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
 
 # License
 
@@ -223,9 +221,9 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
-[Github project]:         https://github.com/VLSIDA/OpenRAM
+[Github project]:        https://github.com/VLSIDA/OpenRAM
 
-[documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
+[documentation]:         documentation/docs/source/index.md
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
 [user-group]:            mailto:openram-user-group@ucsc.edu
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu

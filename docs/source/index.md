@@ -24,6 +24,7 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 16. [Routing](./routing.md#go-back)
 17. [Characterization](./characterization.md#go-back)
 18. [Results](./results.md#go-back)
+19. [FAQ](./FAQ.md#go-back)
 
 
 

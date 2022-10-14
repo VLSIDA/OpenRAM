@@ -5,46 +5,27 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 
 
 
-## Directory
+## Table of Contents
+1.  [OpenRAM Dependencies](#openram-dependencies)
+1.  [Supported Technologies](#supported-technologies)
+1.  [Bitcells](./bitcells.md#go-back)
+1.  [Architecture](./architecture.md#go-back)
+1.  [Implementation](#implementation)
+1.  [Technology and Tool Portability](#technology-and-tool-portability)
+1.  [Basic Usage](./basic_usage.md#go-back)
+1.  [Tutorials](./tutorials.md#go-back)
+1. [Debugging and Unit Testing](./debug.md#go-back)
+1. [Technology Setup](./technology_setup.md#go-back)
+1. [Library Cells](./library_cells.md#go-back)
+1. [Base Data Structures](./base_data_structures.md#go-back)
+1. [Hierarchical Design Modules](./design_modules.md#go-back)
+1. [Control Logic and Timing](./control_logic.md#go-back)
+1. [Routing](./routing.md#go-back)
+1. [Characterization](./characterization.md#go-back)
+1. [Results](./results.md#go-back)
+1. [FAQ](./FAQ.md#go-back)
 1.  [Contributors/Collaborators](#contributorscollaborators)
-2.  [OpenRAM Dependencies](#openram-dependencies)
-3.  [Supported Technologies](#supported-technologies)
-4.  [Bitcells](./bitcells.md#go-back)
-5.  [Architecture](./architecture.md#go-back)
-6.  [Implementation](#implementation)
-7.  [Technology and Tool Portability](#technology-and-tool-portability)
-8.  [Basic Usage](./basic_usage.md#go-back)
-9.  [Tutorials](./tutorials.md#go-back)
-10. [Debugging and Unit Testing](./debug.md#go-back)
-11. [Technology Setup](./technology_setup.md#go-back)
-12. [Library Cells](./library_cells.md#go-back)
-13. [Base Data Structures](./base_data_structures.md#go-back)
-14. [Hierarchical Design Modules](./design_modules.md#go-back)
-15. [Control Logic and Timing](./control_logic.md#go-back)
-16. [Routing](./routing.md#go-back)
-17. [Characterization](./characterization.md#go-back)
-18. [Results](./results.md#go-back)
-19. [FAQ](./FAQ.md#go-back)
 
-
-
-## Contributors/Collaborators
-<img align="right" height="120" src="../assets/images/logos/okstate.png">
-
-* Prof. Matthew Guthaus (UCSC)
-* Prof. James Stine & Dr. Samira Ataei (Oklahoma State University)
-* UCSC students:
-    * Bin Wu
-    * Hunter Nichols
-    * Michael Grimes
-    * Jennifer Sowash
-    * Jesse Cirimelli-Low
-    <img align="right" height="100" src="../assets/images/logos/vlsida.png">
-* Many other past students:
-    * Jeff Butera
-    * Tom Golubev
-    * Marcelo Sero
-    * Seokjoong Kim
 
 
 
@@ -108,3 +89,23 @@ Commercial tools (optional):
     * Uses a wrapper interface with DRC and LVS tools that allow flexibility
     * DRC and LVS can be performed at all levels of the design hierarchy to enhance bug tracking.
     * DRC and LVS can be disabled completely for improved run-time or if licenses are not available.
+
+## Contributors/Collaborators
+<img align="right" height="120" src="../assets/images/logos/okstate.png">
+
+* Prof. Matthew Guthaus (UCSC)
+* Prof. James Stine & Dr. Samira Ataei (Oklahoma State University)
+* UCSC students:
+    * Bin Wu
+    * Hunter Nichols
+    * Michael Grimes
+    * Jennifer Sowash
+    * Jesse Cirimelli-Low
+    <img align="right" height="100" src="../assets/images/logos/vlsida.png">
+* Many other past students:
+    * Jeff Butera
+    * Tom Golubev
+    * Marcelo Sero
+    * Seokjoong Kim
+
+

@@ -28,9 +28,54 @@ This page of the documentation explains the basic usage of OpenRAM.
 
 
 ## Command Line Usage
-* Basic command line (with or without py suffix):
-    * `openram.py config`
-    * `openram.py config.py`
+
+Once you have defined the environment, you can run OpenRAM from the command line
+using a single configuration file written in Python.
+
+For example, create a file called *myconfig.py* specifying the following
+parameters for your memory:
+```
+# Data word size
+word_size = 2
+# Number of words in the memory
+num_words = 16
+
+# Technology to use in $OPENRAM_TECH
+tech_name = "scn4m_subm"
+
+# You can use the technology nominal corner only
+nominal_corner_only = True
+# Or you can specify particular corners
+# Process corners to characterize
+# process_corners = ["SS", "TT", "FF"]
+# Voltage corners to characterize
+# supply_voltages = [ 3.0, 3.3, 3.5 ]
+# Temperature corners to characterize
+# temperatures = [ 0, 25 100]
+
+# Output directory for the results
+output_path = "temp"
+# Output file base name
+output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
+
+# Disable analytical models for full characterization (WARNING: slow!)
+# analytical_delay = False
+
+```
+
+You can then run OpenRAM by executing:
+```
+python3 $OPENRAM_HOME/openram.py myconfig
+```
+You can see all of the options for the configuration file in
+$OPENRAM\_HOME/options.py
+
+To run designs in Docker, it is suggested to use, for example:
+```
+cd OpenRAM/macros
+make example_config_scn4m_subm
+```
+
 * Common arguments:
     * `-t` specify technology (scn4m_subm or scmos or freepdk45)
     * `-v` increase verbosity of output

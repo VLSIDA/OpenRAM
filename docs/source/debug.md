@@ -41,6 +41,41 @@ OpenRAM has the set of thorough regression tests implemented with the Python uni
 
 
 ## Running Unit Tests
+
+Regression testing  performs a number of tests for all modules in OpenRAM.
+From the unit test directory ($OPENRAM\_HOME/tests),
+use the following command to run all regression tests:
+
+```
+cd OpenRAM/compiler/tests
+make -j 3
+```
+The -j can run with 3 threads. By default, this will run in all technologies.
+
+To run a specific test in all technologies:
+```
+cd OpenRAM/compiler/tests
+make 05_bitcell_array_test
+```
+To run a specific technology:
+```
+cd OpenRAM/compiler/tests
+TECHS=scn4m_subm make 05_bitcell_array_test
+```
+
+To increase the verbosity of the test, add one (or more) -v options and
+pass it as an argument to OpenRAM:
+```
+ARGS="-v" make 05_bitcell_array_test
+```
+
+Unit test results are put in a directory:
+```
+OpenRAM/compiler/tests/results/<technology>/<test>
+```
+If the test fails, there will be a tmp directory with intermediate results.
+If the test passes, this directory will be deleted to save space.
+You can view the .out file to see what the output of a test is in either case.
 * Tests can be run in the `$OPENRAM_HOME/tests` directory
 * Command line arguments 
     * `-v` for verbose
@@ -50,7 +85,6 @@ OpenRAM has the set of thorough regression tests implemented with the Python uni
     * `01_library_drc_test.py`
 * All tests
     * `regress.py`
-
 
 
 ## Successful Unit Tests
@@ -139,3 +173,7 @@ FAILED (failures=1)
 * Extracted layout netlist for intermediate module results (`extracted.sp`)
 * Magic only: Run scripts for DRC (`run_drc.sh`) and LVS (`run_lvs.sh`)
 * Calibre only: Runset file for DRC (`drc_runset`) and LVS (`lvs_runset`)
+
+
+
+

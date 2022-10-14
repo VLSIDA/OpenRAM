@@ -49,32 +49,37 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 
 
 ## OpenRAM Dependencies
-* Python 3.6+
-    * NumPy
+
+Please see the Dockerfile for the required versions of tools.
+
+In general, the OpenRAM compiler has very few dependencies:
++ Docker
++ Make
++ Python 3.6 or higher
++ Various Python packages (pip install -r requirements.txt)
++ [Git]
+
+Commercial tools (optional):
 * Spice Simulator
-    * Ngspice 26 (or later)
     * Hspice  I-2013.12-1 (or later)
     * CustomSim 2017 (or later)
 * DRC
     * Calibre 2017.3_29.23
-    * Magic 8.x (http://opencircuitdesign.com/magic/)
 * LVS
     * Calibre 2017.3_29.23
-    * Netgen 1.5 (http://opencircuitdesign.com/netgen/)
-* Git (any version)
 
 
 
 ## Supported Technologies
 * NCSU FreePDK 45nm
     * Non-fabricable but contains DSM rules
-    * Calibre required for DRC/LVS
+    * Calibre or klayout for DRC/LVS
 * MOSIS 0.35um (SCN4M_SUBM)
     * Fabricable technology
     * Magic/Netgen or Calibre for DRC/LVS
-    * 4 layers metal required for supply routing
-* NCSU FreePDK 15nm & ASAP 7nm
-    * In progress
+* Skywater 130nm (sky130)
+    * Fabricable technology
+    * Magic/Netgen or klayout
 
 
 

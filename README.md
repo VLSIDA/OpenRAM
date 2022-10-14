@@ -223,7 +223,7 @@ If I forgot to add you, please let me know!
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
 [Github project]:        https://github.com/VLSIDA/OpenRAM
 
-[documentation]:         documentation/docs/source/index.md
+[documentation]:         docs/source/index.md
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
 [user-group]:            mailto:openram-user-group@ucsc.edu
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu

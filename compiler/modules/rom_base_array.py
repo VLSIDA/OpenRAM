@@ -7,7 +7,7 @@
 #
 
 
-
+import math
 from .bitcell_base_array import bitcell_base_array
 from base import vector
 from globals import OPTS
@@ -16,12 +16,17 @@ from sram_factory import factory
 class rom_base_array(bitcell_base_array):
 
     def __init__(self, rows, cols, strap_spacing, bitmap, name="", column_offset=0):
+
+
         super().__init__(name=name, rows=rows, cols=cols, column_offset=column_offset)
         
         #TODO: data is input in col-major order for ease of parsing, create a function to convert a row-major input to col-major 
         self.data = bitmap
         self.route_layer = 'm1'
         self.strap_spacing = strap_spacing
+        self.data_col_size = self.column_size
+        self.array_col_size = self.column_size + math.ceil(self.column_size / strap_spacing)      
+
         self.create_all_bitline_names()
         self.create_all_wordline_names()
         self.create_netlist()
@@ -37,11 +42,8 @@ class rom_base_array(bitcell_base_array):
         
 
     def create_layout(self):
-        #self.add_layout_pins()
-        self.place_ptx()
-        self.place_taps()
+        self.place_array()
         self.place_rails()
-        #self.route_horizo  ntal_pins(insts=self.cell_inst.values(), layer=self.route_layer, name="S")
         #self.route_bitlines()
         #self.route_wordlines()
 
@@ -72,6 +74,8 @@ class rom_base_array(bitcell_base_array):
         self.cell_ac = factory.create(module_name="base_mod_sd_contact", module_type="rom_base_cell", add_source_contact=self.route_layer, add_drain_contact=self.route_layer)
 
         self.poly_tap = factory.create(module_type="rom_poly_tap", strap_length=self.strap_spacing)
+
+        self.zero_tap = factory.create(module_type="rom_poly_tap", strap_length=0)
         
         self.gnd_rail = factory.create(module_type="rom_array_gnd_tap", length=self.row_size)
 
@@ -87,27 +91,39 @@ class rom_base_array(bitcell_base_array):
         for row in range(self.row_size):
             row_list = []
 
+            # for each new strap placed, offset the column index refrenced to get correct bit in the data array
+            strap_offset = 0
             #when rotated correctly cols are bit lines
-            for col in range(self.column_size):
+            for col in range(self.array_col_size):
                 
                 name = "bit_r{0}_c{1}".format(row, col)
+                
+                data_col = col - strap_offset
+                if col % self.strap_spacing == 0:
 
-                if self.data[row][col] == 1:
+                    name = "tap_r{0}_c{1}".format(row, col)
+                    print("tap instance added at c{0}, r{1}".format(col, row))
+                    self.cell_inst[row, col]=self.add_inst(name=name, mod=self.poly_tap)
+                    self.connect_inst([])
+                    strap_offset += 1
+                    continue
+
+                if self.data[row][data_col] == 1:
                     # if dummy/0 cell above and below a 1, add a tx with contacts on both drain and source 
                     # if the first row and a 0 above, add both contacts
                     # if the last row and 0 below add both contacts
                     #(row == 0 and self.data[row + 1][col] == 0): 
-                    if  (row < self.row_size - 1 and row > 0 and self.data[row + 1][col] == 0 and self.data[row - 1][col] == 0) or \
-                        (row == self.row_size - 1 and self.data[row - 1][col] == 0):
+                    if  (row < self.row_size - 1 and row > 0 and self.data[row + 1][data_col] == 0 and self.data[row - 1][data_col] == 0) or \
+                        (row == self.row_size - 1 and self.data[row - 1][data_col] == 0):
                         
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_ac)
                 
                     # if dummy/0 is below and not above, add a source contact
                     # if in the first row, add a source contact
-                    elif (row > 0 and self.data[row - 1][col] == 0):
+                    elif (row > 0 and self.data[row - 1][data_col] == 0):
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_sc)
 
-                    elif (row < self.row_size - 1 and self.data[row + 1][col] == 0) or \
+                    elif (row < self.row_size - 1 and self.data[row + 1][data_col] == 0) or \
                          (row == self.row_size - 1):          
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_dc)
 
@@ -115,14 +131,14 @@ class rom_base_array(bitcell_base_array):
                         self.cell_inst[row, col]=self.add_inst(name=name, mod=self.cell_nc)
 
 
-                    if row == self.row_size - 1 or self.get_next_cell_in_bl(row, col) == -1:
-                        print(self.cell_inst[row, col])
-                        bl_l = int_bl_list[col]
+                    if row == self.row_size - 1 or self.get_next_cell_in_bl(row, data_col) == -1:
+                        
+                        bl_l = int_bl_list[data_col]
                         bl_h = "gnd" 
                     else:
-                        bl_l = int_bl_list[col]
-                        int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
-                        bl_h = int_bl_list[col]
+                        bl_l = int_bl_list[data_col]
+                        int_bl_list[data_col] = "bl_int_{0}_{1}".format(row, data_col)
+                        bl_h = int_bl_list[data_col]
                     
                     
 
@@ -136,22 +152,17 @@ class rom_base_array(bitcell_base_array):
                     self.connect_inst([])
                     
                 # when col = 0 bl_h is connected to vdd, otherwise connect to previous bl connection
-                # when col = col_size - 1 connected to gnd otherwise create new bl connection
+                # when col = col_size - 1 connected column_sizeto gnd otherwise create new bl connection
                 # 
                 
 
                 row_list.append(self.cell_inst[row, col])
 
-                if col % self.strap_spacing == 0:
-
-                    name = "tap_r{0}_c{1}".format(row, col)
-
-                    self.tap_inst[row, col]=self.add_inst(name=name, mod=self.poly_tap)
-                    self.connect_inst([])
                 
-            name = "tap_r{0}_c{1}".format(row, self.column_size)
+                
+            name = "tap_r{0}_c{1}".format(row, self.array_col_size)
             #print(*row_list)
-            self.tap_inst[row, self.column_size]=self.add_inst(name=name, mod=self.poly_tap)
+            self.cell_inst[row, self.array_col_size]=self.add_inst(name=name, mod=self.zero_tap)
             self.connect_inst([])
 
             self.cell_list.append(row_list)
@@ -169,9 +180,9 @@ class rom_base_array(bitcell_base_array):
         
         self.tap_pos = {}
         for row in range(self.row_size):
-            for s_col in range(0, self.column_size, self.strap_spacing):
-                col = s_col * self.strap_spacing
+            for col in range(0, self.column_size, self.strap_spacing):
 
+                
                 tap_x = self.dummy.width * col
                 tap_y = self.dummy.height * row
 
@@ -182,58 +193,58 @@ class rom_base_array(bitcell_base_array):
 
             self.tap_pos[row, self.column_size] = vector(tap_x, tap_y)
             self.tap_inst[row, self.column_size].place(self.tap_pos[row, self.column_size])
-        offset=vector(0, 0),
+        
         
 
     def place_rails(self):
         
-        #self.gnd_rail_inst = self.add_inst(name="gnd", mod=self.gnd_rail)
-        #self.connect_inst([])
-        print (self.mcon_width)
-        rail_start = vector(-self.dummy.width / 2 , self.cell_inst[self.row_size - 1,0].uy() )
-        rail_end = vector(self.dummy.height * (self.row_size ), self.cell_inst[self.row_size - 1,0].uy())
+        rail_y = self.dummy.height * (self.row_size) + self.mcon_width * 0.5
+        start_x = self.cell_inst[self.row_size - 1, 0].rx()
+        end_x = self.cell_inst[self.row_size - 1, self.array_col_size - 1].cx()
+        #self.dummy.height * self.row_size
+        #self.cell_inst[self.row_size - 1,0].uy() 
+        rail_start = vector(start_x , rail_y)
+        rail_end = vector(end_x, rail_y)
 
         self.add_layout_pin_rect_ends(  name="gnd",
                                         layer="m1",
                                         start=rail_start,
                                         end=rail_end)
 
-    def place_ptx(self):
+    def place_array(self):
         self.cell_pos = {}
-
-        # rows are bitlines
+        
+        # rows are wordlines
         for row in range(self.row_size):
-            # columns are word lines
-            for col in range(self.column_size):
+            
+            strap_cols = -1
+            cell_y = row * (self.dummy.height)
+            
+            # columns are bit lines
+            for col in range(self.array_col_size):
                 
-                cell_x = (self.dummy.width)  * col 
-                cell_y = row * (self.dummy.height)
+                if col % self.strap_spacing == 0:
+                    strap_cols += 1
+                    rot = 0
+                else:
+                    rot = 90
+
+                bit_cols = col - strap_cols
+
+                if col == 0:
+                    cell_x = 0
+                else:
+                    cell_x = (self.dummy.width * bit_cols) + (self.poly_tap.width * strap_cols)
 
                 self.cell_pos[row, col] = vector(cell_x, cell_y)
-                self.cell_inst[row, col].place(self.cell_pos[row, col], rotate=90)
-                #cell_x = self.cell.width  * col
-                #cell_y = self.cell.height * row
-                #print(self.nmos.height + self.nmos.poly_extend_active)
-                if(self.data[row][col] == 1):
+                self.cell_inst[row, col].place(self.cell_pos[row, col], rotate=rot)
 
-                    pass
-                    
-                    
-                    
-                    
-                    #self.add_label("S_{}_{}".format(row,col), self.route_layer, self.cell_inst[row, col].center())
-                    #self.add_label("D", self.route_layer, self.cell_inst[row, col].center())
-
-                #else:
-                    
-                    #poly_offset = (self.nmos.contact_offset + vector(0.5 * self.nmos.active_contact.width + 0.5 * self.nmos.poly_width + self.nmos.active_contact_to_gate, 0)) + (0, cell_y)
-                    #poly_offset = (cell_x, cell_y)
-                    #print(cell_x,cell_y)
-                    #self.add_rect(layer="poly",
-                    #             offset=poly_offset,
-                    #             width=self.nmos.height + self.nmos.poly_extend_active,
-                    #             height=self.nmos.poly_width
-                    #             )
+            strap_cols += 1
+            bit_cols = self.array_col_size - strap_cols
+            cell_x = (self.dummy.width * bit_cols) + (self.poly_tap.width * strap_cols)
+            self.cell_pos[row, self.array_col_size] = vector(cell_x, cell_y)
+            self.cell_inst[row, self.array_col_size].place(self.cell_pos[row, self.array_col_size])
+                
                     
 
 

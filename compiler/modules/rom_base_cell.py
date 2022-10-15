@@ -68,7 +68,7 @@ class rom_base_cell(rom_dummy_cell):
         self.add_rect("poly", poly_offset, self.nmos.poly_width, self.poly_extend_active_spacing )
         
         self.cell_inst.place(nmos_offset)
-
+        self.add_label("CELL ZERO", self.route_layer)
         self.add_label("S", self.route_layer, self.cell_inst.get_pin("S").center())
         self.add_label("D", self.route_layer, self.cell_inst.get_pin("D").center())
         

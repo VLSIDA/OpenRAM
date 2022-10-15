@@ -28,14 +28,14 @@ class rom_poly_tap(design):
     
     def add_boundary(self):
         self.height = self.dummy.height
-        self.width = self.poly_contact.width
+        self.width = self.poly_contact.width 
         super().add_boundary()
 
     def place_via(self):
 
         contact_width = self.poly_contact.width
         
-        contact_x = - contact_width * 0.5 - self.dummy.width
+        contact_x = - contact_width * 0.5
         contact_y = self.dummy.poly.offset.x + (self.poly_width * 0.5)
 
         contact_offset = vector(contact_x, contact_y)
@@ -43,11 +43,13 @@ class rom_poly_tap(design):
                                   to_layer=self.strap_layer,
                                   offset=contact_offset)
 
+        self.add_label("ZERO", "poly")
+
     def place_strap(self, length):
 
         strap_start = vector(self.via.cx(), self.via.cy())
 
-        strap_end = vector( self.dummy.width * length, self.via.cy())
+        strap_end = vector( self.dummy.width * (length - 1) + self.m2_width, self.via.cy())
 
         self.strap = self.add_path(self.strap_layer, (strap_start, strap_end))
 

@@ -1,6 +1,6 @@
 ### [Go Back](./index.md#table-of-contents)
 
-# Debugging
+# Frequently Asked Questions
 
 When OpenRAM runs, it puts files in a temporary directory that is
 shown in the banner at the top. Like:

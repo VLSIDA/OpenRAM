@@ -1,4 +1,4 @@
-### [Go Back](./index.md#directory)
+### [Go Back](./index.md#table-of-contents)
 
 # Debugging
 

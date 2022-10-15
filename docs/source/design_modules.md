@@ -1,4 +1,4 @@
-### [Go Back](./index.md#directory)
+### [Go Back](./index.md#table-of-contents)
 
 # Hierarchical Design Modules
 This page of the documentation explains the hierarchical design modules of OpenRAM.

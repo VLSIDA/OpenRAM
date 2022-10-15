@@ -1,4 +1,4 @@
-### [Go Back](./index.md#directory)
+### [Go Back](./index.md#table-of-contents)
 
 # Routing
 This page of the documentation explains the routing of OpenRAM.

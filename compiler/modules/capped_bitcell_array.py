@@ -40,12 +40,12 @@ class capped_bitcell_array(bitcell_base_array):
         # This specifies which RBL to put on the left or right
         # by port number
         # This could be an empty list
-        if left_rbl != None:
+        if left_rbl is not None:
             self.left_rbl = left_rbl
         else:
             self.left_rbl = [0]
         # This could be an empty list
-        if right_rbl != None:
+        if right_rbl is not None:
             self.right_rbl = right_rbl
         else:
             self.right_rbl=[1] if len(self.all_ports) > 1 else []
@@ -166,7 +166,7 @@ class capped_bitcell_array(bitcell_base_array):
 
         self.capped_array_wordline_names = []
         self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
-        self.capped_array_wordline_names.extend(self.all_wordline_names) # TODO: I think I need rblwls here too
+        self.capped_array_wordline_names.extend(self.replica_array_wordline_names)
         self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
 
         self.add_pin_list(self.all_wordline_names, "INPUT")

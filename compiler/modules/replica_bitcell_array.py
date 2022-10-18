@@ -41,9 +41,15 @@ class replica_bitcell_array(bitcell_base_array):
         # This specifies which RBL to put on the left or right
         # by port number
         # This could be an empty list
-        self.left_rbl = left_rbl
+        if left_rbl is not None:
+            self.left_rbl = left_rbl
+        else:
+            self.left_rbl = []
         # This could be an empty list
-        self.right_rbl = right_rbl
+        if right_rbl is not None:
+            self.right_rbl = right_rbl
+        else:
+            self.right_rbl=[]
         self.rbls = self.left_rbl + self.right_rbl
 
         debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
@@ -164,10 +170,14 @@ class replica_bitcell_array(bitcell_base_array):
             self.add_pin_list(self.rbl_bitline_names[port], "INOUT")
 
     def add_wordline_pins(self):
+        # Wordlines to be grounded by capped_bitcell_array
+        self.gnd_wordline_names = []
 
         for port in self.all_ports:
             for bit in self.all_ports:
                 self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
+                if bit != port:
+                    self.gnd_wordline_names.append("rbl_wl_{0}_{1}".format(port, bit))
 
         self.all_rbl_wordline_names = [x for sl in self.rbl_wordline_names for x in sl]
 

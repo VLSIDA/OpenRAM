@@ -233,7 +233,7 @@ class cell_properties():
 
         self._row_cap_2port = bitcell(["wl0", "wl1", "gnd"],
                                        ["INPUT", "INPUT", "POWER", "GROUND"])
-        
+
         self._internal = cell([],[])
 
     @property

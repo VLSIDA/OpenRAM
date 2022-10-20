@@ -12,5 +12,3 @@ class internal_base(design):
 
     def __init__(self, name, cell_name=None, prop=None):
         design.__init__(self, name, cell_name, prop)
- 
-    

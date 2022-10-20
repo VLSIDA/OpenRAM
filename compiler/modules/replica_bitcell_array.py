@@ -204,7 +204,7 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Main array
         self.bitcell_array_inst=self.add_inst(name="bitcell_array",
-                                                mod=self.bitcell_array)
+                                              mod=self.bitcell_array)
         self.connect_inst(self.all_bitline_names + self.all_wordline_names + self.supplies)
 
         # Replica columns
@@ -217,7 +217,7 @@ class replica_bitcell_array(bitcell_base_array):
             else:
                 self.replica_col_insts.append(None)
 
-        # Dummy rows under the bitcell array (connected with with the replica cell wl)
+        # Dummy rows above/below the bitcell array (connected with the replica cell wl)
         self.dummy_row_replica_insts = []
         # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
         for port in self.all_ports:
@@ -249,6 +249,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.translate_all(array_offset.scale(-1, -1))
 
         self.add_layout_pins()
+
+        self.route_supplies()
 
         lower_left = self.find_lowest_coords()
         upper_right = self.find_highest_coords()
@@ -369,6 +371,12 @@ class replica_bitcell_array(bitcell_base_array):
                                         offset=pin.ll(),
                                         width=pin.width(),
                                         height=self.height)
+
+    def route_supplies(self):
+
+        for inst in self.insts:
+            for pin_name in ["vdd", "gnd"]:
+                self.copy_layout_pin(inst, pin_name)
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

@@ -1,0 +1,12 @@
+include requirements.txt
+include docker/*
+recursive-include compiler *
+recursive-include technology *
+exclude compiler/gen_stimulus.py
+exclude compiler/model_data_util.py
+exclude compiler/printGDS.py
+exclude compiler/processGDS.py
+exclude compiler/uniquifyGDS.py
+exclude compiler/view_profile.py 
+exclude compiler/run_profile.sh
+global-exclude *.pyc

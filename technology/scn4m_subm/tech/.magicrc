@@ -1,3 +1,12 @@
+# Check if the openram package is installed. If so, append that path to $OPENRAM_TECH.
+# If $OPENRAM_TECH isn't defined and the package is installed, use the package directory.
+set openramhome [exec echo -e "import os\ntry:\n  import openram\n  print(os.path.dirname(openram.__file__))\nexcept:\n  print(\"notinstalled\")" | python3 -]
+set openramtech "${openramhome}/technology/scn4m_subm/tech"
+if { [info exists ::env(OPENRAM_TECH)] && ($openramhome != "notinstalled") } {
+    set ::env(OPENRAM_TECH) $env(OPENRAM_TECH):$openramtech
+} elseif { $openramhome != "notinstalled" } {
+    set ::env(OPENRAM_TECH) $openramtech
+}
 set openram_paths [split $::env(OPENRAM_TECH) ":"]
 foreach p $openram_paths {
   path sys +$p/scn4m_subm/tech

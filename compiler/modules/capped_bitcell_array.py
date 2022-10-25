@@ -157,19 +157,22 @@ class capped_bitcell_array(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        self.all_bitline_names = self.replica_bitcell_array.all_bitline_names
+        self.all_bitcell_bitline_names = self.replica_bitcell_array.all_bitcell_bitline_names
+        self.replica_array_bitline_names = self.replica_bitcell_array.all_bitline_names
 
-        self.add_pin_list(self.all_bitline_names, "INOUT")
+        self.add_pin_list(self.replica_array_bitline_names, "INOUT")
 
     def add_wordline_pins(self):
-        self.all_wordline_names = self.replica_bitcell_array.all_wordline_names
+        self.used_wordline_names = self.replica_bitcell_array.used_wordline_names
+        self.unused_wordline_names = self.replica_bitcell_array.unused_wordline_names
+        self.replica_array_wordline_names = self.replica_bitcell_array.all_wordline_names
 
-        self.capped_array_wordline_names = []
-        self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
-        self.capped_array_wordline_names.extend(self.replica_array_wordline_names)
-        self.capped_array_wordline_names.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
+        self.all_wordline_names = []
+        self.all_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
+        self.all_wordline_names.extend(self.replica_array_wordline_names)
+        self.all_wordline_names.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
 
-        self.add_pin_list(self.all_wordline_names, "INPUT")
+        self.add_pin_list(self.used_wordline_names, "INPUT")
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -178,25 +181,28 @@ class capped_bitcell_array(bitcell_base_array):
         # Main array
         self.replica_bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                                       mod=self.replica_bitcell_array)
-        self.connect_inst(self.all_bitline_names + self.all_wordline_names + self.supplies)
+        self.connect_inst(self.replica_array_bitline_names + ["gnd" if x in self.unused_wordline_names else x for x in self.replica_array_wordline_names] + self.supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                   mod=self.col_cap_bottom))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitcell_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
-        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitcell_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
                                                     mod=self.row_cap_left))
-        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.capped_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.all_wordline_names + self.supplies)
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
                                                     mod=self.row_cap_right))
-        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.capped_array_wordline_names + self.supplies)
+        self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.all_wordline_names + self.supplies)
+
+        # bitcell array needed for some offset calculations
+        self.bitcell_array_inst = self.replica_bitcell_array.bitcell_array_inst
 
     def create_layout(self):
 
@@ -227,7 +233,7 @@ class capped_bitcell_array(bitcell_base_array):
         self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
         self.height = self.dummy_row_insts[1].uy()
 
-        self.copy_layout_pins()
+        # self.copy_layout_pins()
 
         self.route_supplies()
 
@@ -294,11 +300,12 @@ class capped_bitcell_array(bitcell_base_array):
         dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] - 1) + self.bitcell_array_inst.lr()
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
-    def copy_layout_pins(self):
-        for pin_name in self.replica_bitcell_array_inst.get_layout_pins():
-            if pin_name in ["vdd", "gnd"]:
-                continue
-            self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
+    # FIXME: what does this do and where did it come from ?? commenting out for now 10/24
+    # def copy_layout_pins(self):
+        # for pin_name in self.replica_bitcell_array_inst.get_layout_pins():
+            # if pin_name in ["vdd", "gnd"]:
+                # continue
+            # self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
 
     def route_supplies(self):
 

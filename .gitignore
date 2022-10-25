@@ -15,3 +15,5 @@ technology/sky130/tech/.magicrc
 .idea
 compiler/tests/results/
 open_pdks/
+dist/
+openram.egg-info/

@@ -432,16 +432,24 @@ def setup_paths():
 
     global OPTS
 
+    # If $OPENRAM_HOME is defined, use that path for the source code.
+    # Otherwise, use the openram package.
     try:
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+        debug.warning("$OPENRAM_HOME is defined. "
+                      "Source code at this path will be used as library.")
     except:
-        debug.error("$OPENRAM_HOME is not properly defined.", 1)
+        import openram
+        OPENRAM_HOME = os.path.dirname(openram.__file__)
+        # Add this directory to os.environ here
+        os.environ["OPENRAM_HOME"] = OPENRAM_HOME
 
     debug.check(os.path.isdir(OPENRAM_HOME),
                 "$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
 
     if OPENRAM_HOME not in sys.path:
-        debug.error("Please add OPENRAM_HOME to the PYTHONPATH.", -1)
+        sys.path.insert(0, OPENRAM_HOME)
+        debug.info(2, "Adding source code to PYTHONPATH.")
 
     # Use a unique temp subdirectory if multithreaded
     if OPTS.num_threads > 1 or OPTS.openram_temp == "/tmp":
@@ -547,11 +555,27 @@ def import_tech():
     debug.info(2,
                "Importing technology: " + OPTS.tech_name)
 
-    # environment variable should point to the technology dir
+    OPENRAM_TECH = ""
+
+    # Check if $OPENRAM_TECH is defined
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
-        debug.error("$OPENRAM_TECH environment variable is not defined.", 1)
+        debug.warning("$OPENRAM_TECH environment variable is not defined. "
+                      "Only the default technology modules will be considered if installed. "
+                      "However, not having this environment variable may cause errors.")
+
+    # Point to the default technology modules that are part of the openram package
+    try:
+        import openram
+        if OPENRAM_TECH != "":
+            OPENRAM_TECH += ":"
+        OPENRAM_TECH += os.path.dirname(openram.__file__) + "/technology"
+    except:
+        debug.warning("Couldn't find the openram package.")
+
+    # Add this environment variable to os.environ
+    os.environ["OPENRAM_TECH"] = OPENRAM_TECH
 
     # Add all of the paths
     for tech_path in OPENRAM_TECH.split(":"):

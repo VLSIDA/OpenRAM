@@ -8,11 +8,12 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 ## Table of Contents
 1.  [OpenRAM Dependencies](#openram-dependencies)
 1.  [Supported Technologies](#supported-technologies)
+1.  [Basic Setup](./basic_setup.md#go-back)
+1.  [Basic Usage](./basic_usage.md#go-back)
 1.  [Bitcells](./bitcells.md#go-back)
 1.  [Architecture](./architecture.md#go-back)
 1.  [Implementation](#implementation)
 1.  [Technology and Tool Portability](#technology-and-tool-portability)
-1.  [Basic Usage](./basic_usage.md#go-back)
 1.  [Tutorials](./tutorials.md#go-back)
 1. [Debugging and Unit Testing](./debug.md#go-back)
 1. [Technology Setup](./technology_setup.md#go-back)

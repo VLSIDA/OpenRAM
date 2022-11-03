@@ -18,7 +18,8 @@ a Liberty (.lib) file for timing analysis/optimization
 
 import sys
 import datetime
-from openram import globals as g
+import openram
+import globals as g
 
 (OPTS, args) = g.parse_args()
 
@@ -29,7 +30,7 @@ if len(args) != 1:
 
 
 # These depend on arguments, so don't load them until now.
-from openram import debug
+import debug
 
 # Parse config file and set up all the options
 g.init_openram(config_file=args[0], is_unit_test=False)
@@ -47,7 +48,7 @@ g.print_time("Start", start_time)
 # Output info about this run
 g.report_status()
 
-from openram.modules import sram_config
+from modules import sram_config
 
 
 # Configure the SRAM organization
@@ -73,7 +74,7 @@ for path in output_files:
     debug.print_raw(path)
 
 
-from openram.modules import sram
+from modules import sram
 s = sram(name=OPTS.output_name,
          sram_config=c)
 

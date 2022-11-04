@@ -440,7 +440,7 @@ def setup_paths():
                       "Source code at this path will be used as library.")
     except:
         import openram
-        OPENRAM_HOME = os.path.dirname(openram.__file__)
+        OPENRAM_HOME = os.path.dirname(openram.__file__ + "/compiler")
         # Add this directory to os.environ here
         os.environ["OPENRAM_HOME"] = OPENRAM_HOME
 

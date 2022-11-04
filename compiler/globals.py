@@ -561,10 +561,9 @@ def import_tech():
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
-        debug.warning("$OPENRAM_TECH environment variable is not defined. "
-                      "Only the default technology modules will be considered if installed. "
-                      "However, not having this environment variable may cause errors.")
-
+        debug.info(2,
+                   "$OPENRAM_TECH environment variable is not defined. "
+                   "Only the default technology modules will be considered if installed.")
     # Point to the default technology modules that are part of the openram package
     try:
         import openram

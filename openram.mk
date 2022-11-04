@@ -1,6 +1,6 @@
 OPENRAM_HOME := $(abspath $(TOP_DIR)/compiler)
 OPENRAM_TECH := $(abspath $(TOP_DIR)/technology)
-OPENRAM_COMPILER := $(abspath $(TOP_DIR)/openram.py)
+OPENRAM_COMPILER := $(abspath $(TOP_DIR)/sram_compiler.py)
 
 PDK_ROOT ?= $(TOP_DIR)
 

@@ -13,7 +13,7 @@ try:
     OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
 except:
     import openram
-    OPENRAM_HOME = os.path.dirname(openram.__file__)
+    OPENRAM_HOME = os.path.dirname(openram.__file__) + "/compiler"
 
 if not os.path.isdir(OPENRAM_HOME):
     assert False

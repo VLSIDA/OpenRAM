@@ -1,3 +1,6 @@
+include Makefile
+include openram.mk
+include setpaths.sh
 include requirements.txt
 include docker/*
 recursive-include compiler *

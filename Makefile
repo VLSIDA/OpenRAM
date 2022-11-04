@@ -218,6 +218,8 @@ wipe: uninstall
 
 # Build the openram library
 build-library:
+	@rm -rf dist
+	@rm -rf openram.egg-info
 	@python3 -m build
 .PHONY: build-library
 

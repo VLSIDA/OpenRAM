@@ -9,9 +9,9 @@ from setuptools import setup, find_namespace_packages
 
 
 # Include these folder from the root of repo as submodules
-include = ["docker", "technology"]
+include = ["compiler", "docker", "technology", "macros"]
 # Exclude files/folders with these words
-exclude = ["docs", "images", "macros"]
+exclude = ["docs", "images"]
 
 
 # Find all modules inside the 'compiler' folder
@@ -24,7 +24,7 @@ for dir in find_namespace_packages():
 # Replace 'compiler' with 'openram' for package names
 packages = []
 for dir in dirs:
-    packages += [dir.replace("compiler", "openram")]
+    packages.append(dir)
 
 # Make the included folders submodules of openram package
 for i in range(len(packages)):
@@ -34,6 +34,10 @@ for i in range(len(packages)):
 # Fix directory paths
 for i in range(len(dirs)):
     dirs[i] = dirs[i].replace(".", "/")
+
+# Insert the root as the openram module
+packages.insert(0, "openram")
+dirs.insert(0, "")
 
 # Zip package names and their paths
 package_dir = {k: v for k, v in zip(packages, dirs)}

@@ -220,6 +220,7 @@ wipe: uninstall
 build-library:
 	@rm -rf dist
 	@rm -rf openram.egg-info
+	@python3 -m pip install --upgrade build
 	@python3 -m build
 .PHONY: build-library
 

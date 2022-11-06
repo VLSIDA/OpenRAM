@@ -23,7 +23,7 @@ class openram_back_end_test(openram_test):
         config_file = "{}/tests/configs/config_back_end".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(1, "Testing top-level back-end openram.py with 2-bit, 16 word SRAM.")
+        debug.info(1, "Testing top-level back-end sram_compiler.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
         out_path = "/tmp/testsram_{0}_{1}_{2}/".format(OPTS.tech_name, getpass.getuser(), os.getpid())
 
@@ -54,9 +54,9 @@ class openram_back_end_test(openram_test):
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-            exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
+            exe_name = "{0}/../sram_compiler.py ".format(OPENRAM_HOME)
         else:
-            exe_name = "{0}{1}/openram.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
+            exe_name = "{0}{1}/../sram_compiler.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
         cmd = "{0} -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                        out_file,

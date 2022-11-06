@@ -131,7 +131,7 @@ def bp():
     An empty function so you can set soft breakpoints in pdb.
     Usage:
     1) Add a breakpoint anywhere in your code with "import debug; debug.bp()".
-    2) Run "python3 -m pdb openram.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
+    2) Run "python3 -m pdb sram_compiler.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
     3) When pdb starts, run "break debug.bp" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
     4) Then run "cont" to continue.
     5) You can now set additional breakpoints or display commands

@@ -24,7 +24,7 @@ import subprocess
 
 VERSION = "1.2.0"
 NAME = "OpenRAM v{}".format(VERSION)
-USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
+USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 
 OPTS = options.options()
 CHECKPOINT_OPTS = None

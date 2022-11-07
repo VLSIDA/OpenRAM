@@ -16,9 +16,13 @@ a LEF (.lef) file for preliminary P&R (real one should be from layout)
 a Liberty (.lib) file for timing analysis/optimization
 """
 
+import os
 import sys
 import datetime
-import openram
+try:
+    import openram
+except:
+    sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals as g
 
 (OPTS, args) = g.parse_args()

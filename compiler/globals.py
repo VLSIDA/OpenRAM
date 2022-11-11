@@ -141,9 +141,6 @@ def print_banner():
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
     debug.print_raw("|=========" + dev_info.center(60) + "=========|")
-    if OPTS.openram_temp:
-        temp_info = "Temp dir: {}".format(OPTS.openram_temp)
-        debug.print_raw("|=========" + temp_info.center(60) + "=========|")
     debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
     debug.print_raw("|==============================================================================|")
 
@@ -436,8 +433,6 @@ def setup_paths():
     # Otherwise, use the openram package.
     try:
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        debug.warning("$OPENRAM_HOME is defined. "
-                      "Source code at this path will be used as library.")
     except:
         import openram
         OPENRAM_HOME = os.path.dirname(openram.__file__) + "/compiler"
@@ -446,6 +441,7 @@ def setup_paths():
 
     debug.check(os.path.isdir(OPENRAM_HOME),
                 "$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
+    debug.info(1, "OpenRAM source code found in {}".format(OPENRAM_HOME))
 
     if OPENRAM_HOME not in sys.path:
         sys.path.insert(0, OPENRAM_HOME)
@@ -571,7 +567,11 @@ def import_tech():
             OPENRAM_TECH += ":"
         OPENRAM_TECH += os.path.dirname(openram.__file__) + "/technology"
     except:
-        debug.warning("Couldn't find the openram package.")
+        if OPENRAM_TECH == "":
+            debug.warning("Couldn't find a tech directory. "
+                          "Install openram library or set $OPENRAM_TECH.")
+
+    debug.info(1, "Tech directory found in {}".format(OPENRAM_TECH))
 
     # Add this environment variable to os.environ
     os.environ["OPENRAM_TECH"] = OPENRAM_TECH

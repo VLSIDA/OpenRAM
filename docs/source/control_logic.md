@@ -7,13 +7,13 @@ This page of the documentation explains the control logic and timing of OpenRAM.
 
 ## Table of Contents
 1. [Read Timing](#read-timing)
-2. [Write Timing](#write-timing)
-3. [External Control Signals](#external-control-signals)
-4. [Internal Control Signals](#internal-control-signals)
-5. [Replica Bitline (RBL)](#replica-bitline-rbl)
-6. [Internal Control Signals Diagram (Read)](#internal-control-signals-diagram-read)
-7. [Internal Control Signals Diagram (Write)](#internal-control-signals-diagram-write)
-8. [Clock Distribution](#clock-distribution)
+1. [Write Timing](#write-timing)
+1. [External Control Signals](#external-control-signals)
+1. [Internal Control Signals](#internal-control-signals)
+1. [Replica Bitline (RBL)](#replica-bitline-rbl)
+1. [Internal Control Signals Diagram (Read)](#internal-control-signals-diagram-read)
+1. [Internal Control Signals Diagram (Write)](#internal-control-signals-diagram-write)
+1. [Clock Distribution](#clock-distribution)
 
 
 

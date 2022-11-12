@@ -6,17 +6,17 @@ This page of the documentation explains the hierarchical design modules of OpenR
 
 
 ## Table of Contents
-1.  [Hierarchical Design Modules](#hierarchical-design-modules-1)
-2.  [Bank](#bank)
-3.  [Port Data](#port-data)
-4.  [Port Address](#port-address)
-5.  [Plain Bitcell Array](#plain-bitcell-array)
-6.  [Variations of Bitcells Needed](#variations-of-bitcells-needed)
-7.  [Replica Bitcell Array](#replica-bitcell-array)
-8.  [1D Arrays](#1d-arrays)
-9.  [2D Arrays](#2d-arrays)
-10. [Delay Line](#delay-line)
-11. [Hierarchical (Address) Decoder](#hierarchical-address-decoder)
+1. [Hierarchical Design Modules](#hierarchical-design-modules-1)
+1. [Bank](#bank)
+1. [Port Data](#port-data)
+1. [Port Address](#port-address)
+1. [Plain Bitcell Array](#plain-bitcell-array)
+1. [Variations of Bitcells Needed](#variations-of-bitcells-needed)
+1. [Replica Bitcell Array](#replica-bitcell-array)
+1. [1D Arrays](#1d-arrays)
+1. [2D Arrays](#2d-arrays)
+1. [Delay Line](#delay-line)
+1. [Hierarchical (Address) Decoder](#hierarchical-address-decoder)
 
 
 
@@ -61,7 +61,7 @@ This page of the documentation explains the hierarchical design modules of OpenR
 
 ## Port Address
 * Encapsulates the row decoder and wordline driver for easier placement next to a bank
-* Each port will have its own port_address module 
+* Each port will have its own port\_address module 
 
 
 

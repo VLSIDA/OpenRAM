@@ -7,9 +7,9 @@ This page of the documentation explains the base data structures of OpenRAM.
 
 ## Table of Contents
 1. [Design Classes](#design-classes)
-2. [Base Class Inheritance](#base-class-inheritance)
-3. [Parameterized Transistor](#parameterized-transistor-ptx-or-pfinfet)
-4. [Parameterized Cells](#parameterized-cells)
+1. [Base Class Inheritance](#base-class-inheritance)
+1. [Parameterized Transistor](#parameterized-transistor-ptx-or-pfinfet)
+1. [Parameterized Cells](#parameterized-cells)
 
 
 

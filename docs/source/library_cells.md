@@ -7,12 +7,12 @@ This page of the documentation explains the library cells of OpenRAM.
 
 ## Table of Contents
 1. [Required Hard/Custom Cells](#required-hardcustom-cells)
-2. [Bitcell(s)](#bitcells)
-3. [Multiport Bitcells](#multiport-bitcells)
-4. [Parameterized Bitcell](#parameterized-bitcell)
-5. [Sense Amplifier](#sense-amplifier)
-6. [DFF](#dff)
-7. [Tristate/Write Driver](#tristatewrite-driver)
+1. [Bitcell(s)](#bitcells)
+1. [Multiport Bitcells](#multiport-bitcells)
+1. [Parameterized Bitcell](#parameterized-bitcell)
+1. [Sense Amplifier](#sense-amplifier)
+1. [DFF](#dff)
+1. [Tristate/Write Driver](#tristatewrite-driver)
 
 
 

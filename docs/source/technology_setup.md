@@ -7,17 +7,17 @@ This page of the documentation explains the technology setup of OpenRAM.
 
 ## Table of Contents
 1. [Technology Directories](#technology-directories)
-2. Technology Configuration:
+1. Technology Configuration:
     1. [Layer Map](#technology-configuration-layer-map)
-    2. [GDS](#technology-configuration-gds)
-    3. [DRC](#technology-configuration-drc)
-    4. [SPICE](#technology-configuration-spice)
-    5. [Parameters](#technology-configuration-parameters)
+    1. [GDS](#technology-configuration-gds)
+    1. [DRC](#technology-configuration-drc)
+    1. [SPICE](#technology-configuration-spice)
+    1. [Parameters](#technology-configuration-parameters)
 
 
 
 ## Technology Directories
-* Environment variable OPENRAM_TECH specifies list of technology directories
+* Environment variable OPENRAM\_TECH specifies list of technology directories
     * Similar to `*nix $PATH`
 * Directory structure:
     ```
@@ -73,7 +73,7 @@ This page of the documentation explains the technology setup of OpenRAM.
 
 
 ## Technology Configuration: DRC
-* Creates the design_rule class with several parts:
+* Creates the design\_rule class with several parts:
     * Grid size
     * Location of DRC, LVS, PEX rules and layer map
     * Subset of design rules for FEOL and BEOL

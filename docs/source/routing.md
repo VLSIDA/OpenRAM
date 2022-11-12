@@ -7,9 +7,9 @@ This page of the documentation explains the routing of OpenRAM.
 
 ## Table of Contents
 1. [Power Supply Options](#power-supply-options)
-2. [Power Routing](#power-routing)
-3. [Power Supply Algorithm](#power-supply-algorithm)
-4. [Channel Router](#channel-router)
+1. [Power Routing](#power-routing)
+1. [Power Supply Algorithm](#power-supply-algorithm)
+1. [Channel Router](#channel-router)
 
 
 

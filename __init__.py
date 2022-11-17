@@ -20,3 +20,6 @@ if not os.path.isdir(OPENRAM_HOME):
 
 if OPENRAM_HOME not in sys.path:
     sys.path.insert(0, OPENRAM_HOME)
+
+# Export everything in globals.py as part of "openram"
+from globals import *

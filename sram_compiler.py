@@ -22,14 +22,23 @@ import datetime
 try:
     import openram
 except:
-    sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals as g
+    # If openram library isn't found as a python package,
+    # import it from the $OPENRAM_HOME path.
+    import importlib.util
+    OPENRAM_HOME = os.getenv("OPENRAM_HOME")
+    # Import using spec since the directory can be named something
+    # other than "openram".
+    spec = importlib.util.spec_from_file_location("openram", "{}/../__init__.py".format(OPENRAM_HOME))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["openram"] = module
+    spec.loader.exec_module(module)
+    import openram
 
-(OPTS, args) = g.parse_args()
+(OPTS, args) = openram.parse_args()
 
 # Check that we are left with a single configuration file as argument.
 if len(args) != 1:
-    print(g.USAGE)
+    print(openram.USAGE)
     sys.exit(2)
 
 
@@ -37,20 +46,20 @@ if len(args) != 1:
 import debug
 
 # Parse config file and set up all the options
-g.init_openram(config_file=args[0], is_unit_test=False)
+openram.init_openram(config_file=args[0], is_unit_test=False)
 
 # Ensure that the right bitcell exists or use the parameterised one
-g.setup_bitcell()
+openram.setup_bitcell()
 
 # Only print banner here so it's not in unit tests
-g.print_banner()
+openram.print_banner()
 
 # Keep track of running stats
 start_time = datetime.datetime.now()
-g.print_time("Start", start_time)
+openram.print_time("Start", start_time)
 
 # Output info about this run
-g.report_status()
+openram.report_status()
 
 from modules import sram_config
 
@@ -86,7 +95,7 @@ s = sram(name=OPTS.output_name,
 s.save()
 
 # Delete temp files etc.
-g.end_openram()
-g.print_time("End", datetime.datetime.now(), start_time)
+openram.end_openram()
+openram.print_time("End", datetime.datetime.now(), start_time)
 
 

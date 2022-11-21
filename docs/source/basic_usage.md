@@ -38,13 +38,13 @@ import globals
 globals.init_openram("myconfig.py") # Config files are explained on this page
 ```
 Note that you should import "openram" in this order so that the modules are imported properly. You can also look
-at `sram_compiler.py` as an example on how to use "openram."
+at [sram_compiler.py](../../sram_compiler.py) as an example on how to use "openram."
 
 
 
 ## Command Line Usage (with library)
 You can run OpenRAM from the command line  using the `sram_compiler.py` script that is included in the
-library's installation. You can the package directory on a path like:
+library's installation. You can find the package directory on a path like:
 ```
 /home/mrg/.local/lib/python3.8/site-packages/openram
 ```

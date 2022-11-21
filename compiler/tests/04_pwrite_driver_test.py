@@ -20,7 +20,7 @@ import debug
 class pwrite_driver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_{0}".format(OPTS.tech_name), is_unit_test=True)
 
         debug.info(2, "Checking 1x pwrite_driver")
         tx = factory.create(module_type="pwrite_driver", size=1)

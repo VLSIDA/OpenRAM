@@ -20,7 +20,7 @@ class wordline_driver_array_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         # check wordline driver for multi-port
         OPTS.bitcell = "pbitcell"

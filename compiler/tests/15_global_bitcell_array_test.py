@@ -20,7 +20,7 @@ class global_bitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         # debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
         # a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)

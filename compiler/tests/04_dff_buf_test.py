@@ -20,7 +20,7 @@ class dff_buf_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
         debug.info(2, "Testing dff_buf 4x 8x")
         a = factory.create(module_type="dff_buf", inv1_size=4, inv2_size=8)
         self.local_check(a)

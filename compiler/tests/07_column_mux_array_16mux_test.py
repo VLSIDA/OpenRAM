@@ -19,7 +19,7 @@ class column_mux_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         debug.info(1, "Testing sample for 16-way column_mux_array")
         a = factory.create(module_type="column_mux_array", columns=64, word_size=4)

@@ -19,7 +19,7 @@ class sense_amp_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=1")
         a = factory.create(module_type="sense_amp_array", word_size=4, words_per_row=1)

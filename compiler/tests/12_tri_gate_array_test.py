@@ -21,7 +21,7 @@ class tri_gate_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         debug.info(1, "Testing tri_gate_array for columns=8, word_size=8")
         a = factory.create(module_type="tri_gate_array", columns=8, word_size=8)

@@ -19,7 +19,7 @@ class write_driver_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         # check write driver array for single port
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8")

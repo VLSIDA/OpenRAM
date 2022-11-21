@@ -185,7 +185,7 @@ def check_versions():
         OPTS.coverage = 0
 
 
-def init_openram(config_file, is_unit_test=True):
+def init_openram(config_file, is_unit_test=False):
     """ Initialize the technology, paths, simulators, etc. """
 
     check_versions()
@@ -294,7 +294,7 @@ def get_tool(tool_type, preferences, default_name=None):
             return(None, "")
 
 
-def read_config(config_file, is_unit_test=True):
+def read_config(config_file, is_unit_test=False):
     """
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config

@@ -21,7 +21,7 @@ class openram_front_end_test(openram_test):
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         config_file = "{}/tests/configs/config_front_end".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         debug.info(1, "Testing top-level front-end sram_compiler.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"

@@ -19,7 +19,7 @@ class sense_amp_array_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         # check sense amp array for single port
         debug.info(2, "Testing sense_amp_array for word_size=4, words_per_row=2 and num_spare_cols=3")

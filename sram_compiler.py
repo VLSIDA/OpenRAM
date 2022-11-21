@@ -46,7 +46,7 @@ if len(args) != 1:
 import debug
 
 # Parse config file and set up all the options
-openram.init_openram(config_file=args[0], is_unit_test=False)
+openram.init_openram(config_file=args[0])
 
 # Ensure that the right bitcell exists or use the parameterised one
 openram.setup_bitcell()

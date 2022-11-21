@@ -18,7 +18,7 @@ class port_data_spare_cols_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
         from modules import sram_config
 
         c = sram_config(word_size=8,

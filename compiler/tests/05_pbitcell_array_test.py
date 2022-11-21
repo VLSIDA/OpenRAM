@@ -20,7 +20,7 @@ class pbitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        globals.init_openram(config_file, is_unit_test=True)
 
         debug.info(2, "Testing 4x4 array for multiport bitcell, with read ports at the edge of the bit cell")
         OPTS.bitcell = "pbitcell"

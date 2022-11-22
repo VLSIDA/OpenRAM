@@ -6,19 +6,19 @@ This page of the documentation explains the characterization of OpenRAM.
 
 
 ## Table of Contents
-1.  [Characterization Overview](#characterization-overview)
-2.  [Characterizer Organization](#characterizer-organization)
-3.  [Characterization Options](#characterization-options)
-4.  [Characterization Measurements](#characterization-measurements)
-5.  [Analytical Characterization](#analytical-characterization)
-6.  [Multiport Characterization](#multiport-characterization)
-7.  [Characterizer Unit Test Use](#characterizer-unit-test-use)
-8.  [Functional Simulation](#functional-simulation)
-9.  [Power/Delay Characterization](#powerdelay-characterization)
-10. [Timing Graph](#timing-graph)
-11. [Graph Creation Example: Buffer](#graph-creation-example-buffer)
-12. [Graph Module Exclusion](#graph-module-exclusion)
-13. [Timing Measurement Checks](#timing-measurement-checks)
+1. [Characterization Overview](#characterization-overview)
+1. [Characterizer Organization](#characterizer-organization)
+1. [Characterization Options](#characterization-options)
+1. [Characterization Measurements](#characterization-measurements)
+1. [Analytical Characterization](#analytical-characterization)
+1. [Multiport Characterization](#multiport-characterization)
+1. [Characterizer Unit Test Use](#characterizer-unit-test-use)
+1. [Functional Simulation](#functional-simulation)
+1. [Power/Delay Characterization](#powerdelay-characterization)
+1. [Timing Graph](#timing-graph)
+1. [Graph Creation Example: Buffer](#graph-creation-example-buffer)
+1. [Graph Module Exclusion](#graph-module-exclusion)
+1. [Timing Measurement Checks](#timing-measurement-checks)
 
 
 
@@ -62,9 +62,9 @@ Measures the timing/power through SPICE simulation:
 
 ## Characterization Measurements
 * Characterization is performed primarily to generate tables in .lib file
-    * cell_rise/cell_fall - Delay of from negative clock edge to DOUT when reading a 1 or 0 respectively
-    * rise_transition/fall_transition - Slew of DOUT when read 1 or 0 respectively
-    * Setup and hold time for inputs (setup_rising, hold_rising)
+    * cell\_rise/cell\_fall - Delay of from negative clock edge to DOUT when reading a 1 or 0 respectively
+    * rise\_transition/fall\_transition - Slew of DOUT when read 1 or 0 respectively
+    * Setup and hold time for inputs (setup\_rising, hold\_rising)
     * Total power and leakage power
     * Delays and slews and intended to be independent of clock period.
     * Fall delays are copied to rise delays after characterization*

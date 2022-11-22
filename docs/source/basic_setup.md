@@ -13,35 +13,55 @@ In general, the OpenRAM compiler has very few dependencies:
 + Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ [Git]
++ Git
+
+
+
+## OpenRAM Library
+OpenRAM is available as a Python library. There are a few ways to install it:
+
++ Install using Makefile (you need to clone the repo):
+```
+git clone git@github.com:VLSIDA/OpenRAM.git
+cd OpenRAM
+make library
+```
++ Install the latest _dev_ version:
+```
+pip3 install git+ssh://git@github.com/VLSIDA/OpenramRAM.git@dev
+```
+
 
 ## Docker
 
-We have a [docker setup](./docker) to run OpenRAM. To use this, you should run:
+We have a [docker setup](../../docker) to run OpenRAM. To use this, you should run:
 ```
 cd OpenRAM/docker
 make build
 ```
-This must be run once and will take a while to build all the tools.
+This must be run once and will take a while to build all the tools. If you have the
+OpenRAM library installed, you can also run the docker setup from the package
+installation directory.
+
 
 
 ## Environment
 
-You must set two environment variables:
+If you haven't installed the OpenRAM library or you want to use a different OpenRAM installation,
+you can set two environment variables:
 + OPENRAM\_HOME should point to the compiler source directory.
-+ OPENERAM\_TECH should point to one or more root technology directories (colon separated).
++ OPENRAM\_TECH should point to one or more root technology directories (colon separated).
 
-You should also add OPENRAM\_HOME to your PYTHONPATH.
+If you have the library installed and OPENRAM\_HOME set, the library will use the installation on
+the OPENRAM\_HOME path.
 
-For example add this to your .bashrc:
+If you don't have the library, you should also add OPENRAM\_HOME to your PYTHONPATH. This is not
+needed if you have the library.
 
+You can add these environment variables to your `.bashrc`:
 ```
   export OPENRAM_HOME="$HOME/OpenRAM/compiler"
   export OPENRAM_TECH="$HOME/OpenRAM/technology"
-```
-
-You should also add OPENRAM\_HOME to your PYTHONPATH:
-```
   export PYTHONPATH=$OPENRAM_HOME
 ```
 
@@ -51,17 +71,17 @@ directory that you use and any custom technology modules as well. For example:
   export PYTHONPATH="$OPENRAM_HOME:$OPENRAM_TECH/sky130:$OPENRAM_TECH/sky130/custom"
 ```
 
-We include the tech files necessary for [SCMOS] SCN4M_SUBM,
+We include the tech files necessary for [SCMOS] SCN4M\_SUBM,
 [FreePDK45]. The [SCMOS] spice models, however, are
 generic and should be replaced with foundry models. You may get the
 entire [FreePDK45 PDK here][FreePDK45].
 
 
+
 ### Sky130 Setup
 
-To install [Sky130], you must have the open_pdks files installed in $PDK_ROOT. 
+To install [Sky130], you must have the open\_pdks files installed in $PDK\_ROOT. 
 To install this automatically, you can run:
-
 ```
 cd $HOME/OpenRAM
 make pdk
@@ -69,8 +89,15 @@ make pdk
 
 Then you must also install the [Sky130] SRAM build space and the appropriate cell views
 by running:
-
 ```
 cd $HOME/OpenRAM
 make install
 ```
+
+You can also run these from the package installation directory if you have the OpenRAM library.
+
+
+
+[SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
+[FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[Sky130]:   https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git

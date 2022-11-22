@@ -6,13 +6,13 @@ This page of the documentation explains the results of OpenRAM.
 
 
 ## Table of Contents
-1.  [Small Layouts](#small-layouts)
-2.  [Relative Planar Bitcells](#relative-planar-bitcells-035um-scmos)
-3.  [SRAM Area](#sram-area)
-4.  [Generated Layout by OpenRAM](#generated-layout-by-openram-for-a-multiport-6r2w-sram-in-32-nm-soi-cmos-technology)
-5.  [Timing and Density Results for Generated SRAMs](#timing-and-density-results-for-generated-srams)
-6.  [Comparison with Fabricated SRAMs](#comparison-with-fabricated-srams)
-7.  [Conclusions](#conclusions)
+1. [Small Layouts](#small-layouts)
+1. [Relative Planar Bitcells](#relative-planar-bitcells-035um-scmos)
+1. [SRAM Area](#sram-area)
+1. [Generated Layout by OpenRAM](#generated-layout-by-openram-for-a-multiport-6r2w-sram-in-32-nm-soi-cmos-technology)
+1. [Timing and Density Results for Generated SRAMs](#timing-and-density-results-for-generated-srams)
+1. [Comparison with Fabricated SRAMs](#comparison-with-fabricated-srams)
+1. [Conclusions](#conclusions)
 
 
 

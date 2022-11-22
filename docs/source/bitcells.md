@@ -7,8 +7,8 @@ This page of the documentation explains the bitcells supported by OpenRAM.
 
 ## Table of Contents
 1. [Multiport Bitcells](#multiport-bitcells)
-2. [Relative Bitcell Sizes](#relative-bitcell-sizes-035um-scmos)
-3. [Thin SRAM Bitcells](#thin-sram-bitcells-130nm)
+1. [Relative Bitcell Sizes](#relative-bitcell-sizes-035um-scmos)
+1. [Thin SRAM Bitcells](#thin-sram-bitcells-130nm)
 
 
 

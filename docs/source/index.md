@@ -6,14 +6,15 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 
 
 ## Table of Contents
-1.  [OpenRAM Dependencies](#openram-dependencies)
-1.  [Supported Technologies](#supported-technologies)
-1.  [Bitcells](./bitcells.md#go-back)
-1.  [Architecture](./architecture.md#go-back)
-1.  [Implementation](#implementation)
-1.  [Technology and Tool Portability](#technology-and-tool-portability)
-1.  [Basic Usage](./basic_usage.md#go-back)
-1.  [Tutorials](./tutorials.md#go-back)
+1. [OpenRAM Dependencies](#openram-dependencies)
+1. [Supported Technologies](#supported-technologies)
+1. [Basic Setup](./basic_setup.md#go-back)
+1. [Basic Usage](./basic_usage.md#go-back)
+1. [Bitcells](./bitcells.md#go-back)
+1. [Architecture](./architecture.md#go-back)
+1. [Implementation](#implementation)
+1. [Technology and Tool Portability](#technology-and-tool-portability)
+1. [Tutorials](./tutorials.md#go-back)
 1. [Debugging and Unit Testing](./debug.md#go-back)
 1. [Technology Setup](./technology_setup.md#go-back)
 1. [Library Cells](./library_cells.md#go-back)
@@ -24,13 +25,12 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 1. [Characterization](./characterization.md#go-back)
 1. [Results](./results.md#go-back)
 1. [FAQ](./FAQ.md#go-back)
-1.  [Contributors/Collaborators](#contributorscollaborators)
+1. [Contributors/Collaborators](#contributorscollaborators)
 
 
 
 
 ## OpenRAM Dependencies
-
 Please see the Dockerfile for the required versions of tools.
 
 In general, the OpenRAM compiler has very few dependencies:
@@ -38,16 +38,16 @@ In general, the OpenRAM compiler has very few dependencies:
 + Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ [Git]
++ Git
 
 Commercial tools (optional):
 * Spice Simulator
     * Hspice  I-2013.12-1 (or later)
     * CustomSim 2017 (or later)
 * DRC
-    * Calibre 2017.3_29.23
+    * Calibre 2017.3\_29.23
 * LVS
-    * Calibre 2017.3_29.23
+    * Calibre 2017.3\_29.23
 
 
 
@@ -55,7 +55,7 @@ Commercial tools (optional):
 * NCSU FreePDK 45nm
     * Non-fabricable but contains DSM rules
     * Calibre or klayout for DRC/LVS
-* MOSIS 0.35um (SCN4M_SUBM)
+* MOSIS 0.35um (SCN4M\_SUBM)
     * Fabricable technology
     * Magic/Netgen or Calibre for DRC/LVS
 * Skywater 130nm (sky130)

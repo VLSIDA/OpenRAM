@@ -7,11 +7,11 @@ This page of the documentation explains the debugging and unit testing of OpenRA
 
 ## Table of Contents
 1. [Unit Tests](#unit-tests)
-2. [Unit Test Organization](#unit-test-organization)
-3. [Running Unit Tests](#running-unit-tests)
-4. [Successful Unit Tests](#successful-unit-tests)
-5. [Debugging Unsuccessful Unit Tests](#debugging-unsuccessful-unit-tests-or-openrampy)
-6. [Temporary Output Files](#temporary-output-files)
+1. [Unit Test Organization](#unit-test-organization)
+1. [Running Unit Tests](#running-unit-tests)
+1. [Successful Unit Tests](#successful-unit-tests)
+1. [Debugging Unsuccessful Unit Tests](#debugging-unsuccessful-unit-tests-or-sram_compilerpy)
+1. [Temporary Output Files](#temporary-output-files)
 
 
 
@@ -124,7 +124,7 @@ OK
 
 
 
-## Debugging Unsuccessful Unit Tests (or openram.py)
+## Debugging Unsuccessful Unit Tests (or sram\_compiler.py)
 * You will get an ERROR during unit test and see a stack trace 
 * Examine the temporary output files in the temp directory (/tmp/mydir)
 ```console

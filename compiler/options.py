@@ -13,7 +13,7 @@ class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
     of these options can be over-riden in a configuration file
-    that is the sole required command-line positional argument for openram.py.
+    that is the sole required command-line positional argument for sram_compiler.py.
     """
 
     ###################

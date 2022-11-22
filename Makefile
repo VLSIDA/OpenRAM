@@ -215,3 +215,16 @@ wipe: uninstall
 	@rm -rf $(OPEN_PDKS_DIR)
 	@rm -rf $(SKY130_PDKS_DIR)
 .PHONY: wipe
+
+# Build the openram library
+build-library:
+	@rm -rf dist
+	@rm -rf openram.egg-info
+	@python3 -m pip install --upgrade build
+	@python3 -m build
+.PHONY: build-library
+
+# Build and install the openram library
+library: build-library
+	@python3 -m pip install --find-links=dist openram --force
+.PHONY: library

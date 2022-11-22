@@ -285,7 +285,7 @@ class replica_bitcell_array(bitcell_base_array):
 
     def get_replica_top(self):
         """ Return the top of all replica columns. """
-        return self.dummy_row_insts[0].by()
+        return self.dummy_row_insts[1].by()
 
     def get_replica_bottom(self):
         """ Return the bottom of all replica columns. """
@@ -293,7 +293,7 @@ class replica_bitcell_array(bitcell_base_array):
 
     def get_replica_left(self):
         """ Return the left of all replica columns. """
-        return self.dummy_col_insts[0].rx()
+        return self.dummy_col_insts[0].lx()
 
     def get_replica_right(self):
         """ Return the right of all replica columns. """

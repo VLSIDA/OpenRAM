@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import cell_properties as props
+from openram import debug
+from openram.tech import cell_properties as props
 from .bitcell_base import bitcell_base
 
 
@@ -20,5 +20,4 @@ class dummy_bitcell_2port(bitcell_base):
     def __init__(self, name):
         super().__init__(name, prop=props.bitcell_2port)
         debug.info(2, "Create dummy bitcell 2 port object")
-
 

@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
+from openram import debug
+from openram import OPTS
 from .simulation import simulation
-from globals import OPTS
-import debug
+
 
 class elmore(simulation):
     """

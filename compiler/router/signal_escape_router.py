@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 from datetime import datetime
-import debug
-from globals import print_time
+from openram import debug
+from openram import print_time
 from .router import router
 from .signal_grid import signal_grid
 

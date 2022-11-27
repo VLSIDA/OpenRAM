@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from base import vector
-from sram_factory import factory
-from tech import cell_properties
-import debug
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import cell_properties
+from openram import OPTS
 
 
 class sense_amp_array(design):

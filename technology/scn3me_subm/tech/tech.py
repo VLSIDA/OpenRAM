@@ -1,7 +1,7 @@
 import os
-from design_rules import *
-from module_type import *
-from custom_cell_properties import CellProperties
+from openram.drc.design_rules import *
+from openram.drc.module_type import *
+from openram.drc.custom_cell_properties import CellProperties
 
 """
 File containing the process technology parameters for SCMOS 3me, subm, 180nm.

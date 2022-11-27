@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from base import vector
-from globals import OPTS
-from sram_factory import factory
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class dff_inv(design):

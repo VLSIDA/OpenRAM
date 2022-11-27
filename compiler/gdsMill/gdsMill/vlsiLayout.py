@@ -1,8 +1,8 @@
-from .gdsPrimitives import *
+import math
 from datetime import *
 import numpy as np
-import math
-import debug
+from openram import debug
+from .gdsPrimitives import *
 
 
 class VlsiLayout:
@@ -774,7 +774,7 @@ class VlsiLayout:
             else:
                 label_text = label.textString
             try:
-                from tech import layer_override
+                from openram.tech import layer_override
                 if layer_override[label_text]:
                     shapes = self.getAllShapes((layer_override[label_text][0], None))
                     if not shapes:

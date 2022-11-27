@@ -4,21 +4,19 @@
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
-
+#
 import os
 import math
-
-from gdsMill import gdsMill
-import tech
-import globals
-import debug
+from openram import debug
+from openram import tech
+from openram.gdsMill import gdsMill
+from openram import OPTS
 from .vector import vector
 from .pin_layout import pin_layout
 try:
-    from tech import special_purposes
+    from openram.tech import special_purposes
 except ImportError:
     special_purposes = {}
-OPTS = globals.OPTS
 
 
 def ceil(decimal):
@@ -159,7 +157,7 @@ def get_gds_pins(pin_names, name, gds_filename, units):
                     # may have must-connect pins
                     if isinstance(lpp[1], list):
                         try:
-                            from tech import layer_override
+                            from openram.tech import layer_override
                             if layer_override[pin_name]:
                                 lpp = layer_override[pin_name.textString]
                         except:

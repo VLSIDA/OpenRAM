@@ -1,6 +1,6 @@
 import copy
 from collections import defaultdict
-import debug
+from openram import debug
 
 
 class timing_graph():

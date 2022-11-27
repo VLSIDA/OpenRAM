@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import os
-import debug
-from globals import OPTS, find_exe, get_tool
+from openram import debug
+from openram import OPTS, find_exe, get_tool
 from .lib import *
 from .delay import *
 from .elmore import *
@@ -55,5 +55,4 @@ if not OPTS.analytical_delay:
 
 else:
     debug.info(1, "Analytical model enabled.")
-
 

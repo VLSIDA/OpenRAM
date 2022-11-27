@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base.vector import vector
-from base.vector3d import vector3d
-from base.pin_layout import pin_layout
+from openram import debug
+from openram.base.vector import vector
+from openram.base.vector3d import vector3d
+from openram.base.pin_layout import pin_layout
 from .direction import direction
 
 

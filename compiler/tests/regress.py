@@ -10,8 +10,7 @@
 import re
 import unittest
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals
+from openram import globals
 from subunit import ProtocolTestCase, TestProtocolClient
 from testtools import ConcurrentTestSuite
 

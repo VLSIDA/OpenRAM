@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.tech import drc, layer, preferred_directions
+from openram.tech import layer as tech_layers
 from .hierarchy_design import hierarchy_design
 from .vector import vector
-from tech import drc, layer, preferred_directions
-from tech import layer as tech_layers
 
 
 class contact(hierarchy_design):

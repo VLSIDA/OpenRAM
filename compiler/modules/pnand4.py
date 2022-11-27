@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.base import logical_effort
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, spice
+from openram.tech import cell_properties as cell_props
 from .pgate import *
-import debug
-from tech import drc, parameter, spice
-from base import vector
-from base import logical_effort
-from sram_factory import factory
-from tech import cell_properties as cell_props
 
 
 class pnand4(pgate):

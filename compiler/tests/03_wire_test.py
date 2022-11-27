@@ -6,22 +6,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys
-import os
 
-import globals
+import openram
 
 
 class wire_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
-        from base import wire
-        import tech
-        from base import design
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram.base import wire
+        from openram import tech
+        from openram.base import design
 
         layer_stacks = [tech.poly_stack] + tech.beol_stacks
 
@@ -50,12 +49,12 @@ class wire_test(openram_test):
                 wire(w, layer_stack, position_list)
                 self.local_drc_check(w)
 
-        globals.end_openram()
+        openram.end_openram()
 
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

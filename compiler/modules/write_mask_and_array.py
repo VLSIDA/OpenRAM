@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
 import math
-from sram_factory import factory
-from base import vector
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class write_mask_and_array(design):

@@ -3,9 +3,9 @@
 # Copyright (c) 2016-2021 Regents of the University of California
 # All rights reserved.
 #
+from openram.sram_factory import factory
+from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-from sram_factory import factory
-from globals import OPTS
 
 
 class dummy_array(bitcell_base_array):

@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base.vector3d import vector3d
+from openram import debug
+from openram.base.vector3d import vector3d
 from .grid_cell import grid_cell
 
 

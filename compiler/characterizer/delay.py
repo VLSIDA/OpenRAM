@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import shutil
-import debug
-import tech
 import math
+import shutil
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .stimuli import *
 from .trim_spice import *
 from .charutils import *
 from .sram_op import *
 from .bit_polarity import *
-from globals import OPTS
 from .simulation import simulation
 from .measurements import *
 

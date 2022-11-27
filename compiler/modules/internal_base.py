@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram.base import design
 
-from base import design
 
 class internal_base(design):
 

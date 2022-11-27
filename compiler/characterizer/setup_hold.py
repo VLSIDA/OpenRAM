@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import tech
+from openram import debug
+from openram.sram_factory import factory
+from openram import tech
+from openram import OPTS
 from .stimuli import *
-import debug
 from .charutils import *
-from globals import OPTS
-from sram_factory import factory
 
 
 class setup_hold():

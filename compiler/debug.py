@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
-import inspect
-import globals
 import sys
+import os
 import pdb
+import inspect
+from openram import globals
 
 # the debug levels:
 # 0 = minimum output (default)
@@ -96,7 +96,7 @@ log.create_file = True
 
 
 def info(lev, str):
-    from globals import OPTS
+    from openram.globals import OPTS
     # 99 is a special never print level
     if lev == 99:
         return
@@ -114,7 +114,7 @@ def info(lev, str):
 
 
 def archive():
-    from globals import OPTS
+    from openram.globals import OPTS
     try:
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
     except:

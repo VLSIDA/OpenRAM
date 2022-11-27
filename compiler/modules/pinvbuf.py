@@ -5,11 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer
 from .pgate import *
-from base import vector
-from sram_factory import factory
-from tech import layer
+
 
 class pinvbuf(pgate):
     """

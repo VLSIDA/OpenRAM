@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
-from tech import layer, preferred_directions
-from base import vector
-from sram_factory import factory
-from globals import OPTS
-from tech import layer_properties as layer_props
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer, preferred_directions
+from openram.tech import layer_properties as layer_props
+from openram import OPTS
 
 
 class column_mux_array(design):

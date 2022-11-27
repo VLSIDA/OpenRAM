@@ -8,14 +8,14 @@
 """
 This provides a set of useful generic types for the gdsMill interface.
 """
-import debug
-from .vector import vector
-import tech
 import math
 import copy
 import numpy as np
-from globals import OPTS
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .utils import round_to_grid
+from .vector import vector
 
 
 class geometry:

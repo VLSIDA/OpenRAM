@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, spice
 from .pgate import *
-import debug
-from tech import drc, parameter, spice
-from base import vector
-from sram_factory import factory
 
 
 class ptristate_inv(pgate):

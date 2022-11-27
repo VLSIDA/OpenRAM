@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 
-
 class table_gen:
     """small library of functions to generate the html tables"""
 

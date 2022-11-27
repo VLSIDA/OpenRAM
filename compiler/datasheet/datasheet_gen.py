@@ -15,10 +15,10 @@ a web friendly html datasheet.
 # Improve css
 
 
-from globals import OPTS
 import os
 import math
 import csv
+from openram import OPTS
 from .datasheet import datasheet
 from .table_gen import table_gen
 

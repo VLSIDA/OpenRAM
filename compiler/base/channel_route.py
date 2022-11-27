@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import collections
-import debug
-from tech import drc
+from openram import debug
+from openram.tech import drc
 from .vector import vector
 from .design import design
 
@@ -404,5 +404,4 @@ class channel_route(design):
             self.add_via_stack_center(from_layer=pin.layer,
                                       to_layer=self.horizontal_layer,
                                       offset=pin_pos)
-
 

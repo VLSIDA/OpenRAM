@@ -5,9 +5,9 @@
 # All rights reserved.
 #
 
-from sram_factory import factory
+from openram.sram_factory import factory
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from globals import OPTS
 
 
 class sky130_row_cap_array(sky130_bitcell_base_array):

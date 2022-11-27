@@ -5,9 +5,9 @@
 # All rights reserved.
 #
 
-import debug
-from tech import cell_properties as props
-from modules import bitcell_base
+from openram import debug
+from openram.modules import bitcell_base
+from openram.tech import cell_properties as props
 
 
 class sky130_bitcell(bitcell_base):

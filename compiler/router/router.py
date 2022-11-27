@@ -5,18 +5,17 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-import itertools
 import math
+import itertools
 from datetime import datetime
-from gdsMill import gdsMill
-import debug
-from globals import OPTS, print_time
-from tech import drc, GDS
-from tech import layer as techlayer
-from base.vector import vector
-from base.vector3d import vector3d
-from base.pin_layout import pin_layout
+from openram import debug
+from openram.base.vector import vector
+from openram.base.vector3d import vector3d
+from openram.base.pin_layout import pin_layout
+from openram.gdsMill import gdsMill
+from openram.tech import drc, GDS
+from openram.tech import layer as techlayer
+from openram import OPTS, print_time
 from .router_tech import router_tech
 from .pin_group import pin_group
 from . import grid_utils

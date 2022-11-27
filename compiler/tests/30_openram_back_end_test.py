@@ -6,14 +6,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
+import shutil
+import getpass
 import unittest
 from testutils import *
-import sys, os, re, shutil
 
-import globals
-from globals import OPTS
-import debug
-import getpass
+import openram
+from openram import debug
+from openram import OPTS
 
 
 class openram_back_end_test(openram_test):
@@ -21,7 +22,7 @@ class openram_back_end_test(openram_test):
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         config_file = "{}/tests/configs/config_back_end".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
 
         debug.info(1, "Testing top-level back-end sram_compiler.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
@@ -102,11 +103,11 @@ class openram_back_end_test(openram_test):
                 shutil.rmtree(out_path, ignore_errors=True)
             self.assertEqual(os.path.exists(out_path), False)
 
-        globals.end_openram()
+        openram.end_openram()
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

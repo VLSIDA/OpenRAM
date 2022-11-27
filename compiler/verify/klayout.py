@@ -10,12 +10,11 @@ This is a DRC/LVS/PEX interface file for klayout.
 
 """
 
-
 import os
 import re
 import shutil
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 from .run_script import *
 
 # Keep track of statistics

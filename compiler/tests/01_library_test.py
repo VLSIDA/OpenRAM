@@ -6,20 +6,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
 import unittest
 from testutils import *
-import sys, os,re
 
-import globals
-from globals import OPTS
-import debug
+import openram
+from openram import debug
+from openram import OPTS
+
 
 class library_lvs_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
-        import verify
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram import verify
 
         (gds_dir, sp_dir, allnames) = setup_files()
         drc_errors = 0
@@ -41,7 +42,7 @@ class library_lvs_test(openram_test):
 
         # fail if the error count is not zero
         self.assertEqual(drc_errors + lvs_errors, 0)
-        globals.end_openram()
+        openram.end_openram()
 
 
 def setup_files():
@@ -66,7 +67,7 @@ def setup_files():
         tempnames[i] = re.sub('\.sp$', '', tempnames[i])
 
     try:
-        from tech import blackbox_cells
+        from openram.tech import blackbox_cells
         nameset = list(set(tempnames) - set(blackbox_cells))
     except ImportError:
         # remove duplicate base names
@@ -78,7 +79,7 @@ def setup_files():
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

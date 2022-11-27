@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import math
-from tech import spice
+from openram.tech import spice
 
 
 class verilog:

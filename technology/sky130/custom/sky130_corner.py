@@ -5,10 +5,10 @@
 # All rights reserved.
 #
 
-import debug
-from base import design
-from base import get_libcell_size
-from tech import layer, GDS
+from openram import debug
+from openram.base import design
+from openram.base import get_libcell_size
+from openram.tech import layer, GDS
 
 
 class sky130_corner(design):

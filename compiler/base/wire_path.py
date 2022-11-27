@@ -5,11 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from .vector import vector
-from .utils import snap_to_grid
+from openram.tech import drc
+from openram.tech import layer as techlayer
 from .design import design
-from tech import drc
-from tech import layer as techlayer
+from .utils import snap_to_grid
+from .vector import vector
+
 
 def create_rectilinear_route(my_list):
     """ Add intermediate nodes if it isn't rectilinear. Also skip

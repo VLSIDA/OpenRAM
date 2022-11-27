@@ -6,21 +6,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class column_mux_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
 
         # check single level column mux in multi-port
         OPTS.bitcell = "pbitcell"
@@ -38,11 +38,12 @@ class column_mux_pbitcell_test(openram_test):
         tx = factory.create(module_type="column_mux",tx_size=8, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 import math
-import tech
-from globals import OPTS
-from sram_factory import factory
-from base import timing_graph
+from openram import debug
+from openram.base import timing_graph
+from openram.sram_factory import factory
+from openram import tech
+from openram import OPTS
 
 
 class simulation():

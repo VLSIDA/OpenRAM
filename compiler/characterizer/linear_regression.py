@@ -5,13 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-from .regression_model import regression_model
 from sklearn.linear_model import Ridge
-from globals import OPTS
-import debug
-
 from sklearn.linear_model import LinearRegression
+from openram import debug
+from openram import OPTS
+from .regression_model import regression_model
 
 
 class linear_regression(regression_model):

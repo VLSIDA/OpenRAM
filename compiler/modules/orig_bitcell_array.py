@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram.sram_factory import factory
+from openram.tech import drc, spice
+from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-from tech import drc, spice
-from globals import OPTS
-from sram_factory import factory
 
 
 class bitcell_array(bitcell_base_array):

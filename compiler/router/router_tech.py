@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc, layer, preferred_directions
-from base.contact import contact
-from base.vector import vector
-import debug
 import math
+from openram import debug
+from openram.base.contact import contact
+from openram.base.vector import vector
+from openram.tech import drc, layer, preferred_directions
 
 
 class router_tech:

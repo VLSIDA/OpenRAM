@@ -5,14 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import collections
-import debug
-import random
 import math
+import random
+import collections
 from numpy import binary_repr
+from openram import debug
+from openram import OPTS
 from .stimuli import *
 from .charutils import *
-from globals import OPTS
 from .simulation import simulation
 
 

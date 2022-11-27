@@ -5,11 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import drc, parameter, spice
 from abc import ABC, abstractmethod
+from openram import debug
+from openram.tech import drc, parameter, spice
 from .stimuli import *
 from .charutils import *
+
 
 class spice_measurement(ABC):
     """Base class for spice stimulus measurements."""

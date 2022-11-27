@@ -7,7 +7,7 @@
 
 
 import os
-import drc as d
+from openram import drc as d
 
 """
 File containing the process technology parameters for Skywater 130nm.

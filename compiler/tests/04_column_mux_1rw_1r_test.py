@@ -6,26 +6,26 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class column_mux_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
 
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
-        globals.setup_bitcell()
+        openram.setup_bitcell()
 
         debug.info(2, "Checking column mux port 0")
         tx = factory.create(module_type="column_mux", tx_size=8, bitcell_bl="bl0", bitcell_br="br0")
@@ -35,11 +35,12 @@ class column_mux_1rw_1r_test(openram_test):
         tx = factory.create(module_type="column_mux", tx_size=8, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

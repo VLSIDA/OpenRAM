@@ -5,11 +5,11 @@
 # All rights reserved.
 #
 
-import debug
-from modules import bitcell_array
+from openram import debug
+from openram.modules import bitcell_array
+from openram.sram_factory import factory
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from globals import OPTS
-from sram_factory import factory
 
 
 class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):

@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import optparse
 import os
+import optparse
 
 
 class options(optparse.Values):

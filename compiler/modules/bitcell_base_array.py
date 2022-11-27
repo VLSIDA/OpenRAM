@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from sram_factory import factory
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class bitcell_base_array(design):

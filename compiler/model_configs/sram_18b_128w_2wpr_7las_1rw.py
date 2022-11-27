@@ -1,4 +1,4 @@
-from shared_config import *
+from .shared_config import *
 word_size = 18
 num_words = 128
 words_per_row = 2

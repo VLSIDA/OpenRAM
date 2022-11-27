@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 
-
 class delay_data():
     """
     This is the delay class to represent the delay information
@@ -38,7 +37,3 @@ class delay_data():
         assert isinstance(other, delay_data)
         return delay_data(other.delay + self.delay,
                           self.slew)
-
-
-
-

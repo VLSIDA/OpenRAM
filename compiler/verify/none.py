@@ -7,9 +7,9 @@
 #
 """
 This is a DRC/LVS/PEX interface file the case with no DRC/LVS tools.
-
 """
-import debug
+
+from openram import debug
 
 # Only print the warning once.
 drc_warned = False

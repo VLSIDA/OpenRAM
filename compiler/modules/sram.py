@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import datetime
 import os
-import debug
-from characterizer import functional
-from globals import OPTS, print_time
 import shutil
+import datetime
+from openram import debug
+from openram.characterizer import functional
+from openram import OPTS, print_time
 
 
 class sram():
@@ -26,7 +26,7 @@ class sram():
 
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
-        from base import design
+        from openram.base import design
         design.name_map=[]
 
         debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size,
@@ -80,7 +80,7 @@ class sram():
 
         # Import this at the last minute so that the proper tech file
         # is loaded and the right tools are selected
-        import verify
+        from openram import verify
 
         # Save the spice file
         start_time = datetime.datetime.now()
@@ -144,7 +144,7 @@ class sram():
 
         # Characterize the design
         start_time = datetime.datetime.now()
-        from characterizer import lib
+        from openram.characterizer import lib
         debug.print_raw("LIB: Characterizing... ")
         lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
@@ -158,7 +158,7 @@ class sram():
 
         # Write the datasheet
         start_time = datetime.datetime.now()
-        from datasheet import datasheet_gen
+        from openram.datasheet import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
         debug.print_raw("Datasheet: Writing to {0}".format(dname))
         datasheet_gen.datasheet_write(dname)

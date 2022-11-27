@@ -6,21 +6,22 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
+
 
 class ptx_1finger_pmos_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
-        import tech
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram import tech
 
         debug.info(2, "Checking min size PMOS with 1 finger")
         fet = factory.create(module_type="ptx",
@@ -29,12 +30,12 @@ class ptx_1finger_pmos_test(openram_test):
                              tx_type="pmos")
         self.local_drc_check(fet)
 
-        globals.end_openram()
+        openram.end_openram()
 
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 import os
-import sys
 
 # Attempt to add the source code to the PYTHONPATH here before running globals.init_openram().
 try:
@@ -17,8 +16,12 @@ except:
 if not os.path.isdir(OPENRAM_HOME):
     assert False
 
-if OPENRAM_HOME not in sys.path:
-    sys.path.insert(0, OPENRAM_HOME)
+# Make sure that OPENRAM_HOME is an environment variable just in case
+if "OPENRAM_HOME" not in os.environ.keys():
+    os.environ["OPENRAM_HOME"] = OPENRAM_HOME
 
-# Export everything in globals.py as part of "openram"
-from globals import *
+# Prepend $OPENRAM_HOME to __path__ so that openram will use those modules
+__path__.insert(0, OPENRAM_HOME)
+
+# Import everything in globals.py
+from .globals import *

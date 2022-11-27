@@ -6,20 +6,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
 import unittest
 from testutils import *
-import sys, os,re
 
-import globals
-from globals import OPTS
-import debug
+import openram
+from openram import debug
+from openram import OPTS
+
 
 #@unittest.skip("SKIPPING 23_lib_sram_model_corners_test")
 class lib_model_corners_lib_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.nominal_corner_only = False
         OPTS.netlist_only = True
 
@@ -30,9 +31,9 @@ class lib_model_corners_lib_test(openram_test):
             num_spare_rows = 0
             num_spare_cols = 0
 
-        from characterizer import lib
-        from modules import sram
-        from modules import sram_config
+        from openram.characterizer import lib
+        from openram.modules import sram
+        from openram.modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1,
@@ -72,17 +73,12 @@ class lib_model_corners_lib_test(openram_test):
             golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)),newname)
             self.assertTrue(self.isapproxdiff(libname,golden,0.15))
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())
-
-
-
-
-
-

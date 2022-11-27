@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import GDS, layer
-from tech import preferred_directions
-from tech import cell_properties as props
-from globals import OPTS
+from openram import debug
+from openram.tech import GDS, layer
+from openram.tech import preferred_directions
+from openram.tech import cell_properties as props
+from openram import OPTS
 from . import utils
 from .hierarchy_design import hierarchy_design
 
@@ -67,7 +67,7 @@ class design(hierarchy_design):
         self.setup_multiport_constants()
 
         try:
-            from tech import power_grid
+            from openram.tech import power_grid
             self.supply_stack = power_grid
         except ImportError:
             # if no power_grid is specified by tech we use sensible defaults

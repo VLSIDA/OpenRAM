@@ -5,9 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from tech import drc
+from openram.tech import drc
+from openram.sram_factory import factory
 from .wire_path import wire_path
-from sram_factory import factory
 
 
 class wire(wire_path):
@@ -71,7 +71,7 @@ class wire(wire_path):
 
         # This is here for the unit tests which may not have
         # initialized the static parts of the layout class yet.
-        from base import layout
+        from openram.base import layout
         layout("fake", "fake")
 
         (layer1, via, layer2) = layer_stack

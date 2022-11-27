@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-import tech
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .stimuli import *
 from .trim_spice import *
 from .charutils import *
-from globals import OPTS
 from .delay import delay
 from .measurements import *
 

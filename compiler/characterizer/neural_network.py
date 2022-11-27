@@ -5,11 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-from .regression_model import regression_model
-from globals import OPTS
-import debug
 from sklearn.neural_network import MLPRegressor
+from openram import debug
+from openram import OPTS
+from .regression_model import regression_model
 
 
 class neural_network(regression_model):

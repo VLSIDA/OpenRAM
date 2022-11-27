@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-from .simulation import simulation
-from globals import OPTS
-import debug
-import tech
-
 import math
+from openram import debug
+from openram import tech
+from openram import OPTS
+from .simulation import simulation
+
 
 class cacti(simulation):
     """

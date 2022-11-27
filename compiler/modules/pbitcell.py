@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import logical_effort
-from base import vector
-from tech import drc, parameter, layer
-from tech import cell_properties as props
-from globals import OPTS
+from openram import debug
+from openram.base import logical_effort
+from openram.base import vector
+from openram.tech import drc, parameter, layer
+from openram.tech import cell_properties as props
+from openram import OPTS
 from .ptx import ptx
 from .bitcell_base import bitcell_base
 

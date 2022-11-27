@@ -5,9 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
 import math
-import tech
+from openram import tech
 
 
 class vector():

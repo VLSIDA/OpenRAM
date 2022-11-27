@@ -8,8 +8,8 @@
 from datetime import datetime
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-import debug
-from globals import print_time
+from openram import debug
+from openram import print_time
 from .router import router
 from . import grid_utils
 from .signal_grid import signal_grid

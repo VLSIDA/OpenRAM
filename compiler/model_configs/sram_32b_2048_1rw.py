@@ -1,4 +1,4 @@
-from shared_config import *
+from .shared_config import *
 word_size = 32
 num_words = 2048
 

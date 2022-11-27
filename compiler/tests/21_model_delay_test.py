@@ -6,14 +6,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
+
 
 # @unittest.skip("SKIPPING 21_model_delay_test")
 class model_delay_test(openram_test):
@@ -21,18 +22,18 @@ class model_delay_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
-        from characterizer import delay
-        from characterizer import elmore
-        from modules import sram
-        from modules import sram_config
+        from openram.characterizer import delay
+        from openram.characterizer import elmore
+        from openram.modules import sram
+        from openram.modules import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1
@@ -61,7 +62,7 @@ class model_delay_test(openram_test):
 
         d = delay(s.s, tempspice, corner)
         m = elmore(s.s, tempspice, corner)
-        import tech
+        from openram import tech
         loads = [tech.spice["dff_in_cap"]*4]
         slews = [tech.spice["rise_time"]*2]
         load_slews = []
@@ -100,11 +101,12 @@ class model_delay_test(openram_test):
 
         self.assertTrue(self.check_golden_data(spice_delays,model_delays,error_tolerance))
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

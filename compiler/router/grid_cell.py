@@ -5,6 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+
 class grid_cell:
     """
     A single cell that can be occupied in a given layer, blocked,

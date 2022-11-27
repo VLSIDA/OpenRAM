@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.base import logical_effort
+from openram.tech import cell_properties as props
+from openram.tech import parameter, drc
 from .bitcell_base import bitcell_base
-from tech import cell_properties as props
-from tech import parameter, drc
-from base import logical_effort
 
 
 class replica_bitcell_1port(bitcell_base):
@@ -39,7 +39,7 @@ class replica_bitcell_1port(bitcell_base):
 
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
-        from tech import spice
+        from openram.tech import spice
         leakage = spice["bitcell_leakage"]
         dynamic = 0 # FIXME
         total_power = self.return_power(dynamic, leakage)

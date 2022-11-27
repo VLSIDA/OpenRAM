@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-import re
 import os
+import re
 import math
-import tech
-from globals import OPTS
 from pprint import pformat
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
@@ -37,7 +37,7 @@ class spice():
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         try:
-            from tech import lvs_name
+            from openram.tech import lvs_name
             lvs_dir = OPTS.openram_tech + lvs_name + "_lvs_lib/"
         except ImportError:
             lvs_dir = OPTS.openram_tech + "lvs_lib/"

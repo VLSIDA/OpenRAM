@@ -5,8 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import parameter
+from openram import debug
+from openram.tech import parameter
+
 
 class logical_effort():
     """

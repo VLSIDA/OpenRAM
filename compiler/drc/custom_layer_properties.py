@@ -6,7 +6,6 @@
 # All rights reserved.
 #
 
-
 class _bank:
     def __init__(self, stack, pitch):
         # bank

@@ -7,8 +7,8 @@
 #
 import os
 import re
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 
 
 def relative_compare(value1, value2, error_tolerance=0.001):

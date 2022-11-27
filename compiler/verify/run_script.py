@@ -10,10 +10,10 @@ Some baseline functions to run scripts.
 """
 
 import os
-import debug
 import subprocess
 import time
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 
 
 def run_script(cell_name, script="lvs"):

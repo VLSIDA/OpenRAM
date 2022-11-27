@@ -6,14 +6,15 @@
 # All rights reserved.
 #
 import sys
-from tech import drc, parameter
-import debug
-from base import design
 import math
-from math import log,sqrt,ceil
-from base import vector
-from sram_factory import factory
-from globals import OPTS
+from math import log, sqrt, ceil
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, parameter
+from openram import OPTS
+
 
 class multibank(design):
     """

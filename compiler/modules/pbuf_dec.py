@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
 from .pgate import *
-from sram_factory import factory
 
 
 class pbuf_dec(pgate):

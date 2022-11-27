@@ -13,7 +13,7 @@ the trunk
 
 import sys
 import os
-import debug
+from openram import debug
 
 TECHNOLOGY = "freepdk45"
 

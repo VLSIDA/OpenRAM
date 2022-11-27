@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import GDS, drc
-from .vector import vector
-from tech import layer, layer_indices
 import math
+from openram import debug
+from openram.tech import GDS, drc
+from openram.tech import layer, layer_indices
+from .vector import vector
 
 
 class pin_layout:
@@ -48,8 +48,8 @@ class pin_layout:
 
             else:
                 try:
-                    from tech import layer_override
-                    from tech import layer_override_name
+                    from openram.tech import layer_override
+                    from openram.tech import layer_override_name
                     if layer_override[name]:
                        self.lpp = layer_override[name]
                        self.layer = "pwellp"
@@ -406,15 +406,15 @@ class pin_layout:
         # Try to use a global pin purpose if it exists,
         # otherwise, use the regular purpose
         try:
-            from tech import pin_purpose as global_pin_purpose
+            from openram.tech import pin_purpose as global_pin_purpose
             pin_purpose = global_pin_purpose
         except ImportError:
             pass
 
         try:
-            from tech import label_purpose
+            from openram.tech import label_purpose
             try:
-                from tech import layer_override_purpose
+                from openram.tech import layer_override_purpose
                 if pin_layer_num in layer_override_purpose:
                     layer_num = layer_override_purpose[pin_layer_num][0]
                     label_purpose = layer_override_purpose[pin_layer_num][1]

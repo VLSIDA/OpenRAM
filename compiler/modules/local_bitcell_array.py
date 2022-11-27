@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer_properties as layer_props
+from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-from globals import OPTS
-from sram_factory import factory
-from base import vector
-import debug
-from tech import layer_properties as layer_props
 
 
 class local_bitcell_array(bitcell_base_array):

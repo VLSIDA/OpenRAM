@@ -5,13 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from itertools import tee
+from openram import debug
+from openram.sram_factory import factory
+from openram.tech import drc
 from .design import design
 from .vector import vector
 from .vector3d import vector3d
-from tech import drc
-from itertools import tee
-from sram_factory import factory
+
 
 class route(design):
     """

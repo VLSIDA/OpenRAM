@@ -6,8 +6,8 @@
 #
 
 from copy import deepcopy
-from modules import internal_base
-from tech import cell_properties as props
+from openram.modules import internal_base
+from openram.tech import cell_properties as props
 
 class sky130_internal(internal_base):
 

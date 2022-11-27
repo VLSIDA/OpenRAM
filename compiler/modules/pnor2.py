@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, spice
+from openram.tech import cell_properties as cell_props
 from .pgate import *
-import debug
-from tech import drc, parameter, spice
-from base import vector
-from sram_factory import factory
-from tech import cell_properties as cell_props
 
 
 class pnor2(pgate):

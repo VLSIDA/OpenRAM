@@ -6,9 +6,9 @@
 # All rights reserved.
 #
 from datetime import datetime
-import debug
-from globals import print_time
-from base.vector3d import vector3d
+from openram import debug
+from openram.base.vector3d import vector3d
+from openram import print_time
 from .router import router
 from .direction import direction
 from .supply_grid import supply_grid

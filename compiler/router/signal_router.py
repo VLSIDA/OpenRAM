@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from router import router
+from openram import debug
+from openram.router import router
 
 
 class signal_router(router):

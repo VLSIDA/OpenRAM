@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
 from math import log, sqrt, ceil
-from globals import OPTS
-from sram_factory import factory
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class sram_config:
@@ -28,12 +28,12 @@ class sram_config:
         self.num_spare_cols = num_spare_cols
 
         try:
-            from tech import array_row_multiple
+            from openram.tech import array_row_multiple
             self.array_row_multiple = array_row_multiple
         except ImportError:
             self.array_row_multiple = 1
         try:
-            from tech import array_col_multiple
+            from openram.tech import array_col_multiple
             self.array_col_multiple = array_col_multiple
         except ImportError:
             self.array_col_multiple = 1

@@ -5,14 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, layer
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 from .pgate import *
-import debug
-from tech import drc, layer
-from base import vector
-from .pgate import *
-from sram_factory import factory
-from tech import cell_properties as cell_props
-from globals import OPTS
 
 
 class column_mux(pgate):

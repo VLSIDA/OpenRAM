@@ -5,9 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from tech import cell_properties as props
-from tech import spice
+from openram.base import design
+from openram.tech import cell_properties as props
+from openram.tech import spice
 
 
 class dff(design):

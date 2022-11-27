@@ -5,11 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.base import logical_effort
+from openram.tech import cell_properties as props
+from openram.tech import parameter, drc
 from .bitcell_base import bitcell_base
-from tech import cell_properties as props
-from tech import parameter, drc
-from base import logical_effort
 
 
 class replica_bitcell_2port(bitcell_base):

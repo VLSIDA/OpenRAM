@@ -5,9 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from math import log,ceil
 import re
+from math import log, ceil
+from openram import debug
 
 
 class trim_spice():

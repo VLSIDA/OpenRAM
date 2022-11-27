@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
+import math
+from openram import debug
+from openram import OPTS
 from .analytical_util import *
 from .simulation import simulation
-from globals import OPTS
-import debug
 
-import math
 
 relative_data_path = "sim_data"
 data_file = "sim_data.csv"

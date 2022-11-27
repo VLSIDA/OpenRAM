@@ -4,13 +4,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-import debug
-
+import os
 import csv
 import math
 import numpy as np
-import os
+from openram import debug
+
 
 process_transform = {'SS':0.0, 'TT': 0.5, 'FF':1.0}
 

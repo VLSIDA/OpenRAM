@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 from enum import Enum
-from base.vector3d import vector3d
-import debug
+from openram import debug
+from openram.base.vector3d import vector3d
 
 
 class direction(Enum):

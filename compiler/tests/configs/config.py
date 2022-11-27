@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import OPTS
+from openram import OPTS
 word_size = 1
 num_words = 16
 

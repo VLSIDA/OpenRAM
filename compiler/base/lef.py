@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
-from base import pin_layout
-from tech import layer_names
 import os
 import shutil
-from globals import OPTS
+from openram import debug
+from openram.base import vector
+from openram.base import pin_layout
+from openram.tech import layer_names
+from openram import OPTS
 
 
 class lef:
@@ -64,7 +64,7 @@ class lef:
         f.write('puts "Finished writing LEF cell {}"\n'.format(self.name))
         f.close()
         os.system("chmod u+x {}".format(run_file))
-        from run_script import run_script
+        from openram.verify.run_script import run_script
         (outfile, errfile, resultsfile) = run_script(self.name, "lef")
 
     def lef_write(self, lef_name):

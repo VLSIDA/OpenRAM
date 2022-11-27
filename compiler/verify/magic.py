@@ -19,12 +19,11 @@ We obtained this file from Qflow ( http://opencircuitdesign.com/qflow/index.html
 and include its appropriate license.
 """
 
-
 import os
 import re
 import shutil
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 from .run_script import *
 # Keep track of statistics
 num_drc_runs = 0
@@ -96,12 +95,12 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # Flatten the transistors
     # Bug in Netgen 1.5.194 when using this...
     try:
-        from tech import blackbox_cells
+        from openram.tech import blackbox_cells
     except ImportError:
         blackbox_cells = []
 
     try:
-        from tech import flatglob
+        from openram.tech import flatglob
     except ImportError:
         flatglob = []
         f.write("gds readonly true\n")

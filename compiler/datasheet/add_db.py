@@ -5,10 +5,11 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from pathlib import Path
-import glob
-import os
 import sys
+import os
+import glob
+from pathlib import Path
+
 
 # This is the path to the directory you would like to search
 # This directory is searched recursively for .html files

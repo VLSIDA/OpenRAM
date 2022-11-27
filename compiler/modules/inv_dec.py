@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from base import logical_effort
-from tech import cell_properties as props
-from tech import spice, parameter
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import cell_properties as props
+from openram.tech import spice, parameter
 
 
 class inv_dec(design):

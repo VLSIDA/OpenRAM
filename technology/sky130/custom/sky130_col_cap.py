@@ -5,9 +5,9 @@
 # All rights reserved.
 #
 
-import debug
-from base import design
-from tech import cell_properties as props
+from openram import debug
+from openram.base import design
+from openram.tech import cell_properties as props
 
 
 class sky130_col_cap(design):

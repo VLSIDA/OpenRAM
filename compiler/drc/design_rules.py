@@ -5,7 +5,7 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
 from .drc_value import *
 from .drc_lut import *
 

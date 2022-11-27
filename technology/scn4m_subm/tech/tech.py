@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import os
-import drc as d
+from openram import drc as d
 #from drc.design_rules import design_rules
 #from drc.module_type import module_type
 #from drc.custom_cell_properties import cell_properties

@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import cell_properties as props
+from openram import debug
+from openram.tech import cell_properties as props
 from .bitcell_base import bitcell_base
 
 

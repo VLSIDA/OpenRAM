@@ -5,12 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from base import vector
-from sram_factory import factory
-from globals import OPTS
-from tech import layer
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer
+from openram import OPTS
 
 
 class and4_dec(design):

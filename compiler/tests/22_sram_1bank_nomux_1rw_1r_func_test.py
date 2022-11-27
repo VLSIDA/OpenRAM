@@ -6,21 +6,21 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class psram_1bank_nomux_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
@@ -28,14 +28,14 @@ class psram_1bank_nomux_func_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 1
-        globals.setup_bitcell()
+        openram.setup_bitcell()
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
-        from characterizer import functional
-        from modules import sram_config
+        from openram.characterizer import functional
+        from openram.modules import sram_config
         c = sram_config(word_size=4,
                         num_words=32,
                         num_banks=1)
@@ -51,11 +51,12 @@ class psram_1bank_nomux_func_test(openram_test):
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

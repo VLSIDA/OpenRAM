@@ -1,8 +1,8 @@
-from .template import template
-from globals import OPTS
 import os
-from math import ceil, log
 import re
+from math import ceil, log
+from openram import OPTS
+from .template import template
 
 
 class sram_multibank:

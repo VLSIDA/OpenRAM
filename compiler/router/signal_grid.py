@@ -5,10 +5,10 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from heapq import heappush,heappop
 from copy import deepcopy
-from base.vector3d import vector3d
+from heapq import heappush,heappop
+from openram import debug
+from openram.base.vector3d import vector3d
 from .grid import grid
 from .grid_path import grid_path
 

@@ -11,12 +11,12 @@ various functions that can be be used to generate stimulus for other
 simulations as well.
 """
 
-import tech
-import debug
-import subprocess
 import os
+import subprocess
 import numpy as np
-from globals import OPTS
+from openram import debug
+from openram import tech
+from openram import OPTS
 
 
 class stimuli():

@@ -6,25 +6,25 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals
-from globals import OPTS
-import debug
+
+import openram
+from openram import debug
+from openram import OPTS
 
 
 class multibank_verilog_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file, is_unit_test=True)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.route_supplies=False
         OPTS.check_lvsdrc=False
         OPTS.netlist_only=True
-        from modules import sram
-        from modules import sram_config
+        from openram.modules import sram
+        from openram.modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=2)
@@ -50,12 +50,12 @@ class multibank_verilog_test(openram_test):
         one_golden = "{0}/golden/{1}".format(os.path.dirname(os.path.realpath(__file__)), v1bfile)
         self.assertTrue(self.isdiff(v1bname, one_golden))
 
-        globals.end_openram()
+        openram.end_openram()
 
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

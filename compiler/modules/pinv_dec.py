@@ -5,13 +5,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, layer
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 from .pinv import pinv
-from tech import drc, parameter, layer
-from globals import OPTS
-from sram_factory import factory
-from tech import cell_properties as cell_props
 
 
 class pinv_dec(pinv):

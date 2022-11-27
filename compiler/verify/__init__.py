@@ -15,12 +15,11 @@ run_pex, repsectively. If there is an error, they should abort and report the er
 If not, OpenRAM will continue as if nothing happened!
 """
 
-import debug
-from globals import OPTS
-from globals import get_tool
-from tech import drc_name
-from tech import lvs_name
-from tech import pex_name
+from openram import debug
+from openram.tech import drc_name
+from openram.tech import lvs_name
+from openram.tech import pex_name
+from openram import OPTS, get_tool
 
 debug.info(1, "Initializing verify...")
 if not OPTS.check_lvsdrc:

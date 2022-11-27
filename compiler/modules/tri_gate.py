@@ -5,9 +5,9 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from tech import spice
+from openram import debug
+from openram.base import design
+from openram.tech import spice
 
 
 class tri_gate(design):

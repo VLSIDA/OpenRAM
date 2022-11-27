@@ -6,13 +6,13 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
+import sys, os, re
 import unittest
 from testutils import *
-import sys, os,re
 
-import globals
-import debug
+import openram
+from openram import debug
+
 
 class code_format_test(openram_test):
     "Run a test to check for tabs instead of spaces in the all source files."
@@ -147,7 +147,7 @@ def check_print_output(file_name):
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

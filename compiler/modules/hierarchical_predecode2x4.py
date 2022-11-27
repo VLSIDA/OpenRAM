@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import OPTS
 from .hierarchical_predecode import hierarchical_predecode
-from globals import OPTS
 
 
 class hierarchical_predecode2x4(hierarchical_predecode):

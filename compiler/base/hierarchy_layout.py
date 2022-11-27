@@ -1253,7 +1253,6 @@ class layout():
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
-        from openram.sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -1272,7 +1271,6 @@ class layout():
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
         """
-        from openram.sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -2176,7 +2174,6 @@ class layout():
 
         # Find the number of vias for this pitch
         supply_vias = 1
-        from openram.sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,
@@ -2289,7 +2286,6 @@ class layout():
 
         # Find the number of vias for this pitch
         self.supply_vias = 1
-        from openram.sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,

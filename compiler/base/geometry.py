@@ -249,7 +249,6 @@ class instance(geometry):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. Index will return one of several pins."""
 
-        import copy
         if index == -1:
             pin = copy.deepcopy(self.mod.get_pin(name))
             pin.transform(self.offset, self.mirror, self.rotate)
@@ -267,7 +266,6 @@ class instance(geometry):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """
 
-        import copy
         pin = copy.deepcopy(self.mod.get_pins(name))
 
         new_pins = []

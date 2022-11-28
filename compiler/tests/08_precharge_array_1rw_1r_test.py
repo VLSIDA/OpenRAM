@@ -13,7 +13,7 @@ from testutils import *
 import openram
 from openram import debug
 from openram.sram_factory import factory
-from openrem import OPTS
+from openram import OPTS
 
 
 class precharge_1rw_1r_test(openram_test):

@@ -1,11 +1,20 @@
 ### [Go Back](./index.md#table-of-contents)
 
+# Basic Setup
 This page shows the basic setup for using OpenRAM.
 
-# Basic Setup
+
+
+## Table of Contents
+1. [Dependencies](#dependencies)
+1. [OpenRAM Library](#openram-library)
+1. [Docker](#docker)
+1. [Environment](#environment)
+1. [Sky130 Setup](#sky130-setup)
+
+
 
 ## Dependencies
-
 Please see the Dockerfile for the required versions of tools.
 
 In general, the OpenRAM compiler has very few dependencies:
@@ -26,14 +35,14 @@ git clone git@github.com:VLSIDA/OpenRAM.git
 cd OpenRAM
 make library
 ```
+
 + Install the latest _dev_ version:
 ```
-pip3 install git+ssh://git@github.com/VLSIDA/OpenramRAM.git@dev
+pip3 install git+ssh://git@github.com/VLSIDA/OpenRAM.git@dev
 ```
 
 
 ## Docker
-
 We have a [docker setup](../../docker) to run OpenRAM. To use this, you should run:
 ```
 cd OpenRAM/docker

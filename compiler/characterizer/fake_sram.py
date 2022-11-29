@@ -10,9 +10,14 @@ class fake_sram(sram_config):
     """
     def __init__(self, name, word_size, num_words, write_size=None, num_banks=1,
                  words_per_row=None, num_spare_rows=0, num_spare_cols=0):
-        sram_config.__init__(self, name, word_size, num_words, write_size=None,
-                             num_banks=1, words_per_row=None, num_spare_rows=0,
-                             num_spare_cols=0)
+        sram_config.__init__(self, word_size, num_words, write_size,
+                             num_banks, words_per_row, num_spare_rows,
+                             num_spare_cols)
+        self.name = name
+        if write_size and self.write_size != self.word_size:
+            self.num_wmasks = int(ceil(self.word_size / self.write_size))
+        else:
+            self.num_wmasks = 0
 
     def setup_multiport_constants(self):
         """
@@ -88,35 +93,36 @@ class fake_sram(sram_config):
         self.pins.extend(['clk{}'.format(port) for port in range(
             self.num_rw_ports + self.num_r_ports + self.num_w_ports)])
         for port in range(self.num_rw_ports):
-            self.pins.extend(['din{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['din{0}[{1}]'.format(port, bit)
                               for bit in range(self.num_cols)])
-            self.pins.extend(['dout{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['dout{0}[{1}]'.format(port, bit)
                               for bit in range(self.num_cols)])
-            self.pins.extend(['addr{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
             if self.num_wmasks != 0:
-                self.pins.extend(['wmask{0}[{1}]]'.format(port, bit)
+                print(self.num_wmasks)
+                self.pins.extend(['wmask{0}[{1}]'.format(port, bit)
                                   for bit in range(self.num_wmasks)])
 
             self.pins.extend(['csb{}'.format(port), 'web{}'.format(port)])
 
         start_port = self.num_rw_ports
         for port in range(start_port, start_port + self.num_r_ports):
-            self.pins.extend(['dout{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['dout{0}[{1}]'.format(port, bit)
                               for bit in range(self.num_cols)])
-            self.pins.extend(['addr{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
 
             self.pins.extend(['csb{}'.format(port)])
 
         start_port += self.num_r_ports
         for port in range(start_port, start_port + self.num_w_ports):
-            self.pins.extend(['din{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['din{0}[{1}]'.format(port, bit)
                               for bit in range(self.num_cols)])
-            self.pins.extend(['addr{0}[{1}]]'.format(port, bit)
+            self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
             if self.num_wmasks != 0:
-                self.pins.extend(['wmask{0}[{1}]]'.format(port, bit)
+                self.pins.extend(['wmask{0}[{1}]'.format(port, bit)
                                   for bit in range(self.num_wmasks)])
 
             self.pins.extend(['csb{}'.format(port), 'web{}'.format(port)])

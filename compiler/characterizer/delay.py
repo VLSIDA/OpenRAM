@@ -17,6 +17,8 @@ from .bit_polarity import *
 from globals import OPTS
 from .simulation import simulation
 from .measurements import *
+from os import path
+import re
 
 
 class delay(simulation):
@@ -118,8 +120,10 @@ class delay(simulation):
         # Other measurements associated with the read port not included in the liberty file
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
-        read_measures.append(self.create_read_bit_measures())
-        read_measures.append(self.create_sen_and_bitline_path_measures())
+        # TODO: Maybe don't do this here (?)
+        if OPTS.top_process != "memchar":
+            read_measures.append(self.create_read_bit_measures())
+            read_measures.append(self.create_sen_and_bitline_path_measures())
 
         return read_measures
 
@@ -245,8 +249,8 @@ class delay(simulation):
     def create_sen_and_bitline_path_measures(self):
         """Create measurements for the s_en and bitline paths for individual delays per stage."""
 
-        # FIXME: There should be a default_read_port variable in this case, pathing is done with this
-        # but is never mentioned otherwise
+#        # FIXME: There should be a default_read_port variable in this case, pathing is done with this
+#        # but is never mentioned otherwise
         port = self.read_ports[0]
         sen_and_port = self.sen_name + str(port)
         bl_and_port = self.bl_name.format(port) # bl_name contains a '{}' for the port
@@ -391,12 +395,12 @@ class delay(simulation):
 
         # creates and opens stimulus file for writing
         self.delay_stim_sp = "delay_stim.sp"
-        temp_stim = "{0}/{1}".format(self.output_path, self.delay_stim_sp)
+        temp_stim = path.join(self.output_path, self.delay_stim_sp)
         self.sf = open(temp_stim, "w")
 
         # creates and opens measure file for writing
         self.delay_meas_sp = "delay_meas.sp"
-        temp_meas = "{0}/{1}".format(self.output_path, self.delay_meas_sp)
+        temp_meas = path.join(self.output_path, self.delay_meas_sp)
         self.mf = open(temp_meas, "w")
 
         if OPTS.spice_name == "spectre":
@@ -429,7 +433,7 @@ class delay(simulation):
                                 t_rise=self.slew,
                                 t_fall=self.slew)
 
-        self.stim.write_include(temp_meas)
+        self.sf.write(".include {0}".format(temp_meas))
         # self.load_all_measure_nets()
         self.write_delay_measures()
         # self.write_simulation_saves()
@@ -448,15 +452,15 @@ class delay(simulation):
 
         # creates and opens stimulus file for writing
         self.power_stim_sp = "power_stim.sp"
-        temp_stim = "{0}/{1}".format(self.output_path, self.power_stim_sp)
+        temp_stim = path.join(self.output_path, self.power_stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Power stimulus for period of {0}n\n\n".format(self.period))
-        self.stim = stimuli(self.sf, self.corner)
 
         # creates and opens measure file for writing
         self.power_meas_sp = "power_meas.sp"
-        temp_meas = "{0}/{1}".format(opts.openram_temp, self.power_meas_sp)
+        temp_meas = path.join(self.output_path, self.power_meas_sp)
         self.mf = open(temp_meas, "w")
+        self.stim = stimuli(self.sf, self.mf, self.corner)
 
         # include UNTRIMMED files in stimulus file
         if trim:
@@ -488,7 +492,7 @@ class delay(simulation):
         for port in self.all_ports:
             self.stim.gen_constant(sig_name="CLK{0}".format(port), v_val=0)
 
-        self.stim.write_include(temp_meas)
+        self.sf.write(".include {}".format(temp_meas))
         self.write_power_measures()
 
         # run until the end of the cycle time
@@ -1151,15 +1155,90 @@ class delay(simulation):
         if self.sp_file != self.sim_sp_file:
             shutil.copy(self.sp_file, self.sim_sp_file)
 
+    def recover_measurment_objects(self):
+        mf = open(path.join(OPTS.output_path, "delay_meas.sp"), "r")
+        measure_text = mf.read()
+        port_iter = re.finditer(r"\* (Read|Write) ports (\d*)", measure_text)
+        port_measure_lines = []
+        loc = 0
+        port_name = ''
+        for port in port_iter:
+            port_measure_lines.append((port_name, measure_txt[loc:port.end(0)]))
+            loc = port.start(0)
+            port_name = port.group(1) + port.group(2)
+
+        mf.close()
+        # Cycle comments, not sure if i need this
+        cycle_lines = port_measure_lines.pop(0)[1]
+        # For now just recover the bit_measures and sen_and_bitline_path_measures
+        self.read_meas_lists.append([])
+        bit_measure_rule = re.compile(r"\.meas tran (v_q_a\d+_b\d+_(read|write)_(zero|one)\d+) FIND v\((.*)\) AT=(\d+(\.\d+)?)n")
+        for measures in port_measure_lines:
+            port_name = measures[0]
+            text = measures[1]
+            bit_measure_iter = bit_measure_rule.finditer(text)
+            for bit_measure in bit_measure_iter:
+                meas_name = bit_measure.group(1)
+                read = bit_measure.group(2) == "read"
+                probe = bit_measure.group(4)
+                polarity = bit_polarity.NONINVERTING
+                if "q_bar" in meas_name:
+                    polarity = bit_polarity.INVERTING
+                meas = voltage_at_measure(meas_name, probe)
+                if read:
+                    self.read_bit_meas[polarity].append(meas)
+                    self.read_meas_lists[-1].append(meas)
+                else:
+                    self.write_bit_meas[polarity].append(meas)
+                    self.write_meas_lists[-1].append(meas)
+
+        delay_path_rule = re.compile(r"\.meas tran delay_(.*)_to_(.*) TRIG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n TARG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n")
+        port = self.read_ports[0]
+        sen_and_port = self.sen_name + str(port)
+        bl_and_port = self.bl_name.format(port) # bl_name contains a '{}' for the port
+        meas_buff = []
+        for measures in port_measure_lines:
+            port_name = measures[0]
+            text = measures[1]
+            delay_path_iter = delay_path_rule.finditer(text)
+            for delay_path_measure in delay_path_iter:
+                from_ = delay_path_measure.group(1)
+                to_ = delay_path_measure.group(2)
+                trig_rise = delay_path_measure.group(5)
+                targ_rise = delay_path_measure.group(10)
+                meas_name = "delay_{0}_to_{1}".format(from_, to_)
+                meas = delay_measure(meas_name, from_, to_, trig_rise, targ_rise, measure_scale=1e9, has_port=False)
+                meas.meta_str = sram_op.READ_ZERO
+                meas.meta_add_delay = True
+                meas_buff.append(meas)
+                # TODO: we are losing duplicate measures here
+                if from_ == sen_and_port:
+                    self.sen_path_meas.extend(meas_buff.copy())
+                    meas_buff.clear()
+                elif from_ == bl_and_port:
+                    self.bl_path_meas.extend(meas_buff)
+                    meas_buff.clear()
+        self.read_meas_lists.append(self.sen_path_meas + self.bl_path_meas)
+
+
+
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""
 
         self.set_probe(probe_address, probe_data)
         self.prepare_netlist()
-        self.create_graph()
-        self.set_internal_spice_names()
-        self.create_measurement_names()
-        self.create_measurement_objects()
+        if OPTS.top_process == "memchar":
+            # TODO: fix
+            self.bl_name = "xsram.xbank0.bl_0_{}"
+            self.br_name = "xsram.xbank0.br_0_{}"
+            self.sen_name = "xsram.s_en"
+            self.create_measurement_objects()
+            self.recover_measurment_objects()
+        else:
+            self.create_graph()
+            self.set_internal_spice_names()
+            self.create_measurement_names()
+            self.create_measurement_objects()
 
     def analyze(self, probe_address, probe_data, load_slews):
         """

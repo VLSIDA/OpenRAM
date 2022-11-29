@@ -65,7 +65,7 @@ OPENRAM_TMP=/openram/macros/$*/tmp
 %.ok: configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	@$(DOCKER_CMD) python3 -u /openram/compiler/openram.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
+	@$(DOCKER_CMD) python3 -u /openram/sram_compiler.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
 
 .DELETE_ON_ERROR: $(STAMPS)
 

@@ -35,7 +35,7 @@ class code_format_test(openram_test):
                 continue
             if re.search("debug.py$", code):
                 continue
-            if re.search("openram.py$", code):
+            if re.search("sram_compiler.py$", code):
                 continue
             if re.search("testutils.py$", code):
                 continue

@@ -125,11 +125,23 @@ class sky130_bitcell_base_array(bitcell_base_array):
     def add_supply_pins(self):
         """ Add the layout pins """
         # Copy a vdd/gnd layout pin from every cell
+
+        for inst in self.insts:
+            if "wlstrap" in inst.name:
+                try:
+                    self.copy_layout_pin(inst, "VPWR", "vdd")
+                except:
+                    pass
+                try:
+                    self.copy_layout_pin(inst, "VGND", "gnd")
+                except:
+                    pass
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
+
                 if row == 2: #add only 1 label per col
 
                     if 'VPB' or 'vpb' in self.cell_inst[row, col].mod.pins:

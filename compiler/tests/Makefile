@@ -121,8 +121,11 @@ $(TEST_BASES):
 	@mkdir -p results/$*/tmp
 	@$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && sleep 1 && python3 -u $(OPENRAM_DIR)/$(getfile).py \
 		-t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
-	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && \
-	rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
+ifdef KEEP
+	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
+else
+	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" && rm -rf $(TOP_DIR)/compiler/tests/results/$* || echo "$* ... FAIL!"
+endif
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
 .PHONY: docker-pull

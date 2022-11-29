@@ -80,3 +80,4 @@ from .write_mask_and_array import *
 from .sram_1bank import *
 from .sram_config import *
 from .sram import *
+from .internal_base import *

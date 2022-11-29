@@ -19,161 +19,8 @@ predictive and fabricable technologies.
 
 # Documentation
 
-Please take a look at our presentation We have created a detailed
-presentation that serves as our [documentation][documentation].
-This is the most up-to-date information, so please let us know if you see
-things that need to be fixed.
-
-# Basic Setup
-
-## Dependencies
-
-Please see the Dockerfile for the required versions of tools.
-
-In general, the OpenRAM compiler has very few dependencies:
-+ Docker
-+ Make
-+ Python 3.6 or higher
-+ Various Python packages (pip install -r requirements.txt)
-+ [Git]
-
-## Docker
-
-We have a [docker setup](./docker) to run OpenRAM. To use this, you should run:
-```
-cd openram/docker
-make build
-```
-This must be run once and will take a while to build all the tools.
-
-
-## Environment
-
-You must set two environment variables:
-+ OPENRAM\_HOME should point to the compiler source directory.
-+ OPENERAM\_TECH should point to one or more root technology directories (colon separated).
-
-You should also add OPENRAM\_HOME to your PYTHONPATH.
-
-For example add this to your .bashrc:
-
-```
-  export OPENRAM_HOME="$HOME/openram/compiler"
-  export OPENRAM_TECH="$HOME/openram/technology"
-  export PYTHONPATH=$OPENRAM_HOME
-```
-
-Note that if you want symbols to resolve in your editor, you may also want to add the specific technology
-directory that you use and any custom technology modules as well. For example:
-```
-  export PYTHONPATH="$OPENRAM_HOME:$OPENRAM_TECH/sky130:$OPENRAM_TECH/sky130/custom"
-```
-
-We include the tech files necessary for [SCMOS] SCN4M_SUBM,
-[FreePDK45]. The [SCMOS] spice models, however, are
-generic and should be replaced with foundry models. You may get the
-entire [FreePDK45 PDK here][FreePDK45].
-
-
-### Sky130 Setup
-
-To install [Sky130], you must have the open_pdks files installed in $PDK_ROOT. 
-To install this automatically, you can run:
-
-  cd $HOME/openram
-  make pdk
-
-Then you must also install the [Sky130] SRAM build space and the appropriate cell views
-by running:
-
-  cd $HOME/openram
-  make install
-
-# Basic Usage
-
-Once you have defined the environment, you can run OpenRAM from the command line
-using a single configuration file written in Python.
-
-For example, create a file called *myconfig.py* specifying the following
-parameters for your memory:
-```
-# Data word size
-word_size = 2
-# Number of words in the memory
-num_words = 16
-
-# Technology to use in $OPENRAM_TECH
-tech_name = "scn4m_subm"
-
-# You can use the technology nominal corner only
-nominal_corner_only = True
-# Or you can specify particular corners
-# Process corners to characterize
-# process_corners = ["SS", "TT", "FF"]
-# Voltage corners to characterize
-# supply_voltages = [ 3.0, 3.3, 3.5 ]
-# Temperature corners to characterize
-# temperatures = [ 0, 25 100]
-
-# Output directory for the results
-output_path = "temp"
-# Output file base name
-output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
-
-# Disable analytical models for full characterization (WARNING: slow!)
-# analytical_delay = False
-
-```
-
-You can then run OpenRAM by executing:
-```
-python3 $OPENRAM_HOME/openram.py myconfig
-```
-You can see all of the options for the configuration file in
-$OPENRAM\_HOME/options.py
-
-To run designs in Docker, it is suggested to use, for example:
-```
-cd openram/macros
-make example_config_scn4m_subm
-```
-
-# Unit Tests
-
-Regression testing  performs a number of tests for all modules in OpenRAM.
-From the unit test directory ($OPENRAM\_HOME/tests),
-use the following command to run all regression tests:
-
-```
-cd openram/compiler/tests
-make -j 3
-```
-The -j can run with 3 threads. By default, this will run in all technologies.
-
-To run a specific test in all technologies:
-```
-cd openram/compiler/tests
-make 05_bitcell_array_test
-```
-To run a specific technology:
-```
-cd openram/compiler/tests
-TECHS=scn4m_subm make 05_bitcell_array_test
-```
-
-To increase the verbosity of the test, add one (or more) -v options and
-pass it as an argument to OpenRAM:
-```
-ARGS="-v" make 05_bitcell_array_test
-```
-
-Unit test results are put in a directory:
-```
-openram/compiler/tests/results/<technology>/<test>
-```
-If the test fails, there will be a tmp directory with intermediate results.
-If the test passes, this directory will be deleted to save space.
-You can view the .out file to see what the output of a test is in either case.
+Please see our [documentation][documentation] and let us know if anything needs
+updating.
 
 # Get Involved
 
@@ -186,17 +33,25 @@ You can view the .out file to see what the output of a test is in either case.
 
 # Further Help
 
-+ [Additional hints](./HINTS.md)
 + [Documentation][documentation]
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-+ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
 
 # License
 
 OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
 
+# Publications
+
++ M. R. Guthaus, J. E. Stine, S. Ataei, B. Chen, B. Wu, M. Sarwar, "OpenRAM: An Open-Source Memory Compiler," Proceedings of the 35th International Conference on Computer-Aided Design (ICCAD), 2016
++ S. Ataei, J. Stine, M. Guthaus, “A 64 kb differential single-port 12T SRAM design with a bit-interleaving scheme for low-voltage operation in 32 nm SOI CMOS,” International Conference on Computer Design (ICCD), 2016, pp. 499-506.
++ E. Ebrahimi, M. Guthaus, J. Renau, “Timing Speculative SRAM”, IEEE In- ternational Symposium on Circuits and Systems (ISCAS), 2017
++ B. Wu, J.E. Stine, M.R. Guthaus, "Fast and Area-Efficient Word-Line Optimization",  IEEE International Symposium on Circuits and Systems (ISCAS), 2019
++ B. Wu, M. Guthaus, "Bottom Up Approach for High Speed SRAM Word-line Buffer Insertion Optimization", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019
++ H. Nichols, M. Grimes, J. Sowash, J. Cirimelli-Low, M. Guthaus "Automated Synthesis of Multi-Port Memories and Control", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019
+
+ 
 # Contributors & Acknowledgment
 
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
@@ -215,9 +70,9 @@ If I forgot to add you, please let me know!
 
 [Github issues]:         https://github.com/VLSIDA/OpenRAM/issues
 [Github pull request]:   https://github.com/VLSIDA/OpenRAM/pulls
-[Github project]:         https://github.com/VLSIDA/OpenRAM
+[Github project]:        https://github.com/VLSIDA/OpenRAM
 
-[documentation]:         https://docs.google.com/presentation/d/10InGB33N51I6oBHnqpU7_w9DXlx-qe9zdrlco2Yc5co/edit?usp=sharing
+[documentation]:         docs/source/index.md
 [dev-group]:             mailto:openram-dev-group@ucsc.edu
 [user-group]:            mailto:openram-user-group@ucsc.edu
 [dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu

@@ -6,6 +6,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
+      - name: Library build
+        run: |
+         make library
       - name: Docker build
         run: |
          cd ${{ github.workspace }}/docker

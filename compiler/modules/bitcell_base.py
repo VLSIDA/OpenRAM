@@ -265,3 +265,15 @@ class bitcell_base(design):
             delay = math.sqrt(2*tstep*(vdd-spice["nom_threshold"])/m)
 
         return delay
+
+    def build_graph(self, graph, inst_name, port_nets):
+        """
+        Adds edges based on inputs/outputs.
+        Overrides base class function.
+        """
+        debug.error("Must override build_graph function in bitcell base class.")
+
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+
+        return False

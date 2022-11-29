@@ -782,14 +782,26 @@ library_prefix_name = "sky130_fd_bd_sram__"
 # This will look for a maglef file and copy it over the mag file
 # before DRC after extraction
 
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1a_cell
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1a_replica_ce
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1_replica_cell
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1_replica_ce
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1_replica_cell
+# gds flatglob sky130_fd_bd_sram__openram_sp_cell_opt1a_cell
+# gds flatglob sky130_fd_bd_sram__sram_sp_cell_fom_serifs
+
 flatglob = ["*_?mos_m*",
             "sky130_fd_bd_sram__sram_sp_cell_fom_serifs",
-            "sky130_fd_bd_sram__openram_sp_cell_opt1a_cell",
-            "sky130_fd_bd_sram__openram_sp_cell_opt1a_replica_ce",
+
+            "sky130_fd_bd_sram__sram_sp_cell",
             "sky130_fd_bd_sram__openram_sp_cell_opt1_replica_cell",
+            "sky130_fd_bd_sram__openram_sp_cell_opt1a_replica_cell",
+
+            "sky130_fd_bd_sram__sram_sp_cell_opt1_ce",
             "sky130_fd_bd_sram__openram_sp_cell_opt1_replica_ce",
-            "sky130_fd_bd_sram__openram_sp_cell_opt1a_cell",
-            "sky130_fd_bd_sram__sram_sp_cell_fom_serifs"]
+            "sky130_fd_bd_sram__openram_sp_cell_opt1a_replica_ce",
+            "sky130_fd_bd_sram__sram_sp_wlstrap_ce",
+            "sky130_fd_bd_sram__sram_sp_wlstrap_p_ce"]
 
 blackbox_cells = ["sky130_fd_bd_sram__openram_dp_cell",
                   "sky130_fd_bd_sram__openram_dp_cell_dummy",

@@ -10,17 +10,31 @@ import shutil
 import datetime
 from openram import debug
 from openram.characterizer import functional
+from openram.modules import sram_config as config
 from openram import OPTS, print_time
 
 
 class sram():
     """
     This is not a design module, but contains an SRAM design instance.
-    It could later try options of number of banks and oganization to compare
+    It could later try options of number of banks and organization to compare
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, sram_config, name):
+    def __init__(self, sram_config=None, name=None):
+
+        # Create default configs if custom config isn't provided
+        if sram_config is None:
+            sram_config = config(word_size=OPTS.word_size,
+                                 num_words=OPTS.num_words,
+                                 write_size=OPTS.write_size,
+                                 num_banks=OPTS.num_banks,
+                                 words_per_row=OPTS.words_per_row,
+                                 num_spare_rows=OPTS.num_spare_rows,
+                                 num_spare_cols=OPTS.num_spare_cols)
+
+        if name is None:
+            name = OPTS.output_name
 
         sram_config.set_local_config(self)
 

@@ -61,18 +61,7 @@ openram.print_time("Start", start_time)
 # Output info about this run
 openram.report_status()
 
-from openram.modules import sram_config
-
-
-# Configure the SRAM organization
-c = sram_config(word_size=OPTS.word_size,
-                num_words=OPTS.num_words,
-                write_size=OPTS.write_size,
-                num_banks=OPTS.num_banks,
-                words_per_row=OPTS.words_per_row,
-                num_spare_rows=OPTS.num_spare_rows,
-                num_spare_cols=OPTS.num_spare_cols)
-debug.print_raw("Words per row: {}".format(c.words_per_row))
+debug.print_raw("Words per row: {}".format(OPTS.words_per_row))
 
 output_extensions = ["lvs", "sp", "v", "lib", "py", "html", "log"]
 # Only output lef/gds if back-end
@@ -86,10 +75,9 @@ debug.print_raw("Output files are: ")
 for path in output_files:
     debug.print_raw(path)
 
-
+# Create an SRAM (we can also pass sram_config, see documentation/tutorials for details)
 from openram.modules import sram
-s = sram(name=OPTS.output_name,
-         sram_config=c)
+s = sram()
 
 # Output the files for the resulting SRAM
 s.save()

@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
-from vector import vector
+from base import design
+from base import vector
 from sram_factory import factory
 from tech import cell_properties
 import debug
 from globals import OPTS
 
 
-class sense_amp_array(design.design):
+class sense_amp_array(design):
     """
     Array of sense amplifiers to read the bitlines through the column mux.
     Dynamically generated sense amp array for all bitlines.
@@ -75,6 +75,8 @@ class sense_amp_array(design.design):
         self.width = self.local_insts[-1].rx()
 
         self.add_layout_pins()
+
+        self.route_supplies()
         self.route_rails()
 
         self.add_boundary()
@@ -91,7 +93,6 @@ class sense_amp_array(design.design):
 
     def add_modules(self):
         self.amp = factory.create(module_type="sense_amp")
-        self.add_mod(self.amp)
 
         # This is just used for measurements,
         # so don't add the module
@@ -151,12 +152,6 @@ class sense_amp_array(design.design):
         for i in range(len(self.local_insts)):
             inst = self.local_insts[i]
 
-            for gnd_pin in inst.get_pins("gnd"):
-                self.copy_power_pin(gnd_pin)
-
-            for vdd_pin in inst.get_pins("vdd"):
-                self.copy_power_pin(vdd_pin)
-
             bl_pin = inst.get_pin(inst.mod.get_bl_names())
             br_pin = inst.get_pin(inst.mod.get_br_names())
             dout_pin = inst.get_pin(inst.mod.dout_name)
@@ -177,6 +172,10 @@ class sense_amp_array(design.design):
                                 offset=dout_pin.ll(),
                                 width=dout_pin.width(),
                                 height=dout_pin.height())
+
+    def route_supplies(self):
+        self.route_horizontal_pins("vdd")
+        self.route_horizontal_pins("gnd")
 
     def route_rails(self):
         # Add enable across the array

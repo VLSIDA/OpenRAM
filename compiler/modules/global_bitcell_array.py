@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from globals import OPTS
 from sram_factory import factory
-from vector import vector
+from base import vector
 import debug
 from numpy import cumsum
 from tech import layer_properties as layer_props
 
 
-class global_bitcell_array(bitcell_base_array.bitcell_base_array):
+class global_bitcell_array(bitcell_base_array):
     """
     Creates a global bitcell array.
     Rows is an integer number for all local arrays.
@@ -64,7 +64,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                 rbl=self.rbl,
                                 left_rbl=[0],
                                 right_rbl=[1] if len(self.all_ports) > 1 else [])
-            self.add_mod(la)
             self.local_mods.append(la)
             return
 
@@ -90,7 +89,6 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
                                     cols=cols,
                                     rbl=self.rbl)
 
-            self.add_mod(la)
             self.local_mods.append(la)
 
     def add_pins(self):
@@ -344,4 +342,3 @@ class global_bitcell_array(bitcell_base_array.bitcell_base_array):
         """Exclude dffs from graph as they do not represent critical path"""
 
         self.graph_inst_exclude.add(self.ctrl_dff_inst)
-

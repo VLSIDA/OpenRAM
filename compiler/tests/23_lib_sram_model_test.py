@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os,re
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 import debug
@@ -23,12 +23,21 @@ class lib_sram_model_test(openram_test):
         OPTS.nominal_corner_only = False
         OPTS.netlist_only = True
 
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
+
         from characterizer import lib
-        from sram import sram
-        from sram_config import sram_config
+        from modules import sram
+        from modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
-                        num_banks=1)
+                        num_banks=1,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "Testing analytical timing for sample 2 bit, 16 words SRAM with 1 bank")

@@ -5,16 +5,16 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 from tech import layer, preferred_directions
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class column_mux_array(design.design):
+class column_mux_array(design):
     """
     Dynamically generated column mux array.
     Array of column mux to read the bitlines through the 6T.
@@ -87,7 +87,6 @@ class column_mux_array(design.design):
         self.mux = factory.create(module_type="column_mux",
                                   bitcell_bl=self.bitcell_bl,
                                   bitcell_br=self.bitcell_br)
-        self.add_mod(self.mux)
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 
@@ -148,13 +147,14 @@ class column_mux_array(design.design):
                                 offset=offset,
                                 height=self.height - offset.y)
 
-        for inst in self.mux_inst:
-            self.copy_layout_pin(inst, "gnd")
+    def route_supplies(self):
+        self.route_horizontal_pins("gnd", self.insts)
 
     def add_routing(self):
         self.add_horizontal_input_rail()
         self.add_vertical_poly_rail()
         self.route_bitlines()
+        self.route_supplies()
 
     def add_horizontal_input_rail(self):
         """ Create address input rails below the mux transistors  """
@@ -174,16 +174,17 @@ class column_mux_array(design.design):
             sel_index = col % self.words_per_row
             # Add the column x offset to find the right select bit
             gate_offset = self.mux_inst[col].get_pin("sel").bc()
-            # height to connect the gate to the correct horizontal row
-            # sel_height = self.get_pin("sel_{}".format(sel_index)).by()
             # use the y offset from the sel pin and the x offset from the gate
+            
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
+
+            bl_offset = offset.scale(0, 1) + vector((self.mux_inst[col].get_pin("br_out").cx() + self.mux_inst[col].get_pin("bl_out").cx())/2, 0)
             self.add_via_stack_center(from_layer="poly",
                                       to_layer=self.sel_layer,
-                                      offset=offset,
+                                      offset=bl_offset,
                                       directions=self.via_directions)
-            self.add_path("poly", [offset, gate_offset])
+            self.add_path("poly", [offset, gate_offset, bl_offset])
 
     def route_bitlines(self):
         """  Connect the output bit-lines to form the appropriate width mux """

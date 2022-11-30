@@ -6,13 +6,13 @@
 # All rights reserved.
 #
 import debug
-import design
-from vector import vector
+from base import design
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class dff_buf_array(design.design):
+class dff_buf_array(design):
     """
     This is a simple row (or multiple rows) of flops.
     Unlike the data flops, these are never spaced out.
@@ -68,7 +68,6 @@ class dff_buf_array(design.design):
         self.dff = factory.create(module_type="dff_buf",
                                   inv1_size=self.inv1_size,
                                   inv2_size=self.inv2_size)
-        self.add_mod(self.dff)
 
     def create_dff_array(self):
         self.dff_insts={}
@@ -155,15 +154,23 @@ class dff_buf_array(design.design):
             gndn_pin=self.dff_insts[row, self.columns - 1].get_pin("gnd")
             self.add_path(gnd0_pin.layer, [gnd0_pin.lc(), gndn_pin.rc()], width=gnd0_pin.height())
 
-        for row in range(self.rows):
-            for col in range(self.columns):
-                # Continous vdd rail along with label.
-                vdd_pin=self.dff_insts[row, col].get_pin("vdd")
-                self.copy_power_pin(vdd_pin, loc=vdd_pin.lc())
+        if self.rows > 1:
+            # Vertical straps on ends if multiple rows
+            left_dff_insts = [self.dff_insts[x, 0] for x in range(self.rows)]
+            right_dff_insts = [self.dff_insts[x, self.columns-1] for x in range(self.rows)]
+            self.route_vertical_pins("vdd", left_dff_insts, xside="lx", yside="cy")
+            self.route_vertical_pins("gnd", right_dff_insts, xside="rx", yside="cy")
+        else:
+            for row in range(self.rows):
+                for col in range(self.columns):
+                    # Continous vdd rail along with label.
+                    vdd_pin=self.dff_insts[row, col].get_pin("vdd")
+                    self.copy_power_pin(vdd_pin)
 
-                # Continous gnd rail along with label.
-                gnd_pin=self.dff_insts[row, col].get_pin("gnd")
-                self.copy_power_pin(gnd_pin, loc=gnd_pin.lc())
+                    # Continous gnd rail along with label.
+                    gnd_pin=self.dff_insts[row, col].get_pin("gnd")
+                    self.copy_power_pin(gnd_pin)
+
 
     def add_layout_pins(self):
 

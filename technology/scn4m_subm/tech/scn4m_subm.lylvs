@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description/>
+ <version/>
+ <category>lvs</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>false</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>true</show-in-menu>
+ <group-name>lvs_scripts</group-name>
+ <menu-path>tools_menu.lvs.end</menu-path>
+ <interpreter>dsl</interpreter>
+ <dsl-interpreter-name>lvs-dsl-xml</dsl-interpreter-name>
+ <text>#
+# Extraction for freePDK45
+#
+############################
+tstart = Time.now
+
+# optionnal for a batch launch :   klayout -b -rd input=my_layout.gds -rd report=my_report.lyrdb -rd schematic=reference_netlist.cir -rd target_netlist=extracted_netlist.cir -r lvs_freepdk45.lvs
+if $input
+  source($input)
+end
+
+if $report
+  report_lvs($report)
+else
+  report_lvs("lvs_report.lvsdb")
+end
+
+if $schematic
+#reference netlist
+   schematic($schematic)
+else
+   schematic(RBA::CellView::active.filename.sub(/\.(oas|gds|oas.gz|gds.gz)$/, ".sp"))
+end
+
+# true: use net names instead of numbers
+# false: use numbers for nets
+spice_with_net_names = true
+
+# true: put in comments with details
+# false: no comments
+spice_with_comments = true
+
+if $target_netlist
+  target_netlist($target_netlist)
+else
+   # target_netlist("netlist.cir", write_spice(spice_with_net_names, spice_with_comments), "The netlist comment goes here.")
+   target_netlist(File.join(File.dirname(RBA::CellView::active.filename), source.cell_name+"_extracted.cir"), write_spice(spice_with_net_names, spice_with_comments),  "Extracted by KLayout on : #{Time.now.strftime("%d/%m/%Y %H:%M")}")
+end
+
+# Hierarchical mode
+deep
+# Use 4 CPU cores
+threads(4)
+# Print details
+verbose(true)
+
+
+# layers definitions
+########################
+info("Layers definitions")
+
+  DNW = input(38,0)
+  nwell = input(42,0)
+  pwell = input(41,0)
+  CW = input(59,0)
+  active = input(43,0)
+  TA = input(60,0)
+  PBase = input(58,0)
+  poly = input(46,0)
+  SB = input(29,0)
+  nplus = input(45,0)
+  pplus = input(44,0)
+  PO2 = input(56,0)
+  HR = input(34,0)
+  Contact = input(25,0)
+  ContactPoly = input(47,0)
+  ContactActive = input(48,0)
+  ContactPoly2 = input(55, 0)
+  CT = Contact + ContactPoly + ContactActive + ContactPoly2
+  M1 = input(49,0)
+  V1 = input(50,0)
+  M2 = input(51,0)
+  V2 = input(61,0)
+  M3 = input(62,0)
+  V3 = input(30,0)
+  M4 = input(31,0)
+  CTM = input(35,0)
+  V4 = input(32,0)
+  M5 = input(33,0)
+  V5 = input(36,0)
+  M6 = input(37,0)
+  Glass = input(52,0)
+  Pads = input(26,0)
+
+# layers processing
+########################
+info("Layers processing")
+
+# Bulk layer for terminal provisioning
+bulk        = polygon_layer
+
+active_in_nwell = active &amp; nwell
+pactive    = active_in_nwell &amp; pplus
+ntie       = active_in_nwell &amp; nplus
+pgate      = pactive &amp; poly
+psd        = pactive - pgate
+
+active_in_pwell = active &amp; pwell
+nactive    = active_in_pwell &amp; nplus
+ptie       = active_in_pwell &amp; pplus
+ngate      = nactive &amp; poly
+nsd        = nactive - ngate
+
+
+cheat("cell_1rw", "dummy_cell_1rw", "replica_cell_1rw", "cell_2rw", "dummy_cell_2rw", "replica_cell_2rw", "pbitcell", "dummy_pbitcell", "replica_pbitcell", "dff", "wordline_driver*") {
+
+# PMOS transistor device extraction
+extract_devices(mos4("p"), { "SD" =&gt; psd, "G" =&gt; pgate, "tS" =&gt; psd, "tD" =&gt; psd, "tG" =&gt; poly, "W" =&gt; nwell })
+
+# NMOS transistor device extraction
+extract_devices(mos4("n"), { "SD" =&gt; nsd, "G" =&gt; ngate, "tS" =&gt; nsd, "tD" =&gt; nsd, "tG" =&gt; poly, "W" =&gt; pwell })
+
+}
+
+# Define connectivity for netlist extraction
+
+# Inter-layer
+connect(nwell,   ntie)
+connect(pwell,   ptie)
+connect(CT,   ntie)
+connect(CT,   ptie)
+connect(psd,  CT)
+connect(nsd,  CT)
+connect(poly,   CT)
+connect(CT,   M1)
+connect(CT,   M1)
+connect(M1,   V1)
+connect(V1,   M2)
+connect(M2,   V2)
+connect(V2,   M3)
+connect(M3,   V3)
+connect(V3,   M4)
+connect(M4,   V4)
+connect(V4,   M5)
+connect(M5,   V5)
+connect(V5,   M6)
+
+
+# Global
+schematic.simplify
+
+if $connect_supplies
+  connect_implicit("vdd")
+  connect_implicit("gnd")
+end
+
+connect_global(pwell, "PWELL")
+connect_global(nwell, "NWELL")
+#connect_global(bulk, "BULK")
+
+for pat in %w(pinv* pnor* pnand* and?_dec* write_driver* port_address* replica_bitcell_array*)
+  connect_explicit(pat, [ "NWELL", "vdd" ])
+  connect_explicit(pat, [ "BULK", "PWELL", "gnd" ])
+end
+
+# Actually performs the extraction
+netlist # ... not really required
+
+# Flatten cells which are present in one netlist only
+align
+# SIMPLIFICATION of the netlist
+#netlist.make_top_level_pins
+#netlist.combine_devices
+#netlist.purge
+#netlist.purge_nets
+netlist.simplify
+
+# Tolerances for the devices extracted parameters
+#  tolerance(device_class_name, parameter_name [, :absolute =&gt; absolute_tolerance] [, :relative =&gt; relative_tolerance])
+tolerance("P", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+tolerance("N", "W", :absolute =&gt; 1.nm, :relative =&gt; 0.001)
+
+#max_res(1000000)
+#min_caps(1e-15)
+
+max_branch_complexity(65536)
+max_depth(16)
+
+if ! compare
+  #raise "ERROR : Netlists don't match"
+  puts "ERROR : Netlists don't match"
+else
+  puts "CONGRATULATIONS! Netlists match."
+end
+
+# time spent for the LVS
+time = Time.now
+hours = ((time - tstart)/3600).to_i
+minutes = ((time - tstart)/60 - hours * 60).to_i
+seconds = ((time - tstart) - (minutes * 60 + hours * 3600)).to_i
+$stdout.write "LVS finished at : #{time.hour}:#{time.min}:#{time.sec}  -  LVS duration =  #{hours} hrs. #{minutes} min. #{seconds} sec.\n"</text>
+</klayout-macro>

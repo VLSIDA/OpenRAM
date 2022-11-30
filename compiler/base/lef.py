@@ -6,12 +6,12 @@
 # All rights reserved.
 #
 import debug
+from base import vector
+from base import pin_layout
 from tech import layer_names
 import os
 import shutil
 from globals import OPTS
-from vector import vector
-from pin_layout import pin_layout
 
 
 class lef:
@@ -120,14 +120,13 @@ class lef:
                     old_blockages = list(self.blockages[pin.layer])
                     for blockage in old_blockages:
                         if blockage.overlaps(inflated_pin):
-                            intersection_shape = blockage.intersection(inflated_pin)
+                            intersection_pin = blockage.intersection(inflated_pin)
                             # If it is zero area, don't split the blockage
-                            if intersection_shape[0][0]==intersection_shape[1][0] or intersection_shape[0][1]==intersection_shape[1][1]:
+                            if not intersection_pin or intersection_pin.area() == 0:
                                 continue
 
                             # Remove the old blockage and add the new ones
                             self.blockages[pin.layer].remove(blockage)
-                            intersection_pin = pin_layout("", intersection_shape, inflated_pin.layer)
                             new_blockages = blockage.cut(intersection_pin)
                             self.blockages[pin.layer].extend(new_blockages)
                             # We split something so make another pass

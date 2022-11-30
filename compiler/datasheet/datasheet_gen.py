@@ -19,8 +19,8 @@ from globals import OPTS
 import os
 import math
 import csv
-import datasheet
-import table_gen
+from .datasheet import datasheet
+from .table_gen import table_gen
 
 # def process_name(corner):
 # """
@@ -400,7 +400,7 @@ def parse_characterizer_csv(f, pages):
             if found == 0:
 
                 # if this is the first corner for this sram, run first time configuration and set up tables
-                new_sheet = datasheet.datasheet(NAME)
+                new_sheet = datasheet(NAME)
                 pages.append(new_sheet)
 
                 new_sheet.git_id = ORIGIN_ID
@@ -411,12 +411,12 @@ def parse_characterizer_csv(f, pages):
                 new_sheet.description = [NAME, NUM_WORDS, NUM_BANKS, NUM_RW_PORTS, NUM_W_PORTS,
                                          NUM_R_PORTS, TECH_NAME, MIN_PERIOD, WORD_SIZE, ORIGIN_ID, DATETIME]
 
-                new_sheet.corners_table = table_gen.table_gen("corners")
+                new_sheet.corners_table = table_gen("corners")
                 new_sheet.corners_table.add_row(
                     ['Transistor Type', 'Power Supply', 'Temperature', 'Corner Name'])
                 new_sheet.corners_table.add_row(
                     [PROC, VOLT, TEMP, LIB_NAME.replace(OUT_DIR, '').replace(NAME, '')])
-                new_sheet.operating_table = table_gen.table_gen(
+                new_sheet.operating_table = table_gen(
                     "operating_table")
                 new_sheet.operating_table.add_row(
                     ['Parameter', 'Min', 'Typ', 'Max', 'Units'])
@@ -432,10 +432,10 @@ def parse_characterizer_csv(f, pages):
                     # failed to provide non-zero MIN_PERIOD
                     new_sheet.operating_table.add_row(
                         ['Operating Frequency (F)', '', '', "not available in netlist only", 'MHz'])
-                new_sheet.power_table = table_gen.table_gen("power")
+                new_sheet.power_table = table_gen("power")
                 new_sheet.power_table.add_row(
                     ['Pins', 'Mode', 'Power', 'Units'])
-                new_sheet.timing_table = table_gen.table_gen("timing")
+                new_sheet.timing_table = table_gen("timing")
                 new_sheet.timing_table.add_row(
                     ['Parameter', 'Min', 'Max', 'Units'])
                 # parse initial timing information
@@ -592,10 +592,10 @@ def parse_characterizer_csv(f, pages):
                     else:
                         break
 
-                new_sheet.dlv_table = table_gen.table_gen("dlv")
+                new_sheet.dlv_table = table_gen("dlv")
                 new_sheet.dlv_table.add_row(['Type', 'Description', 'Link'])
 
-                new_sheet.io_table = table_gen.table_gen("io")
+                new_sheet.io_table = table_gen("io")
                 new_sheet.io_table.add_row(['Type', 'Value'])
 
                 if not OPTS.netlist_only:

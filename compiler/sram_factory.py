@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 from globals import OPTS
+import importlib
 
 
 class sram_factory:
@@ -101,10 +102,18 @@ class sram_factory:
             # Load a cached version from previous usage
             mod = self.modules[real_module_type]
         except KeyError:
-            # Dynamically load the module
-            import importlib
-            c = importlib.reload(__import__(real_module_type))
+            try:
+                # Dynamically load the module
+                if real_module_type == "contact":
+                    c  = importlib.import_module("base.contact")
+                else:
+                    c  = importlib.import_module("modules."+real_module_type)
+            except ModuleNotFoundError:
+                # Check if it is a technology specific module
+                c  = importlib.import_module("custom."+real_module_type)
+
             mod = getattr(c, real_module_type)
+
             self.modules[real_module_type] = mod
             self.module_indices[real_module_type] = 0
             self.objects[real_module_type] = []

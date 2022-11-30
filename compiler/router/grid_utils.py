@@ -10,8 +10,8 @@ Some utility functions for sets of grid cells.
 """
 
 import math
-from direction import direction
-from vector3d import vector3d
+from .direction import direction
+from base.vector3d import vector3d
 
 
 def increment_set(curset, direct):

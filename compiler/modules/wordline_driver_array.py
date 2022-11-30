@@ -6,15 +6,15 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 from tech import drc, layer
-from vector import vector
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class wordline_driver_array(design.design):
+class wordline_driver_array(design):
     """
     Creates a Wordline Driver
     Generates the wordline-driver to drive the bitcell
@@ -42,11 +42,18 @@ class wordline_driver_array(design.design):
             self.route_layer = "li"
         else:
             self.route_layer = "m1"
+
         self.place_drivers()
         self.route_layout()
-        self.route_vdd_gnd()
-        self.offset_x_coordinates()
+        self.offset_x_coordinates(vector(-2*self.m4_pitch, 0))
+
+        # Leave a well gap to separate the bitcell array well from this well
+        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
+        self.width = self.wld_inst[-1].rx() + well_gap
+        self.height = self.wld_inst[-1].uy()
+
         self.add_boundary()
+        self.route_supplies()
         self.DRC_LVS()
 
     def add_pins(self):
@@ -65,39 +72,18 @@ class wordline_driver_array(design.design):
         self.wl_driver = factory.create(module_type="wordline_driver",
                                         cols=self.cols)
 
-        self.add_mod(self.wl_driver)
+    def route_supplies(self):
+        """
+        Add vertical power rails.
+        """
 
-    def route_vdd_gnd(self):
-        """
-        Add a pin for each row of vdd/gnd which
-        are must-connects next level up.
-        """
         if layer_props.wordline_driver.vertical_supply:
-            for name in ["vdd", "gnd"]:
-                supply_pins = self.wld_inst[0].get_pins(name)
-                for pin in supply_pins:
-                    self.add_layout_pin_segment_center(text=name,
-                                                       layer=pin.layer,
-                                                       start=pin.bc(),
-                                                       end=vector(pin.cx(), self.height))
+            self.route_vertical_pins("vdd", self.wld_inst)
+            self.route_vertical_pins("gnd", self.wld_inst)
         else:
-            # Find the x offsets for where the vias/pins should be placed
-            xoffset_list = [self.wld_inst[0].rx()]
-            for num in range(self.rows):
-                # this will result in duplicate polygons for rails, but who cares
+            self.route_vertical_pins("vdd", self.wld_inst, xside="rx",)
+            self.route_vertical_pins("gnd", self.wld_inst, xside="lx",)
 
-                # use the inverter offset even though it will be the and's too
-                (gate_offset, y_dir) = self.get_gate_offset(0,
-                                                            self.wl_driver.height,
-                                                            num)
-                # Route both supplies
-                for name in ["vdd", "gnd"]:
-                    supply_pin = self.wld_inst[num].get_pin(name)
-
-                    # Add pins in two locations
-                    for xoffset in xoffset_list:
-                        pin_pos = vector(xoffset, supply_pin.cy())
-                        self.copy_power_pin(supply_pin, loc=pin_pos)
 
     def create_drivers(self):
         self.wld_inst = []
@@ -128,21 +114,17 @@ class wordline_driver_array(design.design):
             self.wld_inst[row].place(offset=and2_offset,
                                      mirror=inst_mirror)
 
-        # Leave a well gap to separate the bitcell array well from this well
-        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
-        self.width = self.wl_driver.width + well_gap
-        self.height = self.wl_driver.height * self.rows
-
     def route_layout(self):
         """ Route all of the signals """
 
         # Wordline enable connection
         en_pin = self.wld_inst[0].get_pin("B")
-        en_bottom_pos = vector(en_pin.lx(), 0)
-        en_pin = self.add_layout_pin(text="en",
-                                     layer="m2",
-                                     offset=en_bottom_pos,
-                                     height=self.height)
+        en_bottom_pos = vector(en_pin.cx(), 0)
+        en_top_pos = vector(en_pin.cx(), self.wld_inst[-1].uy())
+        en_pin = self.add_layout_pin_segment_center(text="en",
+                                                    layer="m2",
+                                                    start=en_bottom_pos,
+                                                    end=en_top_pos) 
 
         for row in range(self.rows):
             and_inst = self.wld_inst[row]

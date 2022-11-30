@@ -9,11 +9,12 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 
 
+@unittest.skip("SKIPPING 21_hspice_setuphold_test")
 class timing_setup_test(openram_test):
 
     def runTest(self):

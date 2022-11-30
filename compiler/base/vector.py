@@ -51,6 +51,7 @@ class vector():
         else:
             self.x=float(value[0])
             self.y=float(value[1])
+        self._hash = hash((self.x,self.y))
 
     def __getitem__(self, index):
         """
@@ -104,6 +105,7 @@ class vector():
     def snap_to_grid(self):
         self.x = self.snap_offset_to_grid(self.x)
         self.y = self.snap_offset_to_grid(self.y)
+        self._hash = hash((self.x,self.y))
         return self
 
     def snap_offset_to_grid(self, offset):

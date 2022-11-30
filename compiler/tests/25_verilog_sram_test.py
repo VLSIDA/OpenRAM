@@ -9,7 +9,7 @@
 import unittest
 from testutils import *
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
+
 import globals
 from globals import OPTS
 import debug
@@ -23,8 +23,8 @@ class verilog_test(openram_test):
         OPTS.route_supplies=False
         OPTS.check_lvsdrc=False
         OPTS.netlist_only=True
-        from sram import sram
-        from sram_config import sram_config
+        from modules import sram
+        from modules import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1)

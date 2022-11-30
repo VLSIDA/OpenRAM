@@ -1,0 +1,22 @@
+diff --git a/commands/CmdLQ.c b/commands/CmdLQ.c
+index ca70086..ee3242c 100644
+--- a/commands/CmdLQ.c
++++ b/commands/CmdLQ.c
+@@ -1745,7 +1745,7 @@ CmdPort(w, cmd)
+ 		    if (sl->lab_flags & PORT_DIR_MASK)
+ 		    {
+ 		    	idx = (int)sl->lab_port;
+-		    	if (idx < i) i = idx;
++		    	if (idx < i || i == -1) i = idx;
+ 		    }
+ 		}
+ #ifdef MAGIC_WRAPPER
+@@ -1764,7 +1764,7 @@ CmdPort(w, cmd)
+ 		    {
+ 		    	idx = (int)sl->lab_port;
+ 		    	if (idx > refidx)
+-		            if (idx < i) i = idx;
++		            if (idx < i || i == -1) i = idx;
+ 		    }
+ 		}
+ #ifdef MAGIC_WRAPPER

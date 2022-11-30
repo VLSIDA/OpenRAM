@@ -7,7 +7,6 @@
 #
 import unittest
 import sys, os, glob
-sys.path.append(os.getenv("OPENRAM_HOME"))
 from globals import OPTS
 import debug
 import pdb
@@ -24,24 +23,24 @@ class openram_test(unittest.TestCase):
     def tearDown(self):
         duration = time.time() - self.start_time
         print('%s: %.3fs' % (self.id(), duration))
-        
+
     def fail(self, msg):
         import inspect
         s = inspect.stack()
         base_filename = os.path.splitext(os.path.basename(s[2].filename))[0]
-        
+
         try:
             OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         except:
             debug.error("$OPENRAM_HOME is not properly defined.", 1)
-        
-        import shutil
-        zip_file = "{0}/../{1}_{2}".format(OPENRAM_HOME, base_filename, os.getpid())
-        debug.info(0, "Archiving failed temp files {0} to {1}".format(OPTS.openram_temp, zip_file))
-        shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
-        
+
+        # import shutil
+        # zip_file = "{0}/../{1}_{2}".format(OPENRAM_HOME, base_filename, os.getpid())
+        # debug.info(0, "Archiving failed temp files {0} to {1}".format(OPTS.openram_temp, zip_file))
+        # shutil.make_archive(zip_file, 'zip', OPTS.openram_temp)
+
         super().fail(msg)
-        
+
     def local_drc_check(self, w):
 
         self.reset()
@@ -55,7 +54,7 @@ class openram_test(unittest.TestCase):
             self.fail("DRC failed: {}".format(w.name))
         elif not OPTS.keep_temp:
             self.cleanup()
- 
+
     def local_check(self, a, final_verification=False):
 
         self.reset()
@@ -128,7 +127,7 @@ class openram_test(unittest.TestCase):
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
-        
+
         files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             # Only remove the files
@@ -140,8 +139,8 @@ class openram_test(unittest.TestCase):
         Reset everything after each test.
         """
         # Reset the static duplicate name checker for unit tests.
-        import hierarchy_design
-        hierarchy_design.hierarchy_design.name_map=[]
+        from base import hierarchy_design
+        hierarchy_design.name_map=[]
 
     def check_golden_data(self, data, golden_data, error_tolerance=1e-2):
         """

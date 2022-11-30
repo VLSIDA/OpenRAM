@@ -25,7 +25,7 @@ import re
 import shutil
 import debug
 from globals import OPTS
-from run_script import *
+from .run_script import *
 
 # Keep track of statistics
 num_drc_runs = 0
@@ -94,6 +94,9 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("set SUB gnd\n")
     #f.write("gds polygon subcell true\n")
     f.write("gds warning default\n")
+    # Flatten the transistors
+    # Bug in Netgen 1.5.194 when using this...
+    f.write("gds flatglob *_?mos_m*\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
     # they appear to be disconnected.
@@ -116,12 +119,14 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
         pre = "#"
     else:
         pre = ""
-    if final_verification and OPTS.route_supplies:
-        f.write(pre + "extract unique all\n")
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
-    f.write(pre + "extract\n")
+    if final_verification and OPTS.route_supplies:
+        f.write(pre + "extract unique all\n")
+    f.write(pre + "extract all\n")
+    f.write(pre + "select top cell\n")
+    f.write(pre + "feedback why\n")
     f.write('puts "Finished extract"\n')
     # f.write(pre + "ext2spice hierarchy on\n")
     # f.write(pre + "ext2spice scale off\n")
@@ -141,6 +146,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # but they all seem compatible enough.
     f.write(pre + "ext2spice format ngspice\n")
     f.write(pre + "ext2spice {}\n".format(cell_name))
+    f.write(pre + "select top cell\n")
+    f.write(pre + "feedback why\n")
     f.write('puts "Finished ext2spice"\n')
 
     f.write("quit -noprompt\n")
@@ -260,6 +267,11 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, output_path)
+            
+        setup_file_object = open(output_path + "/setup.tcl", 'a')
+        setup_file_object.write("# Increase the column sizes for ease of reading long names\n")
+        setup_file_object.write("::netgen::format 120\n")
+
     else:
         setup_file = 'nosetup'
 
@@ -337,16 +349,33 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=
 
     # Netlists match uniquely.
     test = re.compile("match uniquely.")
-    correct = list(filter(test.search, final_results))
-    # Fail if they don't match. Something went wrong!
-    if len(correct) == 0:
+    uniquely = list(filter(test.search, final_results))
+
+    # Netlists match uniquely.
+    test = re.compile("match correctly.")
+    correctly = list(filter(test.search, final_results))
+
+    # Top level pins mismatch
+    test = re.compile("The top level cell failed pin matching.")
+    pins_incorrectly = list(filter(test.search, final_results))
+
+    # Fail if the pins mismatched
+    if len(pins_incorrectly) > 0:
         total_errors += 1
+
+    # Fail if they don't match. Something went wrong!
+    if len(uniquely) == 0 and len(correctly) == 0:
+        total_errors += 1
+
+    if len(uniquely) == 0 and len(correctly) > 0:
+        debug.warning("{0}\tLVS matches but not uniquely".format(cell_name))
 
     if total_errors>0:
         # Just print out the whole file, it is short.
         for e in results:
             debug.info(1,e.strip("\n"))
-        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,resultsfile))
+        debug.error("{0}\tLVS mismatch (results in {1})".format(cell_name,
+                                                                resultsfile))
     else:
         debug.info(1, "{0}\tLVS matches".format(cell_name))
 

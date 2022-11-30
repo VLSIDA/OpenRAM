@@ -8,12 +8,12 @@
 import os
 import math
 
-import gdsMill
+from gdsMill import gdsMill
 import tech
 import globals
 import debug
-from vector import vector
-from pin_layout import pin_layout
+from .vector import vector
+from .pin_layout import pin_layout
 try:
     from tech import special_purposes
 except ImportError:

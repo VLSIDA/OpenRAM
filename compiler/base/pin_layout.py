@@ -7,7 +7,7 @@
 #
 import debug
 from tech import GDS, drc
-from vector import vector
+from .vector import vector
 from tech import layer, layer_indices
 import math
 
@@ -187,6 +187,10 @@ class pin_layout:
 
     def intersection(self, other):
         """ Check if a shape overlaps with a rectangle  """
+
+        if not self.overlaps(other):
+            return None
+
         (ll, ur) = self.rect
         (oll, our) = other.rect
 
@@ -195,7 +199,10 @@ class pin_layout:
         min_y = max(ll.y, oll.y)
         max_y = min(ur.y, our.y)
 
-        return [vector(min_x, min_y), vector(max_x, max_y)]
+        if max_x - min_x == 0 or max_y - min_y == 0:
+            return None
+
+        return pin_layout("", [vector(min_x, min_y), vector(max_x, max_y)], self.layer)
 
     def xoverlaps(self, other):
         """ Check if shape has x overlap """
@@ -509,12 +516,19 @@ class pin_layout:
         elif other.contains(self):
             return math.inf
         else:
-            intersections = self.compute_overlap_segment(other)
+            intersections = set(self.compute_overlap_segment(other))
             # This is the common case where two pairs of edges overlap
             # at two points, so just find the distance between those two points
             if len(intersections) == 2:
                 (p1, p2) = intersections
                 return math.sqrt(pow(p1[0]-p2[0], 2) + pow(p1[1]-p2[1], 2))
+            # If we have a rectangular overlap region
+            elif len(intersections) == 4:
+                points = intersections
+                ll = vector(min(p.x for p in points), min(p.y for p in points))
+                ur = vector(max(p.x for p in points), max(p.y for p in points))
+                new_shape = pin_layout("", [ll, ur], self.lpp)
+                return max(new_shape.height(), new_shape.width())
             else:
                 # This is where we had a corner intersection or none (1 or 0)
                 return 0

@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import debug
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from tech import drc, spice
 from globals import OPTS
 from sram_factory import factory
@@ -46,6 +46,8 @@ class bitcell_array(bitcell_base_array):
 
         self.add_layout_pins()
 
+        self.route_supplies()
+
         self.add_boundary()
 
         self.DRC_LVS()
@@ -53,7 +55,6 @@ class bitcell_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.cell = factory.create(module_type=OPTS.bitcell)
-        self.add_mod(self.cell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -64,11 +65,11 @@ class bitcell_array(bitcell_base_array):
                 self.cell_inst[row, col]=self.add_inst(name=name,
                                                        mod=self.cell)
                 self.connect_inst(self.get_bitcell_pins(row, col))
-                
+
                 # If it is a "core" cell, it could be trimmed for sim time
                 if col>0 and col<self.column_size-1 and row>0 and row<self.row_size-1:
                     self.trim_insts.add(name)
-                    
+
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""
 

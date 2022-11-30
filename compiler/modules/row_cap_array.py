@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2021 Regents of the University of California
 # All rights reserved.
 #
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
 
@@ -37,14 +37,13 @@ class row_cap_array(bitcell_base_array):
 
         self.width = max([x.rx() for x in self.insts])
         self.height = max([x.uy() for x in self.insts])
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
     def add_modules(self):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
-        self.add_mod(self.dummy_cell)
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 
@@ -107,11 +106,13 @@ class row_cap_array(bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        # Add vdd/gnd via stacks
         for row in range(1, self.row_size - 1):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:
                     for pin in inst.get_pins(pin_name):
-                        self.copy_power_pin(pin)
-
+                        self.add_layout_pin(text=pin_name,
+                                            layer=pin.layer,
+                                            offset=pin.ll(),
+                                            width=pin.width(),
+                                            height=pin.height())

@@ -5,15 +5,15 @@
 #
 from math import log, ceil
 import debug
-import design
+from base import design
 from sram_factory import factory
-from vector import vector
+from base import vector
 from tech import layer, drc
 from globals import OPTS
 from tech import layer_properties as layer_props
 
 
-class port_address(design.design):
+class port_address(design):
     """
     Create the address port (row decoder and wordline driver)..
     """
@@ -76,16 +76,19 @@ class port_address(design.design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-        for inst in [self.wordline_driver_array_inst, self.row_decoder_inst]:
-            self.copy_power_pins(inst, "vdd")
-            self.copy_power_pins(inst, "gnd")
+        if layer_props.wordline_driver.vertical_supply:
+            self.copy_layout_pin(self.rbl_driver_inst, "vdd")
+        else:
+            rbl_pos = self.rbl_driver_inst.get_pin("vdd").rc()
+            self.add_power_pin("vdd", rbl_pos)
+            self.add_path("m4", [rbl_pos, self.wordline_driver_array_inst.get_pins("vdd")[0].rc()])
 
-        for rbl_vdd_pin in self.rbl_driver_inst.get_pins("vdd"):
-            if layer_props.port_address.supply_offset:
-                self.copy_power_pin(rbl_vdd_pin)
-            else:
-                self.copy_power_pin(rbl_vdd_pin, loc=rbl_vdd_pin.lc())
+        self.copy_layout_pin(self.wordline_driver_array_inst, "vdd")
+        self.copy_layout_pin(self.wordline_driver_array_inst, "gnd")
 
+        self.copy_layout_pin(self.row_decoder_inst, "vdd")
+        self.copy_layout_pin(self.row_decoder_inst, "gnd")
+            
         # Also connect the B input of the RBL and_dec to vdd
         if OPTS.local_array_size == 0:
             rbl_b_pin = self.rbl_driver_inst.get_pin("B")
@@ -145,12 +148,10 @@ class port_address(design.design):
 
         self.row_decoder = factory.create(module_type="decoder",
                                           num_outputs=self.num_rows)
-        self.add_mod(self.row_decoder)
 
         self.wordline_driver_array = factory.create(module_type="wordline_driver_array",
                                                     rows=self.num_rows,
                                                     cols=self.num_cols)
-        self.add_mod(self.wordline_driver_array)
 
         local_array_size = OPTS.local_array_size
         if local_array_size > 0:
@@ -173,8 +174,6 @@ class port_address(design.design):
             self.rbl_driver = factory.create(module_type="and2_dec",
                                              size=driver_size,
                                              height=b.height)
-
-        self.add_mod(self.rbl_driver)
 
     def create_row_decoder(self):
         """  Create the hierarchical row decoder  """
@@ -232,17 +231,15 @@ class port_address(design.design):
         wordline_driver_array_offset = vector(self.row_decoder_inst.rx(), 0)
         self.wordline_driver_array_inst.place(wordline_driver_array_offset)
 
-        # The wordline driver also had an extra gap on the right, so use this offset
-        well_gap = 2 * drc("pwell_to_nwell") + drc("nwell_enclose_active")
-        x_offset = self.wordline_driver_array_inst.rx() - well_gap - self.rbl_driver.width
-        
+        # This m4_pitch corresponds to the offset space for jog routing in the
+        # wordline_driver_array
+        rbl_driver_offset = wordline_driver_array_offset + vector(2 * self.m4_pitch, 0)
+
         if self.port == 0:
-            rbl_driver_offset = vector(x_offset,
-                                       0)
             self.rbl_driver_inst.place(rbl_driver_offset, "MX")
         else:
-            rbl_driver_offset = vector(x_offset,
-                                       self.wordline_driver_array.height)
+            rbl_driver_offset += vector(0,
+                                        self.wordline_driver_array.height)
             self.rbl_driver_inst.place(rbl_driver_offset)
 
         # Pass this up

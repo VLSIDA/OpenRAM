@@ -9,13 +9,13 @@
 This provides a set of useful generic types for the gdsMill interface.
 """
 import debug
-from vector import vector
+from .vector import vector
 import tech
 import math
 import copy
 import numpy as np
 from globals import OPTS
-from utils import round_to_grid
+from .utils import round_to_grid
 
 
 class geometry:

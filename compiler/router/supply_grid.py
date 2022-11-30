@@ -5,8 +5,8 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from signal_grid import signal_grid
-from grid_path import grid_path
+from .signal_grid import signal_grid
+from .grid_path import grid_path
 
 
 class supply_grid(signal_grid):

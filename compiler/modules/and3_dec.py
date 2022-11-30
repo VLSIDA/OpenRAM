@@ -6,19 +6,19 @@
 # All rights reserved.
 #
 import debug
-from vector import vector
-import design
+from base import design
+from base import vector
 from sram_factory import factory
 from globals import OPTS
 from tech import layer
 
 
-class and3_dec(design.design):
+class and3_dec(design):
     """
     This is an AND with configurable drive strength.
     """
     def __init__(self, name, size=1, height=None, add_wells=True):
-        design.design.__init__(self, name)
+        design.__init__(self, name)
         debug.info(1, "Creating and3_dec {}".format(name))
         self.add_comment("size: {}".format(size))
         self.size = size
@@ -40,9 +40,6 @@ class and3_dec(design.design):
         self.inv = factory.create(module_type="inv_dec",
                                   height=self.height,
                                   size=self.size)
-
-        self.add_mod(self.nand)
-        self.add_mod(self.inv)
 
     def create_layout(self):
         if "li" in layer:

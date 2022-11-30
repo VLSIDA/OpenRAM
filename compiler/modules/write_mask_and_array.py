@@ -5,15 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import design
+from base import design
 import debug
 import math
 from sram_factory import factory
-from vector import vector
+from base import vector
 from globals import OPTS
 
 
-class write_mask_and_array(design.design):
+class write_mask_and_array(design):
     """
     Array of AND gates to turn write mask signal on only when w_en is on.
     The write mask AND array goes between the write driver array and the sense amp array.
@@ -63,7 +63,6 @@ class write_mask_and_array(design.design):
         # Assume stage effort of 3 to compute the size
         self.and2 = factory.create(module_type="pand2",
                                    size=max(self.write_size / 4.0, 1))
-        self.add_mod(self.and2)
 
     def create_and2_array(self):
         self.and2_insts = {}
@@ -146,7 +145,7 @@ class write_mask_and_array(design.design):
                 self.add_via_stack_center(from_layer=supply_pin.layer,
                                           to_layer="m1",
                                           offset=supply_pin.center())
-            
+
         for supply in ["gnd", "vdd"]:
             supply_pin = self.and2_insts[0].get_pin(supply)
             supply_pin_yoffset = supply_pin.cy()
@@ -158,4 +157,3 @@ class write_mask_and_array(design.design):
                                           to_layer="m1",
                                           offset=loc)
                 self.copy_power_pin(supply_pin, loc=loc)
-

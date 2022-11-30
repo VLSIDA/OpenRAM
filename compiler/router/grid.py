@@ -6,8 +6,8 @@
 # All rights reserved.
 #
 import debug
-from vector3d import vector3d
-from grid_cell import grid_cell
+from base.vector3d import vector3d
+from .grid_cell import grid_cell
 
 
 class grid:
@@ -67,6 +67,16 @@ class grid:
         else:
             self.add_map(n)
             return self.map[n].blocked
+
+    def is_inside(self, n):
+        if not isinstance(n, vector3d):
+            for item in n:
+                if self.is_inside(item):
+                    return True
+            else:
+                return False
+        else:
+            return n.x >= self.ll.x and n.x <= self.ur.x and n.y >= self.ll.y and n.y <= self.ur.y
 
     def set_path(self, n, value=True):
         if isinstance(n, (list, tuple, set, frozenset)):
@@ -128,7 +138,7 @@ class grid:
         """
         Side specifies which side.
         Layer specifies horizontal (0) or vertical (1)
-        Width specifies how wide the perimter "stripe" should be.
+        Width specifies how wide the perimeter "stripe" should be.
         Works from the inside out from the bbox (ll, ur)
         """
         if "ring" in side:

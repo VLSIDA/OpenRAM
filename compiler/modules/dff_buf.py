@@ -6,14 +6,14 @@
 # All rights reserved.
 #
 import debug
-import design
+from base import design
 from tech import layer
-from vector import vector
+from base import vector
 from globals import OPTS
 from sram_factory import factory
 
 
-class dff_buf(design.design):
+class dff_buf(design):
     """
     This is a simple buffered DFF. The output is buffered
     with two inverters, of variable size, to provide q
@@ -58,17 +58,14 @@ class dff_buf(design.design):
 
     def add_modules(self):
         self.dff = factory.create(module_type="dff")
-        self.add_mod(self.dff)
 
         self.inv1 = factory.create(module_type="pinv",
                                    size=self.inv1_size,
                                    height=self.dff.height)
-        self.add_mod(self.inv1)
 
         self.inv2 = factory.create(module_type="pinv",
                                    size=self.inv2_size,
                                    height=self.dff.height)
-        self.add_mod(self.inv2)
 
     def add_pins(self):
         self.add_pin_list(["D", "Q", "Qb", "clk", "vdd", "gnd"],
@@ -110,7 +107,7 @@ class dff_buf(design.design):
             pass
 
         well_spacing += 2 * self.well_extend_active
-        
+
         self.inv1_inst.place(vector(self.dff_inst.rx() + well_spacing, 0))
 
         # Add INV2 to the right

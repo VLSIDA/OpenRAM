@@ -35,7 +35,7 @@ ${CELL_TESTS} \
 ${MODULE_TESTS} \
 ${TOP_TESTS} \
 ${CHAR_TESTS} \
-${USAGE_TESTS} 
+${USAGE_TESTS}
 
 .PHONY: ${ALL_TESTS}
 
@@ -64,8 +64,8 @@ usage: ${USAGE_TESTS}
 
 $(ALL_TESTS):
 	python3 $@ -t ${TECH}
-	
-	
+
+
 OPENRAM_TECHS = $(subst :, ,$(OPENRAM_TECH))
 TECH_DIR := $(word 1, $(foreach dir,$(OPENRAM_TECHS),$(wildcard $(dir)/$(TECH))))
 CONFIG_DIR = $(OPENRAM_HOME)/model_configs
@@ -75,9 +75,9 @@ CSV_DIR = $(TECH_DIR)/sim_data
 # Creates names of technology specific okay files for the configs
 STAMPS=$(addprefix $(SIM_DIR)/, $(addsuffix .ok, $(notdir $(basename $(MODEL_CONFIGS)))))
 
-OPTS = 
+OPTS =
 # Characterize and perform DRC/LVS
-OPTS += -c 
+OPTS += -c
 # Do not characterize or perform DRC/LVS
 OPTS += -n
 # Verbosity
@@ -100,8 +100,7 @@ model: $(STAMPS)
 
 clean_model:
 	rm -f -r $(SIM_DIR)/*.ok
-	
+
 clean:
 	find . -name \*.pyc -exec rm {} \;
 	find . -name \*~ -exec rm {} \;
-

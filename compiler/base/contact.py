@@ -5,16 +5,14 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import hierarchy_design
 import debug
-from tech import drc, layer
-import tech
-from vector import vector
-from sram_factory import factory
-import sys
+from .hierarchy_design import hierarchy_design
+from .vector import vector
+from tech import drc, layer, preferred_directions
+from tech import layer as tech_layers
 
 
-class contact(hierarchy_design.hierarchy_design):
+class contact(hierarchy_design):
     """
     Object for a contact shape with its conductor enclosures.  Creates
     a contact array minimum active or poly enclosure and metal1
@@ -51,20 +49,20 @@ class contact(hierarchy_design.hierarchy_design):
 
         # Non-preferred directions
         if directions == "nonpref":
-            first_dir = "H" if tech.preferred_directions[layer_stack[0]]=="V" else "V"
-            second_dir = "H" if tech.preferred_directions[layer_stack[2]]=="V" else "V"
+            first_dir = "H" if preferred_directions[layer_stack[0]]=="V" else "V"
+            second_dir = "H" if preferred_directions[layer_stack[2]]=="V" else "V"
             self.directions = (first_dir, second_dir)
         # Preferred directions
         elif directions == "pref":
-            self.directions = (tech.preferred_directions[layer_stack[0]],
-                               tech.preferred_directions[layer_stack[2]])
+            self.directions = (preferred_directions[layer_stack[0]],
+                               preferred_directions[layer_stack[2]])
         # User directions
         elif directions:
             self.directions = directions
         # Preferred directions
         else:
-            self.directions = (tech.preferred_directions[layer_stack[0]],
-                               tech.preferred_directions[layer_stack[2]])
+            self.directions = (preferred_directions[layer_stack[0]],
+                               preferred_directions[layer_stack[2]])
         self.offset = vector(0, 0)
         self.implant_type = implant_type
         self.well_type = well_type
@@ -101,7 +99,7 @@ class contact(hierarchy_design.hierarchy_design):
         self.second_layer_name = second_layer
 
         # Contacts will have unique per first layer
-        if via_layer in tech.layer:
+        if via_layer in tech_layers:
             self.via_layer_name = via_layer
         elif via_layer == "contact":
             if first_layer in ("active", "poly"):
@@ -194,7 +192,7 @@ class contact(hierarchy_design.hierarchy_design):
     def create_nitride_cut_enclosure(self):
         """ Special layer that encloses poly contacts in some processes """
         # Check if there is a special poly nitride cut layer
-        if "npc" not in tech.layer:
+        if "npc" not in tech_layers:
             return
 
         npc_enclose_poly = drc("npc_enclose_poly")
@@ -256,7 +254,7 @@ class contact(hierarchy_design.hierarchy_design):
 
         # Optionally implant well if layer exists
         well_layer = "{}well".format(self.well_type)
-        if well_layer in tech.layer:
+        if well_layer in tech_layers:
             well_width_rule = drc("minwidth_" + well_layer)
             self.well_enclose_active = drc(well_layer + "_enclose_active")
             self.well_width = max(self.first_layer_width + 2 * self.well_enclose_active,
@@ -273,35 +271,5 @@ class contact(hierarchy_design.hierarchy_design):
     def analytical_power(self, corner, load):
         """ Get total power of a module  """
         return self.return_power()
-
-
-# Set up a static for each layer to be used for measurements
-for layer_stack in tech.layer_stacks:
-    (layer1, via, layer2) = layer_stack
-    cont = factory.create(module_type="contact",
-                          layer_stack=layer_stack)
-    module = sys.modules[__name__]
-    # Also create a contact that is just the first layer
-    if layer1 == "poly" or layer1 == "active":
-        setattr(module, layer1 + "_contact", cont)
-    else:
-        setattr(module, layer1 + "_via", cont)
-
-# Set up a static for each well contact for measurements
-if "nwell" in tech.layer:
-    cont = factory.create(module_type="contact",
-                          layer_stack=tech.active_stack,
-                          implant_type="n",
-                          well_type="n")
-    module = sys.modules[__name__]
-    setattr(module, "nwell_contact", cont)
-
-if "pwell" in tech.layer:
-    cont = factory.create(module_type="contact",
-                          layer_stack=tech.active_stack,
-                          implant_type="p",
-                          well_type="p")
-    module = sys.modules[__name__]
-    setattr(module, "pwell_contact", cont)
 
 

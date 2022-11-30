@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2021 Regents of the University of California
 # All rights reserved.
 #
-from bitcell_base_array import bitcell_base_array
+from .bitcell_base_array import bitcell_base_array
 from sram_factory import factory
 from globals import OPTS
 
@@ -36,6 +36,8 @@ class dummy_array(bitcell_base_array):
 
         self.add_layout_pins()
 
+        self.route_supplies()
+
         self.add_boundary()
 
         self.DRC_LVS()
@@ -45,7 +47,6 @@ class dummy_array(bitcell_base_array):
 
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
         self.cell = factory.create(module_type=OPTS.bitcell)
-        self.add_mod(self.dummy_cell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
@@ -98,6 +99,8 @@ class dummy_array(bitcell_base_array):
                                         offset=wl_pin.ll().scale(0, 1),
                                         width=self.width,
                                         height=wl_pin.height())
+
+    def route_supplies(self):
 
         # Copy a vdd/gnd layout pin from every cell
         for row in range(self.row_size):

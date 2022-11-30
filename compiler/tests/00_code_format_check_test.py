@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -30,6 +30,7 @@ class code_format_test(openram_test):
             errors += check_file_format_carriage(code)
             errors += check_file_format_whitespace(code)
 
+        # Check for "print"
         for code in source_codes:
             if re.search("gdsMill", code):
                 continue
@@ -43,6 +44,11 @@ class code_format_test(openram_test):
                 continue
             errors += check_print_output(code)
 
+        # Check for copyright
+        for code in source_codes:
+            if re.search("gdsMill", code):
+                continue
+            errors += check_copyright(code)
 
         # fails if there are any tabs in any files
         self.assertEqual(errors, 0)
@@ -143,6 +149,39 @@ def check_print_output(file_name):
 
     file.close()
     return(count)
+
+
+def check_copyright(file_name):
+    """ Check if any file doesn't contain the copyright at the top. """
+
+    from datetime import date
+    year = date.today().year
+    old_copyright = ("# See LICENSE for licensing information.\n"
+                     "#\n"
+                     "# Copyright (c) 2016-{} Regents of the University of California and The Board\n"
+                     "# of Regents for the Oklahoma Agricultural and Mechanical College\n"
+                     "# (acting for and on behalf of Oklahoma State University)\n"
+                     "# All rights reserved.\n"
+                     "#\n").format(year)
+    new_copyright = ("# See LICENSE for licensing information.\n"
+                     "#\n"
+                     "# Copyright (c) 2016-{} Regents of the University of California, Santa Cruz\n"
+                     "# All rights reserved.\n"
+                     "#\n").format(year)
+    skip_files = []
+    base_file_name = os.path.basename(file_name)
+    if base_file_name in skip_files:
+        return 0
+    file = open(file_name, "r")
+    line = file.read()
+    file.close()
+    # Skip possible shebang at the top
+    line = re.sub(r'#!.*\n', '', line)
+    # Check if copyright is missing
+    if not line.startswith(old_copyright) and not line.startswith(new_copyright):
+        debug.info(0, "\nFound missing/wrong copyright in " + file_name)
+        return 1
+    return 0
 
 
 # run the test from the command line

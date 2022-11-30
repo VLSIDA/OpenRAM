@@ -1,3 +1,8 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 from .and2_dec import *
 from .and3_dec import *
 from .and4_dec import *

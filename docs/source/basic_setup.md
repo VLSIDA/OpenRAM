@@ -89,14 +89,15 @@ entire [FreePDK45 PDK here][FreePDK45].
 
 ### Sky130 Setup
 
-To install [Sky130], you must have the open\_pdks files installed in $PDK\_ROOT. 
+To install [Sky130], you must have open\_pdks installed in $PDK\_ROOT. We highly recommend that you
+use the version tagged in the Makefile as others have not been verified.
 To install this automatically, you can run:
 ```
 cd $HOME/OpenRAM
 make pdk
 ```
 
-Then you must also install the [Sky130] SRAM build space and the appropriate cell views
+Then you must also install the [Sky130] SRAM build space with the appropriate cell views into the OpenRAM technology directory
 by running:
 ```
 cd $HOME/OpenRAM

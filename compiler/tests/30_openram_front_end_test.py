@@ -59,12 +59,12 @@ class openram_front_end_test(openram_test):
         else:
             exe_name = "{0}{1}/../sram_compiler.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_front_end.py".format(OPENRAM_HOME)
-        cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                          out_file,
-                                                                          out_path,
-                                                                          options,
-                                                                          config_name,
-                                                                          out_path)
+        cmd = "{0} -n -o {1} -p {2} {3} {4} > {5}/output.log".format(exe_name,
+                                                                     out_file,
+                                                                     out_path,
+                                                                     options,
+                                                                     config_name,
+                                                                     out_path)
         debug.info(1, cmd)
         os.system(cmd)
 

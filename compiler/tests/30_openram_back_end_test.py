@@ -59,12 +59,12 @@ class openram_back_end_test(openram_test):
         else:
             exe_name = "{0}{1}/../sram_compiler.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
-        cmd = "{0} -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                       out_file,
-                                                                       out_path,
-                                                                       options,
-                                                                       config_name,
-                                                                       out_path)
+        cmd = "{0} -o {1} -p {2} {3} {4} > {5}/output.log".format(exe_name,
+                                                                  out_file,
+                                                                  out_path,
+                                                                  options,
+                                                                  config_name,
+                                                                  out_path)
         debug.info(1, cmd)
         os.system(cmd)
 
@@ -104,6 +104,7 @@ class openram_back_end_test(openram_test):
             self.assertEqual(os.path.exists(out_path), False)
 
         openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":

@@ -261,7 +261,7 @@ class replica_bitcell_array(bitcell_base_array):
         upper_right = self.find_highest_coords()
         self.width = upper_right.x - lower_left.x
         self.height = upper_right.y - lower_left.y
-        self.translate_all(lower_left)
+        # self.translate_all(lower_left)
 
         self.add_boundary()
 

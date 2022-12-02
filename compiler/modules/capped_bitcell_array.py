@@ -101,8 +101,10 @@ class capped_bitcell_array(bitcell_base_array):
         # Dummy Row or Col Cap, depending on bitcell array properties
         col_cap_module_type = ("col_cap_array" if self.cell.end_caps else "dummy_array")
 
+        # TODO: remove redundancy from arguments in pairs below (top/bottom, left/right)
+        # for example, cols takes the same value for top/bottom
         self.col_cap_top = factory.create(module_type=col_cap_module_type,
-                                          cols=self.column_size,
+                                          cols=self.column_size + len(self.rbls),
                                           rows=1,
                                           # dummy column + left replica column(s)
                                           column_offset=1 + len(self.left_rbl),
@@ -110,7 +112,7 @@ class capped_bitcell_array(bitcell_base_array):
                                           location="top")
 
         self.col_cap_bottom = factory.create(module_type=col_cap_module_type,
-                                             cols=self.column_size,
+                                             cols=self.column_size + len(self.rbls),
                                              rows=1,
                                              # dummy column + left replica column(s)
                                              column_offset=1 + len(self.left_rbl),
@@ -157,7 +159,7 @@ class capped_bitcell_array(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        self.all_bitcell_bitline_names = self.replica_bitcell_array.all_bitcell_bitline_names
+        self.all_bitline_names = self.replica_bitcell_array.all_bitline_names
         self.replica_array_bitline_names = self.replica_bitcell_array.all_bitline_names
 
         self.add_pin_list(self.replica_array_bitline_names, "INOUT")
@@ -187,10 +189,10 @@ class capped_bitcell_array(bitcell_base_array):
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
                                                   mod=self.col_cap_bottom))
-        self.connect_inst(self.all_bitcell_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
-        self.connect_inst(self.all_bitcell_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
+        self.connect_inst(self.all_bitline_names + ["gnd"] * len(self.col_cap_top.get_wordline_names()) + self.supplies)
 
         # Left/right Dummy columns
         self.dummy_col_insts = []
@@ -210,7 +212,6 @@ class capped_bitcell_array(bitcell_base_array):
         # row-based or column based power and ground lines.
         self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
-        self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
@@ -218,7 +219,7 @@ class capped_bitcell_array(bitcell_base_array):
         self.row_end_offset = vector(self.cell.width, self.cell.height)
 
         # Everything is computed with the replica array
-        self.replica_bitcell_array_inst.place(offset=self.unused_offset)
+        self.replica_bitcell_array_inst.place(offset=self.bitcell_offset.scale(-1, -1)) # may need to depend on rbl
 
         self.add_end_caps()
 
@@ -230,10 +231,10 @@ class capped_bitcell_array(bitcell_base_array):
 
         # Add extra width on the left and right for the unused WLs
 
-        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
+        self.width = self.dummy_col_insts[1].rx()
         self.height = self.dummy_row_insts[1].uy()
 
-        # self.copy_layout_pins()
+        self.copy_layout_pins()
 
         self.route_supplies()
 
@@ -281,31 +282,30 @@ class capped_bitcell_array(bitcell_base_array):
 
         # Far top dummy row (first row above array is NOT flipped if even number of rows)
         flip_dummy = (self.row_size + self.rbl[1]) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, self.rbl[1] + flip_dummy) + self.bitcell_array_inst.ul()
+        dummy_row_offset = self.bitcell_offset.scale(1, self.rbl[1] + flip_dummy) + self.replica_bitcell_array_inst.ul() + vector(0, -0.8)
         self.dummy_row_insts[1].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
 
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.rbl[0] + 1) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] - 1 + flip_dummy) + self.unused_offset
+        dummy_row_offset = self.bitcell_offset.scale(0, -self.rbl[0] + flip_dummy)
         self.dummy_row_insts[0].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
         # Far left dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl) - 1, -self.rbl[0] - 1)  + self.unused_offset
+        dummy_col_offset = self.bitcell_offset.scale(-len(self.left_rbl), -self.rbl[0])
         self.dummy_col_insts[0].place(offset=dummy_col_offset)
 
         # Far right dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] - 1) + self.bitcell_array_inst.lr()
+        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] + 1) + self.replica_bitcell_array_inst.lr()
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
-    # FIXME: what does this do and where did it come from ?? commenting out for now 10/24
-    # def copy_layout_pins(self):
-        # for pin_name in self.replica_bitcell_array_inst.get_layout_pins():
-            # if pin_name in ["vdd", "gnd"]:
-                # continue
-            # self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
+    def copy_layout_pins(self):
+        for pin_name in self.replica_bitcell_array.get_layout_pins():
+            if pin_name in ["vdd", "gnd"]:
+                continue
+            self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
 
     def route_supplies(self):
 
@@ -373,9 +373,9 @@ class capped_bitcell_array(bitcell_base_array):
                 self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
 
         # Ground the unused replica wordlines
-        for (names, inst) in zip(self.replica_bitcell_array_inst.rbl_wordline_names, self.replica_bitcell_array_inst.dummy_row_replica_insts):
-            for (wl_name, pin_name) in zip(names, self.replica_bitcell_array_inst.dummy_row.get_wordline_names()):
-                if wl_name in self.replica_bitcell_array_inst.gnd_wordline_names:
+        for (names, inst) in zip(self.replica_bitcell_array.rbl_wordline_names, self.replica_bitcell_array.dummy_row_replica_insts):
+            for (wl_name, pin_name) in zip(names, self.replica_bitcell_array.dummy_row.get_wordline_names()):
+                if wl_name in self.replica_bitcell_array.unused_wordline_names:
                     pin = inst.get_pin(pin_name)
                     self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
                     self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)

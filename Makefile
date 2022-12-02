@@ -224,5 +224,5 @@ build-library:
 
 # Build and install the openram library
 library: build-library
-	@python3 -m pip install --find-links=dist openram --force
+	@python3 -m pip install --force --find-links=dist openram
 .PHONY: library

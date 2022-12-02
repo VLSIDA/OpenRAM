@@ -22,7 +22,7 @@ class multi_bank_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import sram_config
+        from openram import sram_config
 
         c = sram_config(word_size=4,
                         num_words=16)

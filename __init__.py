@@ -25,3 +25,7 @@ __path__.insert(0, OPENRAM_HOME)
 
 # Import everything in globals.py
 from .globals import *
+# Import classes in the "openram" namespace
+# sram_config should be imported before sram
+from .sram_config import *
+from .sram import *

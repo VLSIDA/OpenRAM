@@ -30,7 +30,7 @@ class sram_pex_test(openram_test):
         from openram import characterizer
         reload(characterizer)
         from openram.characterizer import functional
-        from openram.modules import sram_config
+        from openram import sram_config
         c = sram_config(word_size=4,
                         num_words=32,
                         num_banks=1)

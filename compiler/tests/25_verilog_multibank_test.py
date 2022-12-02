@@ -23,8 +23,8 @@ class multibank_verilog_test(openram_test):
         OPTS.route_supplies=False
         OPTS.check_lvsdrc=False
         OPTS.netlist_only=True
-        from openram.modules import sram
-        from openram.modules import sram_config
+        from openram import sram
+        from openram import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=2)

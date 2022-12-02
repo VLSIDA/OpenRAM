@@ -22,7 +22,7 @@ class sram_1bank_32b_1024_wmask_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import sram_config
+        from openram import sram_config
 
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1

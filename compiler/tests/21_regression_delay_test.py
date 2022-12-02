@@ -32,8 +32,8 @@ class regression_model_test(openram_test):
         reload(characterizer)
         from openram.characterizer import linear_regression
         from openram.characterizer import neural_network
-        from openram.modules import sram
-        from openram.modules import sram_config
+        from openram import sram
+        from openram import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1

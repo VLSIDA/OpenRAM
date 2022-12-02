@@ -76,7 +76,7 @@ for path in output_files:
     debug.print_raw(path)
 
 # Create an SRAM (we can also pass sram_config, see documentation/tutorials for details)
-from openram.modules import sram
+from openram import sram
 s = sram()
 
 # Output the files for the resulting SRAM

@@ -49,7 +49,7 @@ class openram_back_end_library_test(openram_test):
         OPTS.num_threads = 2
 
         # Create an SRAM using the library
-        from openram.modules import sram
+        from openram import sram
         s = sram()
         s.save()
 

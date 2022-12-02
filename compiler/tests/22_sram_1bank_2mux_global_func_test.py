@@ -31,7 +31,7 @@ class sram_1bank_2mux_func_test(openram_test):
         from openram import characterizer
         reload(characterizer)
         from openram.characterizer import functional
-        from openram.modules import sram_config
+        from openram import sram_config
         OPTS.local_array_size = 8
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1

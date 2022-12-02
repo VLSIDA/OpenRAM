@@ -9,8 +9,7 @@ import os
 import shutil
 import datetime
 from openram import debug
-from openram.characterizer import functional
-from openram.modules import sram_config as config
+from openram import sram_config as config
 from openram import OPTS, print_time
 
 
@@ -50,7 +49,7 @@ class sram():
 
         self.name = name
 
-        from .sram_1bank import sram_1bank as sram
+        from openram.modules.sram_1bank import sram_1bank as sram
 
         self.s = sram(name, sram_config)
 
@@ -73,7 +72,7 @@ class sram():
     def verilog_write(self, name):
         self.s.verilog_write(name)
         if self.num_banks != 1:
-            from .sram_multibank import sram_multibank
+            from openram.modules.sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
             mb.verilog_write(name[:-2] + '_top.v')
 
@@ -95,6 +94,7 @@ class sram():
         # Import this at the last minute so that the proper tech file
         # is loaded and the right tools are selected
         from openram import verify
+        from openram.characterizer import functional
 
         # Save the spice file
         start_time = datetime.datetime.now()

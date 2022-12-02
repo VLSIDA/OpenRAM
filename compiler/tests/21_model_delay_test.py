@@ -32,8 +32,8 @@ class model_delay_test(openram_test):
         reload(characterizer)
         from openram.characterizer import delay
         from openram.characterizer import elmore
-        from openram.modules import sram
-        from openram.modules import sram_config
+        from openram import sram
+        from openram import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1

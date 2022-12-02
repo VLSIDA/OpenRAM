@@ -21,7 +21,7 @@ class single_bank_1w_1r_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import sram_config
+        from openram import sram_config
 
         OPTS.num_rw_ports = 0
         OPTS.num_r_ports = 1

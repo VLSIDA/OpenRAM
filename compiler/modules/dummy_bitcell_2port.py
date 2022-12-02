@@ -21,3 +21,6 @@ class dummy_bitcell_2port(bitcell_base):
         super().__init__(name, prop=props.bitcell_2port)
         debug.info(2, "Create dummy bitcell 2 port object")
 
+    def build_graph(self, graph, inst_name, port_nets):
+        """ Adds edges based on inputs/outputs. Overrides base class function. """
+        pass

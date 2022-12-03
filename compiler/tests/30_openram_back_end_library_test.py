@@ -21,7 +21,7 @@ class openram_back_end_library_test(openram_test):
         global OPTS
         # Set output name and path before calling init_openram()
         out_file = "testsram"
-        out_path = "/tmp/testsram_{0}_{1}_{2}".format(OPTS.tech_name, getpass.getuser(), os.getpid())
+        out_path = "/tmp/testsram_{0}_{1}_{2}/".format(OPTS.tech_name, getpass.getuser(), os.getpid())
         OPTS.output_name = out_file
         OPTS.output_path = out_path
 
@@ -55,28 +55,28 @@ class openram_back_end_library_test(openram_test):
 
         # assert an error until we actually check a resul
         for extension in ["gds", "v", "lef", "sp", "lvs.sp"]:
-            filename = "{0}/{1}.{2}".format(out_path, out_file, extension)
+            filename = "{0}{1}.{2}".format(out_path, out_file, extension)
             debug.info(1, "Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename), True)
 
         # check if the auxiliary scripts were created
         for script_name in ["run_drc.sh", "run_lvs.sh"]:
-            filename = "{0}/{1}".format(out_path, script_name)
+            filename = "{0}{1}".format(out_path, script_name)
             debug.info(1, "Checking for file: " + filename)
             self.assertEqual(os.path.exists(filename), True)
 
         # Make sure there is any .lib file
         import glob
-        files = glob.glob('{0}/*.lib'.format(out_path))
+        files = glob.glob('{0}*.lib'.format(out_path))
         self.assertTrue(len(files)>0)
 
         # Make sure there is any .html file
         if os.path.exists(out_path):
-            datasheets = glob.glob('{0}/*html'.format(out_path))
+            datasheets = glob.glob('{0}*html'.format(out_path))
             self.assertTrue(len(datasheets)>0)
 
         # grep any errors from the output
-        output_log = open("{0}/{1}.log".format(out_path, out_file), "r")
+        output_log = open("{0}{1}.log".format(out_path, out_file), "r")
         output = output_log.read()
         output_log.close()
         self.assertEqual(len(re.findall('ERROR', output)), 0)

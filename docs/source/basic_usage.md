@@ -40,19 +40,18 @@ from openram import tech
 ...
 ```
 
-Note that you should need to initalize OpenRAM so that the modules are imported properly. You can also look
+Note that you need to initalize OpenRAM so that the modules are imported properly. You can also look
 at [sram_compiler.py](../../sram_compiler.py) as an example on how to use "openram."
 
-If you want to pass custom configuration when generating an SRAM, you can use `sram_config` class.
+If you want to pass custom configuration when generating an SRAM, you can use the `sram_config` class.
 ```python
 import openram
 openram.init_openram("myconfig.py")
-openram.setup_bitcell()
 
-from openram.modules import sram_config
+from openram import sram_config
 c = sram_config(...)
 
-from openram.modules import sram
+from openram import sram
 s = sram(sram_config=c,
          name="custom_name")
 

@@ -106,6 +106,8 @@ class sram_factory:
                 # Dynamically load the module
                 if real_module_type == "contact":
                     c  = importlib.import_module("openram.base.contact")
+                elif real_module_type == "sram":
+                    c = importlib.import_module("openram.sram")
                 else:
                     c  = importlib.import_module("openram.modules."+real_module_type)
             except ModuleNotFoundError:

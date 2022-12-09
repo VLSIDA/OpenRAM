@@ -41,9 +41,7 @@ class rom_dummy_cell(design):
         self.add_boundary()
         self.add_poly()
         self.add_metal()
-        print(self.height)
-        print(self.width)
-        self.add_label("0,0", self.route_layer)
+        #self.add_label("0,0", self.route_layer)
 
 
     
@@ -65,8 +63,6 @@ class rom_dummy_cell(design):
         #this is calculated as a negative value
         self.cell_diffusion_offset = ((self.base_width - 2 * self.active_enclose_contact - self.nmos.contact_width) - drc("active_to_active")) * 0.5
 
-        
-        
         # width offset to account for poly-active spacing between base and dummy cells on the same bitline
         self.poly_active_offset = 0.5 * (self.base_width - 2 * self.cell_diffusion_offset - (self.poly_width + 2 * self.active_enclose_contact + self.nmos.contact_width)) - self.poly_to_active
 
@@ -77,8 +73,8 @@ class rom_dummy_cell(design):
     def add_boundary(self):
 
         #cell width with offsets applied, height becomes width when the cells are rotated 
+        # self.width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
         self.width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
-
         # cell height with offsets applied, width becomes height when the cells are rotated, if the offsets are positive (greater than 0) they are not applied
         self.height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
 
@@ -88,18 +84,22 @@ class rom_dummy_cell(design):
 
     def add_poly(self):
 
-        poly_x = 0.5 * self.nmos.contact_width + self.contact_to_gate
+        poly_x = 0.5 * (self.nmos.poly_height + self.poly_extend_active_spacing)
+        # 0.5 * self.nmos.contact_width + self.contact_to_gate
 
-        self.poly = self.add_rect("poly", vector(poly_x, 0), self.poly_width, self.nmos.poly_height + self.poly_extend_active_spacing)
-        print(self.poly_width, self.height)
+        self.poly = self.add_rect_center("poly", vector(poly_x, self.base_width * 0.5), 2 * poly_x, self.poly_width)
 
     def add_metal(self):
 
-        wire_x =  min(self.cell_diffusion_offset, 0) + min(self.poly_active_offset, 0) - self.mcon_width * 0.5
-        wire_y = 0.5 * (self.width - self.poly_extend_active_spacing)
+        if self.route_layer == "li":
+            via = "mcon"
+        else:
+            via = "via{}".format(self.route_layer[len(self.route_layer) - 1])
+        wire_y =  self.height + drc["minwidth_{}".format(via)] * 0.5
+        wire_x = 0.5 * (self.width - self.poly_extend_active_spacing)
 
-        wire_start = vector( wire_x, wire_y )
-        wire_end = vector(self.height + self.mcon_width * 0.5, wire_y)
+        wire_start = vector( wire_x, 0)
+        wire_end = vector(wire_x, wire_y)
 
         # if self.route_layer == 'm1':
 
@@ -109,11 +109,18 @@ class rom_dummy_cell(design):
         #         self.add_via_center(self.li_stack, [self.width, wire_y])
 
         self.add_path(self.route_layer, [wire_start, wire_end])   
+
+        # drain_x = 0
+        # drain_y = 0.5 * (self.width)
+        source_x = 0.5 * (self.width - self.poly_extend_active_spacing)
+        source_y = 0
+        source_pos = vector(source_x, source_y)
+        self.add_layout_pin_rect_center("S", self.route_layer, source_pos)
+
+        drain_pos = vector(source_x, self.height)
+        self.add_layout_pin_rect_center("D", self.route_layer, drain_pos)
         
             
-            
-            
-
     def add_nmos(self):
         #used only for layout constants
         # if not self.source_contact:

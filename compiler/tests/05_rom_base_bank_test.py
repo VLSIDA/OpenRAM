@@ -16,7 +16,7 @@ from sram_factory import factory
 import debug
 
 
-class rom_array_test(openram_test):
+class rom_bank_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -24,10 +24,8 @@ class rom_array_test(openram_test):
 
         debug.info(2, "Testing 4x4 array for rom cell")
 
+        a = factory.create(module_type="rom_base_bank", strap_spacing = 2)
 
-        data = [[1, 0, 0, 0, 0, 1, 0, 0, 1], [0, 1, 1, 1, 0, 1, 0, 0, 1], [1, 0, 1, 1, 0, 1, 0, 0, 1], [1, 1, 0, 1, 1, 0, 0, 0, 1], [1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 1, 1, 1, 0, 0, 0, 1], [1, 0, 1, 1, 1, 0, 0, 0, 1], [1, 1, 0, 0, 1, 1, 0, 0, 1]]
-
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4)
         self.local_check(a)
         globals.end_openram()
 

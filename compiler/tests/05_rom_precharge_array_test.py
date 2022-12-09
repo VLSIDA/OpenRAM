@@ -16,18 +16,16 @@ from sram_factory import factory
 import debug
 
 
-class rom_array_test(openram_test):
+class rom_precharge_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing 4x4 array for rom cell")
+        debug.info(2, "Testing precharge array for rom cell")
 
 
-        data = [[1, 0, 0, 0, 0, 1, 0, 0, 1], [0, 1, 1, 1, 0, 1, 0, 0, 1], [1, 0, 1, 1, 0, 1, 0, 0, 1], [1, 1, 0, 1, 1, 0, 0, 0, 1], [1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 1, 1, 1, 0, 0, 0, 1], [1, 0, 1, 1, 1, 0, 0, 0, 1], [1, 1, 0, 0, 1, 1, 0, 0, 1]]
-
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4)
+        a = factory.create(module_type="rom_precharge_array", cols=4, strap_spacing=2)
         self.local_check(a)
         globals.end_openram()
 

@@ -6,10 +6,7 @@
 # All rights reserved.
 #
 
-
-import math
 from .rom_dummy_cell import rom_dummy_cell
-from base import design
 from base import vector
 from globals import OPTS
 from sram_factory import factory
@@ -26,9 +23,7 @@ class rom_base_cell(rom_dummy_cell):
         #self.create_layout()
 
 
-    def create_netlist(self):
-        print("using base cell netlist creation")
-        
+    def create_netlist(self):        
         self.add_pins()
         self.add_nmos()
         self.create_nmos()
@@ -38,9 +33,6 @@ class rom_base_cell(rom_dummy_cell):
         self.setup_drc_offsets()
         self.place_nmos()
         self.add_boundary()
-
-        print(self.height)
-        print(self.width)
 
 
     def create_nmos(self):
@@ -58,19 +50,30 @@ class rom_base_cell(rom_dummy_cell):
 
     def place_nmos(self):
 
-        
-        poly_offset = vector(0.5 * self.nmos.active_contact.width + self.nmos.active_contact_to_gate,
-                                 self.nmos.poly_height)
+        # 0.5 * self.nmos.active_contact.width + self.nmos.active_contact_to_gate
+        poly_offset = vector(self.poly_extend_active_spacing * 0.5 + self.nmos.height + 2 * self.poly_extend_active, self.nmos.width * 0.5 - 0.5 * self.nmos.contact_width - self.active_enclose_contact)
 
-        nmos_offset = vector(- 0.5 * self.nmos.contact_width - self.active_enclose_contact, self.nmos.poly_extend_active)
+        # nmos_offset = vector(- 0.5 * self.nmos.contact_width - self.active_enclose_contact, self.nmos.poly_extend_active)
+        print("{} poly spacing".format(self.poly_extend_active_spacing))
 
+        nmos_offset = vector(self.nmos.poly_extend_active + self.nmos.height ,- 0.5 * self.nmos.contact_width - self.active_enclose_contact)
         # add rect of poly to account for offset from drc spacing
-        self.add_rect("poly", poly_offset, self.nmos.poly_width, self.poly_extend_active_spacing )
+        self.add_rect_center("poly", poly_offset, self.poly_extend_active_spacing, self.nmos.poly_width)
         
-        self.cell_inst.place(nmos_offset)
-        self.add_label("CELL ZERO", self.route_layer)
-        self.add_label("S", self.route_layer, self.cell_inst.get_pin("S").center())
-        self.add_label("D", self.route_layer, self.cell_inst.get_pin("D").center())
+        self.cell_inst.place(nmos_offset, rotate=90)
+        # self.add_label("CELL ZERO", self.route_layer)
+        self.copy_layout_pin(self.cell_inst, "S", "S")
+        self.copy_layout_pin(self.cell_inst, "D", "D")
+        self.source_pos = self.cell_inst.get_pin("S").center()
+        # if self.add_source_contact != False:
+        #     # drain_x = 0
+        #     # drain_y = 0.5 * (self.width - self.poly_extend_active_spacing)
+
+            
+        #     print("drained")
+        #     print(drain_pos)
+        #     self.add_layout_pin_rect_center("S", self.route_layer, drain_pos)
+        # self.add_label("S", self.route_layer, self.cell_inst.get_pin("S").center())
         
         
 

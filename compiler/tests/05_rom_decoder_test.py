@@ -16,18 +16,16 @@ from sram_factory import factory
 import debug
 
 
-class rom_array_test(openram_test):
+class rom_decoder_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         globals.init_openram(config_file)
 
-        debug.info(2, "Testing 4x4 array for rom cell")
+        debug.info(2, "Testing 2x4 decoder for rom cell")
 
 
-        data = [[1, 0, 0, 0, 0, 1, 0, 0, 1], [0, 1, 1, 1, 0, 1, 0, 0, 1], [1, 0, 1, 1, 0, 1, 0, 0, 1], [1, 1, 0, 1, 1, 0, 0, 0, 1], [1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 1, 1, 1, 0, 0, 0, 1], [1, 0, 1, 1, 1, 0, 0, 0, 1], [1, 1, 0, 0, 1, 1, 0, 0, 1]]
-
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4)
+        a = factory.create(module_type="rom_decoder", num_outputs=8, strap_spacing=2)
         self.local_check(a)
         globals.end_openram()
 

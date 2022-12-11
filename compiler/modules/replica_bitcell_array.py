@@ -250,18 +250,18 @@ class replica_bitcell_array(bitcell_base_array):
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
-        array_offset = self.bitcell_offset.scale(1 + len(self.left_rbl), 1 + self.rbl[0])
+        array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
         self.translate_all(array_offset.scale(-1, -1))
+
+        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
+        self.height = self.dummy_row_insts[1].uy()
 
         self.add_layout_pins()
 
         self.route_supplies()
 
-        lower_left = self.find_lowest_coords()
-        upper_right = self.find_highest_coords()
-        self.width = upper_right.x - lower_left.x
-        self.height = upper_right.y - lower_left.y
-        # self.translate_all(lower_left)
+        self.width = (len(self.rbls) + self.column_size) * self.cell.width
+        self.height = (len(self.rbls) + self.row_size) * self.cell.height
 
         self.add_boundary()
 
@@ -335,13 +335,13 @@ class replica_bitcell_array(bitcell_base_array):
         """ Add the layout pins """
 
         # All wordlines
-        # Main array wl and bl/br
+        # Main array wl
         for pin_name in self.all_bitcell_wordline_names:
             pin_list = self.bitcell_array_inst.get_pins(pin_name)
             for pin in pin_list:
                 self.add_layout_pin(text=pin_name,
                                     layer=pin.layer,
-                                    offset=pin.ll(),
+                                    offset=pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=pin.height())
 
@@ -352,16 +352,17 @@ class replica_bitcell_array(bitcell_base_array):
                 pin = inst.get_pin(pin_name)
                 self.add_layout_pin(text=wl_name,
                                     layer=pin.layer,
-                                    offset=pin.ll(),
+                                    offset=pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=pin.height())
 
+        # Main array bl/br
         for pin_name in self.all_bitcell_bitline_names:
             pin_list = self.bitcell_array_inst.get_pins(pin_name)
             for pin in pin_list:
                 self.add_layout_pin(text=pin_name,
                                     layer=pin.layer,
-                                    offset=pin.ll(),
+                                    offset=pin.ll().scale(1, 0),
                                     width=pin.width(),
                                     height=self.height)
 
@@ -373,7 +374,7 @@ class replica_bitcell_array(bitcell_base_array):
                     pin = inst.get_pin(pin_name)
                     self.add_layout_pin(text=bl_name,
                                         layer=pin.layer,
-                                        offset=pin.ll(),
+                                        offset=pin.ll().scale(1, 0),
                                         width=pin.width(),
                                         height=self.height)
 

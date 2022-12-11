@@ -219,7 +219,7 @@ class capped_bitcell_array(bitcell_base_array):
         self.row_end_offset = vector(self.cell.width, self.cell.height)
 
         # Everything is computed with the replica array
-        self.replica_bitcell_array_inst.place(offset=self.bitcell_offset.scale(-1, -1)) # may need to depend on rbl
+        self.replica_bitcell_array_inst.place(offset=0)
 
         self.add_end_caps()
 
@@ -282,7 +282,7 @@ class capped_bitcell_array(bitcell_base_array):
 
         # Far top dummy row (first row above array is NOT flipped if even number of rows)
         flip_dummy = (self.row_size + self.rbl[1]) % 2
-        dummy_row_offset = self.bitcell_offset.scale(1, self.rbl[1] + flip_dummy) + self.replica_bitcell_array_inst.ul() + vector(0, -0.8)
+        dummy_row_offset = self.bitcell_offset.scale(0, self.rbl[1] - 1 + flip_dummy) + self.replica_bitcell_array_inst.ul()
         self.dummy_row_insts[1].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
 
@@ -298,11 +298,11 @@ class capped_bitcell_array(bitcell_base_array):
 
         # Far right dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl), -self.rbl[0] + 1) + self.replica_bitcell_array_inst.lr()
+        dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl) - 1, -self.rbl[0]) + self.replica_bitcell_array_inst.lr()
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
     def copy_layout_pins(self):
-        for pin_name in self.replica_bitcell_array.get_layout_pins():
+        for pin_name in self.replica_bitcell_array_inst.get_pins():
             if pin_name in ["vdd", "gnd"]:
                 continue
             self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)

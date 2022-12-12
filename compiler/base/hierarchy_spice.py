@@ -8,6 +8,7 @@
 import os
 import re
 import math
+import textwrap as tr
 from pprint import pformat
 from openram import debug
 from openram import tech
@@ -338,19 +339,21 @@ class spice():
                 return
 
             # write out the first spice line (the subcircuit)
-            sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
-                                                  " ".join(self.pins)))
+            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(self.pins)))
+            sp.write("\n.SUBCKT {0}\n+ {1}\n".format(self.cell_name,
+                                                     wrapped_pins))
 
             # write a PININFO line
-            pin_info = "*.PININFO"
-            for pin in self.pins:
-                if self.pin_type[pin] == "INPUT":
-                    pin_info += " {0}:I".format(pin)
-                elif self.pin_type[pin] == "OUTPUT":
-                    pin_info += " {0}:O".format(pin)
-                else:
-                    pin_info += " {0}:B".format(pin)
-            sp.write(pin_info + "\n")
+            if False:
+                pin_info = "*.PININFO"
+                for pin in self.pins:
+                    if self.pin_type[pin] == "INPUT":
+                        pin_info += " {0}:I".format(pin)
+                    elif self.pin_type[pin] == "OUTPUT":
+                        pin_info += " {0}:O".format(pin)
+                    else:
+                        pin_info += " {0}:B".format(pin)
+                sp.write(pin_info + "\n")
 
             # Also write pins as comments
             for pin in self.pins:
@@ -391,9 +394,11 @@ class spice():
                                                                    " ".join(self.conns[i])))
                     sp.write("\n")
                 else:
-                    sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
-                                                     " ".join(self.conns[i]),
-                                                     self.insts[i].mod.cell_name))
+                    wrapped_connections = "\n+ ".join(tr.wrap(" ".join(self.conns[i])))
+
+                    sp.write("X{0}\n+ {1}\n+ {2}\n".format(self.insts[i].name,
+                                                           wrapped_connections,
+                                                           self.insts[i].mod.cell_name))
 
             sp.write(".ENDS {0}\n".format(self.cell_name))
 
@@ -408,6 +413,7 @@ class spice():
                 sp.write("\n".join(self.spice))
 
             sp.write("\n")
+
 
     def sp_write(self, spname, lvs=False, trim=False):
         """Writes the spice to files"""

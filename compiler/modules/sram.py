@@ -173,14 +173,9 @@ class sram():
 
         # Characterize the design
         start_time = datetime.datetime.now()
-        from characterizer import delay
-        debug.print_raw("LIB: Writing Analysis File... ")
-        d = delay(self, self.get_sp_name(), ("TT", 5, 25))
-        if (self.sram.num_spare_rows == 0):
-            probe_address = "1" * self.sram.addr_size
-        else:
-            probe_address = "0" + "1" * (self.sram.addr_size - 1)
-        d.analysis_init(probe_address, probe_data)
+        from openram.characterizer import lib
+        debug.print_raw("LIB: Characterizing... ")
+        lib(out_dir=OPTS.output_path, sram=self.s, sp_file=self.get_sp_name())
         print_time("Characterization", datetime.datetime.now(), start_time)
 
         # Write the config file

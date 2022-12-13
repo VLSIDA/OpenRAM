@@ -9,11 +9,10 @@
 
 import math
 from .bitcell_base_array import bitcell_base_array
-from base import vector
-from globals import OPTS
-from sram_factory import factory
-import tech
-from tech import drc
+from openram.base import vector
+from openram import OPTS
+from openram.sram_factory import factory 
+from openram.tech import drc
 
 class rom_base_array(bitcell_base_array):
 

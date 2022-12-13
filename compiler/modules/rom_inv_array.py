@@ -6,10 +6,10 @@
 # All rights reserved.
 #
 
-from base import design
-from sram_factory import factory
-from base import vector
-from tech import layer, drc
+from openram.base import design
+from openram.sram_factory import factory
+from openram.base import vector
+from openram.tech import layer, drc
 
 
 

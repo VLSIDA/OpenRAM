@@ -7,11 +7,10 @@
 #
 
 from .rom_dummy_cell import rom_dummy_cell
-from base import vector
-from globals import OPTS
-from sram_factory import factory
-
-from tech import drc
+from openram.base import vector
+from openram import OPTS
+from openram.sram_factory import factory
+from openram.tech import drc
 
 
 class rom_base_cell(rom_dummy_cell):

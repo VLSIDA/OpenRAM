@@ -6,13 +6,12 @@
 # All rights reserved.
 #
 
-import math
-from base import design
-from sram_factory import factory
-from base import vector
-from globals import OPTS
-import tech
-from tech import drc
+from math import ceil, log
+from openram.base import design
+from openram.sram_factory import factory
+from openram.base import vector
+from openram import OPTS
+from openram.tech import drc
 
 
 class rom_decoder(design):
@@ -23,7 +22,7 @@ class rom_decoder(design):
         # array gets rotated 90deg so that rows/cols switch
         self.strap_spacing=strap_spacing
         self.num_outputs = num_outputs
-        self.num_inputs = math.ceil(math.log(num_outputs, 2))
+        self.num_inputs = ceil(log(num_outputs, 2))
         self.create_decode_map()
 
         for i in range(2 * self.num_inputs): print(self.decode_map[i])

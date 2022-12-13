@@ -1,11 +1,11 @@
 
 import math
-from base import vector
-from base import design
-from globals import OPTS
-from sram_factory import factory
+from openram.base import vector
+from openram.base import design
+from openram import OPTS
+from openram.sram_factory import factory
 import tech
-from tech import drc
+from openram.tech import drc
 
 class rom_base_bank(design):
 

@@ -6,12 +6,12 @@
 # All rights reserved.
 #
 
-import math
-from base import geometry
-from base import design
-from sram_factory import factory
-from base import vector
-from tech import layer, drc
+from math import ceil
+from openram.base import geometry
+from openram.base import design
+from openram.sram_factory import factory
+from openram.base import vector
+from openram.tech import layer, drc
 
 
 
@@ -40,7 +40,7 @@ class rom_precharge_array(design):
 
         
         if strap_spacing != 0:
-            self.num_straps = math.ceil(self.cols / self.strap_spacing)
+            self.num_straps = ceil(self.cols / self.strap_spacing)
             self.array_col_size = self.cols + self.num_straps  
         else:
             self.num_straps = 0

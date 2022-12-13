@@ -10,9 +10,9 @@ import unittest
 from testutils import *
 import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
+import openram
+from openram import OPTS
+from openram.sram_factory import factory
 import debug
 
 
@@ -20,7 +20,7 @@ class rom_bank_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
 
         debug.info(2, "Testing 4x4 array for rom cell")
 
@@ -31,7 +31,7 @@ class rom_bank_test(openram_test):
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

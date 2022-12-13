@@ -1,9 +1,15 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 
-
-from base import design
-from base import vector
-from globals import OPTS
-from sram_factory import factory
+from openram.base import design
+from openram.base import vector
+from openram import OPTS
+from openram.sram_factory import factory
 
 class rom_poly_tap(design):
 

@@ -10,28 +10,28 @@ import unittest
 from testutils import *
 import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import OPTS
+from openram.sram_factory import factory
+from openram import debug
 
 
 class rom_decoder_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
 
         debug.info(2, "Testing 2x4 decoder for rom cell")
 
 
         a = factory.create(module_type="rom_decoder", num_outputs=8, strap_spacing=2)
         self.local_check(a)
-        globals.end_openram()
+        openram.end_openram()
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

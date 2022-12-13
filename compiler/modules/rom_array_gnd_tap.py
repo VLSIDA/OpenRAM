@@ -1,8 +1,8 @@
 
 
-from base import design
-from base import vector
-from sram_factory import factory
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
 
 class rom_array_gnd_tap(design):
 

@@ -8,11 +8,11 @@
 
 
 
-from base import design
-from base import vector
-from globals import OPTS
-from sram_factory import factory
-from tech import drc
+from openram.base import design
+from openram.base import vector
+from openram import OPTS
+from openram.sram_factory import factory
+from openram.tech import drc
 
 
 class rom_dummy_cell(design):

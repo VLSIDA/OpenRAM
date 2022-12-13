@@ -39,11 +39,6 @@ class sram_config:
         except ImportError:
             self.array_col_multiple = 1
 
-        if self.write_size:
-            self.num_wmasks = int(ceil(self.word_size / self.write_size))
-        else:
-            self.num_wmasks = 0
-
         if not self.num_spare_cols:
             self.num_spare_cols = 0
 

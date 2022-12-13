@@ -59,6 +59,7 @@ class delay(simulation):
         self.set_corner(corner)
         self.create_signal_names()
         self.add_graph_exclusions()
+        self.meas_id = 0
 
     def create_measurement_objects(self):
         """ Create the measurements used for read and write ports """
@@ -167,7 +168,9 @@ class delay(simulation):
 
         write_measures = []
         write_measures.append(self.write_lib_meas)
-        write_measures.append(self.create_write_bit_measures())
+        if OPTS.top_process != "memchar":
+            write_measures.append(self.create_write_bit_measures())
+
         return write_measures
 
     def create_debug_measurement_objects(self):
@@ -265,8 +268,8 @@ class delay(simulation):
         bitline_path = bl_paths[0]
 
         # Get the measures
-        self.sen_path_meas = self.create_delay_path_measures(sen_path)
-        self.bl_path_meas = self.create_delay_path_measures(bitline_path)
+        self.sen_path_meas = self.create_delay_path_measures(sen_path, "sen")
+        self.bl_path_meas = self.create_delay_path_measures(bitline_path, "bl")
         all_meas = self.sen_path_meas + self.bl_path_meas
 
         # Paths could have duplicate measurements, remove them before they go to the stim file
@@ -288,7 +291,7 @@ class delay(simulation):
 
         return unique_measures
 
-    def create_delay_path_measures(self, path):
+    def create_delay_path_measures(self, path, process):
         """Creates measurements for each net along given path."""
 
         # Determine the directions (RISE/FALL) of signals
@@ -300,6 +303,8 @@ class delay(simulation):
             cur_net, next_net = path[i], path[i + 1]
             cur_dir, next_dir = path_dirs[i], path_dirs[i + 1]
             meas_name = "delay_{0}_to_{1}".format(cur_net, next_net)
+            meas_name += "_" + process + "_id" + str(self.meas_id)
+            self.meas_id += 1
             if i + 1 != len(path) - 1:
                 path_meas.append(delay_measure(meas_name, cur_net, next_net, cur_dir, next_dir, measure_scale=1e9, has_port=False))
             else: # Make the last measurement always measure on FALL because is a read 0
@@ -1163,15 +1168,17 @@ class delay(simulation):
         loc = 0
         port_name = ''
         for port in port_iter:
-            port_measure_lines.append((port_name, measure_txt[loc:port.end(0)]))
+            port_measure_lines.append((port_name, measure_text[loc:port.end(0)]))
             loc = port.start(0)
             port_name = port.group(1) + port.group(2)
 
         mf.close()
         # Cycle comments, not sure if i need this
-        cycle_lines = port_measure_lines.pop(0)[1]
+        # cycle_lines = port_measure_lines.pop(0)[1]
         # For now just recover the bit_measures and sen_and_bitline_path_measures
         self.read_meas_lists.append([])
+        self.read_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
+        self.write_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
         bit_measure_rule = re.compile(r"\.meas tran (v_q_a\d+_b\d+_(read|write)_(zero|one)\d+) FIND v\((.*)\) AT=(\d+(\.\d+)?)n")
         for measures in port_measure_lines:
             port_name = measures[0]
@@ -1180,43 +1187,52 @@ class delay(simulation):
             for bit_measure in bit_measure_iter:
                 meas_name = bit_measure.group(1)
                 read = bit_measure.group(2) == "read"
+                cycle =  bit_measure.group(3)
                 probe = bit_measure.group(4)
                 polarity = bit_polarity.NONINVERTING
                 if "q_bar" in meas_name:
                     polarity = bit_polarity.INVERTING
                 meas = voltage_at_measure(meas_name, probe)
                 if read:
+                    if cycle == "one":
+                        meas.meta_str = sram_op.READ_ONE
+                    else:
+                        meas.meta_str = sram_op.READ_ZERO
                     self.read_bit_meas[polarity].append(meas)
                     self.read_meas_lists[-1].append(meas)
                 else:
+                    if cycle == "one":
+                        meas.meta_str = sram_op.WRITE_ONE
+                    else:
+                        meas.meta_str = sram_op.WRITE_ZERO
                     self.write_bit_meas[polarity].append(meas)
                     self.write_meas_lists[-1].append(meas)
 
-        delay_path_rule = re.compile(r"\.meas tran delay_(.*)_to_(.*) TRIG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n TARG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n")
+        delay_path_rule = re.compile(r"\.meas tran delay_(.*)_to_(.*)_(sen|bl)_(id\d*) TRIG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n TARG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n")
         port = self.read_ports[0]
-        sen_and_port = self.sen_name + str(port)
-        bl_and_port = self.bl_name.format(port) # bl_name contains a '{}' for the port
         meas_buff = []
+        self.sen_path_meas = []
+        self.bl_path_meas = []
         for measures in port_measure_lines:
-            port_name = measures[0]
             text = measures[1]
             delay_path_iter = delay_path_rule.finditer(text)
             for delay_path_measure in delay_path_iter:
                 from_ = delay_path_measure.group(1)
                 to_ = delay_path_measure.group(2)
-                trig_rise = delay_path_measure.group(5)
-                targ_rise = delay_path_measure.group(10)
-                meas_name = "delay_{0}_to_{1}".format(from_, to_)
+                path_ = delay_path_measure.group(3)
+                id_ = delay_path_measure.group(4)
+                trig_rise = delay_path_measure.group(8)
+                targ_rise = delay_path_measure.group(15)
+                meas_name = "delay_{0}_to_{1}_{2}_{3}".format(from_, to_, path_, id_)
                 meas = delay_measure(meas_name, from_, to_, trig_rise, targ_rise, measure_scale=1e9, has_port=False)
                 meas.meta_str = sram_op.READ_ZERO
                 meas.meta_add_delay = True
                 meas_buff.append(meas)
-                # TODO: we are losing duplicate measures here
-                if from_ == sen_and_port:
+                if path_ == "sen":
                     self.sen_path_meas.extend(meas_buff.copy())
                     meas_buff.clear()
-                elif from_ == bl_and_port:
-                    self.bl_path_meas.extend(meas_buff)
+                elif path_ == "bl":
+                    self.bl_path_meas.extend(meas_buff.copy())
                     meas_buff.clear()
         self.read_meas_lists.append(self.sen_path_meas + self.bl_path_meas)
 
@@ -1229,9 +1245,9 @@ class delay(simulation):
         self.prepare_netlist()
         if OPTS.top_process == "memchar":
             # TODO: fix
-            self.bl_name = "xsram.xbank0.bl_0_{}"
-            self.br_name = "xsram.xbank0.br_0_{}"
-            self.sen_name = "xsram.s_en"
+            self.bl_name = "xsram:xbank0:bl_0_{}"
+            self.br_name = "xsram:xbank0:br_0_{}"
+            self.sen_name = "xsram:s_en"
             self.create_measurement_objects()
             self.recover_measurment_objects()
         else:

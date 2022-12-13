@@ -14,6 +14,7 @@ from .stimuli import *
 from .charutils import *
 from globals import OPTS
 from .simulation import simulation
+from .measurements import voltage_at_measure
 
 
 class functional(simulation):
@@ -78,9 +79,12 @@ class functional(simulation):
         self.wordline_row = 0
         self.bitline_column = 0
         self.create_signal_names()
-        self.add_graph_exclusions()
-        self.create_graph()
-        self.set_internal_spice_names()
+        #self.add_graph_exclusions()
+        #self.create_graph()
+        #self.set_internal_spice_names()
+        self.bl_name = "xsram:xbank0:bl_0_{}"
+        self.br_name = "xsram:xbank0:br_0_{}"
+        self.sen_name = "xsram:s_en"
         self.q_name, self.qbar_name = self.get_bit_name()
         debug.info(2, "q:\t\t{0}".format(self.q_name))
         debug.info(2, "qbar:\t{0}".format(self.qbar_name))
@@ -275,7 +279,8 @@ class functional(simulation):
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
                 measure_name = "v{0}_{1}ck{2}".format(dout_port.lower(), bit, cycle)
-                value = parse_spice_list("timing", measure_name)
+                # value = parse_spice_list("timing", measure_name)
+                value = self.measures[measure_name].retrieve_measure(port=0)
                 # FIXME: Ignore the spare columns for now
                 if bit >= self.word_size:
                     value = 0
@@ -473,6 +478,7 @@ class functional(simulation):
 
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
+        self.measures = {}
 
         for (word, dout_port, eo_period, cycle) in self.read_check:
             t_initial = eo_period
@@ -480,7 +486,7 @@ class functional(simulation):
             num_bits = self.word_size + self.num_spare_cols
             for bit in range(num_bits):
                 signal_name = "{0}_{1}".format(dout_port, bit)
-                measure_name = "V{0}ck{1}".format(signal_name, cycle)
+                measure_name = "v{0}ck{1}".format(signal_name, cycle)
                 voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
 
                 self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,
@@ -488,10 +494,13 @@ class functional(simulation):
                                                                                 voltage_value,
                                                                                 eo_period))
                 # TODO: Convert to measurement statement instead of stimuli
-                self.stim.gen_meas_value(meas_name=measure_name,
-                                         dout=signal_name,
-                                         t_initial=t_initial,
-                                         t_final=t_final)
+                meas = voltage_at_measure(measure_name, signal_name)
+                self.measures[measure_name] = meas
+                meas.write_measure(self.stim, ((t_initial + t_final) / 2, 0))
+                # self.stim.gen_meas_value(meas_name=measure_name,
+                #                          dout=signal_name,
+                #                          t_initial=t_initial,
+                #                          t_final=t_final)
 
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
@@ -499,10 +508,13 @@ class functional(simulation):
     # FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
-        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
-        storage_names = cell_inst.mod.get_storage_net_names()
-        debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
-                                              "supported for characterization. Storage nets={0}").format(storage_names))
+        # TODO: Find a way to get the cell_name and storage_names statically
+        # (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
+        # storage_names = cell_inst.mod.get_storage_net_names()
+        # debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
+        #                                       "supported for characterization. Storage nets={0}").format(storage_names))
+        cell_name = "xsram:xbank0:xbitcell_array:xbitcell_array:xbit_r0_c0"
+        storage_names = ("Q", "Q_bar")
         q_name = cell_name + OPTS.hier_seperator + str(storage_names[0])
         qbar_name = cell_name + OPTS.hier_seperator + str(storage_names[1])
 

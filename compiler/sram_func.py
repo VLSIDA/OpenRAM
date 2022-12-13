@@ -44,27 +44,29 @@ init_openram(config_file=config_file, is_unit_test=False)
 print_banner()
 
 # Configure the SRAM organization (duplicated from openram.py)
-from sram_config import sram_config
-c = sram_config(word_size=OPTS.word_size,
-                num_words=OPTS.num_words,
-                write_size=OPTS.write_size,
-                num_banks=OPTS.num_banks,
-                words_per_row=OPTS.words_per_row,
-                num_spare_rows=OPTS.num_spare_rows,
-                num_spare_cols=OPTS.num_spare_cols)
+#from sram_config import sram_config
+from characterizer.fake_sram import fake_sram
+s = fake_sram(name=OPTS.output_name,
+              word_size=OPTS.word_size,
+              num_words=OPTS.num_words,
+              write_size=OPTS.write_size,
+              num_banks=OPTS.num_banks,
+              words_per_row=OPTS.words_per_row,
+              num_spare_rows=OPTS.num_spare_rows,
+              num_spare_cols=OPTS.num_spare_cols)
+
+s.parse_html(OPTS.output_path + "sram.html")
+s.generate_pins()
+s.setup_multiport_constants()
 
 OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
-
-# Initialize and create the sram object
-from sram import sram
-s = sram(name=OPTS.output_name, sram_config=c)
 
 # Generate stimulus and run functional simulation on the design
 start_time = datetime.datetime.now()
 from characterizer import functional
 debug.print_raw("Functional simulation... ")
-f = functional(s.s, cycles=cycles, spfile=s.get_sp_name(), period=period, output_path=OPTS.openram_temp)
+f = functional(s, cycles=cycles, spfile=OPTS.output_path + OPTS.output_name + ".sp", period=period, output_path=OPTS.openram_temp)
 (fail, error) = f.run()
 debug.print_raw(error)
 print_time("Functional simulation", datetime.datetime.now(), start_time)

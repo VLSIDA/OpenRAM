@@ -6,8 +6,6 @@
 # All rights reserved.
 #
 
-
-
 from openram.base import design
 from openram.base import vector
 from openram import OPTS

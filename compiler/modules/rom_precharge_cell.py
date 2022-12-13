@@ -10,7 +10,6 @@ from openram.base import design
 from openram.base import vector
 from openram import OPTS
 from openram.sram_factory import factory
-
 from openram.tech import drc
 
 

@@ -110,14 +110,15 @@ class rom_base_array(bitcell_base_array):
         self.cell_list = []
         self.current_row = 0
         #list of current bitline interconnect nets, starts as the same as the bitline list and is updated when new insts of cells are added
-        int_bl_list = self.bitline_names[0]
+        self.int_bl_list = self.bitline_names[0].copy()
         #When rotated correctly rows are word lines
         for row in range(self.row_size):
             row_list = []
 
             # for each new strap placed, offset the column index refrenced to get correct bit in the data array
             strap_offset = 0
-            # when rotated correctly cols are bit lines
+            first_in_col = True
+            # cols are bit lines
             for col in range(self.column_size):
                 
                 if col % self.strap_spacing == 0:
@@ -140,7 +141,6 @@ class rom_base_array(bitcell_base_array):
                         
                         new_inst = self.add_inst(name=name, mod=self.cell_ac)
                         
-                
                     # if dummy/0 is below and not above, add a source contact
                     # if in the first row, add a source contact
                     elif (row > 0 and self.data[row - 1][col] == 0) or \
@@ -157,12 +157,17 @@ class rom_base_array(bitcell_base_array):
 
                     if row == self.row_size - 1 or self.get_next_cell_in_bl(row, col) == -1:
                         
-                        bl_l = int_bl_list[col]
+                        bl_l = self.int_bl_list[col]
                         bl_h = "gnd" 
+                    # elif first_in_col:
+                    #     bl_l = self.bitline_names[0][col]
+                    #     int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
+                    #     bl_h = int_bl_list[col]
+                    #     first_in_col = False
                     else:
-                        bl_l = int_bl_list[col]
-                        int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
-                        bl_h = int_bl_list[col]
+                        bl_l = self.int_bl_list[col]
+                        self.int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
+                        bl_h = self.int_bl_list[col]
                     
                     
                     self.cell_inst[row, col] = new_inst
@@ -192,10 +197,12 @@ class rom_base_array(bitcell_base_array):
 
 
     def create_precharge_inst(self):
-        prechrg_pins = []
+        prechrg_pins = self.bitline_names[0].copy()
 
         for bl in range(self.column_size):
-            prechrg_pins.append(self.bitline_names[0][bl])
+            # if the internal bl was never updated there are no active cells in the bitline, so it should route straight to ground"
+            if self.int_bl_list[bl] == prechrg_pins[bl]:
+                prechrg_pins[bl] = "gnd"
         
         prechrg_pins.append("precharge_gate")
         prechrg_pins.append("vdd")
@@ -362,34 +369,3 @@ class rom_base_array(bitcell_base_array):
         return "bli_{0}_{1}".format(row, col)
     
     
-    def get_bitcell_pins(self, row, col):
-        """ 
-        return the correct nets to attack nmos/cell drain, gate, source, body pins to
-        """
-
-        bitcell_pins = []
-
-        #drain pin
-        if self.current_row == 0:
-            bitcell_pins.append(self.bitline_names[0][col])
-        else:
-            bitcell_pins.append(self.get_current_bl_interconnect(col))
-            
-
-        #gate pin
-        bitcell_pins.append(self.get_wordline_names()[row])
-
-        #source pin
-        
-        """If there is another bitcell to be placed below the current cell, """
-        
-        if self.get_next_cell_in_bl(row, col) == -1:
-            bitcell_pins.append("gnd")
-        else:
-            """create another interconnect net"""
-            bitcell_pins.append(self.create_next_bl_interconnect(row, col))
-
-        #body pin
-        bitcell_pins.append("gnd")
-
-        return bitcell_pins

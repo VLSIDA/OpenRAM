@@ -27,7 +27,7 @@ class rom_bank_test(openram_test):
         a = factory.create(module_type="rom_base_bank", strap_spacing = 2)
 
         self.local_check(a)
-        globals.end_openram()
+        openram.end_openram()
 
 # run the test from the command line
 if __name__ == "__main__":

@@ -226,7 +226,7 @@ class capped_bitcell_array(bitcell_base_array):
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
-        array_offset = self.bitcell_offset.scale(1 + len(self.left_rbl), 1 + self.rbl[0])
+        array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
         self.translate_all(array_offset.scale(-1, -1))
 
         # Add extra width on the left and right for the unused WLs
@@ -302,8 +302,10 @@ class capped_bitcell_array(bitcell_base_array):
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
     def copy_layout_pins(self):
-        for pin_name in self.replica_bitcell_array_inst.get_pins():
-            if pin_name in ["vdd", "gnd"]:
+        excluded_pins = ["vdd", "gnd"]
+        excluded_pins.extend(self.unused_wordline_names)
+        for pin_name in self.replica_bitcell_array.get_pin_names():
+            if pin_name in excluded_pins:
                 continue
             self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
 
@@ -375,7 +377,7 @@ class capped_bitcell_array(bitcell_base_array):
         # Ground the unused replica wordlines
         for (names, inst) in zip(self.replica_bitcell_array.rbl_wordline_names, self.replica_bitcell_array.dummy_row_replica_insts):
             for (wl_name, pin_name) in zip(names, self.replica_bitcell_array.dummy_row.get_wordline_names()):
-                if wl_name in self.replica_bitcell_array.unused_wordline_names:
+                if wl_name in self.unused_wordline_names:
                     pin = inst.get_pin(pin_name)
                     self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
                     self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)

@@ -225,7 +225,7 @@ class replica_bitcell_array(bitcell_base_array):
         # Dummy rows above/below the bitcell array (connected with the replica cell wl)
         self.dummy_row_replica_insts = []
         # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
-        for port in self.all_ports:
+        for port in self.all_ports: # TODO: tie to self.rbl or whatever
             self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
                                                                 mod=self.dummy_row))
             self.connect_inst(self.all_bitcell_bitline_names + self.rbl_wordline_names[port] + self.supplies)
@@ -253,15 +253,12 @@ class replica_bitcell_array(bitcell_base_array):
         array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
         self.translate_all(array_offset.scale(-1, -1))
 
-        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
-        self.height = self.dummy_row_insts[1].uy()
-
         self.add_layout_pins()
 
         self.route_supplies()
 
-        self.width = (len(self.rbls) + self.column_size) * self.cell.width
         self.height = (len(self.rbls) + self.row_size) * self.cell.height
+        self.width = (len(self.rbls) + self.column_size) * self.cell.width
 
         self.add_boundary()
 

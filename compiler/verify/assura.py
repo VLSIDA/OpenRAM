@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -25,12 +25,11 @@ drc["lvs_subcircuits"] variable, and additional options must be
 inserted in the runset.
 """
 
-
 import os
 import re
-from run_script import *
-import debug
-from globals import OPTS
+from openram import debug
+from openram.verify.run_script import *
+from openram import OPTS
 
 # Keep track of statistics
 num_drc_runs = 0
@@ -39,7 +38,7 @@ num_pex_runs = 0
 
 
 def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
-    from tech import drc
+    from openram.tech import drc
     drc_rules = drc["drc_rules"]
     drc_runset = output_path + cell_name + ".rsf"
     drc_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
@@ -108,7 +107,7 @@ def run_drc(name, gds_name, final_verification=False):
 
 def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
 
-    from tech import drc
+    from openram.tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = output_path + name + ".rsf"
     # The LVS compare rules must be defined in the tech file for Assura.

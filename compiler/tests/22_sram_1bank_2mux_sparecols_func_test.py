@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 @unittest.skip("SKIPPING 22_sram_1bank_2mux_sparecols_func_test")
@@ -21,17 +21,17 @@ class sram_1bank_2mux_sparecols_func_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
-        from characterizer import functional
-        from modules import sram_config
+        from openram.characterizer import functional
+        from openram import sram_config
         if OPTS.tech_name == "sky130":
             num_spare_rows = 1
             num_spare_cols = 1
@@ -57,11 +57,12 @@ class sram_1bank_2mux_sparecols_func_test(openram_test):
         (fail, error) = f.run()
         self.assertTrue(fail, error)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

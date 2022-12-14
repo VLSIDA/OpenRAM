@@ -1,16 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import drc
-from base import design
-from base import vector
-from sram_factory import factory
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc
+from openram import OPTS
 
 class tri_gate_array(design):
     """

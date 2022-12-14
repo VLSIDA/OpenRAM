@@ -1,6 +1,11 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 import copy
 from collections import defaultdict
-import debug
+from openram import debug
 
 
 class timing_graph():

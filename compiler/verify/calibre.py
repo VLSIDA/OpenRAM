@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -16,11 +16,10 @@ Calibre means pointing the code to the proper DRC and LVS rule files.
 
 """
 
-
 import os
 import re
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 from .run_script import run_script
 
 # Keep track of statistics
@@ -36,7 +35,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    from tech import drc
+    from openram.tech import drc
     drc_rules = drc["drc_rules"]
 
     drc_runset = {
@@ -77,7 +76,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    from tech import drc
+    from openram.tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
@@ -151,7 +150,7 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
         run_drc(cell_name, gds_name, sp_name)
         run_lvs(cell_name, gds_name, sp_name)
 
-    from tech import drc
+    from openram.tech import drc
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,

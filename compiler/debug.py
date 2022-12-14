@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
-import inspect
-import globals
 import sys
+import os
 import pdb
+import inspect
+from openram import globals
 
 # the debug levels:
 # 0 = minimum output (default)
@@ -96,7 +96,7 @@ log.create_file = True
 
 
 def info(lev, str):
-    from globals import OPTS
+    from openram.globals import OPTS
     # 99 is a special never print level
     if lev == 99:
         return
@@ -114,7 +114,7 @@ def info(lev, str):
 
 
 def archive():
-    from globals import OPTS
+    from openram.globals import OPTS
     try:
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
     except:
@@ -131,7 +131,7 @@ def bp():
     An empty function so you can set soft breakpoints in pdb.
     Usage:
     1) Add a breakpoint anywhere in your code with "import debug; debug.bp()".
-    2) Run "python3 -m pdb openram.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
+    2) Run "python3 -m pdb sram_compiler.py config.py" or "python3 -m pdb 05_bitcell_array.test" (for example)
     3) When pdb starts, run "break debug.bp" to set a SOFT breakpoint. (Or you can add this to your ~/.pdbrc)
     4) Then run "cont" to continue.
     5) You can now set additional breakpoints or display commands

@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-import debug
+import openram
+from openram import debug
+from openram import OPTS
+
 
 class path_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
-        from base import wire_path
-        import tech
-        from base import design
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram.base import wire_path
+        from openram import tech
+        from openram.base import design
 
         min_space = 2 * tech.drc["minwidth_m1"]
         layer_stack = ("m1")
@@ -86,13 +87,12 @@ class path_test(openram_test):
         wire_path(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        globals.end_openram()
-
+        openram.end_openram()
 
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

@@ -1,12 +1,12 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import os
-import drc as d
+from openram import drc as d
 #from drc.design_rules import design_rules
 #from drc.module_type import module_type
 #from drc.custom_cell_properties import cell_properties

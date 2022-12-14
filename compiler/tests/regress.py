@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -10,8 +10,7 @@
 import re
 import unittest
 import sys, os
-sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals
+from openram import globals
 from subunit import ProtocolTestCase, TestProtocolClient
 from testtools import ConcurrentTestSuite
 

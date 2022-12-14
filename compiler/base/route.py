@@ -1,17 +1,18 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from itertools import tee
+from openram import debug
+from openram.sram_factory import factory
+from openram.tech import drc
 from .design import design
 from .vector import vector
 from .vector3d import vector3d
-from tech import drc
-from itertools import tee
-from sram_factory import factory
+
 
 class route(design):
     """

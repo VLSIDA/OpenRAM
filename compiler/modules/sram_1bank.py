@@ -1,23 +1,23 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import vector
-from base import channel_route
-from router import router_tech
-from globals import OPTS, print_time
 import datetime
-import debug
 from math import ceil
-from importlib import reload
-from base import design
-from base import verilog
-from base import lef
-from sram_factory import factory
-from tech import spice
+from importlib import import_module, reload
+from openram import debug
+from openram.base import vector
+from openram.base import channel_route
+from openram.base import design
+from openram.base import verilog
+from openram.base import lef
+from openram.router import router_tech
+from openram.sram_factory import factory
+from openram.tech import spice
+from openram import OPTS, print_time
 
 
 class sram_1bank(design, verilog, lef):
@@ -43,7 +43,7 @@ class sram_1bank(design, verilog, lef):
             self.num_spare_cols = 0
 
         try:
-            from tech import power_grid
+            from openram.tech import power_grid
             self.supply_stack = power_grid
         except ImportError:
             # if no power_grid is specified by tech we use sensible defaults
@@ -254,9 +254,9 @@ class sram_1bank(design, verilog, lef):
             # Do not route the power supply (leave as must-connect pins)
             return
         elif OPTS.route_supplies == "grid":
-            from router import supply_grid_router as router
+            from openram.router import supply_grid_router as router
         else:
-            from router import supply_tree_router as router
+            from openram.router import supply_tree_router as router
         rtr=router(layers=self.supply_stack,
                    design=self,
                    bbox=bbox,
@@ -367,7 +367,7 @@ class sram_1bank(design, verilog, lef):
                     for bit in range(self.num_spare_cols):
                         pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
-        from router import signal_escape_router as router
+        from openram.router import signal_escape_router as router
         rtr=router(layers=self.m3_stack,
                    design=self,
                    bbox=bbox)
@@ -482,7 +482,7 @@ class sram_1bank(design, verilog, lef):
 
         self.bank_count = 0
 
-        c = reload(__import__('modules.' + OPTS.control_logic))
+        c = reload(import_module("." + OPTS.control_logic, "openram.modules"))
         self.mod_control_logic = getattr(c, OPTS.control_logic)
 
         # Create the control logic module for each port type

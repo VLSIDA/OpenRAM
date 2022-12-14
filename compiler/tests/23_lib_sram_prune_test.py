@@ -1,34 +1,35 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
 import unittest
 from testutils import *
-import sys, os,re
 
-import globals
-from globals import OPTS
-import debug
+import openram
+from openram import debug
+from openram import OPTS
+
 
 @unittest.skip("SKIPPING 23_lib_sram_prune_test")
 class lib_sram_prune_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
-        from characterizer import lib
+        from openram.characterizer import lib
         if not OPTS.spice_exe:
             debug.error("Could not find {} simulator.".format(OPTS.spice_name),-1)
 
@@ -39,8 +40,8 @@ class lib_sram_prune_test(openram_test):
             num_spare_rows = 0
             num_spare_cols = 0
 
-        from modules import sram
-        from modules import sram_config
+        from openram import sram
+        from openram import sram_config
         c = sram_config(word_size=2,
                         num_words=16,
                         num_banks=1,
@@ -72,17 +73,12 @@ class lib_sram_prune_test(openram_test):
             self.assertTrue(self.isapproxdiff(libname,golden,0.40))
 
         reload(characterizer)
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())
-
-
-
-
-
-

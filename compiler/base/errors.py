@@ -1,4 +1,8 @@
-
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 
 class drc_error(Exception):
     """Exception raised for DRC errors.

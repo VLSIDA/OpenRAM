@@ -1,17 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-from .regression_model import regression_model
 from sklearn.linear_model import Ridge
-from globals import OPTS
-import debug
-
 from sklearn.linear_model import LinearRegression
+from openram import debug
+from openram import OPTS
+from .regression_model import regression_model
 
 
 class linear_regression(regression_model):

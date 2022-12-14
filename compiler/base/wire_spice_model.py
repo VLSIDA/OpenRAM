@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -16,14 +16,14 @@ class wire_spice_model():
         self.wire_r = self.cal_wire_r(wire_length, wire_width) # r in each segment
 
     def cal_wire_c(self, wire_length, wire_width):
-        from tech import spice
+        from openram.tech import spice
         # Convert the F/um^2 to fF/um^2 then multiple by width and length
         total_c = (spice["wire_unit_c"]*1e12) * wire_length * wire_width
         wire_c = total_c / self.lump_num
         return wire_c
 
     def cal_wire_r(self, wire_length, wire_width):
-        from tech import spice
+        from openram.tech import spice
         total_r = spice["wire_unit_r"] * wire_length / wire_width
         wire_r = total_r / self.lump_num
         return wire_r

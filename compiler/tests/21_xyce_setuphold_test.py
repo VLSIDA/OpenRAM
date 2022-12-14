@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
+import openram
+from openram import OPTS
 
 
 class timing_setup_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
         OPTS.spice_name="Xyce"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
-        from characterizer import setup_hold
-        import tech
+        from openram.characterizer import setup_hold
+        from openram import tech
         slews = [tech.spice["rise_time"]*2]
 
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
@@ -57,11 +57,12 @@ class timing_setup_test(openram_test):
 
         self.assertTrue(self.check_golden_data(data,golden_data,0.25))
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

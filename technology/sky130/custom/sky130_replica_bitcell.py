@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
-from modules import bitcell_base
-from base import logical_effort
-from tech import parameter, drc
-from tech import cell_properties as props
+from openram import debug
+from openram.base import logical_effort
+from openram.modules import bitcell_base
+from openram.tech import parameter, drc
+from openram.tech import cell_properties as props
 
 
 class sky130_replica_bitcell(bitcell_base):
@@ -43,7 +43,7 @@ class sky130_replica_bitcell(bitcell_base):
 
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
-        from tech import spice
+        from openram.tech import spice
         leakage = spice["bitcell_leakage"]
         dynamic = 0 # temporary
         total_power = self.return_power(dynamic, leakage)

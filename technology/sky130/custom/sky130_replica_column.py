@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
+from openram import debug
+from openram.base import geometry
+from openram.sram_factory import factory
+from openram.tech import layer
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from sram_factory import factory
-from globals import OPTS
-from base import geometry
-from tech import layer
 
 
 class sky130_replica_column(sky130_bitcell_base_array):
@@ -90,8 +90,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-        #self.add_pin("top_gate", "INPUT")
-        #self.add_pin("bot_gate", "INPUT")
+        self.add_pin("top_gate", "INPUT")
+        self.add_pin("bot_gate", "INPUT")
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell_1port", version="opt1")
@@ -246,7 +246,7 @@ class sky130_replica_column(sky130_bitcell_base_array):
 
                 if 'VNB' or 'vnb' in self.cell_inst[row].mod.pins:
                     try:
-                        from tech import layer_override
+                        from openram.tech import layer_override
                         if layer_override['VNB']:
                             pin = inst.get_pin("vnb")
                             self.add_label("gnd", pin.layer, pin.center())

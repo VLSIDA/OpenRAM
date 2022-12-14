@@ -1,13 +1,13 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import os
-import debug
-from globals import OPTS, find_exe, get_tool
+from openram import debug
+from openram import OPTS, find_exe, get_tool
 from .lib import *
 from .delay import *
 from .elmore import *
@@ -55,5 +55,4 @@ if not OPTS.analytical_delay:
 
 else:
     debug.info(1, "Analytical model enabled.")
-
 

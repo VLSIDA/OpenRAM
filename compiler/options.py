@@ -1,19 +1,19 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import optparse
 import os
+import optparse
 
 
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
     of these options can be over-riden in a configuration file
-    that is the sole required command-line positional argument for openram.py.
+    that is the sole required command-line positional argument for sram_compiler.py.
     """
 
     ###################

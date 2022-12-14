@@ -1,18 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, layer
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 from .pgate import *
-import debug
-from tech import drc, layer
-from base import vector
-from .pgate import *
-from sram_factory import factory
-from tech import cell_properties as cell_props
-from globals import OPTS
 
 
 class column_mux(pgate):

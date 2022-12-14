@@ -1,18 +1,18 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from base import logical_effort
-from base import vector
-from tech import layer, drc, spice
-from sram_factory import factory
-from globals import OPTS
-from tech import cell_properties as cell_props
+from openram import debug
+from openram.base import design
+from openram.base import logical_effort
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer, drc, spice
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 
 
 class ptx(design):

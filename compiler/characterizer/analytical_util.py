@@ -1,16 +1,16 @@
+# See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-import debug
-
+import os
 import csv
 import math
 import numpy as np
-import os
+from openram import debug
+
 
 process_transform = {'SS':0.0, 'TT': 0.5, 'FF':1.0}
 

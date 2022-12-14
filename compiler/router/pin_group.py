@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base.vector import vector
-from base.vector3d import vector3d
-from base.pin_layout import pin_layout
+from openram import debug
+from openram.base.vector import vector
+from openram.base.vector3d import vector3d
+from openram.base.pin_layout import pin_layout
 from .direction import direction
 
 

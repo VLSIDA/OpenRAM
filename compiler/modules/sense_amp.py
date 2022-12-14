@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
-from tech import parameter, drc, spice
-from tech import cell_properties as props
-from base import logical_effort
+from openram import debug
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import parameter, drc, spice
+from openram.tech import cell_properties as props
 
 
 class sense_amp(design):
@@ -43,7 +43,7 @@ class sense_amp(design):
         # FIXME: This input load will be applied to both the s_en timing and bitline timing.
 
         # Input load for the bitlines which are connected to the source/drain of a TX. Not the selects.
-        from tech import spice
+        from openram.tech import spice
         # Default is 8x. Per Samira and Hodges-Jackson book:
         # "Column-mux transistors driven by the decoder must be sized for optimal speed"
         bitline_pmos_size = 8 # FIXME: This should be set somewhere and referenced. Probably in tech file.

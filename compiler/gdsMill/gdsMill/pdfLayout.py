@@ -1,8 +1,8 @@
-import pyx
 import math
-from numpy import matrix
-from gdsPrimitives import *
 import random
+from numpy import matrix
+from openram.gdsMill import pyx
+from .gdsPrimitives import *
 
 class pdfLayout:
     """Class representing a view for a layout as a PDF"""

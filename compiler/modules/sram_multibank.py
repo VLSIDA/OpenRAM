@@ -1,8 +1,13 @@
-from .template import template
-from globals import OPTS
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 import os
-from math import ceil, log
 import re
+from math import ceil, log
+from openram import OPTS
+from .template import template
 
 
 class sram_multibank:

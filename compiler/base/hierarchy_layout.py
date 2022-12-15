@@ -631,10 +631,11 @@ class layout():
         """
         return self.pins
 
-    def copy_layout_pin(self, instance, pin_name, new_name=""):
+    def copy_layout_pin(self, instance, pin_name, new_name="", relative_offset=vector(0, 0)):
         """
         Create a copied version of the layout pin at the current level.
         You can optionally rename the pin to a new name.
+        You can optionally add an offset vector by which to move the pin.
         """
         pins = instance.get_pins(pin_name)
 
@@ -646,7 +647,7 @@ class layout():
                 new_name = pin_name
             self.add_layout_pin(new_name,
                                 pin.layer,
-                                pin.ll(),
+                                pin.ll() + relative_offset,
                                 pin.width(),
                                 pin.height())
 

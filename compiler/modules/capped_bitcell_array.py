@@ -307,7 +307,15 @@ class capped_bitcell_array(bitcell_base_array):
         for pin_name in self.replica_bitcell_array.get_pin_names():
             if pin_name in excluded_pins:
                 continue
-            self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
+            # move pins to edges of cap cells
+            if "wl" in pin_name:
+                pin_offset = self.bitcell_offset.scale(-1, 0)
+            else:
+                pin_offset = self.bitcell_offset.scale(0, -1)
+
+            self.copy_layout_pin(instance=self.replica_bitcell_array_inst,
+                                 pin_name=pin_name,
+                                 relative_offset=pin_offset)
 
     def route_supplies(self):
 

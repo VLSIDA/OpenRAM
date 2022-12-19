@@ -26,3 +26,7 @@ class sky130_dummy_bitcell(bitcell_base):
             cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1a_dummy"
         super().__init__(name, cell_name, prop=props.bitcell_1port)
         debug.info(2, "Create dummy bitcell")
+
+    def build_graph(self, graph, inst_name, port_nets):
+        """ Adds edges based on inputs/outputs. Overrides base class function. """
+        pass

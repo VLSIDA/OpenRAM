@@ -128,14 +128,11 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
         for inst in self.insts:
             if "wlstrap" in inst.name:
-                try:
+                if "VPWR" in inst.mod.pins:
                     self.copy_layout_pin(inst, "VPWR", "vdd")
-                except:
-                    pass
-                try:
+                if "VGND" in inst.mod.pins:
                     self.copy_layout_pin(inst, "VGND", "gnd")
-                except:
-                    pass
+
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]

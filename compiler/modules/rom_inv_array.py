@@ -56,7 +56,7 @@ class rom_inv_array(design):
     def create_modules(self):
 
         self.inv_mod = factory.create(module_type="pinv", module_name="inv_array_mod", height=self.inv_size, add_wells=False)
-        self.end_inv = factory.create(module_type="pinv", module_name="inv_array_end_mod", height=self.inv_size)
+        self.end_inv = factory.create(module_type="pinv", module_name="inv_array_end_mod", height=self.inv_size, add_wells=True)
         # For layout constants
         self.poly_tap = factory.create(module_type="rom_poly_tap", strap_length=0)
 
@@ -73,7 +73,6 @@ class rom_inv_array(design):
         for col in range(self.cols):
             name = "Xinv_c{0}".format(col)
             if col == self.cols - 1:
-                print("TAP ME DOWN")
                 self.inv_insts.append(self.add_inst(name=name, mod=self.end_inv))
             else:
                 self.inv_insts.append(self.add_inst(name=name, mod=self.inv_mod))

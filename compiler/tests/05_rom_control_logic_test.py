@@ -13,19 +13,19 @@ import sys, os
 import openram
 from openram import OPTS
 from openram.sram_factory import factory
-import debug
+from openram import debug
 
 
-class rom_bank_test(openram_test):
+class rom_decoder_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(2, "Testing 4x4 array for rom cell")
+        debug.info(2, "Testing control logic for rom cell")
 
-        a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data", word_size=1)
 
+        a = factory.create(module_type="rom_control_logic", num_outputs=4)
         self.local_check(a)
         openram.end_openram()
 

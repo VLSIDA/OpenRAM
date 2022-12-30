@@ -17,16 +17,13 @@ class rom_base_cell(rom_dummy_cell):
 
     def __init__(self, name="", cell_name=None, add_source_contact=False, add_drain_contact=False, route_layer="m1"):
         super().__init__(name, cell_name, add_source_contact, add_drain_contact, route_layer)
-        #self.route_layer= route_layer
-        #self.create_netlist()
-        #self.create_layout()
+
 
 
     def create_netlist(self):        
         self.add_pins()
         self.add_nmos()
         self.create_nmos()
-        
         
     def create_layout(self):
         self.setup_drc_offsets()
@@ -64,15 +61,7 @@ class rom_base_cell(rom_dummy_cell):
         self.copy_layout_pin(self.cell_inst, "S", "S")
         self.copy_layout_pin(self.cell_inst, "D", "D")
         self.source_pos = self.cell_inst.get_pin("S").center()
-        # if self.add_source_contact != False:
-        #     # drain_x = 0
-        #     # drain_y = 0.5 * (self.width - self.poly_extend_active_spacing)
 
-            
-        #     print("drained")
-        #     print(drain_pos)
-        #     self.add_layout_pin_rect_center("S", self.route_layer, drain_pos)
-        # self.add_label("S", self.route_layer, self.cell_inst.get_pin("S").center())
         
         
 

@@ -16,11 +16,12 @@ from openram.tech import drc
 
 class rom_base_array(bitcell_base_array):
 
-    def __init__(self, rows, cols, strap_spacing, bitmap, name="", column_offset=0, route_layer="li", output_layer="m2"):
+    def __init__(self, rows, cols, strap_spacing, bitmap, name="", column_offset=0, route_layer="li", output_layer="m2", pitch_match=False):
 
         super().__init__(name=name, rows=rows, cols=cols, column_offset=column_offset)
 
         self.data = bitmap
+        self.pitch_match = pitch_match
         self.route_layer = route_layer
         self.output_layer = output_layer
         self.strap_spacing = strap_spacing 
@@ -44,14 +45,18 @@ class rom_base_array(bitcell_base_array):
         
 
     def create_layout(self):
+        self.create_layout_constants()
         self.place_array()
+        if self.pitch_match:
+            self.route_pitch_offsets()
+        self.place_precharge()
         self.place_wordline_contacts()
         self.place_bitline_contacts()
-        self.place_precharge()
+
+        
         self.place_rails()
         self.route_precharge()
         
-
         self.add_boundary()
         self.add_label("ARRAY ZERO", self.route_layer)
         self.add_label("array height", self.route_layer, [0, self.height])
@@ -95,6 +100,12 @@ class rom_base_array(bitcell_base_array):
         self.precharge_array = factory.create(module_type="rom_precharge_array", cols=self.column_size, strap_spacing=self.strap_spacing, route_layer=self.route_layer)
 
 
+    def create_layout_constants(self):
+        self.route_width = drc("minwidth_" + self.route_layer)
+
+        self.route_pitch = drc("{0}_to_{0}".format(self.route_layer))
+
+
     def add_pins(self):
         for bl_name in self.get_bitline_names():
             self.add_pin(bl_name, "INOUT")
@@ -116,9 +127,13 @@ class rom_base_array(bitcell_base_array):
             row_list = []
 
             # for each new strap placed, offset the column index refrenced to get correct bit in the data array
-            strap_offset = 0
-            first_in_col = True
             # cols are bit lines
+            strap_row = False
+            pre_strap_row = False
+            if row % self.strap_spacing == 0 and self.pitch_match:
+                strap_row = True
+            if (row + 1) % self.strap_spacing == 0 and self.pitch_match:
+                pre_strap_row = True
             for col in range(self.column_size):
                 
                 if col % self.strap_spacing == 0:
@@ -127,7 +142,6 @@ class rom_base_array(bitcell_base_array):
                     #print("tap instance added at c{0}, r{1}".format(col, row))
                     self.tap_inst[row, col]=self.add_inst(name=name, mod=self.poly_tap)
                     self.connect_inst([])
-                    strap_offset += 1
                     
                 name = "bit_r{0}_c{1}".format(row, col)
 
@@ -137,19 +151,23 @@ class rom_base_array(bitcell_base_array):
                     # if the last row and 0 below add both contacts
                     if  (row < self.row_size - 1 and row > 0 and self.data[row + 1][col] == 0 and self.data[row - 1][col] == 0) or \
                         (row == self.row_size - 1 and self.data[row - 1][col] == 0) or \
-                        (row == 0 and self.data[row + 1][col] == 0):
+                        (row == 0 and self.data[row + 1][col] == 0) or \
+                        (row < self.row_size - 1 and self.data[row + 1][col] == 0 and strap_row) or \
+                        (row > 0 and self.data[row - 1][col] == 0 and pre_strap_row):
                         
                         new_inst = self.add_inst(name=name, mod=self.cell_ac)
                         
                     # if dummy/0 is below and not above, add a source contact
                     # if in the first row, add a source contact
                     elif (row > 0 and self.data[row - 1][col] == 0) or \
-                         (row == 0):
+                         (row == 0) or \
+                         (strap_row):
 
                         new_inst=self.add_inst(name=name, mod=self.cell_sc)
 
                     elif (row < self.row_size - 1 and self.data[row + 1][col] == 0) or \
-                         (row == self.row_size - 1):          
+                         (row == self.row_size - 1) or \
+                          (pre_strap_row):          
                         new_inst=self.add_inst(name=name, mod=self.cell_dc)
 
                     else:
@@ -187,7 +205,6 @@ class rom_base_array(bitcell_base_array):
                 row_list.append(new_inst)
 
                 
-                
             name = "tap_r{0}_c{1}".format(row, self.array_col_size)
             #print(*row_list)
             self.tap_inst[row, self.column_size]=self.add_inst(name=name, mod=self.zero_tap)
@@ -222,9 +239,7 @@ class rom_base_array(bitcell_base_array):
 
     def place_rails(self):
 
-        width = drc("minwidth_" + self.route_layer)
-        drc_rule = "{0}_to_{0}".format(self.route_layer)
-        spacing = drc(drc_rule)
+        spacing = self.route_pitch
         
         rail_y = self.cell_list[self.row_size - 1][0].offset.y + self.dummy.base_width + spacing
         # self.dummy.height * (self.row_size) 
@@ -237,7 +252,7 @@ class rom_base_array(bitcell_base_array):
         rail_start = vector(start_x , rail_y)
         rail_end = vector(end_x, rail_y)
 
-        self.gnd = self.add_layout_pin_rect_ends(  name="gnd",
+        self.gnd = self.add_layout_pin_rect_ends(name="gnd",
                                         layer="m1",
                                         start=rail_start,
                                         end=rail_end)
@@ -249,22 +264,22 @@ class rom_base_array(bitcell_base_array):
 
             
             self.add_via_stack_center(via_pos, self.route_layer, "m1", ["H", "V"])
-
-        prechrg_vdd = self.precharge_inst.get_pin("vdd")
         
 
     def place_array(self):
         self.cell_pos = {}
         self.strap_pos = {}
         # rows are wordlines
+
+        pitch_offset = 0
         for row in range(self.row_size):
             
-            # strap_cols = -1
+            if row % self.strap_spacing == 0 and row != 0 and self.pitch_match:
+                pitch_offset += self.poly_tap.width
             
-            cell_y = row * (self.dummy.height)
+            cell_y = row * (self.dummy.height) + pitch_offset
             
             cell_x = 0
-
             for col in range(self.column_size):                    
 
                 if col % self.strap_spacing == 0:
@@ -286,6 +301,19 @@ class rom_base_array(bitcell_base_array):
             # self.add_layout_pin_rect_center("wl{}".format(row), "m2", tap_pin)
     
 
+    def route_pitch_offsets(self):
+
+        for row in range(0  , self.row_size, self.strap_spacing):
+            if row != 0:
+                for col in range(self.column_size):
+                    source = self.cell_inst[row, col].get_pin("S")
+                    drain = self.cell_inst[row - 1, col].get_pin("D")
+
+                    start = vector(drain.cx(), source.cy())
+                    end = drain.center()
+                    self.add_segment_center(self.route_layer, start, end)
+
+
     def place_precharge(self):
 
         self.precharge_offset = vector(0,  - self.precharge_inst.height - self.dummy.nmos.end_to_contact - 2 * drc["nwell_enclose_active"])
@@ -293,14 +321,15 @@ class rom_base_array(bitcell_base_array):
         self.precharge_inst.place(offset=self.precharge_offset)
 
         self.copy_layout_pin(self.precharge_inst, "vdd")
+        self.copy_layout_pin(self.precharge_inst, "gate", "precharge")
 
     
                     
     def place_wordline_contacts(self):
 
-        width = drc["minwidth_{}".format(self.route_layer)]
+        width = self.route_width
         
-        height = drc["minwidth_{}".format(self.route_layer)]
+        height = self.route_width
 
         offset = vector(self.poly_contact.width * 0.5, self.dummy.poly.offset.y)
 
@@ -308,36 +337,31 @@ class rom_base_array(bitcell_base_array):
             
             poly_via = self.tap_inst[wl, 0].get_pin("via")
             self.copy_layout_pin(self.tap_inst[wl, 0], "via", self.wordline_names[0][wl])
-            self.add_via_stack_center(poly_via.center(), "m1", self.output_layer)
+            # self.add_via_stack_center(poly_via.center(), "m1", self.output_layer)
 
-        corrected_offset = offset - vector(0.5 * width, 0.5 * height)
         # self.create_horizontal_pin_bus(self.route_layer, offset=corrected_offset, names=self.wordline_names[0], pitch=self.dummy.height, length=None)
 
     def place_bitline_contacts(self):
 
-        src_pin = self.cell_nc.source_pos
+        rail_y = self.precharge_inst.get_pin("vdd").cy()
 
         for bl in range(self.column_size):
-
-
-            # self.copy_layout_pin(self.cell_list[0][bl], "S", self.bitline_names[0][bl])
 
             src_pin = self.cell_list[0][bl].get_pin("S")
             prechg_pin_name = "pre_bl{0}_out".format(bl)
             pre_pin = self.precharge_inst.get_pin(prechg_pin_name)
 
-            
-            # offset = src_pin_offset + vector(src_pin.x, 0)
-            
-
-            middle_offset = (pre_pin.cy() - src_pin.cy()) * 0.5
+            middle_offset = (src_pin.cy() - pre_pin.cy() ) * 0.5
 
             corrected = vector(src_pin.cx(), src_pin.cy() - middle_offset)
             self.add_via_stack_center(corrected, self.route_layer, self.output_layer)
-            self.add_layout_pin_rect_center(self.bitline_names[0][bl], self.output_layer, corrected )
 
+            output_pos = vector(corrected.x, rail_y)
+
+            self.add_segment_center(self.output_layer, corrected, output_pos)
             
-            # self.gnd[0].y()
+            self.add_layout_pin_rect_center(self.bitline_names[0][bl], self.output_layer, output_pos )
+
 
 
     def route_precharge(self):

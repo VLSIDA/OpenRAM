@@ -27,7 +27,7 @@ class rom_array_test(openram_test):
 
         data = [[1, 0, 0, 0, 0, 1, 0, 0, 1], [0, 1, 1, 1, 0, 1, 0, 0, 1], [1, 0, 1, 1, 0, 1, 0, 0, 1], [1, 1, 0, 1, 1, 0, 0, 0, 1], [1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 1, 1, 1, 0, 0, 0, 1], [1, 0, 1, 1, 1, 0, 0, 0, 1], [1, 1, 0, 0, 1, 1, 0, 0, 1]]
 
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4)
+        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4, pitch_match=True)
         self.local_check(a)
         openram.end_openram()
 

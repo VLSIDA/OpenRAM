@@ -139,6 +139,7 @@ class rom_precharge_array(design):
             
 
     def create_layout_pins(self):
+        self.copy_layout_pin(self.tap_insts[0], "via", "gate")
         for col in range(self.cols):
             source_pin = self.pmos_insts[col].get_pin("D")
             bl = "pre_bl{0}_out".format(col)

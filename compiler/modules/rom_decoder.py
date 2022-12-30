@@ -5,13 +5,12 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
 from math import ceil, log
-from openram.base import design
 from openram.sram_factory import factory
-from openram.base import vector
+from openram.base import vector, design
 from openram import OPTS
 from openram.tech import drc
+
 
 
 class rom_decoder(design):
@@ -25,7 +24,7 @@ class rom_decoder(design):
         self.num_inputs = ceil(log(num_outputs, 2))
         self.create_decode_map()
 
-        for i in range(2 * self.num_inputs): print(self.decode_map[i])
+        # for i in range(2 * self.num_inputs): print(self.decode_map[i])
         
         super().__init__(name)
 
@@ -152,7 +151,6 @@ class rom_decoder(design):
 
 
     def place_input_inverters(self):
-        print(self.array_inst.ll().x)
         self.inv_inst.place(vector(self.array_inst.ll().x, 0))
 
 
@@ -163,7 +161,6 @@ class rom_decoder(design):
     def create_outputs(self):
 
         self.output_names = []
-        self.outputs = []
         for j in range(self.num_outputs):
             name = "out_{0}".format(j)
             self.output_names.append(name)
@@ -178,6 +175,8 @@ class rom_decoder(design):
             # self.outputs.append(self.add_layout_pin_rect_center(self.output_names[bl], self.output_layer, offset ))
         
     def connect_inputs(self):
+
+        self.copy_layout_pin(self.array_inst, "precharge")
 
         for i in range(self.num_inputs):
             wl = self.num_inputs * 2 - i * 2 - 1
@@ -235,14 +234,8 @@ class rom_decoder(design):
 
         offset = vector(-0.5 *width ,0.5 * (array_gnd[0].cy() + array_gnd[-1].cy()))
 
-
-
-        # self.add_rect_center(self.route_layer, offset, width, height)
-
-
         start = end - vector(0, 0.5 * minwidth)
         end = vector(start.x, array_gnd[1].uy())
-        # self.add_segment_center("m1", start, end)
 
  
 

@@ -50,12 +50,12 @@ class rom_precharge_cell(design):
         self.cell_inst = self.add_inst( name="precharge_pmos",
                                         mod=self.pmos, 
                                         )
-        self.connect_inst(["bitline", "gate", "vdd", "vdd"])
+        self.connect_inst(["bitline", "gate", "vdd", "body"])
 
         
     def add_pins(self):   
-        pin_list = ["vdd", "gate", "bitline", "vdd"]
-        dir_list = ["OUTPUT", "INPUT", "OUTPUT", "POWER"]
+        pin_list = ["vdd", "gate", "bitline", "body"]
+        dir_list = ["POWER", "INPUT", "OUTPUT", "INPUT"]
 
         self.add_pin_list(pin_list, dir_list) 
 

@@ -18,8 +18,8 @@ class rom_dummy_cell(design):
     def __init__(self, name="", cell_name=None, add_source_contact=False, add_drain_contact=False, route_layer="m1"):
         super().__init__(name, cell_name)
         self.route_layer = route_layer
-        self.add_source_contact=add_source_contact
-        self.add_drain_contact=add_drain_contact
+        self.add_source_contact="li"
+        self.add_drain_contact="li"
         self.create_netlist()
         self.create_layout()
 
@@ -70,12 +70,22 @@ class rom_dummy_cell(design):
 
     def add_boundary(self):
 
-        #cell width with offsets applied, height becomes width when the cells are rotated 
-        # self.width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
-        self.width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
-        # cell height with offsets applied, width becomes height when the cells are rotated, if the offsets are positive (greater than 0) they are not applied
-        self.height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
+        width = self.nmos.width + self.active_space
 
+        #cell width with offsets applied, height becomes width when the cells are rotated 
+        # width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
+        # cell height with offsets applied, width becomes height when the cells are rotated, if the offsets are positive (greater than 0) they are not applied
+        height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
+        
+        # make the cells square so the pitch of wordlines will match bitlines
+        print("height: {0} width: {1}".format(height, width))
+        if width > height:
+            self.width = width
+            self.height = width
+        else:
+            self.width = height
+            self.height = height
+        
         super().add_boundary()
 
         

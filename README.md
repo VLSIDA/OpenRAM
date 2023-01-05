@@ -194,7 +194,7 @@ You can view the .out file to see what the output of a test is in either case.
 + [OpenRAM Slack Workspace][Slack]
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-+ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fostodon.org</a>
++ <a rel="me" href="https://fosstodon.org/@mrg">@mrg@fosstodon.org</a>
 
 # License
 

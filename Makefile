@@ -21,11 +21,17 @@ OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.311
 #OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
+GF180_PDK ?= $(PDK_ROOT)/gf180
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
 SKY130_PDKS_GIT_REPO ?= https://github.com/google/skywater-pdk.git
 SKY130_PDKS_GIT_COMMIT ?= f70d8ca46961ff92719d8870a18a076370b85f6c
+
+# GF180 PDK
+GF180_PDKS_DIR ?= $(PDK_ROOT)/gf180mcu-pdk
+GF180_PDKS_GIT_REPO ?= https://github.com/google/gf180mcu-pdk.git
+GF180_PDKS_GIT_COMMIT ?= main
 
 # Create lists of all the files to copy/link
 GDS_FILES := $(sort $(wildcard $(SRAM_LIB_DIR)/cells/*/*.gds))
@@ -67,7 +73,16 @@ $(SKY130_PDKS_DIR): check-pdk-root
 	@git -C $(SKY130_PDKS_DIR) checkout $(SKY130_PDKS_GIT_COMMIT) && \
 		git -C $(SKY130_PDKS_DIR) submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
 
-$(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
+$(GF180_PDKS_DIR): check-pdk-root
+	@echo "Cloning gf PDK..."
+	@[ -d $(PDK_ROOT)/gf180mcu-pdk ] || \
+		git clone https://github.com/google/gf180mcu-pdk.git $(PDK_ROOT)/gf180mcu-pdk
+	@cd $(SKY130_PDKS_DIR) && \
+		git checkout main && git pull && \
+		git checkout -qf $(GF180_PDKS_GIT_COMMIT) && \
+		git submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
+
+$(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR) $(GF180_PDKS_DIR)
 	@echo "Cloning open_pdks..."
 	@[ -d $(OPEN_PDKS_DIR) ] || \
 		git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)

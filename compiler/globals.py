@@ -22,7 +22,7 @@ from openram import debug
 from openram import options
 
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 

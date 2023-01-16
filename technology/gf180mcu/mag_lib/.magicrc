@@ -1,0 +1,69 @@
+###
+###	Source file TECHNAME.magicrc
+###	Process this file with the m4 processor
+###
+puts stdout "Sourcing design .magicrc for technology TECHNAME ..."
+
+# Put internal grid on 0.005 pitch.  This is important to match vendor file
+# input (as opposed to SCMOS-style layout.  The default lambda grid is 0.05um).
+
+set scalefac [tech lambda]
+if {[lindex $scalefac 1] < 10} {
+    scalegrid 1 10
+}
+
+# drc off
+drc euclidean on
+# Change this to a fixed number for repeatable behavior with GDS writes
+# e.g., "random seed 12345"
+catch {random seed}
+
+# Allow override of PDK path from environment variable PDK_ROOT
+# "file nativename" guards against a local PDK_ROOT with "~" in the name
+if {[catch {set PDK_ROOT [file nativename $env(PDK_ROOT)]}]} {
+    set PDK_ROOT STAGING_PATH
+}
+
+# loading technology
+tech load $PDK_ROOT/TECHNAME/MAGIC_CURRENT/TECHNAME.tech
+
+# load device generator
+source $PDK_ROOT/TECHNAME/MAGIC_CURRENT/TECHNAME.tcl
+
+# load bind keys
+# source $PDK_ROOT/TECHNAME/MAGIC_CURRENT/TECHNAME-BindKeys
+
+# set units to lambda grid 
+snap lambda
+
+# set gf180mcu standard power, ground, and substrate names
+set VDD VDD
+set GND VSS
+set SUB VSUBS
+
+# Allow override of type of magic library views used, "mag" or "maglef",
+# from environment variable MAGTYPE
+
+if {[catch {set MAGTYPE $env(MAGTYPE)}]} {
+   set MAGTYPE mag
+}
+
+# add path to reference cells
+if {[file isdir ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}]} {
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}/gf180mcu_fd_pr
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}/gf180mcu_mcu7t5v0
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}/gf180mcu_mcu9t5v0
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}/gf180mcu_fd_io
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/${MAGTYPE}/gf180mcu_fd_ip_sram
+} else {
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/gf180mcu_fd_pr/${MAGTYPE}
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/gf180mcu_fd_sc_mcu7t5v0/${MAGTYPE}
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/gf180mcu_fd_sc_mcu9t5v0/${MAGTYPE}
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/gf180mcu_fd_io/${MAGTYPE}
+    addpath ${PDK_ROOT}/TECHNAME/libs.ref/gf180mcu_fd_ip_sram/${MAGTYPE}
+}
+
+# add path to IP from catalog.  This procedure defined in the PDK script.
+catch {magic::query_mylib_ip}
+# add path to local IP from user design space.  Defined in the PDK script.
+catch {magic::query_my_projects}

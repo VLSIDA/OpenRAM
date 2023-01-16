@@ -132,6 +132,7 @@ layer_names = {}
 layer_names["active"]  = "active"
 layer_names["pwell"]   = "pwell"
 layer_names["nwell"]   = "nwell"
+layer_names["dnwell"]   = "dnwell"
 layer_names["nimplant"]= "nimplant"
 layer_names["pimplant"]= "pimplant"
 layer_names["poly"]    = "poly"
@@ -153,225 +154,218 @@ layer_names["boundary"]= "boundary"
 
 # technology parameter
 parameter={}
-# difftap.2b
+
 parameter["min_tx_size"] = 0.250
 parameter["beta"] = 3
 
-parameter["6T_inv_nmos_size"] = 0.205
-parameter["6T_inv_pmos_size"] = 0.09
-parameter["6T_access_size"] = 0.135
-
+parameter["6T_inv_nmos_size"] = 0.6
+parameter["6T_inv_pmos_size"] = 0.95
+parameter["6T_access_size"] = 0.6
 drc = d.design_rules("gf180")
 
 # grid size
 drc["grid"] = 0.005
 
-# minwidth_tx with contact (no dog bone transistors)
-# difftap.2b
-drc["minwidth_tx"] = 0.360
-drc["minlength_channel"] = 0.150
+drc["minwidth_tx"] = 0.28
+#drc["minlength_channel"] = 0.150
 
-drc["pwell_to_nwell"] = 0
-# nwell.1 Minimum width of nwell/pwell
+drc["pwell_to_nwell"] = 0 # assuming same potential
+
 drc.add_layer("nwell",
-              width=0.840,
-              spacing=1.270)
+              width=0.86,
+              spacing=0.6)
 
-# poly.1a Minimum width of poly
-# poly.2 Minimum spacing of poly AND active
+drc.add_layer("pwell",
+              width=0.74, # 0.6 for 1.5v
+              spacing=0.86) # equal potential 1.7 otherwise
+
 drc.add_layer("poly",
-              width=0.150,
-              spacing=0.210)
+              width=0.18,
+              spacing=0.24)
 # poly.8
-drc["poly_extend_active"] = 0.13
+#drc["poly_extend_active"] = 0.13
 # Not a rule
-drc["poly_to_contact"] = 0
+#drc["poly_to_contact"] = 0
 # poly.7 Minimum enclosure of active around gate
-drc["active_enclose_gate"] = 0.075
+#drc["active_enclose_gate"] = 0.075
 # poly.4 Minimum spacing of field poly to active
-drc["poly_to_active"] = 0.075
+#drc["poly_to_active"] = 0.075
 # poly.2 Minimum spacing of field poly
-drc["poly_to_field_poly"] = 0.210
+#drc["poly_to_field_poly"] = 0.210
 
-# difftap.1 Minimum width of active
-# difftap.3 Minimum spacing of active
 drc.add_layer("active",
-              width=0.150,
-              spacing=0.270)
-# difftap.8
+              width=0.22,
+              spacing=0.280)
+
+drc.add_enclosure("dnwell",
+                layer="pwell",
+                enclosure=2.5,
+                extension=2.5)
+
 drc.add_enclosure("nwell",
                   layer="active",
-                  enclosure=0.18,
-                  extension=0.18)
+                  enclosure=0.43,
+                  extension=0.6)
 
-# nsd/psd.5a
-drc.add_enclosure("implant",
+drc.add_enclosure("pwell",
                   layer="active",
-                  enclosure=0.125)
+                  enclosure=0.43,
+                  extension=0.6)
+# nsd/psd.5a
+#drc.add_enclosure("implant",
+#                  layer="active",
+#                  enclosure=0.125)
 
 # Same as active enclosure?
-drc["implant_to_contact"] = 0.070
+#drc["implant_to_contact"] = 0.070
 # nsd/psd.1 nsd/psd.2
-drc.add_layer("implant",
-              width=0.380,
-              spacing=0.380,
-              area=0.265)
+#drc.add_layer("implant",
+#              width=0.380,
+#              spacing=0.380,
+#              area=0.265)
 
 # licon.1, licon.2
-drc.add_layer("contact",
-              width=0.170,
-              spacing=0.170)
+#drc.add_layer("contact",
+#              width=0.170,
+#              spacing=0.170)
 # licon.5c (0.06 extension), (licon.7 for extension)
-drc.add_enclosure("active",
-                  layer="contact",
-                  enclosure=0.040,
-                  extension=0.060)
+#drc.add_enclosure("active",
+#                  layer="contact",
+#                  enclosure=0.040,
+#                  extension=0.060)
 # licon.7
-drc["tap_extend_contact"] = 0.120
+#drc["tap_extend_contact"] = 0.120
 
 # licon.8 Minimum enclosure of poly around contact
-drc.add_enclosure("poly",
-                  layer="contact",
-                  enclosure=0.08,
-                  extension=0.08)
+#drc.add_enclosure("poly",
+#                  layer="contact",
+#                  enclosure=0.08,
+#                  extension=0.08)
 # licon.11a
-drc["active_contact_to_gate"] = 0.050
+#drc["active_contact_to_gate"] = 0.050
 # npc.4 > licon.14 0.19 > licon.11a
-drc["poly_contact_to_gate"] = 0.270
+#drc["poly_contact_to_gate"] = 0.270
 # licon.15
-drc["npc_enclose_poly"] = 0.1
+#drc["npc_enclose_poly"] = 0.1
 
 # li.1, li.3
-drc.add_layer("li",
-              width=0.170,
-              spacing=0.170)
+#drc.add_layer("li",
+#              width=0.170,
+#              spacing=0.170)
 
 # licon.5
-drc.add_enclosure("li",
-                  layer="contact",
-                  enclosure=0,
-                  extension=0.080)
+#drc.add_enclosure("li",
+#                  layer="contact",
+#                  enclosure=0,
+#                  extension=0.080)
 
-drc.add_enclosure("li",
-                  layer="mcon",
-                  enclosure=0,
-                  extension=0.080)
+#drc.add_enclosure("li",
+#                  layer="mcon",
+#                  enclosure=0,
+#                  extension=0.080)
 # mcon.1, mcon.2
-drc.add_layer("mcon",
-              width=0.170,
-              spacing=0.210)
+#drc.add_layer("mcon",
+#              width=0.170,
+#              spacing=0.210)
 
-# m1.1 Minimum width of metal1
-# m1.2 Minimum spacing of metal1
-# m1.6 Minimum area of metal1
 drc.add_layer("m1",
-              width=0.140,
-              spacing=0.140,
-              area=0.083)
+              width=0.23,
+              spacing=0.23,
+              area=0.1444)
 # m1.4 Minimum enclosure of metal1
 # m1.5 Minimum enclosure around contact on two opposite sides
-drc.add_enclosure("m1",
-                  layer="mcon",
-                  enclosure=0.030,
-                  extension=0.060)
+#drc.add_enclosure("m1",
+#                  layer="mcon",
+#                  enclosure=0.030,
+#                  extension=0.060)
 # via.4a Minimum enclosure around via1
 # via.5a Minimum enclosure around via1 on two opposite sides
-drc.add_enclosure("m1",
-                  layer="via1",
-                  enclosure=0.055,
-                  extension=0.085)
+#drc.add_enclosure("m1",
+#                  layer="via1",
+#                  enclosure=0.055,
+#                  extension=0.085)
 
 # via.1a Minimum width of via1
 # via.2 Minimum spacing of via1
-drc.add_layer("via1",
-              width=0.150,
-              spacing=0.170)
+#drc.add_layer("via1",
+#              width=0.150,
+#              spacing=0.170)
 
-# m2.1 Minimum width of intermediate metal
-# m2.2 Minimum spacing of intermediate metal
-# m2.6 Minimum area of metal2
 drc.add_layer("m2",
-              width=0.140,
-              spacing=0.140,
-              area=0.0676)
+              width=0.28,
+              spacing=0.28,
+              area=0.1444)
 # m2.4 Minimum enclosure around via1
 # m2.5 Minimum enclosure around via1 on two opposite sides
-drc.add_enclosure("m2",
-                  layer="via1",
-                  enclosure=0.055,
-                  extension=0.085)
+#drc.add_enclosure("m2",
+#                  layer="via1",
+#                  enclosure=0.055,
+#                  extension=0.085)
 # via2.4 Minimum enclosure around via2
 # via2.5 Minimum enclosure around via2 on two opposite sides
-drc.add_enclosure("m2",
-                  layer="via2",
-                  enclosure=0.040,
-                  extension=0.085)
+#drc.add_enclosure("m2",
+#                  layer="via2",
+#                  enclosure=0.040,
+#                  extension=0.085)
 
 # via2.1a Minimum width of Via2
 # via2.2  Minimum spacing of Via2
-drc.add_layer("via2",
-              width=0.200,
-              spacing=0.200)
+#drc.add_layer("via2",
+#              width=0.200,
+#              spacing=0.200)
 
-# m3.1 Minimum width of metal3
-# m3.2 Minimum spacing of metal3
-# m3.6 Minimum area of metal3
 drc.add_layer("m3",
-              width=0.300,
-              spacing=0.300,
-              area=0.240)
+              width=0.28,
+              spacing=0.28,
+              area=0.1444)
 # m3.4 Minimum enclosure around via2
-drc.add_enclosure("m3",
-                  layer="via2",
-                  enclosure=0.065)
+#drc.add_enclosure("m3",
+#                  layer="via2",
+#                  enclosure=0.065)
 # via3.4 Minimum enclosure around via3
 # via3.5 Minimum enclosure around via3 on two opposite sides
-drc.add_enclosure("m3",
-                  layer="via3",
-                  enclosure=0.060,
-                  extension=0.090)
+#drc.add_enclosure("m3",
+#                  layer="via3",
+#                  enclosure=0.060,
+#                  extension=0.090)
 
 # via3.1 Minimum width of Via3
 # via3.2 Minimum spacing of Via3
-drc.add_layer("via3",
-              width=0.200,
-              spacing=0.200)
+#drc.add_layer("via3",
+#              width=0.200,
+#              spacing=0.200)
 
-# m4.1 Minimum width of metal4
-# m4.2 Minimum spacing of metal4
-# m4.7 Minimum area of metal4
 drc.add_layer("m4",
-              width=0.300,
-              spacing=0.300,
-              area=0.240)
+              width=0.28,
+              spacing=0.28,
+              area=0.1444)
 # m4.3 Minimum enclosure around via3
-drc.add_enclosure("m4",
-                  layer="via3",
-                  enclosure=0.065)
-# FIXME: Wrong rule m4.3 Minimum enclosure around via3
-drc.add_enclosure("m4",
-                  layer="via4",
-                  enclosure=0.060)
+#drc.add_enclosure("m4",
+#                  layer="via3",
+#                  enclosure=0.065)
+
+#drc.add_enclosure("m4",
+#                  layer="via4",
+#                  enclosure=0.060)
 
 
 # via4.1 Minimum width of Via4
 # via4.2 Minimum spacing of Via4
-drc.add_layer("via4",
-              width=0.800,
-              spacing=0.800)
+#drc.add_layer("via4",
+#              width=0.800,
+#              spacing=0.800)
 
-# FIXME: Wrong rules
 # m5.1 Minimum width of metal5
 # m5.2 Minimum spacing of metal5
 # m5.7 Minimum area of metal5
-drc.add_layer("m5",
-              width=1.600,
-              spacing=1.600,
-              area=4.000)
+#drc.add_layer("m5",
+#              width=1.600,
+#              spacing=1.600,
+#              area=4.000)
 # m5.3 Minimum enclosure around via4
-drc.add_enclosure("m5",
-                  layer="via4",
-                  enclosure=0.310)
+#drc.add_enclosure("m5",
+#                  layer="via4",
+#                  enclosure=0.310)
 
 
 
@@ -439,16 +433,16 @@ parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of d
 # Technology Tool Preferences
 ###################################################
 
-if use_calibre:
-    drc_name = "calibre"
-    lvs_name = "calibre"
-    pex_name = "calibre"
-elif use_klayout:
-    drc_name = "klayout"
-    lvs_name = "klayout"
-    pex_name = "klayout"
-else:
-    drc_name = "magic"
-    lvs_name = "netgen"
-    pex_name = "magic"
+#if use_calibre:
+#    drc_name = "calibre"
+#    lvs_name = "calibre"
+#    pex_name = "calibre"
+#if use_klayout:
+#    drc_name = "klayout"
+#    lvs_name = "klayout"
+#    pex_name = "klayout"
+#else:
+drc_name = "magic"
+lvs_name = "netgen"
+pex_name = "magic"
 

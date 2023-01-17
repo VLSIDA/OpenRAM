@@ -182,14 +182,14 @@ drc.add_layer("pwell",
 drc.add_layer("poly",
               width=0.18,
               spacing=0.24)
-# poly.8
-#drc["poly_extend_active"] = 0.13
-# Not a rule
-#drc["poly_to_contact"] = 0
+
+drc["poly_extend_active"] = 0.22
+
+drc["poly_to_contact"] = 0
 # poly.7 Minimum enclosure of active around gate
 #drc["active_enclose_gate"] = 0.075
-# poly.4 Minimum spacing of field poly to active
-#drc["poly_to_active"] = 0.075
+
+drc["poly_to_active"] = 0.1
 # poly.2 Minimum spacing of field poly
 #drc["poly_to_field_poly"] = 0.210
 
@@ -224,10 +224,9 @@ drc.add_enclosure("pwell",
 #              spacing=0.380,
 #              area=0.265)
 
-# licon.1, licon.2
-#drc.add_layer("contact",
-#              width=0.170,
-#              spacing=0.170)
+drc.add_layer("contact",
+              width=0.22,
+              spacing=0.25)
 # licon.5c (0.06 extension), (licon.7 for extension)
 #drc.add_enclosure("active",
 #                  layer="contact",

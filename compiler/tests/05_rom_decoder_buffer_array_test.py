@@ -16,16 +16,16 @@ from openram.sram_factory import factory
 from openram import debug
 
 
-class rom_decoder_test(openram_test):
+class rom_decoder_buffer_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(2, "Testing 2x4 decoder for rom cell")
+        debug.info(2, "Testing 4 col decoder buffer for rom decoder")
 
 
-        a = factory.create(module_type="rom_decoder", num_outputs=20, strap_spacing=2, cols=16)
+        a = factory.create(module_type="rom_address_control_array", cols=4)
         self.local_check(a)
         openram.end_openram()
 

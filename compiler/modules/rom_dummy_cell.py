@@ -41,54 +41,7 @@ class rom_dummy_cell(design):
         self.add_metal()
         #self.add_label("0,0", self.route_layer)
 
-
     
-
-
-    # Calculates offsets of cell width and height so that tiling of cells does not violate any drc rules
-    def setup_drc_offsets(self):
-    
-        #nmos contact to gate distance
-        self.contact_to_gate = 0.5 * (self.nmos.width - 2 * self.nmos.contact_width - self.nmos.poly_width - 2 * self.active_enclose_contact) 
-
-        #height offset to account for active-to-active spacing between adjacent bitlines
-        self.poly_extend_active_spacing = abs( 2 * self.nmos.poly_extend_active - drc("active_to_active") )
-
-        #contact to contact distance, minimum cell width before drc offsets 
-        self.base_width = self.nmos.width - 2 * self.active_enclose_contact - self.nmos.contact_width
-
-        #width offset to account for active-to-active spacing between cells on the same bitline
-        #this is calculated as a negative value
-        self.cell_diffusion_offset = ((self.base_width - 2 * self.active_enclose_contact - self.nmos.contact_width) - drc("active_to_active")) * 0.5
-
-        # width offset to account for poly-active spacing between base and dummy cells on the same bitline
-        self.poly_active_offset = 0.5 * (self.base_width - 2 * self.cell_diffusion_offset - (self.poly_width + 2 * self.active_enclose_contact + self.nmos.contact_width)) - self.poly_to_active
-
-        #so that the poly taps are far enough apart 
-        self.poly_tap_offset = (self.base_width - self.cell_diffusion_offset - self.poly_contact.width - self.poly_active_offset) - drc("poly_to_poly")
- 
-
-    def add_boundary(self):
-
-        width = self.nmos.width + self.active_space
-
-        #cell width with offsets applied, height becomes width when the cells are rotated 
-        # width = self.nmos.height + self.poly_extend_active_spacing + 2 * self.nmos.poly_extend_active
-        # cell height with offsets applied, width becomes height when the cells are rotated, if the offsets are positive (greater than 0) they are not applied
-        height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
-        
-        # make the cells square so the pitch of wordlines will match bitlines
-        print("height: {0} width: {1}".format(height, width))
-        if width > height:
-            self.width = width
-            self.height = width
-        else:
-            self.width = height
-            self.height = height
-        
-        super().add_boundary()
-
-        
 
     def add_poly(self):
 
@@ -129,22 +82,6 @@ class rom_dummy_cell(design):
         self.add_layout_pin_rect_center("D", self.route_layer, drain_pos)
         
             
-    def add_nmos(self):
-        #used only for layout constants
-        # if not self.source_contact:
-        #     add_source = False
-        # else:
-        #     add_source = self.route_layer
 
-        # if not self.drain_contact:
-        #     add_drain = False
-        # else:
-        #     add_drain = self.route_layer
-        self.nmos  = factory.create(module_type="ptx",
-                                    module_name="nmos_rom_mod",
-                                    tx_type="nmos",
-                                    add_source_contact=self.add_source_contact,
-                                    add_drain_contact=self.add_drain_contact
-                                    )
         
     

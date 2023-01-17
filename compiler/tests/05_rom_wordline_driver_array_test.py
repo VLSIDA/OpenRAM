@@ -1,33 +1,34 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
 import openram
-from openram import OPTS
-from openram.sram_factory import factory
 from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
 
 
-class rom_decoder_test(openram_test):
+class wordline_driver_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(2, "Testing 2x4 decoder for rom cell")
+        # check wordline driver for single port
+        debug.info(2, "Checking driver")
+        tx = factory.create(module_type="rom_wordline_driver_array", rows=8, cols=32)
+        self.local_check(tx)
 
-
-        a = factory.create(module_type="rom_decoder", num_outputs=20, strap_spacing=2, cols=16)
-        self.local_check(a)
         openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":

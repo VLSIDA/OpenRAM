@@ -696,13 +696,15 @@ class layout():
                                         start=left_pos,
                                         end=right_pos)
 
-    def connect_row_pins(self, layer, pins, name=None, full=False):
+    def connect_row_pins(self, layer, pins, name=None, full=False, round=False):
         """
         Connects left/right rows that are aligned.
         """
         bins = {}
         for pin in pins:
                 y = pin.cy()
+                if round: 
+                    y = round_to_grid(y)
                 try:
                     bins[y].append(pin)
                 except KeyError:

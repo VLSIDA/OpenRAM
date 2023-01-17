@@ -15,6 +15,11 @@ class rom_control_logic(design):
         self.output_size = num_outputs
         self.mod_height = height
 
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
+
         # dff = factory.create(module_type="dff")
         
         # if height == None:
@@ -43,11 +48,11 @@ class rom_control_logic(design):
 
         self.inv_mod = factory.create(module_type="pinv", module_name="rom_control_logic_pinv", height=self.mod_height)
         self.nand_mod = factory.create(module_type="pnand2", module_name="rom_control_nand", height=self.mod_height)
-        self.driver_mod = factory.create(module_type="pdriver", inverting=True, fanout=self.output_size, height=self.mod_height, add_wells=False)
+        self.driver_mod = factory.create(module_type="pdriver", inverting=True, fanout=self.output_size, height=self.mod_height, add_wells=True)
         
         
     def add_pins(self):
-        self.add_pin("READ", "INPUT")
+        self.add_pin("clk", "INPUT")
         self.add_pin("CS", "INPUT")
         self.add_pin("prechrg", "OUTPUT")
         self.add_pin("vdd", "POWER")
@@ -56,10 +61,10 @@ class rom_control_logic(design):
     def create_instances(self):
         
         self.inv_inst = self.add_inst(name="read_signal_inv", mod=self.inv_mod)
-        self.connect_inst(["READ", "READ_BAR", "vdd", "gnd"])
+        self.connect_inst(["clk", "clk_bar", "vdd", "gnd"])
 
         self.nand_inst = self.add_inst(name="control_nand", mod=self.nand_mod)
-        self.connect_inst(["CS", "READ_BAR", "pre_drive", "vdd", "gnd"])
+        self.connect_inst(["CS", "clk_bar", "pre_drive", "vdd", "gnd"])
 
         self.driver_inst = self.add_inst(name="driver_inst", mod=self.driver_mod)
         self.connect_inst(["pre_drive", "prechrg", "vdd", "gnd"])
@@ -75,7 +80,7 @@ class rom_control_logic(design):
         self.copy_layout_pin(self.driver_inst, "Z", "prechrg")
         self.copy_layout_pin(self.nand_inst, "B", "CS")
 
-        self.add_path("li", [self.inv_inst.get_pin("Z").center(), self.nand_inst.get_pin("A").center()])
+        self.add_path(self.route_layer, [self.inv_inst.get_pin("Z").center(), self.nand_inst.get_pin("A").center()])
 
-        self.add_path("li", [self.nand_inst.get_pin("Z").center(), self.driver_inst.get_pin("A").center()])
+        self.add_path(self.route_layer, [self.nand_inst.get_pin("Z").center(), self.driver_inst.get_pin("A").center()])
          

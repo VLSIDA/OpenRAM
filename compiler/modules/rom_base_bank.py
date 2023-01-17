@@ -4,21 +4,32 @@ from openram.base import vector
 from openram.base import design
 from openram import OPTS
 from openram.sram_factory import factory
-from openram.tech import drc
+from openram.tech import drc, layer
 
 class rom_base_bank(design):
 
+    """
+    Rom data bank with row and column decoder + control logic
+
+    word size is in bytes
+    """
+
     def __init__(self, strap_spacing=0, data_file=None, name="", word_size=2) -> None:
 
-        # self.cols = word_size * 8
+        self.word_size = word_size * 8
         self.read_binary(word_size=word_size, data_file=data_file)
 
         self.num_outputs = self.rows
         self.num_inputs = ceil(log(self.rows, 2))
+        self.col_bits = ceil(log(self.words_per_row, 2))
+        self.row_bits = self.num_inputs
         
         # self.data = [[0, 1, 0, 1], [1, 1, 1, 1], [1, 1, 0, 0], [0, 0, 1, 0]]
         self.strap_spacing = strap_spacing
-        self.route_layer = "li"
+        if "li" in layer:
+            self.route_layer = "li"
+        else:
+            self.route_layer = "m1"
         self.bus_layer = "m2"
         self.interconnect_layer = "m1"
 
@@ -78,7 +89,7 @@ class rom_base_bank(design):
         self.route_decode_outputs()
         self.route_control()
 
-        self.route_supplies()
+        # self.route_supplies()
         self.height = self.array_inst.height
         self.width = self.array_inst.width
         self.add_boundary()
@@ -102,7 +113,7 @@ class rom_base_bank(design):
 
 
         out_pins = []
-        for j in range(self.num_outputs):
+        for j in range(self.rows):
             out_pins.append("rom_out_{}".format(j))
         self.add_pin_list(out_pins, "OUTPUT")
 
@@ -112,11 +123,16 @@ class rom_base_bank(design):
 
     def add_modules(self):
         self.array = factory.create(module_type="rom_base_array", cols=self.cols, rows=self.rows, strap_spacing=self.strap_spacing, bitmap=self.data, route_layer=self.route_layer, pitch_match=True) 
-        self.decode_array = factory.create(module_type="rom_decoder", num_outputs=self.rows, strap_spacing=self.strap_spacing, route_layer=self.route_layer)
-        self.control_logic = factory.create(module_type="rom_control_logic", num_outputs=(self.rows + self.cols) / 2, height=self.decode_array.inv_inst.height)
+        self.decode_array = factory.create(module_name="rom_row_decode", module_type="rom_decoder", num_outputs=self.rows, strap_spacing=self.strap_spacing, route_layer=self.route_layer, cols=self.cols)
+        self.control_logic = factory.create(module_type="rom_control_logic", num_outputs=(self.rows + self.cols) / 2, height=self.decode_array.buf_inst.height)
+        self.column_mux = factory.create(module_type="rom_column_mux_array", columns=self.cols, word_size=self.word_size, bitline_layer=self.route_layer)
         
+        self.column_decode = factory.create(module_name="rom_column_decode", module_type="rom_decoder", num_outputs=self.words_per_row, strap_spacing=self.strap_spacing, route_layer=self.route_layer, cols=1)
 
     def create_instances(self):
+        gnd = ["gnd"]
+        vdd = ["vdd"]
+        prechrg = ["precharge"]
         array_pins = []
         decode_pins = []
 
@@ -132,8 +148,8 @@ class rom_base_bank(design):
         array_pins.append("gnd")
 
 
-        for addr in range(self.num_inputs):
-            name = "addr_{}".format(addr)
+        for addr in range(self.row_bits):
+            name = "row_addr_{}".format(addr)
             decode_pins.append(name)
         for wl in range(self.rows):
             name = "wl_{}".format(wl)
@@ -144,31 +160,67 @@ class rom_base_bank(design):
         decode_pins.append("gnd")
 
 
+        bitlines = ["bl_{}".format(bl) for bl in range(self.cols)]
+        select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
+        bitline_out = ["rom_out_{}".format(bl) for bl in range(self.word_size)]
+        addr_lsb = ["col_addr_{}".format(addr) for addr in range(self.col_bits)]
+        col_mux_pins = bitlines + select_lines + bitline_out + gnd
+
+        col_decode_pins = addr_lsb + select_lines + prechrg + vdd + gnd
         self.array_inst = self.add_inst(name="rom_bit_array", mod=self.array)
         self.connect_inst(array_pins)
 
-        self.decode_inst = self.add_inst(name="rom_decoder", mod=self.decode_array)
+        self.decode_inst = self.add_inst(name="rom_row_decoder", mod=self.decode_array)
         self.connect_inst(decode_pins)
 
         self.control_inst = self.add_inst(name="rom_control", mod=self.control_logic)
         self.connect_inst(["READ", "CS", "precharge", "vdd", "gnd"])
 
+        self.mux_inst = self.add_inst(name="rom_column_mux", mod=self.column_mux)
+        self.connect_inst(col_mux_pins)
+
+        self.col_decode_inst = self.add_inst(name="rom_column_decoder", mod=self.column_decode)
+        self.connect_inst(col_decode_pins)
+
 
         
     def place_instances(self):
-                
+        self.place_row_decoder()
+        self.place_data_array()
+        self.place_control_logic()
+        self.place_col_decoder()
+        self.place_col_mux()
+
+
+    def place_row_decoder(self):
+        self.decode_offset = vector(0, self.control_inst.height)
+        self.decode_inst.place(offset=self.decode_offset)
+    
+    def place_data_array(self):
+        # We approximate the correct position for the array
         array_x = self.decode_inst.width + (2) * ( self.route_layer_width + self.route_layer_pitch ) 
-        array_y = self.decode_array.inv_inst.height - self.array.precharge_inst.cy() - self.array.dummy.height * 0.5
+        array_y = self.decode_array.buf_inst.height - self.array.precharge_inst.cy() - self.array.zero_cell.height * 0.5
         self.array_offset = vector(array_x ,array_y)
-        self.decode_offset = vector(0, 0)
-
-        self.control_offset = vector(0,0)
-
         self.array_inst.place(offset=self.array_offset)
 
-        self.decode_inst.place(offset=self.decode_offset)
+        # now move array to correct alignment with decoder
+        array_align = self.decode_inst.get_pin("wl_0").cy() - self.array_inst.get_pin("wl_0_0").cy()
+        self.array_inst.place(offset=(self.array_offset + vector(0, array_align)))
+    
+    def place_control_logic(self):
+        self.control_offset = vector(0,0)
+        self.control_inst.place(offset=self.control_offset)
 
-        self.control_inst.place(offset=self.control_offset, mirror="MX")
+    def place_col_decoder(self):
+        self.col_decode_offset = vector(self.control_logic.width * 1.3, 0)
+        self.col_decode_inst.place(offset=self.col_decode_offset)
+
+    def place_col_mux(self):
+
+        self.mux_offset = vector(self.decode_inst.width, 0)
+        self.mux_inst.place(offset=self.mux_offset)
+        
+        
 
     def create_wl_bus(self):
         bus_x = self.decode_inst.width + ( drc["minwidth_{}".format(self.bus_layer)] + 1.5 * drc["{0}_to_{0}".format(self.bus_layer)] )
@@ -182,21 +234,26 @@ class rom_base_bank(design):
 
     def route_decode_outputs(self):
 
-        for wl in range(self.rows):
-            decode_output = self.decode_array.output_names[wl]
-            decode_out_pin = self.decode_inst.get_pin(decode_output)
+        route_pins = [self.array_inst.get_pin("wl_0_{}".format(wl)) for wl in range(self.rows)]
+        decode_pins = [self.decode_inst.get_pin("wl_{}".format(wl)) for wl in range(self.rows)]
+        route_pins.extend(decode_pins)
+        self.connect_row_pins(self.interconnect_layer, route_pins, round=True)
 
-            array_wl = self.array.wordline_names[0][wl]
-            array_wl_pin = self.array_inst.get_pin(array_wl)
+        # for wl in range(self.rows):
+        #     decode_output = self.decode_array.output_names[wl]
+        #     decode_out_pin = self.decode_inst.get_pin(decode_output)
+
+        #     array_wl = self.array.wordline_names[0][wl]
+        #     array_wl_pin = self.array_inst.get_pin(array_wl)
 
 
-            # wl_bus_wire = self.wl_bus[self.wl_interconnects[wl]]
+        #     # wl_bus_wire = self.wl_bus[self.wl_interconnects[wl]]
 
-            start = decode_out_pin.center()
-            end = vector(array_wl_pin.cx(), start.y)
+        #     start = decode_out_pin.center()
+        #     end = vector(array_wl_pin.cx(), start.y)
 
-            self.add_segment_center(self.bus_layer, start, end)
-            self.add_via_stack_center(array_wl_pin.center(), self.bus_layer, self.interconnect_layer )
+        #     self.add_segment_center(self.bus_layer, start, end)
+        #     self.add_via_stack_center(array_wl_pin.center(), self.bus_layer, self.interconnect_layer )
 
 
     def route_array_inputs(self):

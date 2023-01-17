@@ -10,10 +10,11 @@ from openram.base import design
 from openram.base import vector
 from openram import OPTS
 from openram.sram_factory import factory
+from openram.tech import drc
 
 class rom_poly_tap(design):
 
-    def __init__(self, name="", strap_length=0, cell_name=None, prop=None, tx_type="nmos", strap_layer="m1"):
+    def __init__(self, name="", strap_length=0, cell_name=None, prop=None, tx_type="nmos", strap_layer="m2"):
         super().__init__(name, cell_name, prop)
         self.strap_layer=strap_layer
         self.length = strap_length
@@ -23,7 +24,7 @@ class rom_poly_tap(design):
 
     def create_netlist(self):
         #for layout constants
-        self.dummy = factory.create(module_type="rom_dummy_cell")
+        self.dummy = factory.create(module_type="rom_base_cell")
         self.pmos = factory.create(module_type="ptx", tx_type="pmos")
 
     def create_layout(self):
@@ -31,20 +32,19 @@ class rom_poly_tap(design):
         self.place_via()
         # if self.tx_type == "pmos":
         self.extend_poly()
+        self.place_ptap()
         self.add_boundary()
-        if self.length != 0:
-            self.place_strap()
+        # if self.length != 0:
+        #     self.place_strap()
 
     
     def add_boundary(self):
         contact_width = self.poly_contact.width + 2 * self.contact_x_offset 
 
         offset = self.active_space - (contact_width - self.active_enclose_contact - self.active_extend_contact)
-        print("THINGY {}".format(offset))
         self.height = self.dummy.height
         self.width = contact_width + self.pitch_offset
 
-        print("poly height: {0}, width: {1}".format(self.height, self.width))
         super().add_boundary()
 
     def place_via(self):
@@ -61,7 +61,7 @@ class rom_poly_tap(design):
 
         if self.tx_type == "nmos":
             
-            contact_y = self.dummy.poly.cy()
+            contact_y = self.dummy.cell_inst.width * 0.5 - 0.5 * self.contact_width - self.active_enclose_contact
             # contact_y = self.dummy.poly.offset.x + (self.poly_width * 0.5)
             # self.contact_x_offset = 0
         else:
@@ -75,8 +75,6 @@ class rom_poly_tap(design):
                                   to_layer=self.strap_layer,
                                   offset=self.contact_offset)
         self.add_layout_pin_rect_center("via", self.strap_layer, self.contact_offset)
-
-
 
 
     def place_strap(self):
@@ -105,4 +103,15 @@ class rom_poly_tap(design):
 
         self.add_rect("poly", extend_offset, self.contact_x_offset , self.poly_width)
         
+    def place_ptap(self):
+        tap_y = self.via.uy() + drc["{0}_to_{0}".format(self.strap_layer)] * 2
+
+        contact_pos = vector(self.via.cx(), tap_y)
+        self.add_via_center(layers=self.active_stack,
+                            offset=contact_pos,
+                            implant_type="p",
+                            well_type="p")
+        self.add_power_pin(name="gnd", 
+                           loc=contact_pos,
+                           start_layer=self.active_stack[2])
 

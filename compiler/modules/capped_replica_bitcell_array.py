@@ -14,7 +14,7 @@ from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
 
 
-class capped_bitcell_array(bitcell_base_array):
+class capped_replica_bitcell_array(bitcell_base_array):
     """
     Creates a replica bitcell array then adds the row and column caps to all
     sides of a bitcell array.

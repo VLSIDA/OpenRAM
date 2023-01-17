@@ -14,7 +14,7 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class capped_bitcell_array_1rw_1r_test(openram_test):
+class capped_replica_bitcell_array_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -26,7 +26,7 @@ class capped_bitcell_array_1rw_1r_test(openram_test):
         openram.setup_bitcell()
 
         debug.info(2, "Testing 4x4 array left and right replica for dp cell")
-        a = factory.create(module_type="capped_bitcell_array",
+        a = factory.create(module_type="capped_replica_bitcell_array",
                            cols=4,
                            rows=4,
                            rbl=[1, 1],

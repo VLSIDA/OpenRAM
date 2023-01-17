@@ -168,10 +168,11 @@ class capped_bitcell_array(bitcell_base_array):
         self.used_wordline_names = self.replica_bitcell_array.used_wordline_names
         self.unused_wordline_names = self.replica_bitcell_array.unused_wordline_names
         self.replica_array_wordline_names = self.replica_bitcell_array.all_wordline_names
+        self.replica_array_wordline_names_with_grounded_wls = ["gnd" if x in self.unused_wordline_names else x for x in self.replica_array_wordline_names]
 
         self.all_wordline_names = []
         self.all_wordline_names.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
-        self.all_wordline_names.extend(self.replica_array_wordline_names)
+        self.all_wordline_names.extend(self.replica_array_wordline_names_with_grounded_wls)
         self.all_wordline_names.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
 
         self.add_pin_list(self.used_wordline_names, "INPUT")
@@ -183,7 +184,7 @@ class capped_bitcell_array(bitcell_base_array):
         # Main array
         self.replica_bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                                       mod=self.replica_bitcell_array)
-        self.connect_inst(self.replica_array_bitline_names + ["gnd" if x in self.unused_wordline_names else x for x in self.replica_array_wordline_names] + self.supplies)
+        self.connect_inst(self.replica_array_bitline_names + self.replica_array_wordline_names_with_grounded_wls + self.supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
@@ -226,8 +227,8 @@ class capped_bitcell_array(bitcell_base_array):
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
-        array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
-        self.translate_all(array_offset.scale(-1, -1))
+        self.array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
+        self.translate_all(self.array_offset.scale(-1, -1))
 
         # Add extra width on the left and right for the unused WLs
 
@@ -387,8 +388,8 @@ class capped_bitcell_array(bitcell_base_array):
             for (wl_name, pin_name) in zip(names, self.replica_bitcell_array.dummy_row.get_wordline_names()):
                 if wl_name in self.unused_wordline_names:
                     pin = inst.get_pin(pin_name)
-                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
+                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x, self.array_offset)
+                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x, self.array_offset)
 
     def route_side_pin(self, name, side, offset_multiple=1):
         """
@@ -458,23 +459,23 @@ class capped_bitcell_array(bitcell_base_array):
 
         return (left_loc, right_loc)
 
-    def connect_side_pin(self, pin, side, offset):
+    def connect_side_pin(self, pin, side, offset, inst_offset=vector(0, 0)):
         """
         Used to connect horizontal layers of pins to the left/right straps
         locs provides the offsets of the pin strip end points.
         """
         if side in ["left", "right"]:
-            self.connect_vertical_side_pin(pin, side, offset)
+            self.connect_vertical_side_pin(pin, side, offset, inst_offset)
         elif side in ["top", "bottom", "bot"]:
-            self.connect_horizontal_side_pin(pin, side, offset)
+            self.connect_horizontal_side_pin(pin, side, offset, inst_offset)
         else:
             debug.error("Invalid side {}".format(side), -1)
 
-    def connect_horizontal_side_pin(self, pin, side, yoffset):
+    def connect_horizontal_side_pin(self, pin, side, yoffset, inst_offset=vector(0, 0)):
         """
         Used to connect vertical layers of pins to the top/bottom horizontal straps
         """
-        cell_loc = pin.center()
+        cell_loc = pin.center() + inst_offset
         pin_loc = vector(cell_loc.x, yoffset)
 
         # Place the pins a track outside of the array
@@ -487,11 +488,11 @@ class capped_bitcell_array(bitcell_base_array):
         self.add_path(pin.layer, [cell_loc, pin_loc])
 
 
-    def connect_vertical_side_pin(self, pin, side, xoffset):
+    def connect_vertical_side_pin(self, pin, side, xoffset, inst_offset=vector(0, 0)):
         """
         Used to connect vertical layers of pins to the top/bottom vertical straps
         """
-        cell_loc = pin.center()
+        cell_loc = pin.center() + inst_offset
         pin_loc = vector(xoffset, cell_loc.y)
 
         # Place the pins a track outside of the array

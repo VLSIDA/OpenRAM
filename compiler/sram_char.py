@@ -16,34 +16,43 @@ an analytical model or spice simulation is used for characterization.
 import sys
 import datetime
 from globals import *
-from importlib import reload
 try:
     import openram
 except:
-    sys.path.append(os.getenv("OPENRAM_HOME"))
+    # If openram library isn't found as a python package,
+    # import it from the $OPENRAM_HOME path.
+    import importlib.util
+    OPENRAM_HOME = os.getenv("OPENRAM_HOME")
+    # Import using spec since the directory can be named something
+    # other than "openram".
+    spec = importlib.util.spec_from_file_location("openram", "{}/../__init__.py".format(OPENRAM_HOME))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["openram"] = module
+    spec.loader.exec_module(module)
+    import openram
 
-(OPTS, args) = parse_args()
+(OPTS, args) = openram.parse_args()
 
 # Override the usage
-USAGE = "Usage: {} [options] <config file>\nUse -h for help.\n".format(__file__)
+USAGE = "Usage: {} [options] <config file> <spice netlist> <html report>\nUse -h for help.\n".format(__file__)
 
 # Check that we are left with a single configuration file as argument.
-if len(args) != 2:
+if len(args) != 3:
     print(USAGE)
     sys.exit(2)
 
 OPTS.top_process = 'memchar'
 
 # These depend on arguments, so don't load them until now.
-import debug
+from openram import debug
 
 # Parse config file and set up all the options
-init_openram(config_file=args[0], is_unit_test=False)
+openram.init_openram(config_file=args[0], is_unit_test=False)
 
-print_banner()
+openram.print_banner()
 
 # Configure the SRAM organization (duplicated from openram.py)
-from characterizer.fake_sram import fake_sram
+from openram.characterizer import fake_sram
 s = fake_sram(name=OPTS.output_name,
               word_size=OPTS.word_size,
               num_words=OPTS.num_words,
@@ -53,7 +62,11 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_rows=OPTS.num_spare_rows,
               num_spare_cols=OPTS.num_spare_cols)
 
-s.parse_html(args[1])
+debug.check(os.path.exists(args[1], "Spice netlist file {} not found.".format(args[1])))
+debug.check(os.path.exists(args[2], "HTML report file {} not found.".format(args[2])))
+sp_file = args[1]
+html_file = args[2]
+s.parse_html(html_file)
 s.generate_pins()
 s.setup_multiport_constants()
 
@@ -65,9 +78,9 @@ OPTS.trim_netlist = False
 
 # Characterize the design
 start_time = datetime.datetime.now()
-from characterizer import lib
+from openram.characterizer import lib
 debug.print_raw("LIB: Characterizing... ")
-lib(out_dir=OPTS.output_path, sram=s, sp_file=OPTS.output_path + OPTS.output_name + ".sp", use_model=False)
+lib(out_dir=OPTS.output_path, sram=s, sp_file=sp_file, use_model=False)
 print_time("Characterization", datetime.datetime.now(), start_time)
 
 # Output info about this run
@@ -75,4 +88,4 @@ print("Output files are:\n{0}*.lib".format(OPTS.output_path))
 #report_status() #could modify this function to provide relevant info
 
 # Delete temp files, remove the dir, etc.
-end_openram()
+openram.end_openram()

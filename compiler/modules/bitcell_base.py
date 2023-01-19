@@ -1,16 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-import debug
-from base import design
-from globals import OPTS
-from base import logical_effort
-from tech import parameter, drc, layer, spice
+from openram import debug
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import parameter, drc, layer, spice
+from openram import OPTS
 
 
 class bitcell_base(design):
@@ -46,7 +45,7 @@ class bitcell_base(design):
 
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
-        from tech import spice
+        from openram.tech import spice
         leakage = spice["bitcell_leakage"]
         # FIXME
         dynamic = 0

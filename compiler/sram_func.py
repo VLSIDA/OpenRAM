@@ -16,9 +16,23 @@ number of cycles and period to be simulated.
 import sys
 import datetime
 from globals import *
-from importlib import reload
 
-(OPTS, args) = parse_args()
+try:
+    import openram
+except:
+    # If openram library isn't found as a python package,
+    # import it from the $OPENRAM_HOME path.
+    import importlib.util
+    OPENRAM_HOME = os.getenv("OPENRAM_HOME")
+    # Import using spec since the directory can be named something
+    # other than "openram".
+    spec = importlib.util.spec_from_file_location("openram", "{}/../__init__.py".format(OPENRAM_HOME))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["openram"] = module
+    spec.loader.exec_module(module)
+    import openram
+
+(OPTS, args) = openram.parse_args()
 
 # Override the usage
 USAGE = "Usage: {} [options] <config file> <cycles> <period>\nUse -h for help.\n".format(__file__)
@@ -34,17 +48,18 @@ OPTS.top_process = 'memfunc'
 config_file = args[0]
 cycles = int(args[1])
 period = float(args[2])
+sp_file = args[3]
+html_file = args[4]
 
 # These depend on arguments, so don't load them until now.
-import debug
+from openram import debug
 
 # Parse config file and set up all the options
-init_openram(config_file=config_file, is_unit_test=False)
+openram.init_openram(config_file=config_file, is_unit_test=False)
 
-print_banner()
+openram.print_banner()
 
 # Configure the SRAM organization (duplicated from openram.py)
-#from sram_config import sram_config
 from characterizer.fake_sram import fake_sram
 s = fake_sram(name=OPTS.output_name,
               word_size=OPTS.word_size,
@@ -55,7 +70,7 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_rows=OPTS.num_spare_rows,
               num_spare_cols=OPTS.num_spare_cols)
 
-s.parse_html(OPTS.output_path + s.name + ".html")
+s.parse_html(html_file)
 s.generate_pins()
 s.setup_multiport_constants()
 
@@ -64,13 +79,13 @@ OPTS.check_lvsdrc = False
 
 # Generate stimulus and run functional simulation on the design
 start_time = datetime.datetime.now()
-from characterizer import functional
+from openram.characterizer import functional
 debug.print_raw("Functional simulation... ")
-f = functional(s, cycles=cycles, spfile=OPTS.output_path + OPTS.output_name + ".sp", period=period, output_path=OPTS.openram_temp)
+f = functional(s, cycles=cycles, spfile=sp_file, period=period, output_path=OPTS.openram_temp)
 (fail, error) = f.run()
 debug.print_raw(error)
-print_time("Functional simulation", datetime.datetime.now(), start_time)
+openram.print_time("Functional simulation", datetime.datetime.now(), start_time)
 
 # Delete temp files, remove the dir, etc. after success
 if fail:
-    end_openram()
+    openram.end_openram()

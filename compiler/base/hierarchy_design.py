@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import os
+from openram import debug
+from openram import OPTS
 from .hierarchy_layout import layout
 from .hierarchy_spice import spice
-import debug
-import os
-from globals import OPTS
 
 
 class hierarchy_design(spice, layout):
@@ -49,7 +49,7 @@ class hierarchy_design(spice, layout):
 
     def DRC_LVS(self, final_verification=False, force_check=False):
         """Checks both DRC and LVS for a module"""
-        import verify
+        from openram import verify
 
         # No layout to check
         if OPTS.netlist_only:
@@ -82,7 +82,7 @@ class hierarchy_design(spice, layout):
 
     def DRC(self, final_verification=False):
         """Checks DRC for a module"""
-        import verify
+        from openram import verify
 
         # Unit tests will check themselves.
         # Do not run if disabled in options.
@@ -102,7 +102,7 @@ class hierarchy_design(spice, layout):
 
     def LVS(self, final_verification=False):
         """Checks LVS for a module"""
-        import verify
+        from openram import verify
 
         # Unit tests will check themselves.
         # Do not run if disabled in options.

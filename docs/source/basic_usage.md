@@ -34,17 +34,36 @@ This page of the documentation explains the basic usage of OpenRAM.
 If you have the library installed, you can use OpenRAM in any Python script. You can import "openram" as follows:
 ```python
 import openram
-import globals
-globals.init_openram("myconfig.py") # Config files are explained on this page
+openram.init_openram("myconfig.py") # Config files are explained on this page
+# Now you can use modules from openram
+from openram import tech
+...
 ```
-Note that you should import "openram" in this order so that the modules are imported properly. You can also look
-at `sram_compiler.py` as an example on how to use "openram."
 
+Note that you need to initalize OpenRAM so that the modules are imported properly. You can also look
+at [sram_compiler.py](../../sram_compiler.py) as an example on how to use "openram."
+
+If you want to pass custom configuration when generating an SRAM, you can use the `sram_config` class.
+```python
+import openram
+openram.init_openram("myconfig.py")
+
+from openram import sram_config
+c = sram_config(...)
+
+from openram import sram
+s = sram(sram_config=c,
+         name="custom_name")
+
+s.save()
+
+openram.end_openram()
+```
 
 
 ## Command Line Usage (with library)
-You can run OpenRAM from the command line  using the `sram_compiler.py` script that is included in the
-library's installation. You can the package directory on a path like:
+You can run OpenRAM from the command line using the [sram_compiler.py](../../sram_compiler.py) script that is
+included in the library's installation. You can find the package directory on a path like:
 ```
 /home/mrg/.local/lib/python3.8/site-packages/openram
 ```
@@ -58,7 +77,6 @@ You can continue with following section for more details.
 
 
 ## Command Line Usage (without library)
-
 Once you have defined the environment, you can run OpenRAM from the command line
 using a single configuration file written in Python.
 

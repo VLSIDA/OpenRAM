@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -11,12 +11,12 @@ various functions that can be be used to generate stimulus for other
 simulations as well.
 """
 
-import tech
-import debug
-import subprocess
 import os
+import subprocess
 import numpy as np
-from globals import OPTS
+from openram import debug
+from openram import tech
+from openram import OPTS
 
 
 class stimuli():

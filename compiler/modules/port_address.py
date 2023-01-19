@@ -1,16 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 from math import log, ceil
-import debug
-from base import design
-from sram_factory import factory
-from base import vector
-from tech import layer, drc
-from globals import OPTS
-from tech import layer_properties as layer_props
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer, drc
+from openram.tech import layer_properties as layer_props
+from openram import OPTS
 
 
 class port_address(design):

@@ -1,17 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
-
-import debug
-from base import vector
-from base import contact
+from openram import debug
+from openram.base import vector
+from openram.base import contact
+from openram.sram_factory import factory
+from openram.tech import drc, spice
+from openram.tech import cell_properties as props
+from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-from tech import drc, spice
-from tech import cell_properties as props
-from globals import OPTS
-from sram_factory import factory
 
 
 class replica_bitcell_array(bitcell_base_array):

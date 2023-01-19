@@ -1,15 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-from .regression_model import regression_model
-from globals import OPTS
-import debug
 from sklearn.neural_network import MLPRegressor
+from openram import debug
+from openram import OPTS
+from .regression_model import regression_model
 
 
 class neural_network(regression_model):

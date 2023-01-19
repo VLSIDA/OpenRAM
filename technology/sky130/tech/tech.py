@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
 
 import os
-import drc as d
+from openram import drc as d
 
 """
 File containing the process technology parameters for Skywater 130nm.

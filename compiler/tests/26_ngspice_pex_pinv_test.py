@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 """
 Run regression tests/pex test on an extracted pinv to ensure pex functionality
 with Ngspice.
 """
+import sys, os
 import unittest
 from testutils import header,openram_test
-import sys, os
 
-import globals
-from globals import OPTS
-import debug
+import openram
+from openram import debug
+from openram import OPTS
+
 
 @unittest.skip("SKIPPING 26_ngspice_pex_pinv_test")
 class ngspice_pex_pinv_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
-        import pinv
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram.modules import pinv
 
         # load the ngspice
         OPTS.spice_name="ngspice"
@@ -29,7 +30,7 @@ class ngspice_pex_pinv_test(openram_test):
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
-        import characterizer
+        from openram import characterizer
         reload(characterizer)
 
         # generate the pinv module
@@ -68,7 +69,7 @@ class ngspice_pex_pinv_test(openram_test):
         # assert pex_delay > sp_delay, "pex delay {0} is smaller than sp_delay {1}"\
         # .format(pex_delay,sp_delay)
 
-        globals.end_openram()
+        openram.end_openram()
 
     def simulate_delay(self, test_module, top_level_name):
         from charutils import parse_spice_list
@@ -87,8 +88,8 @@ class ngspice_pex_pinv_test(openram_test):
 
     def write_simulation(self, sim_file, cir_file, top_module_name):
         """ write pex spice simulation for a pinv test"""
-        import tech
-        from characterizer import measurements, stimuli
+        from openram import tech
+        from openram.characterizer import measurements, stimuli
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         sim_file = open(sim_file, "w")
         simulation = stimuli(sim_file, corner)
@@ -135,9 +136,10 @@ class ngspice_pex_pinv_test(openram_test):
         sim_file.close()
         return simulation
 
+
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main()

@@ -1,21 +1,21 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os,sys,re
+import os, sys, re
 import time
-import debug
 import datetime
+import numpy as np
+from openram import debug
+from openram import tech
+from openram.tech import spice
+from openram import OPTS
 from .setup_hold import *
 from .delay import *
 from .charutils import *
-import tech
-import numpy as np
-from globals import OPTS
-from tech import spice
 
 
 class lib:

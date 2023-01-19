@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -16,55 +16,54 @@ a LEF (.lef) file for preliminary P&R (real one should be from layout)
 a Liberty (.lib) file for timing analysis/optimization
 """
 
-import os
 import sys
+import os
 import datetime
 try:
     import openram
 except:
-    sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals as g
+    # If openram library isn't found as a python package,
+    # import it from the $OPENRAM_HOME path.
+    import importlib.util
+    OPENRAM_HOME = os.getenv("OPENRAM_HOME")
+    # Import using spec since the directory can be named something
+    # other than "openram".
+    spec = importlib.util.spec_from_file_location("openram", "{}/../__init__.py".format(OPENRAM_HOME))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["openram"] = module
+    spec.loader.exec_module(module)
+    import openram
 
-(OPTS, args) = g.parse_args()
+(OPTS, args) = openram.parse_args()
 
 # Check that we are left with a single configuration file as argument.
 if len(args) != 1:
-    print(g.USAGE)
+    print(openram.USAGE)
     sys.exit(2)
 
 # Set top process to openram
 OPTS.top_process = 'openram'
 
 # These depend on arguments, so don't load them until now.
-import debug
+from openram import debug
 
 # Parse config file and set up all the options
-g.init_openram(config_file=args[0], is_unit_test=False)
+openram.init_openram(config_file=args[0])
 
 # Ensure that the right bitcell exists or use the parameterised one
-g.setup_bitcell()
+openram.setup_bitcell()
 
 # Only print banner here so it's not in unit tests
-g.print_banner()
+openram.print_banner()
 
 # Keep track of running stats
 start_time = datetime.datetime.now()
-g.print_time("Start", start_time)
+openram.print_time("Start", start_time)
 
 # Output info about this run
-g.report_status()
+openram.report_status()
 
-from modules import sram_config
-
-# Configure the SRAM organization
-c = sram_config(word_size=OPTS.word_size,
-                num_words=OPTS.num_words,
-                write_size=OPTS.write_size,
-                num_banks=OPTS.num_banks,
-                words_per_row=OPTS.words_per_row,
-                num_spare_rows=OPTS.num_spare_rows,
-                num_spare_cols=OPTS.num_spare_cols)
-debug.print_raw("Words per row: {}".format(c.words_per_row))
+debug.print_raw("Words per row: {}".format(OPTS.words_per_row))
 
 output_extensions = ["lvs", "sp", "v", "lib", "py", "html", "log"]
 # Only output lef/gds if back-end
@@ -78,13 +77,13 @@ debug.print_raw("Output files are: ")
 for path in output_files:
     debug.print_raw(path)
 
-from modules import sram
-s = sram(name=OPTS.output_name,
-         sram_config=c)
+# Create an SRAM (we can also pass sram_config, see documentation/tutorials for details)
+from openram import sram
+s = sram()
 
 # Output the files for the resulting SRAM
 s.save()
 
 # Delete temp files etc.
-g.end_openram()
-g.print_time("End", datetime.datetime.now(), start_time)
+openram.end_openram()
+openram.print_time("End", datetime.datetime.now(), start_time)

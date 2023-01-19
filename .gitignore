@@ -21,3 +21,4 @@ sky130A/
 sky130B/
 skywater-pdk/
 sky130_fd_bd_sram/
+docker/openram-ubuntu.log

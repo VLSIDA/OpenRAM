@@ -1,7 +1,11 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2022 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 import copy
 from collections import defaultdict
-import debug
-import json
+from openram import debug
 
 
 class timing_graph():
@@ -139,35 +143,6 @@ class timing_graph():
             return []
 
         return [self.edge_mods[(path[i], path[i+1])] for i in range(len(path)-1)]
-
-    def write(self, filename):
-        """
-        Export graph to a JSON file
-        """
-        # TODO: Find a proper way to store edge_mods values
-        with open(filename, 'w') as f:
-            f.write(
-                json.dumps(
-                    {
-                        'graph':
-                            {key: list(val) for key, val in self.graph.items()},
-                        'edge_mods':
-                            {
-                                ', '.join(key): str(value)
-                                for key, value in self.edge_mods.items()
-                            }
-                    }
-                )
-            )
-
-    def read(self, filename):
-        """
-        Read graph from JSON file
-        """
-        with open(filename, 'r') as f:
-            d = json.loads(f.read())
-            self.graph = {key: set(value) for key, value in d['graph'].items()}
-            self.edge_mods = {tuple(key.split(', ')): value for key, value in d['edge_mods'].items()}
 
     def __str__(self):
         """ override print function output """

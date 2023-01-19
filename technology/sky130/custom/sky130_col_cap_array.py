@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-from sram_factory import factory
+from openram.base import geometry
+from openram.sram_factory import factory
+from openram.tech import layer
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from globals import OPTS
-from base import geometry
-from tech import layer
 
 class sky130_col_cap_array(sky130_bitcell_base_array):
     """
@@ -230,7 +230,7 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 
             if 'VNB' or 'vnb' in self.cell_inst[col].mod.pins:
                 try:
-                    from tech import layer_override
+                    from openram.tech import layer_override
                     if layer_override['VNB']:
                         pin = inst.get_pin("vnb")
                         self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))

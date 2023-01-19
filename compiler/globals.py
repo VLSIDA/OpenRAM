@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -9,17 +9,17 @@
 This is called globals.py, but it actually parses all the arguments
 and performs the global OpenRAM setup as well.
 """
+import sys
 import os
-import debug
+import re
 import shutil
 import optparse
-import options
-import sys
-import re
 import copy
 import importlib
 import getpass
 import subprocess
+from openram import debug
+from openram import options
 
 
 VERSION = "1.2.0"
@@ -185,7 +185,7 @@ def check_versions():
         OPTS.coverage = 0
 
 
-def init_openram(config_file, is_unit_test=True):
+def init_openram(config_file, is_unit_test=False):
     """ Initialize the technology, paths, simulators, etc. """
 
     check_versions()
@@ -202,7 +202,7 @@ def init_openram(config_file, is_unit_test=True):
 
     init_paths()
 
-    from sram_factory import factory
+    from openram.sram_factory import factory
     factory.reset()
 
     global OPTS
@@ -222,8 +222,8 @@ def init_openram(config_file, is_unit_test=True):
     setup_bitcell()
 
     # Import these to find the executables for checkpointing
-    import characterizer
-    import verify
+    from openram import characterizer
+    from openram import verify
     # Make a checkpoint of the options so we can restore
     # after each unit test
     if not CHECKPOINT_OPTS:
@@ -249,7 +249,7 @@ def setup_bitcell():
 
     # See if bitcell exists
     try:
-        c = importlib.import_module("modules." + OPTS.bitcell)
+        c = importlib.import_module("openram.modules." + OPTS.bitcell)
         mod = getattr(c, OPTS.bitcell)
     except ImportError:
         # Use the pbitcell if we couldn't find a custom bitcell
@@ -294,7 +294,7 @@ def get_tool(tool_type, preferences, default_name=None):
             return(None, "")
 
 
-def read_config(config_file, is_unit_test=True):
+def read_config(config_file, is_unit_test=False):
     """
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
@@ -385,7 +385,7 @@ def end_openram():
     cleanup_paths()
 
     if OPTS.check_lvsdrc:
-        import verify
+        from openram import verify
         verify.print_drc_stats()
         verify.print_lvs_stats()
         verify.print_pex_stats()
@@ -429,23 +429,8 @@ def setup_paths():
 
     global OPTS
 
-    # If $OPENRAM_HOME is defined, use that path for the source code.
-    # Otherwise, use the openram package.
-    try:
-        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-    except:
-        import openram
-        OPENRAM_HOME = os.path.dirname(openram.__file__) + "/compiler"
-        # Add this directory to os.environ here
-        os.environ["OPENRAM_HOME"] = OPENRAM_HOME
-
-    debug.check(os.path.isdir(OPENRAM_HOME),
-                "$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
+    from openram import OPENRAM_HOME
     debug.info(1, "OpenRAM source code found in {}".format(OPENRAM_HOME))
-
-    if OPENRAM_HOME not in sys.path:
-        sys.path.insert(0, OPENRAM_HOME)
-        debug.info(2, "Adding source code to PYTHONPATH.")
 
     # Use a unique temp subdirectory if multithreaded
     if OPTS.num_threads > 1 or OPTS.openram_temp == "/tmp":
@@ -515,7 +500,7 @@ def init_paths():
 def set_default_corner():
     """ Set the default corner. """
 
-    import tech
+    from openram import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
         if OPTS.nominal_corner_only:
@@ -548,8 +533,7 @@ def import_tech():
     """ Dynamically adds the tech directory to the path and imports it. """
     global OPTS
 
-    debug.info(2,
-               "Importing technology: " + OPTS.tech_name)
+    debug.info(2, "Importing technology: " + OPTS.tech_name)
 
     OPENRAM_TECH = ""
 
@@ -591,18 +575,23 @@ def import_tech():
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 
-    # Prepend the tech directory so it is sourced FIRST
+    # Append tech_path to openram.__path__ to import it from openram
     tech_path = OPTS.openram_tech
-    sys.path.insert(0, tech_path)
+    openram.__path__.append(tech_path)
     try:
-        import tech
+        from openram import tech
     except ImportError:
         debug.error("Could not load tech module.", -1)
 
-    # Prepend custom modules of the technology to the path, if they exist
-    custom_mod_path = os.path.join(tech_path, "modules/")
+    # Remove OPENRAM_TECH from sys.path because we should be done with those
+    for tech_path in OPENRAM_TECH.split(":"):
+        sys.path.remove(tech_path)
+
+    # Add the custom modules to "tech"
+    custom_mod_path = os.path.join(tech_path, "custom/")
     if os.path.exists(custom_mod_path):
-        sys.path.insert(0, custom_mod_path)
+        from openram import tech
+        tech.__path__.append(custom_mod_path)
 
 
 def print_time(name, now_time, last_time=None, indentation=2):

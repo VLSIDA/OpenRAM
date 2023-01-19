@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
-from base import geometry
-from sram_factory import factory
-from modules import bitcell_base_array
-from globals import OPTS
-from tech import layer
+from openram import debug
+from openram.base import geometry
+from openram.modules import bitcell_base_array
+from openram.sram_factory import factory
+from openram.tech import layer
+from openram import OPTS
 
 
 class sky130_bitcell_base_array(bitcell_base_array):
@@ -128,14 +128,11 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
         for inst in self.insts:
             if "wlstrap" in inst.name:
-                try:
+                if "VPWR" in inst.mod.pins:
                     self.copy_layout_pin(inst, "VPWR", "vdd")
-                except:
-                    pass
-                try:
+                if "VGND" in inst.mod.pins:
                     self.copy_layout_pin(inst, "VGND", "gnd")
-                except:
-                    pass
+
         for row in range(self.row_size):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
@@ -154,7 +151,7 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
                     if 'VNB' or 'vnb'in self.cell_inst[row, col].mod.pins:
                         try:
-                            from tech import layer_override
+                            from openram.tech import layer_override
                             if layer_override['VNB']:
                                 pin = inst.get_pin("vnb")
                                 self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))

@@ -1,32 +1,32 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
 import sys
+import os
 import re
 from math import sqrt
-import debug
-from gdsMill import gdsMill
-import tech
-from tech import drc, GDS
-from tech import layer as tech_layer
-from tech import layer_indices as tech_layer_indices
-from tech import preferred_directions
-from tech import layer_stacks as tech_layer_stacks
-from tech import active_stack as tech_active_stack
-from sram_factory import factory
-from globals import OPTS
+from openram import debug
+from openram.gdsMill import gdsMill
+from openram import tech
+from openram.tech import drc, GDS
+from openram.tech import layer as tech_layer
+from openram.tech import layer_indices as tech_layer_indices
+from openram.tech import preferred_directions
+from openram.tech import layer_stacks as tech_layer_stacks
+from openram.tech import active_stack as tech_active_stack
+from openram.sram_factory import factory
+from openram import OPTS
 from .vector import vector
 from .pin_layout import pin_layout
 from .utils import round_to_grid
 from . import geometry
 
 try:
-    from tech import special_purposes
+    from openram.tech import special_purposes
 except ImportError:
     special_purposes = {}
 
@@ -171,7 +171,7 @@ class layout():
         in many places in the compiler.
         """
         try:
-            from tech import power_grid
+            from openram.tech import power_grid
             layout.pwr_grid_layers = [power_grid[0], power_grid[2]]
         except ImportError:
             layout.pwr_grid_layers = ["m3", "m4"]
@@ -1253,7 +1253,6 @@ class layout():
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
-        from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -1272,7 +1271,6 @@ class layout():
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
         """
-        from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -1379,10 +1377,10 @@ class layout():
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
-        import ptx
-        mos = ptx.ptx(width=width,
-                      mults=mults,
-                      tx_type=tx_type)
+        from openram.modules import ptx
+        mos = ptx(width=width,
+                  mults=mults,
+                  tx_type=tx_type)
         inst = self.add_inst(name=mos.name,
                              mod=mos,
                              offset=offset,
@@ -2176,7 +2174,6 @@ class layout():
 
         # Find the number of vias for this pitch
         supply_vias = 1
-        from sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,
@@ -2289,7 +2286,6 @@ class layout():
 
         # Find the number of vias for this pitch
         self.supply_vias = 1
-        from sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,

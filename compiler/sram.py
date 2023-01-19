@@ -1,27 +1,39 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import datetime
 import os
-import debug
-from characterizer import functional, delay
-from base import timing_graph
-from globals import OPTS, print_time
 import shutil
+import datetime
+from openram import debug
+from openram import sram_config as config
+from openram import OPTS, print_time
 
 
 class sram():
     """
     This is not a design module, but contains an SRAM design instance.
-    It could later try options of number of banks and oganization to compare
+    It could later try options of number of banks and organization to compare
     results.
     We can later add visualizer and other high-level functions as needed.
     """
-    def __init__(self, name, sram_config):
+    def __init__(self, sram_config=None, name=None):
+
+        # Create default configs if custom config isn't provided
+        if sram_config is None:
+            sram_config = config(word_size=OPTS.word_size,
+                                 num_words=OPTS.num_words,
+                                 write_size=OPTS.write_size,
+                                 num_banks=OPTS.num_banks,
+                                 words_per_row=OPTS.words_per_row,
+                                 num_spare_rows=OPTS.num_spare_rows,
+                                 num_spare_cols=OPTS.num_spare_cols)
+
+        if name is None:
+            name = OPTS.output_name
 
         self.name = name
         self.config = sram_config
@@ -37,7 +49,7 @@ class sram():
 
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
-        from base import design
+        from openram.base import design
         design.name_map=[]
 
         self.create()
@@ -48,7 +60,7 @@ class sram():
                                                                                        self.num_banks))
         start_time = datetime.datetime.now()
 
-        from .sram_1bank import sram_1bank as sram
+        from openram.modules.sram_1bank import sram_1bank as sram
 
         self.s = sram(self.name, self.config)
 
@@ -79,7 +91,7 @@ class sram():
     def verilog_write(self, name):
         self.s.verilog_write(name)
         if self.num_banks != 1:
-            from .sram_multibank import sram_multibank
+            from openram.modules.sram_multibank import sram_multibank
             mb = sram_multibank(self.s)
             mb.verilog_write(name[:-2] + '_top.v')
 
@@ -100,7 +112,9 @@ class sram():
 
         # Import this at the last minute so that the proper tech file
         # is loaded and the right tools are selected
-        import verify
+        from openram import verify
+        from openram.characterizer import functional
+        from openram.characterizer import delay
 
         # Save the spice file
         start_time = datetime.datetime.now()
@@ -187,7 +201,7 @@ class sram():
 
         # Write the datasheet
         start_time = datetime.datetime.now()
-        from datasheet import datasheet_gen
+        from openram.datasheet import datasheet_gen
         dname = OPTS.output_path + self.s.name + ".html"
         debug.print_raw("Datasheet: Writing to {0}".format(dname))
         datasheet_gen.datasheet_write(dname)

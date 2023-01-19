@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2022 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 from datetime import datetime
-import debug
-from globals import print_time
-from base.vector3d import vector3d
+from openram import debug
+from openram.base.vector3d import vector3d
+from openram import print_time
 from .router import router
 from .direction import direction
 from .supply_grid import supply_grid

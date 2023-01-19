@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
-from modules import replica_bitcell_array
-from base import vector
-from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from base import round_to_grid
 from math import sqrt
-from tech import drc
-from tech import array_row_multiple
-from tech import array_col_multiple
-from globals import OPTS
+from openram import debug
+from openram.base import vector
+from openram.base import round_to_grid
+from openram.modules import replica_bitcell_array
+from openram.tech import drc
+from openram.tech import array_row_multiple
+from openram.tech import array_col_multiple
+from openram import OPTS
+from .sky130_bitcell_base_array import sky130_bitcell_base_array
 
 
 class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_array):

@@ -1,4 +1,4 @@
-from modules import sram_config
+from openram.modules import sram_config
 from math import ceil
 import re
 

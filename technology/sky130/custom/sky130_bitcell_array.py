@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2022 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
-from modules import bitcell_array
+from openram import debug
+from openram.modules import bitcell_array
+from openram.sram_factory import factory
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from globals import OPTS
-from sram_factory import factory
 
 
 class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):

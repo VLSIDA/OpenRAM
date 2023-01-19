@@ -37,8 +37,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.row_size = rows
         # This is how many RBLs are in all the arrays
         self.rbl = rbl
-        # This specifies which RBL to put on the left or right
-        # by port number
+        # This specifies which RBL to put on the left or right by port number
         # This could be an empty list
         if left_rbl is not None:
             self.left_rbl = left_rbl

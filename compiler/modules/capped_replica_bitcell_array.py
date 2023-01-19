@@ -33,22 +33,18 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
-        if rbl:
-            self.rbl = rbl
-        else:
-            self.rbl=[1, 1 if len(self.all_ports)>1 else 0]
-        # This specifies which RBL to put on the left or right
-        # by port number
+        self.rbl = rbl
+        # This specifies which RBL to put on the left or right by port number
         # This could be an empty list
         if left_rbl is not None:
             self.left_rbl = left_rbl
         else:
-            self.left_rbl = [0]
+            self.left_rbl = []
         # This could be an empty list
         if right_rbl is not None:
             self.right_rbl = right_rbl
         else:
-            self.right_rbl=[1] if len(self.all_ports) > 1 else []
+            self.right_rbl=[]
         self.rbls = self.left_rbl + self.right_rbl
 
         # Two dummy rows plus replica even if we don't add the column

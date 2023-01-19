@@ -100,7 +100,6 @@ class fake_sram(sram_config):
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
             if self.num_wmasks != 0:
-                print(self.num_wmasks)
                 self.pins.extend(['wmask{0}[{1}]'.format(port, bit)
                                   for bit in range(self.num_wmasks)])
 
@@ -109,7 +108,7 @@ class fake_sram(sram_config):
         start_port = self.num_rw_ports
         for port in range(start_port, start_port + self.num_r_ports):
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
-                              for bit in range(self.num_cols)])
+                              for bit in range(self.word_size)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
 
@@ -118,7 +117,7 @@ class fake_sram(sram_config):
         start_port += self.num_r_ports
         for port in range(start_port, start_port + self.num_w_ports):
             self.pins.extend(['din{0}[{1}]'.format(port, bit)
-                              for bit in range(self.num_cols)])
+                              for bit in range(self.word_size)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
             if self.num_wmasks != 0:

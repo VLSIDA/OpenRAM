@@ -121,9 +121,9 @@ class delay(simulation):
         # Other measurements associated with the read port not included in the liberty file
         read_measures.append(self.create_bitline_measurement_objects())
         read_measures.append(self.create_debug_measurement_objects())
+        read_measures.append(self.create_read_bit_measures())
         # TODO: Maybe don't do this here (?)
         if OPTS.top_process != "memchar":
-            read_measures.append(self.create_read_bit_measures())
             read_measures.append(self.create_sen_and_bitline_path_measures())
 
         return read_measures
@@ -168,8 +168,7 @@ class delay(simulation):
 
         write_measures = []
         write_measures.append(self.write_lib_meas)
-        if OPTS.top_process != "memchar":
-            write_measures.append(self.create_write_bit_measures())
+        write_measures.append(self.create_write_bit_measures())
 
         return write_measures
 
@@ -229,8 +228,11 @@ class delay(simulation):
 
         bit_col = self.get_data_bit_column_number(probe_address, probe_data)
         bit_row = self.get_address_row_number(probe_address)
-        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
-        storage_names = cell_inst.mod.get_storage_net_names()
+        #(cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
+        cell_name = OPTS.hier_seperator.join(("X" + self.sram.name,  "xbank0", "xreplica_bitcell_array", "xbitcell_array", "xbit_r{}_c{}".format(bit_row, bit_col)))
+        #cell_name = OPTS.hier_seperator.join(("X" + self.sram.name,  "xbank0", "xbitcell_array", "xbitcell_array", "xbit_r{}_c{}".format(bit_row, bit_col)))
+        storage_names = ("Q", "Q_bar")
+        #storage_names = cell_inst.mod.get_storage_net_names()
         debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
                                               "supported for characterization. Storage nets={0}").format(storage_names))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":
@@ -859,7 +861,8 @@ class delay(simulation):
 
             result[port].update(read_port_dict)
 
-            self.path_delays = self.check_path_measures()
+            if self.sen_path_meas and self.bl_path_meas:
+                self.path_delays = self.check_path_measures()
 
         return (True, result)
 
@@ -950,7 +953,7 @@ class delay(simulation):
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
         """
         Checks the value of the discharging bitline. Confirms s_en timing errors.
-        Returns true if the bitlines are at there expected value.
+        Returns true if the bitlines are at there their value.
         """
         # The inputs looks at discharge/charged bitline rather than left or right (bl/br)
         # Performs two checks, discharging bitline is at least 10% away from vdd and there is a
@@ -1161,7 +1164,13 @@ class delay(simulation):
             shutil.copy(self.sp_file, self.sim_sp_file)
 
     def recover_measurment_objects(self):
-        mf = open(path.join(OPTS.output_path, "delay_meas.sp"), "r")
+        mf_path = path.join(OPTS.output_path, "delay_meas.sp")
+        self.sen_path_meas = None
+        self.bl_path_meas = None
+        if not path.exists(mf_path):
+            debug.info(1, "Delay measure file not found. Skipping measure recovery")
+            return
+        mf = open(mf_path, "r")
         measure_text = mf.read()
         port_iter = re.finditer(r"\* (Read|Write) ports (\d*)", measure_text)
         port_measure_lines = []
@@ -1179,34 +1188,34 @@ class delay(simulation):
         self.read_meas_lists.append([])
         self.read_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
         self.write_bit_meas = {bit_polarity.NONINVERTING: [], bit_polarity.INVERTING: []}
-        bit_measure_rule = re.compile(r"\.meas tran (v_q_a\d+_b\d+_(read|write)_(zero|one)\d+) FIND v\((.*)\) AT=(\d+(\.\d+)?)n")
-        for measures in port_measure_lines:
-            port_name = measures[0]
-            text = measures[1]
-            bit_measure_iter = bit_measure_rule.finditer(text)
-            for bit_measure in bit_measure_iter:
-                meas_name = bit_measure.group(1)
-                read = bit_measure.group(2) == "read"
-                cycle =  bit_measure.group(3)
-                probe = bit_measure.group(4)
-                polarity = bit_polarity.NONINVERTING
-                if "q_bar" in meas_name:
-                    polarity = bit_polarity.INVERTING
-                meas = voltage_at_measure(meas_name, probe)
-                if read:
-                    if cycle == "one":
-                        meas.meta_str = sram_op.READ_ONE
-                    else:
-                        meas.meta_str = sram_op.READ_ZERO
-                    self.read_bit_meas[polarity].append(meas)
-                    self.read_meas_lists[-1].append(meas)
-                else:
-                    if cycle == "one":
-                        meas.meta_str = sram_op.WRITE_ONE
-                    else:
-                        meas.meta_str = sram_op.WRITE_ZERO
-                    self.write_bit_meas[polarity].append(meas)
-                    self.write_meas_lists[-1].append(meas)
+#        bit_measure_rule = re.compile(r"\.meas tran (v_q_a\d+_b\d+_(read|write)_(zero|one)\d+) FIND v\((.*)\) AT=(\d+(\.\d+)?)n")
+#        for measures in port_measure_lines:
+#            port_name = measures[0]
+#            text = measures[1]
+#            bit_measure_iter = bit_measure_rule.finditer(text)
+#            for bit_measure in bit_measure_iter:
+#                meas_name = bit_measure.group(1)
+#                read = bit_measure.group(2) == "read"
+#                cycle =  bit_measure.group(3)
+#                probe = bit_measure.group(4)
+#                polarity = bit_polarity.NONINVERTING
+#                if "q_bar" in meas_name:
+#                    polarity = bit_polarity.INVERTING
+#                meas = voltage_at_measure(meas_name, probe)
+#                if read:
+#                    if cycle == "one":
+#                        meas.meta_str = sram_op.READ_ONE
+#                    else:
+#                        meas.meta_str = sram_op.READ_ZERO
+#                    self.read_bit_meas[polarity].append(meas)
+#                    self.read_meas_lists[-1].append(meas)
+#                else:
+#                    if cycle == "one":
+#                        meas.meta_str = sram_op.WRITE_ONE
+#                    else:
+#                        meas.meta_str = sram_op.WRITE_ZERO
+#                    self.write_bit_meas[polarity].append(meas)
+#                    self.write_meas_lists[-1].append(meas)
 
         delay_path_rule = re.compile(r"\.meas tran delay_(.*)_to_(.*)_(sen|bl)_(id\d*) TRIG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n TARG v\((.*)\) VAL=(\d+(\.\d+)?) (RISE|FALL)=(\d+) TD=(\d+(\.\d+)?)n")
         port = self.read_ports[0]
@@ -1244,10 +1253,10 @@ class delay(simulation):
         self.set_probe(probe_address, probe_data)
         self.prepare_netlist()
         if OPTS.top_process == "memchar":
-            # TODO: fix
-            self.bl_name = "xsram:xbank0:bl_0_{}"
-            self.br_name = "xsram:xbank0:br_0_{}"
-            self.sen_name = "xsram:s_en"
+            # TODO: guess the bl and br. It can be "bl_..." or "bl..."
+            self.bl_name = "X{0}{1}xbank0{1}bl{{}}_{2}".format(self.sram.name, OPTS.hier_seperator, self.bitline_column)
+            self.br_name = "X{0}{1}xbank0{1}br{{}}_{2}".format(self.sram.name, OPTS.hier_seperator, self.bitline_column)
+            self.sen_name = "X{0}{1}xbank0{1}s_en".format(self.sram.name, OPTS.hier_seperator)
             self.create_measurement_objects()
             self.recover_measurment_objects()
         else:
@@ -1522,3 +1531,6 @@ class delay(simulation):
             self.stim.gen_pwl("CSB{0}".format(port), self.cycle_times, self.csb_values[port], self.period, self.slew, 0.05)
             if port in self.readwrite_ports:
                 self.stim.gen_pwl("WEB{0}".format(port), self.cycle_times, self.web_values[port], self.period, self.slew, 0.05)
+                if self.sram.num_wmasks:
+                    for bit in range(self.sram.num_wmasks):
+                        self.stim.gen_pwl("WMASK{0}_{1}".format(port, bit), self.cycle_times, self.wmask_values[port][bit], self.period, self.slew, 0.05)

@@ -463,13 +463,13 @@ class capped_replica_bitcell_array(bitcell_base_array):
         locs provides the offsets of the pin strip end points.
         """
         if side in ["left", "right"]:
-            self.connect_vertical_side_pin(pin, side, offset)
+            self.connect_vertical_side_pin(pin, offset)
         elif side in ["top", "bottom", "bot"]:
-            self.connect_horizontal_side_pin(pin, side, offset)
+            self.connect_horizontal_side_pin(pin, offset)
         else:
             debug.error("Invalid side {}".format(side), -1)
 
-    def connect_horizontal_side_pin(self, pin, side, yoffset):
+    def connect_horizontal_side_pin(self, pin, yoffset):
         """
         Used to connect vertical layers of pins to the top/bottom horizontal straps
         """
@@ -486,7 +486,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.add_path(pin.layer, [cell_loc, pin_loc])
 
 
-    def connect_vertical_side_pin(self, pin, side, xoffset):
+    def connect_vertical_side_pin(self, pin, xoffset):
         """
         Used to connect vertical layers of pins to the top/bottom vertical straps
         """

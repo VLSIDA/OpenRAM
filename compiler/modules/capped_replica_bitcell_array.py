@@ -375,7 +375,9 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
 
     def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
+        """
+        Connect the unused RBL and dummy wordlines to gnd
+        """
         # This grounds all the dummy row word lines
         for inst in self.dummy_row_insts:
             for wl_name in self.col_cap_top.get_wordline_names():
@@ -417,11 +419,6 @@ class capped_replica_bitcell_array(bitcell_base_array):
         top_via = contact(layer_stack=self.supply_stack,
                           directions=("H", "H"))
 
-
-#        self.add_layout_pin_rect_ends(text=name,
-#                                      layer=layer,
-#                                      start=bot_loc,
-#                                      end=top_loc)
         self.add_layout_pin_segment_center(text=name,
                                            layer=layer,
                                            start=bot_loc,
@@ -445,10 +442,6 @@ class capped_replica_bitcell_array(bitcell_base_array):
         side_via = contact(layer_stack=self.supply_stack,
                            directions=("V", "V"))
 
-#        self.add_layout_pin_rect_ends(text=name,
-#                                      layer=layer,
-#                                      start=left_loc,
-#                                      end=right_loc)
         self.add_layout_pin_segment_center(text=name,
                                            layer=layer,
                                            start=left_loc,
@@ -459,8 +452,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
     def connect_side_pin(self, pin, side, offset):
         """
-        Used to connect horizontal layers of pins to the left/right straps
-        locs provides the offsets of the pin strip end points.
+        Used to connect a pin to the a horizontal or vertical strap
+        offset gives the location of the strap
         """
         if side in ["left", "right"]:
             self.connect_vertical_side_pin(pin, offset)
@@ -471,7 +464,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
     def connect_horizontal_side_pin(self, pin, yoffset):
         """
-        Used to connect vertical layers of pins to the top/bottom horizontal straps
+        Used to connect a pin to the top/bottom horizontal straps
         """
         cell_loc = pin.center()
         pin_loc = vector(cell_loc.x, yoffset)
@@ -485,10 +478,9 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # Add a path to connect to the array
         self.add_path(pin.layer, [cell_loc, pin_loc])
 
-
     def connect_vertical_side_pin(self, pin, xoffset):
         """
-        Used to connect vertical layers of pins to the top/bottom vertical straps
+        Used to connect a pin to the left/right vertical straps
         """
         cell_loc = pin.center()
         pin_loc = vector(xoffset, cell_loc.y)

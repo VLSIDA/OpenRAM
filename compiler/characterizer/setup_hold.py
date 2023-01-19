@@ -42,7 +42,7 @@ class setup_hold():
         self.stim_sp = "sh_stim.sp"
         temp_stim = OPTS.openram_temp + self.stim_sp
         self.sf = open(temp_stim, "w")
-        self.stim = stimuli(self.sf, self.corner)
+        self.stim = stimuli(self.sf, self.mf, self.corner)
 
         self.write_header(correct_value)
 

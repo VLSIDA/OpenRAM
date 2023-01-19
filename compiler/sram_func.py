@@ -55,7 +55,7 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_rows=OPTS.num_spare_rows,
               num_spare_cols=OPTS.num_spare_cols)
 
-s.parse_html(OPTS.output_path + "sram.html")
+s.parse_html(OPTS.output_path + s.name + ".html")
 s.generate_pins()
 s.setup_multiport_constants()
 

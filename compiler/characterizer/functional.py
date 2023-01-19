@@ -299,10 +299,11 @@ class functional(simulation):
                                                                                                                                 self.v_low,
                                                                                                                                 self.v_high)
                 except ValueError:
-                    error ="FAILED: {0}_{1} value {2} at time {3}n is not a float.".format(dout_port,
+                    error ="FAILED: {0}_{1} value {2} at time {3}n is not a float. Measure: {4}".format(dout_port,
                                                                                            bit,
                                                                                            value,
-                                                                                           eo_period)
+                                                                                           eo_period,
+                                                                                           measure_name)
 
                     return (0, error)
             self.read_results.append([sp_read_value, dout_port, eo_period, cycle])

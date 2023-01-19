@@ -231,7 +231,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.width = self.dummy_col_insts[1].rx()
         self.height = self.dummy_row_insts[1].uy()
 
-        self.copy_layout_pins()
+        self.add_layout_pins()
 
         self.route_supplies()
 
@@ -298,21 +298,26 @@ class capped_replica_bitcell_array(bitcell_base_array):
         dummy_col_offset = self.bitcell_offset.scale(len(self.right_rbl) - 1, -self.rbl[0]) + self.replica_bitcell_array_inst.lr()
         self.dummy_col_insts[1].place(offset=dummy_col_offset)
 
-    def copy_layout_pins(self):
-        excluded_pins = ["vdd", "gnd"]
-        excluded_pins.extend(self.unused_wordline_names)
-        for pin_name in self.replica_bitcell_array.get_pin_names():
-            if pin_name in excluded_pins:
-                continue
-            # move pins to edges of cap cells
-            if "wl" in pin_name:
-                pin_offset = self.bitcell_offset.scale(-1, 0)
-            else:
-                pin_offset = self.bitcell_offset.scale(0, -1)
+    def add_layout_pins(self):
+        for pin_name in self.used_wordline_names + self.all_bitline_names:
+            pin = self.replica_bitcell_array_inst.get_pin(pin_name)
 
-            self.copy_layout_pin(instance=self.replica_bitcell_array_inst,
-                                 pin_name=pin_name,
-                                 relative_offset=pin_offset)
+            if "wl" in pin_name:
+                # wordlines
+                pin_offset = pin.ll().scale(0, 1)
+                pin_width  = self.width
+                pin_height = pin.height()
+            else:
+                # bitlines
+                pin_offset = pin.ll().scale(1, 0)
+                pin_width  = pin.width()
+                pin_height = self.height
+
+            self.add_layout_pin(text=pin_name,
+                                layer=pin.layer,
+                                offset=pin_offset,
+                                width=pin_width,
+                                height=pin_height)
 
     def route_supplies(self):
 

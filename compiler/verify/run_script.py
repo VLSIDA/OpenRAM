@@ -29,6 +29,21 @@ def run_script(cell_name, script="lvs"):
 
     scriptpath = '{0}run_{1}.sh'.format(OPTS.openram_temp, script)
 
+    # Wrap with conda activate & conda deactivate
+    if OPTS.use_conda:
+        from openram import CONDA_HOME
+        with open(scriptpath, "r") as f:
+            script_content = f.readlines()
+        with open(scriptpath, "w") as f:
+            # First line is shebang
+            f.write(script_content[0] + "\n")
+            # Activate conda using the activate script
+            f.write("source {}/bin/activate\n".format(CONDA_HOME))
+            for line in script_content[1:]:
+                f.write(line + "\n")
+            # Deactivate conda at the end
+            f.write("conda deactivate\n")
+
     debug.info(2, "Starting {}".format(scriptpath))
     start = time.time()
     with open(outfile, 'wb') as fo, open(errfile, 'wb') as fe:

@@ -121,6 +121,9 @@ class options(optparse.Values):
     ###################
     # Tool options
     ###################
+    # Use conda to install the default tools
+    # (existing tools will be used if disabled)
+    use_conda = True
     # Variable to select the variant of spice
     spice_name = None
     # The spice executable being used which is derived from the user PATH.

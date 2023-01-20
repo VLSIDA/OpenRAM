@@ -196,6 +196,8 @@ def init_openram(config_file, is_unit_test=False):
 
     read_config(config_file, is_unit_test)
 
+    install_conda()
+
     import_tech()
 
     set_default_corner()
@@ -228,6 +230,19 @@ def init_openram(config_file, is_unit_test=False):
     # after each unit test
     if not CHECKPOINT_OPTS:
         CHECKPOINT_OPTS = copy.copy(OPTS)
+
+
+def install_conda():
+    """ Setup conda for default tools. """
+
+    # Don't setup conda if not used
+    if not OPTS.use_conda or OPTS.is_unit_test:
+        return
+
+    debug.info(1, "Creating conda setup...");
+
+    from openram import CONDA_HOME
+    subprocess.call("./install_conda.sh", cwd=os.path.abspath(CONDA_HOME + "/.."))
 
 
 def setup_bitcell():

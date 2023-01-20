@@ -23,6 +23,21 @@ if "OPENRAM_HOME" not in os.environ.keys():
 # Prepend $OPENRAM_HOME to __path__ so that openram will use those modules
 __path__.insert(0, OPENRAM_HOME)
 
+
+# Find the conda installation directory
+if os.path.exists(OPENRAM_HOME + "/install_conda.sh"):
+    CONDA_HOME = OPENRAM_HOME + "/miniconda"
+elif os.path.exists(OPENRAM_HOME + "/../install_conda.sh"):
+    CONDA_HOME = os.path.abspath(OPENRAM_HOME + "/../miniconda")
+
+# Add CONDA_HOME to environment variables
+try:
+    os.environ["CONDA_HOME"] = CONDA_HOME
+except:
+    from openram import debug
+    debug.warning("Couldn't find install_conda.sh")
+
+
 # Import everything in globals.py
 from .globals import *
 # Import classes in the "openram" namespace

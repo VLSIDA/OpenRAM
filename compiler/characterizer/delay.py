@@ -229,7 +229,7 @@ class delay(simulation):
         bit_col = self.get_data_bit_column_number(probe_address, probe_data)
         bit_row = self.get_address_row_number(probe_address)
         #(cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
-        cell_name = OPTS.hier_seperator.join(("X" + self.sram.name,  "xbank0", "xreplica_bitcell_array", "xbitcell_array", "xbit_r{}_c{}".format(bit_row, bit_col)))
+        cell_name = "X{0}{3}xbank0{3}xreplica_bitcell_array{3}xbitcell_array{3}x_bit_r{1}_c{2}".format(self.sram_name, bit_row, bit_col, OPTS.hier_seperator)
         #cell_name = OPTS.hier_seperator.join(("X" + self.sram.name,  "xbank0", "xbitcell_array", "xbitcell_array", "xbit_r{}_c{}".format(bit_row, bit_col)))
         storage_names = ("Q", "Q_bar")
         #storage_names = cell_inst.mod.get_storage_net_names()
@@ -1245,6 +1245,29 @@ class delay(simulation):
                     meas_buff.clear()
         self.read_meas_lists.append(self.sen_path_meas + self.bl_path_meas)
 
+    def guess_spice_names(self):
+        """This is run in place of get_spice_names function from simulation.py when
+        running stand-alone characterizer."""
+        # TODO: Find a better method
+        with open(self.sp_file, "r") as file:
+            bl_prefix = None
+            br_prefix = None
+            for line in file:
+                if re.search("bl_\d_\d", line):
+                    bl_prefix = "bl_"
+                    br_prefix = "br_"
+                    break
+                if re.search("bl\d_\d", line):
+                    bl_prefix = "bl"
+                    br_prefix = "br"
+                    break
+            debug.check(bl_prefix, "Could not guess the bitline name.")
+            self.bl_name = "X{0}{1}xbank0{1}{2}{{}}_{3}".format(self.sram.name, OPTS.hier_seperator, bl_prefix, self.bitline_column)
+            self.br_name = "X{0}{1}xbank0{1}{2}{{}}_{3}".format(self.sram.name, OPTS.hier_seperator, br_prefix, self.bitline_column)
+            self.sen_name = "X{0}{1}xbank0{1}s_en".format(self.sram.name, OPTS.hier_seperator)
+
+
+
 
 
     def analysis_init(self, probe_address, probe_data):
@@ -1253,10 +1276,7 @@ class delay(simulation):
         self.set_probe(probe_address, probe_data)
         self.prepare_netlist()
         if OPTS.top_process == "memchar":
-            # TODO: guess the bl and br. It can be "bl_..." or "bl..."
-            self.bl_name = "X{0}{1}xbank0{1}bl{{}}_{2}".format(self.sram.name, OPTS.hier_seperator, self.bitline_column)
-            self.br_name = "X{0}{1}xbank0{1}br{{}}_{2}".format(self.sram.name, OPTS.hier_seperator, self.bitline_column)
-            self.sen_name = "X{0}{1}xbank0{1}s_en".format(self.sram.name, OPTS.hier_seperator)
+            self.guess_spice_names()
             self.create_measurement_objects()
             self.recover_measurment_objects()
         else:

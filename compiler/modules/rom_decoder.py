@@ -14,7 +14,7 @@ from openram.tech import drc
 
 
 class rom_decoder(design):
-    def __init__(self, num_outputs, cols, strap_spacing, name="", route_layer="m1", output_layer="m2"):
+    def __init__(self, num_outputs, cols, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
         
         # word lines/ rows / inputs in the base array become the address lines / cols / inputs in the decoder
         # bit lines / cols / outputs in the base array become the word lines / rows / outputs in the decoder
@@ -34,7 +34,11 @@ class rom_decoder(design):
         self.output_layer = output_layer
         self.inv_route_layer = "m2"
         self.cols=cols
+        self.invert_outputs=invert_outputs
         self.create_netlist()
+
+        self.width = self.array_mod.height + self.wordline_buf.width
+        self.height = self.array_mod.width + self.control_array.height
         self.create_layout()
 
     def create_netlist(self):
@@ -49,10 +53,9 @@ class rom_decoder(design):
         self.place_input_buffer()
         self.place_driver()
         self.route_outputs()
-        self.width = self.array_inst.height + self.wordline_buf_inst.width
-        self.height = self.array_inst.width + self.buf_inst.height
+        
         self.connect_inputs()
-        # self.route_supplies()
+        self.route_supplies()
         self.add_boundary()
 
     def setup_layout_constants(self):
@@ -97,18 +100,24 @@ class rom_decoder(design):
 
         for j in range(self.num_outputs):
             self.add_pin("wl_{0}".format(j), "OUTPUT")
-        self.add_pin("precharge_gate", "INPUT")
+        self.add_pin("precharge", "INPUT")
+        self.add_pin("clk", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
 
     def add_modules(self):
 
-        self.control_array = factory.create(module_type="rom_address_control_array", cols=self.num_inputs)
+        self.control_array = factory.create(module_type="rom_address_control_array", 
+                                            cols=self.num_inputs)
+
 
         self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), \
-                                           rows=self.num_outputs, \
-                                           cols=self.cols)
+                                        rows=self.num_outputs, \
+                                        cols=self.cols,
+                                        invert_outputs=self.invert_outputs,
+                                        tap_spacing=self.strap_spacing)
+                                            
 
         self.array_mod = factory.create(module_type="rom_base_array", \
                                         module_name="{}_array".format(self.name), \
@@ -116,8 +125,8 @@ class rom_decoder(design):
                                         rows=2 * self.num_inputs, \
                                         bitmap=self.decode_map,
                                         strap_spacing = self.strap_spacing,
-                                        route_layer=self.route_layer,
-                                        output_layer=self.output_layer)
+                                        bitline_layer=self.output_layer,
+                                        tap_direction="col")
 
 
     def create_instances(self):
@@ -135,8 +144,8 @@ class rom_decoder(design):
 
         for i in range(self.num_inputs):
             control_pins.append("A{0}".format(i))
-            control_pins.append("A{0}_int".format(i))
-            control_pins.append("Abar{0}_int".format(i))
+            control_pins.append("in_{0}".format(i))
+            control_pins.append("inbar_{0}".format(i))
         control_pins.append("clk")
         control_pins.append("vdd")
         control_pins.append("gnd")
@@ -156,7 +165,7 @@ class rom_decoder(design):
         for i in reversed(range(self.num_inputs)):
             array_pins.append("inbar_{0}".format(i))
             array_pins.append("in_{0}".format(i))
-        array_pins.append("precharge_gate")
+        array_pins.append("precharge")
         array_pins.append("vdd")
         array_pins.append("gnd")
         self.connect_inst(array_pins)
@@ -173,9 +182,10 @@ class rom_decoder(design):
     def place_input_buffer(self):
         wl = self.array_mod.row_size - 1
         align = self.array_inst.get_pin(self.array_mod.wordline_names[0][wl]).cx() - self.buf_inst.get_pin("A0_out").cx()
-        print("align: {}".format(align))
 
         self.buf_inst.place(vector(align, 0))
+
+        self.copy_layout_pin(self.buf_inst, "clk")
 
 
 
@@ -196,6 +206,9 @@ class rom_decoder(design):
         for j in range(self.num_outputs):
 
             self.copy_layout_pin(self.wordline_buf_inst, "out_{}".format(j), "wl_{}".format(j))
+            offset = self.wordline_buf_inst.get_pin("out_{}".format(j)).center()
+
+            # self.add_via_stack_center(offset, self.output_layer, self.wordline_buf.route_layer)
 
         array_pins = [self.array_inst.get_pin("bl_0_{}".format(bl)) for bl in range(self.num_outputs)]
         driver_pins = [self.wordline_buf_inst.get_pin("in_{}".format(bl)) for bl in range(self.num_outputs)]
@@ -229,44 +242,50 @@ class rom_decoder(design):
     def route_supplies(self):
         minwidth =  drc["minwidth_{}".format(self.inv_route_layer)]
         pitch = drc["{0}_to_{0}".format(self.inv_route_layer)]
+        self.copy_layout_pin(self.array_inst, "vdd")
+        self.copy_layout_pin(self.wordline_buf_inst, "vdd")
+        self.copy_layout_pin(self.buf_inst, "vdd")
 
+        self.copy_layout_pin(self.array_inst, "gnd")
+        self.copy_layout_pin(self.wordline_buf_inst, "gnd")
+        self.copy_layout_pin(self.buf_inst, "gnd")
 
         # route decode array vdd and inv array vdd together
-        array_vdd = self.array_inst.get_pin("vdd")
-        inv_vdd = self.buf_inst.get_pins("vdd")[-1]
+        # array_vdd = self.array_inst.get_pin("vdd")
+        # inv_vdd = self.buf_inst.get_pins("vdd")[-1]
 
-        end = vector(array_vdd.cx(), inv_vdd.cy() - 0.5 * minwidth)
-        self.add_segment_center("m1", array_vdd.center(), end)
-        end = vector(array_vdd.cx() + 0.5 * minwidth, inv_vdd.cy())
-        self.add_segment_center(self.route_layer, inv_vdd.center(), end)
+        # end = vector(array_vdd.cx(), inv_vdd.cy() - 0.5 * minwidth)
+        # self.add_segment_center("m1", array_vdd.center(), end)
+        # end = vector(array_vdd.cx() + 0.5 * minwidth, inv_vdd.cy())
+        # self.add_segment_center(self.route_layer, inv_vdd.center(), end)
 
-        end = vector(array_vdd.cx(), inv_vdd.cy())
-        self.add_via_stack_center(end, self.route_layer, "m1")
-        self.add_layout_pin_rect_center("vdd", "m1", end)
+        # end = vector(array_vdd.cx(), inv_vdd.cy())
+        # self.add_via_stack_center(end, self.route_layer, "m1")
+        # self.add_layout_pin_rect_center("vdd", "m1", end)
         
-        # route pin on inv gnd
+        # # route pin on inv gnd
 
-        inv_gnd = self.buf_inst.get_pins("gnd")[0]
-        array_gnd = self.array_inst.get_pins("gnd")
+        # inv_gnd = self.buf_inst.get_pins("gnd")[0]
+        # array_gnd = self.array_inst.get_pins("gnd")
 
-        # add x jog
+        # # add x jog
 
-        start = vector(array_gnd[0].cx(), inv_gnd.cy())
-        self.add_via_stack_center(start, self.route_layer, "m1")
-        self.add_layout_pin_rect_center("gnd", "m1", start)
+        # start = vector(array_gnd[0].cx(), inv_gnd.cy())
+        # self.add_via_stack_center(start, self.route_layer, "m1")
+        # self.add_layout_pin_rect_center("gnd", "m1", start)
 
-        end = array_gnd[0].center()
-        self.add_segment_center("m1", start, end)
-        # add y jog
+        # end = array_gnd[0].center()
+        # self.add_segment_center("m1", start, end)
+        # # add y jog
 
 
-        width =  minwidth
-        height = array_gnd[0].uy() - array_gnd[-1].uy() + minwidth
+        # width =  minwidth
+        # height = array_gnd[0].uy() - array_gnd[-1].uy() + minwidth
 
-        offset = vector(-0.5 *width ,0.5 * (array_gnd[0].cy() + array_gnd[-1].cy()))
+        # offset = vector(-0.5 *width ,0.5 * (array_gnd[0].cy() + array_gnd[-1].cy()))
 
-        start = end - vector(0, 0.5 * minwidth)
-        end = vector(start.x, array_gnd[1].uy())
+        # start = end - vector(0, 0.5 * minwidth)
+        # end = vector(start.x, array_gnd[1].uy())
 
  
 

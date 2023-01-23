@@ -24,7 +24,7 @@ class rom_bank_test(openram_test):
 
         debug.info(2, "Testing 4x4 array for rom cell")
 
-        a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data", word_size=1)
+        a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data_1kB", word_size=1)
 
         self.local_check(a)
         openram.end_openram()

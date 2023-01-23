@@ -22,12 +22,12 @@ class rom_column_mux(pgate):
     Column-mux transistors driven by the decoder must be sized
     for optimal speed
     """
-    def __init__(self, name, tx_size=8, bitline_layer="li"):
+    def __init__(self, name, tx_size=8, input_layer="m2", output_layer="m1"):
 
         debug.info(2, "creating single ROM column mux cell: {0}".format(name))
         self.tx_size = int(tx_size)
-        self.bitline_layer = bitline_layer
-
+        self.input_layer = input_layer
+        self.output_layer= output_layer
         super().__init__(name)
 
 
@@ -42,15 +42,18 @@ class rom_column_mux(pgate):
 
     def create_layout(self):
 
-        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
-        if self.bitline_layer == "li" :
-            self.col_mux_stack = self.li_stack
-        else:
-            self.col_mux_stack = self.m1_stack
-        self.pin_layer = self.bitcell.bitline_layer
+        
+        self.pin_layer = self.input_layer
         self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
         self.pin_width = getattr(self, "{}_width".format(self.pin_layer))
         self.pin_height = 2 * self.pin_width
+
+        # If li exists, use li and m1 for the mux, otherwise use m1 and m2
+        if self.output_layer == "li" :
+            self.col_mux_stack = self.li_stack
+        else:
+            self.col_mux_stack = self.m1_stack
+
 
         self.place_ptx()
 
@@ -69,7 +72,7 @@ class rom_column_mux(pgate):
         # self.add_pn_wells()
 
     def add_ptx(self):
-        self.bitcell = factory.create(module_type="rom_base_cell", bitline_layer=self.bitline_layer)
+        self.bitcell = factory.create(module_type="rom_base_cell")
 
         # Adds nmos_lower,nmos_upper to the module
         self.ptx_width = self.tx_size * drc("minwidth_tx")
@@ -98,7 +101,7 @@ class rom_column_mux(pgate):
 
         # bl_out and br_out
         self.add_layout_pin(text="bl_out",
-                            layer=self.col_mux_stack[2],
+                            layer=self.col_mux_stack[0],
                             offset=bl_pos,
                             height=self.pin_height)
 
@@ -147,18 +150,8 @@ class rom_column_mux(pgate):
         nmos_lower_d_pin = self.nmos_lower.get_pin("D")
 
 
-        # Add vias to bl, br_out, nmos_upper/S, nmos_lower/D
-        # self.add_via_stack_center(from_layer=bl_pin.layer,
-        #                           to_layer=self.col_mux_stack[0],
-        #                           offset=bl_pin.bc())
-        # self.add_via_stack_center(from_layer=br_out_pin.layer,
-        #                           to_layer=self.col_mux_stack[0],
-        #                           offset=br_out_pin.uc())
-        # self.add_via_stack_center(from_layer=nmos_upper_s_pin.layer,
-        #                           to_layer=self.col_mux_stack[2],
-        #                           offset=nmos_upper_s_pin.center())
         self.add_via_stack_center(from_layer=nmos_lower_d_pin.layer,
-                                  to_layer=self.col_mux_stack[2],
+                                  to_layer=self.output_layer,
                                   offset=nmos_lower_d_pin.center())
 
         # bl -> nmos_upper/D on metal1
@@ -167,29 +160,17 @@ class rom_column_mux(pgate):
                + nmos_lower_s_pin.uc().scale(0, 0.5)
         mid2 = bl_pin.bc().scale(0, 0.4) \
                + nmos_lower_s_pin.uc().scale(1, 0.5)
-        self.add_path(self.col_mux_stack[0],
+        self.add_path(self.col_mux_stack[2],
                       [bl_pin.bc(), mid1, mid2, nmos_lower_s_pin.center()])
         # halfway up, move over
         mid1 = bl_out_pin.uc().scale(1, 0.4) \
                + nmos_lower_d_pin.bc().scale(0, 0.4)
         mid2 = bl_out_pin.uc().scale(0, 0.4) \
                + nmos_lower_d_pin.bc().scale(1, 0.4)
-        self.add_path(self.col_mux_stack[2],
+        self.add_path(self.col_mux_stack[0],
                       [bl_out_pin.uc(), mid1, mid2, nmos_lower_d_pin.center()])
 
-        # # br -> nmos_lower/D on metal2
-        # # br_out -> nmos_lower/S on metal1
-        # self.add_path(self.col_mux_stack[0],
-        #               [br_out_pin.uc(),
-        #                vector(nmos_lower_s_pin.cx(), br_out_pin.uy()),
-        #                nmos_lower_s_pin.center()])
-        # # halfway up, move over
-        # mid1 = br_pin.bc().scale(1, 0.5) \
-        #        + nmos_lower_d_pin.uc().scale(0, 0.5)
-        # mid2 = br_pin.bc().scale(0, 0.5) \
-        #        + nmos_lower_d_pin.uc().scale(1, 0.5)
-        # self.add_path(self.col_mux_stack[2],
-        #               [br_pin.bc(), mid1, mid2, nmos_lower_d_pin.center()])
+
 
     def extend_implants(self):
         """

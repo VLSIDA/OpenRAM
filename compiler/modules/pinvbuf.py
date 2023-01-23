@@ -17,13 +17,14 @@ class pinvbuf(pgate):
     This is a simple inverter/buffer used for driving loads. It is
     used in the column decoder for 1:2 decoding and as the clock buffer.
     """
-    def __init__(self, name, size=4, height=None):
+    def __init__(self, name, size=4, height=None, route_in_cell=False):
 
         debug.info(1, "creating pinvbuf {}".format(name))
         self.add_comment("size: {}".format(size))
 
         self.stage_effort = 4
         self.row_height = height
+        self.route_in_cell = route_in_cell
         # FIXME: Change the number of stages to support high drives.
 
         # stage effort of 4 or less
@@ -132,15 +133,35 @@ class pinvbuf(pgate):
                                   to_layer=a3_pin.layer,
                                   offset=a3_pin.center())
 
-        # inv1 Z to inv4 A (up and over)
         z1_pin = self.inv1_inst.get_pin("Z")
         a4_pin = self.inv4_inst.get_pin("A")
-        mid_point = vector(z1_pin.cx(), a4_pin.cy())
-        self.add_wire(route_stack,
-                      [z1_pin.center(), mid_point, a4_pin.center()])
-        self.add_via_stack_center(from_layer=z1_pin.layer,
-                                  to_layer=route_stack[2],
-                                  offset=z1_pin.center())
+        if self.route_in_cell:
+            # inv1 Z to inv4 A (under and up)
+            mid_point = vector(a4_pin.cx(), z1_pin.cy())
+            end_point = a4_pin.center()
+            # end_point = vector(a4_pin.cx(), a4_pin.by() - self.m1_space - self.contact_space)
+            self.add_path(route_stack[2],
+                        [z1_pin.center(), mid_point, end_point])
+                
+            self.add_via_stack_center(from_layer=z1_pin.layer,
+                                    to_layer=route_stack[2],
+                                    offset=z1_pin.center())
+
+            self.add_via_stack_center(from_layer=a4_pin.layer,
+                                    to_layer=route_stack[2],
+                                    offset=end_point)
+
+            
+            self.add_segment_center(a4_pin.layer, end_point, a4_pin.center())
+        else:
+            # inv1 Z to inv4 A (up and over)
+            
+            mid_point = vector(z1_pin.cx(), a4_pin.cy())
+            self.add_wire(route_stack,
+                        [z1_pin.center(), mid_point, a4_pin.center()])
+            self.add_via_stack_center(from_layer=z1_pin.layer,
+                                    to_layer=route_stack[2],
+                                    offset=z1_pin.center())
 
     def add_layout_pins(self):
 

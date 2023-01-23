@@ -9,7 +9,7 @@ from openram import debug
 from openram.base import design
 from openram.base import vector
 from openram.sram_factory import factory
-from openram.tech import layer, preferred_directions
+from openram.tech import layer, preferred_directions, drc
 from openram.tech import layer_properties as layer_props
 from openram import OPTS
 
@@ -20,18 +20,18 @@ class rom_column_mux_array(design):
     Array of column mux to read the bitlines from ROM, based on the RAM column mux
     """
 
-    def __init__(self, name, columns, word_size, offsets=None, column_offset=0, bitline_layer="m1"):
+    def __init__(self, name, columns, word_size, input_layer="m2", bitline_layer="m1", sel_layer="m2"):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} word_size: {1} ".format(columns, word_size))
 
         self.columns = columns
         self.word_size = word_size
-        self.offsets = offsets
         self.words_per_row = int(self.columns / self.word_size)
-        self.column_offset = column_offset
+        self.input_layer = input_layer
+        # self.sel_layer = layer_props.column_mux_array.select_layer
+        self.sel_layer = sel_layer
 
-        self.sel_layer = layer_props.column_mux_array.select_layer
         self.sel_pitch = getattr(self, self.sel_layer + "_pitch")
         self.bitline_layer = bitline_layer
 
@@ -89,7 +89,9 @@ class rom_column_mux_array(design):
         self.width = self.columns * self.mux.width
         # one set of metal1 routes for select signals and a pair to interconnect the mux outputs bl/br
         # one extra route pitch is to space from the sense amp
-        self.route_height = (self.words_per_row + 3) * self.sel_pitch
+        self.route_height = (self.words_per_row + 3) * self.cell.width
+        self.route_layer_width = drc["minwidth_{}".format(self.bitline_layer)]
+        self.route_layer_pitch = drc["{0}_to_{0}".format(self.bitline_layer)]
 
     def create_array(self):
         self.mux_inst = []
@@ -106,8 +108,7 @@ class rom_column_mux_array(design):
 
     def place_array(self):
         # Default to single spaced columns
-        if not self.offsets:
-            self.offsets = [n * self.mux.width for n in range(self.columns)]
+        self.offsets = [n * self.mux.width for n in range(self.columns)]
 
         # For every column, add a pass gate
         for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
@@ -145,7 +146,7 @@ class rom_column_mux_array(design):
     def add_horizontal_input_rail(self):
         """ Create address input rails below the mux transistors  """
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height + (j - self.words_per_row) * self.sel_pitch)
+            offset = vector(0, self.route_height + (j - self.words_per_row) * self.cell.width)
             self.add_layout_pin(text="sel_{}".format(j),
                                 layer=self.sel_layer,
                                 offset=offset,
@@ -154,6 +155,7 @@ class rom_column_mux_array(design):
     def add_vertical_poly_rail(self):
         """  Connect the poly to the address rails """
 
+        
         # Offset to the first transistor gate in the pass gate
         for col in range(self.columns):
             # which select bit should this column connect to depends on the position in the word
@@ -165,7 +167,9 @@ class rom_column_mux_array(design):
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
 
-            bl_offset = offset.scale(0, 1) + vector((self.mux_inst[col].get_pin("bl_out").cx()), 0)
+            bl_x_offset = self.mux_inst[col].get_pin("bl_out").cx() + 2 * self.route_layer_width + self.route_layer_pitch + 0.5 * self.poly_contact.width
+
+            bl_offset = offset.scale(0, 1) + vector(bl_x_offset, 0)
             self.add_via_stack_center(from_layer="poly",
                                       to_layer=self.sel_layer,
                                       offset=bl_offset,
@@ -178,12 +182,12 @@ class rom_column_mux_array(design):
 
             bl_offset_begin = self.mux_inst[j].get_pin("bl_out").bc()
 
-            bl_out_offset_begin = bl_offset_begin - vector(0, (self.words_per_row + 1) * self.sel_pitch)
+            bl_out_offset_begin = bl_offset_begin - vector(0, (self.words_per_row + 1) * self.cell.width)
 
             # Add the horizontal wires for the first bit
             if j % self.words_per_row == 0:
                 bl_offset_end = self.mux_inst[j + self.words_per_row - 1].get_pin("bl_out").bc()
-                bl_out_offset_end = bl_offset_end - vector(0, (self.words_per_row + 1) * self.sel_pitch)
+                bl_out_offset_end = bl_offset_end - vector(0, (self.words_per_row + 1) * self.cell.width)
 
                 self.add_path(self.sel_layer, [bl_out_offset_begin, bl_out_offset_end])
 

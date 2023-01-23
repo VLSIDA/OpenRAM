@@ -15,10 +15,11 @@ from openram.tech import drc
 
 class rom_base_cell(design):
 
-    def __init__(self, name="", bitline_layer="li", bit_value=1):
+    def __init__(self, name="", bitline_layer="li", bit_value=1, add_well=False):
         super().__init__(name)
         self.bit_value = bit_value
         self.bitline_layer = bitline_layer
+        self.add_well=add_well
         self.create_netlist()
         self.create_layout()
 
@@ -39,6 +40,7 @@ class rom_base_cell(design):
         self.place_poly()
         if self.bit_value == 0:
             self.short_gate()
+
         
 
 
@@ -150,7 +152,19 @@ class rom_base_cell(design):
 
         self.add_segment_center(self.bitline_layer, self.get_pin("D").center(), self.get_pin("S").center())
         
-        
+    # def place_tap(self):
+
+    #     tap_x = self.poly_contact.width * 0.5
+    #     tap_y = self.via.uy() + drc["{0}_to_{0}".format(self.strap_layer)] * 2
+
+    #     contact_pos = vector(tap_x, tap_y)
+    #     self.add_via_center(layers=self.active_stack,
+    #                         offset=contact_pos,
+    #                         implant_type="p",
+    #                         well_type="p")
+    #     self.add_power_pin(name="gnd", 
+    #                        loc=contact_pos,
+    #                        start_layer=self.active_stack[2])
 
 
         

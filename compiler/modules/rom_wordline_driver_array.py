@@ -19,14 +19,15 @@ class rom_wordline_driver_array(design):
     Creates a Wordline Buffer/Inverter array
     """
 
-    def __init__(self, name, rows, cols):
+    def __init__(self, name, rows, cols, invert_outputs=False, tap_spacing=4):
         design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
         self.rows = rows
         self.cols = cols
-
+        self.invert_outputs=invert_outputs
+        self.tap_spacing = tap_spacing
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -60,10 +61,25 @@ class rom_wordline_driver_array(design):
     def add_modules(self):
         b = factory.create(module_type="rom_base_cell")
 
-        self.wl_driver = factory.create(module_type="pbuf_dec",
-                                        size=self.cols,
-                                        height=b.height,
-                                        add_wells=False)
+        if self.invert_outputs:
+            self.wl_driver = factory.create(module_type="pinv_dec",
+                                            size=self.cols,
+                                            height=b.height,
+                                            add_wells=False)
+                
+            self.wl_driver_tap = factory.create(module_type="pinv_dec",
+                                            size=self.cols,
+                                            add_wells=True)
+        else:
+            self.wl_driver = factory.create(module_type="pbuf_dec",
+                                            size=self.cols,
+                                            height=b.height,
+                                            add_wells=False)
+            self.wl_driver_tap = factory.create(module_type="pbuf_dec",
+                                            size=self.cols,
+                                            add_wells=True)
+        print(self.wl_driver.height)
+        print(self.wl_driver_tap.height)
 
     def route_supplies(self):
         """
@@ -80,21 +96,25 @@ class rom_wordline_driver_array(design):
     def create_drivers(self):
         self.wld_inst = []
         for row in range(self.rows):
-            self.wld_inst.append(self.add_inst(name="wld{0}".format(row),
-                                               mod=self.wl_driver))
+            if row % self.tap_spacing == 0:
+                self.wld_inst.append(self.add_inst(name="wld{0}".format(row),
+                                               mod=self.wl_driver_tap))
+            else:
+                self.wld_inst.append(self.add_inst(name="wld{0}".format(row),
+                                                mod=self.wl_driver))
             self.connect_inst(["in_{0}".format(row),
                                "out_{0}".format(row),
                                "vdd", "gnd"])
 
     def place_drivers(self):
-
+        y_offset = 0
         for row in range(self.rows):
             # These are flipped since we always start with an RBL on the bottom
-            y_offset = self.wl_driver.height * row
 
             offset = [0, y_offset]
 
             self.wld_inst[row].place(offset=offset)
+            y_offset += self.wld_inst[row].height
 
         self.width = self.wl_driver.width
         self.height = self.wl_driver.height * self.rows

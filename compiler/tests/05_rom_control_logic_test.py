@@ -25,7 +25,7 @@ class rom_decoder_test(openram_test):
         debug.info(2, "Testing control logic for rom cell")
 
 
-        a = factory.create(module_type="rom_control_logic", num_outputs=4)
+        a = factory.create(module_type="rom_control_logic", num_outputs=4, clk_fanout=4, height=40)
         self.local_check(a)
         openram.end_openram()
 

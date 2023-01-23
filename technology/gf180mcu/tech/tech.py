@@ -27,10 +27,28 @@ File containing the process technology parameters for SCMOS 4m, 0.35um
 # For example: tech_modules['contact'] = 'contact_scn4m'
 tech_modules = d.module_type()
 
+tech_modules["bitcell_1port"] = "gf180_bitcell"
+
 ###################################################
 # Custom cell properties
 ###################################################
 cell_properties = d.cell_properties()
+
+cell_properties.bitcell_1port.port_order = ['BL', 'BR','GND', 'VDD', 'nwell', 'pwell', 'WL']
+cell_properties.bitcell_1port.port_types = ["OUTPUT", "OUTPUT", "GROUND", "POWER", "BIAS", "BIAS", "INPUT"]
+cell_properties.bitcell_1port.port_map = {'BL': 'BL',
+                                          'BR': 'BR',
+                                          'WL': 'WL',
+                                          'VDD': 'VPWR',
+                                          'pwell': 'VNB',
+                                          'nwell': 'VPB',
+                                          'GND': 'VGND'}
+
+cell_properties.bitcell_1port.wl_layer = "m3"
+cell_properties.bitcell_1port.bl_layer = "m2"
+cell_properties.bitcell_1port.vdd_layer = "m1"
+cell_properties.bitcell_1port.gnd_layer = "m1"
+
 cell_properties.ptx.model_is_subckt = True
 
 ###################################################

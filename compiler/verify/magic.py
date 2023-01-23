@@ -414,17 +414,9 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False, outp
     # pex_fix did run the pex using a script while dev orignial method
     # use batch mode.
     # the dev old code using batch mode does not run and is split into functions
-    pex_runset = write_script_pex_rule(gds_name, name, sp_name, output)
+    write_script_pex_rule(gds_name, name, sp_name, output)
 
-    errfile = "{0}{1}.pex.err".format(output_path, name)
-    outfile = "{0}{1}.pex.out".format(output_path, name)
-
-    script_cmd = "{0} 2> {1} 1> {2}".format(pex_runset,
-                                            errfile,
-                                            outfile)
-    cmd = script_cmd
-    debug.info(2, cmd)
-    os.system(cmd)
+    (outfile, errfile, resultsfile) = run_script(name, "pex")
 
     # rename technology models
     pex_nelist = open(output, 'r')
@@ -533,7 +525,6 @@ def write_script_pex_rule(gds_name, cell_name, sp_name, output):
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
-    return run_file
 
 
 def find_error(results):

@@ -405,6 +405,11 @@ class stimuli():
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
+        # Wrap the command with conda activate & conda deactivate
+        # FIXME: Should use verify/run_script.py here but run_script doesn't return
+        # the return code of the subprocess. File names might also mismatch.
+        from openram import CONDA_HOME
+        cmd = "source {0}/bin/activate && {1} && conda deactivate".format(CONDA_HOME, cmd)
         debug.info(2, cmd)
         retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 

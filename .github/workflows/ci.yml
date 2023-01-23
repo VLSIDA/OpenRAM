@@ -9,10 +9,9 @@ jobs:
       - name: Library build
         run: |
          make library
-      - name: Docker build
+      - name: Build conda
         run: |
-         cd ${{ github.workspace }}/docker
-         make build
+         ./install_conda.sh
       - name: PDK Install
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"

@@ -13,6 +13,10 @@ then
     rm ${CONDA_INSTALLER_FILE}
     source ${CONDA_BASE}/bin/activate
 
+    # Prioritize channels to prevent version conflicts
+    conda config --add channels conda-forge
+    conda config --add channels vlsida-eda
+
     # Install iverilog from conda-eda
     conda install -y -c litex-hub iverilog
 

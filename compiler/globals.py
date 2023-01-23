@@ -472,8 +472,16 @@ def find_exe(check_exe):
     Check if the binary exists in any path dir
     and return the full path.
     """
+    # Search for conda setup if used
+    if OPTS.use_conda:
+        from openram import CONDA_HOME
+        search_path = "{0}/bin{1}{2}".format(CONDA_HOME,
+                                             os.pathsep,
+                                             os.environ["PATH"])
+    else:
+        search_path = os.environ["PATH"]
     # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
+    for path in search_path.split(os.pathsep):
         exe = os.path.join(path, check_exe)
         # if it is found, then break and use first version
         if is_exe(exe):

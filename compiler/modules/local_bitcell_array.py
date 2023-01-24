@@ -67,7 +67,7 @@ class local_bitcell_array(bitcell_base_array):
         # This is just used for names
         self.cell = factory.create(module_type=OPTS.bitcell)
 
-        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+        self.bitcell_array = factory.create(module_type="capped_replica_bitcell_array",
                                             cols=self.cols,
                                             rows=self.rows,
                                             rbl=self.rbl,

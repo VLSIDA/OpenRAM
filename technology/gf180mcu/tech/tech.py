@@ -39,10 +39,10 @@ cell_properties.bitcell_1port.port_types = ["OUTPUT", "OUTPUT", "GROUND", "POWER
 cell_properties.bitcell_1port.port_map = {'BL': 'BL',
                                           'BR': 'BR',
                                           'WL': 'WL',
-                                          'VDD': 'VPWR',
-                                          'pwell': 'VNB',
-                                          'nwell': 'VPB',
-                                          'GND': 'VGND'}
+                                          'VDD': 'VDD',
+                                          'pwell': 'pwell',
+                                          'nwell': 'nwell',
+                                          'GND': 'GND'}
 
 cell_properties.bitcell_1port.wl_layer = "m3"
 cell_properties.bitcell_1port.bl_layer = "m2"

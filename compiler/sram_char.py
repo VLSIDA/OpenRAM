@@ -62,8 +62,8 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_rows=OPTS.num_spare_rows,
               num_spare_cols=OPTS.num_spare_cols)
 
-debug.check(os.path.exists(args[1], "Spice netlist file {} not found.".format(args[1])))
-debug.check(os.path.exists(args[2], "HTML report file {} not found.".format(args[2])))
+debug.check(os.path.exists(args[1]), "Spice netlist file {} not found.".format(args[1]))
+debug.check(os.path.exists(args[2]), "HTML report file {} not found.".format(args[2]))
 sp_file = args[1]
 html_file = args[2]
 s.parse_html(html_file)

@@ -19,6 +19,7 @@ from .simulation import *
 from .measurements import *
 from .model_check import *
 from .analytical_util import *
+from .fake_sram import *
 
 debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""

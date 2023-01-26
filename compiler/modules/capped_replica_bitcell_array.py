@@ -209,6 +209,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # row-based or column based power and ground lines.
         self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
+        self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale
         self.bitcell_offset = vector(self.cell.width, self.cell.height)
@@ -216,19 +217,14 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.row_end_offset = vector(self.cell.width, self.cell.height)
 
         # Everything is computed with the replica array
-        self.replica_bitcell_array_inst.place(offset=0)
+        self.replica_bitcell_array_inst.place(offset=self.unused_offset)
 
         self.add_end_caps()
 
-        # Array was at (0, 0) but move everything so it is at the lower left
-        # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
-        # Note that this doesn't include the row/col cap
-        self.array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
-        self.translate_all(self.array_offset.scale(-1, -1))
+        # shift everything up and right to account for cap cells
+        self.translate_all(self.bitcell_offset.scale(-1, -1))
 
-        # Add extra width on the left and right for the unused WLs
-
-        self.width = self.dummy_col_insts[1].rx()
+        self.width = self.dummy_col_insts[1].rx() + self.unused_offset.x
         self.height = self.dummy_row_insts[1].uy()
 
         self.add_layout_pins()
@@ -285,12 +281,12 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         # Far bottom dummy row (first row below array IS flipped)
         flip_dummy = (self.rbl[0] + 1) % 2
-        dummy_row_offset = self.bitcell_offset.scale(0, flip_dummy - 1)
+        dummy_row_offset = self.bitcell_offset.scale(0, flip_dummy - 1) + self.unused_offset
         self.dummy_row_insts[0].place(offset=dummy_row_offset,
                                       mirror="MX" if flip_dummy else "R0")
         # Far left dummy col
         # Shifted down by the number of left RBLs even if we aren't adding replica column to this bitcell array
-        dummy_col_offset = self.bitcell_offset.scale(-1, -1)
+        dummy_col_offset = self.bitcell_offset.scale(-1, -1) + self.unused_offset
         self.dummy_col_insts[0].place(offset=dummy_col_offset)
 
         # Far right dummy col

@@ -78,7 +78,7 @@ class rom_precharge_cell(rom_base_cell):
         source = self.cell_inst.get_pin("S")
 
         tap_y = source.cy() - self.contact_width - 2 * self.active_enclose_contact - self.active_space
-
+        self.tap_offset = abs(tap_y)
         pos  = vector(source.cx(), tap_y )
 
         self.add_via_center(layers=self.active_stack,

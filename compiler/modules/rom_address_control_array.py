@@ -65,7 +65,9 @@ class rom_address_control_array(design):
     def add_pins(self):
         for col in range(self.cols):
             self.add_pin("A{0}_in".format(col), "INPUT")
+        for col in range(self.cols):
             self.add_pin("A{0}_out".format(col), "OUTPUT")
+        for col in range(self.cols):
             self.add_pin("Abar{0}_out".format(col), "OUTPUT")
         self.add_pin("clk", "INPUT")
         self.add_pin("vdd", "POWER")

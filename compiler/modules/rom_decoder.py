@@ -144,8 +144,12 @@ class rom_decoder(design):
 
         for i in range(self.num_inputs):
             control_pins.append("A{0}".format(i))
-            control_pins.append("in_{0}".format(i))
-            control_pins.append("inbar_{0}".format(i))
+        for i in range(self.num_inputs):
+            control_pins.append("A_int_{0}".format(i))
+        for i in range(self.num_inputs):
+            control_pins.append("Ab_int_{0}".format(i))
+        
+            
         control_pins.append("clk")
         control_pins.append("vdd")
         control_pins.append("gnd")
@@ -163,8 +167,8 @@ class rom_decoder(design):
 
 
         for i in reversed(range(self.num_inputs)):
-            array_pins.append("inbar_{0}".format(i))
-            array_pins.append("in_{0}".format(i))
+            array_pins.append("Ab_int_{0}".format(i))
+            array_pins.append("A_int_{0}".format(i))
         array_pins.append("precharge")
         array_pins.append("vdd")
         array_pins.append("gnd")
@@ -236,6 +240,7 @@ class rom_decoder(design):
 
             self.add_path(self.inv_route_layer, [addr_out_pin.center(), addr_middle, addr_pin.center()])
             self.add_path(self.inv_route_layer, [addr_bar_out_pin.center(), addr_bar_middle, addr_bar_pin.center()])
+            self.copy_layout_pin(self.buf_inst, "A{}_in".format(i), "A{}".format(i))
 
             # self.add_segment_center(self.inv_route_layer, addr_bar_middle + vector(0, self.inv_route_width * 0.5), addr_bar_out_pin.center() + vector(0, self.inv_route_width * 0.5), self.inv_route_width)
 
@@ -250,42 +255,28 @@ class rom_decoder(design):
         self.copy_layout_pin(self.wordline_buf_inst, "gnd")
         self.copy_layout_pin(self.buf_inst, "gnd")
 
-        # route decode array vdd and inv array vdd together
-        # array_vdd = self.array_inst.get_pin("vdd")
-        # inv_vdd = self.buf_inst.get_pins("vdd")[-1]
 
-        # end = vector(array_vdd.cx(), inv_vdd.cy() - 0.5 * minwidth)
-        # self.add_segment_center("m1", array_vdd.center(), end)
-        # end = vector(array_vdd.cx() + 0.5 * minwidth, inv_vdd.cy())
-        # self.add_segment_center(self.route_layer, inv_vdd.center(), end)
-
-        # end = vector(array_vdd.cx(), inv_vdd.cy())
-        # self.add_via_stack_center(end, self.route_layer, "m1")
-        # self.add_layout_pin_rect_center("vdd", "m1", end)
+        # Extend nwells to connect with eachother
+        self.extend_wells()
         
-        # # route pin on inv gnd
 
-        # inv_gnd = self.buf_inst.get_pins("gnd")[0]
-        # array_gnd = self.array_inst.get_pins("gnd")
-
-        # # add x jog
-
-        # start = vector(array_gnd[0].cx(), inv_gnd.cy())
-        # self.add_via_stack_center(start, self.route_layer, "m1")
-        # self.add_layout_pin_rect_center("gnd", "m1", start)
-
-        # end = array_gnd[0].center()
-        # self.add_segment_center("m1", start, end)
-        # # add y jog
+    def extend_wells(self):
+        precharge_well_rx = self.array_inst.get_pins("vdd")[0].cx() + 0.5 * self.nwell_width
+        precharge_well_lx = precharge_well_rx - self.array_mod.precharge_array.height - 0.5 * self.nwell_width - self.array_mod.precharge_array.well_offset
 
 
-        # width =  minwidth
-        # height = array_gnd[0].uy() - array_gnd[-1].uy() + minwidth
+        offset = vector(precharge_well_rx ,self.array_inst.by())
 
-        # offset = vector(-0.5 *width ,0.5 * (array_gnd[0].cy() + array_gnd[-1].cy()))
+        self.add_label(text="well_right", layer="nwell", offset=offset)
+        offset = vector(precharge_well_lx ,self.array_inst.by())
+        self.add_label(text="well_left", layer="nwell", offset=offset)
+        vdd_pins=self.buf_inst.get_pins("vdd").copy()
+        print(vdd_pins)
+        well_by = vdd_pins[1].cy()
+        well_ll = vector(precharge_well_lx, well_by)
 
-        # start = end - vector(0, 0.5 * minwidth)
-        # end = vector(start.x, array_gnd[1].uy())
+        self.add_rect(layer="nwell", offset=well_ll, height = self.array_inst.by() - well_by, width=precharge_well_rx - precharge_well_lx)
+
 
  
 

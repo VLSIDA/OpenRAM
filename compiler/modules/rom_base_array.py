@@ -117,7 +117,7 @@ class rom_base_array(bitcell_base_array):
 
     def add_pins(self):
         for bl_name in self.get_bitline_names():
-            self.add_pin(bl_name, "INOUT")
+            self.add_pin(bl_name, "OUTPUT")
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
         self.add_pin("precharge_gate", "INPUT")

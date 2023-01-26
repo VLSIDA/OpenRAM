@@ -175,6 +175,7 @@ class rom_precharge_array(design):
         self.connect_row_pins(layer=self.strap_layer, pins=array_pins, name=None, round=False)
 
     def extend_well(self):
+        self.well_offset = self.pmos.tap_offset
         well_y = self.pmos_insts[0].get_pin("vdd").cy() - 0.5 * self.nwell_width
 
         well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width

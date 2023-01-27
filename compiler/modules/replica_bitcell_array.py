@@ -255,7 +255,7 @@ class replica_bitcell_array(bitcell_base_array):
 
         self.route_supplies()
 
-        self.height = (len(self.rbl) + self.row_size) * self.cell.height
+        self.height = (sum(self.rbl) + self.row_size) * self.cell.height
         self.width = (len(self.rbls) + self.column_size) * self.cell.width
 
         self.add_boundary()

@@ -245,8 +245,7 @@ class rom_decoder(design):
             # self.add_segment_center(self.inv_route_layer, addr_bar_middle + vector(0, self.inv_route_width * 0.5), addr_bar_out_pin.center() + vector(0, self.inv_route_width * 0.5), self.inv_route_width)
 
     def route_supplies(self):
-        minwidth =  drc["minwidth_{}".format(self.inv_route_layer)]
-        pitch = drc["{0}_to_{0}".format(self.inv_route_layer)]
+
         self.copy_layout_pin(self.array_inst, "vdd")
         self.copy_layout_pin(self.wordline_buf_inst, "vdd")
         self.copy_layout_pin(self.buf_inst, "vdd")
@@ -255,9 +254,8 @@ class rom_decoder(design):
         self.copy_layout_pin(self.wordline_buf_inst, "gnd")
         self.copy_layout_pin(self.buf_inst, "gnd")
 
-
         # Extend nwells to connect with eachother
-        self.extend_wells()
+        # self.extend_wells()
         
 
     def extend_wells(self):
@@ -272,11 +270,10 @@ class rom_decoder(design):
         self.add_label(text="well_left", layer="nwell", offset=offset)
         vdd_pins=self.buf_inst.get_pins("vdd").copy()
         print(vdd_pins)
-        well_by = vdd_pins[1].cy()
-        well_ll = vector(precharge_well_lx, well_by)
-
-        self.add_rect(layer="nwell", offset=well_ll, height = self.array_inst.by() - well_by, width=precharge_well_rx - precharge_well_lx)
-
+        well_by = vdd_pins[0].cy()
+        # well_ll = vector(precharge_well_lx, well_by)
+        well_ll = vector(self.buf_inst.rx(), well_by)
+        # self.add_rect(layer="nwell", offset=well_ll, height = self.array_inst.by() - well_by, width=precharge_well_rx - self.buf_inst.rx())
 
  
 

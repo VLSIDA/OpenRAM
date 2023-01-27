@@ -120,7 +120,7 @@ class rom_base_array(bitcell_base_array):
             self.add_pin(bl_name, "OUTPUT")
         for wl_name in self.get_wordline_names():
             self.add_pin(wl_name, "INPUT")
-        self.add_pin("precharge_gate", "INPUT")
+        self.add_pin("precharge", "INPUT")
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
@@ -207,7 +207,7 @@ class rom_base_array(bitcell_base_array):
         #     if self.int_bl_list[bl] == prechrg_pins[bl]:
         #         prechrg_pins[bl] = "gnd"
         
-        prechrg_pins.append("precharge_gate")
+        prechrg_pins.append("precharge")
         prechrg_pins.append("vdd")
         self.precharge_inst = self.add_inst(name="decode_array_precharge", mod=self.precharge_array)
         self.connect_inst(prechrg_pins)

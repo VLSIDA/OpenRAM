@@ -86,11 +86,13 @@ class rom_wordline_driver_array(design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
+
         if layer_props.wordline_driver.vertical_supply:
-            self.route_vertical_pins("vdd", self.wld_inst)
-            self.route_vertical_pins("gnd", self.wld_inst)
-            self.route_vertical_pins("vdd", self.wld_inst, layer=self.supply_layer)
-            self.route_vertical_pins("gnd", self.wld_inst, layer=self.supply_layer)
+            print("copied")
+            # self.route_vertical_pins("vdd", self.wld_inst)
+            # self.route_vertical_pins("gnd", self.wld_inst)
+            self.route_vertical_pins("vdd", [self], layer=self.supply_layer)
+            self.route_vertical_pins("gnd", [self], layer=self.supply_layer)
         else:
             self.route_vertical_pins("vdd", self.wld_inst, xside="rx",)
             self.route_vertical_pins("gnd", self.wld_inst, xside="lx",)
@@ -123,6 +125,8 @@ class rom_wordline_driver_array(design):
         route_width = drc["minwidth_{}".format(self.route_layer)]
         for row in range(self.rows):
             inst = self.wld_inst[row]
+            self.copy_layout_pin(inst, "vdd")
+            self.copy_layout_pin(inst, "gnd")
 
             self.copy_layout_pin(inst, "A", "in_{0}".format(row))
 

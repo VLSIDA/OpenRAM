@@ -18,12 +18,12 @@ then
     conda config --add channels vlsida-eda
 
     # Install iverilog from conda-eda
-    conda install -y -c litex-hub iverilog
+    conda install -q -y -c litex-hub iverilog
 
     # Install rest of the tools from vlsida-eda
     for tool in ${TOOLS}
     do
-        conda install -y -c vlsida-eda ${tool}
+        conda install -q -y -c vlsida-eda ${tool}
     done
 
     conda deactivate

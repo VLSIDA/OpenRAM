@@ -25,6 +25,8 @@ jobs:
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
          export FREEPDK45="~/FreePDK45"
+         # KLAYOUT_PATH breaks klayout installation. Unset it for now...
+         unset KLAYOUT_PATH
          #cd $OPENRAM_HOME/.. && make pdk && make install
          #export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm

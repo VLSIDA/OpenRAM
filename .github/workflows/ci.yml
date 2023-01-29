@@ -41,4 +41,5 @@ jobs:
          export ARCHIVE_DIR="/tmp/github_runner_fail_${{ github.run_id }}_${{ github.run_attempt }}"
          mkdir -p $ARCHIVE_DIR
          cp -r ${{ github.workspace }}/compiler/tests/results/* $ARCHIVE_DIR
+         chmod -R 777 $ARCHIVE_DIR
          echo "Files of this run are located in $ARCHIVE_DIR"

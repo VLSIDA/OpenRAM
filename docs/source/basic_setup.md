@@ -8,7 +8,8 @@ This page shows the basic setup for using OpenRAM.
 ## Table of Contents
 1. [Dependencies](#dependencies)
 1. [OpenRAM Library](#openram-library)
-1. [Docker](#docker)
+1. [Anaconda](#anaconda)
+1. [Docker](#docker-deprecated-use-anaconda-instead)
 1. [Environment](#environment)
 1. [Sky130 Setup](#sky130-setup)
 
@@ -18,11 +19,11 @@ This page shows the basic setup for using OpenRAM.
 Please see the Dockerfile for the required versions of tools.
 
 In general, the OpenRAM compiler has very few dependencies:
-+ Docker
++ Git
 + Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ Git
++ Anaconda
 
 
 
@@ -38,11 +39,22 @@ make library
 
 + Install the latest _dev_ version:
 ```
-pip3 install git+ssh://git@github.com/VLSIDA/OpenRAM.git@dev
+pip3 install git+https://git@github.com/VLSIDA/OpenRAM.git@dev
 ```
 
 
-## Docker
+
+## Anaconda
+We use Anaconda package manager to install the tools used by OpenRAM. This way, you don't have to
+worry about updating/installing these tools. OpenRAM installs Anaconda silently in the background
+(without affecting any existing anaconda setup you have).
+
+OpenRAM uses Anaconda by default, but you can turn this feature off by setting `use_conda = False`
+in your config file. Then, OpenRAM will use the tools you have installed on your system.
+
+
+
+## Docker (deprecated, use Anaconda instead)
 We have a [docker setup](../../docker) to run OpenRAM. To use this, you should run:
 ```
 cd OpenRAM/docker

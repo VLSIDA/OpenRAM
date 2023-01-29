@@ -36,11 +36,11 @@ def run_script(cell_name, script="lvs"):
             script_content = f.readlines()
         with open(scriptpath, "w") as f:
             # First line is shebang
-            f.write(script_content[0] + "\n")
+            f.write(script_content[0])
             # Activate conda using the activate script
             f.write("source {}/bin/activate\n".format(CONDA_HOME))
             for line in script_content[1:]:
-                f.write(line + "\n")
+                f.write(line)
             # Deactivate conda at the end
             f.write("conda deactivate\n")
 

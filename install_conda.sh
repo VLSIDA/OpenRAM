@@ -29,9 +29,3 @@ then
     conda deactivate
 fi
 
-# TODO: Check if all tools are installed in case the miniconda is already installed
-
-#SEARCH_PATTERN=$(echo "${TOOLS}" | tr -s '[:blank:]' '|')
-#INSTALLED_TOOLS=$(conda list | grep -o -E "${SEARCH_PATTERN}")
-#echo "${SEARCH_PATTERN}"
-#echo "${INSTALLED_TOOLS}"

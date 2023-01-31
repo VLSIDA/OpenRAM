@@ -34,10 +34,10 @@ except:
 (OPTS, args) = openram.parse_args()
 
 # Override the usage
-USAGE = "Usage: {} [options] <config file> <spice netlist> <html report>\nUse -h for help.\n".format(__file__)
+USAGE = "Usage: {} [options] <config file> <spice netlist>\nUse -h for help.\n".format(__file__)
 
 # Check that we are left with a single configuration file as argument.
-if len(args) != 3:
+if len(args) != 2:
     print(USAGE)
     sys.exit(2)
 
@@ -63,10 +63,7 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_cols=OPTS.num_spare_cols)
 
 debug.check(os.path.exists(args[1]), "Spice netlist file {} not found.".format(args[1]))
-debug.check(os.path.exists(args[2]), "HTML report file {} not found.".format(args[2]))
 sp_file = args[1]
-html_file = args[2]
-s.parse_html(html_file)
 s.generate_pins()
 s.setup_multiport_constants()
 

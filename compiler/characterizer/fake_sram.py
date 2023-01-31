@@ -1,6 +1,7 @@
 from openram import sram_config
 from math import ceil
 import re
+from openram import OPTS
 
 
 class fake_sram(sram_config):
@@ -29,7 +30,7 @@ class fake_sram(sram_config):
         A first W port (with no RW ports) will be: clk0, csb0, addr0, data0
 
         """
-        total_ports = self.num_rw_ports + self.num_w_ports + self.num_r_ports
+        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
 
         # These are the read/write port indices.
         self.readwrite_ports = []
@@ -46,53 +47,25 @@ class fake_sram(sram_config):
 
         # The order is always fixed as RW, W, R
         port_number = 0
-        for port in range(self.num_rw_ports):
+        for port in range(OPTS.num_rw_ports):
             self.readwrite_ports.append(port_number)
             self.write_ports.append(port_number)
             self.read_ports.append(port_number)
             port_number += 1
-        for port in range(self.num_w_ports):
+        for port in range(OPTS.num_w_ports):
             self.write_ports.append(port_number)
             self.writeonly_ports.append(port_number)
             port_number += 1
-        for port in range(self.num_r_ports):
+        for port in range(OPTS.num_r_ports):
             self.read_ports.append(port_number)
             self.readonly_ports.append(port_number)
             port_number += 1
 
-    def parse_html(self, filename):
-        """
-        Parse the HTML file generated from previous SRAM generation
-        and populate the members
-        """
-        with open(filename, 'r') as html:
-            for line in html:
-                if 'Ports and Configuration' in line:
-                    configRE = re.compile(r'<tr><td>(\w*)</td><td>(\w*)</td></tr>')
-                    values = configRE.finditer(line)
-                    for val in values:
-                        if val.group(1) == 'WORD_SIZE':
-                            self.word_size = int(val.group(2))
-                        elif val.group(1) == 'NUM_WORDS':
-                            self.num_words = int(val.group(2))
-                        elif val.group(1) == 'NUM_BANKS':
-                            self.num_banks = int(val.group(2))
-                        elif val.group(1) == 'NUM_RW_PORTS':
-                            self.num_rw_ports = int(val.group(2))
-                        elif val.group(1) == 'NUM_R_PORTS':
-                            self.num_r_ports = int(val.group(2))
-                        elif val.group(1) == 'NUM_W_PORTS':
-                            self.num_w_ports = int(val.group(2))
-                        elif val.group(1) == 'Area (&microm<sup>2</sup>)':
-                            self.height = int(val.group(2) ** 0.5)
-                            self.width = int(val.group(2) ** 0.5)
-            self.compute_sizes()
-
     def generate_pins(self):
         self.pins = ['vdd', 'gnd']
         self.pins.extend(['clk{}'.format(port) for port in range(
-            self.num_rw_ports + self.num_r_ports + self.num_w_ports)])
-        for port in range(self.num_rw_ports):
+            OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports)])
+        for port in range(OPTS.num_rw_ports):
             self.pins.extend(['din{0}[{1}]'.format(port, bit)
                               for bit in range(self.word_size)])
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
@@ -105,8 +78,8 @@ class fake_sram(sram_config):
 
             self.pins.extend(['csb{}'.format(port), 'web{}'.format(port)])
 
-        start_port = self.num_rw_ports
-        for port in range(start_port, start_port + self.num_r_ports):
+        start_port = OPTS.num_rw_ports
+        for port in range(start_port, start_port + OPTS.num_r_ports):
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
                               for bit in range(self.word_size)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
@@ -114,8 +87,8 @@ class fake_sram(sram_config):
 
             self.pins.extend(['csb{}'.format(port)])
 
-        start_port += self.num_r_ports
-        for port in range(start_port, start_port + self.num_w_ports):
+        start_port += OPTS.num_r_ports
+        for port in range(start_port, start_port + OPTS.num_w_ports):
             self.pins.extend(['din{0}[{1}]'.format(port, bit)
                               for bit in range(self.word_size)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)

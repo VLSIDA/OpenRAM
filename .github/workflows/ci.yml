@@ -25,7 +25,7 @@ jobs:
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
-         export FREEPDK45="/home/github-runner/FreePDK45"
+         export FREEPDK45="~/FreePDK45"
          # KLAYOUT_PATH breaks klayout installation. Unset it for now...
          unset KLAYOUT_PATH
          #cd $OPENRAM_HOME/.. && make pdk && make install

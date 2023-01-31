@@ -23,7 +23,7 @@ TECHNOLOGY = "freepdk45"
 PDK_PATH=os.environ.get("FREEPDK45")
 if PDK_PATH==None:
     debug.error("Must define FREEPDK45 to point to PDK.", -1)
-PDK_DIR=os.path.abspath(PDK_PATH)
+PDK_DIR=os.path.abspath(os.path.expanduser(PDK_PATH))
 os.environ["PDK_DIR"] = PDK_DIR
 os.environ["SYSTEM_CDS_LIB_DIR"] = "{0}/ncsu_basekit/cdssetup".format(PDK_DIR)
 os.environ["CDS_SITE"] = PDK_DIR

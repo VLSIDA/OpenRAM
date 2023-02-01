@@ -109,7 +109,7 @@ class rom_precharge_array(design):
             
 
     def create_precharge_tx(self, col):
-        name = "Xpmos_c{0}".format(col)
+        name = "pmos_c{0}".format(col)
         pmos = self.add_inst(name=name, mod=self.pmos)
         self.array_insts.append(pmos)
         self.pmos_insts.append(pmos)

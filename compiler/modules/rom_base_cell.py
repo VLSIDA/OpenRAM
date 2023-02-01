@@ -80,7 +80,7 @@ class rom_base_cell(design):
         # height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
         
         # make the cells square so the pitch of wordlines will match bitlines
-        print("height: {0} width: {1}".format(height, width))
+        # print("height: {0} width: {1}".format(height, width))
         if width > height:
             self.width = width
             self.height = width

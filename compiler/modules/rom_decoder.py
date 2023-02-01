@@ -112,17 +112,17 @@ class rom_decoder(design):
                                             cols=self.num_inputs)
 
 
-        self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), \
-                                        rows=self.num_outputs, \
-                                        cols=self.cols,
+        self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), 
+                                        rows=self.num_outputs, 
+                                        cols=ceil(self.cols * 0.5),
                                         invert_outputs=self.invert_outputs,
                                         tap_spacing=self.strap_spacing)
                                             
 
-        self.array_mod = factory.create(module_type="rom_base_array", \
-                                        module_name="{}_array".format(self.name), \
-                                        cols=self.num_outputs, \
-                                        rows=2 * self.num_inputs, \
+        self.array_mod = factory.create(module_type="rom_base_array", 
+                                        module_name="{}_array".format(self.name), 
+                                        cols=self.num_outputs, 
+                                        rows=2 * self.num_inputs, 
                                         bitmap=self.decode_map,
                                         strap_spacing = self.strap_spacing,
                                         bitline_layer=self.output_layer,

@@ -19,11 +19,9 @@ class rom_control_logic(design):
         self.height = height
         if self.height is not None:
 
-            print("got height of {}".format(self.height))
-            self.driver_height = 0.6 * self.height
-            self.gate_height = 0.2 * self.height
+            self.driver_height = 0.5 * self.height
+            self.gate_height = 0.25 * self.height
         else:
-            print("got none height")
             self.gate_height = 20 * self.m1_pitch
             self.driver_height = self.gate_height
 
@@ -98,12 +96,11 @@ class rom_control_logic(design):
     def route_insts(self):
         
         route_width = drc["minwidth_{}".format(self.route_stack[2])]
-
         self.copy_layout_pin(self.buf_inst, "A", "clk_in")
         self.copy_layout_pin(self.buf_inst, "Zb", "clkb_out")
         self.copy_layout_pin(self.buf_inst, "Z", "clk_out")
         self.copy_layout_pin(self.driver_inst, "Z", "prechrg")
-        self.copy_layout_pin(self.nand_inst, "B", "CS")
+        self.copy_layout_pin(self.nand_inst, "A", "CS")
         self.copy_layout_pin(self.buf_inst, "gnd")
         self.copy_layout_pin(self.driver_inst, "vdd")
         self.copy_layout_pin(self.buf_inst, "vdd")

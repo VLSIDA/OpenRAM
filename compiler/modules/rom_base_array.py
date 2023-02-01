@@ -266,7 +266,7 @@ class rom_base_array(bitcell_base_array):
                 self.cell_pos[row, col] = vector(cell_x, cell_y)
                 self.cell_inst[row, col].place(self.cell_pos[row, col])
                 cell_x += self.zero_cell.width
-                self.add_label("debug", "li", self.cell_pos[row, col])
+                # self.add_label("debug", "li", self.cell_pos[row, col])
 
             
             self.strap_pos[row, self.column_size] = vector(cell_x, cell_y)
@@ -326,7 +326,7 @@ class rom_base_array(bitcell_base_array):
 
     def place_precharge(self):
 
-        self.precharge_offset = vector(0,  - self.precharge_inst.height - self.zero_cell.nmos.end_to_contact - 2 * drc["nwell_enclose_active"])
+        self.precharge_offset = vector(0,  - self.precharge_inst.height - self.zero_cell.nmos.end_to_contact - 2 * drc["nwell_enclose_active"] - 3 * self.m1_pitch)
 
         self.precharge_inst.place(offset=self.precharge_offset)
 

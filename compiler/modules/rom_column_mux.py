@@ -57,19 +57,13 @@ class rom_column_mux(pgate):
 
         self.place_ptx()
 
-        # cell = factory.create(module_type=OPTS.bitcell)
-        # if(cell_props.use_strap == True and OPTS.num_ports == 1):
-        #     strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
-        #     precharge_width = cell.width + strap.width
-        # else:
-        #     precharge_width = cell.width
         self.width = self.bitcell.width
         self.height = self.nmos_lower.uy() + self.pin_height
 
         self.connect_poly()
         self.add_bitline_pins()
         self.connect_bitlines()
-        # self.add_pn_wells()
+        self.add_pn_wells()
 
     def add_ptx(self):
         self.bitcell = factory.create(module_type="rom_base_cell")
@@ -107,7 +101,7 @@ class rom_column_mux(pgate):
 
 
     def place_ptx(self):
-        """ Create the two pass gate NMOS transistors to switch the bitlines"""
+        """ Create the pass gate NMOS transistor to switch the bitline """
 
         # Space it in the center
         nmos_lower_position = self.nmos.active_offset.scale(0, 1) \
@@ -148,7 +142,9 @@ class rom_column_mux(pgate):
 
         nmos_lower_s_pin = self.nmos_lower.get_pin("S")
         nmos_lower_d_pin = self.nmos_lower.get_pin("D")
-
+        self.add_via_stack_center(from_layer=nmos_lower_s_pin.layer,
+                                  to_layer=self.input_layer,
+                                  offset=nmos_lower_s_pin.center())
 
         self.add_via_stack_center(from_layer=nmos_lower_d_pin.layer,
                                   to_layer=self.output_layer,
@@ -160,14 +156,14 @@ class rom_column_mux(pgate):
                + nmos_lower_s_pin.uc().scale(0, 0.5)
         mid2 = bl_pin.bc().scale(0, 0.4) \
                + nmos_lower_s_pin.uc().scale(1, 0.5)
-        self.add_path(self.col_mux_stack[2],
+        self.add_path(self.input_layer,
                       [bl_pin.bc(), mid1, mid2, nmos_lower_s_pin.center()])
         # halfway up, move over
         mid1 = bl_out_pin.uc().scale(1, 0.4) \
                + nmos_lower_d_pin.bc().scale(0, 0.4)
         mid2 = bl_out_pin.uc().scale(0, 0.4) \
                + nmos_lower_d_pin.bc().scale(1, 0.4)
-        self.add_path(self.col_mux_stack[0],
+        self.add_path(self.output_layer,
                       [bl_out_pin.uc(), mid1, mid2, nmos_lower_d_pin.center()])
 
 
@@ -197,7 +193,7 @@ class rom_column_mux(pgate):
         #     rbc_width = self.bitcell.width
         # Add it to the right, aligned in between the two tx
         active_pos = vector(self.bitcell.width,
-                            self.nmos_upper.by() - 0.5 * self.poly_space)
+                            self.nmos_lower.uy() + self.active_contact.height + self.active_space)
 
         self.add_via_center(layers=self.active_stack,
                             offset=active_pos,
@@ -205,16 +201,17 @@ class rom_column_mux(pgate):
                             well_type="p")
 
         # If there is a li layer, include it in the power stack
-        self.add_via_center(layers=self.col_mux_stack,
-                            offset=active_pos)
+        self.add_via_stack_center(from_layer=self.active_stack[2],
+                                  to_layer=self.supply_stack[0],
+                                  offset=active_pos)
 
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer="m1",
+                                        layer=self.supply_stack[0],
                                         offset=active_pos)
 
         # Add well enclosure over all the tx and contact
-        if "pwell" in layer:
-            self.add_rect(layer="pwell",
-                          offset=vector(0, 0),
-                          width=rbc_width,
-                          height=self.height)
+        # if "pwell" in layer:
+        #     self.add_rect(layer="pwell",
+        #                   offset=vector(0, 0),
+        #                   width=rbc_width,
+        #                   height=self.height)

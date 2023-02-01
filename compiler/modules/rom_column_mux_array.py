@@ -20,7 +20,7 @@ class rom_column_mux_array(design):
     Array of column mux to read the bitlines from ROM, based on the RAM column mux
     """
 
-    def __init__(self, name, columns, word_size, input_layer="m2", bitline_layer="m1", sel_layer="m2"):
+    def __init__(self, name, columns, word_size, tap_spacing=4, input_layer="m2", bitline_layer="m1", sel_layer="m2"):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} word_size: {1} ".format(columns, word_size))
@@ -29,6 +29,7 @@ class rom_column_mux_array(design):
         self.word_size = word_size
         self.words_per_row = int(self.columns / self.word_size)
         self.input_layer = input_layer
+        self.tap_spacing = tap_spacing
         # self.sel_layer = layer_props.column_mux_array.select_layer
         self.sel_layer = sel_layer
 
@@ -44,14 +45,6 @@ class rom_column_mux_array(design):
         if not OPTS.netlist_only:
             self.create_layout()
 
-    def get_bl_name(self):
-        bl_name = self.mux.get_bl_names()
-        return bl_name
-
-    def get_br_name(self, port=0):
-        br_name = self.mux.get_br_names()
-        return br_name
-
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
@@ -61,12 +54,14 @@ class rom_column_mux_array(design):
         self.setup_layout_constants()
         self.place_array()
         self.add_routing()
+        
         # Find the highest shapes to determine height before adding well
         highest = self.find_highest_coords()
         self.height = highest.y
         self.add_layout_pins()
         if "pwell" in layer:
             self.add_enclosure(self.mux_inst, "pwell")
+        
         self.add_boundary()
         self.DRC_LVS()
 
@@ -80,8 +75,8 @@ class rom_column_mux_array(design):
         self.add_pin("gnd")
 
     def add_modules(self):
-        self.mux = factory.create(module_type="rom_column_mux")
-
+        self.mux = factory.create(module_type="rom_column_mux", input_layer=self.input_layer, output_layer=self.bitline_layer)
+        self.tap = factory.create(module_type="rom_poly_tap", add_tap=True)
         self.cell = factory.create(module_type="rom_base_cell")
 
     def setup_layout_constants(self):
@@ -145,8 +140,12 @@ class rom_column_mux_array(design):
 
     def add_horizontal_input_rail(self):
         """ Create address input rails below the mux transistors  """
+        tap_offset = 0
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height + (j - self.words_per_row) * self.cell.width)
+            if j % self.tap_spacing == 0 and j != 0:
+                tap_offset += self.tap.pitch_offset
+            offset = vector(0, self.route_height + tap_offset + (j - self.words_per_row) * self.cell.width)
+
             self.add_layout_pin(text="sel_{}".format(j),
                                 layer=self.sel_layer,
                                 offset=offset,
@@ -208,7 +207,10 @@ class rom_column_mux_array(design):
                                       directions=self.via_directions)
 
 
-
+    def add_taps(self):
+        pass
+            
+        
     def graph_exclude_columns(self, column_include_num):
         """
         Excludes all columns muxes unrelated to the target bit being simulated.

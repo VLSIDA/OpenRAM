@@ -2,7 +2,7 @@
 from math import ceil, log, sqrt
 from openram.base import vector
 from openram.base import design
-from openram import OPTS
+from openram import OPTS, debug
 from openram.sram_factory import factory
 from openram.tech import drc, layer
 
@@ -14,8 +14,8 @@ class rom_base_bank(design):
     word size is in bytes
     """
 
-    def __init__(self, strap_spacing=0, data_file=None, name="", word_size=2) -> None:
-
+    def __init__(self, strap_spacing=0, data_file=None, name="", word_size=2):
+        super().__init__(name=name)
         self.word_size = word_size * 8
         self.read_binary(word_size=word_size, data_file=data_file)
 
@@ -31,7 +31,7 @@ class rom_base_bank(design):
         self.bitline_layer = "m1"
         self.wordline_layer = "m2"
 
-        super().__init__(name=name)
+        
         if "li" in layer:
             self.route_stack = self.m1_stack
         else:
@@ -39,7 +39,8 @@ class rom_base_bank(design):
         self.route_layer = self.route_stack[0]
         self.setup_layout_constants()
         self.create_netlist()
-        self.create_layout()
+        if not OPTS.netlist_only:
+            self.create_layout()
     """
     Reads a hexadecimal file from a given directory to be used as the data written to the ROM
     endian is either "big" or "little"
@@ -48,10 +49,17 @@ class rom_base_bank(design):
     """
 
     def read_binary(self, data_file, word_size=2, endian="big"):
-        
+        # Read data as hexidecimal text file
         hex_file = open(data_file, 'r')
         hex_data = hex_file.read()
-        bin_data = list("{0:08b}".format(int(hex_data, 16)))
+
+        # Convert from hex into an int
+        data_int = int(hex_data, 16)
+        # Then from int into a right aligned, zero padded string
+        bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
+
+        # Then turn the string into a list of ints
+        bin_data = list(bin_string)
         bin_data = [int(x) for x in bin_data]
 
         # data size in bytes
@@ -78,17 +86,20 @@ class rom_base_bank(design):
         self.data = chunked_data
         self.cols = bits_per_row
         self.rows = int(num_words / (self.words_per_row))
+        debug.info(1, "Read rom binary: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, num_words, self.cols, self.rows, self.words_per_row))
+
         # print("hex: {0}, binary: {1}, chunked: {2}".format(hex_data, bin_data, chunked_data))
 
         
     def create_netlist(self):
         self.add_modules()
-        # self.add_pins()
+        self.add_pins()
 
-        print("Creating ROM bank instances")
-        self.create_instances()
+
         
     def create_layout(self):
+        print("Creating ROM bank instances")
+        self.create_instances()
         print("Placing ROM bank instances")
         self.place_instances()
 
@@ -101,12 +112,11 @@ class rom_base_bank(design):
         print("Routing clock signal")
         self.route_clock()
         self.route_array_outputs()
-        # self.route_supplies()
+        self.place_top_level_pins()
+        self.route_supplies()
         self.height = self.array_inst.height
         self.width = self.array_inst.width
         self.add_boundary()
-
-        print("Rom bank placement complete")
 
 
     def setup_layout_constants(self):
@@ -121,11 +131,11 @@ class rom_base_bank(design):
         self.add_pin("clk", "INPUT")
         self.add_pin("CS", "INPUT")
 
-        for i in range(self.num_inputs):
+        for i in range(self.row_bits + self.col_bits):
             self.add_pin("addr_{}".format(i), "INPUT")
 
         out_pins = []
-        for j in range(self.rows):
+        for j in range(self.word_size):
             out_pins.append("rom_out_{}".format(j))
         self.add_pin_list(out_pins, "OUTPUT")
 
@@ -153,14 +163,14 @@ class rom_base_bank(design):
                                            strap_spacing=self.strap_spacing, 
                                            route_layer=self.route_layer, 
                                            cols=self.cols)
-        
-        
-        
+
         
         self.column_mux = factory.create(module_type="rom_column_mux_array", 
                                          columns=self.cols,
                                          word_size=self.word_size,
-                                         bitline_layer=self.interconnect_layer)
+                                         tap_spacing=self.strap_spacing,
+                                         bitline_layer=self.interconnect_layer,
+                                         input_layer=self.bitline_layer)
         
         self.column_decode = factory.create(module_name="rom_column_decode",
                                             module_type="rom_decoder", 
@@ -173,55 +183,37 @@ class rom_base_bank(design):
         self.control_logic = factory.create(module_type="rom_control_logic", 
                                             num_outputs=(self.rows + self.cols + self.words_per_row) * 0.5, 
                                             clk_fanout=(self.col_bits + self.row_bits) * 2,
-                                            height=self.column_decode.height)
+                                            height=self.column_decode.height )
 
-        print("Col decode height of {}".format(self.column_decode.height))
 
     def create_instances(self):
         gnd = ["gnd"]
         vdd = ["vdd"]
         prechrg = ["precharge"]
         clk = ["clk_int"]
-        array_pins = []
-        decode_pins = []
-
-        for bl in range(self.cols):
-            name = "bl_{}".format(bl)
-            array_pins.append(name)
-        for wl in range(self.rows):
-            name = "wl_{}".format(wl)
-            array_pins.append(wl)
-        
-        array_pins.append("precharge")
-        array_pins.append("vdd")
-        array_pins.append("gnd")
-
-
-        for addr in range(self.row_bits):
-            name = "row_addr_{}".format(addr)
-            decode_pins.append(name)
-        for wl in range(self.rows):
-            name = "wl_{}".format(wl)
-            decode_pins.append(name)
-
-        decode_pins.append("precharge")
-        decode_pins.append("clk_int")
-        decode_pins.append("vdd")
-        decode_pins.append("gnd")
-
 
         bitlines = ["bl_{}".format(bl) for bl in range(self.cols)]
-        select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
-        bitline_out = ["rom_out_{}".format(bl) for bl in range(self.word_size)]
-        addr_lsb = ["col_addr_{}".format(addr) for addr in range(self.col_bits)]
-        col_mux_pins = bitlines + select_lines + bitline_out + gnd
+        wordlines = ["wl_{}".format(wl) for wl in range(self.rows)]
 
+        addr_msb = ["addr_{}".format(addr + self.col_bits) for addr in range(self.row_bits)]
+        addr_lsb = ["addr_{}".format(addr) for addr in range(self.col_bits)]
+
+        select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
+        outputs = ["rom_out_{}".format(bl) for bl in range(self.word_size)]
+    
+
+        array_pins = bitlines + wordlines + prechrg + vdd + gnd
+
+        row_decode_pins = addr_msb + wordlines + prechrg + clk + vdd + gnd
         col_decode_pins = addr_lsb + select_lines + prechrg + clk + vdd + gnd
+
+        col_mux_pins = bitlines + select_lines + outputs + gnd
+
         self.array_inst = self.add_inst(name="rom_bit_array", mod=self.array)
         self.connect_inst(array_pins)
 
         self.decode_inst = self.add_inst(name="rom_row_decoder", mod=self.decode_array)
-        self.connect_inst(decode_pins)
+        self.connect_inst(row_decode_pins)
 
         self.control_inst = self.add_inst(name="rom_control", mod=self.control_logic)
         self.connect_inst(["clk", "CS", "precharge", "clk_int", "vdd", "gnd"])
@@ -269,7 +261,7 @@ class rom_base_bank(design):
         self.col_decode_inst.place(offset=self.col_decode_offset)
 
     def place_col_mux(self):
-        mux_y_offset = self.array_inst.by() - self.mux_inst.height - self.route_layer_pitch
+        mux_y_offset = self.array_inst.by() - self.mux_inst.height - 5 * self.route_layer_pitch
 
         mux_x_offset = self.array_inst.get_pin("bl_0_0").cx() - self.mux_inst.get_pin("bl_0").cx()
         self.mux_offset = vector(mux_x_offset, mux_y_offset)
@@ -298,7 +290,7 @@ class rom_base_bank(design):
         col_decode_pins = [self.col_decode_inst.get_pin("wl_{}".format(wl)) for wl in range(self.words_per_row)]
         sel_pins = [self.mux_inst.get_pin("sel_{}".format(wl)) for wl in range(self.words_per_row)]
         sel_pins.extend(col_decode_pins)
-        self.connect_row_pins(self.array.bitline_layer, sel_pins, round=True)
+        self.connect_row_pins(self.wordline_layer, sel_pins, round=True)
 
 
 
@@ -391,34 +383,49 @@ class rom_base_bank(design):
 
             self.add_path(self.array.bitline_layer, [bl_out, bl_mux])
 
+    def place_top_level_pins(self):
+        self.copy_layout_pin(self.control_inst, "CS", "CS")
+        for i in range(self.word_size):
+            self.copy_layout_pin(self.mux_inst, "bl_out_{}".format(i), "rom_out_{}".format(i))
+        for lsb in range(self.col_bits):
+            name = "addr_{}".format(lsb)
+            self.copy_layout_pin(self.col_decode_inst, "A{}".format(lsb), name)
+
+        for msb in range(self.col_bits, self.row_bits + self.col_bits):
+            name = "addr_{}".format(msb)
+            pin_num = msb - self.col_bits            
+            self.copy_layout_pin(self.decode_inst, "A{}".format(pin_num), name)
+            
         
+
 
     def route_supplies(self):
 
         for inst in self.insts:
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
-        gnd_start = vector(self.array_inst.get_pins("gnd")[0].cx(),0)
+            if not inst.mod.name.__contains__("contact"):
+                self.copy_layout_pin(inst, "vdd")
+                self.copy_layout_pin(inst, "gnd")
+        # gnd_start = vector(self.array_inst.get_pins("gnd")[0].cx(),0)
 
-        decode_gnd = self.decode_inst.get_pin("gnd")
-        decode_vdd = self.decode_inst.get_pin("vdd")
-        array_vdd = self.array_inst.get_pin("vdd")
+        # decode_gnd = self.decode_inst.get_pin("gnd")
+        # decode_vdd = self.decode_inst.get_pin("vdd")
+        # array_vdd = self.array_inst.get_pin("vdd")
 
-        # self.add_segment_center("m1", gnd_start, decode_gnd.center())
+        # # self.add_segment_center("m1", gnd_start, decode_gnd.center())
 
 
-        self.add_power_pin("gnd", decode_vdd.center())
-        self.add_power_pin("vdd", decode_gnd.center())
+        # self.add_power_pin("gnd", decode_vdd.center())
+        # self.add_power_pin("vdd", decode_gnd.center())
 
-        vdd_start = vector(array_vdd.lx() + 0.5 * self.via1_space, array_vdd.cy())
-        end = vector(decode_vdd.lx(), vdd_start.y)
+        # vdd_start = vector(array_vdd.lx() + 0.5 * self.via1_space, array_vdd.cy())
+        # end = vector(decode_vdd.lx(), vdd_start.y)
 
-        self.add_segment_center(self.interconnect_layer, vdd_start, end)
-        self.add_via_stack_center(vdd_start, "m1", self.interconnect_layer)
+        # self.add_segment_center(self.interconnect_layer, vdd_start, end)
+        # self.add_via_stack_center(vdd_start, "m1", self.interconnect_layer)
 
-        vdd_start = vector(decode_vdd.cx(), vdd_start.y)
+        # vdd_start = vector(decode_vdd.cx(), vdd_start.y)
 
-        self.add_segment_center(self.interconnect_layer, vdd_start, decode_vdd.center())
+        # self.add_segment_center(self.interconnect_layer, vdd_start, decode_vdd.center())
 
         
 

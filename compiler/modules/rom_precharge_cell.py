@@ -7,6 +7,7 @@
 #
 
 from .rom_base_cell import rom_base_cell
+from .pgate import pgate
 from openram.base import vector
 from openram import OPTS
 from openram.sram_factory import factory
@@ -30,10 +31,11 @@ class rom_precharge_cell(rom_base_cell):
 
 
     def add_modules(self):
-
+        width = pgate.nearest_bin("pmos", drc["minwidth_tx"])
         self.pmos  = factory.create(module_type="ptx",
                                     module_name="pre_pmos_mod",
                                     tx_type="pmos",
+                                    width=width,
                                     add_source_contact=self.supply_layer,
                                     add_drain_contact=self.bitline_layer
                                     )

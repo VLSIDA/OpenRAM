@@ -29,6 +29,8 @@ class rom_array_test(openram_test):
 
         a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4, pitch_match=True)
         self.local_check(a)
+        a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
+
         openram.end_openram()
 
 # run the test from the command line

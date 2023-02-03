@@ -184,6 +184,10 @@ class rom_base_bank(design):
                                             num_outputs=(self.rows + self.cols + self.words_per_row) * 0.5, 
                                             clk_fanout=(self.col_bits + self.row_bits) * 2,
                                             height=self.column_decode.height )
+        
+        self.output_buffer = factory.create(module_type="rom_wordline_driver_array", 
+                                            rows=self.word_size,
+                                            cols=4)
 
 
     def create_instances(self):
@@ -199,6 +203,8 @@ class rom_base_bank(design):
         addr_lsb = ["addr_{}".format(addr) for addr in range(self.col_bits)]
 
         select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
+
+        pre_buf_outputs = ["rom_out_prebuf_{}".format(bit) for bit in range(self.word_size)]
         outputs = ["rom_out_{}".format(bl) for bl in range(self.word_size)]
     
 
@@ -207,7 +213,9 @@ class rom_base_bank(design):
         row_decode_pins = addr_msb + wordlines + prechrg + clk + vdd + gnd
         col_decode_pins = addr_lsb + select_lines + prechrg + clk + vdd + gnd
 
-        col_mux_pins = bitlines + select_lines + outputs + gnd
+        col_mux_pins = bitlines + select_lines + pre_buf_outputs + gnd
+
+        output_buffer_pins = pre_buf_outputs + outputs + vdd + gnd
 
         self.array_inst = self.add_inst(name="rom_bit_array", mod=self.array)
         self.connect_inst(array_pins)
@@ -224,6 +232,9 @@ class rom_base_bank(design):
         self.col_decode_inst = self.add_inst(name="rom_column_decoder", mod=self.column_decode)
         self.connect_inst(col_decode_pins)
 
+        self.output_buf_inst = self.add_inst(name="rom_output_buffer", mod=self.output_buffer)
+        self.connect_inst(output_buffer_pins)
+
 
         
     def place_instances(self):
@@ -232,6 +243,7 @@ class rom_base_bank(design):
         self.place_col_mux()
         self.place_col_decoder()
         self.place_control_logic()
+        self.place_output_buffer()
 
 
     def place_row_decoder(self):
@@ -267,6 +279,11 @@ class rom_base_bank(design):
         self.mux_offset = vector(mux_x_offset, mux_y_offset)
         self.mux_inst.place(offset=self.mux_offset)
         
+    def place_output_buffer(self):
+        output_x = self.col_decode_inst.rx()
+        output_y = 0
+        self.output_buf_offset = vector(output_x, output_y)
+        self.output_buf_inst.place(offset=self.output_buf_offset, rotate=90)
         
     # def create_wl_bus(self):
     #     bus_x = self.decode_inst.width + ( drc["minwidth_{}".format(self.bus_layer)] + 1.5 * drc["{0}_to_{0}".format(self.bus_layer)] )

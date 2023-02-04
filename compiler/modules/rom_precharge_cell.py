@@ -99,3 +99,5 @@ class rom_precharge_cell(rom_base_cell):
         self.add_path(self.supply_layer, [self.get_pin("vdd").center(), pos, self.get_pin("S").center()])
 
         self.remove_layout_pin("S")
+    def place_bitline(self):
+        pass

@@ -25,21 +25,23 @@ class rom_poly_tap(design):
 
     def create_netlist(self):
         #for layout constants
-        if self.tx_type == "nmos":
-            self.dummy = factory.create(module_type="rom_base_cell")
-        else:
-            self.dummy = factory.create(module_type="rom_precharge_cell")
+        self.dummy = factory.create(module_type="rom_base_cell")
+
+        # if self.tx_type == "nmos":
+        #     self.dummy = factory.create(module_type="rom_base_cell")
+        # else:
+        #     self.dummy = factory.create(module_type="rom_precharge_cell")
 
         self.pmos = factory.create(module_type="ptx", tx_type="pmos")
 
     def create_layout(self):
 
         self.place_via()
-
+        self.add_boundary()
         if self.add_tap:
             self.place_active_tap()
             self.extend_poly()
-        self.add_boundary()
+        
 
         # if self.length != 0:
         #     self.place_strap()
@@ -94,9 +96,13 @@ class rom_poly_tap(design):
     #     self.strap = self.add_path(self.strap_layer, (strap_start, strap_end))
 
     def extend_poly(self):
-    
-        self.add_segment_center("poly", self.via.center(), vector(self.via.cx() + self.pitch_offset, self.via.cy()))
-        self.add_segment_center("poly", self.via.center(), vector(0, self.via.cy()))
+        y_offset = 0
+        if self.tx_type == "pmos":
+            y_offset = -self.height
+        start = self.via.center() + vector(0, y_offset)
+
+        self.add_segment_center("poly", start, vector(self.via.cx() + self.pitch_offset, self.via.cy() + y_offset))
+        self.add_segment_center("poly", start, vector(0, self.via.cy() + y_offset))
 
 
         

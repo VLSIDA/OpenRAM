@@ -65,13 +65,6 @@ class rom_base_array(bitcell_base_array):
         
         
         
-        
-        
-        
- 
-
-        
-        
     def add_boundary(self):
         ll = self.find_lowest_coords()
         bottom_offset = - self.zero_cell.nmos.end_to_contact + self.precharge_inst.offset.y
@@ -134,7 +127,7 @@ class rom_base_array(bitcell_base_array):
         #list of current bitline interconnect nets, starts as the same as the bitline list and is updated when new insts of cells are added
         self.int_bl_list = self.bitline_names[0].copy()
         #When rotated correctly rows are word lines
-        for row in range(self.row_size):
+        for row in range(self.row_size + 1):
             row_list = []
 
             # for each new strap placed, offset the column index refrenced to get correct bit in the data array
@@ -153,6 +146,7 @@ class rom_base_array(bitcell_base_array):
                 row_list.append(new_inst)
 
             
+
             name = "tap_r{0}_c{1}".format(row, self.array_col_size)
             new_tap = self.add_inst(name=name, mod=self.poly_tap)
             self.tap_inst[row, self.column_size] = new_tap
@@ -160,6 +154,9 @@ class rom_base_array(bitcell_base_array):
             self.connect_inst([])
 
             self.cell_list.append(row_list)
+        
+
+    
 
 
     def create_poly_tap(self, row, col):
@@ -173,13 +170,12 @@ class rom_base_array(bitcell_base_array):
     def create_cell(self, row, col):
         name = "bit_r{0}_c{1}".format(row, col)
 
-
-        # when col = 0, bl_h is connected to vdd, otherwise connect to previous bl connection
+        # when col = 0, bl_h is connected to precharge, otherwise connect to previous bl connection
         # when col = col_size - 1 connected column_sizeto gnd otherwise create new bl connection
-        if row == self.row_size - 1 or self.get_next_cell_in_bl(row, col) == -1:
+        if row == self.row_size :
 
             bl_l = self.int_bl_list[col]
-            bl_h = "gnd" 
+            bl_h = "gnd"
         else:
             bl_l = self.int_bl_list[col]
 
@@ -187,8 +183,12 @@ class rom_base_array(bitcell_base_array):
                 self.int_bl_list[col] = "bl_int_{0}_{1}".format(row, col)
                 
             bl_h = self.int_bl_list[col]
+        # Final row of dummy nmos that contains only 1s, acts to prevent shorting bl to ground when precharging
 
-        if self.data[row][col] == 1:
+        if row == self.row_size:
+            new_inst = self.add_inst(name=name, mod=self.one_cell)
+            self.connect_inst([bl_h, bl_l, "precharge", "gnd"])
+        elif self.data[row][col] == 1:
             new_inst = self.add_inst(name=name, mod=self.one_cell)
             self.connect_inst([bl_h, bl_l, self.wordline_names[0][row], "gnd"])     
         else: 
@@ -228,7 +228,7 @@ class rom_base_array(bitcell_base_array):
         pitch = drc["{0}_to_{0}".format(self.wordline_layer)]
 
         for i in range(self.column_size):
-            drain = self.cell_list[self.row_size - 1][i].get_pin("D")
+            drain = self.cell_list[self.row_size][i].get_pin("D")
 
             gnd_pos = drain.center() + vector(0, pitch + via_width + self.route_pitch)
             self.add_layout_pin_rect_center(text="gnd", layer=self.bitline_layer, offset=gnd_pos)
@@ -244,11 +244,10 @@ class rom_base_array(bitcell_base_array):
         self.cell_pos = {}
         self.strap_pos = {}
         # rows are wordlines
-        col_offset = 0 
         pitch_offset = 0
-        for row in range(self.row_size):
+        for row in range(self.row_size + 1):
             
-            if row % self.tap_spacing == 0 and self.pitch_match:
+            if row % self.tap_spacing == 0 and self.pitch_match and row != self.row_size:
                 pitch_offset += self.active_contact.width + self.active_space
             
             cell_y = row * (self.zero_cell.height) + pitch_offset
@@ -376,6 +375,22 @@ class rom_base_array(bitcell_base_array):
             bl_end = vector(bl_start.x, pre_out_pin.cy())
 
             self.add_segment_center(self.bitline_layer, bl_start, bl_end)
+        
+        upper_precharge = self.precharge_inst.get_pin("precharge_r")
+        lower_precharge = self.tap_inst[self.row_size, self.column_size ].get_pin("poly_tap")
+
+        if self.pitch_match:
+            wire_offset = 2 * self.m1_pitch
+        else:
+            wire_offset = 3 * self.m1_pitch
+        start = upper_precharge.center()
+        end = lower_precharge.center()
+        mid1 = start + vector(wire_offset, 0)
+        mid2 = end + vector(wire_offset, 0)
+        
+        self.add_path(layer="m1", coordinates=[start, mid1, mid2, end])
+
+
     def connect_taps(self):
         array_pins = [self.tap_list[i].get_pin("poly_tap") for i in range(len(self.tap_list))]
 

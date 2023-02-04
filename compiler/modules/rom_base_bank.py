@@ -114,6 +114,7 @@ class rom_base_bank(design):
         self.route_array_outputs()
         self.place_top_level_pins()
         self.route_supplies()
+        self.route_output_buffers()
         self.height = self.array_inst.height
         self.width = self.array_inst.width
         self.add_boundary()
@@ -185,7 +186,8 @@ class rom_base_bank(design):
                                             clk_fanout=(self.col_bits + self.row_bits) * 2,
                                             height=self.column_decode.height )
         
-        self.output_buffer = factory.create(module_type="rom_wordline_driver_array", 
+        self.output_buffer = factory.create(module_type="rom_wordline_driver_array",
+                                            module_name="rom_output_buffer",
                                             rows=self.word_size,
                                             cols=4)
 
@@ -280,10 +282,10 @@ class rom_base_bank(design):
         self.mux_inst.place(offset=self.mux_offset)
         
     def place_output_buffer(self):
-        output_x = self.col_decode_inst.rx()
-        output_y = 0
+        output_x = self.col_decode_inst.rx() + self.output_buf_inst.height 
+        output_y = self.col_decode_inst.by() + self.output_buf_inst.width
         self.output_buf_offset = vector(output_x, output_y)
-        self.output_buf_inst.place(offset=self.output_buf_offset, rotate=90)
+        self.output_buf_inst.place(offset=self.output_buf_offset, rotate=270)
         
     # def create_wl_bus(self):
     #     bus_x = self.decode_inst.width + ( drc["minwidth_{}".format(self.bus_layer)] + 1.5 * drc["{0}_to_{0}".format(self.bus_layer)] )
@@ -396,14 +398,38 @@ class rom_base_bank(design):
     def route_array_outputs(self):
         for i in range(self.cols):
             bl_out = self.array_inst.get_pin("bl_0_{}".format(i)).center()
+
             bl_mux = self.mux_inst.get_pin("bl_{}".format(i)).center()
 
             self.add_path(self.array.bitline_layer, [bl_out, bl_mux])
 
+
+    def route_output_buffers(self):
+        mux = self.mux_inst
+        buf = self.output_buf_inst
+        route_nets = [ [mux.get_pin("bl_out_{}".format(bit)), buf.get_pin("in_{}".format(bit))] for bit in range(self.word_size)]
+
+        channel_ll = vector( route_nets[0][0].cx(), route_nets[0][1].cy() + self.m1_pitch * 3)
+        self.create_horizontal_channel_route(netlist=route_nets, offset=channel_ll, layer_stack=self.m1_stack)
+        # for bit in range(self.word_size):
+        #     mux_pin = self.mux_inst.get_pin("bl_out_{}".format(bit))
+        #     buf_pin = self.output_buf_inst.get_pin("in_{}".format(bit))
+        #     mux_out = vector(mux_pin.cx(), mux_pin.by())
+        #     buf_in = buf_pin.center()
+
+        #     mid1 = vector(mux_out.x, buf_in.y + bit * self.m2_pitch)
+        #     mid2 = vector(buf_in.x, mid1.y)
+        #     print("start: {0}, mid: {1}, stop: {2}".format(mux_out, mid1, buf_in))
+        #     self.add_path(layer="m2", coordinates=[mux_out, mid1, mid2, buf_in])
+
+
+            
     def place_top_level_pins(self):
-        self.copy_layout_pin(self.control_inst, "CS", "CS")
+        self.copy_layout_pin(self.control_inst, "CS")
+        self.copy_layout_pin(self.control_inst, "clk_in", "clk")
+
         for i in range(self.word_size):
-            self.copy_layout_pin(self.mux_inst, "bl_out_{}".format(i), "rom_out_{}".format(i))
+            self.copy_layout_pin(self.output_buf_inst, "out_{}".format(i), "rom_out_{}".format(i))
         for lsb in range(self.col_bits):
             name = "addr_{}".format(lsb)
             self.copy_layout_pin(self.col_decode_inst, "A{}".format(lsb), name)

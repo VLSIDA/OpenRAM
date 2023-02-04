@@ -123,8 +123,8 @@ class rom_base_cell(design):
 
     def place_tx(self):
 
-
-        tx_offset = vector(self.poly_extend_active + self.cell_inst.height + (self.poly_size) ,- 0.5 * self.contact_width - self.active_enclose_contact)
+        # sizing_offset = self.cell_inst.height - drc["minwidth_tx"]
+        tx_offset = vector(self.poly_extend_active + self.cell_inst.height + self.poly_size,- 0.5 * self.contact_width - self.active_enclose_contact)
         # add rect of poly to account for offset from drc spacing
         # self.add_rect_center("poly", poly_offset, self.poly_extend_active_spacing, self.poly_width)
         

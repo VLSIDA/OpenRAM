@@ -81,7 +81,7 @@ class rom_control_logic(design):
         self.connect_inst(["clk_in", "clk_bar", "clk_out", "vdd", "gnd"])
 
         self.nand_inst = self.add_inst(name="control_nand", mod=self.nand_mod)
-        self.connect_inst(["CS", "clk_bar", "pre_drive", "vdd", "gnd"])
+        self.connect_inst(["CS", "clk_out", "pre_drive", "vdd", "gnd"])
 
         self.driver_inst = self.add_inst(name="driver_inst", mod=self.driver_mod)
         self.connect_inst(["pre_drive", "prechrg", "vdd", "gnd"])

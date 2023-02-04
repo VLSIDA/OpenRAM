@@ -106,19 +106,19 @@ class rom_control_logic(design):
         self.copy_layout_pin(self.buf_inst, "vdd")
         # self.copy_layout_pin(self.buf_inst, "vdd")
 
-        clk_bar = self.buf_inst.get_pin("Zb")
+        clk = self.buf_inst.get_pin("Z")
 
         nand_B = self.nand_inst.get_pin("B")
 
         
         # Connect buffered clock bar to nand input
 
-        mid = vector(clk_bar.lx() - route_width - 2 * self.m1_space)
-        self.add_path(self.route_stack[2], [clk_bar.center(), mid, nand_B.center()])
+        mid = vector(clk.lx() - route_width - 2 * self.m1_space)
+        self.add_path(self.route_stack[2], [clk.center(), mid, nand_B.center()])
 
-        self.add_via_stack_center(from_layer=clk_bar.layer,
+        self.add_via_stack_center(from_layer=clk.layer,
                                 to_layer=self.route_stack[2],
-                                offset=clk_bar.center())
+                                offset=clk.center())
         self.add_via_stack_center(from_layer=nand_B.layer,
                                 to_layer=self.route_stack[2],
                                 offset=nand_B.center())

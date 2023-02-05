@@ -155,15 +155,28 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        self.all_bitline_names = self.replica_bitcell_array.all_bitline_names
-        self.replica_array_bitline_names = self.replica_bitcell_array.all_bitline_names
+        # some of these are just included for compatibility with modules instantiating this module
+        self.bitcell_bitline_names = self.replica_bitcell_array.bitcell_bitline_names
+        self.all_bitcell_bitline_names = self.replica_bitcell_array.all_bitcell_bitline_names
+        self.rbl_bitline_names = self.replica_bitcell_array.rbl_bitline_names
+        self.all_rbl_bitline_names = self.replica_bitcell_array.all_rbl_bitline_names
 
-        self.add_pin_list(self.replica_array_bitline_names, "INOUT")
+        self.bitline_names = self.replica_bitcell_array.bitline_names
+        self.all_bitline_names = self.replica_bitcell_array.all_bitline_names
+
+        self.add_pin_list(self.all_bitline_names, "INOUT")
 
     def add_wordline_pins(self):
+        # some of these are just included for compatibility with modules instantiating this module
+        self.rbl_wordline_names = self.replica_bitcell_array.rbl_wordline_names
+        self.all_rbl_wordline_names = self.replica_bitcell_array.all_rbl_wordline_names
+        self.bitcell_wordline_names = self.replica_bitcell_array.wordline_names
+        self.all_bitcell_wordline_names = self.replica_bitcell_array.all_wordline_names
+
         self.used_wordline_names = self.replica_bitcell_array.used_wordline_names
         self.unused_wordline_names = self.replica_bitcell_array.unused_wordline_names
         self.replica_array_wordline_names = self.replica_bitcell_array.all_wordline_names
+        self.replica_array_all_wordline_names = self.replica_bitcell_array.wordline_names
         self.replica_array_wordline_names_with_grounded_wls = ["gnd" if x in self.unused_wordline_names else x for x in self.replica_array_wordline_names]
 
         self.all_wordline_names = []
@@ -180,7 +193,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # Main array
         self.replica_bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
                                                       mod=self.replica_bitcell_array)
-        self.connect_inst(self.replica_array_bitline_names + self.replica_array_wordline_names_with_grounded_wls + self.supplies)
+        self.connect_inst(self.all_bitline_names + self.replica_array_wordline_names_with_grounded_wls + self.supplies)
 
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
@@ -243,6 +256,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         self.DRC_LVS()
 
+    # TODO: I think I gotta offset these to account for the stupid instances not knowing where they are
     def get_main_array_top(self):
         return self.replica_bitcell_array_inst.get_main_array_top()
 

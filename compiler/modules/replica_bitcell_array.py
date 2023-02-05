@@ -182,10 +182,9 @@ class replica_bitcell_array(bitcell_base_array):
 
         self.all_rbl_wordline_names = [x for sl in self.rbl_wordline_names for x in sl]
 
+        self.bitcell_wordline_names = self.bitcell_array.wordline_names
         self.all_bitcell_wordline_names = self.bitcell_array.all_wordline_names
-
-        # All wordlines including RBL
-        self.all_wordline_names = []
+# All wordlines including RBL self.all_wordline_names = []
         for bit in range(self.rbl[0]):
             self.all_wordline_names.extend(self.rbl_wordline_names[bit])
         self.all_wordline_names.extend(self.all_bitcell_wordline_names)

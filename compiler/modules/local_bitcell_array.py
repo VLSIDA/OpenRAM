@@ -19,7 +19,7 @@ class local_bitcell_array(bitcell_base_array):
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
-    def __init__(self, rows, cols, rbl, left_rbl=[], right_rbl=[], name=""):
+    def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
         debug.info(2, "Creating {0} {1}x{2} rbl: {3} left_rbl: {4} right_rbl: {5}".format(name,
                                                                                           rows,
@@ -84,11 +84,11 @@ class local_bitcell_array(bitcell_base_array):
         # Inputs to the bitcell array (by port)
         self.array_wordline_inputs = []
 
-        self.wordline_names = self.bitcell_array.wordline_names
-        self.all_wordline_names = self.bitcell_array.all_wordline_names
+        self.wordline_names = self.bitcell_array.bitcell_wordline_names
+        self.all_wordline_names = self.bitcell_array.bitcell_all_wordline_names
 
-        self.bitline_names = self.bitcell_array.bitline_names
-        self.all_bitline_names = self.bitcell_array.all_bitline_names
+        self.bitline_names = self.bitcell_array.bitcell_bitline_names
+        self.all_bitline_names = self.bitcell_array.all_bitcell_bitline_names
 
         self.rbl_wordline_names = self.bitcell_array.rbl_wordline_names
         self.all_rbl_wordline_names = self.bitcell_array.all_rbl_wordline_names
@@ -163,7 +163,7 @@ class local_bitcell_array(bitcell_base_array):
         # FIXME: Replace this with a tech specific parameter
         driver_to_array_spacing = 3 * self.m3_pitch
 
-        wl_offset = vector(0, self.bitcell_array.get_replica_bottom())
+        wl_offset = vector(0, self.bitcell_array.get_replica_bottom()) # look for offset problems here
         self.wl_insts[0].place(wl_offset)
 
         bitcell_array_offset = vector(self.wl_insts[0].rx() + driver_to_array_spacing, 0)
@@ -171,7 +171,7 @@ class local_bitcell_array(bitcell_base_array):
 
         if len(self.all_ports) > 1:
             wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
+                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height) # look for offset problems here
             self.wl_insts[1].place(wl_offset,
                                    mirror="XY")
 
@@ -273,7 +273,7 @@ class local_bitcell_array(bitcell_base_array):
     def get_main_array_right(self):
         return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_right()
 
-    def get_column_offsets(self):
+    def get_column_offsets(self): # TODO: copy this style when fixing getters in capped_replica_bitcell_array.py
         """
         Return an array of the x offsets of all the regular bits
         """
@@ -294,7 +294,7 @@ class local_bitcell_array(bitcell_base_array):
 
         self.bitcell_array.graph_exclude_replica_col_bits()
 
-    def get_cell_name(self, inst_name, row, col):
+    def get_cell_name(self, inst_name, row, col): # TODO: no shot this'll work...
         """Gets the spice name of the target bitcell."""
         return self.bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name, row, col)
 

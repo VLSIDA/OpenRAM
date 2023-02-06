@@ -88,10 +88,12 @@ class delay(simulation):
         self.clk_frmt = "clk{0}" # Unformatted clock name
         targ_name = "{0}{{}}_{1}".format(self.dout_name, self.probe_data) # Empty values are the port and probe data bit
         self.delay_meas = []
-        self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "RISE", "RISE", measure_scale=1e9))
+        self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "FALL", "RISE", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ONE # Used to index time delay values when measurements written to spice file.
+        self.dealy_meas[-1].meta_add_delay = True
         self.delay_meas.append(delay_measure("delay_hl", self.clk_frmt, targ_name, "FALL", "FALL", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ZERO
+        self.dealy_meas[-1].meta_add_delay = True
         self.read_lib_meas+=self.delay_meas
 
         self.slew_meas = []
@@ -1029,8 +1031,8 @@ class delay(simulation):
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl, slew_lh)
         # high-to-low delays start at neg. clk edge, so they need to be less than half_period
         half_period = self.period / 2
-        if abs(delay_hl)>half_period or abs(delay_lh)>self.period or abs(slew_hl)>half_period or abs(slew_lh)>self.period \
-           or delay_hl<0 or delay_lh<0 or slew_hl<0 or slew_lh<0:
+        if abs(delay_hl)>half_period or abs(delay_lh)>self.half_period or abs(slew_hl)>half_period or abs(slew_lh)>self.period \
+           or (delay_hl<0 and delay_lh<0) or slew_hl<0 or slew_lh<0:
             debug.info(2, "UNsuccessful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                                delays_str,
                                                                                                slews_str))

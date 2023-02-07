@@ -94,11 +94,11 @@ class local_bitcell_array(bitcell_base_array):
         # Inputs to the bitcell array (by port)
         self.array_wordline_inputs = []
 
-        self.wordline_names = self.bitcell_array.bitcell_wordline_names
-        self.all_wordline_names = self.bitcell_array.all_bitcell_wordline_names
+        self.wordline_names = self.bitcell_array.wordline_names
+        self.all_wordline_names = self.bitcell_array.all_wordline_names
 
-        self.bitline_names = self.bitcell_array.bitcell_bitline_names
-        self.all_bitline_names = self.bitcell_array.all_bitcell_bitline_names
+        self.bitline_names = self.bitcell_array.bitline_names
+        self.all_bitline_names = self.bitcell_array.all_bitline_names
 
         self.rbl_wordline_names = self.bitcell_array.rbl_wordline_names
         self.all_rbl_wordline_names = self.bitcell_array.all_rbl_wordline_names

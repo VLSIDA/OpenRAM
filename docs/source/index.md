@@ -34,11 +34,11 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 Please see the Dockerfile for the required versions of tools.
 
 In general, the OpenRAM compiler has very few dependencies:
-+ Docker
++ Git
 + Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ Git
++ Anaconda
 
 Commercial tools (optional):
 * Spice Simulator

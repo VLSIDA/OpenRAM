@@ -279,22 +279,6 @@ class replica_bitcell_array(bitcell_base_array):
         """ Return the right of the main bitcell array. """
         return self.bitcell_array_inst.rx()
 
-    def get_replica_top(self):
-        """ Return the top of all replica columns. """
-        return self.dummy_row_insts[1].by()
-
-    def get_replica_bottom(self):
-        """ Return the bottom of all replica columns. """
-        return self.dummy_row_insts[0].uy()
-
-    def get_replica_left(self):
-        """ Return the left of all replica columns. """
-        return self.dummy_col_insts[0].lx()
-
-    def get_replica_right(self):
-        """ Return the right of all replica columns. """
-        return self.dummy_col_insts[1].rx()
-
     def get_column_offsets(self):
         """
         Return an array of the x offsets of all the regular bits

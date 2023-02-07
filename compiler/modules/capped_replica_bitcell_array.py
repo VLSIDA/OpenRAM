@@ -254,28 +254,30 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.DRC_LVS()
 
     def get_main_array_top(self):
-        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_main_array_top()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array.get_main_array_top()
 
     def get_main_array_bottom(self):
-        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_main_array_bottom()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array.get_main_array_bottom()
 
     def get_main_array_left(self):
-        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_main_array_left()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array.get_main_array_left()
 
     def get_main_array_right(self):
-        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_main_array_right()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array.get_main_array_right()
 
+    # FIXME: these names need to be changed to reflect what they're actually returning
     def get_replica_top(self):
-        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_replica_top()
+        return self.dummy_row_insts[1].by()
 
     def get_replica_bottom(self):
-        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_replica_bottom()
+        return self.dummy_row_insts[0].uy()
 
     def get_replica_left(self):
-        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_replica_left()
+        return self.dummy_col_insts[0].lx()
 
     def get_replica_right(self):
-        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_replica_right()
+        return self.dummy_col_insts[1].rx()
+
 
     def get_column_offsets(self):
         """

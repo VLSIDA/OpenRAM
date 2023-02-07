@@ -30,9 +30,19 @@ class local_bitcell_array(bitcell_base_array):
 
         self.rows = rows
         self.cols = cols
+        # This is how many RBLs are in all the arrays
         self.rbl = rbl
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        # This specifies which RBL to put on the left or right by port number
+        # This could be an empty list
+        if left_rbl is not None:
+            self.left_rbl = left_rbl
+        else:
+            self.left_rbl = []
+        # This could be an empty list
+        if right_rbl is not None:
+            self.right_rbl = right_rbl
+        else:
+            self.right_rbl=[]
 
         debug.check(len(self.all_ports) < 3, "Local bitcell array only supports dual port or less.")
 

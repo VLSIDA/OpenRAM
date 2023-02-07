@@ -1,0 +1,25 @@
+name: deploy
+on:
+  push:
+    branches:
+      - stable
+    tags:
+      - 'v*.*.*'
+jobs:
+  deploy_pip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Install dependencies
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+        run: |
+         python3 -m pip install virtualenv
+      - name: Build Python package
+        run: |
+         make build_library
+      - name: Upload package to PyPI
+        run: |
+         echo "Not ready yet..." 

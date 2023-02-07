@@ -541,15 +541,13 @@ class capped_replica_bitcell_array(bitcell_base_array):
         """
         Excludes bits in column from being added to graph except target
         """
-        self.bitcell_array.graph_exclude_bits(targ_row, targ_col)
+        self.replica_bitcell_array.graph_exclude_bits(targ_row, targ_col)
 
     def graph_exclude_replica_col_bits(self):
         """
         Exclude all replica/dummy cells in the replica columns except the replica bit.
         """
-
-        for port in self.left_rbl + self.right_rbl:
-            self.replica_columns[port].exclude_all_but_replica()
+        self.replica_bitcell_array.graph_exclude_replica_col_bits()
 
     def get_cell_name(self, inst_name, row, col):
         """
@@ -561,4 +559,4 @@ class capped_replica_bitcell_array(bitcell_base_array):
         """
         Clears the bit exclusions
         """
-        self.bitcell_array.init_graph_params()
+        self.replica_bitcell_array.clear_exclude_bits()

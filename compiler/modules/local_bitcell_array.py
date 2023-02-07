@@ -163,7 +163,7 @@ class local_bitcell_array(bitcell_base_array):
         # FIXME: Replace this with a tech specific parameter
         driver_to_array_spacing = 3 * self.m3_pitch
 
-        wl_offset = vector(0, self.bitcell_array.get_replica_bottom()) # look for offset problems here
+        wl_offset = vector(0, self.bitcell_array.get_replica_bottom())
         self.wl_insts[0].place(wl_offset)
 
         bitcell_array_offset = vector(self.wl_insts[0].rx() + driver_to_array_spacing, 0)
@@ -171,7 +171,7 @@ class local_bitcell_array(bitcell_base_array):
 
         if len(self.all_ports) > 1:
             wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height) # look for offset problems here
+                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
             self.wl_insts[1].place(wl_offset,
                                    mirror="XY")
 

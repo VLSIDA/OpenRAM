@@ -273,7 +273,7 @@ class local_bitcell_array(bitcell_base_array):
     def get_main_array_right(self):
         return self.bitcell_array_inst.lx() + self.bitcell_array.get_main_array_right()
 
-    def get_column_offsets(self): # TODO: copy this style when fixing getters in capped_replica_bitcell_array.py
+    def get_column_offsets(self):
         """
         Return an array of the x offsets of all the regular bits
         """

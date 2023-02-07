@@ -256,33 +256,37 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         self.DRC_LVS()
 
-    # TODO: I think I gotta offset these to account for the stupid instances not knowing where they are
     def get_main_array_top(self):
-        return self.replica_bitcell_array_inst.get_main_array_top()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_main_array_top()
 
     def get_main_array_bottom(self):
-        return self.replica_bitcell_array_inst.get_main_array_bottom()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_main_array_bottom()
 
     def get_main_array_left(self):
-        return self.replica_bitcell_array_inst.get_main_array_left()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_main_array_left()
 
     def get_main_array_right(self):
-        return self.replica_bitcell_array_inst.get_main_array_right()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_main_array_right()
 
     def get_replica_top(self):
-        return self.replica_bitcell_array_inst.get_replica_top()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_replica_top()
 
     def get_replica_bottom(self):
-        return self.replica_bitcell_array_inst.get_replica_bottom()
+        return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array_inst.get_replica_bottom()
 
     def get_replica_left(self):
-        return self.replica_bitcell_array_inst.get_replica_left()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_replica_left()
 
     def get_replica_right(self):
-        return self.replica_bitcell_array_inst.get_replica_right()
+        return self.replica_bitcell_array_inst.lx() + self.replica_bitcell_array_inst.get_replica_right()
 
     def get_column_offsets(self):
-        return self.replica_bitcell_array_inst.get_column_offsets()
+        """
+        Return an array of the x offsets of all the regular bits
+        """
+        # must add the offset of the instance
+        offsets = [self.replica_bitcell_array_inst.lx() + x for x in self.replica_bitcell_array.get_column_offsets()]
+        return offsets
 
     def add_end_caps(self):
         """ Add dummy cells or end caps around the array """

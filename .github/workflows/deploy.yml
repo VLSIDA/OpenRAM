@@ -1,10 +1,10 @@
 name: deploy
-on: [push]
-#  push:
-#    branches:
-#      - stable
-#    tags:
-#      - 'v*.*.*'
+on:
+  push:
+    branches:
+      - stable
+    tags:
+      - 'v*.*.*'
 jobs:
   deploy_pip:
     runs-on: ubuntu-latest

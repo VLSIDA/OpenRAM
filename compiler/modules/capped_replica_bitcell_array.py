@@ -551,7 +551,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         """
         Gets the spice name of the target bitcell.
         """
-        return self.bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name, row, col)
+        return self.replica_bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.replica_bitcell_array_inst.name, row, col)
 
     def clear_exclude_bits(self):
         """

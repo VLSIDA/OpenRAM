@@ -294,7 +294,7 @@ class local_bitcell_array(bitcell_base_array):
 
         self.bitcell_array.graph_exclude_replica_col_bits()
 
-    def get_cell_name(self, inst_name, row, col): # TODO: no shot this'll work...
+    def get_cell_name(self, inst_name, row, col):
         """Gets the spice name of the target bitcell."""
         return self.bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.bitcell_array_inst.name, row, col)
 

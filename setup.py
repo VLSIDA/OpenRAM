@@ -11,7 +11,7 @@ from setuptools import setup, find_namespace_packages
 # Include these folder from the root of repo as submodules
 include = ["compiler", "docker", "technology", "macros"]
 # Exclude files/folders with these words
-exclude = ["docs", "images"]
+exclude = ["docs", "images", "miniconda"]
 
 
 # Find all modules inside the 'compiler' folder

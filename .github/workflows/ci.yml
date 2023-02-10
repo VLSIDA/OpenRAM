@@ -1,5 +1,8 @@
 name: ci
-on: [push]
+on:
+  push:
+    branches:
+      - '!stable'
 jobs:
   regress:
     runs-on: self-hosted

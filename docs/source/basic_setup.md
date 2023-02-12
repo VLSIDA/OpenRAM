@@ -99,7 +99,7 @@ entire [FreePDK45 PDK here][FreePDK45].
 
 
 
-### Sky130 Setup
+## Sky130 Setup
 
 To install [Sky130], you must have open\_pdks installed in $PDK\_ROOT. We highly recommend that you
 use the version tagged in the Makefile as others have not been verified.

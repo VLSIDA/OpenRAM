@@ -56,11 +56,11 @@ jobs:
     needs: regression_test
     uses: ./.github/workflows/sync.yml
     secrets:
-      ACCESS_TOKEN_GITHUB: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
   # This job triggers version.yml workflow
   version_trigger:
     if: ${{ github.event_name == 'push' && github.ref_name == 'dev' }}
     needs: regression_test
     uses: ./.github/workflows/version.yml
     secrets:
-      ACCESS_TOKEN_GITHUB: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}

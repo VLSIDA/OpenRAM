@@ -103,7 +103,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                           cols=self.column_size + len(self.rbls),
                                           rows=1,
                                           # dummy column + left replica column(s)
-                                          column_offset=1 + len(self.left_rbl),
+                                          column_offset=1,
                                           mirror=0,
                                           location="top")
 
@@ -111,7 +111,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                              cols=self.column_size + len(self.rbls),
                                              rows=1,
                                              # dummy column + left replica column(s)
-                                             column_offset=1 + len(self.left_rbl),
+                                             column_offset=1,
                                              mirror=0,
                                              location="bottom")
 

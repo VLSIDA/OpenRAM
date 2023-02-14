@@ -69,6 +69,7 @@ s.setup_multiport_constants()
 
 OPTS.netlist_only = True
 OPTS.check_lvsdrc = False
+OPTS.nomimal_corner_only = True
 
 # TODO: remove this after adding trimmed netlist gen to sram run
 OPTS.trim_netlist = False

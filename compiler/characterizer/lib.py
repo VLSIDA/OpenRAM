@@ -82,6 +82,7 @@ class lib:
         debug.info(1, "Slews: {0}".format(self.slews))
         debug.info(1, "Loads: {0}".format(self.loads))
         debug.info(1, "self.load_slews : {0}".format(self.load_slews))
+
     def create_corners(self):
         """ Create corners for characterization. """
         # Get the corners from the options file

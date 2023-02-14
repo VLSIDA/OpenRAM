@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -127,6 +127,9 @@ class options(optparse.Values):
     ###################
     # Top process that was ran (openram, memchar, memfunc)
     top_process = None
+    # Use conda to install the default tools
+    # (existing tools will be used if disabled)
+    use_conda = True
     # Variable to select the variant of spice
     spice_name = None
     # The spice executable being used which is derived from the user PATH.

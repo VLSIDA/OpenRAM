@@ -61,11 +61,11 @@ freepdk45: $(FREEPDK45_STAMPS)
 scn4m_subm: $(SCN4M_SUBM_STAMPS)
 .PHONY: scn4m_subm
 	
-OPENRAM_TMP=/openram/macros/$*/tmp
+OPENRAM_TMP=$(MACRO_DIR)/$*/tmp
 %.ok: configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	@$(DOCKER_CMD) python3 -u /openram/sram_compiler.py $(OPENRAM_OPTS) -o $* -p /openram/macros/$* /openram/macros/$< && touch $@
+	@python3 -u $(OPENRAM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
 
 .DELETE_ON_ERROR: $(STAMPS)
 

@@ -8,11 +8,11 @@ jobs:
         uses: actions/checkout@v1
       - name: Library build
         run: |
+         rm -rf ~/.local/lib/python3.8/site-packages/openram*
          make library
-      - name: Docker build
+      - name: Build conda
         run: |
-         cd ${{ github.workspace }}/docker
-         make build
+         ./install_conda.sh
       - name: PDK Install
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
@@ -26,6 +26,8 @@ jobs:
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
          export FREEPDK45="~/FreePDK45"
+         # KLAYOUT_PATH breaks klayout installation. Unset it for now...
+         unset KLAYOUT_PATH
          #cd $OPENRAM_HOME/.. && make pdk && make install
          #export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm

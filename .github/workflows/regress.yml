@@ -7,7 +7,7 @@ on:
     branches-ignore:
       - stable
 jobs:
-  # All tests should be run from this job.
+  # All tests should be run from this job
   regression_test:
     # This job runs on pull requests or any push that doesn't have a new version
     if: ${{ github.event_name == 'pull_request' || startsWith(github.event.head_commit.message, 'Bump version:') == false }}

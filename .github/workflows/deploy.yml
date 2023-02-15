@@ -4,6 +4,7 @@ on:
     branches:
       - stable
 jobs:
+  # This job upload the Python library to PyPI
   deploy_pip:
     if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') }}
     runs-on: ubuntu-latest
@@ -24,6 +25,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+  # This job creates a new GitHub release
   github_release:
     if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') }}
     runs-on: ubuntu-latest

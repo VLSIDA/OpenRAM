@@ -57,10 +57,10 @@ jobs:
          git tag ${{ env.LATEST_VERSION }} HEAD
          # Push to private/dev
          git pull private-repo dev
-         git push private-repo HEAD:dev --tags
+         git push private-repo HEAD:dev ${{ env.LATEST_VERSION }}
          # Push to public-repo/dev
          git pull public-repo dev
-         git push public-repo HEAD:dev --tags
+         git push public-repo HEAD:dev ${{ env.LATEST_VERSION }}
          # Push to public/stable
          git pull public-repo stable
-         git push public-repo HEAD:stable --tags
+         git push public-repo HEAD:stable ${{ env.LATEST_VERSION }}

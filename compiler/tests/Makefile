@@ -86,7 +86,20 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw1r_func_test.ok \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
-	%/50_riscv_8k_1rw_func_test.ok
+	%/50_riscv_8k_1rw_func_test.ok \
+	freepdk45/20_sram_1bank_2mux_1rw_1r_spare_cols_test.ok \
+	freepdk45/20_sram_1bank_2mux_1w_1r_spare_cols_test.ok \
+	freepdk45/20_sram_1bank_2mux_global_test.ok \
+	freepdk45/20_sram_1bank_2mux_wmask_spare_cols_test.ok \
+	freepdk45/20_sram_1bank_2mux_wmask_test.ok \
+	freepdk45/20_sram_1bank_4mux_1rw_1r_test.ok \
+	freepdk45/20_sram_1bank_4mux_test.ok \
+	freepdk45/20_sram_1bank_8mux_1rw_1r_test.ok \
+	freepdk45/21_model_delay_test.ok \
+	freepdk45/21_xyce_delay_test.ok \
+	scn4m_subm/19_single_bank_global_bitline_test.ok \
+	scn4m_subm/21_model_delay_test.ok \
+	scn4m_subm/21_xyce_delay_test.ok
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))

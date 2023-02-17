@@ -21,8 +21,8 @@ jobs:
       - name: Synchronize OpenRAM repo
         run: |
          # Configure pusher account
-         git config --global user.name "mrg"
-         git config --global user.email "mrg@ucsc.edu"
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
          # Add remote repo
          git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git
          git pull public-repo dev
@@ -41,8 +41,8 @@ jobs:
       - name: Compare version and tag
         run: |
          # Configure pusher account
-         git config --global user.name "mrg"
-         git config --global user.email "mrg@ucsc.edu"
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
          # Add both repos
          git remote add private-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/PrivateRAM.git
          git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git

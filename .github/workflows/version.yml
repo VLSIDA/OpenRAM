@@ -16,8 +16,8 @@ jobs:
       - name: Configure git
         run: |
          # Configure the committer
-         git config --global user.name "mrg"
-         git config --global user.email "mrg@ucsc.edu"
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
          # Set remote repos
          git remote add private-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/PrivateRAM.git
          git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git

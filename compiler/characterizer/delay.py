@@ -90,10 +90,10 @@ class delay(simulation):
         self.delay_meas = []
         self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "FALL", "RISE", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ONE # Used to index time delay values when measurements written to spice file.
-        self.delay_meas[-1].meta_add_delay = True
+        self.delay_meas[-1].meta_add_delay = False
         self.delay_meas.append(delay_measure("delay_hl", self.clk_frmt, targ_name, "FALL", "FALL", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ZERO
-        self.delay[-1].meta_add_delay = True
+        self.delay_meas[-1].meta_add_delay = False
         self.read_lib_meas+=self.delay_meas
 
         self.slew_meas = []
@@ -1031,7 +1031,7 @@ class delay(simulation):
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl, slew_lh)
         # high-to-low delays start at neg. clk edge, so they need to be less than half_period
         half_period = self.period / 2
-        if abs(delay_hl)>half_period or abs(delay_lh)>self.half_period or abs(slew_hl)>half_period or abs(slew_lh)>self.period \
+        if abs(delay_hl)>half_period or abs(delay_lh)>half_period or abs(slew_hl)>half_period or abs(slew_lh)>self.period \
            or (delay_hl<0 and delay_lh<0) or slew_hl<0 or slew_lh<0:
             debug.info(2, "UNsuccessful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                                delays_str,
@@ -1041,6 +1041,13 @@ class delay(simulation):
             debug.info(2, "Successful simulation (in ns):\n\t\t{0}\n\t\t{1}\n\t\t{2}".format(period_load_slew_str,
                                                                                              delays_str,
                                                                                              slews_str))
+
+        if delay_lh < 0 and delay_hl > 0:
+            result_dict["delay_lh"] = result_dict["delay_hl"]
+            debug.info(2, "delay_lh captured precharge, using delay_hl instead")
+        elif delay_hl < 0 and delay_lh > 0:
+            result_dict["delay_hl"] = result_dict["delay_lh"]
+            debug.info(2, "delay_hl captured precharge, using delay_lh instead")
 
         return True
 

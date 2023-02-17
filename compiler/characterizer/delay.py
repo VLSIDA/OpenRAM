@@ -90,10 +90,10 @@ class delay(simulation):
         self.delay_meas = []
         self.delay_meas.append(delay_measure("delay_lh", self.clk_frmt, targ_name, "FALL", "RISE", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ONE # Used to index time delay values when measurements written to spice file.
-        self.dealy_meas[-1].meta_add_delay = True
+        self.delay_meas[-1].meta_add_delay = True
         self.delay_meas.append(delay_measure("delay_hl", self.clk_frmt, targ_name, "FALL", "FALL", measure_scale=1e9))
         self.delay_meas[-1].meta_str = sram_op.READ_ZERO
-        self.dealy_meas[-1].meta_add_delay = True
+        self.delay[-1].meta_add_delay = True
         self.read_lib_meas+=self.delay_meas
 
         self.slew_meas = []

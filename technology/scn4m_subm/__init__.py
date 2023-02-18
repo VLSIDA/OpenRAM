@@ -22,11 +22,7 @@ TECHNOLOGY = "scn4m_subm"
 try:
     DRCLVS_HOME = os.path.abspath(os.environ.get("DRCLVS_HOME"))
 except:
-    tech_paths = os.environ.get("OPENRAM_TECH").split(':')
-    for d in tech_paths:
-        if os.path.isdir(d+"/freepdk45"):
-            DRCLVS_HOME= d+"/freepdk45/tech"
-            break
+    DRCLVS_HOME = "{0}/tech".format(os.path.dirname(__file__))
 
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 

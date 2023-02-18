@@ -35,15 +35,11 @@ TECHNOLOGY = "freepdk45"
 try:
     DRCLVS_HOME = os.path.abspath(os.environ.get("DRCLVS_HOME"))
 except:
-    tech_paths = os.environ.get("OPENRAM_TECH").split(':')
-    for d in tech_paths:
-        if os.path.isdir(d+"/freepdk45"):
-            DRCLVS_HOME= d+"/freepdk45/tech"
-            break
+    DRCLVS_HOME = "{0}/tech".format(os.path.dirname(__file__))
 
 # If you are using Cadence, you should set the DRCLVS_HOME environment variable
 # to the FreePDK45 PDK location:
 # DRCLVS_HOME= PDK_DIR+"/ncsu_basekit/techfile/calibre"
 os.environ["DRCLVS_HOME"] = DRCLVS_HOME
 
-os.environ["SPICE_MODEL_DIR"] = "{0}/models/hspice/tran_models".format(os.path.dirname(__file__))
+os.environ["SPICE_MODEL_DIR"] = "{0}/models/tran_models".format(os.path.dirname(__file__))

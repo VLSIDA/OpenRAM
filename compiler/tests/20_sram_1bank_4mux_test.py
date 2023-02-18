@@ -30,6 +30,9 @@ class sram_1bank_4mux_test(openram_test):
             num_spare_rows = 0
             num_spare_cols = 0
 
+        if OPTS.tech_name == "freepdk45":
+            OPTS.route_supplies = False
+
         c = sram_config(word_size=4,
                         num_words=64,
                         num_banks=1,

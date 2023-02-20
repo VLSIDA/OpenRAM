@@ -30,6 +30,9 @@ class sram_1bank_2mux_wmask_spare_cols_test(openram_test):
             num_spare_rows = 0
             num_spare_cols = 0
 
+        if OPTS.tech_name == "freepdk45":
+            OPTS.route_supplies = False
+
         c = sram_config(word_size=8,
                         write_size=4,
                         num_words=64,

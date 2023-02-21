@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -28,6 +28,21 @@ def run_script(cell_name, script="lvs"):
     resultsfile = "{0}{1}.{2}.report".format(OPTS.openram_temp, cell_name, script)
 
     scriptpath = '{0}run_{1}.sh'.format(OPTS.openram_temp, script)
+
+    # Wrap with conda activate & conda deactivate
+    if OPTS.use_conda:
+        from openram import CONDA_HOME
+        with open(scriptpath, "r") as f:
+            script_content = f.readlines()
+        with open(scriptpath, "w") as f:
+            # First line is shebang
+            f.write(script_content[0])
+            # Activate conda using the activate script
+            f.write("source {}/bin/activate\n".format(CONDA_HOME))
+            for line in script_content[1:]:
+                f.write(line)
+            # Deactivate conda at the end
+            f.write("conda deactivate\n")
 
     debug.info(2, "Starting {}".format(scriptpath))
     start = time.time()

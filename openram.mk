@@ -17,7 +17,7 @@ export PDK_ROOT
 UID = $(shell id -u)
 GID = $(shell id -g)
 
-export OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp 
+export OPENRAM_TMP=$(OPENRAM_DIR)/results/$*/tmp
 export DOCKER_CMD= docker run \
 		-v $(TOP_DIR):/openram \
 		-v $(FREEPDK45):/freepdk45 \

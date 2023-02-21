@@ -1,0 +1,42 @@
+name: sync_tag
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  # This job makes sure that a version commit has a tag (manually bumped versions might have tags missing)
+  sync_dev_tag_check:
+    if: ${{ github.repository == 'VLSIDA/PrivateRAM' && startsWith(github.event.head_commit.message, 'Bump version:') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      - name: Compare version and tag
+        run: |
+         # Configure pusher account
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
+         # Add both repos
+         git remote add private-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/PrivateRAM.git
+         git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git
+         # Read the version file
+         echo "LATEST_VERSION=v$(cat VERSION)" >> $GITHUB_ENV
+         # Read the tag name of the last commit
+         echo "HEAD_TAG=$(git describe --tags HEAD)" >> $GITHUB_ENV
+      - name: Make a new tag and push
+        if: ${{ env.LATEST_VERSION != env.HEAD_TAG }}
+        run: |
+         # Tag the commit
+         git tag ${{ env.LATEST_VERSION }} HEAD
+         # Push to private/dev
+         git pull private-repo dev
+         git push private-repo HEAD:dev ${{ env.LATEST_VERSION }}
+         # Push to public-repo/dev
+         git pull public-repo dev
+         git push public-repo HEAD:dev ${{ env.LATEST_VERSION }}
+         # Push to public/stable
+         git pull public-repo stable
+         git push public-repo HEAD:stable ${{ env.LATEST_VERSION }}

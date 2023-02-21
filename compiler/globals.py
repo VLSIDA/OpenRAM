@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -22,7 +22,8 @@ from openram import debug
 from openram import options
 
 
-VERSION = "1.2.0"
+from openram import OPENRAM_HOME
+VERSION = open(OPENRAM_HOME + "/../VERSION").read().rstrip()
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 
@@ -196,6 +197,8 @@ def init_openram(config_file, is_unit_test=False):
 
     read_config(config_file, is_unit_test)
 
+    install_conda()
+
     import_tech()
 
     set_default_corner()
@@ -228,6 +231,19 @@ def init_openram(config_file, is_unit_test=False):
     # after each unit test
     if not CHECKPOINT_OPTS:
         CHECKPOINT_OPTS = copy.copy(OPTS)
+
+
+def install_conda():
+    """ Setup conda for default tools. """
+
+    # Don't setup conda if not used
+    if not OPTS.use_conda or OPTS.is_unit_test:
+        return
+
+    debug.info(1, "Creating conda setup...");
+
+    from openram import CONDA_HOME
+    subprocess.call("./install_conda.sh", cwd=os.path.abspath(CONDA_HOME + "/.."))
 
 
 def setup_bitcell():
@@ -457,8 +473,16 @@ def find_exe(check_exe):
     Check if the binary exists in any path dir
     and return the full path.
     """
+    # Search for conda setup if used
+    if OPTS.use_conda:
+        from openram import CONDA_HOME
+        search_path = "{0}/bin{1}{2}".format(CONDA_HOME,
+                                             os.pathsep,
+                                             os.environ["PATH"])
+    else:
+        search_path = os.environ["PATH"]
     # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
+    for path in search_path.split(os.pathsep):
         exe = os.path.join(path, check_exe)
         # if it is found, then break and use first version
         if is_exe(exe):

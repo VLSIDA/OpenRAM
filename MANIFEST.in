@@ -2,9 +2,11 @@ include Makefile
 include openram.mk
 include setpaths.sh
 include requirements.txt
+include install_conda.sh
 include docker/*
 recursive-include compiler *
 recursive-include technology *
+include VERSION
 exclude .DS_Store
 exclude .idea
 exclude **/model_data

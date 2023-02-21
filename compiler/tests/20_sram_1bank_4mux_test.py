@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -29,6 +29,9 @@ class sram_1bank_4mux_test(openram_test):
         else:
             num_spare_rows = 0
             num_spare_cols = 0
+
+        if OPTS.tech_name == "freepdk45":
+            OPTS.route_supplies = False
 
         c = sram_config(word_size=4,
                         num_words=64,

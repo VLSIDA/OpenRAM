@@ -1,0 +1,12 @@
+
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTG.inc
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTG.inc
+
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTL.inc
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTL.inc
+
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_VTH.inc
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_VTH.inc
+
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/NMOS_THKOX.inc
+.inc '$PDK_DIR/ncsu_basekit/models/hspice/tran_models/models_nom/PMOS_THKOX.inc

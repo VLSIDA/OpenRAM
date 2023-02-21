@@ -1,0 +1,27 @@
+name: sync
+on:
+  workflow_call:
+    secrets:
+      WORKFLOW_ACCESS_TOKEN:
+        required: true
+jobs:
+  # This job synchronizes the 'dev' branch of OpenRAM repo with the current branch
+  sync_dev_no_version:
+    if: ${{ github.repository == 'VLSIDA/PrivateRAM' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      - name: Synchronize OpenRAM repo
+        run: |
+         # Configure pusher account
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
+         # Add remote repo
+         git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git
+         git pull public-repo dev
+         # Push the latest changes
+         git push -u public-repo HEAD:dev

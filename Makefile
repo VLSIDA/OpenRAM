@@ -215,14 +215,14 @@ wipe: uninstall
 .PHONY: wipe
 
 # Build the openram library
-build-library:
+build_library:
 	@rm -rf dist
 	@rm -rf openram.egg-info
 	@python3 -m pip install --upgrade build
 	@python3 -m build
-.PHONY: build-library
+.PHONY: build_library
 
 # Build and install the openram library
-library: build-library
-	@python3 -m pip install --force --find-links=dist openram
+library: build_library
+	@python3 -m pip install --force dist/openram*.whl
 .PHONY: library

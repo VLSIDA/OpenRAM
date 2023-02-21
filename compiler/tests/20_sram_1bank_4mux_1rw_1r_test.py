@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -22,6 +22,9 @@ class sram_1bank_4mux_1rw_1r_test(openram_test):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
         from openram import sram_config
+
+        if OPTS.tech_name == "freepdk45":
+            OPTS.route_supplies = False
 
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1

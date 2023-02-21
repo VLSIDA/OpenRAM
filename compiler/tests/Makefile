@@ -12,7 +12,7 @@ TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))
 TEST_BASES = $(basename $(TEST_SRCS))
 TEST_STAMPS= $(addsuffix .ok,$(TEST_BASES))
 
-OPENRAM_DIR = /openram/compiler/tests
+OPENRAM_DIR = $(OPENRAM_HOME)/tests
 RESULTS_DIR = $(OPENRAM_DIR)/results
 
 # Use % for all techs: 
@@ -86,7 +86,7 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw1r_func_test.ok \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
-	%/50_riscv_8k_1rw_func_test.ok
+	%/50_riscv_8k_1rw_func_test.ok \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
@@ -119,8 +119,7 @@ $(TEST_BASES):
 	@rm -rf results/$*
 	@rm -rf results/$*.*
 	@mkdir -p results/$*/tmp
-	@$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && sleep 1 && python3 -u $(OPENRAM_DIR)/$(getfile).py \
-		-t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
+	@sh -c "python3 -u $(OPENRAM_DIR)/$(getfile).py -t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
 ifdef KEEP
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
 else

@@ -1,12 +1,10 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-{} Regents of the University of California, Santa Cruz
-# All rights reserved
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# All rights reserved.
 #
-
 from openram import sram_config
 from math import ceil
-import re
 from openram import OPTS
 
 

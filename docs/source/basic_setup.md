@@ -52,6 +52,12 @@ worry about updating/installing these tools. OpenRAM installs Anaconda silently 
 OpenRAM uses Anaconda by default, but you can turn this feature off by setting `use_conda = False`
 in your config file. Then, OpenRAM will use the tools you have installed on your system.
 
+If you want to install Anaconda without running OpenRAM (for example to run unit tests, which do not install Anaconda), you can run:
+```
+cd OpenRAM
+./install_conda.sh
+```
+
 
 
 ## Docker (deprecated, use Anaconda instead)

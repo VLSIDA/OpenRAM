@@ -50,7 +50,7 @@ use the following command to run all regression tests:
 cd OpenRAM/compiler/tests
 make -j 3
 ```
-The -j can run with 3 threads. By default, this will run in all technologies.
+The -j can run with 3 threads. By default, this will run in all technologies. Note that if you have not run openram, the conda environment will not be installed. You can install it by running OpenRAM/install_conda.sh (see [Basic Setup](basic_setup.md#anaconda) for more details).
 
 To run a specific test in all technologies:
 ```

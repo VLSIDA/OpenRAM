@@ -1,7 +1,16 @@
-name: ci
-on: [push]
+name: regress
+on:
+  push:
+    branches-ignore:
+      - stable
+  pull_request:
+    branches-ignore:
+      - stable
 jobs:
-  regress:
+  # All tests should be run from this job
+  regression_test:
+    # This job runs on pull requests or any push that doesn't have a new version
+    if: ${{ github.event_name == 'pull_request' || startsWith(github.event.head_commit.message, 'Bump version:') == false }}
     runs-on: self-hosted
     steps:
       - name: Checkout code
@@ -39,5 +48,19 @@ jobs:
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
-         name: Regress Archives
-         path: ${{ github.workspace }}/compiler/tests/results/*
+          name: Regress Archives
+          path: ${{ github.workspace }}/compiler/tests/results/*
+  # This job triggers sync.yml workflow
+  sync_trigger:
+    if: ${{ always() && github.event_name == 'push' && github.ref_name == 'dev' && github.repository == 'VLSIDA/PrivateRAM' && needs.regression_test.result == 'failure' }}
+    needs: regression_test
+    uses: ./.github/workflows/sync.yml
+    secrets:
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+  # This job triggers version.yml workflow
+  version_trigger:
+    if: ${{ github.event_name == 'push' && github.ref_name == 'dev' }}
+    needs: regression_test
+    uses: ./.github/workflows/version.yml
+    secrets:
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}

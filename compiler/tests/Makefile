@@ -86,7 +86,7 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw1r_func_test.ok \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
-	%/50_riscv_8k_1rw_func_test.ok
+	%/50_riscv_8k_1rw_func_test.ok \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))

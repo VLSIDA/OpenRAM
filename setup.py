@@ -11,7 +11,7 @@ from setuptools import setup, find_namespace_packages
 # Include these folder from the root of repo as submodules
 include = ["compiler", "docker", "technology", "macros"]
 # Exclude files/folders with these words
-exclude = ["docs", "images"]
+exclude = ["docs", "images", "miniconda"]
 
 
 # Find all modules inside the 'compiler' folder
@@ -48,8 +48,21 @@ with open("requirements.txt") as f:
     reqs = f.read().splitlines()
 
 
+# Read version from file
+version = open("VERSION", "r").read().rstrip()
+
+
 # Call the setup to create the package
 setup(
+    name="openram",
+    version=version,
+    description="An open-source static random access memory (SRAM) compiler",
+    url="https://openram.org/",
+    author="Matthew Guthaus",
+    author_email="mrg@ucsc.edu",
+    keywords=[ "sram", "magic", "gds", "netgen", "ngspice", "netlist" ],
+    readme="README.md",
+    license="BSD-3",
     packages=packages,
     package_dir=package_dir,
     include_package_data=True,

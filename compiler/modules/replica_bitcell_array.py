@@ -101,7 +101,7 @@ class replica_bitcell_array(bitcell_base_array):
                 # the array.
                 # These go from the top (where the bitcell array starts ) down
                 replica_bit = self.rbl[0] - port - 1
-                column_offset = self.rbl[0]
+                column_offset = len(self.left_rbl)
 
             elif port in self.right_rbl:
 
@@ -109,7 +109,7 @@ class replica_bitcell_array(bitcell_base_array):
                 # the array.
                 # These go from the bottom up
                 replica_bit = self.rbl[0] + self.row_size + port - 1
-                column_offset = self.rbl[0] + self.column_size + 1
+                column_offset = len(self.left_rbl) + self.column_size + 1
             else:
                 continue
 

@@ -1261,19 +1261,18 @@ class delay(simulation):
     def guess_spice_names(self):
         """This is run in place of set_internal_spice_names function from
         simulation.py when running stand-alone characterizer."""
-        # TODO: Find a better method
         with open(self.sp_file, "r") as file:
             bl_prefix = None
             br_prefix = None
             replica_bitcell_array_name = None
             for line in file:
-                if re.search("bl_\d_\d", line):
+                if re.search(r"bl_\d_\d", line):
                     bl_prefix = "bl_"
                     br_prefix = "br_"
-                if re.search("bl\d_\d", line):
+                if re.search(r"bl\d_\d", line):
                     bl_prefix = "bl"
                     br_prefix = "br"
-                if re.search("Xreplica_bitcell_array", line):
+                if re.search(r"Xreplica_bitcell_array", line):
                     replica_bitcell_array_name = "replica_bitcell_array"
                 if bl_prefix and replica_bitcell_array_name:
                     break
@@ -1284,10 +1283,6 @@ class delay(simulation):
             if not replica_bitcell_array_name:
                 replica_bitcell_array_name = "bitcell_array"
             self.cell_format = "X{{0}}{{3}}xbank0{{3}}x{0}{{3}}xbitcell_array{{3}}xbit_r{{1}}_c{{2}}".format(replica_bitcell_array_name)
-
-
-
-
 
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""

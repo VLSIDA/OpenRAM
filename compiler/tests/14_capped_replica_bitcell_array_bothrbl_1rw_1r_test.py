@@ -14,7 +14,7 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class replica_column_test(openram_test):
+class capped_replica_bitcell_array_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -25,20 +25,13 @@ class replica_column_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing one left replica column for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 0], replica_bit=0)
-        self.local_check(a)
-
-        debug.info(2, "Testing one right replica column for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[0, 1], replica_bit=4)
-        self.local_check(a)
-
-        debug.info(2, "Testing two (left, right) replica columns for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=0)
-        self.local_check(a)
-
-        debug.info(2, "Testing two (left, right) replica columns for dual port")
-        a = factory.create(module_type="replica_column", rows=4, rbl=[1, 1], replica_bit=5)
+        debug.info(2, "Testing 4x4 array left and right replica for dp cell")
+        a = factory.create(module_type="capped_replica_bitcell_array",
+                           cols=4,
+                           rows=4,
+                           rbl=[1, 1],
+                           left_rbl=[0],
+                           right_rbl=[1])
         self.local_check(a)
 
         openram.end_openram()

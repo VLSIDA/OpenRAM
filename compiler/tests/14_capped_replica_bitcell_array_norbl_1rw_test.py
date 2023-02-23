@@ -14,24 +14,19 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class replica_column_test(openram_test):
+class capped_replica_bitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        if OPTS.tech_name == "sky130":
-            num_spare_rows = 1
-            num_spare_cols = 1
-        else:
-            num_spare_rows = 0
-            num_spare_cols = 0
 
-        debug.info(2, "Testing replica column for single port")
-        a = factory.create(module_type="replica_column",
-                           rows=4 + num_spare_rows,
-                           rbl=[1, 0],
-                           replica_bit=1,
-                           column_offset=num_spare_cols)
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 0
+        OPTS.num_w_ports = 0
+
+        factory.reset()
+        debug.info(2, "Testing 4x4 array for bitcell")
+        a = factory.create(module_type="capped_replica_bitcell_array", cols=7, rows=5, rbl=[1, 0])
         self.local_check(a)
 
         openram.end_openram()

@@ -374,9 +374,12 @@ class bank(design):
                                                 cols=cols,
                                                 rows=self.num_rows)
         else:
-            self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+            self.bitcell_array = factory.create(module_type="capped_replica_bitcell_array",
                                                 cols=self.num_cols + self.num_spare_cols,
-                                                rows=self.num_rows)
+                                                rows=self.num_rows,
+                                                rbl=[1, 1 if len(self.all_ports)>1 else 0],
+                                                left_rbl=[0],
+                                                right_rbl=[1] if len(self.all_ports)>1 else [])
 
         self.port_address = []
         for port in self.all_ports:

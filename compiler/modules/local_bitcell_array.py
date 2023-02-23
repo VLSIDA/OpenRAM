@@ -19,7 +19,7 @@ class local_bitcell_array(bitcell_base_array):
     This can either be a single aray on its own if there is no hierarchical WL
     or it can be combined into a larger array with hierarchical WL.
     """
-    def __init__(self, rows, cols, rbl, left_rbl=[], right_rbl=[], name=""):
+    def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
         debug.info(2, "Creating {0} {1}x{2} rbl: {3} left_rbl: {4} right_rbl: {5}".format(name,
                                                                                           rows,
@@ -30,9 +30,19 @@ class local_bitcell_array(bitcell_base_array):
 
         self.rows = rows
         self.cols = cols
+        # This is how many RBLs are in all the arrays
         self.rbl = rbl
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        # This specifies which RBL to put on the left or right by port number
+        # This could be an empty list
+        if left_rbl is not None:
+            self.left_rbl = left_rbl
+        else:
+            self.left_rbl = []
+        # This could be an empty list
+        if right_rbl is not None:
+            self.right_rbl = right_rbl
+        else:
+            self.right_rbl=[]
 
         debug.check(len(self.all_ports) < 3, "Local bitcell array only supports dual port or less.")
 
@@ -67,7 +77,7 @@ class local_bitcell_array(bitcell_base_array):
         # This is just used for names
         self.cell = factory.create(module_type=OPTS.bitcell)
 
-        self.bitcell_array = factory.create(module_type="replica_bitcell_array",
+        self.bitcell_array = factory.create(module_type="capped_replica_bitcell_array",
                                             cols=self.cols,
                                             rows=self.rows,
                                             rbl=self.rbl,

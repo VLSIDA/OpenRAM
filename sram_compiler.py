@@ -19,20 +19,11 @@ a Liberty (.lib) file for timing analysis/optimization
 import sys
 import os
 import datetime
-try:
-    import openram
-except:
-    # If openram library isn't found as a python package,
-    # import it from the $OPENRAM_HOME path.
-    import importlib.util
-    OPENRAM_HOME = os.getenv("OPENRAM_HOME")
-    # Import using spec since the directory can be named something
-    # other than "openram".
-    spec = importlib.util.spec_from_file_location("openram", "{}/../__init__.py".format(OPENRAM_HOME))
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["openram"] = module
-    spec.loader.exec_module(module)
-    import openram
+
+# You don't need the next two lines if you're sure that openram package is installed
+from common import *
+make_openram_package()
+import openram
 
 (OPTS, args) = openram.parse_args()
 

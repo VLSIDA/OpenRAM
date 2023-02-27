@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -11,11 +11,9 @@ from openram.base import vector, design
 from openram import OPTS
 from openram.tech import drc
 
-
-
 class rom_decoder(design):
     def __init__(self, num_outputs, fanout, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
-        
+
         # word lines/ rows / inputs in the base array become the address lines / cols / inputs in the decoder
         # bit lines / cols / outputs in the base array become the word lines / rows / outputs in the decoder
         # array gets rotated 90deg so that rows/cols switch
@@ -23,8 +21,6 @@ class rom_decoder(design):
         self.num_outputs = num_outputs
         self.num_inputs = ceil(log(num_outputs, 2))
         self.create_decode_map()
-
-        # for i in range(2 * self.num_inputs): print(self.decode_map[i])
         
         super().__init__(name)
 
@@ -45,7 +41,6 @@ class rom_decoder(design):
         self.add_modules()
         self.add_pins()
         self.create_instances()
-        
 
     def create_layout(self):
         self.setup_layout_constants()
@@ -57,13 +52,13 @@ class rom_decoder(design):
         self.connect_inputs()
         self.route_supplies()
         self.add_boundary()
-    
+
     def add_boundary(self):
         ll = self.find_lowest_coords()
         m1_offset = self.m1_width
         self.translate_all(vector(0, ll.y))
         ur = self.find_highest_coords()
-        
+
         ur = vector(ur.x, ur.y)
         super().add_boundary(ll, ur)
         self.width = ur.x
@@ -77,7 +72,7 @@ class rom_decoder(design):
         # create decoding map that will be the bitmap for the rom decoder
         # row/col order in the map will be switched in the placed decoder/
         for col in range(self.num_inputs):
-            
+
             # odd cols are address
             # even cols are address bar
             col_array = []
@@ -93,17 +88,13 @@ class rom_decoder(design):
                     bin_digit = int(addr[addr_idx])
 
                 col_array.append(bin_digit) 
-                # print("addr {0}, at indx {1}, digit {2}".format(addr, addr_idx, bin_digit))
 
                 if bin_digit == 0 : inv_col_array.append(1)
                 else : inv_col_array.append(0)
-                
 
-                    
             self.decode_map.append(col_array)
             self.decode_map.append(inv_col_array)
         self.decode_map.reverse()
-
 
     def add_pins(self):
         for i in range(self.num_inputs):
@@ -116,12 +107,10 @@ class rom_decoder(design):
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
 
-
     def add_modules(self):
 
         self.control_array = factory.create(module_type="rom_address_control_array", 
                                             cols=self.num_inputs)
-
 
         self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), 
                                         rows=self.num_outputs, 
@@ -129,7 +118,6 @@ class rom_decoder(design):
                                         invert_outputs=self.invert_outputs,
                                         tap_spacing=self.strap_spacing)
                                             
-
         self.array_mod = factory.create(module_type="rom_base_array", 
                                         module_name="{}_array".format(self.name), 
                                         cols=self.num_outputs, 
@@ -139,13 +127,11 @@ class rom_decoder(design):
                                         bitline_layer=self.output_layer,
                                         tap_direction="col")
 
-
     def create_instances(self):
 
         self.create_array_inst()
         self.create_input_buffer()
         self.create_wordline_buffer()
-        
 
     def create_input_buffer(self):
         name = "pre_control_array"
@@ -159,17 +145,16 @@ class rom_decoder(design):
             control_pins.append("A_int_{0}".format(i))
         for i in range(self.num_inputs):
             control_pins.append("Ab_int_{0}".format(i))
-        
-            
+
+
         control_pins.append("clk")
         control_pins.append("vdd")
         control_pins.append("gnd")
         self.connect_inst(control_pins)
 
-
     def create_array_inst(self):
         self.array_inst = self.add_inst(name="decode_array_inst", mod=self.array_mod)
-        
+
         array_pins = []
 
         for j in range(self.num_outputs):
@@ -192,8 +177,6 @@ class rom_decoder(design):
         pwr_pins = ["vdd", "gnd"]
         self.connect_inst(in_pins + out_pins + pwr_pins)
 
-
-
     def place_input_buffer(self):
         wl = self.array_mod.row_size - 1
         align = self.array_inst.get_pin(self.array_mod.wordline_names[0][wl]).cx() - self.buf_inst.get_pin("A0_out").cx()
@@ -202,12 +185,10 @@ class rom_decoder(design):
 
         self.copy_layout_pin(self.buf_inst, "clk")
 
-
-
     def place_array(self):
         offset = vector(self.array_mod.height, self.control_array.height + self.m1_width + self.poly_contact.width)
         self.array_inst.place(offset, rotate=90)
-    
+
     def place_driver(self):
          
         offset = vector(self.array_inst.height + self.m1_width, self.array_inst.by())
@@ -231,7 +212,6 @@ class rom_decoder(design):
         route_pins = array_pins + driver_pins
         self.connect_row_pins(self.output_layer, route_pins, round=True)
 
-        
     def connect_inputs(self):
 
         self.copy_layout_pin(self.array_inst, "precharge")
@@ -264,27 +244,3 @@ class rom_decoder(design):
         self.copy_layout_pin(self.array_inst, "gnd")
         self.copy_layout_pin(self.wordline_buf_inst, "gnd")
         self.copy_layout_pin(self.buf_inst, "gnd")
-
-        # Extend nwells to connect with eachother
-        # self.extend_wells()
-        
-
-    def extend_wells(self):
-        precharge_well_rx = self.array_inst.get_pins("vdd")[0].cx() + 0.5 * self.nwell_width
-        precharge_well_lx = precharge_well_rx - self.array_mod.precharge_array.height - 0.5 * self.nwell_width - self.array_mod.precharge_array.well_offset
-
-
-        offset = vector(precharge_well_rx ,self.array_inst.by())
-
-        self.add_label(text="well_right", layer="nwell", offset=offset)
-        offset = vector(precharge_well_lx ,self.array_inst.by())
-        self.add_label(text="well_left", layer="nwell", offset=offset)
-        vdd_pins=self.buf_inst.get_pins("vdd").copy()
-        print(vdd_pins)
-        well_by = vdd_pins[0].cy()
-        # well_ll = vector(precharge_well_lx, well_by)
-        well_ll = vector(self.buf_inst.rx(), well_by)
-        # self.add_rect(layer="nwell", offset=well_ll, height = self.array_inst.by() - well_by, width=precharge_well_rx - self.buf_inst.rx())
-
- 
-

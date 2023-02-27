@@ -24,10 +24,8 @@ class rom_bank_test(openram_test):
         debug.info(1, "Testing 2kB rom cell")
 
         a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data_2kB", word_size=1)
-        print('wriitng file')
         a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
         self.local_check(a)
-        
 
         openram.end_openram()
 

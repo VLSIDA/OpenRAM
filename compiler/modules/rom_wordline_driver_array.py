@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -12,7 +12,6 @@ from openram.sram_factory import factory
 from openram.tech import layer
 from openram.tech import layer_properties as layer_props
 from openram import OPTS
-
 
 class rom_wordline_driver_array(design):
     """
@@ -82,7 +81,6 @@ class rom_wordline_driver_array(design):
                                             height=b.height,
                                             add_wells=False)
 
-
     def route_supplies(self):
         """
         Add a pin for each row of vdd/gnd which
@@ -117,7 +115,6 @@ class rom_wordline_driver_array(design):
             self.wld_inst[row].place(offset=offset)
             y_offset += self.wld_inst[row].height
 
-
         self.width = self.wl_driver.width
         self.height = self.wl_driver.height * self.rows
 
@@ -143,7 +140,6 @@ class rom_wordline_driver_array(design):
             else:
                 wl_offset = out_pin.rc() - vector( 0.5 * route_width, 0)
 
-
             end = vector(wl_offset.x, \
                          self.get_pin("in_{}".format(row)).cy() + 0.5 * route_width)
             self.add_segment_center(layer=self.route_layer,
@@ -155,7 +151,6 @@ class rom_wordline_driver_array(design):
                                         end=vector(wl_offset.x - 0.5 * route_width, out_pin.cy()))
 
             self.add_layout_pin_rect_center(text="out_{}".format(row), layer=self.route_layer, offset=end - vector(0, 0.5 * route_width))
-
 
     def place_taps(self):
 
@@ -182,7 +177,6 @@ class rom_wordline_driver_array(design):
                 contact_pos = vector( gnd_pin2.cx(), left_edge)
                 self.place_tap(contact_pos, "p")
 
-
     def place_tap(self, offset, well_type):
         self.add_via_center(layers=self.active_stack,
                     offset=offset,
@@ -197,4 +191,3 @@ class rom_wordline_driver_array(design):
         else:
             pin = "vdd"
         self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset)
-

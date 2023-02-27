@@ -1,3 +1,10 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
+#
 
 from math import ceil, log, sqrt
 from openram.base import vector
@@ -103,24 +110,7 @@ class rom_base_bank(design):
         # self.data.reverse()
 
         debug.info(1, "Read rom binary: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, num_words, self.cols, self.rows, self.words_per_row))
-        # self.print_data(chunked_data)
-        # print("Scrambled")
-        # self.print_data(scrambled_chunked)
-        
-        # self.print_word(self.data, 0, 0)
-        # self.print_word(self.data, 0, 1)
-        # self.print_word(self.data, 0, 2)
-        # self.print_word(self.data, 0, 3)
-        # print("hex: {0}, binary: {1}, chunked: {2}".format(hex_data, bin_data, chunked_data))
 
-    def print_data(self, data_array):
-        for row in range(len(data_array)):
-                print(data_array[row])
-        
-    def print_word(self, data_array, bl, word):
-        for bit in range(self.word_size):
-                print(data_array[bl][word + self.words_per_row * bit], end =" ")
-        print("")
 
     def create_netlist(self):
         self.add_modules()
@@ -129,18 +119,13 @@ class rom_base_bank(design):
 
         
     def create_layout(self):
-        print("Creating ROM bank instances")
         self.create_instances()
-        print("Placing ROM bank instances")
         self.place_instances()
 
-        print("Routing decoders to array")
         self.route_decode_outputs()
 
-        print("Routing precharge signal")
         self.route_precharge()
 
-        print("Routing clock signal")
         self.route_clock()
         self.route_array_outputs()
         self.place_top_level_pins()
@@ -177,7 +162,6 @@ class rom_base_bank(design):
 
     def add_modules(self):
 
-        print("Creating bank modules")
         # TODO: provide technology-specific calculation of these parameters
         # in sky130 the address control buffer is composed of 2 size 2 NAND gates, 
         # with a beta of 3, each of these gates has gate capacitance of 2 min sized inverters, therefor a load of 4
@@ -487,16 +471,7 @@ class rom_base_bank(design):
 
         channel_ll = vector( route_nets[0][0].cx(), route_nets[0][1].cy() + self.m1_pitch * 3)
         self.create_horizontal_channel_route(netlist=route_nets, offset=channel_ll, layer_stack=self.m1_stack)
-        # for bit in range(self.word_size):
-        #     mux_pin = self.mux_inst.get_pin("bl_out_{}".format(bit))
-        #     buf_pin = self.output_buf_inst.get_pin("in_{}".format(bit))
-        #     mux_out = vector(mux_pin.cx(), mux_pin.by())
-        #     buf_in = buf_pin.center()
 
-        #     mid1 = vector(mux_out.x, buf_in.y + bit * self.m2_pitch)
-        #     mid2 = vector(buf_in.x, mid1.y)
-        #     print("start: {0}, mid: {1}, stop: {2}".format(mux_out, mid1, buf_in))
-        #     self.add_path(layer="m2", coordinates=[mux_out, mid1, mid2, buf_in])
 
 
             
@@ -524,12 +499,3 @@ class rom_base_bank(design):
             if not inst.mod.name.__contains__("contact"):
                 self.copy_layout_pin(inst, "vdd")
                 self.copy_layout_pin(inst, "gnd")
-
-
-        
-
-
-        
-
-
-

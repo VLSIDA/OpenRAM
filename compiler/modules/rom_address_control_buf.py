@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -22,10 +22,7 @@ class rom_address_control_buf(design):
 
         self.route_layer = route_layer
         self.add_wells = add_wells
-         
         self.size = size
-
-
         if "li" in layer:
             self.inv_layer = "li"
         else:
@@ -39,7 +36,6 @@ class rom_address_control_buf(design):
         self.add_pins()
         self.create_instances()
 
-
     def create_layout(self):
         self.width =  self.cell.height * 2
         self.height = self.inv.width + 2 * self.nand.width
@@ -50,10 +46,8 @@ class rom_address_control_buf(design):
         self.route_sources()
         self.add_boundary()
 
-
     def create_modules(self):
 
-        
         # self.inv1_mod = factory.create(module_type="pinv", module_name="inv_array_end_mod", height=self.inv_size, add_wells=False)
         self.inv = factory.create(module_type="pinv_dec", module_name="inv_array_mod", add_wells=False, size=self.size)
         # self.end_inv = factory.create(module_type="pinv", module_name="inv_array_end_mod", size=self.size, add_wells=True)
@@ -62,7 +56,7 @@ class rom_address_control_buf(design):
         self.cell = factory.create(module_type="rom_base_cell")
 
     def add_pins(self):
-        
+
         self.add_pin("A_in", "INPUT")
         self.add_pin("A_out", "INOUT")
         self.add_pin("Abar_out", "OUTPUT")
@@ -83,7 +77,7 @@ class rom_address_control_buf(design):
 
         self.addr_nand = self.add_inst(name=name, mod=self.nand)
         inst_A = "clk"
-        inst_B = "Abar_internal" 
+        inst_B = "Abar_internal"
         inst_Z = "A_out"
         self.connect_inst([inst_A, inst_B, inst_Z, "vdd", "gnd"])
 
@@ -95,39 +89,30 @@ class rom_address_control_buf(design):
         inst_Z = "Abar_out"
         self.connect_inst([inst_A, inst_B, inst_Z, "vdd", "gnd"])
 
-    
-
-
     def setup_layout_constants(self):
         self.route_width = drc["minwidth_{}".format(self.route_layer)]
         self.interconnect_width = drc["minwidth_{}".format(self.inv_layer)]
 
     def place_instances(self):
-
-
         self.inv_inst.place(offset=vector(self.inv_inst.height,0), rotate=90)
         self.addr_nand.place(offset=vector(self.addr_nand.height , self.inv_inst.width + self.route_width ), rotate=90)
-
         self.addr_bar_nand.place(offset=vector( self.addr_bar_nand.height, self.addr_nand.width + self.inv_inst.width + self.route_width), rotate=90)
-
-
-
 
     def route_gates(self):
         clk1_pin = self.addr_nand.get_pin("A")
         clk2_pin = self.addr_bar_nand.get_pin("A")
         # self.add_label("HERE I AM", "poly", clk_pins.cl())
-        
+
         Abar_out = self.addr_bar_nand.get_pin("Z")
         A_out = self.addr_nand.get_pin("Z")
-        
+
         Abar_in = self.addr_nand.get_pin("B")
         Abar_int_out = self.inv_inst.get_pin("Z")
 
         Aint_in = self.addr_bar_nand.get_pin("B")
         A_in = self.inv_inst.get_pin("A")
 
-        
+
         # Find the center of the pmos poly/gate
         poly_right = clk1_pin.cx() + self.poly_enclose_contact + 0.5 * self.contact_width
 
@@ -160,7 +145,7 @@ class rom_address_control_buf(design):
         self.add_layout_pin_rect_center("A_out", offset=vector(end.x, self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
 
 
-        # Route second NAND to output pin 
+        # Route second NAND to output pin
         self.add_via_stack_center(Abar_out.center(), self.inv_layer, "m2")
         self.add_segment_center("m2", Abar_out.center(), vector(Abar_out.cx(), self.addr_bar_nand.uy()))
         self.add_layout_pin_rect_center("Abar_out", offset=vector(Abar_out.cx(), self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
@@ -170,9 +155,6 @@ class rom_address_control_buf(design):
         end = vector(Abar_int_out.cx(), Abar_in.cy() + 0.5 * self.interconnect_width)
         self.add_segment_center(self.inv_layer, Abar_int_out.center(), end)
         self.copy_layout_pin(self.inv_inst, "A", "A_in")
-        
-
-
 
     def route_sources(self):
 
@@ -210,5 +192,3 @@ class rom_address_control_buf(design):
         self.add_via_stack_center(offset=contact_pos,
                                   from_layer=self.active_stack[2],
                                   to_layer=self.route_layer)
-
-

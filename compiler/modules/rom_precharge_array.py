@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -12,8 +12,6 @@ from openram.base import design
 from openram.sram_factory import factory
 from openram.base import vector
 from openram.tech import layer, drc
-
-
 
 class rom_precharge_array(design):
     """
@@ -38,7 +36,7 @@ class rom_precharge_array(design):
         else:
             self.strap_spacing = 0
 
-        
+
         if strap_spacing != 0:
             self.num_straps = ceil(self.cols / self.strap_spacing)
             self.array_col_size = self.cols + self.num_straps  
@@ -54,8 +52,6 @@ class rom_precharge_array(design):
         self.create_modules()
         self.add_pins()
         self.create_instances()
-        
-
 
     def create_layout(self):
         self.width = self.cols * self.pmos.width 
@@ -64,10 +60,9 @@ class rom_precharge_array(design):
         self.create_layout_pins()
         self.route_supply()
         self.connect_taps()
-        
+
         self.add_boundary()
         self.extend_well()
-
 
     def add_boundary(self):
         # self.translate_all(self.well_ll)
@@ -92,7 +87,6 @@ class rom_precharge_array(design):
             self.add_pin("pre_bl{0}_out".format(col), "OUTPUT")
         self.add_pin("gate", "INPUT")
         self.add_pin("vdd", "POWER")
-        
 
     def create_instances(self):
         self.array_insts = []
@@ -101,12 +95,10 @@ class rom_precharge_array(design):
 
         self.create_poly_tap(-1)
         for col in range(self.cols):
-            
+
             if col % self.strap_spacing  == 0:
                 self.create_poly_tap(col)
             self.create_precharge_tx(col)
-
-            
 
     def create_precharge_tx(self, col):
         name = "pmos_c{0}".format(col)
@@ -131,9 +123,9 @@ class rom_precharge_array(design):
         # columns are bit lines
         cell_x = 0
 
-        
+
         for col in range(self.cols):
-            
+
             if col % self.strap_spacing == 0:
                 self.tap_insts[strap_num].place(vector(cell_x, cell_y + self.poly_tap.height))
                 strap_num += 1
@@ -141,19 +133,11 @@ class rom_precharge_array(design):
                 if self.tap_direction == "col":
                         cell_x += self.poly_tap.pitch_offset
 
-
-            # if col % self.strap_spacing == 0 :
-            #     self.tap_insts[strap_num].place(vector(cell_x, cell_y))
-            #     self.add_label("debug", "li", vector(cell_x, cell_y))
-            #     cell_x += self.poly_tap.width
-                
             self.pmos_insts[col].place(vector(cell_x, cell_y))
             self.add_label("debug", "li", vector(cell_x, cell_y))
             cell_x += self.pmos.width
-        print(self.tap_insts)
 
         self.tap_insts[strap_num].place(vector(cell_x, cell_y + self.poly_tap.height))
-            
 
     def create_layout_pins(self):
         self.copy_layout_pin(self.tap_insts[0], "poly_tap", "gate")
@@ -162,16 +146,12 @@ class rom_precharge_array(design):
             source_pin = self.pmos_insts[col].get_pin("D")
             bl = "pre_bl{0}_out".format(col)
             self.add_layout_pin_rect_center(bl, self.route_layer, source_pin.center())
-        
 
     def route_supply(self):
 
         # self.vdd = self.add_layout_pin_segment_center("vdd", self.supply_layer, start, end)
         # vdd = [self.pmos_insts[i].get_pin("vdd") for i in range(self.cols)]routeroute_horizon_horizon
         self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer)
-
-
-
 
     def connect_taps(self):
         array_pins = [self.tap_insts[i].get_pin("poly_tap") for i in range(len(self.tap_insts))]
@@ -183,12 +163,8 @@ class rom_precharge_array(design):
             start = vector(tap_pin.cx(), tap_pin.by())
             end = vector(start.x, tap.mod.get_pin("poly_tap").cy())
             self.add_segment_center(layer="poly", start=start, end=end)
-        print(end)
         offset_start = vector(end.x - self.poly_tap.width + self.poly_extend_active, end.y) 
         offset_end = end + vector(0.5*self.poly_width, 0)
-        print(self.poly_tap.width)
-        print(end)
-        print(offset_start)
         self.add_segment_center(layer="poly", start=offset_start, end=offset_end)
 
     def extend_well(self):

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -28,7 +28,6 @@ class rom_control_logic(design):
         
         self.clk_fanout = clk_fanout
 
-
         if "li" in layer:
             self.route_stack = self.li_stack
         else:
@@ -37,7 +36,6 @@ class rom_control_logic(design):
         self.create_netlist()
         self.create_layout()
         self.add_boundary()
-        
 
     def create_netlist(self):
         self.add_modules()
@@ -67,8 +65,7 @@ class rom_control_logic(design):
                                          fanout=self.output_size, 
                                          height=self.driver_height, 
                                          add_wells=True)
-        
-        
+
     def add_pins(self):
         self.add_pin("clk_in", "INPUT")
         self.add_pin("CS", "INPUT")
@@ -90,17 +87,14 @@ class rom_control_logic(design):
 
 
     def place_instances(self):
-        # nand_y = self.buf_inst.get_pin("vdd").cy() - self.nand_inst.get_pin("vdd").cy()
         self.nand_inst.place(offset=[self.buf_inst.width, 0])
         self.driver_inst.place(offset=[0, self.buf_inst.height + self.driver_inst.height], mirror="MX")
 
         offset = self.driver_inst.get_pin("vdd").cy() - self.nand_inst.get_pin("vdd").cy()
-        print("offset: {}".format(offset))
         self.driver_inst.place(offset=[0, self.buf_inst.height + self.driver_inst.height - offset], mirror="MX")
 
-
     def route_insts(self):
-        
+
         route_width = drc["minwidth_{}".format(self.route_stack[2])]
         self.copy_layout_pin(self.buf_inst, "A", "clk_in")
         self.copy_layout_pin(self.buf_inst, "Z", "clk_out")
@@ -114,7 +108,7 @@ class rom_control_logic(design):
 
         nand_B = self.nand_inst.get_pin("B")
 
-        
+
         # Connect buffered clock bar to nand input
 
         mid = vector(clk.lx() - route_width - 2 * self.m1_space)
@@ -137,11 +131,10 @@ class rom_control_logic(design):
 
         self.add_path(self.route_stack[2], [nand_Z.center(), mid, driver_A.center()])
 
-
         self.add_via_stack_center(from_layer=nand_Z.layer,
                                 to_layer=self.route_stack[2],
                                 offset=nand_Z.center())
-        
+
         self.add_via_stack_center(from_layer=driver_A.layer,
                                 to_layer=self.route_stack[2],
                                 offset=driver_A.center())

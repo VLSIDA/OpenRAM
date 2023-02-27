@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -80,7 +80,7 @@ class rom_base_cell(design):
         # height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
         
         # make the cells square so the pitch of wordlines will match bitlines
-        # print("height: {0} width: {1}".format(height, width))
+
         if width > height:
             self.width = width
             self.height = width
@@ -151,22 +151,3 @@ class rom_base_cell(design):
     def short_gate(self):
 
         self.add_segment_center(self.bitline_layer, self.get_pin("D").center(), self.get_pin("S").center())
-        
-    # def place_tap(self):
-
-    #     tap_x = self.poly_contact.width * 0.5
-    #     tap_y = self.via.uy() + drc["{0}_to_{0}".format(self.strap_layer)] * 2
-
-    #     contact_pos = vector(tap_x, tap_y)
-    #     self.add_via_center(layers=self.active_stack,
-    #                         offset=contact_pos,
-    #                         implant_type="p",
-    #                         well_type="p")
-    #     self.add_power_pin(name="gnd", 
-    #                        loc=contact_pos,
-    #                        start_layer=self.active_stack[2])
-
-
-        
-
-    

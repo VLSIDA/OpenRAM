@@ -1,11 +1,10 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
 from openram.base import design
 from openram.sram_factory import factory
 from openram.base import vector
@@ -74,13 +73,12 @@ class rom_address_control_array(design):
         self.add_pin("gnd", "GROUND")
 
     def create_instances(self):
-        
+
         self.buf_insts = []
 
         for col in range(self.cols):
-           
+
             name = "Xaddr_buf_{0}".format(col)
-            
             addr_buf = self.add_inst(name=name, mod=self.addr_control)
 
             A_in = "A{0}_in".format(col)
@@ -99,24 +97,16 @@ class rom_address_control_array(design):
 
             self.buf_insts[col].place(offset=base, mirror="MY")
 
-
     def copy_pins(self):
         for i in range(self.cols):
             self.copy_layout_pin(self.buf_insts[i], "A_out", "A{0}_out".format(i))
             self.copy_layout_pin(self.buf_insts[i], "Abar_out", "Abar{0}_out".format(i))
             self.copy_layout_pin(self.buf_insts[i], "A_in", "A{0}_in".format(i))
 
-
-            
     def route_clk(self):
         self.route_horizontal_pins("clk", insts=self.buf_insts, layer=self.route_layer)
-
-
 
     def route_sources(self):
 
         self.route_horizontal_pins("vdd", insts=self.buf_insts, layer=self.route_layer)
         self.route_horizontal_pins("gnd", insts=self.buf_insts, layer=self.route_layer)
-        
-
-

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2022 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -208,10 +208,3 @@ class rom_column_mux(pgate):
         self.add_layout_pin_rect_center(text="gnd",
                                         layer=self.supply_stack[0],
                                         offset=active_pos)
-
-        # Add well enclosure over all the tx and contact
-        # if "pwell" in layer:
-        #     self.add_rect(layer="pwell",
-        #                   offset=vector(0, 0),
-        #                   width=rbc_width,
-        #                   height=self.height)

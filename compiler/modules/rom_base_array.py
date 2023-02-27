@@ -58,16 +58,17 @@ class rom_base_array(bitcell_base_array):
         self.place_precharge()
         self.place_wordline_contacts()
         self.place_bitline_contacts()
-        self.add_boundary()
         self.route_precharge()
+        self.add_boundary()
+
         self.place_rails()
         self.connect_taps()
+
         
         
         
     def add_boundary(self):
         ll = self.find_lowest_coords()
-        bottom_offset = - self.zero_cell.nmos.end_to_contact + self.precharge_inst.offset.y
         m1_offset = self.m1_width
         self.translate_all(vector(0, ll.y + 0.5 * m1_offset))
         ur = self.find_highest_coords()
@@ -209,7 +210,7 @@ class rom_base_array(bitcell_base_array):
         
         prechrg_pins.append("precharge")
         prechrg_pins.append("vdd")
-        self.precharge_inst = self.add_inst(name="decode_array_precharge", mod=self.precharge_array)
+        self.precharge_inst = self.add_inst(name="bitcell_array_precharge", mod=self.precharge_array)
         self.connect_inst(prechrg_pins)
 
 
@@ -389,6 +390,9 @@ class rom_base_array(bitcell_base_array):
         mid2 = end + vector(wire_offset, 0)
         
         self.add_path(layer="m1", coordinates=[start, mid1, mid2, end])
+
+        self.add_layout_pin_rect_center(text="precharge_r", layer="m1", offset=mid1)
+
 
 
     def connect_taps(self):

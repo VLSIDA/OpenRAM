@@ -787,13 +787,15 @@ class layout():
                                         end=bot_pos)
 
 
-    def connect_col_pins(self, layer, pins, name=None, full=False):
+    def connect_col_pins(self, layer, pins, name=None, full=False, round=False, directions="pref"):
         """
         Connects top/bot columns that are aligned.
         """
         bins = {}
         for pin in pins:
                 x = pin.cx()
+                if round: 
+                    x = round_to_grid(x)
                 try:
                     bins[x].append(pin)
                 except KeyError:
@@ -819,7 +821,8 @@ class layout():
                 self.add_via_stack_center(from_layer=pin.layer,
                                           to_layer=layer,
                                           offset=pin.center(),
-                                          min_area=True)
+                                          min_area=True,
+                                          directions=directions)
 
             if name:
                 self.add_layout_pin_segment_center(text=name,

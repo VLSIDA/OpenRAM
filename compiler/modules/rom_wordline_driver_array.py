@@ -19,16 +19,16 @@ class rom_wordline_driver_array(design):
     Creates a Wordline Buffer/Inverter array
     """
 
-    def __init__(self, name, rows, cols, invert_outputs=False, tap_spacing=4):
+    def __init__(self, name, rows, fanout, invert_outputs=False, tap_spacing=4, flip_io=False):
         design.__init__(self, name)
         debug.info(1, "Creating {0}".format(self.name))
-        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
+        self.add_comment("rows: {0} Buffer size of: {1}".format(rows, fanout))
 
         self.rows = rows
-        self.cols = cols
+        self.fanout = fanout
         self.invert_outputs=invert_outputs
         self.tap_spacing = tap_spacing
-
+        self.flip_io = flip_io
         if OPTS.tech_name == "sky130":
             self.supply_layer = "m1"
         else:
@@ -51,7 +51,8 @@ class rom_wordline_driver_array(design):
         self.place_drivers()
         self.route_layout()
         self.route_supplies()
-        self.place_taps()
+        if self.tap_spacing != 0:
+            self.place_taps()
         self.add_boundary()
 
     def add_pins(self):
@@ -70,13 +71,14 @@ class rom_wordline_driver_array(design):
 
         if self.invert_outputs:
             self.wl_driver = factory.create(module_type="pinv_dec",
-                                            size=self.cols,
+                                            size=self.fanout,
                                             height=b.height,
-                                            add_wells=False)
+                                            add_wells=False,
+                                            flip_io=self.flip_io)
                 
         else:
             self.wl_driver = factory.create(module_type="pbuf_dec",
-                                            size=self.cols,
+                                            size=self.fanout,
                                             height=b.height,
                                             add_wells=False)
 
@@ -108,7 +110,7 @@ class rom_wordline_driver_array(design):
     def place_drivers(self):
         y_offset = 0
         for row in range(self.rows):
-            if row % self.tap_spacing == 0:
+            if self.tap_spacing != 0 and row % self.tap_spacing == 0:
                 y_offset += self.tap.pitch_offset
             offset = [0, y_offset]
 
@@ -123,20 +125,34 @@ class rom_wordline_driver_array(design):
         """ Route all of the signals """
         route_width = drc["minwidth_{}".format(self.route_layer)]
         for row in range(self.rows):
-            inst = self.wld_inst[row]
+            if self.flip_io:
+                row_num = self.rows - row - 1
+            else:
+                row_num = row
+            inst = self.wld_inst[row_num]
             self.copy_layout_pin(inst, "vdd")
             self.copy_layout_pin(inst, "gnd")
 
             self.copy_layout_pin(inst, "A", "in_{0}".format(row))
 
+            out_pin = inst.get_pin("Z")
             # output each WL on the right
-            wl_offset = inst.get_pin("Z").rc() - vector( 0.5 * route_width, 0)
+            if self.flip_io:
+                wl_offset = out_pin.lc() - vector(1.6 * route_width, 0)
+                
+            else:
+                wl_offset = out_pin.rc() - vector( 0.5 * route_width, 0)
+
 
             end = vector(wl_offset.x, \
                          self.get_pin("in_{}".format(row)).cy() + 0.5 * route_width)
             self.add_segment_center(layer=self.route_layer,
                                                start=wl_offset,
                                                end=end)
+            if self.flip_io:
+                self.add_segment_center(layer=self.route_layer,
+                                        start=out_pin.lc(),
+                                        end=vector(wl_offset.x - 0.5 * route_width, out_pin.cy()))
 
             self.add_layout_pin_rect_center(text="out_{}".format(row), layer=self.route_layer, offset=end - vector(0, 0.5 * route_width))
 

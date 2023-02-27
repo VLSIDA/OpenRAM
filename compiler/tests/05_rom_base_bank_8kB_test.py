@@ -21,11 +21,11 @@ class rom_bank_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        debug.info(1, "Testing 1kB rom cell")
+        debug.info(1, "Testing 8kB rom cell")
 
-        a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data_1kB", word_size=1)
+        a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file="/openram/technology/rom_data_8kB", word_size=2)
         print('wriitng file')
-        a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
+        a.sp_write(OPTS.openram_temp + 'simulation_file_8kB.sp')
         self.local_check(a)
         
 

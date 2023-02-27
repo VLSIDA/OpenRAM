@@ -14,7 +14,7 @@ from openram.tech import drc
 
 
 class rom_decoder(design):
-    def __init__(self, num_outputs, cols, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
+    def __init__(self, num_outputs, fanout, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
         
         # word lines/ rows / inputs in the base array become the address lines / cols / inputs in the decoder
         # bit lines / cols / outputs in the base array become the word lines / rows / outputs in the decoder
@@ -33,7 +33,7 @@ class rom_decoder(design):
         self.route_layer = route_layer
         self.output_layer = output_layer
         self.inv_route_layer = "m2"
-        self.cols=cols
+        self.fanout=fanout
         self.invert_outputs=invert_outputs
         self.create_netlist()
 
@@ -57,6 +57,17 @@ class rom_decoder(design):
         self.connect_inputs()
         self.route_supplies()
         self.add_boundary()
+    
+    def add_boundary(self):
+        ll = self.find_lowest_coords()
+        m1_offset = self.m1_width
+        self.translate_all(vector(0, ll.y))
+        ur = self.find_highest_coords()
+        
+        ur = vector(ur.x, ur.y)
+        super().add_boundary(ll, ur)
+        self.width = ur.x
+        self.height = ur.y 
 
     def setup_layout_constants(self):
         self.inv_route_width = drc["minwidth_{}".format(self.inv_route_layer)]
@@ -114,7 +125,7 @@ class rom_decoder(design):
 
         self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), 
                                         rows=self.num_outputs, 
-                                        cols=ceil(self.cols * 0.5),
+                                        fanout=ceil(self.fanout),
                                         invert_outputs=self.invert_outputs,
                                         tap_spacing=self.strap_spacing)
                                             
@@ -224,7 +235,7 @@ class rom_decoder(design):
     def connect_inputs(self):
 
         self.copy_layout_pin(self.array_inst, "precharge")
-
+        self.copy_layout_pin(self.array_inst, "precharge_r")
         for i in range(self.num_inputs):
             wl = (self.num_inputs - i) * 2 - 1
             wl_bar = wl - 1

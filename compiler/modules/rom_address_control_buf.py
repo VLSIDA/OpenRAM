@@ -41,16 +41,13 @@ class rom_address_control_buf(design):
         self.height = self.inv.width + 2 * self.nand.width
         self.setup_layout_constants()
         self.place_instances()
-        # self.place_vias()
         self.route_gates()
         self.route_sources()
         self.add_boundary()
 
     def create_modules(self):
 
-        # self.inv1_mod = factory.create(module_type="pinv", module_name="inv_array_end_mod", height=self.inv_size, add_wells=False)
         self.inv = factory.create(module_type="pinv_dec", module_name="inv_array_mod", add_wells=False, size=self.size)
-        # self.end_inv = factory.create(module_type="pinv", module_name="inv_array_end_mod", size=self.size, add_wells=True)
         self.nand = factory.create(module_type="nand2_dec", height=self.inv.height)
         # For layout constants
         self.cell = factory.create(module_type="rom_base_cell")
@@ -101,7 +98,6 @@ class rom_address_control_buf(design):
     def route_gates(self):
         clk1_pin = self.addr_nand.get_pin("A")
         clk2_pin = self.addr_bar_nand.get_pin("A")
-        # self.add_label("HERE I AM", "poly", clk_pins.cl())
 
         Abar_out = self.addr_bar_nand.get_pin("Z")
         A_out = self.addr_nand.get_pin("Z")

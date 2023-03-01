@@ -149,8 +149,6 @@ class rom_precharge_array(design):
 
     def route_supply(self):
 
-        # self.vdd = self.add_layout_pin_segment_center("vdd", self.supply_layer, start, end)
-        # vdd = [self.pmos_insts[i].get_pin("vdd") for i in range(self.cols)]routeroute_horizon_horizon
         self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer)
 
     def connect_taps(self):

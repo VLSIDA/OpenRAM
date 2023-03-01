@@ -30,7 +30,6 @@ class rom_column_mux_array(design):
         self.words_per_row = int(self.columns / self.word_size)
         self.input_layer = input_layer
         self.tap_spacing = tap_spacing
-        # self.sel_layer = layer_props.column_mux_array.select_layer
         self.sel_layer = sel_layer
 
         self.sel_pitch = getattr(self, self.sel_layer + "_pitch")
@@ -107,12 +106,6 @@ class rom_column_mux_array(design):
 
         # For every column, add a pass gate
         for col_num, xoffset in enumerate(self.offsets[0:self.columns]):
-            # if self.cell.mirror.y and (col_num + self.column_offset) % 2:
-            #     mirror = "MY"
-            #     xoffset = xoffset + self.mux.width
-            # else:
-            #     mirror = ""
-
             offset = vector(xoffset, self.route_height)
             self.mux_inst[col_num].place(offset=offset)
 
@@ -205,11 +198,6 @@ class rom_column_mux_array(design):
                                       to_layer=self.sel_layer,
                                       offset=bl_out_offset_begin,
                                       directions=self.via_directions)
-
-
-    def add_taps(self):
-        pass
-
 
     def graph_exclude_columns(self, column_include_num):
         """

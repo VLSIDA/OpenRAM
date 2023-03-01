@@ -14,9 +14,10 @@ from openram.tech import drc
 class rom_decoder(design):
     def __init__(self, num_outputs, fanout, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
 
-        # word lines/ rows / inputs in the base array become the address lines / cols / inputs in the decoder
-        # bit lines / cols / outputs in the base array become the word lines / rows / outputs in the decoder
-        # array gets rotated 90deg so that rows/cols switch
+        # word lines in the base array become the address lines/cols in the decoder
+        # bit lines in the base array become the word lines/rows in the decoder
+        # array gets rotated 90deg so rows/cols switch
+
         self.strap_spacing=strap_spacing
         self.num_outputs = num_outputs
         self.num_inputs = ceil(log(num_outputs, 2))
@@ -204,8 +205,6 @@ class rom_decoder(design):
             self.copy_layout_pin(self.wordline_buf_inst, "out_{}".format(j), "wl_{}".format(j))
             offset = self.wordline_buf_inst.get_pin("out_{}".format(j)).center()
 
-            # self.add_via_stack_center(offset, self.output_layer, self.wordline_buf.route_layer)
-
         array_pins = [self.array_inst.get_pin("bl_0_{}".format(bl)) for bl in range(self.num_outputs)]
         driver_pins = [self.wordline_buf_inst.get_pin("in_{}".format(bl)) for bl in range(self.num_outputs)]
 
@@ -232,8 +231,6 @@ class rom_decoder(design):
             self.add_path(self.inv_route_layer, [addr_out_pin.center(), addr_middle, addr_pin.center()])
             self.add_path(self.inv_route_layer, [addr_bar_out_pin.center(), addr_bar_middle, addr_bar_pin.center()])
             self.copy_layout_pin(self.buf_inst, "A{}_in".format(i), "A{}".format(i))
-
-            # self.add_segment_center(self.inv_route_layer, addr_bar_middle + vector(0, self.inv_route_width * 0.5), addr_bar_out_pin.center() + vector(0, self.inv_route_width * 0.5), self.inv_route_width)
 
     def route_supplies(self):
 

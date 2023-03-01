@@ -30,18 +30,11 @@ class rom_column_mux(pgate):
         self.output_layer= output_layer
         super().__init__(name)
 
-
-
-    def get_bl_names(self):
-        return "bl"
-
-
     def create_netlist(self):
         self.add_pins()
         self.add_ptx()
 
     def create_layout(self):
-
 
         self.pin_layer = self.input_layer
         self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
@@ -53,7 +46,6 @@ class rom_column_mux(pgate):
             self.col_mux_stack = self.li_stack
         else:
             self.col_mux_stack = self.m1_stack
-
 
         self.place_ptx()
 
@@ -108,14 +100,6 @@ class rom_column_mux(pgate):
                               + vector(0.5 * self.bitcell.width- 0.5 * self.nmos.active_width, 0)
         self.nmos_lower.place(nmos_lower_position)
 
-        # # This aligns it directly above the other tx with gates abutting
-        # nmos_upper_position = nmos_lower_position \
-        #                       + vector(0, self.nmos.active_height + max(self.active_space, self.poly_space))
-        # self.nmos_upper.place(nmos_upper_position)
-
-        # if cell_props.pgate.add_implants:
-        #     self.extend_implants()
-
     def connect_poly(self):
         """ Connect the poly gate of the two pass transistors """
 
@@ -137,7 +121,6 @@ class rom_column_mux(pgate):
         """ Connect the bitlines to the mux transistors """
 
         bl_pin = self.get_pin("bl")
-        # br_pin = self.get_pin("br")
         bl_out_pin = self.get_pin("bl_out")
 
         nmos_lower_s_pin = self.nmos_lower.get_pin("S")
@@ -166,31 +149,11 @@ class rom_column_mux(pgate):
         self.add_path(self.output_layer,
                       [bl_out_pin.uc(), mid1, mid2, nmos_lower_d_pin.center()])
 
-
-
-    def extend_implants(self):
-        """
-        Add top-to-bottom implants for adjacency issues in s8.
-        """
-        # Route to the bottom
-        ll = (self.nmos_lower.ll() - vector(2 * [self.implant_enclose_active])).scale(1, 0)
-        # Don't route to the top
-        ur = self.nmos_upper.ur() + vector(self.implant_enclose_active, 0)
-        self.add_rect("nimplant",
-                      ll,
-                      ur.x - ll.x,
-                      ur.y - ll.y)
-
     def add_pn_wells(self):
         """
         Add a well and implant over the whole cell. Also, add the
         pwell contact (if it exists)
         """
-        # if(cell_props.use_strap == True and OPTS.num_ports == 1):
-        #     strap = factory.create(module_type=cell_props.strap_module, version=cell_props.strap_version)
-        #     rbc_width = self.bitcell.width + strap.width
-        # else:
-        #     rbc_width = self.bitcell.width
         # Add it to the right, aligned in between the two tx
         active_pos = vector(self.bitcell.width,
                             self.nmos_lower.uy() + self.active_contact.height + self.active_space)

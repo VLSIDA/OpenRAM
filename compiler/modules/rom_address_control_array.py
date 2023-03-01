@@ -56,10 +56,8 @@ class rom_address_control_array(design):
 
 
     def create_modules(self):
-
         self.addr_control = factory.create(module_type="rom_address_control_buf", size=self.inv_height)
-        # For layout constants
-        # self.poly_tap = factory.create(module_type="rom_poly_tap", strap_length=0)
+
 
     def add_pins(self):
         for col in range(self.cols):

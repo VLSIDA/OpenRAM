@@ -51,20 +51,10 @@ class rom_precharge_cell(rom_base_cell):
 
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
-        #contact to contact distance, minimum cell width before drc offsets
-        self.base_width = self.pmos.width - 2 * self.active_enclose_contact - self.pmos.contact_width
-
-        # width offset to account for poly-active spacing between base and dummy cells on the same bitline
-        self.poly_active_offset = 0.5 * (self.base_width - (self.poly_width + 2 * self.active_enclose_contact + self.pmos.contact_width)) - self.poly_to_active
-
-        #so that the poly taps are far enough apart
-        self.poly_tap_offset = (self.base_width - self.poly_contact.width - self.poly_active_offset) - drc("poly_to_poly")
-
     def extend_well(self):
 
         well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width
         well_ll = vector(0, well_y)
-        # height = self.active_width + 2 * self.well_enclose_active
         height = self.get_pin("D").cy() + 0.5 * self.nwell_width - well_y
         self.add_rect("nwell", well_ll, self.width , height)
 

@@ -115,21 +115,17 @@ class rom_base_array(bitcell_base_array):
         # list of current bitline interconnect nets,
         # starts as the same as the bitline list and is updated when new insts of cells are added
         self.int_bl_list = self.bitline_names[0].copy()
-        #When rotated correctly rows are word lines
+
         for row in range(self.row_size + 1):
             row_list = []
 
-            # for each new strap placed, offset the column index refrenced to get correct bit in the data array
-            # cols are bit lines
             for col in range(self.column_size):
 
                 if col % self.strap_spacing == 0:
                     self.create_poly_tap(row, col)
 
                 new_inst = self.create_cell(row, col)
-
                 self.cell_inst[row, col] = new_inst
-
                 row_list.append(new_inst)
 
             name = "tap_r{0}_c{1}".format(row, self.array_col_size)
@@ -206,8 +202,8 @@ class rom_base_array(bitcell_base_array):
     def place_array(self):
         self.cell_pos = {}
         self.strap_pos = {}
-        # rows are wordlines
         pitch_offset = 0
+
         for row in range(self.row_size + 1):
 
             if row % self.tap_spacing == 0 and self.pitch_match and row != self.row_size:
@@ -228,7 +224,6 @@ class rom_base_array(bitcell_base_array):
                 self.cell_pos[row, col] = vector(cell_x, cell_y)
                 self.cell_inst[row, col].place(self.cell_pos[row, col])
                 cell_x += self.zero_cell.width
-                # self.add_label("debug", "li", self.cell_pos[row, col])
 
             self.strap_pos[row, self.column_size] = vector(cell_x, cell_y)
             self.tap_inst[row, self.column_size].place(self.strap_pos[row, self.column_size])
@@ -338,24 +333,6 @@ class rom_base_array(bitcell_base_array):
         array_pins = [self.tap_list[i].get_pin("poly_tap") for i in range(len(self.tap_list))]
 
         self.connect_row_pins(layer=self.wordline_layer, pins=array_pins, name=None, round=False)
-        # self.connect_row_pins(layer="poly", pins=array_pins, name=None, round=False)
 
         if self.tap_direction == "col":
             self.route_vertical_pins("active_tap", insts=self.tap_list, layer=self.supply_stack[0], full_width=False)
-
-    def get_next_cell_in_bl(self, row_start, col):
-        for row in range(row_start + 1, self.row_size):
-            if self.data[row][col] == 1:
-                return row
-        return -1
-
-
-
-    def get_current_bl_interconnect(self, col):
-        """Get interconnect net for bitline(col) currently being connected """
-        return "bli_{0}_{1}".format(self.current_row, col)
-
-    def create_next_bl_interconnect(self, row, col):
-        """create a new net name for a bitline interconnect"""
-        self.current_row = row
-        return "bli_{0}_{1}".format(row, col)

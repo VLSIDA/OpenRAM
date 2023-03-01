@@ -11,7 +11,7 @@ from openram.base import vector
 from openram.base import design
 from openram import OPTS, debug
 from openram.sram_factory import factory
-from openram.tech import drc, layer
+from openram.tech import drc, layer, parameter
 
 class rom_base_bank(design):
 
@@ -165,7 +165,9 @@ class rom_base_bank(design):
         # TODO: provide technology-specific calculation of these parameters
         # in sky130 the address control buffer is composed of 2 size 2 NAND gates,
         # with a beta of 3, each of these gates has gate capacitance of 2 min sized inverters, therefor a load of 4
-        addr_control_buffer_effort = 4
+
+        
+        addr_control_buffer_effort = parameter['beta'] + 1
         # a single min sized nmos makes up 1/4 of the input capacitance of a min sized inverter
         bitcell_effort = 0.25
 

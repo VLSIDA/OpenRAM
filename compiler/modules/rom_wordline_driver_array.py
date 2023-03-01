@@ -88,8 +88,6 @@ class rom_wordline_driver_array(design):
         """
 
         if layer_props.wordline_driver.vertical_supply:
-            # self.route_vertical_pins("vdd", self.wld_inst)
-            # self.route_vertical_pins("gnd", self.wld_inst)
             self.route_vertical_pins("vdd", [self], layer=self.supply_layer)
             self.route_vertical_pins("gnd", [self], layer=self.supply_layer)
         else:

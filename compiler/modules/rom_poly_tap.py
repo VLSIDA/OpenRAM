@@ -38,8 +38,6 @@ class rom_poly_tap(design):
 
     def add_boundary(self):
         contact_width = self.poly_contact.width
-
-        # offset = self.active_space - (contact_width - self.active_enclose_contact - self.active_extend_contact)
         self.height = self.dummy.height
         self.width = contact_width + self.pitch_offset
 
@@ -82,7 +80,6 @@ class rom_poly_tap(design):
     def place_active_tap(self):
         gap = self.poly_extend_active - 0.5 * ( self.active_contact.height - self.poly_contact.width )
         offset = self.active_space - gap
-        # tap_x = self.via.cx() + self.contact_width + self.active_enclose_contact + self.poly_enclose_contact
         tap_x = self.via.cx() + offset
         tap_y = self.via.cy() + self.dummy.width * 0.5
         contact_pos = vector(tap_x, tap_y)

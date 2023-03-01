@@ -74,7 +74,7 @@ class rom_wordline_driver_array(design):
                                             height=b.height,
                                             add_wells=False,
                                             flip_io=self.flip_io)
-                
+
         else:
             self.wl_driver = factory.create(module_type="pbuf_dec",
                                             size=self.fanout,
@@ -136,7 +136,7 @@ class rom_wordline_driver_array(design):
             # output each WL on the right
             if self.flip_io:
                 wl_offset = out_pin.lc() - vector(1.6 * route_width, 0)
-                
+
             else:
                 wl_offset = out_pin.rc() - vector( 0.5 * route_width, 0)
 

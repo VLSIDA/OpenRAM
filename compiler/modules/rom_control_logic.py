@@ -25,7 +25,7 @@ class rom_control_logic(design):
             self.gate_height = 20 * self.m1_pitch
             self.driver_height = self.gate_height
 
-        
+
         self.clk_fanout = clk_fanout
 
         if "li" in layer:
@@ -49,21 +49,21 @@ class rom_control_logic(design):
         self.route_insts()
 
     def add_modules(self):
-        self.buf_mod = factory.create(module_type="pdriver", 
-                                      module_name="rom_clock_driver", 
+        self.buf_mod = factory.create(module_type="pdriver",
+                                      module_name="rom_clock_driver",
                                       height=self.gate_height,
                                       fanout=self.clk_fanout + 2,
                                       add_wells=True,
                                       )
-        self.nand_mod = factory.create(module_type="pnand2", 
-                                       module_name="rom_control_nand", 
-                                       height=self.gate_height, 
+        self.nand_mod = factory.create(module_type="pnand2",
+                                       module_name="rom_control_nand",
+                                       height=self.gate_height,
                                        add_wells=False)
-        self.driver_mod = factory.create(module_type="pdriver", 
-                                         module_name="rom_precharge_driver", 
-                                         inverting=True, 
-                                         fanout=self.output_size, 
-                                         height=self.driver_height, 
+        self.driver_mod = factory.create(module_type="pdriver",
+                                         module_name="rom_precharge_driver",
+                                         inverting=True,
+                                         fanout=self.output_size,
+                                         height=self.driver_height,
                                          add_wells=True)
 
     def add_pins(self):
@@ -75,7 +75,7 @@ class rom_control_logic(design):
         self.add_pin("gnd", "GROUND")
 
     def create_instances(self):
-        
+
         self.buf_inst = self.add_inst(name="clk_driver", mod=self.buf_mod)
         self.connect_inst(["clk_in", "clk_out", "vdd", "gnd"])
 

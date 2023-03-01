@@ -54,14 +54,14 @@ class rom_column_mux_array(design):
         self.setup_layout_constants()
         self.place_array()
         self.add_routing()
-        
+
         # Find the highest shapes to determine height before adding well
         highest = self.find_highest_coords()
         self.height = highest.y
         self.add_layout_pins()
         if "pwell" in layer:
             self.add_enclosure(self.mux_inst, "pwell")
-        
+
         self.add_boundary()
         self.DRC_LVS()
 
@@ -154,7 +154,7 @@ class rom_column_mux_array(design):
     def add_vertical_poly_rail(self):
         """  Connect the poly to the address rails """
 
-        
+
         # Offset to the first transistor gate in the pass gate
         for col in range(self.columns):
             # which select bit should this column connect to depends on the position in the word
@@ -209,8 +209,8 @@ class rom_column_mux_array(design):
 
     def add_taps(self):
         pass
-            
-        
+
+
     def graph_exclude_columns(self, column_include_num):
         """
         Excludes all columns muxes unrelated to the target bit being simulated.

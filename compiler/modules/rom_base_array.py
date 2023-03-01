@@ -11,7 +11,7 @@ import math
 from .bitcell_base_array import bitcell_base_array
 from openram.base import vector
 from openram import OPTS
-from openram.sram_factory import factory 
+from openram.sram_factory import factory
 from openram.tech import drc, layer
 
 class rom_base_array(bitcell_base_array):
@@ -24,13 +24,13 @@ class rom_base_array(bitcell_base_array):
         self.tap_direction = tap_direction
         self.pitch_match = pitch_match
         self.bitline_layer = bitline_layer
-        self.strap_spacing = strap_spacing 
+        self.strap_spacing = strap_spacing
         self.wordline_layer = wordline_layer
         self.data_col_size = self.column_size
         self.tap_spacing = tap_spacing
 
         if strap_spacing != 0:
-            self.array_col_size = self.column_size + math.ceil(self.column_size / strap_spacing)      
+            self.array_col_size = self.column_size + math.ceil(self.column_size / strap_spacing)
         else:
             self.array_col_size = self.column_size
         self.create_all_bitline_names()
@@ -41,7 +41,7 @@ class rom_base_array(bitcell_base_array):
     def create_netlist(self):
         self.add_modules()
         self.add_pins()
-        
+
         self.create_cell_instances()
         self.create_precharge_inst()
 
@@ -68,28 +68,28 @@ class rom_base_array(bitcell_base_array):
         ur = vector(ur.x, ur.y - self.m1_width)
         super().add_boundary(vector(0, 0), ur)
         self.width = ur.x
-        self.height = ur.y 
-        
+        self.height = ur.y
+
     def add_modules(self):
 
-        self.zero_cell = factory.create(module_name="rom_base_zero_cell", 
-                                        module_type="rom_base_cell", 
-                                        bitline_layer=self.bitline_layer, 
+        self.zero_cell = factory.create(module_name="rom_base_zero_cell",
+                                        module_type="rom_base_cell",
+                                        bitline_layer=self.bitline_layer,
                                         bit_value=0)
 
-        self.one_cell = factory.create(module_name="rom_base_one_cell", 
-                                       module_type="rom_base_cell", 
-                                       bitline_layer=self.bitline_layer, 
+        self.one_cell = factory.create(module_name="rom_base_one_cell",
+                                       module_type="rom_base_cell",
+                                       bitline_layer=self.bitline_layer,
                                        bit_value=1)
 
         if self.tap_direction == "row":
-            self.poly_tap = factory.create(module_type="rom_poly_tap")        
-        else: 
+            self.poly_tap = factory.create(module_type="rom_poly_tap")
+        else:
             self.poly_tap = factory.create(module_type="rom_poly_tap", add_tap=True)
-        self.precharge_array = factory.create(module_type="rom_precharge_array", 
-                                              cols=self.column_size, 
-                                              strap_spacing=self.strap_spacing, 
-                                              route_layer=self.bitline_layer, 
+        self.precharge_array = factory.create(module_type="rom_precharge_array",
+                                              cols=self.column_size,
+                                              strap_spacing=self.strap_spacing,
+                                              route_layer=self.bitline_layer,
                                               strap_layer=self.wordline_layer,
                                               tap_direction=self.tap_direction)
 
@@ -112,7 +112,8 @@ class rom_base_array(bitcell_base_array):
         self.cell_inst = {}
         self.cell_list = []
         self.current_row = 0
-        #list of current bitline interconnect nets, starts as the same as the bitline list and is updated when new insts of cells are added
+        # list of current bitline interconnect nets,
+        # starts as the same as the bitline list and is updated when new insts of cells are added
         self.int_bl_list = self.bitline_names[0].copy()
         #When rotated correctly rows are word lines
         for row in range(self.row_size + 1):
@@ -126,7 +127,7 @@ class rom_base_array(bitcell_base_array):
                     self.create_poly_tap(row, col)
 
                 new_inst = self.create_cell(row, col)
-                
+
                 self.cell_inst[row, col] = new_inst
 
                 row_list.append(new_inst)
@@ -151,7 +152,7 @@ class rom_base_array(bitcell_base_array):
 
         # when col = 0, bl_h is connected to precharge, otherwise connect to previous bl connection
         # when col = col_size - 1 connected column_sizeto gnd otherwise create new bl connection
-        if row == self.row_size :
+        if row == self.row_size:
 
             bl_l = self.int_bl_list[col]
             bl_h = "gnd"
@@ -168,16 +169,16 @@ class rom_base_array(bitcell_base_array):
             self.connect_inst([bl_h, bl_l, "precharge", "gnd"])
         elif self.data[row][col] == 1:
             new_inst = self.add_inst(name=name, mod=self.one_cell)
-            self.connect_inst([bl_h, bl_l, self.wordline_names[0][row], "gnd"])     
-        else: 
+            self.connect_inst([bl_h, bl_l, self.wordline_names[0][row], "gnd"])
+        else:
             new_inst = self.add_inst(name=name, mod=self.zero_cell)
             self.connect_inst([bl_h, self.wordline_names[0][row], "gnd"])
 
-        return new_inst 
+        return new_inst
 
     def create_precharge_inst(self):
         prechrg_pins = self.bitline_names[0].copy()
-        
+
         prechrg_pins.append("precharge")
         prechrg_pins.append("vdd")
         self.precharge_inst = self.add_inst(name="bitcell_array_precharge", mod=self.precharge_array)
@@ -215,14 +216,14 @@ class rom_base_array(bitcell_base_array):
             cell_y = row * (self.zero_cell.height) + pitch_offset
 
             cell_x = 0
-            for col in range(self.column_size):                    
+            for col in range(self.column_size):
 
                 if col % self.strap_spacing == 0:
                     self.strap_pos[row, col] = vector(cell_x, cell_y)
                     self.tap_inst[row, col].place(self.strap_pos[row, col])
 
                     if self.tap_direction == "col":
-                        cell_x += self.poly_tap.pitch_offset  
+                        cell_x += self.poly_tap.pitch_offset
 
                 self.cell_pos[row, col] = vector(cell_x, cell_y)
                 self.cell_inst[row, col].place(self.cell_pos[row, col])
@@ -247,7 +248,7 @@ class rom_base_array(bitcell_base_array):
                     end = drain.center()
                     self.add_segment_center(self.bitline_layer, start, end)
                 self.place_well_tap(row, col)
-     
+
     def place_well_tap(self, row, col):
         cell = self.cell_inst[row, col]
         source = cell.get_pin("S")
@@ -271,7 +272,7 @@ class rom_base_array(bitcell_base_array):
                 directions="nonpref")
         self.add_via_stack_center(offset=tap_pos,
                         from_layer=self.active_stack[2],
-                        to_layer=self.wordline_layer) 
+                        to_layer=self.wordline_layer)
         self.add_layout_pin_rect_center("gnd", self.wordline_layer, tap_pos)
 
     def place_precharge(self):
@@ -279,7 +280,7 @@ class rom_base_array(bitcell_base_array):
         self.precharge_inst.place(offset=self.precharge_offset)
         self.copy_layout_pin(self.precharge_inst, "vdd")
         self.copy_layout_pin(self.precharge_inst, "gate", "precharge")
-       
+
     def place_wordline_contacts(self):
 
         for wl in range(self.row_size):

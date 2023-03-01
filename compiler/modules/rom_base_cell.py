@@ -23,15 +23,15 @@ class rom_base_cell(design):
         self.create_netlist()
         self.create_layout()
 
-        
 
-    def create_netlist(self):        
+
+    def create_netlist(self):
         self.add_pins()
         self.add_modules()
-        
-        
+
+
     def create_layout(self):
-        
+
         self.create_tx()
         self.setup_drc_offsets()
         self.add_boundary()
@@ -41,22 +41,22 @@ class rom_base_cell(design):
         if self.bit_value == 0:
             self.short_gate()
 
-        
+
 
 
     # Calculates offsets of cell width and height so that tiling of cells does not violate any drc rules
     def setup_drc_offsets(self):
 
-        
-    
+
+
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
         #nmos contact to gate distance
-        self.contact_to_gate = 0.5 * (self.nmos.width - 2 * self.nmos.contact_width - self.nmos.poly_width - 2 * self.active_enclose_contact) 
+        self.contact_to_gate = 0.5 * (self.nmos.width - 2 * self.nmos.contact_width - self.nmos.poly_width - 2 * self.active_enclose_contact)
 
         #height offset to account for active-to-active spacing between adjacent bitlines
         self.poly_extend_active_spacing = abs( 2 * self.nmos.poly_extend_active - drc("active_to_active") )
 
-        #contact to contact distance, minimum cell width before drc offsets 
+        #contact to contact distance, minimum cell width before drc offsets
         self.base_width = self.nmos.width - 2 * self.active_enclose_contact - self.nmos.contact_width
 
         #width offset to account for active-to-active spacing between cells on the same bitline
@@ -66,19 +66,19 @@ class rom_base_cell(design):
         # width offset to account for poly-active spacing between base and dummy cells on the same bitline
         self.poly_active_offset = 0.5 * (self.base_width - 2 * self.cell_diffusion_offset - (self.poly_width + 2 * self.active_enclose_contact + self.nmos.contact_width)) - self.poly_to_active
 
-        #so that the poly taps are far enough apart 
+        #so that the poly taps are far enough apart
         self.poly_tap_offset = (self.base_width - self.cell_diffusion_offset - self.poly_contact.width - self.poly_active_offset) - drc("poly_to_poly")
- 
+
 
     def add_boundary(self):
 
         height = self.cell_inst.width + self.active_space
 
-        #cell width with offsets applied, height becomes width when the cells are rotated 
+        #cell width with offsets applied, height becomes width when the cells are rotated
         width = self.cell_inst.height + 2 * self.poly_extend_active
         # cell height with offsets applied, width becomes height when the cells are rotated, if the offsets are positive (greater than 0) they are not applied
         # height = self.base_width - min(self.cell_diffusion_offset, 0) - min(self.poly_active_offset, 0) - min(self.poly_tap_offset, 0)
-        
+
         # make the cells square so the pitch of wordlines will match bitlines
 
         if width > height:
@@ -87,10 +87,10 @@ class rom_base_cell(design):
         else:
             self.width = height
             self.height = height
-        
+
         super().add_boundary()
 
-    
+
     def add_modules(self):
 
         self.nmos  = factory.create(module_type="ptx",
@@ -103,14 +103,14 @@ class rom_base_cell(design):
 
     def create_tx(self):
         self.cell_inst = self.add_inst( name=self.name + "_nmos",
-                                        mod=self.nmos, 
+                                        mod=self.nmos,
                                         )
         if self.bit_value == 0:
             self.connect_inst(["bl", "wl", "bl", "gnd"])
         else:
             self.connect_inst(["bl_h", "wl", "bl_l", "gnd"])
 
-        
+
     def add_pins(self):
         if self.bit_value == 0 :
             pin_list = ["bl", "wl", "gnd"]
@@ -119,7 +119,7 @@ class rom_base_cell(design):
             pin_list = ["bl_h", "bl_l", "wl", "gnd"]
             dir_list = ["INOUT", "INOUT", "INPUT", "GROUND"]
 
-        self.add_pin_list(pin_list, dir_list) 
+        self.add_pin_list(pin_list, dir_list)
 
     def place_tx(self):
 
@@ -127,7 +127,7 @@ class rom_base_cell(design):
         tx_offset = vector(self.poly_extend_active + self.cell_inst.height + self.poly_size,- 0.5 * self.contact_width - self.active_enclose_contact)
         # add rect of poly to account for offset from drc spacing
         # self.add_rect_center("poly", poly_offset, self.poly_extend_active_spacing, self.poly_width)
-        
+
         self.cell_inst.place(tx_offset, rotate=90)
         # self.add_label("CELL ZERO", self.route_layer)
         self.copy_layout_pin(self.cell_inst, "S", "S")

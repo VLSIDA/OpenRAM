@@ -142,7 +142,7 @@ class pinvbuf(pgate):
             # end_point = vector(a4_pin.cx(), a4_pin.by() - self.m1_space - self.contact_space)
             self.add_path(route_stack[2],
                         [z1_pin.center(), mid_point, end_point])
-                
+
             self.add_via_stack_center(from_layer=z1_pin.layer,
                                     to_layer=route_stack[2],
                                     offset=z1_pin.center())
@@ -151,11 +151,11 @@ class pinvbuf(pgate):
                                     to_layer=route_stack[2],
                                     offset=end_point)
 
-            
+
             self.add_segment_center(a4_pin.layer, end_point, a4_pin.center())
         else:
             # inv1 Z to inv4 A (up and over)
-            
+
             mid_point = vector(z1_pin.cx(), a4_pin.cy())
             self.add_wire(route_stack,
                         [z1_pin.center(), mid_point, a4_pin.center()])

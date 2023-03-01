@@ -42,7 +42,7 @@ class rom_column_mux(pgate):
 
     def create_layout(self):
 
-        
+
         self.pin_layer = self.input_layer
         self.pin_pitch = getattr(self, "{}_pitch".format(self.pin_layer))
         self.pin_width = getattr(self, "{}_width".format(self.pin_layer))

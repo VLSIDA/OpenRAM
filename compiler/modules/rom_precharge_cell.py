@@ -21,7 +21,7 @@ class rom_precharge_cell(rom_base_cell):
 
     def create_layout(self):
         super().create_layout()
-        
+
         self.place_tap()
         self.extend_well()
 
@@ -37,27 +37,27 @@ class rom_precharge_cell(rom_base_cell):
 
     def create_tx(self):
         self.cell_inst = self.add_inst( name="precharge_pmos",
-                                        mod=self.pmos, 
+                                        mod=self.pmos,
                                         )
         self.connect_inst(["bitline", "gate", "vdd", "vdd"])
 
-    def add_pins(self):   
+    def add_pins(self):
         pin_list = ["vdd", "gate", "bitline"]
         dir_list = ["POWER", "INPUT", "OUTPUT"]
 
-        self.add_pin_list(pin_list, dir_list) 
+        self.add_pin_list(pin_list, dir_list)
 
     def setup_drc_offsets(self):
 
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
-        #contact to contact distance, minimum cell width before drc offsets 
+        #contact to contact distance, minimum cell width before drc offsets
         self.base_width = self.pmos.width - 2 * self.active_enclose_contact - self.pmos.contact_width
 
         # width offset to account for poly-active spacing between base and dummy cells on the same bitline
         self.poly_active_offset = 0.5 * (self.base_width - (self.poly_width + 2 * self.active_enclose_contact + self.pmos.contact_width)) - self.poly_to_active
 
-        #so that the poly taps are far enough apart 
+        #so that the poly taps are far enough apart
         self.poly_tap_offset = (self.base_width - self.poly_contact.width - self.poly_active_offset) - drc("poly_to_poly")
 
     def extend_well(self):
@@ -82,7 +82,7 @@ class rom_precharge_cell(rom_base_cell):
                 directions="nonpref")
         self.add_via_stack_center(offset=pos,
                         from_layer=self.active_stack[2],
-                        to_layer=self.supply_layer) 
+                        to_layer=self.supply_layer)
 
         bitline_offset = vector( 2 * (drc("minwidth_{}".format(self.bitline_layer)) + drc("{0}_to_{0}".format(self.bitline_layer))) ,0)
 

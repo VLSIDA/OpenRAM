@@ -21,7 +21,7 @@ class rom_decoder(design):
         self.num_outputs = num_outputs
         self.num_inputs = ceil(log(num_outputs, 2))
         self.create_decode_map()
-        
+
         super().__init__(name)
 
         b = factory.create(module_type=OPTS.bitcell)
@@ -48,7 +48,7 @@ class rom_decoder(design):
         self.place_input_buffer()
         self.place_driver()
         self.route_outputs()
-        
+
         self.connect_inputs()
         self.route_supplies()
         self.add_boundary()
@@ -62,7 +62,7 @@ class rom_decoder(design):
         ur = vector(ur.x, ur.y)
         super().add_boundary(ll, ur)
         self.width = ur.x
-        self.height = ur.y 
+        self.height = ur.y
 
     def setup_layout_constants(self):
         self.inv_route_width = drc["minwidth_{}".format(self.inv_route_layer)]
@@ -87,7 +87,7 @@ class rom_decoder(design):
                 else:
                     bin_digit = int(addr[addr_idx])
 
-                col_array.append(bin_digit) 
+                col_array.append(bin_digit)
 
                 if bin_digit == 0 : inv_col_array.append(1)
                 else : inv_col_array.append(0)
@@ -109,19 +109,19 @@ class rom_decoder(design):
 
     def add_modules(self):
 
-        self.control_array = factory.create(module_type="rom_address_control_array", 
+        self.control_array = factory.create(module_type="rom_address_control_array",
                                             cols=self.num_inputs)
 
-        self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name), 
-                                        rows=self.num_outputs, 
+        self.wordline_buf = factory.create(module_type="rom_wordline_driver_array", module_name="{}_wordline_buffer".format(self.name),
+                                        rows=self.num_outputs,
                                         fanout=ceil(self.fanout),
                                         invert_outputs=self.invert_outputs,
                                         tap_spacing=self.strap_spacing)
-                                            
-        self.array_mod = factory.create(module_type="rom_base_array", 
-                                        module_name="{}_array".format(self.name), 
-                                        cols=self.num_outputs, 
-                                        rows=2 * self.num_inputs, 
+
+        self.array_mod = factory.create(module_type="rom_base_array",
+                                        module_name="{}_array".format(self.name),
+                                        cols=self.num_outputs,
+                                        rows=2 * self.num_inputs,
                                         bitmap=self.decode_map,
                                         strap_spacing = self.strap_spacing,
                                         bitline_layer=self.output_layer,
@@ -190,7 +190,7 @@ class rom_decoder(design):
         self.array_inst.place(offset, rotate=90)
 
     def place_driver(self):
-         
+
         offset = vector(self.array_inst.height + self.m1_width, self.array_inst.by())
         self.wordline_buf_inst.place(offset)
 
@@ -226,7 +226,7 @@ class rom_decoder(design):
             addr_bar_out_pin = self.buf_inst.get_pin("Abar{}_out".format(i))
 
             addr_middle = vector(addr_pin.cx(), addr_out_pin.cy())
-            
+
             addr_bar_middle = vector(addr_bar_pin.cx(), addr_bar_out_pin.cy())
 
             self.add_path(self.inv_route_layer, [addr_out_pin.center(), addr_middle, addr_pin.center()])

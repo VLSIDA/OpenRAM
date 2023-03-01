@@ -703,7 +703,7 @@ class layout():
         bins = {}
         for pin in pins:
                 y = pin.cy()
-                if round: 
+                if round:
                     y = round_to_grid(y)
                 try:
                     bins[y].append(pin)
@@ -794,7 +794,7 @@ class layout():
         bins = {}
         for pin in pins:
                 x = pin.cx()
-                if round: 
+                if round:
                     x = round_to_grid(x)
                 try:
                     bins[x].append(pin)

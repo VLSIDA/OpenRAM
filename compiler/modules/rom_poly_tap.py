@@ -37,11 +37,11 @@ class rom_poly_tap(design):
             self.extend_poly()
 
     def add_boundary(self):
-        contact_width = self.poly_contact.width 
+        contact_width = self.poly_contact.width
 
         # offset = self.active_space - (contact_width - self.active_enclose_contact - self.active_extend_contact)
         self.height = self.dummy.height
-        self.width = contact_width + self.pitch_offset 
+        self.width = contact_width + self.pitch_offset
 
         super().add_boundary()
 
@@ -89,7 +89,7 @@ class rom_poly_tap(design):
         offset = self.active_space - gap
         # tap_x = self.via.cx() + self.contact_width + self.active_enclose_contact + self.poly_enclose_contact
         tap_x = self.via.cx() + offset
-        tap_y = self.via.cy() + self.dummy.width * 0.5 
+        tap_y = self.via.cy() + self.dummy.width * 0.5
         contact_pos = vector(tap_x, tap_y)
 
         # edge of the next nmos
@@ -105,7 +105,7 @@ class rom_poly_tap(design):
                                 implant_type="p",
                                 well_type="p",
                                 directions="nonpref")
-            self.add_power_pin(name="gnd", 
+            self.add_power_pin(name="gnd",
                             loc=contact_pos,
                             start_layer=self.active_stack[2])
             self.add_layout_pin_rect_center("active_tap", self.supply_stack[0], contact_pos)

@@ -130,8 +130,6 @@ class rom_address_control_buf(design):
         self.add_via_stack_center(from_layer=self.inv_layer, to_layer=self.route_layer, offset=self.addr_bar_nand.get_pin("A").center())
         self.add_segment_center(self.route_layer, clk_offset, vector(clk_offset.x, clk2_pin.cy()))
 
-
-
         # Route first NAND output to second NAND input
         start = A_out.center()
         end = Aint_in.center()
@@ -139,17 +137,14 @@ class rom_address_control_buf(design):
         self.add_via_stack_center(Aint_in.center(), self.inv_layer, "m2")
         self.add_via_stack_center(A_out.center(), self.inv_layer, "m2")
 
-
         # Route first NAND to output pin
         self.add_segment_center("m2", end, vector(end.x, self.addr_bar_nand.uy()))
         self.add_layout_pin_rect_center("A_out", offset=vector(end.x, self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
-
 
         # Route second NAND to output pin
         self.add_via_stack_center(Abar_out.center(), self.inv_layer, "m2")
         self.add_segment_center("m2", Abar_out.center(), vector(Abar_out.cx(), self.addr_bar_nand.uy()))
         self.add_layout_pin_rect_center("Abar_out", offset=vector(Abar_out.cx(), self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
-
 
         # Route inverter output to NAND
         end = vector(Abar_int_out.cx(), Abar_in.cy() + 0.5 * self.interconnect_width)

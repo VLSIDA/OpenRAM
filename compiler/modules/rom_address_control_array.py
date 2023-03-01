@@ -26,7 +26,7 @@ class rom_address_control_array(design):
             name = "rom_inv_array_{0}".format(cols)
         if inv_height == None:
             self.inv_height = dff.height * 0.5
-        else: 
+        else:
             self.inv_height = inv_height
 
 
@@ -46,7 +46,7 @@ class rom_address_control_array(design):
 
     def create_layout(self):
         self.width = self.cols * self.addr_control.width
-        self.height = self.addr_control.height 
+        self.height = self.addr_control.height
         self.setup_layout_constants()
         self.place_instances()
         self.route_clk()

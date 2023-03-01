@@ -32,14 +32,14 @@ class rom_precharge_array(design):
             name = "rom_inv_array_{0}".format(cols)
 
         if strap_spacing != None:
-            self.strap_spacing = strap_spacing 
+            self.strap_spacing = strap_spacing
         else:
             self.strap_spacing = 0
 
 
         if strap_spacing != 0:
             self.num_straps = ceil(self.cols / self.strap_spacing)
-            self.array_col_size = self.cols + self.num_straps  
+            self.array_col_size = self.cols + self.num_straps
         else:
             self.num_straps = 0
             self.array_col_size = self.cols
@@ -54,7 +54,7 @@ class rom_precharge_array(design):
         self.create_instances()
 
     def create_layout(self):
-        self.width = self.cols * self.pmos.width 
+        self.width = self.cols * self.pmos.width
         self.height = self.pmos.width
         self.place_instances()
         self.create_layout_pins()
@@ -70,7 +70,7 @@ class rom_precharge_array(design):
         self.add_label(layer="nwell", text="upper right",offset=ur)
         # ur = vector(ur.x, ur.y - self.well_ll.y)
         super().add_boundary(vector(0, 0), ur)
-        self.height = ur.y 
+        self.height = ur.y
         self.width = ur.x
 
     def create_modules(self):
@@ -118,8 +118,8 @@ class rom_precharge_array(design):
         self.add_label("ZERO", self.route_layer)
 
         self.array_pos = []
-        strap_num = 0 
-        cell_y = 0  
+        strap_num = 0
+        cell_y = 0
         # columns are bit lines
         cell_x = 0
 
@@ -163,7 +163,7 @@ class rom_precharge_array(design):
             start = vector(tap_pin.cx(), tap_pin.by())
             end = vector(start.x, tap.mod.get_pin("poly_tap").cy())
             self.add_segment_center(layer="poly", start=start, end=end)
-        offset_start = vector(end.x - self.poly_tap.width + self.poly_extend_active, end.y) 
+        offset_start = vector(end.x - self.poly_tap.width + self.poly_extend_active, end.y)
         offset_end = end + vector(0.5*self.poly_width, 0)
         self.add_segment_center(layer="poly", start=offset_start, end=offset_end)
 

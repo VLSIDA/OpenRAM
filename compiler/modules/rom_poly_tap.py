@@ -52,20 +52,15 @@ class rom_poly_tap(design):
         # DRC rule here is hard coded since licon.9 isnt included in skywater130 tech file
 
         # poly contact spacing to P-diffusion < 0.235um (licon.9 + psdm.5a)
-        if OPTS.tech_name == "sky130":
-            self.contact_x_offset =  0.235 - (contact_width - self.pmos.contact_width) * 0.5 - self.poly_extend_active
-        else:
-            assert(False)
+        # if OPTS.tech_name == "sky130":
+        #     self.contact_x_offset =  0.235 - (contact_width - self.pmos.contact_width) * 0.5 - self.poly_extend_active
+        # else:
+        #     assert(False)
 
         contact_y = self.dummy.cell_inst.width * 0.5 - 0.5 * self.contact_width - self.active_enclose_contact
 
-        if self.tx_type == "nmos":
+        self.contact_x_offset = 0
 
-            # contact_y = self.dummy.cell_inst.width * 0.5 - 0.5 * self.contact_width - self.active_enclose_contact
-            # contact_y = self.dummy.poly.offset.x + (self.poly_width * 0.5)
-            self.contact_x_offset = 0
-        # else:
-        #     contact_y = self.pmos.poly_positions[0].x - self.pmos.active_offset.x
 
         contact_x = contact_width * 0.5 + self.contact_x_offset
         self.contact_offset = vector(contact_x, contact_y)

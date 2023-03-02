@@ -1,15 +1,15 @@
-![](./images/OpenRAM_logo_yellow_transparent.svg)
+![](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/OpenRAM_logo_yellow_transparent.svg)
 # OpenRAM
 
 [![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
-[![License: BSD 3-clause](./images/license_badge.svg)](./LICENSE)
-[![Download](./images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/stable.zip)
-[![Download](./images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
+[![License: BSD 3-clause](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/license_badge.svg)](./LICENSE)
+[![Download](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/stable.zip)
+[![Download](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
 
 An open-source static random access memory (SRAM) compiler.
 
 # What is OpenRAM?
-<img align="right" width="25%" src="images/SCMOS_16kb_sram.jpg">
+<img align="right" width="25%" src="https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/SCMOS_16kb_sram.jpg">
 
 OpenRAM is an award winning open-source Python framework to create the layout,
 netlists, timing and power models, placement and routing models, and

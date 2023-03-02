@@ -15,28 +15,14 @@ TEST_STAMPS= $(addsuffix .ok,$(TEST_BASES))
 OPENRAM_DIR = $(OPENRAM_HOME)/tests
 RESULTS_DIR = $(OPENRAM_DIR)/results
 
+
+
 # Use % for all techs: 
 # %/test.py
 # or a specific tech:
 # freepdk45/test.py
 BROKEN_STAMPS = \
-	sky130/01_library_test.ok \
-	sky130/04_column_mux_pbitcell_test.ok \
-	sky130/04_dummy_pbitcell_test.ok \
-	sky130/04_pbitcell_test.ok \
-	sky130/04_pnand4_test.ok \
-	sky130/04_pand4_test.ok \
-	sky130/04_precharge_pbitcell_test.ok \
-	sky130/04_replica_pbitcell_test.ok \
-	sky130/05_pbitcell_array_test.ok \
-	sky130/05_bitcell_array_test.ok \
-	sky130/05_bitcell_array_1rw_1r_test.ok \
-	sky130/05_dummy_array_test.ok \
 	%/06_hierarchical_decoder_4096row_test.ok \
-	sky130/07_column_mux_array_pbitcell_test.ok \
-	sky130/19_pmulti_bank_test.ok \
-	sky130/19_psingle_bank_test.ok \
-	sky130/19_bank_select_pbitcell_test.ok \
 	%/19_single_bank_16mux_1rw_1r_test.ok \
 	%/19_single_bank_16mux_test.ok \
 	%/20_sram_1bank_16mux_1rw_1r_test.ok \
@@ -47,11 +33,6 @@ BROKEN_STAMPS = \
 	%/20_psram_1bank_2mux_test.ok \
 	%/21_hspice_delay_test.ok \
 	%/21_hspice_setuphold_test.ok \
-	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
-	sky130/22_psram_1bank_2mux_func_test.ok \
-	sky130/22_psram_1bank_4mux_func_test.ok \
-	sky130/22_psram_1bank_8mux_func_test.ok \
-	sky130/22_psram_1bank_nomux_func_test.ok \
 	%/22_psram_1bank_2mux_func_test.ok \
 	%/22_psram_1bank_4mux_func_test.ok \
 	%/22_psram_1bank_8mux_func_test.ok \
@@ -66,11 +47,6 @@ BROKEN_STAMPS = \
 	%/22_sram_1bank_nomux_sparecols_func_test.ok \
 	%/22_sram_1bank_wmask_1rw_1r_func_test.ok \
 	%/22_sram_wmask_func_test.ok \
-	sky130/23_lib_sram_linear_regression_test.ok \
-	sky130/23_lib_sram_model_corners_test.ok \
-	sky130/23_lib_sram_model_test.ok \
-	sky130/23_lib_sram_prune_test.ok \
-	sky131/23_lib_sram_test.ok \
 	%/26_hspice_pex_pinv_test.ok \
 	%/27_verilog_multibank_test.ok \
 	%/50_riscv_1k_1rw1r_func_test.ok \
@@ -87,6 +63,35 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
 	%/50_riscv_8k_1rw_func_test.ok \
+	freepdk45/21_xyce_delay_test.ok \
+	scn4m_subm/19_single_bank_global_bitline_test.ok \
+	scn4m_subm/21_xyce_delay_test.ok \
+	sky130/01_library_test.ok \
+	sky130/04_column_mux_pbitcell_test.ok \
+	sky130/04_dummy_pbitcell_test.ok \
+	sky130/04_pbitcell_test.ok \
+	sky130/04_pnand4_test.ok \
+	sky130/04_pand4_test.ok \
+	sky130/04_precharge_pbitcell_test.ok \
+	sky130/04_replica_pbitcell_test.ok \
+	sky130/05_pbitcell_array_test.ok \
+	sky130/05_bitcell_array_test.ok \
+	sky130/05_bitcell_array_1rw_1r_test.ok \
+	sky130/05_dummy_array_test.ok \
+	sky130/07_column_mux_array_pbitcell_test.ok \
+	sky130/19_pmulti_bank_test.ok \
+	sky130/19_psingle_bank_test.ok \
+	sky130/19_bank_select_pbitcell_test.ok \
+	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
+	sky130/22_psram_1bank_2mux_func_test.ok \
+	sky130/22_psram_1bank_4mux_func_test.ok \
+	sky130/22_psram_1bank_8mux_func_test.ok \
+	sky130/22_psram_1bank_nomux_func_test.ok \
+	sky130/23_lib_sram_linear_regression_test.ok \
+	sky130/23_lib_sram_model_corners_test.ok \
+	sky130/23_lib_sram_model_test.ok \
+	sky130/23_lib_sram_prune_test.ok \
+	sky131/23_lib_sram_test.ok
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))

@@ -21,7 +21,7 @@ class rom_bank_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        debug.info(1, "Testing 32 byte rom cell")
+        debug.info(1, "Testing 64 byte rom cell")
 
         test_data = "{0}/{1}/rom_data_64B".format(os.getenv("OPENRAM_HOME"), OPTS.rom_data_dir)
         a = factory.create(module_type="rom_base_bank", strap_spacing = 8, data_file = test_data, word_size = 1)

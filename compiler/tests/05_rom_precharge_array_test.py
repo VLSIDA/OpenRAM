@@ -13,7 +13,7 @@ import sys, os
 import openram
 from openram import OPTS
 from openram.sram_factory import factory
-import debug
+from openram import debug
 
 
 class rom_precharge_test(openram_test):

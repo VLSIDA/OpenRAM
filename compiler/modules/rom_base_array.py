@@ -89,7 +89,7 @@ class rom_base_array(bitcell_base_array):
         self.precharge_array = factory.create(module_type="rom_precharge_array",
                                               cols=self.column_size,
                                               strap_spacing=self.strap_spacing,
-                                              route_layer=self.bitline_layer,
+                                              bitline_layer=self.bitline_layer,
                                               strap_layer=self.wordline_layer,
                                               tap_direction=self.tap_direction)
 

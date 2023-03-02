@@ -25,7 +25,7 @@ class rom_decoder_test(openram_test):
         debug.info(2, "Testing 2x4 decoder for rom cell")
 
 
-        a = factory.create(module_type="rom_decoder", num_outputs=16, strap_spacing=4, cols=16)
+        a = factory.create(module_type="rom_decoder", num_outputs=16, strap_spacing=4, fanout=16)
         self.local_check(a)
         openram.end_openram()
 

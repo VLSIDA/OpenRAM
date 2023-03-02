@@ -15,9 +15,9 @@ from openram.tech import drc
 
 class rom_precharge_cell(rom_base_cell):
 
-    def __init__(self, name="", route_layer="m1", supply_layer="li"):
+    def __init__(self, name="", bitline_layer="m1", supply_layer="li"):
         self.supply_layer = supply_layer
-        super().__init__(name=name, bitline_layer=route_layer)
+        super().__init__(name=name, bitline_layer=bitline_layer)
 
     def create_layout(self):
         super().create_layout()
@@ -74,7 +74,7 @@ class rom_precharge_cell(rom_base_cell):
                         from_layer=self.active_stack[2],
                         to_layer=self.supply_layer)
 
-        bitline_offset = vector( 2 * (drc("minwidth_{}".format(self.bitline_layer)) + drc("{0}_to_{0}".format(self.bitline_layer))) ,0)
+        bitline_offset = vector( 1.5 * (drc("minwidth_{}".format(self.bitline_layer)) + drc("{0}_to_{0}".format(self.bitline_layer))) ,0)
 
         self.add_layout_pin_rect_center("vdd", self.supply_layer, pos - bitline_offset)
 

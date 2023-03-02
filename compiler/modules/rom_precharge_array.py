@@ -17,16 +17,21 @@ class rom_precharge_array(design):
     """
     An array of inverters to create the inverted address lines for the rom decoder
     """
-    def __init__(self, cols, name="", route_layer="li", strap_spacing=None, strap_layer="m2", tap_direction="row"):
+    def __init__(self, cols, name="", bitline_layer=None, strap_spacing=None, strap_layer="m2", tap_direction="row"):
         self.cols = cols
-        self.route_layer = route_layer
         self.strap_layer = strap_layer
         self.tap_direction = tap_direction
 
-        if self.route_layer == "m1" :
+        if "li" in layer:
             self.supply_layer = "li"
         else:
             self.supply_layer = "m1"
+
+        if bitline_layer is not None:
+            self.bitline_layer = bitline_layer
+        else:
+            self.bitline_layer = self.supply_layer
+
 
         if name=="":
             name = "rom_inv_array_{0}".format(cols)
@@ -65,17 +70,15 @@ class rom_precharge_array(design):
         self.extend_well()
 
     def add_boundary(self):
-        # self.translate_all(self.well_ll)
         ur = self.find_highest_coords()
         self.add_label(layer="nwell", text="upper right",offset=ur)
-        # ur = vector(ur.x, ur.y - self.well_ll.y)
         super().add_boundary(vector(0, 0), ur)
         self.height = ur.y
         self.width = ur.x
 
     def create_modules(self):
 
-        self.pmos = factory.create(module_type="rom_precharge_cell", module_name="precharge_cell", route_layer=self.route_layer, supply_layer=self.supply_layer)
+        self.pmos = factory.create(module_type="rom_precharge_cell", module_name="precharge_cell", bitline_layer=self.bitline_layer, supply_layer=self.supply_layer)
 
         # For layout constants
         self.dummy = factory.create(module_type="rom_base_cell")
@@ -115,7 +118,6 @@ class rom_precharge_array(design):
         self.connect_inst([])
 
     def place_instances(self):
-        self.add_label("ZERO", self.route_layer)
 
         self.array_pos = []
         strap_num = 0
@@ -145,7 +147,7 @@ class rom_precharge_array(design):
         for col in range(self.cols):
             source_pin = self.pmos_insts[col].get_pin("D")
             bl = "pre_bl{0}_out".format(col)
-            self.add_layout_pin_rect_center(bl, self.route_layer, source_pin.center())
+            self.add_layout_pin_rect_center(bl, self.bitline_layer, source_pin.center())
 
     def route_supply(self):
 

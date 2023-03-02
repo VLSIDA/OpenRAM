@@ -101,7 +101,7 @@ class rom_base_cell(design):
         # self.add_rect_center("poly", poly_offset, self.poly_extend_active_spacing, self.poly_width)
 
         self.cell_inst.place(tx_offset, rotate=90)
-        # self.add_label("CELL ZERO", self.route_layer)
+
         self.copy_layout_pin(self.cell_inst, "S", "S")
         self.copy_layout_pin(self.cell_inst, "D", "D")
         self.source_pos = self.cell_inst.get_pin("S").center()

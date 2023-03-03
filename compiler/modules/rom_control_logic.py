@@ -90,6 +90,7 @@ class rom_control_logic(design):
         self.nand_inst.place(offset=[self.buf_inst.width, 0])
         self.driver_inst.place(offset=[0, self.buf_inst.height + self.driver_inst.height], mirror="MX")
 
+        # hack to get around the fact these modules dont tile properly
         offset = self.driver_inst.get_pin("vdd").cy() - self.nand_inst.get_pin("vdd").cy()
         self.driver_inst.place(offset=[0, self.buf_inst.height + self.driver_inst.height - offset], mirror="MX")
 

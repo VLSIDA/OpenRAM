@@ -73,7 +73,6 @@ setup(
     author="Matthew Guthaus",
     author_email="mrg+vlsida@ucsc.edu",
     keywords=[ "sram", "magic", "gds", "netgen", "ngspice", "netlist" ],
-    readme="README.md",
     license="BSD-3",
     packages=packages,
     package_dir=package_dir,

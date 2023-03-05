@@ -10,7 +10,7 @@ from openram.sram_factory import factory
 from openram.tech import drc, spice
 from openram.tech import cell_properties as props
 from openram import OPTS
-from .bitcell_base_array import bitcell_base_array
+from openram.modules import bitcell_base_array
 
 
 class replica_bitcell_array(bitcell_base_array):

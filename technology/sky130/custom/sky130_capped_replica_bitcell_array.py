@@ -14,7 +14,7 @@ from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
 
 
-class capped_replica_bitcell_array(sky130_bitcell_base_array):
+class sky130_capped_replica_bitcell_array(sky130_bitcell_base_array):
     """
     Creates a replica bitcell array then adds the row and column caps to all
     sides of a bitcell array.
@@ -29,6 +29,10 @@ class capped_replica_bitcell_array(sky130_bitcell_base_array):
                                                                                              right_rbl))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         self.add_comment("rbl: {0} left_rbl: {1} right_rbl: {2}".format(rbl, left_rbl, right_rbl))
+
+        self.rbl = rbl
+        self.left_rbl = left_rbl
+        self.right_rbl = right_rbl
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -94,10 +98,10 @@ class capped_replica_bitcell_array(sky130_bitcell_base_array):
         self.wordline_pins = []
 
         for port in range(self.rbl[0]):
-            self.wordline_pins.extend(self.rbl_wordline_names[port][port])
+            self.wordline_pins.append(self.rbl_wordline_names[port][port])
         self.wordline_pins.extend(self.all_wordline_names)
         for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
-            self.wordline_pins.extend(self.rbl_wordline_names[port][port])
+            self.wordline_pins.append(self.rbl_wordline_names[port][port])
 
         self.add_pin_list(self.wordline_pins, "INPUT")
 
@@ -117,7 +121,7 @@ class capped_replica_bitcell_array(sky130_bitcell_base_array):
         self.width = self.replica_bitcell_array.width
         self.height = self.replica_bitcell_array.height
 
-        for pin_name in self.replica_bitcell_array_inst.pin_names:
+        for pin_name in self.bitline_pins + self.wordline_pins + self.supplies:
             self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
 
         self.add_boundary()

@@ -30,16 +30,21 @@ In general, the OpenRAM compiler has very few dependencies:
 ## OpenRAM Library
 OpenRAM is available as a Python library. There are a few ways to install it:
 
-+ Install using Makefile (you need to clone the repo):
++ Install the latest _stable_ version with pip:
 ```
-git clone git@github.com:VLSIDA/OpenRAM.git
-cd OpenRAM
-make library
+pip3 install openram
 ```
 
 + Install the latest _dev_ version:
 ```
 pip3 install git+https://git@github.com/VLSIDA/OpenRAM.git@dev
+```
+
++ Install using Makefile (you need to clone the repo):
+```
+git clone git@github.com:VLSIDA/OpenRAM.git
+cd OpenRAM
+make library
 ```
 
 
@@ -52,7 +57,8 @@ worry about updating/installing these tools. OpenRAM installs Anaconda silently 
 OpenRAM uses Anaconda by default, but you can turn this feature off by setting `use_conda = False`
 in your config file. Then, OpenRAM will use the tools you have installed on your system.
 
-If you want to install Anaconda without running OpenRAM (for example to run unit tests, which do not install Anaconda), you can run:
+If you want to install Anaconda without running OpenRAM (for example to run unit tests, which do
+not install Anaconda), you can run:
 ```
 cd OpenRAM
 ./install_conda.sh
@@ -87,15 +93,15 @@ needed if you have the library.
 
 You can add these environment variables to your `.bashrc`:
 ```
-  export OPENRAM_HOME="$HOME/OpenRAM/compiler"
-  export OPENRAM_TECH="$HOME/OpenRAM/technology"
-  export PYTHONPATH=$OPENRAM_HOME
+export OPENRAM_HOME="$HOME/OpenRAM/compiler"
+export OPENRAM_TECH="$HOME/OpenRAM/technology"
+export PYTHONPATH=$OPENRAM_HOME
 ```
 
 Note that if you want symbols to resolve in your editor, you may also want to add the specific technology
 directory that you use and any custom technology modules as well. For example:
 ```
-  export PYTHONPATH="$OPENRAM_HOME:$OPENRAM_TECH/sky130:$OPENRAM_TECH/sky130/custom"
+export PYTHONPATH="$OPENRAM_HOME:$OPENRAM_TECH/sky130:$OPENRAM_TECH/sky130/custom"
 ```
 
 We include the tech files necessary for [SCMOS] SCN4M\_SUBM,

@@ -120,6 +120,13 @@ To install this automatically, you can run:
 cd $HOME/OpenRAM
 make pdk
 ```
+> **Note**: If you don't have Magic installed, you need to install and activate the conda environment before running this command.
+> You can install conda with:
+>
+> ```
+> source miniconda/bin/activate
+> ```
+
 
 Then you must also install the [Sky130] SRAM build space with the appropriate cell views into the OpenRAM technology directory
 by running:

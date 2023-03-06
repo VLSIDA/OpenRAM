@@ -40,7 +40,7 @@ updating.
 
 # License
 
-OpenRAM is licensed under the [BSD 3-clause License](./LICENSE).
+OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
 
 # Publications
 

@@ -69,12 +69,12 @@ $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 
 $(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
-	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk && \
-	cd sky130 && \
-	make veryclean && \
-	make && \
-	make SHARED_PDKS_PATH=/pdk install"
+	@cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
+		cd sky130 && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install
 
 $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."

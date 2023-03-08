@@ -6,10 +6,11 @@
 # All rights reserved.
 #
 
+import datetime
 from math import ceil, log, sqrt
 from openram.base import vector
 from openram.base import design
-from openram import OPTS, debug
+from openram import OPTS, debug, print_time
 from openram.sram_factory import factory
 from openram.tech import drc, layer, parameter
 
@@ -21,120 +22,82 @@ class rom_base_bank(design):
     word size is in bytes
     """
 
-    def __init__(self, strap_spacing=0, data_file=None, name="", word_size=2):
+    def __init__(self, name, rom_config):
         super().__init__(name=name)
-        self.word_size = word_size * 8
-        self.read_binary(word_size=word_size, data_file=data_file, scramble_bits=True, endian="little")
+        self.rom_config = rom_config
+        rom_config.set_local_config(self)
 
+        self.word_size = self.word_bits
+        # self.read_binary(word_size=word_size, data_file=data_file, scramble_bits=True, endian="little")
+        # debug.info(1, "Rom data: {}".format(self.data))
         self.num_outputs = self.rows
         self.num_inputs = ceil(log(self.rows, 2))
         self.col_bits = ceil(log(self.words_per_row, 2))
         self.row_bits = self.num_inputs
 
-        # self.data = [[0, 1, 0, 1], [1, 1, 1, 1], [1, 1, 0, 0], [0, 0, 1, 0]]
-        self.strap_spacing = strap_spacing
-        self.tap_spacing = 8
+        self.tap_spacing = self.strap_spacing
+
+        try:
+            from openram.tech import power_grid
+            self.supply_stack = power_grid
+        except ImportError:
+            # if no power_grid is specified by tech we use sensible defaults
+            # Route a M3/M4 grid
+            self.supply_stack = self.m3_stack
+
         self.interconnect_layer = "m1"
         self.bitline_layer = "m1"
         self.wordline_layer = "m2"
-
 
         if "li" in layer:
             self.route_stack = self.m1_stack
         else:
             self.route_stack = self.m2_stack
         self.route_layer = self.route_stack[0]
-        self.setup_layout_constants()
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
-    """
-    Reads a hexadecimal file from a given directory to be used as the data written to the ROM
-    endian is either "big" or "little"
-    word_size is the number of bytes per word
-    sets the row and column size based on the size of binary input, tries to keep array as square as possible,
-    """
-
-    def read_binary(self, data_file, word_size=2, endian="big", scramble_bits=False):
-        # Read data as hexidecimal text file
-        hex_file = open(data_file, 'r')
-        hex_data = hex_file.read()
-
-        # Convert from hex into an int
-        data_int = int(hex_data, 16)
-        # Then from int into a right aligned, zero padded string
-        bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
-
-        # Then turn the string into a list of ints
-        bin_data = list(bin_string)
-        bin_data = [int(x) for x in bin_data]
-
-        # data size in bytes
-        data_size = len(bin_data) / 8
-        num_words = int(data_size / word_size)
-
-        bytes_per_col = sqrt(num_words)
-
-        self.words_per_row = int(ceil(bytes_per_col /(2*word_size)))
-
-        bits_per_row = self.words_per_row * word_size * 8
-
-        self.cols = bits_per_row
-        self.rows = int(num_words / (self.words_per_row))
-        chunked_data = []
-
-        for i in range(0, len(bin_data), bits_per_row):
-            row_data = bin_data[i:i + bits_per_row]
-            if len(row_data) < bits_per_row:
-                row_data = [0] * (bits_per_row - len(row_data)) + row_data
-            chunked_data.append(row_data)
-
-
-        # if endian == "big":
-
-
-        self.data = chunked_data
-        if scramble_bits:
-            scrambled_chunked = []
-
-            for row_data in chunked_data:
-                scambled_data = []
-                for bit in range(self.word_size):
-                    for word in range(self.words_per_row):
-                        scambled_data.append(row_data[bit + word * self.word_size])
-                scrambled_chunked.append(scambled_data)
-            self.data = scrambled_chunked
-
-
-
-        # self.data.reverse()
-
-        debug.info(1, "Read rom binary: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, num_words, self.cols, self.rows, self.words_per_row))
 
 
     def create_netlist(self):
+        start_time = datetime.datetime.now()
         self.add_modules()
         self.add_pins()
-
-
+        self.create_instances()
+        if not OPTS.is_unit_test:
+            print_time("Submodules", datetime.datetime.now(), start_time)
 
     def create_layout(self):
-        self.create_instances()
+
+        start_time = datetime.datetime.now()
+
+        self.setup_layout_constants()
         self.place_instances()
+        if not OPTS.is_unit_test:
+            print_time("Placement", datetime.datetime.now(), start_time)
 
+
+        start_time = datetime.datetime.now()
+        self.route_layout()
+        if not OPTS.is_unit_test:
+            print_time("Routing", datetime.datetime.now(), start_time)
+
+        self.height = self.array_inst.height
+        self.width = self.array_inst.width
+        self.add_boundary()
+
+        start_time = datetime.datetime.now()
+        if not OPTS.is_unit_test:
+            # We only enable final verification if we have routed the design
+            # Only run this if not a unit test, because unit test will also verify it.
+            self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
+            print_time("Verification", datetime.datetime.now(), start_time)
+
+    def route_layout(self):
         self.route_decode_outputs()
-
         self.route_precharge()
-
         self.route_clock()
         self.route_array_outputs()
         self.place_top_level_pins()
         self.route_supplies()
         self.route_output_buffers()
-        self.height = self.array_inst.height
-        self.width = self.array_inst.width
-        self.add_boundary()
-
 
     def setup_layout_constants(self):
         self.route_layer_width = drc["minwidth_{}".format(self.route_stack[0])]
@@ -166,7 +129,7 @@ class rom_base_bank(design):
         # in sky130 the address control buffer is composed of 2 size 2 NAND gates,
         # with a beta of 3, each of these gates has gate capacitance of 2 min sized inverters, therefor a load of 4
 
-        
+
         addr_control_buffer_effort = parameter['beta'] + 1
         # a single min sized nmos makes up 1/4 of the input capacitance of a min sized inverter
         bitcell_effort = 0.25
@@ -492,12 +455,72 @@ class rom_base_bank(design):
             pin_num = msb - self.col_bits
             self.copy_layout_pin(self.decode_inst, "A{}".format(pin_num), name)
 
-
-
-
     def route_supplies(self):
 
         for inst in self.insts:
             if not inst.mod.name.__contains__("contact"):
                 self.copy_layout_pin(inst, "vdd")
                 self.copy_layout_pin(inst, "gnd")
+
+    # """
+    # Reads a hexadecimal file from a given directory to be used as the data written to the ROM
+    # endian is either "big" or "little"
+    # word_size is the number of bytes per word
+    # sets the row and column size based on the size of binary input, tries to keep array as square as possible,
+    # """
+
+    # def read_binary(self, data_file, word_size=2, endian="big", scramble_bits=False):
+    #     # Read data as hexidecimal text file
+    #     hex_file = open(data_file, 'r')
+    #     hex_data = hex_file.read()
+
+    #     # Convert from hex into an int
+    #     data_int = int(hex_data, 16)
+    #     # Then from int into a right aligned, zero padded string
+    #     bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
+
+    #     # Then turn the string into a list of ints
+    #     bin_data = list(bin_string)
+    #     bin_data = [int(x) for x in bin_data]
+
+    #     # data size in bytes
+    #     data_size = len(bin_data) / 8
+    #     num_words = int(data_size / word_size)
+
+    #     bytes_per_col = sqrt(num_words)
+
+    #     self.words_per_row = int(ceil(bytes_per_col /(2*word_size)))
+
+    #     bits_per_row = self.words_per_row * word_size * 8
+
+    #     self.cols = bits_per_row
+    #     self.rows = int(num_words / (self.words_per_row))
+    #     chunked_data = []
+
+    #     for i in range(0, len(bin_data), bits_per_row):
+    #         row_data = bin_data[i:i + bits_per_row]
+    #         if len(row_data) < bits_per_row:
+    #             row_data = [0] * (bits_per_row - len(row_data)) + row_data
+    #         chunked_data.append(row_data)
+
+
+    #     # if endian == "big":
+
+
+    #     self.data = chunked_data
+    #     if scramble_bits:
+    #         scrambled_chunked = []
+
+    #         for row_data in chunked_data:
+    #             scambled_data = []
+    #             for bit in range(self.word_size):
+    #                 for word in range(self.words_per_row):
+    #                     scambled_data.append(row_data[bit + word * self.word_size])
+    #             scrambled_chunked.append(scambled_data)
+    #         self.data = scrambled_chunked
+
+
+
+    #     # self.data.reverse()
+
+    #     debug.info(1, "Read rom binary: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, num_words, self.cols, self.rows, self.words_per_row))

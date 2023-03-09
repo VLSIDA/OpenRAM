@@ -17,13 +17,22 @@ from openram import OPTS
 
 
 # @unittest.skip("SKIPPING 05_local_bitcell_array_test")
-class local_bitcell_array_test(openram_test):
+class local_bitcell_array_1rw_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(2, "Testing 4x4 local bitcell array for 6t_cell without replica")
+        OPTS.num_rw_ports = 1
+        OPTS.num_r_ports = 0
+        OPTS.num_w_ports = 0
+        openram.setup_bitcell()
+
+        debug.info(2, "Testing 4x4 local bitcell array for 6t_cell without replica column or dummy row")
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[0, 0])
+        self.local_check(a)
+
+        debug.info(2, "Testing 4x4 local bitcell array for 6t_cell without replica column but with dummy row")
         a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 0])
         self.local_check(a)
 

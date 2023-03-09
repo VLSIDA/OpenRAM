@@ -32,10 +32,6 @@ class global_bitcell_array_test(openram_test):
         a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
         self.local_check(a)
 
-        # debug.info(2, "Testing 4x4 local bitcell array for 6t_cell with replica column")
-        # a = factory.create(module_type="local_bitcell_array", cols=4, left_rbl=1, rows=4, ports=[0])
-        # self.local_check(a)
-
         openram.end_openram()
 
 

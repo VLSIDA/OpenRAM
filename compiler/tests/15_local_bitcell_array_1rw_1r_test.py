@@ -28,19 +28,23 @@ class local_bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica")
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica columns or dummy rows")
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[0, 0])
+        self.local_check(a)
+
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica column but with dummy rows")
         a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1])
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], right_rbl=[1])
-        self.local_check(a)
-
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with left replica column and dummy rows")
         a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0])
         self.local_check(a)
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with right replica column and dummy rows")
+        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], right_rbl=[1])
+        self.local_check(a)
+
+        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with both replica columns and dummy rows")
         a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0], right_rbl=[1])
         self.local_check(a)
 

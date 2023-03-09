@@ -29,7 +29,7 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
         a = factory.create(module_type="replica_bitcell_array",
                            cols=4,
                            rows=4,
-                           rbl=[0, 0])
+                           rbl=[1, 1])
         self.local_check(a)
 
         openram.end_openram()

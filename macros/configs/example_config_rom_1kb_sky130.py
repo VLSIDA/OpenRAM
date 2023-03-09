@@ -16,4 +16,4 @@ output_name = "rom"
 
 spice_name = "ngspice"
 
-rom_data = "/home/jswalker/PrivateRAM/macros/rom_example_data/rom_data_1kB"
+rom_data = "macros/rom_example_data/rom_data_1kB"

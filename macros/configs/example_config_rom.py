@@ -8,6 +8,8 @@
 
 word_size = 1
 
+tech_name = "sky130"
+
 nominal_corner_only = True
 
 output_name = "rom"

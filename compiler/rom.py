@@ -25,6 +25,7 @@ class rom():
                                 word_size=OPTS.word_size,
                                 words_per_row=OPTS.words_per_row,
                                 rom_endian=OPTS.rom_endian,
+                                scramble_bits=OPTS.scramble_bits
                                 strap_spacing=OPTS.strap_spacing)
 
         if name is None:

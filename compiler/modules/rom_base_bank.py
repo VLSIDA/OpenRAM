@@ -55,6 +55,10 @@ class rom_base_bank(design):
             self.route_stack = self.m2_stack
         self.route_layer = self.route_stack[0]
 
+        if OPTS.is_unit_test:
+            self.create_netlist()
+            self.create_layout()
+
 
     def create_netlist(self):
         start_time = datetime.datetime.now()

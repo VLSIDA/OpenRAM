@@ -28,7 +28,6 @@ class replica_pbitcell_test(openram_test):
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
 
-        factory.reset()
         debug.info(2, "Checking replica bitcell using pbitcell (small cell)")
         tx = replica_pbitcell(name="rpbc")
         self.local_check(tx)
@@ -37,7 +36,6 @@ class replica_pbitcell_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
 
-        factory.reset()
         debug.info(2, "Checking replica bitcell using pbitcell (large cell)")
         tx = replica_pbitcell(name="rpbc")
         self.local_check(tx)

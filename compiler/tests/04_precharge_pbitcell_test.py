@@ -28,17 +28,14 @@ class precharge_pbitcell_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
 
-        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
         tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
 
-        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (innermost connections)")
         tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)
 
-        factory.reset()
         debug.info(2, "Checking precharge for pbitcell (outermost connections)")
         tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl2", bitcell_br="br2")
         self.local_check(tx)

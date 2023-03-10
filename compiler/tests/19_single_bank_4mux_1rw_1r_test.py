@@ -33,7 +33,6 @@ class single_bank_1rw_1r_test(openram_test):
 
         c.num_words=64
         c.words_per_row=4
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         a = factory.create(module_type="bank", sram_config=c)

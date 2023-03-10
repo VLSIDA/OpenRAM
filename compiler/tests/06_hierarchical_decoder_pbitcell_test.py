@@ -27,17 +27,14 @@ class hierarchical_decoder_pbitcell_test(openram_test):
         OPTS.num_r_ports = 0
         openram.setup_bitcell()
 
-        factory.reset()
         debug.info(1, "Testing 16 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=16)
         self.local_check(a)
 
-        factory.reset()
         debug.info(1, "Testing 17 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=17)
         self.local_check(a)
 
-        factory.reset()
         debug.info(1, "Testing 23 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=23)
         self.local_check(a)
@@ -46,7 +43,6 @@ class hierarchical_decoder_pbitcell_test(openram_test):
         a = factory.create(module_type="hierarchical_decoder", num_outputs=32)
         self.local_check(a)
 
-        factory.reset()
         debug.info(1, "Testing 65 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=65)
         self.local_check(a)
@@ -55,7 +51,6 @@ class hierarchical_decoder_pbitcell_test(openram_test):
         a = factory.create(module_type="hierarchical_decoder", num_outputs=128)
         self.local_check(a)
 
-        factory.reset()
         debug.info(1, "Testing 341 row sample for hierarchical_decoder (multi-port case)")
         a = factory.create(module_type="hierarchical_decoder", num_outputs=341)
         self.local_check(a)

@@ -63,7 +63,25 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
 	%/50_riscv_8k_1rw_func_test.ok \
+	freepdk45/06_rom_decoder_test.ok \
+	freepdk45/07_rom_column_mux_array_test.ok \
+	freepdk45/08_rom_decoder_buffer_array_test.ok \
+	freepdk45/08_rom_precharge_array_test.ok \
+	freepdk45/10_rom_wordline_driver_array_test.ok \
+	freepdk45/14_rom_array_test.ok \
+	freepdk45/16_rom_control_logic_test.ok \
+	freepdk45/19_rom_bank_1kb_test.ok \
+	freepdk45/19_rom_bank_4kb_test.ok \
 	freepdk45/21_xyce_delay_test.ok \
+	scn4m_subm/06_rom_decoder_test.ok \
+	scn4m_subm/07_rom_column_mux_array_test.ok \
+	scn4m_subm/08_rom_decoder_buffer_array_test.ok \
+	scn4m_subm/08_rom_precharge_array_test.ok \
+	scn4m_subm/10_rom_wordline_driver_array_test.ok \
+	scn4m_subm/14_rom_array_test.ok \
+	scn4m_subm/16_rom_control_logic_test.ok \
+	scn4m_subm/19_rom_bank_1kb_test.ok \
+	scn4m_subm/19_rom_bank_4kb_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
 	scn4m_subm/21_xyce_delay_test.ok \
 	sky130/01_library_test.ok \

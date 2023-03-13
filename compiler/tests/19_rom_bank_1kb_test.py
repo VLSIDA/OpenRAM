@@ -30,7 +30,7 @@ class rom_bank_test(openram_test):
                           rom_data = test_data,
                           word_size = 1)
 
-        a = factory.create(module_type="rom_base_bank", rom_config=conf)
+        a = factory.create(module_type="rom_bank", rom_config=conf)
         a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
         self.local_check(a)
 

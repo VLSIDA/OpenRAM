@@ -7,14 +7,14 @@
 #
 
 import datetime
-from math import ceil, log, sqrt
+from math import ceil, log
 from openram.base import vector
 from openram.base import design
-from openram import OPTS, debug, print_time
+from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import drc, layer, parameter
 
-class rom_base_bank(design):
+class rom_bank(design):
 
     """
     Rom data bank with row and column decoder + control logic
@@ -113,14 +113,14 @@ class rom_base_bank(design):
     def add_pins(self):
 
         self.add_pin("clk", "INPUT")
-        self.add_pin("CS", "INPUT")
+        self.add_pin("cs", "INPUT")
 
         for i in range(self.row_bits + self.col_bits):
-            self.add_pin("addr_{}".format(i), "INPUT")
+            self.add_pin("addr[{}]".format(i), "INPUT")
 
         out_pins = []
         for j in range(self.word_size):
-            out_pins.append("rom_out_{}".format(j))
+            out_pins.append("dout[{}]".format(j))
         self.add_pin_list(out_pins, "OUTPUT")
 
         self.add_pin("vdd", "POWER")
@@ -208,14 +208,14 @@ class rom_base_bank(design):
         bitlines = ["bl_{}".format(bl) for bl in range(self.cols)]
         wordlines = ["wl_{}".format(wl) for wl in range(self.rows)]
 
-        addr_msb = ["addr_{}".format(addr + self.col_bits) for addr in range(self.row_bits)]
-        addr_lsb = ["addr_{}".format(addr) for addr in range(self.col_bits)]
+        addr_msb = ["addr[{}]".format(addr + self.col_bits) for addr in range(self.row_bits)]
+        addr_lsb = ["addr[{}]".format(addr) for addr in range(self.col_bits)]
 
         select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
 
         bitline_bar = ["bl_b_{}".format(bl) for bl in range(self.cols)]
         pre_buf_outputs = ["rom_out_prebuf_{}".format(bit) for bit in range(self.word_size)]
-        outputs = ["rom_out_{}".format(bl) for bl in range(self.word_size)]
+        outputs = ["dout[{}]".format(bl) for bl in range(self.word_size)]
 
 
         array_pins = bitlines + wordlines + prechrg + vdd + gnd
@@ -236,7 +236,7 @@ class rom_base_bank(design):
         self.connect_inst(row_decode_pins)
 
         self.control_inst = self.add_inst(name="rom_control", mod=self.control_logic)
-        self.connect_inst(["clk", "CS", "precharge", "clk_int", "vdd", "gnd"])
+        self.connect_inst(["clk", "cs", "precharge", "clk_int", "vdd", "gnd"])
 
         self.mux_inst = self.add_inst(name="rom_column_mux", mod=self.column_mux)
         self.connect_inst(col_mux_pins)
@@ -445,17 +445,17 @@ class rom_base_bank(design):
 
 
     def place_top_level_pins(self):
-        self.copy_layout_pin(self.control_inst, "CS")
+        self.copy_layout_pin(self.control_inst, "CS", "cs")
         self.copy_layout_pin(self.control_inst, "clk_in", "clk")
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.output_inv_inst, "out_{}".format(i), "rom_out_{}".format(i))
+            self.copy_layout_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i))
         for lsb in range(self.col_bits):
-            name = "addr_{}".format(lsb)
+            name = "addr[{}]".format(lsb)
             self.copy_layout_pin(self.col_decode_inst, "A{}".format(lsb), name)
 
         for msb in range(self.col_bits, self.row_bits + self.col_bits):
-            name = "addr_{}".format(msb)
+            name = "addr[{}]".format(msb)
             pin_num = msb - self.col_bits
             self.copy_layout_pin(self.decode_inst, "A{}".format(pin_num), name)
 
@@ -466,65 +466,3 @@ class rom_base_bank(design):
                 self.copy_layout_pin(inst, "vdd")
                 self.copy_layout_pin(inst, "gnd")
 
-    # """
-    # Reads a hexadecimal file from a given directory to be used as the data written to the ROM
-    # endian is either "big" or "little"
-    # word_size is the number of bytes per word
-    # sets the row and column size based on the size of binary input, tries to keep array as square as possible,
-    # """
-
-    # def read_binary(self, data_file, word_size=2, endian="big", scramble_bits=False):
-    #     # Read data as hexidecimal text file
-    #     hex_file = open(data_file, 'r')
-    #     hex_data = hex_file.read()
-
-    #     # Convert from hex into an int
-    #     data_int = int(hex_data, 16)
-    #     # Then from int into a right aligned, zero padded string
-    #     bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
-
-    #     # Then turn the string into a list of ints
-    #     bin_data = list(bin_string)
-    #     bin_data = [int(x) for x in bin_data]
-
-    #     # data size in bytes
-    #     data_size = len(bin_data) / 8
-    #     num_words = int(data_size / word_size)
-
-    #     bytes_per_col = sqrt(num_words)
-
-    #     self.words_per_row = int(ceil(bytes_per_col /(2*word_size)))
-
-    #     bits_per_row = self.words_per_row * word_size * 8
-
-    #     self.cols = bits_per_row
-    #     self.rows = int(num_words / (self.words_per_row))
-    #     chunked_data = []
-
-    #     for i in range(0, len(bin_data), bits_per_row):
-    #         row_data = bin_data[i:i + bits_per_row]
-    #         if len(row_data) < bits_per_row:
-    #             row_data = [0] * (bits_per_row - len(row_data)) + row_data
-    #         chunked_data.append(row_data)
-
-
-    #     # if endian == "big":
-
-
-    #     self.data = chunked_data
-    #     if scramble_bits:
-    #         scrambled_chunked = []
-
-    #         for row_data in chunked_data:
-    #             scambled_data = []
-    #             for bit in range(self.word_size):
-    #                 for word in range(self.words_per_row):
-    #                     scambled_data.append(row_data[bit + word * self.word_size])
-    #             scrambled_chunked.append(scambled_data)
-    #         self.data = scrambled_chunked
-
-
-
-    #     # self.data.reverse()
-
-    #     debug.info(1, "Read rom binary: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, num_words, self.cols, self.rows, self.words_per_row))

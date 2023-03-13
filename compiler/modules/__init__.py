@@ -72,7 +72,7 @@ from .replica_pbitcell import *
 from .row_cap_array import *
 from .row_cap_bitcell_1port import *
 from .row_cap_bitcell_2port import *
-from .rom_base_bank import *
+from .rom_bank import *
 from .sense_amp_array import *
 from .sense_amp import *
 from .tri_gate_array import *

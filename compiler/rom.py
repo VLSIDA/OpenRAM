@@ -44,7 +44,7 @@ class rom():
 
         self.name = name
 
-        import openram.modules.rom_base_bank as rom
+        import openram.modules.rom_bank as rom
 
         self.r = rom(name, rom_config)
 

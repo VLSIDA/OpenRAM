@@ -86,7 +86,7 @@ sram: $(WORKING_SRAM_STAMPS)
 	@mkdir -p $*
 	@python3 -u $(ROM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
 
-.DELETE_ON_ERROR: $(STAMPS)
+.DELETE_ON_ERROR: $(WORKING_SRAM_STAMPS) $(WORKING_ROM_STAMPS)
 
 $(DIRS):
 	@$(MAKE) --no-print-directory $@.ok
@@ -94,6 +94,8 @@ $(DIRS):
 .PHONY: $(DIRS)
 
 clean:
-	rm -rf $(STAMPS)
-	rm -rf $(DIRS)
+	rm -rf $(WORKING_SRAM_STAMPS)
+	rm -rf $(WORKING_ROM_STAMPS)
+	rm -rf $(SRAM_DIRS)
+	rm -rf $(ROM_DIRS)
 .PHONY: clean

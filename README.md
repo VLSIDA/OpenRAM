@@ -3,8 +3,7 @@
 
 [![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
 [![License: BSD 3-clause](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/license_badge.svg)](./LICENSE)
-[![Download](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/download-stable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/stable.zip)
-[![Download](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/download-unstable-blue.svg)](https://github.com/VLSIDA/OpenRAM/archive/dev.zip)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/openram?color=brightgreen&label=PyPI)](https://pypi.org/project/openram/)
 
 An open-source static random access memory (SRAM) compiler.
 

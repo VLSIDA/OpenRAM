@@ -13,6 +13,8 @@ from openram.base import design
 from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import drc, layer, parameter
+from openram.router import router_tech
+
 
 class rom_bank(design):
 
@@ -75,15 +77,14 @@ class rom_bank(design):
         if not OPTS.is_unit_test:
             print_time("Placement", datetime.datetime.now(), start_time)
 
+        self.height = self.array_inst.height
+        self.width = self.array_inst.width
+        self.add_boundary()
 
         start_time = datetime.datetime.now()
         self.route_layout()
         if not OPTS.is_unit_test:
             print_time("Routing", datetime.datetime.now(), start_time)
-
-        self.height = self.array_inst.height
-        self.width = self.array_inst.width
-        self.add_boundary()
 
         start_time = datetime.datetime.now()
         if not OPTS.is_unit_test:
@@ -100,6 +101,23 @@ class rom_bank(design):
         self.place_top_level_pins()
         self.route_supplies()
         self.route_output_buffers()
+
+        rt = router_tech(self.supply_stack, 1)
+        init_bbox = self.get_bbox(side="ring",
+                                  margin=rt.track_width)
+
+        # We need the initial bbox for the supply rings later
+        # because the perimeter pins will change the bbox
+        # Route the pins to the perimeter
+        if OPTS.perimeter_pins:
+            # We now route the escape routes far enough out so that they will
+            # reach past the power ring or stripes on the sides
+            bbox = self.get_bbox(side="ring",
+                                 margin=11*rt.track_width)
+            self.route_escape_pins(bbox)
+
+        self.route_supplies()
+
 
     def setup_layout_constants(self):
         self.route_layer_width = drc["minwidth_{}".format(self.route_stack[0])]
@@ -407,19 +425,20 @@ class rom_bank(design):
         self.create_horizontal_channel_route(netlist=route_nets, offset=channel_ll, layer_stack=self.m1_stack)
 
     def place_top_level_pins(self):
-        self.copy_layout_pin(self.control_inst, "CS", "cs")
-        self.copy_layout_pin(self.control_inst, "clk_in", "clk")
+        self.add_io_pin(self.control_inst, "CS", "cs")
+        self.add_io_pin(self.control_inst, "clk_in", "clk")
 
         for i in range(self.word_size):
-            self.copy_layout_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i))
+            self.add_io_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i))
+
         for lsb in range(self.col_bits):
             name = "addr[{}]".format(lsb)
-            self.copy_layout_pin(self.col_decode_inst, "A{}".format(lsb), name)
+            self.add_io_pin(self.col_decode_inst, "A{}".format(lsb), name)
 
         for msb in range(self.col_bits, self.row_bits + self.col_bits):
             name = "addr[{}]".format(msb)
             pin_num = msb - self.col_bits
-            self.copy_layout_pin(self.decode_inst, "A{}".format(pin_num), name)
+            self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
     def route_supplies(self):
 
@@ -428,3 +447,23 @@ class rom_bank(design):
                 self.copy_layout_pin(inst, "vdd")
                 self.copy_layout_pin(inst, "gnd")
 
+    def route_escape_pins(self, bbox):
+
+        pins_to_route = []
+
+        for bit in range(self.col_bits):
+            pins_to_route.append("addr[{0}]".format(bit))
+
+        for bit in range(self.row_bits):
+            pins_to_route.append("addr[{0}]".format(bit + self.col_bits))
+
+        for bit in range(self.word_size):
+            pins_to_route.append("dout[{0}]".format(bit))
+
+        pins_to_route.append("clk")
+        pins_to_route.append("cs")
+        from openram.router import signal_escape_router as router
+        rtr=router(layers=self.m3_stack,
+                   design=self,
+                   bbox=bbox)
+        rtr.escape_route(pins_to_route)

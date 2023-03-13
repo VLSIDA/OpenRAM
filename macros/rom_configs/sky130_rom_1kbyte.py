@@ -8,10 +8,9 @@
 
 word_size = 1
 
-nominal_corner_only = True
+check_lvsdrc = True
 
-
-rom_data = "rom_configs/example_1kbyte.dat"
+rom_data = "macros/rom_configs/example_1kbyte.dat"
 
 output_name = "rom_1kbyte"
 output_path = "macro/{output_name}".format(**locals())

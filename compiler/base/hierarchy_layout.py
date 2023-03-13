@@ -187,7 +187,7 @@ class layout():
                 pass
 
             # Skip computing the pitch for non-routing layers
-            if layer_id in ["active", "nwell"]:
+            if layer_id in ["active", "nwell", "pwell"]:
                 continue
 
             # Add the pitch

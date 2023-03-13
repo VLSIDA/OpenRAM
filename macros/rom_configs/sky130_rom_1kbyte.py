@@ -8,12 +8,13 @@
 
 word_size = 1
 
-tech_name = "sky130"
-
 nominal_corner_only = True
 
-output_name = "rom"
 
-spice_name = "ngspice"
+rom_data = "rom_configs/example_1kbyte.dat"
 
-rom_data = "macros/rom_example_data/rom_data_1kB"
+output_name = "rom_1kbyte"
+output_path = "macro/{output_name}".format(**locals())
+
+import os
+exec(open(os.path.join(os.path.dirname(__file__), 'sky130_rom_common.py')).read())

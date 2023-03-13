@@ -28,8 +28,6 @@ class rom_bank(design):
         rom_config.set_local_config(self)
 
         self.word_size = self.word_bits
-        # self.read_binary(word_size=word_size, data_file=data_file, scramble_bits=True, endian="little")
-        # debug.info(1, "Rom data: {}".format(self.data))
         self.num_outputs = self.rows
         self.num_inputs = ceil(log(self.rows, 2))
         self.col_bits = ceil(log(self.words_per_row, 2))
@@ -250,9 +248,6 @@ class rom_bank(design):
         self.output_inv_inst = self.add_inst(name="rom_output_inverter", mod=self.output_inv)
         self.connect_inst(output_buf_pins)
 
-
-
-
     def place_instances(self):
         self.place_row_decoder()
         self.place_data_array()
@@ -323,8 +318,6 @@ class rom_bank(design):
         sel_pins.extend(col_decode_pins)
         self.connect_row_pins(self.wordline_layer, sel_pins, round=True)
 
-
-
     def route_array_inputs(self):
 
         for wl in range(self.rows):
@@ -347,15 +340,6 @@ class rom_bank(design):
         col_decode_clk = self.col_decode_inst.get_pin("clk")
         array_prechrg = self.array_inst.get_pin("precharge")
 
-
-        # Route precharge signal to the row decoder
-        # end = vector(row_decode_prechrg.cx() - 0.5 * self.interconnect_layer_width, prechrg_control.cy())
-
-        # self.add_segment_center(self.interconnect_layer, prechrg_control.center(), end)
-
-        # start = end + vector(0.5 * self.interconnect_layer_width, 0)
-        # self.add_segment_center(self.interconnect_layer, start, row_decode_prechrg.center())
-
         self.add_via_stack_center(from_layer=self.route_stack[0],
                                   to_layer=prechrg_control.layer,
                                   offset=prechrg_control.center())
@@ -377,10 +361,8 @@ class rom_bank(design):
         end = col_decode_clk.center()
         self.add_path(self.route_stack[0], [start, mid1, mid2, end])
 
-        # self.add_segment_center(col_decode_prechrg.layer, end, col_decode_prechrg.center())
 
         # Route precharge to main array
-        # end = vector(col_decode_prechrg.cx(), array_prechrg.cy())
         mid = vector(col_decode_prechrg.cx(), array_prechrg.cy() )
         self.add_path(self.route_stack[0], [array_prechrg.center(), mid, col_decode_prechrg.center()])
 
@@ -407,19 +389,6 @@ class rom_bank(design):
 
         self.add_segment_center(row_decode_clk.layer, addr_control_clk, row_decode_clk.rc())
 
-        # Route clock to column decoder
-        # end = col_decode_clk.lc() - vector( 2 * self.route_layer_pitch + self.route_layer_width, 0)
-        # self.add_path(self.route_stack[2], [clk_out.center(), end])
-
-        # self.add_via_stack_center(from_layer=self.route_stack[2],
-        #                           to_layer=row_decode_clk.layer,
-        #                           offset=end)
-
-        # self.add_segment_center(col_decode_clk.layer, end, col_decode_clk.lc())
-
-
-
-
     def route_array_outputs(self):
         array_out_pins = [self.array_inst.get_pin("bl_0_{}".format(bl)) for bl in range(self.cols)]
         inv_in_pins = [self.bitline_inv_inst.get_pin("in_{}".format(bl)) for bl in range(self.cols)]
@@ -429,10 +398,6 @@ class rom_bank(design):
         self.connect_col_pins(self.interconnect_layer, array_out_pins + inv_in_pins, round=True, directions="nonpref")
         self.connect_col_pins(self.interconnect_layer, inv_out_pins + mux_pins, round=True, directions="nonpref")
 
-
-
-
-
     def route_output_buffers(self):
         mux = self.mux_inst
         buf = self.output_inv_inst
@@ -440,9 +405,6 @@ class rom_bank(design):
 
         channel_ll = vector( route_nets[0][0].cx(), route_nets[0][1].cy() + self.m1_pitch * 3)
         self.create_horizontal_channel_route(netlist=route_nets, offset=channel_ll, layer_stack=self.m1_stack)
-
-
-
 
     def place_top_level_pins(self):
         self.copy_layout_pin(self.control_inst, "CS", "cs")

@@ -7,13 +7,9 @@
 #
 import os
 import drc as d
-#from drc.design_rules import design_rules
-#from drc.module_type import module_type
-#from drc.custom_cell_properties import cell_properties
-#from drc.custom_layer_properties import layer_properties
 
 """
-File containing the process technology parameters for SCMOS 4m, 0.35um
+File containing the process technology parameters for Global Foundaries 180nm
 """
 
 ###################################################
@@ -34,15 +30,18 @@ tech_modules["bitcell_1port"] = "gf180_bitcell"
 ###################################################
 cell_properties = d.cell_properties()
 
-cell_properties.bitcell_1port.port_order = ['BL', 'BR','GND', 'VDD', 'nwell', 'pwell', 'WL']
+# is there a better way to tell if the user overrode the port order than this?
+# this is needed to correctly create the bitcell_pins list in the bitcell_base_array 
+cell_properties.override_bitcell_1port_order = True
+cell_properties.bitcell_1port.port_order = ['bl', 'br', 'gnd', 'vdd', 'vpb', 'vnb', 'wl']
 cell_properties.bitcell_1port.port_types = ["OUTPUT", "OUTPUT", "GROUND", "POWER", "BIAS", "BIAS", "INPUT"]
-cell_properties.bitcell_1port.port_map = {'BL': 'BL',
-                                          'BR': 'BR',
-                                          'WL': 'WL',
-                                          'VDD': 'VDD',
-                                          'pwell': 'pwell',
-                                          'nwell': 'nwell',
-                                          'GND': 'GND'}
+cell_properties.bitcell_1port.port_map = {'bl': 'BL',
+                                          'br': 'BR',
+                                          'wl': 'WL',
+                                          'vdd': 'VDD',
+                                          'vnb': 'pwell',
+                                          'vpb': 'nwell',
+                                          'gnd': 'GND'}
 
 cell_properties.bitcell_1port.wl_layer = "m3"
 cell_properties.bitcell_1port.bl_layer = "m2"
@@ -50,6 +49,9 @@ cell_properties.bitcell_1port.vdd_layer = "m1"
 cell_properties.bitcell_1port.gnd_layer = "m1"
 
 cell_properties.ptx.model_is_subckt = True
+
+cell_properties.use_strap = True
+cell_properties.strap_placement = 8     # this means strap cell gets placed after every 8 bitcells
 
 ###################################################
 # Custom layer properties
@@ -86,6 +88,8 @@ m3_stack = ("m3", "via3", "m4")
 
 layer_indices = {"poly": 0,
                  "active": 0,
+                 "nwell": 0,
+                 "pwell": 0,
                  "m1": 1,
                  "m2": 2,
                  "m3": 3,
@@ -425,3 +429,4 @@ drc_name = "magic"
 lvs_name = "netgen"
 pex_name = "magic"
 
+ignore_drc_lvs_on = ["wl_strap"]

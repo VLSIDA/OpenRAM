@@ -40,7 +40,7 @@ from openram import tech
 ...
 ```
 
-Note that you need to initalize OpenRAM so that the modules are imported properly. You can also look
+Note that you need to initialize OpenRAM so that the modules are imported properly. You can also look
 at [sram_compiler.py](../../sram_compiler.py) as an example on how to use "openram."
 
 If you want to pass custom configuration when generating an SRAM, you can use the `sram_config` class.

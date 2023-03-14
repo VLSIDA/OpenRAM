@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2023 Regents of the University of California and The Board
-# of Regents for the Oklahoma Agricultural and Mechanical College
-# (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 import sys, os
@@ -16,29 +14,22 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class replica_pbitcell_test(openram_test):
+class replica_pbitcell_array_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import dummy_pbitcell
 
         OPTS.bitcell = "pbitcell"
+        OPTS.replica_bitcell = "replica_pbitcell"
+        OPTS.dummy_bitcell = "dummy_pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
 
-        debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
-        tx = dummy_pbitcell(name="rpbc")
-        self.local_check(tx)
-
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 1
-
-        debug.info(2, "Checking dummy bitcell using pbitcell (large cell)")
-        tx = dummy_pbitcell(name="rpbc")
-        self.local_check(tx)
+        debug.info(2, "Testing 4x4 array for pbitcell")
+        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, rbl=[1, 0], left_rbl=[0])
+        self.local_check(a)
 
         openram.end_openram()
 

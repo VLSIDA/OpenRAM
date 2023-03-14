@@ -16,28 +16,20 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class replica_pbitcell_test(openram_test):
+class dummy_pbitcell_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import replica_pbitcell
+        from openram.modules import dummy_pbitcell
 
         OPTS.bitcell = "pbitcell"
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
 
-        debug.info(2, "Checking replica bitcell using pbitcell (small cell)")
-        tx = replica_pbitcell(name="rpbc")
-        self.local_check(tx)
-
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 1
-
-        debug.info(2, "Checking replica bitcell using pbitcell (large cell)")
-        tx = replica_pbitcell(name="rpbc")
+        debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
+        tx = dummy_pbitcell(name="rpbc")
         self.local_check(tx)
 
         openram.end_openram()

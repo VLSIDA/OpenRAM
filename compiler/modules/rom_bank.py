@@ -77,8 +77,6 @@ class rom_bank(design):
         if not OPTS.is_unit_test:
             print_time("Placement", datetime.datetime.now(), start_time)
 
-        self.height = self.array_inst.height
-        self.width = self.array_inst.width
         self.add_boundary()
 
         start_time = datetime.datetime.now()
@@ -92,6 +90,17 @@ class rom_bank(design):
             # Only run this if not a unit test, because unit test will also verify it.
             self.DRC_LVS(final_verification=OPTS.route_supplies, force_check=OPTS.check_lvsdrc)
             print_time("Verification", datetime.datetime.now(), start_time)
+
+    def add_boundary(self):
+
+        ll = self.find_lowest_coords()
+        m1_offset = self.m1_width
+        self.translate_all(vector(0, ll.y))
+        ur = self.find_highest_coords()
+        ur = vector(ur.x, ur.y)
+        super().add_boundary(vector(0, 0), ur)
+        self.width = ur.x
+        self.height = ur.y
 
     def route_layout(self):
         self.route_decode_outputs()

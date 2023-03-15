@@ -7,6 +7,8 @@
 
 An open-source static random access memory (SRAM) compiler.
 
+
+
 # What is OpenRAM?
 <img align="right" width="25%" src="https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/SCMOS_16kb_sram.jpg">
 
@@ -16,19 +18,25 @@ other views necessary to use SRAMs in ASIC design. OpenRAM supports
 integration in both commercial and open-source flows with both
 predictive and fabricable technologies.
 
+
+
 # Documentation
 
 Please see our [documentation][documentation] and let us know if anything needs
 updating.
 
+
+
 # Get Involved
 
-+ [Port it](./PORTING.md) to a new technology.
-+ Report bugs by submitting [Github issues].
++ [Port it](./PORTING.md) to a new technology
++ Report bugs by submitting [Github issues]
 + Develop new features (see [how to contribute](./CONTRIBUTING.md))
 + Submit code/fixes using a [Github pull request]
-+ Follow our [project][Github project].
++ Follow our [project][Github project]
 + Read and cite our [ICCAD paper][OpenRAMpaper]
+
+
 
 # Further Help
 
@@ -37,9 +45,13 @@ updating.
 + [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
 + [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
 
+
+
 # License
 
 OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
+
+
 
 # Publications
 
@@ -52,6 +64,7 @@ OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
 + [H. Nichols, "Statistical Modeling of SRAMs", M.S. Thesis, UCSC, 2022.](https://escholarship.org/content/qt7vx9n089/qt7vx9n089_noSplash_cfc4ba479d8eb1b6ec25d7c92357bc18.pdf?t=ra9wzr)
 + [M. Guthaus, H. Nichols, J. Cirimelli-Low, J. Kunzler, B. Wu, "Enabling Design Technology Co-Optimization of SRAMs though Open-Source Software", IEEE International Electron Devices Meeting (IEDM), 2020.](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9372047)
 
+
  
 # Contributors & Acknowledgment
 
@@ -61,7 +74,7 @@ OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
 
 If I forgot to add you, please let me know!
 
-* * *
+
 
 [Matthew Guthaus]:       https://users.soe.ucsc.edu/~mrg
 [James Stine]:           https://ece.okstate.edu/content/stine-james-e-jr-phd

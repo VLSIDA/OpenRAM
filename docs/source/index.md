@@ -35,7 +35,7 @@ navigate through the documentation.
 In general, the OpenRAM compiler has very few dependencies:
 + Git
 + Make
-+ Python 3.6 or higher
++ Python 3.5 or higher
 + Various Python packages (pip install -r requirements.txt)
 + Anaconda
 

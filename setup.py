@@ -74,7 +74,7 @@ setup(
     author_email="mrg+vlsida@ucsc.edu",
     keywords=[ "sram", "magic", "gds", "netgen", "ngspice", "netlist" ],
     license="BSD 3-Clause",
-    python_requires=">=3.6",
+    python_requires=">=3.5",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

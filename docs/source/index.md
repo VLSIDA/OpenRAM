@@ -1,7 +1,8 @@
 # OpenRAM Documentation
 ![OpenRAM Logo](../../images/OpenRAM_logo_yellow_transparent.svg)
 
-These pages provide the documentation of OpenRAM. You can use the links below to navigate through the documentation.
+These pages provide the documentation of OpenRAM. You can use the links below to
+navigate through the documentation.
 
 
 
@@ -10,6 +11,7 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 1. [Supported Technologies](#supported-technologies)
 1. [Basic Setup](./basic_setup.md#go-back)
 1. [Basic Usage](./basic_usage.md#go-back)
+1. [Python Library](./python_library.md#go-back)
 1. [Bitcells](./bitcells.md#go-back)
 1. [Architecture](./architecture.md#go-back)
 1. [Implementation](#implementation)
@@ -29,10 +31,7 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 
 
 
-
 ## OpenRAM Dependencies
-Please see the Dockerfile for the required versions of tools.
-
 In general, the OpenRAM compiler has very few dependencies:
 + Git
 + Make
@@ -90,6 +89,8 @@ Commercial tools (optional):
     * DRC and LVS can be performed at all levels of the design hierarchy to enhance bug tracking.
     * DRC and LVS can be disabled completely for improved run-time or if licenses are not available.
 
+
+
 ## Contributors/Collaborators
 <img align="right" height="120" src="../assets/images/logos/okstate.png">
 
@@ -107,5 +108,4 @@ Commercial tools (optional):
     * Tom Golubev
     * Marcelo Sero
     * Seokjoong Kim
-
 

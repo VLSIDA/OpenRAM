@@ -7,7 +7,6 @@ This page shows the basic setup for using OpenRAM.
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
-1. [OpenRAM Library](#openram-library)
 1. [Anaconda](#anaconda)
 1. [Docker](#docker-deprecated-use-anaconda-instead)
 1. [Environment](#environment)
@@ -16,36 +15,12 @@ This page shows the basic setup for using OpenRAM.
 
 
 ## Dependencies
-Please see the Dockerfile for the required versions of tools.
-
 In general, the OpenRAM compiler has very few dependencies:
 + Git
 + Make
 + Python 3.6 or higher
 + Various Python packages (pip install -r requirements.txt)
 + Anaconda
-
-
-
-## OpenRAM Library
-OpenRAM is available as a Python library. There are a few ways to install it:
-
-+ Install the latest _stable_ version with pip:
-```
-pip3 install openram
-```
-
-+ Install the latest _dev_ version:
-```
-pip3 install git+https://git@github.com/VLSIDA/OpenRAM.git@dev
-```
-
-+ Install using Makefile (you need to clone the repo):
-```
-git clone git@github.com:VLSIDA/OpenRAM.git
-cd OpenRAM
-make library
-```
 
 
 
@@ -142,3 +117,4 @@ You can also run these from the package installation directory if you have the O
 [SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
 [FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [Sky130]:   https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
+

@@ -79,15 +79,21 @@ Commercial tools (optional):
 
 
 ## Technology and Tool Portability
-* OpenRAM is technology independent by using a technology directory that includes:
+* OpenRAM is technology independent by using a technology directory that
+  includes:
     * Technology's specific information
     * Technology's rules such as DRC rules and the GDS layer map
-    * Custom designed library cells (6T, sense amp, DFF) to improve the SRAM density.
-* For technologies that have specific design requirements, such as specialized well contacts, the user can include helper functions in the technology directory.
+    * Custom designed library cells (6T, sense amp, DFF) to improve the SRAM
+      density.
+* For technologies that have specific design requirements, such as specialized
+  well contacts, the user can include helper functions in the technology
+  directory.
 * Verification wrapper scripts
     * Uses a wrapper interface with DRC and LVS tools that allow flexibility
-    * DRC and LVS can be performed at all levels of the design hierarchy to enhance bug tracking.
-    * DRC and LVS can be disabled completely for improved run-time or if licenses are not available.
+    * DRC and LVS can be performed at all levels of the design hierarchy to
+      enhance bug tracking.
+    * DRC and LVS can be disabled completely for improved run-time or if
+      licenses are not available.
 
 
 

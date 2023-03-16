@@ -17,11 +17,11 @@ This page of the documentation explains the basic usage of OpenRAM.
 
 
 ## Environment Variable Setup (assuming bash)
-> **Note**: This is optional if you have the OpenRAM library.
-> See [Python library](./python_library.md#go-back) for details.
-* OPENRAM\_HOME defines where the compiler directory is
+> **Note**: This is optional if you have the OpenRAM library. See
+> [Python library](./python_library.md#go-back) for details.
+* `OPENRAM_HOME` defines where the compiler directory is
     * `export OPENRAM_HOME="$HOME/openram/compiler"`
-* OPENRAM\_TECH defines list of paths where the technologies exist
+* `OPENRAM_TECH` defines list of paths where the technologies exist
     * `export OPENRAM_TECH="$HOME/openram/technology"`
     * Colon separated list so you can have private technology directories
 * Must also have any PDK related variables set up
@@ -131,7 +131,8 @@ OpenRAM is also available as a Python library. See
 
 
 ## Output Files
-The output files are placed in the `output_dir` defined in the configuration file.
+The output files are placed in the `output_dir` defined in the configuration
+file.
 
 The base name is specified by `output_name` and suffixes are added.
 

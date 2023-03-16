@@ -15,7 +15,7 @@ This page explains the Python library of OpenRAM.
 ## Installation
 OpenRAM is available as a Python library. There are a few ways to install it:
 
-+ Install the latest _stable_ version with pip:
++ Install the latest _stable_ version:
 ```
 pip3 install openram
 ```
@@ -35,14 +35,14 @@ make library
 
 
 ## Environment Variables
-OpenRAM library doesn't need any envinronment variable by default. However, if
+OpenRAM library doesn't need any environment variables by default. However, if
 you have set the environment variables explained on
 [basic usage](.basic_usage.md#go-back), the library will use the OpenRAM source
 code located at `OPENRAM_HOME`.
 
-If you want the convenience of being able to call OpenRAM from any Python script
+If you want the convenience of being able to run OpenRAM from any Python script
 and have a custom OpenRAM setup, you can set these environment variables to
-point to that OpenRAM installation.
+point to that OpenRAM installation directory.
 
 If you don't want to use this feature, you can simply unset these environment
 variables.

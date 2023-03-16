@@ -132,10 +132,6 @@ else
 endif
 .DELETE_ON_ERROR: $(TEST_STAMPS)
 
-.PHONY: docker-pull
-docker-pull:
-	docker pull vlsida/openram-ubuntu:latest
-
 clean:
 	@rm -rf $(TOP_DIR)/compiler/tests/results
-.PHONE: clean
+.PHONY: clean

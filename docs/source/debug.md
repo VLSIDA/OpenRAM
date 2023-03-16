@@ -37,8 +37,7 @@ unit test framework:
 * `05-19_*_test.py` checks DRC and LVS of module cells (moving upward in hierarchy with numbers)
 * `20_*_test.py` check DRC and LVS of full SRAM layouts with various configurations.
 * `21_*_test.py` checks timing of full SRAMs and compares (with tolerance) to precomputed result.
-    > **Note**: These tests may fail using different simulators due to the
-    > tolerance level.
+    > **Note**: These tests may fail using different simulators due to the tolerance level.
 * `22_*_test.py` checks functional simulation of full SRAMs with various configurations.
 * `23-25_*_test.py` checks lib, lef, and verilog outputs using diff.
 * `30_openram_test.py` checks command-line interface and whether output files are created.

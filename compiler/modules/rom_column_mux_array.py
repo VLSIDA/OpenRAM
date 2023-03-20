@@ -20,7 +20,7 @@ class rom_column_mux_array(design):
     Array of column mux to read the bitlines from ROM, based on the RAM column mux
     """
 
-    def __init__(self, name, columns, word_size, tap_spacing=4, input_layer="m2", bitline_layer="m1", sel_layer="m2"):
+    def __init__(self, name, columns, word_size, tap_spacing=4, input_layer="m1", bitline_layer="m1", sel_layer="m2"):
         super().__init__(name)
         debug.info(1, "Creating {0}".format(self.name))
         self.add_comment("cols: {0} word_size: {1} ".format(columns, word_size))
@@ -31,7 +31,7 @@ class rom_column_mux_array(design):
         self.input_layer = input_layer
         self.tap_spacing = tap_spacing
         self.sel_layer = sel_layer
-
+        self.supply_layer = "m2"
         self.sel_pitch = getattr(self, self.sel_layer + "_pitch")
         self.bitline_layer = bitline_layer
 
@@ -75,7 +75,7 @@ class rom_column_mux_array(design):
 
     def add_modules(self):
         self.mux = factory.create(module_type="rom_column_mux", input_layer=self.input_layer, output_layer=self.bitline_layer)
-        self.tap = factory.create(module_type="rom_poly_tap", add_tap=True)
+        self.tap = factory.create(module_type="rom_poly_tap", add_active_tap=True)
         self.cell = factory.create(module_type="rom_base_cell")
 
     def setup_layout_constants(self):
@@ -123,7 +123,7 @@ class rom_column_mux_array(design):
 
 
     def route_supplies(self):
-        self.route_horizontal_pins("gnd", self.insts)
+        self.route_horizontal_pins("gnd", self.insts, layer=self.supply_layer)
 
     def add_routing(self):
         self.add_horizontal_input_rail()

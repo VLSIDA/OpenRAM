@@ -13,11 +13,15 @@ from openram.tech import drc
 
 class rom_poly_tap(design):
 
-    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_tap=False):
+    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_active_tap=False, place_poly=None):
         super().__init__(name, cell_name)
         self.strap_layer=strap_layer
         self.tx_type = tx_type
-        self.add_tap = add_tap
+        self.add_tap = add_active_tap
+        if place_poly is None:
+            self.place_poly = add_active_tap
+        else:
+            self.place_poly = place_poly
         self.pitch_offset = 0
         self.create_netlist()
         self.create_layout()
@@ -32,7 +36,7 @@ class rom_poly_tap(design):
 
         self.place_via()
         self.add_boundary()
-        if self.add_tap:
+        if self.add_tap or self.place_poly:
             self.place_active_tap()
             self.extend_poly()
 
@@ -46,14 +50,6 @@ class rom_poly_tap(design):
     def place_via(self):
 
         contact_width = self.poly_contact.width
-
-        # DRC rule here is hard coded since licon.9 isnt included in skywater130 tech file
-
-        # poly contact spacing to P-diffusion < 0.235um (licon.9 + psdm.5a)
-        # if OPTS.tech_name == "sky130":
-        #     self.contact_x_offset =  0.235 - (contact_width - self.pmos.contact_width) * 0.5 - self.poly_extend_active
-        # else:
-        #     assert(False)
 
         contact_y = self.dummy.cell_inst.width * 0.5 - 0.5 * self.contact_width - self.active_enclose_contact
 
@@ -91,13 +87,10 @@ class rom_poly_tap(design):
         tap_edge = tap_x + 0.5 * self.active_contact.height
         self.pitch_offset += (self.active_space * 2) - (tap_edge - active_edge) + self.contact_x_offset
 
-        if self.tx_type == "nmos":
+        if self.tx_type == "nmos" and self.add_tap:
             self.add_via_center(layers=self.active_stack,
                                 offset=contact_pos,
                                 implant_type="p",
                                 well_type="p",
                                 directions="nonpref")
-            self.add_power_pin(name="gnd",
-                            loc=contact_pos,
-                            start_layer=self.active_stack[2])
-            self.add_layout_pin_rect_center("active_tap", self.supply_stack[0], contact_pos)
+            self.add_layout_pin_rect_center("active_tap", self.active_stack[2], contact_pos)

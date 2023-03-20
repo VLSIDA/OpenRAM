@@ -49,10 +49,12 @@ class rom_wordline_driver_array(design):
             self.route_layer = "m1"
         self.place_drivers()
         self.route_layout()
-        self.route_supplies()
+
         if self.tap_spacing != 0:
             self.place_taps()
+        self.route_supplies()
         self.add_boundary()
+
 
     def add_pins(self):
         # inputs to wordline_driver.
@@ -66,7 +68,7 @@ class rom_wordline_driver_array(design):
 
     def add_modules(self):
         b = factory.create(module_type="rom_base_cell")
-        self.tap = factory.create(module_type="rom_poly_tap", add_tap = True)
+        self.tap = factory.create(module_type="rom_poly_tap", add_active_tap = True)
 
         if self.invert_outputs:
             self.wl_driver = factory.create(module_type="pinv_dec",
@@ -86,13 +88,41 @@ class rom_wordline_driver_array(design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-
-        if layer_props.wordline_driver.vertical_supply:
-            self.route_vertical_pins("vdd", [self], layer=self.supply_layer)
-            self.route_vertical_pins("gnd", [self], layer=self.supply_layer)
+        # self.route_vertical_pins("vdd", self.wld_inst, xside="cx", layer=self.supply_layer)
+        # self.route_vertical_pins("gnd", self.wld_inst, xside="cx", layer=self.supply_layer)
+        if not self.invert_outputs:
+            vdd_pins = [pin for inst in self.wld_inst for pin in inst.get_pins("vdd")]
+            gnd_pins = [pin for inst in self.wld_inst for pin in inst.get_pins("gnd")]
         else:
-            self.route_vertical_pins("vdd", self.wld_inst, xside="rx",)
-            self.route_vertical_pins("gnd", self.wld_inst, xside="lx",)
+            vdd_pins = [inst.get_pin("vdd") for inst in self.wld_inst]
+            gnd_pins = [inst.get_pin("gnd") for inst in self.wld_inst]
+        if self.tap_spacing != 0:
+            vdd_pins = vdd_pins + self.vdd_taps
+            gnd_pins = gnd_pins + self.gnd_taps
+
+        supply_width = drc["minwidth_{}".format(self.supply_layer)]
+
+        # Route together all internal supply pins
+        self.connect_col_pins(layer=self.supply_layer, pins=vdd_pins, name="vdd_tmp")
+        self.connect_col_pins(layer=self.supply_layer, pins=gnd_pins, name="gnd_tmp")
+        self.remove_layout_pin("gnd_tap")
+        self.remove_layout_pin("vdd_tap")
+
+        # Place the top level supply pins on the edge of the module
+        for pin in self.get_pins("gnd_tmp"):
+            bottom = vector(pin.cx(), pin.by() - 0.5 * supply_width)
+            top = vector(pin.cx(), pin.uy() + 0.5 * supply_width)
+            self.add_layout_pin_rect_ends(layer=self.supply_layer, start=bottom, end=top, name="gnd")
+
+        for pin in self.get_pins("vdd_tmp"):
+            bottom = vector(pin.cx(), pin.by() - 0.5 * supply_width)
+            top = vector(pin.cx(), pin.uy() + 0.5 * supply_width)
+            self.add_layout_pin_rect_ends(layer=self.supply_layer, start=bottom, end=top, name="vdd")
+
+
+        self.remove_layout_pin("gnd_tmp")
+        self.remove_layout_pin("vdd_tmp")
+
 
     def create_drivers(self):
         self.wld_inst = []
@@ -125,8 +155,7 @@ class rom_wordline_driver_array(design):
             else:
                 row_num = row
             inst = self.wld_inst[row_num]
-            self.copy_layout_pin(inst, "vdd")
-            self.copy_layout_pin(inst, "gnd")
+
 
             self.copy_layout_pin(inst, "A", "in_{0}".format(row))
 
@@ -151,7 +180,8 @@ class rom_wordline_driver_array(design):
             self.add_layout_pin_rect_center(text="out_{}".format(row), layer=self.route_layer, offset=end - vector(0, 0.5 * route_width))
 
     def place_taps(self):
-
+        self.vdd_taps = []
+        self.gnd_taps = []
         for wl in range(0 , self.rows, self.tap_spacing):
             driver = self.wld_inst[wl]
 
@@ -176,6 +206,7 @@ class rom_wordline_driver_array(design):
                 self.place_tap(contact_pos, "p")
 
     def place_tap(self, offset, well_type):
+
         self.add_via_center(layers=self.active_stack,
                     offset=offset,
                     implant_type=well_type,
@@ -185,7 +216,8 @@ class rom_wordline_driver_array(design):
                                 from_layer=self.active_stack[2],
                                 to_layer=self.supply_layer)
         if well_type == "p":
-            pin = "gnd"
+            pin = "gnd_tap"
+            self.gnd_taps.append(self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset))
         else:
-            pin = "vdd"
-        self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset)
+            pin = "vdd_tap"
+            self.vdd_taps.append(self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset))

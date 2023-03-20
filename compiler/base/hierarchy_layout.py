@@ -1897,7 +1897,7 @@ class layout():
             elif add_vias:
                 self.copy_power_pin(pin, new_name=new_name)
 
-    def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
+    def add_io_pin(self, instance, pin_name, new_name, start_layer=None, directions=None):
         """
         Add a signle input or output pin up to metal 3.
         """
@@ -1907,7 +1907,7 @@ class layout():
             start_layer = pin.layer
 
         # Just use the power pin function for now to save code
-        self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
+        self.add_power_pin(new_name, pin.center(), start_layer=start_layer, directions=directions)
 
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         # Hack for min area

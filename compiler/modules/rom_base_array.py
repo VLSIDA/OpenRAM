@@ -58,7 +58,7 @@ class rom_base_array(bitcell_base_array):
         self.route_precharge()
         self.add_boundary()
 
-        self.place_rails()
+        self.route_supplies()
         self.connect_taps()
 
     def add_boundary(self):
@@ -86,7 +86,8 @@ class rom_base_array(bitcell_base_array):
         if self.tap_direction == "row":
             self.poly_tap = factory.create(module_type="rom_poly_tap")
         else:
-            self.poly_tap = factory.create(module_type="rom_poly_tap", add_tap=True)
+            self.poly_tap = factory.create(module_type="rom_poly_tap", add_active_tap=True)
+            self.end_poly_tap = factory.create(module_type="rom_poly_tap", place_poly=True)
         self.precharge_array = factory.create(module_type="rom_precharge_array",
                                               cols=self.column_size,
                                               strap_spacing=self.strap_spacing,
@@ -109,7 +110,8 @@ class rom_base_array(bitcell_base_array):
 
     def create_cell_instances(self):
         self.tap_inst = {}
-        self.tap_list = []
+        self.active_tap_list = []
+        self.poly_tap_list = []
         self.cell_inst = {}
         self.cell_list = []
         self.current_row = 0
@@ -129,19 +131,25 @@ class rom_base_array(bitcell_base_array):
                 self.cell_inst[row, col] = new_inst
                 row_list.append(new_inst)
 
-            name = "tap_r{0}_c{1}".format(row, self.array_col_size)
-            new_tap = self.add_inst(name=name, mod=self.poly_tap)
-            self.tap_inst[row, self.column_size] = new_tap
-            self.tap_list.append(new_tap)
-            self.connect_inst([])
+            self.create_poly_tap(row, self.column_size)
+            # name = "tap_r{0}_c{1}".format(row, self.array_col_size)
+            # new_tap = self.add_inst(name=name, mod=self.poly_tap)
+            # self.tap_inst[row, self.column_size] = new_tap
+            # self.tap_list.append(new_tap)
+            # self.connect_inst([])
 
             self.cell_list.append(row_list)
 
     def create_poly_tap(self, row, col):
         name = "tap_r{0}_c{1}".format(row, col)
-        new_tap = self.add_inst(name=name, mod=self.poly_tap)
+        if row == self.row_size and self.tap_direction == "col":
+            new_tap = self.add_inst(name=name, mod=self.end_poly_tap)
+        else:
+            new_tap = self.add_inst(name=name, mod=self.poly_tap)
+            self.active_tap_list.append(new_tap)
+
         self.tap_inst[row, col]=new_tap
-        self.tap_list.append(new_tap)
+        self.poly_tap_list.append(new_tap)
         self.connect_inst([])
 
     def create_cell(self, row, col):
@@ -189,15 +197,32 @@ class rom_base_array(bitcell_base_array):
         # Make a flat list too
         self.all_bitline_names = [x for sl in zip(*self.bitline_names) for x in sl]
 
-    def place_rails(self):
+    def route_supplies(self):
         via_width = drc("m2_enclose_via1") * 0.5 + drc("minwidth_via1")
         pitch = drc["{0}_to_{0}".format(self.wordline_layer)]
+        drain_l = self.cell_list[self.row_size][0].get_pin("D")
+        drain_r = self.cell_list[self.row_size][self.column_size - 1].get_pin("D")
+        gnd_l = drain_l.center() + vector(-0.5 * self.route_width, pitch + via_width + self.route_pitch)
+        gnd_r = drain_r.center() + vector(0.5 * self.route_width, pitch + via_width + self.route_pitch)
+        self.add_layout_pin_segment_center(text="gnd", layer=self.bitline_layer, start=gnd_l, end=gnd_r)
 
-        for i in range(self.column_size):
-            drain = self.cell_list[self.row_size][i].get_pin("D")
-            gnd_pos = drain.center() + vector(0, pitch + via_width + self.route_pitch)
-            self.add_layout_pin_rect_center(text="gnd", layer=self.bitline_layer, offset=gnd_pos)
-        self.route_horizontal_pins("gnd", insts=[self], yside="cy")
+
+        if self.tap_direction == "row":
+            self.route_horizontal_pins("gnd", insts=[self], yside="cy")
+            self.connect_row_pins(layer=self.wordline_layer, pins=self.gnd_taps, name="gnd")
+
+            self.remove_layout_pin("gnd_tap")
+
+        if self.tap_direction == "col":
+            active_tap_pins = [self.active_tap_list[i].get_pin("active_tap") for i in range(len(self.active_tap_list))]
+            self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp")
+            for pin in self.get_pins("gnd_tmp"):
+                bottom = vector(pin.cx(), pin.by())
+                top = vector(pin.cx(), pin.uy())
+                self.add_layout_pin_rect_ends(layer=self.supply_stack[0], start=bottom, end=top, name="gnd")
+            self.remove_layout_pin("gnd_tmp")
+
+
 
         self.copy_layout_pin(self.precharge_inst, "vdd")
 
@@ -231,7 +256,7 @@ class rom_base_array(bitcell_base_array):
             self.tap_inst[row, self.column_size].place(self.strap_pos[row, self.column_size])
 
     def route_pitch_offsets(self):
-
+        self.gnd_taps = []
         for row in range(0 , self.row_size, self.tap_spacing):
 
             for col in range(self.column_size):
@@ -270,12 +295,11 @@ class rom_base_array(bitcell_base_array):
         self.add_via_stack_center(offset=tap_pos,
                         from_layer=self.active_stack[2],
                         to_layer=self.wordline_layer)
-        self.add_layout_pin_rect_center("gnd", self.wordline_layer, tap_pos)
+        self.gnd_taps.append(self.add_layout_pin_rect_center("gnd_tap", self.wordline_layer, tap_pos))
 
     def place_precharge(self):
         self.precharge_offset = vector(0,  - self.precharge_inst.height - self.zero_cell.nmos.end_to_contact - 2 * drc["nwell_enclose_active"] - 3 * self.m1_pitch)
         self.precharge_inst.place(offset=self.precharge_offset)
-        self.copy_layout_pin(self.precharge_inst, "vdd")
         self.copy_layout_pin(self.precharge_inst, "gate", "precharge")
 
     def place_wordline_contacts(self):
@@ -332,9 +356,6 @@ class rom_base_array(bitcell_base_array):
         self.add_layout_pin_rect_center(text="precharge_r", layer="m1", offset=mid1)
 
     def connect_taps(self):
-        array_pins = [self.tap_list[i].get_pin("poly_tap") for i in range(len(self.tap_list))]
+        poly_tap_pins = [self.poly_tap_list[i].get_pin("poly_tap") for i in range(len(self.poly_tap_list))]
 
-        self.connect_row_pins(layer=self.wordline_layer, pins=array_pins, name=None, round=False)
-
-        if self.tap_direction == "col":
-            self.route_vertical_pins("active_tap", insts=self.tap_list, layer=self.supply_stack[0], full_width=False)
+        self.connect_row_pins(layer=self.wordline_layer, pins=poly_tap_pins)

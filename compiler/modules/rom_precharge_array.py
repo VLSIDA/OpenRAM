@@ -83,7 +83,7 @@ class rom_precharge_array(design):
         # For layout constants
         self.dummy = factory.create(module_type="rom_base_cell")
 
-        self.poly_tap = factory.create(module_type="rom_poly_tap", tx_type="pmos", add_tap=(self.tap_direction == "col"))
+        self.poly_tap = factory.create(module_type="rom_poly_tap", tx_type="pmos", add_active_tap=(self.tap_direction == "col"))
 
     def add_pins(self):
         for col in range(self.cols):

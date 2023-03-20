@@ -1,3 +1,4 @@
+
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2016-2023 Regents of the University of California and The Board
@@ -108,13 +109,12 @@ class rom_bank(design):
         self.route_clock()
         self.route_array_outputs()
         self.place_top_level_pins()
-        self.route_supplies()
         self.route_output_buffers()
 
         rt = router_tech(self.supply_stack, 1)
         init_bbox = self.get_bbox(side="ring",
                                   margin=rt.track_width)
-
+        self.route_supplies(init_bbox)
         # We need the initial bbox for the supply rings later
         # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
@@ -125,7 +125,7 @@ class rom_bank(design):
                                  margin=11*rt.track_width)
             self.route_escape_pins(bbox)
 
-        self.route_supplies()
+
 
 
     def setup_layout_constants(self):
@@ -221,6 +221,7 @@ class rom_bank(design):
                                             module_name="rom_output_buffer",
                                             rows=self.word_size,
                                             fanout=4,
+                                            tap_spacing=1,
                                             invert_outputs=True)
 
 
@@ -373,8 +374,8 @@ class rom_bank(design):
 
         # Route precharge to col decoder
         start = prechrg_control.center()
-        mid1 = vector(self.control_inst.rx(), prechrg_control.cy())
-        mid2 = vector(self.control_inst.rx(), col_decode_prechrg.cy())
+        mid1 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, prechrg_control.cy())
+        mid2 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, col_decode_prechrg.cy())
         end = col_decode_prechrg.center()
         self.add_path(self.route_stack[0], [start, mid1, mid2, end])
 
@@ -383,7 +384,7 @@ class rom_bank(design):
                                   offset=end)
 
         start = mid1
-        mid1 = vector(self.control_inst.rx(), start.y)
+        mid1 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, start.y)
         mid2 = vector(mid1.x, col_decode_clk.cy())
         end = col_decode_clk.center()
         self.add_path(self.route_stack[0], [start, mid1, mid2, end])
@@ -438,7 +439,7 @@ class rom_bank(design):
         self.add_io_pin(self.control_inst, "clk_in", "clk")
 
         for i in range(self.word_size):
-            self.add_io_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i))
+            self.add_io_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i), directions="nonpref")
 
         for lsb in range(self.col_bits):
             name = "addr[{}]".format(lsb)
@@ -449,15 +450,49 @@ class rom_bank(design):
             pin_num = msb - self.col_bits
             self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
-    def route_supplies(self):
+    def route_supplies(self, bbox=None):
 
-        for inst in self.insts:
-            if not inst.mod.name.__contains__("contact"):
-                self.copy_layout_pin(inst, "vdd")
-                self.copy_layout_pin(inst, "gnd")
+        for pin_name in ["vdd", "gnd"]:
+            for inst in self.insts:
+                self.copy_power_pins(inst, pin_name)
+
+        if not OPTS.route_supplies:
+            # Do not route the power supply (leave as must-connect pins)
+            return
+        elif OPTS.route_supplies == "grid":
+            from openram.router import supply_grid_router as router
+        else:
+            from openram.router import supply_tree_router as router
+        rtr=router(layers=self.supply_stack,
+                   design=self,
+                   bbox=bbox,
+                   pin_type=OPTS.supply_pin_type)
+
+        rtr.route()
+
+        if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
+            # Find the lowest leftest pin for vdd and gnd
+            for pin_name in ["vdd", "gnd"]:
+                # Copy the pin shape(s) to rectangles
+                for pin in self.get_pins(pin_name):
+                    self.add_rect(pin.layer,
+                                  pin.ll(),
+                                  pin.width(),
+                                  pin.height())
+
+                # Remove the pin shape(s)
+                self.remove_layout_pin(pin_name)
+
+                # Get new pins
+                pins = rtr.get_new_pins(pin_name)
+                for pin in pins:
+                    self.add_layout_pin(pin_name,
+                                        pin.layer,
+                                        pin.ll(),
+                                        pin.width(),
+                                        pin.height())
 
     def route_escape_pins(self, bbox):
-
         pins_to_route = []
 
         for bit in range(self.col_bits):

@@ -101,10 +101,10 @@ class rom_control_logic(design):
         self.copy_layout_pin(self.buf_inst, "Z", "clk_out")
         self.copy_layout_pin(self.driver_inst, "Z", "prechrg")
         self.copy_layout_pin(self.nand_inst, "A", "CS")
-        self.copy_layout_pin(self.buf_inst, "gnd")
-        self.copy_layout_pin(self.driver_inst, "vdd")
-        self.copy_layout_pin(self.buf_inst, "vdd")
 
+        self.copy_power_pin(self.buf_inst.get_pin("gnd"), directions="nonpref")
+        self.copy_power_pin(self.driver_inst.get_pin("gnd"), directions="nonpref")
+        self.copy_power_pin(self.buf_inst.get_pin("vdd"), directions="nonpref")
         clk = self.buf_inst.get_pin("Z")
 
         nand_B = self.nand_inst.get_pin("B")

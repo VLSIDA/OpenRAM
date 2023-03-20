@@ -108,3 +108,15 @@ class rom_address_control_array(design):
 
         self.route_horizontal_pins("vdd", insts=self.buf_insts, layer=self.route_layer)
         self.route_horizontal_pins("gnd", insts=self.buf_insts, layer=self.route_layer)
+
+        tmp_pins = []
+        for pin in self.get_pins("vdd"):
+            edge = vector(pin.lx() + 0.5 * self.route_width, pin.cy())
+            tmp_pins.append(self.add_layout_pin_rect_center("vdd_edge", layer=self.route_layer, offset=edge))
+        self.copy_layout_pin_shapes("vdd")
+        self.remove_layout_pin("vdd")
+
+        for pin in tmp_pins:
+            print("copying pin")
+            self.copy_layout_pin(self, "vdd_edge", "vdd")
+        self.remove_layout_pin("vdd_edge")

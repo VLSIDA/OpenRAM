@@ -165,9 +165,9 @@ class rom_column_mux(pgate):
 
         # If there is a li layer, include it in the power stack
         self.add_via_stack_center(from_layer=self.active_stack[2],
-                                  to_layer=self.supply_stack[0],
+                                  to_layer=self.pin_layer,
                                   offset=active_pos)
 
         self.add_layout_pin_rect_center(text="gnd",
-                                        layer=self.supply_stack[0],
+                                        layer=self.pin_layer,
                                         offset=active_pos)

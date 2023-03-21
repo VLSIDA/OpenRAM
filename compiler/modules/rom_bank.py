@@ -1,4 +1,3 @@
-
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2016-2023 Regents of the University of California and The Board

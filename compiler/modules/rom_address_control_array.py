@@ -117,6 +117,5 @@ class rom_address_control_array(design):
         self.remove_layout_pin("vdd")
 
         for pin in tmp_pins:
-            print("copying pin")
             self.copy_layout_pin(self, "vdd_edge", "vdd")
         self.remove_layout_pin("vdd_edge")

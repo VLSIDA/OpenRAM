@@ -204,11 +204,10 @@ class rom_base_array(bitcell_base_array):
         drain_r = self.cell_list[self.row_size][self.column_size - 1].get_pin("D")
         gnd_l = drain_l.center() + vector(-0.5 * self.route_width, pitch + via_width + self.route_pitch)
         gnd_r = drain_r.center() + vector(0.5 * self.route_width, pitch + via_width + self.route_pitch)
-        self.add_layout_pin_segment_center(text="gnd", layer=self.bitline_layer, start=gnd_l, end=gnd_r)
+        self.add_layout_pin_rect_ends(name="gnd", layer=self.bitline_layer, start=gnd_l, end=gnd_r)
 
 
         if self.tap_direction == "row":
-            self.route_horizontal_pins("gnd", insts=[self], yside="cy")
             self.connect_row_pins(layer=self.wordline_layer, pins=self.gnd_taps, name="gnd")
 
             self.remove_layout_pin("gnd_tap")
@@ -217,12 +216,10 @@ class rom_base_array(bitcell_base_array):
             active_tap_pins = [self.active_tap_list[i].get_pin("active_tap") for i in range(len(self.active_tap_list))]
             self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp")
             for pin in self.get_pins("gnd_tmp"):
-                bottom = vector(pin.cx(), pin.by())
-                top = vector(pin.cx(), pin.uy())
+                bottom = vector(pin.cx(), pin.by() + 0.5 * drc("minwidth_{}".format(self.supply_stack[0])))
+                top = vector(pin.cx(), pin.uy() - 0.5 * drc("minwidth_{}".format(self.supply_stack[0])))
                 self.add_layout_pin_rect_ends(layer=self.supply_stack[0], start=bottom, end=top, name="gnd")
             self.remove_layout_pin("gnd_tmp")
-
-
 
         self.copy_layout_pin(self.precharge_inst, "vdd")
 

@@ -209,17 +209,36 @@ class rom_base_array(bitcell_base_array):
 
         if self.tap_direction == "row":
             self.connect_row_pins(layer=self.wordline_layer, pins=self.gnd_taps, name="gnd")
-
             self.remove_layout_pin("gnd_tap")
 
         if self.tap_direction == "col":
+            self.remove_layout_pin("gnd")
+
             active_tap_pins = [self.active_tap_list[i].get_pin("active_tap") for i in range(len(self.active_tap_list))]
             self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp")
+
+            gnd_y = gnd_l.y
+            min_x = float('inf')
+            max_x = 0
             for pin in self.get_pins("gnd_tmp"):
-                bottom = vector(pin.cx(), pin.by() + 0.5 * drc("minwidth_{}".format(self.supply_stack[0])))
-                top = vector(pin.cx(), pin.uy() - 0.5 * drc("minwidth_{}".format(self.supply_stack[0])))
-                self.add_layout_pin_rect_ends(layer=self.supply_stack[0], start=bottom, end=top, name="gnd")
+
+                # find the pins on the edges
+                if pin.cx() < min_x:
+                    min_x = pin.cx()
+                if pin.cx() > max_x:
+                    max_x = pin.cx()
+
+                bottom = vector(pin.cx(), pin.by())
+                top = vector(pin.cx(), gnd_y)
+                self.add_via_stack_center(offset=top, from_layer=self.bitline_layer, to_layer=self.supply_stack[0])
+                self.add_via_center(offset=bottom, layers=self.supply_stack)
+
+                self.add_layout_pin_rect_ends(name="gnd", layer=self.supply_stack[0], start=bottom, end=top)
+
             self.remove_layout_pin("gnd_tmp")
+            self.add_segment_center(layer=self.supply_stack[2], start=vector(min_x, bottom.y), end=vector(max_x, bottom.y))
+            self.add_segment_center(layer=self.bitline_layer, start=gnd_l, end=vector(min_x, gnd_l.y))
+            self.add_segment_center(layer=self.bitline_layer, start=gnd_r, end=vector(max_x, gnd_r.y))
 
         self.copy_layout_pin(self.precharge_inst, "vdd")
 

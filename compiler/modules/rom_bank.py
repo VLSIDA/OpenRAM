@@ -475,10 +475,10 @@ class rom_bank(design):
             for pin_name in ["vdd", "gnd"]:
                 # Copy the pin shape(s) to rectangles
                 for pin in self.get_pins(pin_name):
-                    self.add_rect(pin.layer,
-                                  pin.ll(),
-                                  pin.width(),
-                                  pin.height())
+                    self.add_rect(layer=pin.layer,
+                                  offset=pin.ll(),
+                                  width=pin.width(),
+                                  height=pin.height())
 
                 # Remove the pin shape(s)
                 self.remove_layout_pin(pin_name)

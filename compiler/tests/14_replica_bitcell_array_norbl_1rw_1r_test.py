@@ -14,7 +14,7 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class replica_bitcell_array_1rw_1r_test(openram_test):
+class replica_bitcell_array_norbl_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -25,11 +25,8 @@ class replica_bitcell_array_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 non-replica array for dp cell")
-        a = factory.create(module_type="replica_bitcell_array",
-                           cols=4,
-                           rows=4,
-                           rbl=[0, 0])
+        debug.info(2, "Testing 4x4 replica array for 1rw1r cell without replica columns or dummy rows")
+        a = factory.create(module_type="replica_bitcell_array", cols=4, rows=4, rbl=[0, 0])
         self.local_check(a)
 
         openram.end_openram()

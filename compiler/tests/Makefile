@@ -17,7 +17,7 @@ RESULTS_DIR = $(OPENRAM_DIR)/results
 
 
 
-# Use % for all techs: 
+# Use % for all techs:
 # %/test.py
 # or a specific tech:
 # freepdk45/test.py
@@ -70,8 +70,7 @@ BROKEN_STAMPS = \
 	freepdk45/10_rom_wordline_driver_array_test.ok \
 	freepdk45/14_rom_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
-	freepdk45/19_rom_bank_1kb_test.ok \
-	freepdk45/19_rom_bank_4kb_test.ok \
+	freepdk45/19_rom_bank_test.ok \
 	freepdk45/21_xyce_delay_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
@@ -80,8 +79,7 @@ BROKEN_STAMPS = \
 	scn4m_subm/10_rom_wordline_driver_array_test.ok \
 	scn4m_subm/14_rom_array_test.ok \
 	scn4m_subm/16_rom_control_logic_test.ok \
-	scn4m_subm/19_rom_bank_1kb_test.ok \
-	scn4m_subm/19_rom_bank_4kb_test.ok \
+	scn4m_subm/19_rom_bank_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
 	scn4m_subm/21_xyce_delay_test.ok \
 	sky130/01_library_test.ok \
@@ -126,7 +124,7 @@ all: clean $(WORKING_TECH_TEST_STAMPS)
 
 # Run a given technology
 # e.g. make freepdk45
-$(TECHS): 
+$(TECHS):
 	@$(MAKE) --no-print-directory $(filter-out $(BROKEN_STAMPS), $(addprefix $@/, $(TEST_STAMPS)))
 .PHONY: $(TECHS)
 
@@ -137,7 +135,7 @@ $(TEST_BASES):
 .PHONY: $(TEST_BASES)
 
 # To run a test in a given technology
-%.ok: 
+%.ok:
 #	@echo "Running $(gettech) $(getfile) ... "
 	@rm -rf results/$*
 	@rm -rf results/$*.*

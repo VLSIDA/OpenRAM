@@ -43,7 +43,7 @@ $OPENRAM\_HOME/options.py
 To run macros, it is suggested to use, for example:
 ```
 cd OpenRAM/macros
-make example_config_scn4m_subm
+make example_config_scn4m_subm.ok
 ```
 
 * Common arguments:

@@ -9,6 +9,7 @@ navigate through the documentation.
 ## Table of Contents
 1. [OpenRAM Dependencies](#openram-dependencies)
 1. [Supported Technologies](#supported-technologies)
+1. [Online Playground](./OpenRAM.ipynb)
 1. [Basic Setup](./basic_setup.md#go-back)
 1. [Basic Usage](./basic_usage.md#go-back)
 1. [Python Library](./python_library.md#go-back)

@@ -31,6 +31,7 @@ class replica_bitcell_array_leftrbl_1rw_1r_test(openram_test):
 
         openram.end_openram()
 
+
 # run the test from the command line
 if __name__ == "__main__":
     (OPTS, args) = openram.parse_args()

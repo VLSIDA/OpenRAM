@@ -66,12 +66,12 @@ OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
 + [H. Nichols, "Statistical Modeling of SRAMs," M.S. Thesis, UCSC, 2022.](https://escholarship.org/content/qt7vx9n089/qt7vx9n089_noSplash_cfc4ba479d8eb1b6ec25d7c92357bc18.pdf?t=ra9wzr)
 
 
- 
+
 # Contributors & Acknowledgment
 
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
 - [James Stine] from [VLSIARCH] co-founded the project.
-- Many students: Hunter Nichols, Michael Grimes, Jennifer Sowash, Yusu Wang, Joey Kunzler, Jesse Cirimelli-Low, Samira Ataei, Bin Wu, Brian Chen, Jeff Butera
+- Many students: Hunter Nichols, Michael Grimes, Jennifer Sowash, Yusu Wang, Joey Kunzler, Jesse Cirimelli-Low, Samira Ataei, Bin Wu, Brian Chen, Jeff Butera, Sage Walker
 
 If I forgot to add you, please let me know!
 

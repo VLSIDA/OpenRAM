@@ -60,17 +60,17 @@ OpenRAM is licensed under the [BSD 3-Clause License](./LICENSE).
 + [E. Ebrahimi, M. Guthaus, J. Renau, “Timing Speculative SRAM”, IEEE In- ternational Symposium on Circuits and Systems (ISCAS), 2017.](https://escholarship.org/content/qt7nn0j5x3/qt7nn0j5x3_noSplash_172457455e1aceba20694c3d7aa489b4.pdf)
 + [B. Wu, J.E. Stine, M.R. Guthaus, "Fast and Area-Efficient Word-Line Optimization",  IEEE International Symposium on Circuits and Systems (ISCAS), 2019.](https://escholarship.org/content/qt98s4c1hp/qt98s4c1hp_noSplash_753dcc3e218f60aafff98ef77fb56384.pdf)
 + [B. Wu, M. Guthaus, "Bottom Up Approach for High Speed SRAM Word-line Buffer Insertion Optimization", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019.](https://ieeexplore.ieee.org/document/8920325)
-+ [H. Nichols, M. Grimes, J. Sowash, J. Cirimelli-Low, M. Guthaus "Automated Synthesis of Multi-Port Memories and Control", IFIP/IEEE International Conference on Very Large Scale Integration (VLSI-SoC), 2019.](https://escholarship.org/content/qt7047n3k0/qt7047n3k0.pdf?t=q4gcij)
++ [H. Nichols, M. Grimes, J. Sowash, J. Cirimelli-Low, M. Guthaus "Automated Synthesis of Multi-Port Memories and Control", IFIP/IEEE International Conference on Very Large Scale Integration (VLhttps://www.youtube.com/watch?v=rd5j8mG24H4&t=0sSI-SoC), 2019.](https://escholarship.org/content/qt7047n3k0/qt7047n3k0.pdf?t=q4gcij)
 + [H. Nichols, "Statistical Modeling of SRAMs", M.S. Thesis, UCSC, 2022.](https://escholarship.org/content/qt7vx9n089/qt7vx9n089_noSplash_cfc4ba479d8eb1b6ec25d7c92357bc18.pdf?t=ra9wzr)
 + [M. Guthaus, H. Nichols, J. Cirimelli-Low, J. Kunzler, B. Wu, "Enabling Design Technology Co-Optimization of SRAMs though Open-Source Software", IEEE International Electron Devices Meeting (IEDM), 2020.](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9372047)
 
 
- 
+
 # Contributors & Acknowledgment
 
 - [Matthew Guthaus] from [VLSIDA] created the OpenRAM project and is the lead architect.
 - [James Stine] from [VLSIARCH] co-founded the project.
-- Many students: Hunter Nichols, Michael Grimes, Jennifer Sowash, Yusu Wang, Joey Kunzler, Jesse Cirimelli-Low, Samira Ataei, Bin Wu, Brian Chen, Jeff Butera
+- Many students: Hunter Nichols, Michael Grimes, Jennifer Sowash, Yusu Wang, Joey Kunzler, Jesse Cirimelli-Low, Samira Ataei, Bin Wu, Brian Chen, Jeff Butera, Sage Walker
 
 If I forgot to add you, please let me know!
 

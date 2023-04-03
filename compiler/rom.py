@@ -26,7 +26,8 @@ class rom():
                                 words_per_row=OPTS.words_per_row,
                                 rom_endian=OPTS.rom_endian,
                                 scramble_bits=OPTS.scramble_bits,
-                                strap_spacing=OPTS.strap_spacing)
+                                strap_spacing=OPTS.strap_spacing,
+                                data_type=OPTS.data_type)
 
         if name is None:
             name = OPTS.output_name

@@ -58,6 +58,7 @@ class options(optparse.Values):
     ###################
     rom_endian = "little"
     rom_data = None
+    data_type = "bin"
     strap_spacing = 8
     scramble_bits = True
 

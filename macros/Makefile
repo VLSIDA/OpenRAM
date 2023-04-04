@@ -6,6 +6,7 @@ include $(TOP_DIR)/openram.mk
 
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 
+OPENRAM_DIR = $(MACRO_DIR)
 OPENRAM_OPTS := $(OPENRAM_OPTS)
 # Define `OPENRAM_FULL` in your environment to run a full characterize
 ifeq ($(OPENRAM_FULL),)
@@ -40,7 +41,7 @@ configs:
 
 .PHONY: configs
 
-BROKEN := 
+BROKEN :=
 
 WORKING_SRAM_STAMPS=$(filter-out $(addsuffix .ok, $(BROKEN)), $(SRAM_STAMPS))
 WORKING_ROM_STAMPS=$(filter-out $(addsuffix .ok, $(BROKEN)), $(ROM_STAMPS))
@@ -50,7 +51,7 @@ SKY130_STAMPS=$(filter sky130%, $(WORKING_SRAM_STAMPS)) $(filter sky130%, $(WORK
 FREEPDK45_STAMPS=$(filter freepdk45%, $(WORKING_STAMPS)) $(filter freepdk45%, $(WORKING_ROM_STAMPS))
 SCN4M_SUBM_STAMPS=$(filter scn4m_subm%, $(WORKING_STAMPS)) $(filter scn4m_subm%, $(WORKING_ROM_STAMPS))
 
-all: | configs 
+all: | configs
 	@echo
 	@echo "Building following working configs"
 	@for S in $(WORKING_STAMPS); do echo " - $$S"; done
@@ -75,7 +76,7 @@ rom: $(WORKING_ROM_STAMPS)
 
 sram: $(WORKING_SRAM_STAMPS)
 .PHONY: sram
-	
+
 %.ok: sram_configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*

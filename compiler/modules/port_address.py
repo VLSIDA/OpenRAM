@@ -18,11 +18,12 @@ class port_address(design):
     Create the address port (row decoder and wordline driver)..
     """
 
-    def __init__(self, cols, rows, port, name=""):
+    def __init__(self, cols, rows, port, has_rbl, name=""):
 
         self.num_cols = cols
         self.num_rows = rows
         self.port = port
+        self.has_rbl = has_rbl
         self.addr_size = ceil(log(self.num_rows, 2))
 
         if name == "":
@@ -41,7 +42,8 @@ class port_address(design):
         self.add_modules()
         self.create_row_decoder()
         self.create_wordline_driver()
-        self.create_rbl_driver()
+        if self.has_rbl:
+            self.create_rbl_driver()
 
     def create_layout(self):
         if "li" in layer:
@@ -63,7 +65,8 @@ class port_address(design):
         for bit in range(self.num_rows):
             self.add_pin("wl_{0}".format(bit), "OUTPUT")
 
-        self.add_pin("rbl_wl", "OUTPUT")
+        if self.has_rbl:
+            self.add_pin("rbl_wl", "OUTPUT")
 
         self.add_pin("vdd", "POWER")
         self.add_pin("gnd", "GROUND")
@@ -76,12 +79,13 @@ class port_address(design):
 
     def route_supplies(self):
         """ Propagate all vdd/gnd pins up to this level for all modules """
-        if layer_props.wordline_driver.vertical_supply:
-            self.copy_layout_pin(self.rbl_driver_inst, "vdd")
-        else:
-            rbl_pos = self.rbl_driver_inst.get_pin("vdd").rc()
-            self.add_power_pin("vdd", rbl_pos)
-            self.add_path("m4", [rbl_pos, self.wordline_driver_array_inst.get_pins("vdd")[0].rc()])
+        if self.has_rbl:
+            if layer_props.wordline_driver.vertical_supply:
+                self.copy_layout_pin(self.rbl_driver_inst, "vdd")
+            else:
+                rbl_pos = self.rbl_driver_inst.get_pin("vdd").rc()
+                self.add_power_pin("vdd", rbl_pos)
+                self.add_path("m4", [rbl_pos, self.wordline_driver_array_inst.get_pins("vdd")[0].rc()])
 
         self.copy_layout_pin(self.wordline_driver_array_inst, "vdd")
         self.copy_layout_pin(self.wordline_driver_array_inst, "gnd")
@@ -90,11 +94,12 @@ class port_address(design):
         self.copy_layout_pin(self.row_decoder_inst, "gnd")
 
         # Also connect the B input of the RBL and_dec to vdd
-        if OPTS.local_array_size == 0:
-            rbl_b_pin = self.rbl_driver_inst.get_pin("B")
-            rbl_loc = rbl_b_pin.center() - vector(3 * self.m1_pitch, 0)
-            self.add_path(rbl_b_pin.layer, [rbl_b_pin.center(), rbl_loc])
-            self.add_power_pin("vdd", rbl_loc, start_layer=rbl_b_pin.layer)
+        if self.has_rbl:
+            if OPTS.local_array_size == 0:
+                rbl_b_pin = self.rbl_driver_inst.get_pin("B")
+                rbl_loc = rbl_b_pin.center() - vector(3 * self.m1_pitch, 0)
+                self.add_path(rbl_b_pin.layer, [rbl_b_pin.center(), rbl_loc])
+                self.add_power_pin("vdd", rbl_loc, start_layer=rbl_b_pin.layer)
 
     def route_pins(self):
         for row in range(self.addr_size):
@@ -105,7 +110,8 @@ class port_address(design):
             driver_name = "wl_{}".format(row)
             self.copy_layout_pin(self.wordline_driver_array_inst, driver_name)
 
-        self.copy_layout_pin(self.rbl_driver_inst, "Z", "rbl_wl")
+        if self.has_rbl:
+            self.copy_layout_pin(self.rbl_driver_inst, "Z", "rbl_wl")
 
     def route_internal(self):
         for row in range(self.num_rows):
@@ -125,24 +131,25 @@ class port_address(design):
                                       offset=driver_in_pos)
 
         # Route the RBL from the enable input
-        en_pin = self.wordline_driver_array_inst.get_pin("en")
-        if self.port == 0:
-            en_pos = en_pin.bc()
-        else:
-            en_pos = en_pin.uc()
-        rbl_in_pin = self.rbl_driver_inst.get_pin("A")
-        rbl_in_pos = rbl_in_pin.center()
+        if self.has_rbl:
+            en_pin = self.wordline_driver_array_inst.get_pin("en")
+            if self.port == 0:
+                en_pos = en_pin.bc()
+            else:
+                en_pos = en_pin.uc()
+            rbl_in_pin = self.rbl_driver_inst.get_pin("A")
+            rbl_in_pos = rbl_in_pin.center()
 
-        self.add_via_stack_center(from_layer=rbl_in_pin.layer,
-                                  to_layer=en_pin.layer,
-                                  offset=rbl_in_pos)
-        self.add_zjog(layer=en_pin.layer,
-                      start=rbl_in_pos,
-                      end=en_pos,
-                      first_direction="V")
-        self.add_layout_pin_rect_center(text="wl_en",
-                                        layer=en_pin.layer,
-                                        offset=rbl_in_pos)
+            self.add_via_stack_center(from_layer=rbl_in_pin.layer,
+                                      to_layer=en_pin.layer,
+                                      offset=rbl_in_pos)
+            self.add_zjog(layer=en_pin.layer,
+                          start=rbl_in_pos,
+                          end=en_pos,
+                          first_direction="V")
+            self.add_layout_pin_rect_center(text="wl_en",
+                                            layer=en_pin.layer,
+                                            offset=rbl_in_pos)
 
     def add_modules(self):
 
@@ -164,16 +171,17 @@ class port_address(design):
         # to compensate for the local array inverters
         b = factory.create(module_type=OPTS.bitcell)
 
-        if local_array_size > 0:
-            # The local wordline driver will change the polarity
-            self.rbl_driver = factory.create(module_type="inv_dec",
-                                             size=driver_size,
-                                             height=b.height)
-        else:
-            # There is no local wordline driver
-            self.rbl_driver = factory.create(module_type="and2_dec",
-                                             size=driver_size,
-                                             height=b.height)
+        if self.has_rbl:
+            if local_array_size > 0:
+                # The local wordline driver will change the polarity
+                self.rbl_driver = factory.create(module_type="inv_dec",
+                                                 size=driver_size,
+                                                 height=b.height)
+            else:
+                # There is no local wordline driver
+                self.rbl_driver = factory.create(module_type="and2_dec",
+                                                 size=driver_size,
+                                                 height=b.height)
 
     def create_row_decoder(self):
         """  Create the hierarchical row decoder  """
@@ -231,16 +239,17 @@ class port_address(design):
         wordline_driver_array_offset = vector(self.row_decoder_inst.rx(), 0)
         self.wordline_driver_array_inst.place(wordline_driver_array_offset)
 
-        # This m4_pitch corresponds to the offset space for jog routing in the
-        # wordline_driver_array
-        rbl_driver_offset = wordline_driver_array_offset + vector(2 * self.m4_pitch, 0)
+        if self.has_rbl:
+            # This m4_pitch corresponds to the offset space for jog routing in the
+            # wordline_driver_array
+            rbl_driver_offset = wordline_driver_array_offset + vector(2 * self.m4_pitch, 0)
 
-        if self.port == 0:
-            self.rbl_driver_inst.place(rbl_driver_offset, "MX")
-        else:
-            rbl_driver_offset += vector(0,
-                                        self.wordline_driver_array.height)
-            self.rbl_driver_inst.place(rbl_driver_offset)
+            if self.port == 0:
+                self.rbl_driver_inst.place(rbl_driver_offset, "MX")
+            else:
+                rbl_driver_offset += vector(0,
+                                            self.wordline_driver_array.height)
+                self.rbl_driver_inst.place(rbl_driver_offset)
 
         # Pass this up
         self.predecoder_height = self.row_decoder.predecoder_height

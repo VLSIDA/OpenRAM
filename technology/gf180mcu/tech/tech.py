@@ -6,7 +6,7 @@
 # All rights reserved.
 #
 import os
-import drc as d
+from openram import drc as d
 
 """
 File containing the process technology parameters for Global Foundaries 180nm
@@ -59,7 +59,6 @@ cell_properties.nand2_dec.port_map = {'A': 'A',
 
 cell_properties.ptx.model_is_subckt = True
 
-cell_properties.use_strap = True
 cell_properties.strap_placement = 8     # this means strap cell gets placed after every 8 bitcells
 
 cell_properties.names["nand2_dec"] = ["gf180mcu_3v3__nand2_1_dec"]

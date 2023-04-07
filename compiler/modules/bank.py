@@ -115,8 +115,6 @@ class bank(design):
         """ Create routing amoung the modules """
         self.route_central_bus()
 
-        self.route_unused_wordlines()
-
         for port in self.all_ports:
             self.route_bitlines(port)
             if self.has_rbl:
@@ -999,36 +997,6 @@ class bank(design):
         #         self.add_label(text=data_name,
         #                        layer="m1",
         #                        offset=data_pin.center())
-
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-        gnd_wl_names = []
-        return
-        # Connect unused RBL WL to gnd
-        # All RBL WL names
-        array_rbl_names = set(self.bitcell_array.get_rbl_wordline_names())
-        # List of used RBL WL names
-        rbl_wl_names = set()
-        for port in self.all_ports:
-            rbl_wl_names.add(self.bitcell_array.get_rbl_wordline_names(port)[port])
-        gnd_wl_names = list((array_rbl_names - rbl_wl_names))
-
-        for wl_name in gnd_wl_names:
-            pin = self.bitcell_array_inst.get_pin(wl_name)
-            pin_layer = pin.layer
-            layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
-            left_pin_loc = pin.lc()
-            right_pin_loc = pin.rc()
-
-            # Place the pins a track outside of the array
-            left_loc = left_pin_loc - vector(layer_pitch, 0)
-            right_loc = right_pin_loc + vector(layer_pitch, 0)
-            self.add_power_pin("gnd", left_loc, directions=("H", "H"))
-            self.add_power_pin("gnd", right_loc, directions=("H", "H"))
-
-            # Add a path to connect to the array
-            self.add_path(pin_layer, [left_loc, left_pin_loc])
-            self.add_path(pin_layer, [right_loc, right_pin_loc])
 
     def route_control_lines(self, port):
         """ Route the control lines of the entire bank """

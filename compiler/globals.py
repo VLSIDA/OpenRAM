@@ -28,7 +28,6 @@ NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 
 OPTS = options.options()
-CHECKPOINT_OPTS = None
 
 
 def parse_args():
@@ -209,17 +208,6 @@ def init_openram(config_file, is_unit_test=False):
     factory.reset()
 
     global OPTS
-    global CHECKPOINT_OPTS
-
-    # This is a hack. If we are running a unit test and have checkpointed
-    # the options, load them rather than reading the config file.
-    # This way, the configuration is reloaded at the start of every unit test.
-    # If a unit test fails,
-    # we don't have to worry about restoring the old config values
-    # that may have been tested.
-    if is_unit_test and CHECKPOINT_OPTS:
-        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy()
-        return
 
     # Setup correct bitcell names
     setup_bitcell()
@@ -227,10 +215,6 @@ def init_openram(config_file, is_unit_test=False):
     # Import these to find the executables for checkpointing
     from openram import characterizer
     from openram import verify
-    # Make a checkpoint of the options so we can restore
-    # after each unit test
-    if not CHECKPOINT_OPTS:
-        CHECKPOINT_OPTS = copy.copy(OPTS)
 
 
 def install_conda():

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2023 Regents of the University of California and The Board
-# of Regents for the Oklahoma Agricultural and Mechanical College
-# (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 import sys, os
@@ -11,13 +9,12 @@ import unittest
 from testutils import *
 
 import openram
-from openram.sram_factory import factory
 from openram import debug
+from openram.sram_factory import factory
 from openram import OPTS
 
 
-# @unittest.skip("SKIPPING 05_global_bitcell_array_test")
-class global_bitcell_array_1rw_test(openram_test):
+class global_bitcell_array_rbl_1rw_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
@@ -28,8 +25,8 @@ class global_bitcell_array_1rw_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
-        a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
+        debug.info(2, "Testing 2 x 4x4 global bitcell array for 1rw cell with left replica column")
+        a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4, rbl=[1, 0], left_rbl=[0])
         self.local_check(a)
 
         openram.end_openram()

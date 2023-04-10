@@ -62,9 +62,9 @@ class custom_module_finder(MetaPathFinder):
             return None
         # Check if this module can be custom
         from openram import OPTS
-        if module_name in OPTS.__dict__.keys():
+        if hasattr(OPTS, module_name):
             # Get custom name from OPTS
-            custom_name = OPTS.__dict__[module_name]
+            custom_name = getattr(OPTS, module_name)
             # Skip if the module is default, it will be handled by Python
             if custom_name == module_name:
                 return None
@@ -72,6 +72,9 @@ class custom_module_finder(MetaPathFinder):
             from importlib.util import spec_from_file_location
             # Try to find the module in sys.path
             for path in sys.path:
+                # Skip this path if not directory
+                if not os.path.isdir(path):
+                    continue
                 for file in os.listdir(path):
                     # If there is a script matching the custom module name,
                     # import it with the default module name

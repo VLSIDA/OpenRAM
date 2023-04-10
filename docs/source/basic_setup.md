@@ -40,6 +40,12 @@ have installed on your system.
 > ./install_conda.sh
 > ```
 
+> **Note**: You can uninstall OpenRAM's Anaconda installation by running this
+> command:
+> ```
+> rm -rf miniconda
+> ```
+
 
 
 ## Docker (deprecated, use Anaconda instead)

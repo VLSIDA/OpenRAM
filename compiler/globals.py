@@ -565,8 +565,9 @@ def import_tech():
 
     debug.info(1, "Tech directory found in {}".format(OPENRAM_TECH))
 
-    # Add this environment variable to os.environ
+    # Add this environment variable to os.environ and openram namespace
     os.environ["OPENRAM_TECH"] = OPENRAM_TECH
+    openram.OPENRAM_TECH = OPENRAM_TECH
 
     # Add all of the paths
     for tech_path in OPENRAM_TECH.split(":"):

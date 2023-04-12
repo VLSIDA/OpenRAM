@@ -49,6 +49,13 @@ have installed on your system.
 > rm -rf miniconda
 > ```
 
+> **Note**: You can change a tool's version with the following commands:
+> ```
+> source ./miniconda/bin/activate
+> conda uninstall <tool>
+> conda install -y -c vlsida-eda <tool>=<version>
+> ```
+
 
 
 ## Docker (deprecated, use Anaconda instead)

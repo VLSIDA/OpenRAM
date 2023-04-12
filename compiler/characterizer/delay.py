@@ -13,8 +13,6 @@ from openram import OPTS
 from .stimuli import *
 from .trim_spice import *
 from .charutils import *
-from .sram_op import *
-from .bit_polarity import *
 from .simulation import simulation
 from .measurements import *
 from os import path
@@ -1282,7 +1280,7 @@ class delay(simulation):
             self.sen_name = "X{0}{1}xbank0{1}s_en".format(self.sram.name, OPTS.hier_seperator)
             if not replica_bitcell_array_name:
                 replica_bitcell_array_name = "bitcell_array"
-            self.cell_format = "X{{0}}{{3}}xbank0{{3}}x{0}{{3}}xbitcell_array{{3}}xbit_r{{1}}_c{{2}}".format(replica_bitcell_array_name)
+            self.cell_format = "X{{0}}{{3}}xbank0{{3}}xbitcell_array{{3}}x{0}{{3}}xbitcell_array{{3}}xbit_r{{1}}_c{{2}}".format(replica_bitcell_array_name)
 
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""

@@ -54,6 +54,14 @@ class options(optparse.Values):
     num_spare_cols = 0
 
     ###################
+    # ROM configuration options
+    ###################
+    rom_endian = "little"
+    rom_data = None
+    strap_spacing = 8
+    scramble_bits = True
+
+    ###################
     # Optimization options
     ###################
     # Approximate percentage of delay compared to bitlines

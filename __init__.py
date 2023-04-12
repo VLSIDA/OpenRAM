@@ -44,3 +44,6 @@ from .globals import *
 # sram_config should be imported before sram
 from .sram_config import *
 from .sram import *
+
+from .rom_config import *
+from .rom import *

@@ -7,9 +7,8 @@ This page of the documentation explains the basic usage of OpenRAM.
 
 ## Table of Contents
 1. [Environment Variable Setup](#environment-variable-setup-assuming-bash)
-1. [Script Usage (with library)](#script-usage-with-library)
-1. [Command Line Usage (with library)](#command-line-usage-with-library)
-1. [Command Line Usage (without library)](#command-line-usage-without-library)
+1. [Command Line Usage](#command-line-usage)
+1. [Script Usage](#script-usage)
 1. [Configuration Files](#configuration-files)
 1. [Common Configuration File Options](#common-configuration-file-options)
 1. [Output Files](#output-files)
@@ -18,10 +17,11 @@ This page of the documentation explains the basic usage of OpenRAM.
 
 
 ## Environment Variable Setup (assuming bash)
-> **Note**: This is optional if you have the OpenRAM library. See [basic setup](./basic_setup.md#go-back) for details.
-* OPENRAM\_HOME defines where the compiler directory is
-    * ```export OPENRAM_HOME="$HOME/openram/compiler"```
-* OPENRAM_TECH defines list of paths where the technologies exist
+> **Note**: This is optional if you have the OpenRAM library. See
+> [Python library](./python_library.md#go-back) for details.
+* `OPENRAM_HOME` defines where the compiler directory is
+    * `export OPENRAM_HOME="$HOME/openram/compiler"`
+* `OPENRAM_TECH` defines list of paths where the technologies exist
     * `export OPENRAM_TECH="$HOME/openram/technology"`
     * Colon separated list so you can have private technology directories
 * Must also have any PDK related variables set up
@@ -30,106 +30,35 @@ This page of the documentation explains the basic usage of OpenRAM.
 
 
 
-## Script Usage (with library)
-If you have the library installed, you can use OpenRAM in any Python script. You can import "openram" as follows:
-```python
-import openram
-openram.init_openram("myconfig.py") # Config files are explained on this page
-# Now you can use modules from openram
-from openram import tech
-...
-```
-
-Note that you need to initalize OpenRAM so that the modules are imported properly. You can also look
-at [sram_compiler.py](../../sram_compiler.py) as an example on how to use "openram."
-
-If you want to pass custom configuration when generating an SRAM, you can use the `sram_config` class.
-```python
-import openram
-openram.init_openram("myconfig.py")
-
-from openram import sram_config
-c = sram_config(...)
-
-from openram import sram
-s = sram(sram_config=c,
-         name="custom_name")
-
-s.save()
-
-openram.end_openram()
-```
-
-
-## Command Line Usage (with library)
-You can run OpenRAM from the command line using the [sram_compiler.py](../../sram_compiler.py) script that is
-included in the library's installation. You can find the package directory on a path like:
-```
-/home/mrg/.local/lib/python3.8/site-packages/openram
-```
-
-Alternatively, you can run the following command to find that path:
-```
-echo -e "import os\nimport openram\nprint(os.path.dirname(openram.__file__))" | python3 -
-```
-
-You can continue with following section for more details.
-
-
-## Command Line Usage (without library)
+## Command Line Usage
 Once you have defined the environment, you can run OpenRAM from the command line
-using a single configuration file written in Python.
-
-For example, create a file called *myconfig.py* specifying the following
-parameters for your memory:
-```python
-# Data word size
-word_size = 2
-# Number of words in the memory
-num_words = 16
-
-# Technology to use in $OPENRAM_TECH
-tech_name = "scn4m_subm"
-
-# You can use the technology nominal corner only
-nominal_corner_only = True
-# Or you can specify particular corners
-# Process corners to characterize
-# process_corners = ["SS", "TT", "FF"]
-# Voltage corners to characterize
-# supply_voltages = [ 3.0, 3.3, 3.5 ]
-# Temperature corners to characterize
-# temperatures = [ 0, 25 100]
-
-# Output directory for the results
-output_path = "temp"
-# Output file base name
-output_name = "sram_{0}_{1}_{2}".format(word_size,num_words,tech_name)
-
-# Disable analytical models for full characterization (WARNING: slow!)
-# analytical_delay = False
-
-```
-
-You can then run OpenRAM by executing:
+using a single configuration file written in Python. You can then run OpenRAM by
+executing:
 ```
 python3 $OPENRAM_HOME/../sram_compiler.py myconfig
 ```
 You can see all of the options for the configuration file in
 $OPENRAM\_HOME/options.py
 
-To run designs in Docker, it is suggested to use, for example:
+To run macros, it is suggested to use, for example:
 ```
 cd OpenRAM/macros
 make example_config_scn4m_subm
 ```
 
 * Common arguments:
-    * `-t` specify technology (scn4m_subm or scmos or freepdk45)
+    * `-h` print all arguments
+    * `-t` specify technology (scn4m\_subm or scmos or freepdk45)
     * `-v` increase verbosity of output
     * `-n` don't run DRC/LVS
     * `-c` perform simulation-based characterization
     * `-d` don't purge /tmp directory contents
+
+
+
+## Script Usage
+OpenRAM is also available as a Python library. See
+[Python library](./python_library.md#go-back) for details.
 
 
 
@@ -167,7 +96,7 @@ make example_config_scn4m_subm
     # Could be calibre for FreePDK45
     drc_name = "magic"
     lvs_name = "netgen"
-    pex_name = "magic"  
+    pex_name = "magic"
     ```
 
 
@@ -202,7 +131,8 @@ make example_config_scn4m_subm
 
 
 ## Output Files
-The output files are placed in the `output_dir` defined in the configuration file.
+The output files are placed in the `output_dir` defined in the configuration
+file.
 
 The base name is specified by `output_name` and suffixes are added.
 

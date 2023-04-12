@@ -17,3 +17,4 @@ check_lvsdrc = True
 #route_supplies = False
 
 output_name = "sram"
+rom_data_dir = "tests/configs"

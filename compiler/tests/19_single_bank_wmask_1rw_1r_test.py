@@ -34,7 +34,6 @@ class single_bank_wmask_1rw_1r_test(openram_test):
                         num_banks=1)
 
         c.words_per_row=1
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
         a = factory.create("bank", sram_config=c)
@@ -42,7 +41,6 @@ class single_bank_wmask_1rw_1r_test(openram_test):
 
         c.num_words=32
         c.words_per_row=2
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
         a = factory.create("bank", sram_config=c)
@@ -50,7 +48,6 @@ class single_bank_wmask_1rw_1r_test(openram_test):
 
         c.num_words=64
         c.words_per_row=4
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         a = factory.create("bank", sram_config=c)
@@ -58,7 +55,6 @@ class single_bank_wmask_1rw_1r_test(openram_test):
 
         c.num_words=128
         c.words_per_row=8
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
         a = factory.create("bank", sram_config=c)

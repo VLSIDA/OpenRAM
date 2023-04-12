@@ -1,7 +1,8 @@
 # OpenRAM Documentation
 ![OpenRAM Logo](../../images/OpenRAM_logo_yellow_transparent.svg)
 
-These pages provide the documentation of OpenRAM. You can use the links below to navigate through the documentation.
+These pages provide the documentation of OpenRAM. You can use the links below to
+navigate through the documentation.
 
 
 
@@ -10,6 +11,7 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 1. [Supported Technologies](#supported-technologies)
 1. [Basic Setup](./basic_setup.md#go-back)
 1. [Basic Usage](./basic_usage.md#go-back)
+1. [Python Library](./python_library.md#go-back)
 1. [Bitcells](./bitcells.md#go-back)
 1. [Architecture](./architecture.md#go-back)
 1. [Implementation](#implementation)
@@ -29,14 +31,11 @@ These pages provide the documentation of OpenRAM. You can use the links below to
 
 
 
-
 ## OpenRAM Dependencies
-Please see the Dockerfile for the required versions of tools.
-
 In general, the OpenRAM compiler has very few dependencies:
 + Git
 + Make
-+ Python 3.6 or higher
++ Python 3.5 or higher
 + Various Python packages (pip install -r requirements.txt)
 + Anaconda
 
@@ -80,15 +79,23 @@ Commercial tools (optional):
 
 
 ## Technology and Tool Portability
-* OpenRAM is technology independent by using a technology directory that includes:
+* OpenRAM is technology independent by using a technology directory that
+  includes:
     * Technology's specific information
     * Technology's rules such as DRC rules and the GDS layer map
-    * Custom designed library cells (6T, sense amp, DFF) to improve the SRAM density.
-* For technologies that have specific design requirements, such as specialized well contacts, the user can include helper functions in the technology directory.
+    * Custom designed library cells (6T, sense amp, DFF) to improve the SRAM
+      density.
+* For technologies that have specific design requirements, such as specialized
+  well contacts, the user can include helper functions in the technology
+  directory.
 * Verification wrapper scripts
     * Uses a wrapper interface with DRC and LVS tools that allow flexibility
-    * DRC and LVS can be performed at all levels of the design hierarchy to enhance bug tracking.
-    * DRC and LVS can be disabled completely for improved run-time or if licenses are not available.
+    * DRC and LVS can be performed at all levels of the design hierarchy to
+      enhance bug tracking.
+    * DRC and LVS can be disabled completely for improved run-time or if
+      licenses are not available.
+
+
 
 ## Contributors/Collaborators
 <img align="right" height="120" src="../assets/images/logos/okstate.png">
@@ -107,5 +114,4 @@ Commercial tools (optional):
     * Tom Golubev
     * Marcelo Sero
     * Seokjoong Kim
-
 

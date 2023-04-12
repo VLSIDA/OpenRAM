@@ -714,7 +714,11 @@ spice["ground"]="vssd1"
 # whether or not the device model is actually a subckt
 spice["device_prefix"] = "X"
 
-spice["fet_libraries"] = {"TT": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "tt"]]}
+spice["fet_libraries"] = { "TT": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "tt"]],
+                           "SS": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "ss"]],
+                           "FF": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "ff"]],
+                           "SF": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "sf"]],
+                           "FS": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "fs"]] }
 
 # spice stimulus related variables
 spice["feasible_period"] = 10        # estimated feasible period in ns

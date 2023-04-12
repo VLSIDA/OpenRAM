@@ -132,15 +132,16 @@ class pinvbuf(pgate):
                                   to_layer=a3_pin.layer,
                                   offset=a3_pin.center())
 
-        # inv1 Z to inv4 A (up and over)
         z1_pin = self.inv1_inst.get_pin("Z")
         a4_pin = self.inv4_inst.get_pin("A")
+
+        # inv1 Z to inv4 A (up and over)
         mid_point = vector(z1_pin.cx(), a4_pin.cy())
         self.add_wire(route_stack,
-                      [z1_pin.center(), mid_point, a4_pin.center()])
+                    [z1_pin.center(), mid_point, a4_pin.center()])
         self.add_via_stack_center(from_layer=z1_pin.layer,
-                                  to_layer=route_stack[2],
-                                  offset=z1_pin.center())
+                                to_layer=route_stack[2],
+                                offset=z1_pin.center())
 
     def add_layout_pins(self):
 

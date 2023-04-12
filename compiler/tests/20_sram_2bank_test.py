@@ -38,7 +38,6 @@ class sram_2bank_test(openram_test):
                                           c.num_words,
                                           c.words_per_row,
                                           c.num_banks))
-        factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
@@ -54,7 +53,6 @@ class sram_2bank_test(openram_test):
                                           c.num_words,
                                           c.words_per_row,
                                           c.num_banks))
-        factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
@@ -70,7 +68,6 @@ class sram_2bank_test(openram_test):
                                           c.num_words,
                                           c.words_per_row,
                                           c.num_banks))
-        factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 
@@ -87,7 +84,6 @@ class sram_2bank_test(openram_test):
                                           c.num_words,
                                           c.words_per_row,
                                           c.num_banks))
-        factory.reset()
         a = factory.create(module_type="sram", sram_config=c)
         self.local_check(a, final_verification=True)
 

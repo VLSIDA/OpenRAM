@@ -28,7 +28,6 @@ class wordline_driver_array_pbitcell_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
 
-        factory.reset()
         debug.info(2, "Checking driver (multi-port case)")
         tx = factory.create(module_type="wordline_driver_array", rows=8, cols=64)
         self.local_check(tx)

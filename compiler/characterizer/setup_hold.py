@@ -62,12 +62,12 @@ class setup_hold():
                         correct_value=correct_value)
 
         self.write_clock()
+        self.sf.write(".include {}\n".format(temp_meas))
 
         self.write_measures(mode=mode,
                             correct_value=correct_value)
 
         self.stim.write_control(4 * self.period)
-        self.sf.write(".include {}".format(temp_meas))
 
         self.sf.close()
         self.mf.close()

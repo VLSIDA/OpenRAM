@@ -6,26 +6,33 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
+import shutil
+import getpass
 import unittest
 from testutils import *
-import sys, os, re, shutil
-sys.path.append(os.getenv("OPENRAM_HOME"))
-import globals
-from globals import OPTS
-import debug
-import getpass
+
+import openram
+from openram import debug
+from openram import OPTS
 
 
-class openram_front_end_test(openram_test):
+class sram_char_test(openram_test):
 
     def runTest(self):
-        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        config_file = "{}/tests/configs/config_mem_char_func".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
-
-        debug.info(1, "Testing commandline characterizer script memchar.py with 2-bit, 16 word SRAM.")
+        global OPTS
         out_file = "testsram"
         out_path = "/tmp/testsram_{0}_{1}_{2}".format(OPTS.tech_name, getpass.getuser(), os.getpid())
+        OPTS.output_name = out_file
+        OPTS.output_path = out_path
+
+        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
+        config_file = "{}/tests/configs/config_mem_char_func".format(OPENRAM_HOME)
+
+        openram.init_openram(config_file, is_unit_test=False)
+        sp_file = "{0}/tests/sp_files/sram_2_16_1_{1}.sp".format(OPENRAM_HOME, OPTS.tech_name)
+
+        debug.info(1, "Testing commandline characterizer script sram_char.py with 2-bit, 16 word SRAM.")
 
         # make sure we start without the files existing
         if os.path.exists(out_path):
@@ -54,26 +61,22 @@ class openram_front_end_test(openram_test):
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-            exe_name = "{0}/memchar.py ".format(OPENRAM_HOME)
+            exe_name = "{0}/../sram_char.py ".format(OPENRAM_HOME)
         else:
-            exe_name = "{0}{1}/memchar.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
+            exe_name = "{0}{1}/../sram_char.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_mem_char_func.py".format(OPENRAM_HOME)
-        cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                          out_file,
-                                                                          out_path,
-                                                                          options,
-                                                                          config_name,
-                                                                          out_path)
+        cmd = "{0} -n -o {1} -p {2} {3} {4} {5} 2>&1 > {6}/output.log".format(exe_name,
+                                                                              out_file,
+                                                                              out_path,
+                                                                              options,
+                                                                              config_name,
+                                                                              sp_file,
+                                                                              out_path)
         debug.info(1, cmd)
         os.system(cmd)
 
-        # Make sure there is any .lib file
-        import glob
-        files = glob.glob('{0}/*.lib'.format(out_path))
-        self.assertTrue(len(files)>0)
-
         # grep any errors from the output
-        output_log = open("{0}/output.log".format(out_path), "r")
+        output_log = open("{0}/{1}.log".format(out_path, out_file), "r")
         output = output_log.read()
         output_log.close()
         self.assertEqual(len(re.findall('ERROR', output)), 0)
@@ -85,11 +88,12 @@ class openram_front_end_test(openram_test):
                 shutil.rmtree(out_path, ignore_errors=True)
             self.assertEqual(os.path.exists(out_path), False)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

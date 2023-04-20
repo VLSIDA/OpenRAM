@@ -21,9 +21,9 @@ class sram_char_test(openram_test):
 
     def runTest(self):
         global OPTS
-        out_file = "testsram"
+        out_file = "sram_2_16_1_{0}".format(OPTS.tech_name)
         out_path = "{0}/testsram_{1}_{2}_{3}".format(OPTS.openram_temp, OPTS.tech_name, getpass.getuser(), os.getpid())
-        OPTS.output_name = "sram_2_16_1_{0}".format(OPTS.tech_name)
+        OPTS.output_name = out_file
         OPTS.output_path = out_path
 
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))

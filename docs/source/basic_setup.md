@@ -1,7 +1,7 @@
 ### [Go Back](./index.md#table-of-contents)
 
 # Basic Setup
-This page shows the basic setup for using OpenRAM.
+This page shows the basic setup for using OpenRAM to generate an SRAM.
 
 
 

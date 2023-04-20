@@ -23,3 +23,13 @@ This page of the documentation explains the architecture of OpenRAM.
     * Control Logic with Replica Bitline
 
 ![OpenRAM SRAM Architecture](../assets/images/architecture/sram_architecture.png)
+
+## ROM Architecture
+* Bit-cell Array
+    * 1T NAND Bitcell
+* Row Address Decoder
+* Wordline Driver(s)
+* Column Multiplexer
+* Column Pre-Decoder
+* Bitline Precharge(s)
+* Control Logic

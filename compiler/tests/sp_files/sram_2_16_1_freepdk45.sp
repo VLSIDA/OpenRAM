@@ -1615,7 +1615,7 @@ Xdff_r0_c0
 + dff
 .ENDS sram_data_dff
 
-.SUBCKT sram
+.SUBCKT sram_2_16_1_freepdk45
 + din0[0] addr0[0] addr0[1] addr0[2] addr0[3] csb0 web0 clk0 dout0[0]
 + vdd gnd
 * INPUT : din0[0] 
@@ -1643,4 +1643,4 @@ Xrow_address0
 Xdata_dff0
 + din0[0] bank_din0_0 clk_buf0 vdd gnd
 + sram_data_dff
-.ENDS sram
+.ENDS sram_2_16_1_freepdk45

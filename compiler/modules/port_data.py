@@ -204,12 +204,15 @@ class port_data(design):
             precharge_width = cell.width + strap.width
         else:
             precharge_width = cell.width
-        if self.port == 0:
-            # Append an offset on the left
-            precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
+        if self.has_rbl:
+            if self.port == 0:
+                # Append an offset on the left
+                precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
+            else:
+                # Append an offset on the right
+                precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
         else:
-            # Append an offset on the right
-            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
+            precharge_bit_offsets = self.bit_offsets
 
         # has_rbl is a boolean treated as 1 if true 0 if false typical python
         self.precharge_array = factory.create(module_type="precharge_array",
@@ -561,7 +564,7 @@ class port_data(design):
             inst1 = self.precharge_array_inst
             inst1_bls_templ="{inst}_{bit}"
 
-            if self.port==0:
+            if self.port==0 and self.has_rbl:
                 start_bit=1
             else:
                 start_bit=0

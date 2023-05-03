@@ -1,11 +1,12 @@
 OPENRAM_HOME := $(abspath $(TOP_DIR)/compiler)
 OPENRAM_TECH := $(abspath $(TOP_DIR)/technology)
-OPENRAM_COMPILER := $(abspath $(TOP_DIR)/sram_compiler.py)
+SRAM_COMPILER := $(abspath $(TOP_DIR)/sram_compiler.py)
+ROM_COMPILER := $(abspath $(TOP_DIR)/rom_compiler.py)
 
 PDK_ROOT ?= $(TOP_DIR)
 
-ifeq (,$(wildcard $(OPENRAM_COMPILER)))
-$(error Did not find '$(OPENRAM_COMPILER)' in '$(OPENRAM_HOME)' (from $$OPENRAM_HOME))
+ifeq (,$(wildcard $(SRAM_COMPILER)))
+$(error Did not find '$(SRAM_COMPILER)' in '$(OPENRAM_HOME)' (from $$OPENRAM_HOME))
 endif
 export OPENRAM_HOME
 export OPENRAM_TECH

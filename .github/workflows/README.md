@@ -8,7 +8,6 @@ commit" means.
 
 1. If `regress` workflow fails on 'private/dev', `sync` workflow gets triggered
 and it pushes the latest changes to the public repo's 'dev' branch (public/dev).
-After this push, `regress` workflow will also run on 'public/dev'.
 
 1. If `regress` workflow successfully passes on 'private/dev', `version`
 workflow gets triggered. It creates a new version commit and tag, and pushes to
@@ -17,16 +16,6 @@ workflow gets triggered. It creates a new version commit and tag, and pushes to
 1. When there is a push with new version to the 'public/stable' branch, `deploy`
 workflow runs. It deploys the PyPI package of OpenRAM and creates a new GitHub
 release on that repo.
-
-1. If there is a pull request on either repo, `regress` workflow runs on that
-pull request.
-
-1. If there is a push to 'public/dev', `regress` workflow runs (it also happens
-when pull requests are merged).
-
-1. If `regress` workflow successfully passes on 'public/dev', `version`
-workflow gets triggered. It creates a new version commit and tag, and pushes to
-'private/dev', 'public/dev', and 'public/stable'.
 
 
 
@@ -54,7 +43,7 @@ automatically. That means, you don't have to tag that commit manually.
 this commit was automatically generated after a previous commit passed `regress`
 workflow or was manually generated with caution.
 
-1. `regress` workflow doesn't run on branches named 'stable'.
+1. `regress` workflow doesn't run on the public repo.
 
 1. `deploy` workflow only runs on branches named 'stable'.
 
@@ -63,17 +52,14 @@ workflow or was manually generated with caution.
 
 1. `sync` workflow only runs on the private repo.
 
-1. Pull requests merged on to 'public/dev' will also trigger `regress` and it
-can create a new version.
-
-1. Merging pull requests that don't pass `regress` workflow on the public repo
-should be avoided since it won't update the private repo automatically. To
-prevent merging by mistake, the dev branch can be protected in the GitHub
-settings.
+1. `sync_tag` workflow only runs on the private repo.
 
 1. Merging pull requests on the private repo should be safe in any case. They
 are treated the same as commit pushes.
 
+> **Warning**: `regress` workflow is currently disabled on the public repo
+> manually. This was done because of a security risk on our private server.
+> Enabling it on GitHub will run `regress` workflow on the public repo.
 
 
 ## Flowchart

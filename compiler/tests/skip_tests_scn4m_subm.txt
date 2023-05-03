@@ -1,2 +1,0 @@
-19_single_bank_global_bitline_test.py
-21_xyce_delay_test.py

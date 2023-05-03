@@ -32,7 +32,6 @@ class precharge_test(openram_test):
         tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(tx)
 
-        factory.reset()
         debug.info(2, "Checking precharge for 1rw1r port 1")
         tx = factory.create(module_type="precharge", size=1, bitcell_bl="bl1", bitcell_br="br1")
         self.local_check(tx)

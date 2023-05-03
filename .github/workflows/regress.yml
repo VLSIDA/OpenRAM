@@ -3,14 +3,11 @@ on:
   push:
     branches-ignore:
       - stable
-  pull_request:
-    branches-ignore:
-      - stable
 jobs:
   # All tests should be run from this job
   regression_test:
     # This job runs on pull requests or any push that doesn't have a new version
-    if: ${{ github.event_name == 'pull_request' || startsWith(github.event.head_commit.message, 'Bump version:') == false }}
+    if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') == false }}
     runs-on: self-hosted
     steps:
       - name: Checkout code
@@ -26,14 +23,14 @@ jobs:
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
-         #cd $OPENRAM_HOME/tests
-         #export PDK_ROOT="${{ github.workspace }}/pdk"
-         #make pdk
-         #make install
+         export PDK_ROOT="${{ github.workspace }}/pdk"
+         make pdk
+         make install
       - name: Regress
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
+         export PDK_ROOT="${{ github.workspace }}/pdk"
          export FREEPDK45="~/FreePDK45"
          # KLAYOUT_PATH breaks klayout installation. Unset it for now...
          unset KLAYOUT_PATH
@@ -52,14 +49,14 @@ jobs:
           path: ${{ github.workspace }}/compiler/tests/results/*
   # This job triggers sync.yml workflow
   sync_trigger:
-    if: ${{ always() && github.event_name == 'push' && github.ref_name == 'dev' && github.repository == 'VLSIDA/PrivateRAM' && needs.regression_test.result == 'failure' }}
+    if: ${{ always() && github.ref_name == 'dev' && github.repository == 'VLSIDA/PrivateRAM' && needs.regression_test.result == 'failure' }}
     needs: regression_test
     uses: ./.github/workflows/sync.yml
     secrets:
       WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
   # This job triggers version.yml workflow
   version_trigger:
-    if: ${{ github.event_name == 'push' && github.ref_name == 'dev' }}
+    if: ${{ github.ref_name == 'dev' }}
     needs: regression_test
     uses: ./.github/workflows/version.yml
     secrets:

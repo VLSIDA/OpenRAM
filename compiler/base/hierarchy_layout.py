@@ -696,13 +696,15 @@ class layout():
                                         start=left_pos,
                                         end=right_pos)
 
-    def connect_row_pins(self, layer, pins, name=None, full=False):
+    def connect_row_pins(self, layer, pins, name=None, full=False, round=False):
         """
         Connects left/right rows that are aligned.
         """
         bins = {}
         for pin in pins:
                 y = pin.cy()
+                if round:
+                    y = round_to_grid(y)
                 try:
                     bins[y].append(pin)
                 except KeyError:
@@ -785,13 +787,15 @@ class layout():
                                         end=bot_pos)
 
 
-    def connect_col_pins(self, layer, pins, name=None, full=False):
+    def connect_col_pins(self, layer, pins, name=None, full=False, round=False, directions="pref"):
         """
         Connects top/bot columns that are aligned.
         """
         bins = {}
         for pin in pins:
                 x = pin.cx()
+                if round:
+                    x = round_to_grid(x)
                 try:
                     bins[x].append(pin)
                 except KeyError:
@@ -817,7 +821,8 @@ class layout():
                 self.add_via_stack_center(from_layer=pin.layer,
                                           to_layer=layer,
                                           offset=pin.center(),
-                                          min_area=True)
+                                          min_area=True,
+                                          directions=directions)
 
             if name:
                 self.add_layout_pin_segment_center(text=name,
@@ -1892,7 +1897,7 @@ class layout():
             elif add_vias:
                 self.copy_power_pin(pin, new_name=new_name)
 
-    def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
+    def add_io_pin(self, instance, pin_name, new_name, start_layer=None, directions=None):
         """
         Add a signle input or output pin up to metal 3.
         """
@@ -1902,7 +1907,7 @@ class layout():
             start_layer = pin.layer
 
         # Just use the power pin function for now to save code
-        self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
+        self.add_power_pin(new_name, pin.center(), start_layer=start_layer, directions=directions)
 
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         # Hack for min area

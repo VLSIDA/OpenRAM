@@ -28,7 +28,6 @@ class write_driver_pbitcell_test(openram_test):
         OPTS.num_w_ports = 0
         OPTS.num_r_ports = 0
 
-        factory.reset()
         debug.info(2, "Testing write_driver_array for columns=8, word_size=8 (multi-port case)")
         a = factory.create(module_type="write_driver_array", columns=8, word_size=8)
         self.local_check(a)

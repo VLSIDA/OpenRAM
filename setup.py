@@ -52,17 +52,43 @@ with open("requirements.txt") as f:
 version = open("VERSION", "r").read().rstrip()
 
 
+with open("README.md") as f:
+    long_description = f.read()
+
+
 # Call the setup to create the package
 setup(
     name="openram",
     version=version,
     description="An open-source static random access memory (SRAM) compiler",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://openram.org/",
+    download_url="https://github.com/VLSIDA/OpenRAM/releases",
+    project_urls={
+        "Bug Tracker": "https://github.com/VLSIDA/OpenRAM/issues",
+        "Documentation": "https://github.com/VLSIDA/OpenRAM/blob/stable/docs/source/index.md",
+        "Source Code": "https://github.com/VLSIDA/OpenRAM",
+    },
     author="Matthew Guthaus",
-    author_email="mrg@ucsc.edu",
+    author_email="mrg+vlsida@ucsc.edu",
     keywords=[ "sram", "magic", "gds", "netgen", "ngspice", "netlist" ],
-    readme="README.md",
-    license="BSD-3",
+    license="BSD 3-Clause",
+    python_requires=">=3.5",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Operating System :: Unix",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Software Development",
+        "Topic :: System :: Hardware",
+    ],
     packages=packages,
     package_dir=package_dir,
     include_package_data=True,

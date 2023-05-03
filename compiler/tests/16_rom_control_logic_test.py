@@ -6,44 +6,28 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import sys, os
 import unittest
 from testutils import *
+import sys, os
 
 import openram
-from openram import debug
-from openram.sram_factory import factory
 from openram import OPTS
+from openram.sram_factory import factory
+from openram import debug
 
 
-class replica_pbitcell_test(openram_test):
+class rom_decoder_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram.modules import dummy_pbitcell
 
-        OPTS.bitcell = "pbitcell"
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 0
-        OPTS.num_w_ports = 0
+        debug.info(2, "Testing control logic for rom cell")
 
-        factory.reset()
-        debug.info(2, "Checking dummy bitcell using pbitcell (small cell)")
-        tx = dummy_pbitcell(name="rpbc")
-        self.local_check(tx)
 
-        OPTS.num_rw_ports = 1
-        OPTS.num_r_ports = 1
-        OPTS.num_w_ports = 1
-
-        factory.reset()
-        debug.info(2, "Checking dummy bitcell using pbitcell (large cell)")
-        tx = dummy_pbitcell(name="rpbc")
-        self.local_check(tx)
-
+        a = factory.create(module_type="rom_control_logic", num_outputs=4, clk_fanout=4, height=40)
+        self.local_check(a)
         openram.end_openram()
-
 
 # run the test from the command line
 if __name__ == "__main__":

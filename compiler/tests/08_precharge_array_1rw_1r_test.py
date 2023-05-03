@@ -28,7 +28,6 @@ class precharge_1rw_1r_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        factory.reset()
         debug.info(2, "Checking 3 column precharge array for 1RW/1R bitcell (port 0)")
         pc = factory.create(module_type="precharge_array", columns=3, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(pc)

@@ -34,7 +34,6 @@ class port_data_test(openram_test):
                         num_spare_rows=num_spare_rows)
 
         c.words_per_row=1
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
         a = factory.create("port_data", sram_config=c, port=0)

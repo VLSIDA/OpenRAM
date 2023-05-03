@@ -27,7 +27,6 @@ class column_mux_pbitcell_test(openram_test):
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 1
 
-        factory.reset()
         debug.info(1, "Testing sample for 2-way column_mux_array in multi-port")
         a = factory.create(module_type="column_mux_array", columns=16, word_size=8, bitcell_bl="bl0", bitcell_br="br0")
         self.local_check(a)

@@ -49,6 +49,9 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
+# If conda is installed, we will use Magic from there
+CONDA_DIR := $(wildcard $(TOP_DIR)/miniconda)
+
 check-pdk-root:
 ifndef PDK_ROOT
 	$(error PDK_ROOT is undefined, please export it before running make)
@@ -69,12 +72,23 @@ $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 
 $(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
-	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk && \
-	cd sky130 && \
-	make veryclean && \
-	make && \
-	make SHARED_PDKS_PATH=/pdk install"
+ifeq ($(CONDA_DIR),"")
+	@cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
+		cd sky130 && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install
+else
+	@source $(TOP_DIR)/miniconda/bin/activate && \
+		cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
+		cd sky130 && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install && \
+		conda deactivate
+endif
 
 $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."

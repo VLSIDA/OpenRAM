@@ -39,7 +39,8 @@ class ptx(design):
                  connect_drain_active=False,
                  connect_source_active=False,
                  connect_poly=False,
-                 num_contacts=None):
+                 num_contacts=None,
+                 ):
 
         if "li" in layer:
             self.route_layer = "li"
@@ -47,11 +48,11 @@ class ptx(design):
             self.route_layer = "m1"
 
         # Default contacts are the lowest layer
-        if not add_source_contact:
+        if add_source_contact == None:
             add_source_contact = self.route_layer
 
         # Default contacts are the lowest layer
-        if not add_drain_contact:
+        if add_drain_contact == None:
             add_drain_contact = self.route_layer
 
         # We need to keep unique names because outputting to GDSII

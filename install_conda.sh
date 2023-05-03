@@ -26,6 +26,10 @@ then
         conda install -q -y -c vlsida-eda ${tool}
     done
 
+    # Install required Python packages
+    # (This step isn't required but used to prevent possible issues)
+    pip3 install -r requirements.txt
+
     conda deactivate
 fi
 

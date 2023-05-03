@@ -35,7 +35,6 @@ class port_data_test(openram_test):
 
         c.num_words=64
         c.words_per_row=4
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         a = factory.create("port_data", sram_config=c, port=0)

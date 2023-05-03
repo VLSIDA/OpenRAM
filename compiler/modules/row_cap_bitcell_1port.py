@@ -20,3 +20,10 @@ class row_cap_bitcell_1port(bitcell_base):
         debug.info(2, "Create row_cap bitcell 1 port object")
 
         self.no_instances = True
+
+    def build_graph(self, graph, inst_name, port_nets):
+        """
+        Adds edges based on inputs/outputs.
+        Overrides base class function.
+        """
+        pass

@@ -60,26 +60,26 @@ class custom_module_finder(MetaPathFinder):
         # Skip if the package is not openram
         if package_name != "openram":
             return None
-        customizable = False
         # Search for the module name in customizable modules
         from openram import OPTS
         for k, v in OPTS.__dict__.items():
             if module_name == v:
-                customizable = True
+                break
+        else:
+            return None
         # Search for the custom module
-        if customizable:
-            import sys
-            # Try to find the module in sys.path
-            for path in sys.path:
-                # Skip this path if not directory
-                if not os.path.isdir(path):
-                    continue
-                for file in os.listdir(path):
-                    # If there is a script matching the custom module name,
-                    # import it with the default module name
-                    if file == (module_name + ".py"):
-                        from importlib.util import spec_from_file_location
-                        return spec_from_file_location(module_name, "{0}/{1}.py".format(path, module_name))
+        import sys
+        # Try to find the module in sys.path
+        for path in sys.path:
+            # Skip this path if not directory
+            if not os.path.isdir(path):
+                continue
+            for file in os.listdir(path):
+                # If there is a script matching the custom module name,
+                # import it with the default module name
+                if file == (module_name + ".py"):
+                    from importlib.util import spec_from_file_location
+                    return spec_from_file_location(module_name, "{0}/{1}.py".format(path, module_name))
         return None
 # Python calls meta path finders and asks them to handle the module import if
 # they can

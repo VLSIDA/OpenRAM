@@ -2,7 +2,7 @@
 ### [Go Back](./index.md#table-of-contents)
 
 # Basic Usage
-This page of the documentation explains the basic usage of OpenRAM's ROM compiler (OpenROM).
+This page of the documentation explains the basic usage of OpenRAM's ROM compiler (OpenROM). For usage of the RAM compiler see [here](./basic_usage.md#go-back)
 
 
 
@@ -84,3 +84,16 @@ make sky130_rom_1kbyte
     # Add a supply ring to the generated layout
     route_supplies = "ring"
     ```
+
+
+## Output Files
+The output files are placed in the `output_dir` defined in the configuration
+file.
+
+The base name is specified by `output_name` and suffixes are added. Currently only layout and schematic files are generated.
+
+The final results files are:
+* GDS (.gds)
+* SPICE (.sp)
+* Log (.log)
+* Configuration (.py) for replication of creation

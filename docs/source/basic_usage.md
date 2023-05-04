@@ -1,7 +1,7 @@
 ### [Go Back](./index.md#table-of-contents)
 
 # Basic Usage
-This page of the documentation explains the basic usage of OpenRAM's SRAM compiler.
+This page of the documentation explains the basic usage of OpenRAM's SRAM compiler. For usage of the ROM compiler see [here](./basic_rom_usage.md#go-back)
 
 
 

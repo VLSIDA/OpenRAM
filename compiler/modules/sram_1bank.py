@@ -255,6 +255,8 @@ class sram_1bank(design, verilog, lef):
             return
         elif OPTS.route_supplies == "grid":
             from openram.router import supply_grid_router as router
+        elif OPTS.route_supplies == "navigation":
+            from openram.router import navigation_router as router
         else:
             from openram.router import supply_tree_router as router
         rtr=router(layers=self.supply_stack,

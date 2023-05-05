@@ -475,18 +475,20 @@ def find_exe(check_exe):
 
 
 def init_paths():
-    """ Create the temp and output directory if it doesn't exist """
+    """ Create the temp and output directory if it doesn't exist. """
+
     if os.path.exists(OPTS.openram_temp):
         purge_temp()
     else:
-        # make the directory if it doesn't exist
+        # Make the directory if it doesn't exist
         try:
-            debug.info(1,
-                       "Creating temp directory: {}".format(OPTS.openram_temp))
+            debug.info(1, "Creating temp directory: {}".format(OPTS.openram_temp))
             os.makedirs(OPTS.openram_temp, 0o750)
         except OSError as e:
-            if e.errno == 17:  # errno.EEXIST
+            if e.errno == 17: # errno.EEXIST
                 os.chmod(OPTS.openram_temp, 0o750)
+            else:
+                debug.error("Unable to make temp directory: {}".format(OPTS.openram_temp), -1)
     #import inspect
     #s = inspect.stack()
     #from pprint import pprint
@@ -499,10 +501,10 @@ def init_paths():
     try:
         os.makedirs(OPTS.output_path, 0o750)
     except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
+        if e.errno == 17: # errno.EEXIST
             os.chmod(OPTS.output_path, 0o750)
-    except:
-        debug.error("Unable to make output directory.", -1)
+        else:
+            debug.error("Unable to make output directory: {}".format(OPTS.output_path), -1)
 
 
 def set_default_corner():

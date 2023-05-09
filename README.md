@@ -4,7 +4,7 @@
 [![Python 3.5](https://img.shields.io/badge/Python-3.5-green.svg)](https://www.python.org/)
 [![License: BSD 3-clause](https://raw.githubusercontent.com/VLSIDA/OpenRAM/stable/images/license_badge.svg)](./LICENSE)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/openram?color=brightgreen&label=PyPI)](https://pypi.org/project/openram/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://githubtocolab.com/VLSIDA/OpenRAM/blob/patch-colab/docs/source/OpenRAM.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://githubtocolab.com/sfmth/openram-playground/blob/main/OpenRAM.ipynb)
 
 An open-source static random access memory (SRAM) compiler.
 

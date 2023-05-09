@@ -6,6 +6,7 @@
 from openram import debug
 from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
+from openram.base.vector3d import vector3d
 from openram.gdsMill import gdsMill
 from openram.tech import GDS
 from openram.tech import layer as tech_layer
@@ -26,6 +27,7 @@ class navigation_router(router_tech):
         self.layers = layers
         self.design = design
         self.gds_filename = OPTS.openram_temp + "temp.gds"
+        self.track_width = 1
         self.pins = {}
         self.all_pins = set()
         self.blockages = []
@@ -49,11 +51,17 @@ class navigation_router(router_tech):
         self.find_blockages()
 
         # Create the navigation graph
-        self.nav = navigation_graph()
         pin_iter = iter(self.pins["vdd"])
         vdd_0 = next(pin_iter)
         vdd_1 = next(pin_iter)
+        self.nav = navigation_graph(self.track_width)
         self.nav.create_graph(vdd_0, vdd_1, self.blockages)
+
+        # Find the shortest path from source to target
+        path = self.nav.find_shortest_path(vdd_0, vdd_1)
+
+        # Create the path shapes on layout
+        self.add_path(path)
 
         self.write_debug_gds(source=vdd_0, target=vdd_1)
 
@@ -68,8 +76,8 @@ class navigation_router(router_tech):
             layer, boundary = shape
             # gdsMill boundaries are in (left, bottom, right, top) order
             # so repack and snap to the grid
-            ll = vector(boundary[0], boundary[1]).snap_to_grid()
-            ur = vector(boundary[2], boundary[3]).snap_to_grid()
+            ll = vector(boundary[0], boundary[1])
+            ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
             pin = pin_layout(pin_name, rect, layer)
             pin_set.add(pin)
@@ -80,7 +88,7 @@ class navigation_router(router_tech):
 
     def find_blockages(self):
         """  """
-        debug.info(1, "Finding all blockages")
+        debug.info(1, "Finding all blockages...")
 
         for lpp in [self.vert_lpp, self.horiz_lpp]:
             shapes = self.layout.getAllShapes(lpp)
@@ -92,8 +100,7 @@ class navigation_router(router_tech):
                 rect = [ll, ur]
                 new_shape = pin_layout("blockage{}".format(len(self.blockages)),
                                        rect,
-                                       lpp)
-
+                                       lpp).inflated_pin()
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
                 if new_shape not in self.all_pins and not self.pin_contains(new_shape):
@@ -105,6 +112,30 @@ class navigation_router(router_tech):
             if pin.contains(shape):
                 return True
         return False
+
+
+    def add_path(self, path):
+        """  """
+
+        for i in range(len(path) - 1):
+            self.connect_nodes(path[i], path[i + 1])
+
+
+    def connect_nodes(self, a, b):
+        """ Connect nodes 'a' and 'b' with a wire. """
+
+        # Calculate the shape of the wire
+        track_offset = vector3d(self.track_width / 2, self.track_width / 2, 0)
+        ll = a.center.min(b.center) - track_offset
+        ur = a.center.max(b.center) + track_offset
+
+        debug.info(0, "Adding wire: ({}, {})".format(ll, ur))
+
+        # Add the shape to the layout
+        self.design.add_rect(layer="text",
+                             offset=(ll[0], ll[1]),
+                             width=ur.x - ll.x,
+                             height=ur.y - ll.y)
 
 
     def write_debug_gds(self, gds_name="debug_route.gds", source=None, target=None):
@@ -120,30 +151,16 @@ class navigation_router(router_tech):
 
         # Display the inflated blockage
         for blockage in self.nav.nav_blockages:
-            ll, ur = blockage.ll, blockage.ur
-            self.design.add_rect(layer="text",
-                                 offset=ll,
-                                 width=ur.x - ll.x,
-                                 height=ur.y - ll.y)
-            self.design.add_label(text="blockage",
-                                  layer="text",
-                                  offset=ll)
+            self.add_object_info(blockage, "blockage")
         for node in self.nav.nodes:
-            self.design.add_rect_center(layer="text",
-                                        offset=node.position,
-                                        width=1,
-                                        height=1)
-            self.design.add_label(text="-0-",
+            offset = (node.center.x, node.center.y)
+            self.design.add_label(text="O",
                                   layer="text",
-                                  offset=node.position)
+                                  offset=offset)
         if source:
-            self.design.add_label(text="source",
-                                  layer="text",
-                                  offset=source.rect[0])
+            self.add_object_info(source, "source")
         if target:
-            self.design.add_label(text="target",
-                                  layer="text",
-                                  offset=target.rect[0])
+            self.add_object_info(target, "target")
 
 
     def del_router_info(self):
@@ -151,3 +168,16 @@ class navigation_router(router_tech):
 
         lpp = tech_layer["text"]
         self.design.objs = [x for x in self.design.objs if x.lpp != lpp]
+
+
+    def add_object_info(self, obj, label):
+        """  """
+
+        ll, ur = obj.rect
+        self.design.add_rect(layer="text",
+                             offset=ll,
+                             width=ur.x - ll.x,
+                             height=ur.y - ll.y)
+        self.design.add_label(text=label,
+                              layer="text",
+                              offset=ll)

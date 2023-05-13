@@ -76,12 +76,12 @@ rom: $(WORKING_ROM_STAMPS)
 sram: $(WORKING_SRAM_STAMPS)
 .PHONY: sram
 	
-%.ok: sram_configs/%.py
+%: sram_configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
 	@python3 -u $(SRAM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
 
-%.ok: rom_configs/%.py
+%: rom_configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
 	@python3 -u $(ROM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@

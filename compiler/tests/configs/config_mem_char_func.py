@@ -12,5 +12,6 @@ num_words = 16
 tech_name = OPTS.tech_name
 output_name = "sram"
 
+analytical_delay = False
 nominal_corner_only = True
-spice_name = "ngspice"
+spice_name = "Xyce"

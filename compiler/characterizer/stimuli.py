@@ -412,12 +412,12 @@ class stimuli():
         from openram import CONDA_HOME
         cmd = "source {0}/bin/activate && {1} && conda deactivate".format(CONDA_HOME, cmd)
         debug.info(2, cmd)
-        retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
+        proc = subprocess.run(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 
         spice_stdout.close()
         spice_stderr.close()
 
-        if (retcode > valid_retcode):
+        if (proc.returncode > valid_retcode):
             debug.error("Spice simulation error: " + cmd, -1)
         else:
             end_time = datetime.datetime.now()

@@ -865,8 +865,10 @@ class bank(design):
         driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
         if self.has_rbl:
             driver_names = driver_names + ["rbl_wl"]
-        # rbl_wl in next two lines will be ignored by zip once driver_names is exhausted in the no rbl case
-        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        else:
+            rbl_wl_name = None
+        # rbl_wl in next line will be ignored by zip once driver_names is exhausted in the no rbl case
         for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)

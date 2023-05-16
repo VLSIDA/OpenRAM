@@ -8,6 +8,8 @@
 import math
 import random
 import collections
+from os import path
+import shutil
 from numpy import binary_repr
 from openram import debug
 from openram import OPTS
@@ -33,6 +35,9 @@ class functional(simulation):
         if not spfile:
             # self.sp_file is assigned in base class
             sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
+        # Copy sp file to temp dir
+        self.temp_spice = path.join(OPTS.openram_temp, "sram.sp")
+        shutil.copy(self.sp_file, self.temp_spice)
 
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
@@ -386,16 +391,16 @@ class functional(simulation):
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
         self.stim_sp = "functional_stim.sp"
-        temp_stim = "{0}/{1}".format(self.output_path, self.stim_sp)
+        temp_stim = path.join(self.output_path, self.stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Functional test stimulus file for {0}ns period\n\n".format(self.period))
         self.meas_sp = "functional_meas.sp"
-        temp_meas = "{0}/{1}".format(self.output_path, self.meas_sp)
+        temp_meas = path.join(self.output_path, self.meas_sp)
         self.mf = open(temp_meas, "w")
         self.stim = stimuli(self.sf, self.mf, self.corner)
 
         # Write include statements
-        self.stim.write_include(self.sp_file)
+        self.stim.write_include(self.temp_spice)
 
         # Write Vdd/Gnd statements
         self.sf.write("\n* Global Power Supplies\n")
@@ -502,9 +507,11 @@ class functional(simulation):
                 #                          dout=signal_name,
                 #                          t_initial=t_initial,
                 #                          t_final=t_final)
-
+        
+        self.sf.write(".include {0}\n".format(temp_meas))
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
+        self.mf.close()
 
     # FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):

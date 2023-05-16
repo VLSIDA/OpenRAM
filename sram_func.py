@@ -19,16 +19,16 @@ from globals import *
 
 # You don't need the next two lines if you're sure that openram package is installed
 from common import *
-make_openram_pacakage()
+make_openram_package()
 import openram
 
 (OPTS, args) = openram.parse_args()
 
 # Override the usage
-USAGE = "Usage: {} [options] <config file> <cycles> <period>\nUse -h for help.\n".format(__file__)
+USAGE = "Usage: {} [options] <config file> <sp_file> <cycles> <period>\nUse -h for help.\n".format(__file__)
 
 # Check that we are left with a single configuration file as argument.
-if len(args) != 3:
+if len(args) != 4:
     print(USAGE)
     sys.exit(2)
 
@@ -36,10 +36,9 @@ OPTS.top_process = 'memfunc'
 
 # Parse argument
 config_file = args[0]
-cycles = int(args[1])
-period = float(args[2])
-sp_file = args[3]
-html_file = args[4]
+sp_file = args[1]
+cycles = int(args[2])
+period = float(args[3])
 
 # These depend on arguments, so don't load them until now.
 from openram import debug
@@ -60,7 +59,6 @@ s = fake_sram(name=OPTS.output_name,
               num_spare_rows=OPTS.num_spare_rows,
               num_spare_cols=OPTS.num_spare_cols)
 
-s.parse_html(html_file)
 s.generate_pins()
 s.setup_multiport_constants()
 

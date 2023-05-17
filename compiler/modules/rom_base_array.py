@@ -202,8 +202,8 @@ class rom_base_array(bitcell_base_array):
         pitch = drc["{0}_to_{0}".format(self.wordline_layer)]
         drain_l = self.cell_list[self.row_size][0].get_pin("D")
         drain_r = self.cell_list[self.row_size][self.column_size - 1].get_pin("D")
-        gnd_l = drain_l.center() + vector(-0.5 * self.route_width, pitch + via_width + self.route_pitch)
-        gnd_r = drain_r.center() + vector(0.5 * self.route_width, pitch + via_width + self.route_pitch)
+        gnd_l = drain_l.center() + vector(-0.5 * self.route_width, 0.5 * pitch + via_width + self.route_pitch)
+        gnd_r = drain_r.center() + vector(0.5 * self.route_width, 0.5 * pitch + via_width + self.route_pitch)
         self.add_layout_pin_rect_ends(name="gnd", layer=self.bitline_layer, start=gnd_l, end=gnd_r)
 
 
@@ -310,7 +310,7 @@ class rom_base_array(bitcell_base_array):
                 directions="nonpref")
         self.add_via_stack_center(offset=tap_pos,
                         from_layer=self.active_stack[2],
-                        to_layer=self.wordline_layer)
+                        to_layer=self.wordline_layer, directions="nonpref")
         self.gnd_taps.append(self.add_layout_pin_rect_center("gnd_tap", self.wordline_layer, tap_pos))
 
     def place_precharge(self):
@@ -326,6 +326,10 @@ class rom_base_array(bitcell_base_array):
 
     def place_bitline_contacts(self):
 
+        if "li" in layer:
+            output_layer = "m1"
+        else:
+            output_layer = "m3"
         rail_y = self.precharge_inst.get_pins("vdd")[0].cy()
 
         for bl in range(self.column_size):
@@ -340,9 +344,12 @@ class rom_base_array(bitcell_base_array):
 
             output_pos = vector(corrected.x, rail_y)
 
-            self.add_segment_center(self.bitline_layer, corrected, output_pos)
+            if output_layer != self.bitline_layer:
+                self.add_via_stack_center(from_layer=self.bitline_layer, to_layer=output_layer, offset=corrected)
 
-            self.add_layout_pin_rect_center(self.bitline_names[0][bl], self.bitline_layer, output_pos )
+            self.add_segment_center(output_layer, corrected, output_pos)
+
+            self.add_layout_pin_rect_center(self.bitline_names[0][bl], output_layer, output_pos )
 
     def route_precharge(self):
         for bl in range(self.column_size):

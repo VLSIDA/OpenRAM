@@ -13,9 +13,9 @@ from openram.tech import drc
 
 class rom_poly_tap(design):
 
-    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_active_tap=False, place_poly=None):
+    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_active_tap=False, place_poly=False):
         super().__init__(name, cell_name)
-        self.strap_layer=strap_layer
+        self.strap_layer = strap_layer
         self.tx_type = tx_type
         self.add_tap = add_active_tap
         if place_poly is None:
@@ -36,9 +36,10 @@ class rom_poly_tap(design):
 
         self.place_via()
         self.add_boundary()
+        self.extend_poly()
+
         if self.add_tap or self.place_poly:
             self.place_active_tap()
-            self.extend_poly()
 
     def add_boundary(self):
         contact_width = self.poly_contact.width
@@ -59,9 +60,14 @@ class rom_poly_tap(design):
         contact_x = contact_width * 0.5 + self.contact_x_offset
         self.contact_offset = vector(contact_x, contact_y)
 
+        if OPTS.tech_name == "sky130":
+            directions="pref"
+        else:
+            directions="nonpref"
         self.via = self.add_via_stack_center(from_layer="poly",
                                   to_layer=self.strap_layer,
-                                  offset=self.contact_offset)
+                                  offset=self.contact_offset,
+                                  directions=directions)
         self.add_layout_pin_rect_center("poly_tap", self.strap_layer, self.contact_offset)
 
     def extend_poly(self):
@@ -69,8 +75,8 @@ class rom_poly_tap(design):
         if self.tx_type == "pmos":
             y_offset = -self.height
         start = self.via.center() + vector(0, y_offset)
-
-        self.add_segment_center("poly", start, vector(self.via.cx() + self.pitch_offset, self.via.cy() + y_offset))
+        if self.place_poly:
+            self.add_segment_center("poly", start, vector(self.via.cx() + self.pitch_offset, self.via.cy() + y_offset))
         self.add_segment_center("poly", start, vector(0, self.via.cy() + y_offset))
 
     def place_active_tap(self):

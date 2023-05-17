@@ -15,10 +15,16 @@ from openram.tech import drc
 
 class rom_base_cell(design):
 
-    def __init__(self, name="", bitline_layer="li", bit_value=1, add_well=False):
+    def __init__(self, name="", bitline_layer=None, bit_value=1, add_well=False):
         super().__init__(name)
         self.bit_value = bit_value
-        self.bitline_layer = bitline_layer
+
+        if bitline_layer is None and OPTS.tech_name == "sky130":
+            self.bitline_layer = "li"
+        elif bitline_layer is None:
+            self.bitline_layer = "m1"
+        else:
+            self.bitline_layer = bitline_layer
         self.add_well=add_well
         self.create_netlist()
         self.create_layout()
@@ -41,6 +47,7 @@ class rom_base_cell(design):
     # Calculates offsets of cell width and height so that tiling of cells does not violate any drc rules
     def setup_drc_offsets(self):
 
+        self.bitline_width = drc(f"minwidth_{self.bitline_layer}")
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
     def add_boundary(self):
@@ -50,9 +57,7 @@ class rom_base_cell(design):
         #cell width with offsets applied, height becomes width when the cells are rotated
         width = self.cell_inst.height + 2 * self.poly_extend_active
 
-
         # make the cells square so the pitch of wordlines will match bitlines
-
         if width > height:
             self.width = width
             self.height = width
@@ -61,7 +66,6 @@ class rom_base_cell(design):
             self.height = height
 
         super().add_boundary()
-
 
     def add_modules(self):
 
@@ -72,7 +76,6 @@ class rom_base_cell(design):
                                     add_drain_contact=self.bitline_layer
                                     )
 
-
     def create_tx(self):
         self.cell_inst = self.add_inst( name=self.name + "_nmos",
                                         mod=self.nmos,
@@ -81,7 +84,6 @@ class rom_base_cell(design):
             self.connect_inst(["bl", "wl", "bl", "gnd"])
         else:
             self.connect_inst(["bl_h", "wl", "bl_l", "gnd"])
-
 
     def add_pins(self):
         if self.bit_value == 0 :
@@ -95,10 +97,7 @@ class rom_base_cell(design):
 
     def place_tx(self):
 
-        # sizing_offset = self.cell_inst.height - drc["minwidth_tx"]
         tx_offset = vector(self.poly_extend_active + self.cell_inst.height + self.poly_size,- 0.5 * self.contact_width - self.active_enclose_contact)
-        # add rect of poly to account for offset from drc spacing
-        # self.add_rect_center("poly", poly_offset, self.poly_extend_active_spacing, self.poly_width)
 
         self.cell_inst.place(tx_offset, rotate=90)
 
@@ -113,13 +112,10 @@ class rom_base_cell(design):
         end = poly_offset + vector(self.poly_size, 0)
         self.add_segment_center("poly", start, end)
 
-
     def place_bitline(self):
-
         start = self.get_pin("D").center()
-        end = start + vector(0, 2 * self.active_enclose_contact + 0.5 * self.contact_width + self.active_space)
-        self.add_segment_center(self.bitline_layer, start, end)
+        end = start + vector(0, 2 * self.active_enclose_contact + self.contact_width + self.active_space)
+        self.add_segment_center(self.bitline_layer, start, end, self.bitline_width * 2)
 
     def short_gate(self):
-
         self.add_segment_center(self.bitline_layer, self.get_pin("D").center(), self.get_pin("S").center())

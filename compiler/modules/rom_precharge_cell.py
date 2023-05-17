@@ -26,7 +26,10 @@ class rom_precharge_cell(rom_base_cell):
         self.extend_well()
 
     def add_modules(self):
-        width = pgate.nearest_bin("pmos", drc["minwidth_tx"])
+        if OPTS.tech_name == "sky130":
+            width = pgate.nearest_bin("pmos", drc["minwidth_tx"])
+        else:
+            width = drc("minwidth_tx")
         self.pmos  = factory.create(module_type="ptx",
                                     module_name="pre_pmos_mod",
                                     tx_type="pmos",
@@ -60,8 +63,7 @@ class rom_precharge_cell(rom_base_cell):
 
     def place_tap(self):
         source = self.cell_inst.get_pin("S")
-
-        tap_y = source.cy() - self.contact_width - 2 * self.active_enclose_contact - self.active_space
+        tap_y = source.cy() - self.contact_width - 5 * self.active_enclose_contact - self.active_space
         self.tap_offset = abs(tap_y)
         pos  = vector(source.cx(), tap_y )
 
@@ -83,4 +85,8 @@ class rom_precharge_cell(rom_base_cell):
         self.remove_layout_pin("S")
 
     def place_bitline(self):
+        pass
+
+    def short_gate(self):
+        print("not shorting")
         pass

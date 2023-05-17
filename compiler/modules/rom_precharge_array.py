@@ -125,7 +125,6 @@ class rom_precharge_array(design):
         # columns are bit lines
         cell_x = 0
 
-
         for col in range(self.cols):
 
             if col % self.strap_spacing == 0:
@@ -136,7 +135,6 @@ class rom_precharge_array(design):
                         cell_x += self.poly_tap.pitch_offset
 
             self.pmos_insts[col].place(vector(cell_x, cell_y))
-            self.add_label("debug", "li", vector(cell_x, cell_y))
             cell_x += self.pmos.width
 
         self.tap_insts[strap_num].place(vector(cell_x, cell_y + self.poly_tap.height))
@@ -150,7 +148,6 @@ class rom_precharge_array(design):
             self.add_layout_pin_rect_center(bl, self.bitline_layer, source_pin.center())
 
     def route_supply(self):
-
         self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer)
 
     def connect_taps(self):

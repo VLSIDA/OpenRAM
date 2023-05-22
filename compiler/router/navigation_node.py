@@ -13,26 +13,23 @@ class navigation_node:
     # This is used to assign unique ids to nodes
     next_id = 0
 
-    def __init__(self, center, offset=None, horizontal=1, vertical=1):
+    def __init__(self, center):
 
         self.id = navigation_node.next_id
         navigation_node.next_id += 1
-        if isinstance(center, vector):
-            self.center = vector3d(center[0], center[1], 0)
-        elif isinstance(center, vector3d):
+        if isinstance(center, vector3d):
             self.center = center
         else:
             self.center = vector3d(center)
-        if offset:
-            self.center += vector3d(offset * horizontal, offset * vertical, 0)
         self.neighbors = []
 
 
     def add_neighbor(self, node):
         """ Connect two nodes. """
 
-        self.neighbors.append(node)
-        node.neighbors.append(self)
+        if node not in self.neighbors:
+            self.neighbors.append(node)
+            node.neighbors.append(self)
 
 
     def remove_neighbor(self, node):
@@ -47,6 +44,5 @@ class navigation_node:
         """ Return the cost of going to node. """
 
         if node in self.neighbors:
-            return self.center.distance(node.center)
-        else:
-            return float("inf")
+            return self.center.distance(node.center) + abs(self.center.z - node.center.z)
+        return float("inf")

@@ -5,41 +5,21 @@
 #
 import heapq
 from openram import debug
+from openram.base.vector3d import vector3d
+from .direction import direction
 from .navigation_node import navigation_node
-from .navigation_blockage import navigation_blockage
+from .navigation_utils import *
 
 
 class navigation_graph:
     """ This is the navigation graph created from the blockages. """
 
-    def __init__(self, track_width):
+    def __init__(self, router):
 
-        self.track_width = track_width
-
-
-    def is_probe_blocked(self, p1, p2):
-        """
-        Return if a probe sent from p1 to p2 encounters a blockage.
-        The probe must be sent vertically or horizontally.
-        This method assumes that blockages are rectangular.
-        """
-
-        # Check if any blockage blocks this probe
-        for blockage in self.nav_blockages:
-            right_x = blockage.ur[0]
-            upper_y = blockage.ur[1]
-            left_x = blockage.ll[0]
-            lower_y = blockage.ll[1]
-            # Check if blocked vertically
-            if is_between(left_x, right_x, p1.x) and (is_between(p1.y, p2.y, upper_y) or is_between(p1.y, p2.y, lower_y)):
-                return True
-            # Check if blocked horizontally
-            if is_between(upper_y, lower_y, p1.y) and (is_between(p1.x, p2.x, left_x) or is_between(p1.x, p2.x, right_x)):
-                return True
-        return False
+        self.router = router
 
 
-    def create_graph(self, layout_source, layout_target, layout_blockages):
+    def create_graph(self, layout_source, layout_target):
         """  """
         debug.info(0, "Creating the navigation graph for source '{0}' and target'{1}'.".format(layout_source, layout_target))
 
@@ -49,71 +29,78 @@ class navigation_graph:
         region = (s_ll.min(t_ll), s_ur.min(t_ur))
         debug.info(0, "Routing region is ll: '{0}' ur: '{1}'".format(region[0], region[1]))
 
-        # Instantiate "navigation blockage" objects from layout blockages
-        self.nav_blockages = []
-        for layout_blockage in layout_blockages:
-            ll, ur = layout_blockage.rect
-            if (is_between(region[0].x, region[1].x, ll.x) and is_between(region[0].y, region[1].y, ll.y)) or \
-               (is_between(region[0].x, region[1].x, ur.x) and is_between(region[0].y, region[1].y, ur.y)):
-                self.nav_blockages.append(navigation_blockage(ll, ur))
+        # Find the blockages that are in the routing area
+        self.graph_blockages = []
+        for blockage in self.router.blockages:
+            ll, ur = blockage.rect
+            if is_in_region(ll, region) or is_in_region(ur, region):
+                self.graph_blockages.append(blockage)
+        debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
+        # Obtain the x and y points for Hanan grid
+        x_values = []
+        y_values = []
+        offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
+        for shape in [layout_source, layout_target]:
+            center = shape.center()
+            x_values.append(center.x)
+            y_values.append(center.y)
+        for blockage in self.graph_blockages:
+            ll, ur = blockage.rect
+            x_values.extend([ll.x - offset, ur.x + offset])
+            y_values.extend([ll.y - offset, ur.y + offset])
+
+        # Generate Hanan points here (cartesian product of all x and y values)
+        hanan_points = []
+        for x in x_values:
+            for y in y_values:
+                hanan_points.append(vector3d(x, y, 0))
+                hanan_points.append(vector3d(x, y, 1))
+
+        # Remove blocked points
+        for point in hanan_points.copy():
+            for blockage in self.graph_blockages:
+                ll, ur = blockage.rect
+                if self.router.get_zindex(blockage.lpp) == point.z and is_in_region(point, blockage.rect):
+                    hanan_points.remove(point)
+                    break
+
+        # Create graph nodes from Hanan points
         self.nodes = []
+        for point in hanan_points:
+            self.nodes.append(navigation_node(point))
 
-        # Add source and target for this graph
-        self.nodes.append(navigation_node(layout_source.center()))
-        self.nodes.append(navigation_node(layout_target.center()))
-
-        # Create the corner nodes
-        for blockage in self.nav_blockages:
-            blockage.create_corner_nodes(self.track_width / 2)
-
-        # These nodes will be connected to create the final graph
-        connect_objs = []
-        connect_objs.extend(self.nodes)
-        connect_objs.extend(self.nav_blockages)
-
-        # Create intersection nodes
-        # NOTE: Intersection nodes are used to connect boundaries of blockages
-        # perpendicularly.
-        debug.info(0, "Number of objects: {}".format(len(connect_objs)))
-        for i in range(len(connect_objs)):
-            obj1 = connect_objs[i]
-            for j in range(i + 1, len(connect_objs)):
-                obj2 = connect_objs[j]
-                node1, node2 = get_closest_nodes(obj1, obj2)
-                # Try two different corners
-                for k in [0, 1]:
-                    # Create a node at the perpendicular corner of these two nodes
-                    x_node = node1 if k else node2
-                    y_node = node2 if k else node1
-                    corner = navigation_node([x_node.center[0], y_node.center[1], 0])
-                    # Skip this corner if the perpendicular connection is blocked
-                    if self.is_probe_blocked(corner.center, node1.center) or self.is_probe_blocked(corner.center, node2.center):
+        # Connect closest points avoiding blockages
+        for i in range(len(self.nodes)):
+            node = self.nodes[i]
+            for d in direction.cardinal_offsets():
+                min_dist = float("inf")
+                min_neighbor = None
+                for j in range(i + 1, len(self.nodes)):
+                    neighbor = self.nodes[j]
+                    if node.center.z != neighbor.center.z:
                         continue
-                    # Check if this new node stands on an existing connection
-                    self.remove_intersected_neighbors(node1, corner, k)
-                    self.remove_intersected_neighbors(node2, corner, not(k))
-                    # Add this new node to the graph
-                    corner.add_neighbor(node1)
-                    corner.add_neighbor(node2)
-                    self.nodes.append(corner)
+                    distance_vector = neighbor.center - node.center
+                    distance = node.center.distance(neighbor.center)
+                    if (distance_vector.x or (distance_vector.y * d.y <= 0)) and \
+                       (distance_vector.y or (distance_vector.x * d.x <= 0)):
+                        continue
+                    if distance < min_dist:
+                        min_dist = distance
+                        min_neighbor = neighbor
+                if min_neighbor:
+                    node.add_neighbor(min_neighbor)
 
-        # Add corner nodes from blockages after intersections
-        for blockage in self.nav_blockages:
-            self.nodes.extend(blockage.corners)
-        debug.info(0, "Number of nodes after corners: {}".format(len(self.nodes)))
-
-
-    def remove_intersected_neighbors(self, node, corner, axis):
-        """  """
-
-        a = node.center
-        mid = corner.center
-        for neighbor in node.neighbors:
-            b = neighbor.center
-            if a[not(axis)] == b[not(axis)] and is_between(a[axis], b[axis], mid[axis]):
-                neighbor.remove_neighbor(node)
-                neighbor.add_neighbor(corner)
+        # Connect nodes that are on top of each other
+        for i in range(len(self.nodes)):
+            node = self.nodes[i]
+            for j in range(i + 1, len(self.nodes)):
+                neighbor = self.nodes[j]
+                if node.center.x == neighbor.center.x and \
+                   node.center.y == neighbor.center.y and \
+                   node.center.z != neighbor.center.z:
+                    node.add_neighbor(neighbor)
+        debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
     def find_shortest_path(self, source, target):
@@ -122,11 +109,19 @@ class navigation_graph:
         A* algorithm.
         """
 
-        source = self.nodes[0]
-        target = self.nodes[1]
+        # Find source and target nodes
+        source_center = source.center()
+        source_center = vector3d(source_center.x, source_center.y, self.router.get_zindex(source.lpp))
+        target_center = target.center()
+        target_center = vector3d(target_center.x, target_center.y, self.router.get_zindex(target.lpp))
+        for node in self.nodes:
+            if node.center == source_center:
+                source = node
+            if node.center == target_center:
+                target = node
 
         # Heuristic function to calculate the scores
-        h = lambda node: target.center.distance(node.center)
+        h = lambda node: target.center.distance(node.center) + abs(target.center.z - node.center.z)
 
         queue = []
         close_set = set()
@@ -161,7 +156,7 @@ class navigation_graph:
 
             # Update neighbor scores
             for node in current.neighbors:
-                tentative_score = current.get_edge_cost(node) + g_scores[current.id]
+                tentative_score = self.get_edge_cost(current, node) + g_scores[current.id]
                 if node.id not in g_scores or tentative_score < g_scores[node.id]:
                     came_from[node.id] = current
                     g_scores[node.id] = tentative_score
@@ -172,48 +167,14 @@ class navigation_graph:
         return None
 
 
-def is_between(a, b, mid):
-    """ Return if 'mid' is between 'a' and 'b'. """
+    def get_edge_cost(self, source, target):
+        """  """
 
-    return (a < mid and mid < b) or (b < mid and mid < a)
-
-
-def get_closest_nodes(a, b):
-    """  """
-
-    if isinstance(a, navigation_node) and isinstance(b, navigation_node):
-        return a, b
-    if isinstance(a, navigation_blockage) and isinstance(b, navigation_blockage):
-        min_dist = float("inf")
-        min_a = None
-        min_b = None
-        for node_a in a.corners:
-            for node_b in b.corners:
-                dist = node_a.center.distance(node_b.center)
-                if dist < min_dist:
-                    min_dist = dist
-                    min_a = node_a
-                    min_b = node_b
-        return min_a, min_b
-    if isinstance(a, navigation_node):
-        min_dist = float("inf")
-        min_a = None
-        min_b = None
-        for node_b in b.corners:
-            dist = a.center.distance(node_b.center)
-            if dist < min_dist:
-                min_dist = dist
-                min_a = a
-                min_b = node_b
-        return min_a, min_b
-    if isinstance(b, navigation_node):
-        min_dist = float("inf")
-        min_a = None
-        min_b = None
-        for node_a in a.corners:
-            dist = b.center.distance(node_a.center)
-            if dist < min_dist:
-                min_dist = dist
-                min_a = node_a
-                min_b = b
-        return min_a, min_b
+        if target in source.neighbors:
+            is_vertical = source.center.x == target.center.x
+            layer_dist = source.center.distance(target.center)
+            if is_vertical != bool(source.center.z):
+                layer_dist *= 2
+            via_dist = abs(source.center.z - target.center.z) * 2
+            return layer_dist + via_dist
+        return float("inf")

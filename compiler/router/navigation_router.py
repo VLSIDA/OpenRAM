@@ -35,7 +35,7 @@ class navigation_router(router_tech):
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ Route the given pins in the given order. """
-        #debug.info(0, "Running router for {}...".format(pins))
+        debug.info(1, "Running router for {}...".format(pins))
 
         # Prepare gdsMill to find pins and blockages
         self.design.gds_write(self.gds_filename)
@@ -54,8 +54,8 @@ class navigation_router(router_tech):
         pin_iter = iter(self.pins["vdd"])
         vdd_0 = next(pin_iter)
         vdd_1 = next(pin_iter)
-        self.nav = navigation_graph(self.track_width)
-        self.nav.create_graph(vdd_0, vdd_1, self.blockages)
+        self.nav = navigation_graph(self)
+        self.nav.create_graph(vdd_0, vdd_1)
 
         # Find the shortest path from source to target
         path = self.nav.find_shortest_path(vdd_0, vdd_1)
@@ -100,7 +100,7 @@ class navigation_router(router_tech):
                 rect = [ll, ur]
                 new_shape = pin_layout("blockage{}".format(len(self.blockages)),
                                        rect,
-                                       lpp).inflated_pin()
+                                       lpp).inflated_pin(multiple=1)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
                 if new_shape not in self.all_pins and not self.pin_contains(new_shape):
@@ -124,18 +124,10 @@ class navigation_router(router_tech):
     def connect_nodes(self, a, b):
         """ Connect nodes 'a' and 'b' with a wire. """
 
-        # Calculate the shape of the wire
-        track_offset = vector3d(self.track_width / 2, self.track_width / 2, 0)
-        ll = a.center.min(b.center) - track_offset
-        ur = a.center.max(b.center) + track_offset
-
-        debug.info(0, "Adding wire: ({}, {})".format(ll, ur))
-
-        # Add the shape to the layout
-        self.design.add_rect(layer="text",
-                             offset=(ll[0], ll[1]),
-                             width=ur.x - ll.x,
-                             height=ur.y - ll.y)
+        if a.center.x == b.center.x and a.center.y == b.center.y:
+            self.design.add_via_center(self.layers, vector(a.center.x, b.center.y))
+        else:
+            self.design.add_path(self.get_layer(a.center.z), [a.center, b.center])
 
 
     def write_debug_gds(self, gds_name="debug_route.gds", source=None, target=None):
@@ -150,7 +142,7 @@ class navigation_router(router_tech):
         """  """
 
         # Display the inflated blockage
-        for blockage in self.nav.nav_blockages:
+        for blockage in self.nav.graph_blockages:
             self.add_object_info(blockage, "blockage")
         for node in self.nav.nodes:
             offset = (node.center.x, node.center.y)

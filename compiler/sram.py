@@ -35,34 +35,23 @@ class sram():
         if name is None:
             name = OPTS.output_name
 
-        self.name = name
-        self.config = sram_config
-        sram_config.setup_multiport_constants()
         sram_config.set_local_config(self)
-
-        self.sp_name = OPTS.output_path + self.name + ".sp"
-        self.lvs_name = OPTS.output_path + self.name + ".lvs.sp"
-        self.pex_name = OPTS.output_path + self.name + ".pex.sp"
-        self.gds_name = OPTS.output_path + self.name + ".gds"
-        self.lef_name = OPTS.output_path + self.name + ".lef"
-        self.v_name = OPTS.output_path + self.name + ".v"
 
         # reset the static duplicate name checker for unit tests
         # in case we create more than one SRAM
         from openram.base import design
         design.name_map=[]
 
-        self.create()
-
-    def create(self):
         debug.info(2, "create sram of size {0} with {1} num of words {2} banks".format(self.word_size,
                                                                                        self.num_words,
                                                                                        self.num_banks))
         start_time = datetime.datetime.now()
 
+        self.name = name
+
         from openram.modules.sram_1bank import sram_1bank as sram
 
-        self.s = sram(self.name, self.config)
+        self.s = sram(name, sram_config)
 
         self.s.create_netlist()
         if not OPTS.netlist_only:
@@ -118,12 +107,13 @@ class sram():
 
         # Save the spice file
         start_time = datetime.datetime.now()
-        debug.print_raw("SP: Writing to {0}".format(self.sp_name))
-        self.sp_write(self.sp_name)
+        spname = OPTS.output_path + self.s.name + ".sp"
+        debug.print_raw("SP: Writing to {0}".format(spname))
+        self.sp_write(spname)
 
         # Save a functional simulation file with default period
         functional(self.s,
-                   os.path.basename(self.sp_name),
+                   os.path.basename(spname),
                    cycles=200,
                    output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
@@ -131,7 +121,7 @@ class sram():
         # Save stimulus and measurement file
         start_time = datetime.datetime.now()
         debug.print_raw("DELAY: Writing stimulus...")
-        d = delay(self.s, self.get_sp_name(), ("TT", 5, 25), output_path=OPTS.output_path)
+        d = delay(self.s, spname, ("TT", 5, 25), output_path=OPTS.output_path)
         if (self.s.num_spare_rows == 0):
             probe_address = "1" * self.s.addr_size
         else:
@@ -150,11 +140,12 @@ class sram():
         if not OPTS.netlist_only:
             # Write the layout
             start_time = datetime.datetime.now()
-            debug.print_raw("GDS: Writing to {0}".format(self.gds_name))
-            self.gds_write(self.gds_name)
+            gdsname = OPTS.output_path + self.s.name + ".gds"
+            debug.print_raw("GDS: Writing to {0}".format(gdsname))
+            self.gds_write(gdsname)
             if OPTS.check_lvsdrc:
                 verify.write_drc_script(cell_name=self.s.name,
-                                        gds_name=os.path.basename(self.gds_name),
+                                        gds_name=os.path.basename(gdsname),
                                         extract=True,
                                         final_verification=True,
                                         output_path=OPTS.output_path)
@@ -162,18 +153,20 @@ class sram():
 
             # Create a LEF physical model
             start_time = datetime.datetime.now()
-            debug.print_raw("LEF: Writing to {0}".format(self.lef_name))
-            self.lef_write(self.lef_name)
+            lefname = OPTS.output_path + self.s.name + ".lef"
+            debug.print_raw("LEF: Writing to {0}".format(lefname))
+            self.lef_write(lefname)
             print_time("LEF", datetime.datetime.now(), start_time)
 
         # Save the LVS file
         start_time = datetime.datetime.now()
-        debug.print_raw("LVS: Writing to {0}".format(self.lvs_name))
-        self.sp_write(self.lvs_name, lvs=True)
+        lvsname = OPTS.output_path + self.s.name + ".lvs.sp"
+        debug.print_raw("LVS: Writing to {0}".format(lvsname))
+        self.sp_write(lvsname, lvs=True)
         if not OPTS.netlist_only and OPTS.check_lvsdrc:
             verify.write_lvs_script(cell_name=self.s.name,
-                                    gds_name=os.path.basename(self.gds_name),
-                                    sp_name=os.path.basename(self.lvs_name),
+                                    gds_name=os.path.basename(gdsname),
+                                    sp_name=os.path.basename(lvsname),
                                     final_verification=True,
                                     output_path=OPTS.output_path)
         print_time("LVS writing", datetime.datetime.now(), start_time)
@@ -182,14 +175,20 @@ class sram():
         if OPTS.use_pex:
             start_time = datetime.datetime.now()
             # Output the extracted design if requested
-            verify.run_pex(self.s.name, self.gds_name, self.sp_name, output=self.pex_name)
+            pexname = OPTS.output_path + self.s.name + ".pex.sp"
+            spname = OPTS.output_path + self.s.name + ".sp"
+            verify.run_pex(self.s.name, gdsname, spname, output=pexname)
+            sp_file = pexname
             print_time("Extraction", datetime.datetime.now(), start_time)
+        else:
+            # Use generated spice file for characterization
+            sp_file = spname
 
         # Characterize the design
         start_time = datetime.datetime.now()
         from openram.characterizer import lib
         debug.print_raw("LIB: Characterizing... ")
-        lib(out_dir=OPTS.output_path, sram=self.s, sp_file=self.get_sp_name())
+        lib(out_dir=OPTS.output_path, sram=self.s, sp_file=sp_file)
         print_time("Characterization", datetime.datetime.now(), start_time)
 
         # Write the config file

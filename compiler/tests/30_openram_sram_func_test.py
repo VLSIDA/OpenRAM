@@ -55,7 +55,7 @@ class sram_func_test(openram_test):
 
         if OPTS.tech_name:
             options += " -t {}".format(OPTS.tech_name)
-        
+
         options += " -j 2"
 
         # Always perform code coverage

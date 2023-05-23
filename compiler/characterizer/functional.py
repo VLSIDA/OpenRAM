@@ -506,8 +506,8 @@ class functional(simulation):
                 # self.stim.gen_meas_value(meas_name=measure_name,
                 #                          dout=signal_name,
                 #                          t_initial=t_initial,
-                #                          t_final=t_final)
-        
+                #                          t_final=t_final
+
         self.sf.write(".include {0}\n".format(temp_meas))
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()

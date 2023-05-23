@@ -78,12 +78,18 @@ class navigation_graph:
                 min_neighbor = None
                 for j in range(i + 1, len(self.nodes)):
                     neighbor = self.nodes[j]
+                    # Skip if not on the same layer
                     if node.center.z != neighbor.center.z:
                         continue
+                    # Calculate the distance vector and distance value
                     distance_vector = neighbor.center - node.center
                     distance = node.center.distance(neighbor.center)
+                    # Skip if not connected rectilinearly
                     if (distance_vector.x or (distance_vector.y * d.y <= 0)) and \
                        (distance_vector.y or (distance_vector.x * d.x <= 0)):
+                        continue
+                    # Skip if this connection is blocked by a blockage
+                    if is_probe_blocked(node.center, neighbor.center, self.graph_blockages):
                         continue
                     if distance < min_dist:
                         min_dist = distance
@@ -156,7 +162,7 @@ class navigation_graph:
 
             # Update neighbor scores
             for node in current.neighbors:
-                tentative_score = self.get_edge_cost(current, node) + g_scores[current.id]
+                tentative_score = current.get_edge_cost(node) + g_scores[current.id]
                 if node.id not in g_scores or tentative_score < g_scores[node.id]:
                     came_from[node.id] = current
                     g_scores[node.id] = tentative_score
@@ -165,16 +171,3 @@ class navigation_graph:
 
         # Return None if not connected
         return None
-
-
-    def get_edge_cost(self, source, target):
-        """  """
-
-        if target in source.neighbors:
-            is_vertical = source.center.x == target.center.x
-            layer_dist = source.center.distance(target.center)
-            if is_vertical != bool(source.center.z):
-                layer_dist *= 2
-            via_dist = abs(source.center.z - target.center.z) * 2
-            return layer_dist + via_dist
-        return float("inf")

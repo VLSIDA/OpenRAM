@@ -35,7 +35,8 @@ class navigation_router(router_tech):
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ Route the given pins in the given order. """
-        debug.info(1, "Running router for {}...".format(pins))
+        #debug.info(1, "Running router for {}...".format(pins))
+        self.write_debug_gds(gds_name="before.gds")
 
         # Prepare gdsMill to find pins and blockages
         self.design.gds_write(self.gds_filename)
@@ -63,7 +64,7 @@ class navigation_router(router_tech):
         # Create the path shapes on layout
         self.add_path(path)
 
-        self.write_debug_gds(source=vdd_0, target=vdd_1)
+        self.write_debug_gds(gds_name="after.gds", source=vdd_0, target=vdd_1)
 
 
     def find_pins(self, pin_name):
@@ -142,13 +143,14 @@ class navigation_router(router_tech):
         """  """
 
         # Display the inflated blockage
-        for blockage in self.nav.graph_blockages:
-            self.add_object_info(blockage, "blockage")
-        for node in self.nav.nodes:
-            offset = (node.center.x, node.center.y)
-            self.design.add_label(text="O",
-                                  layer="text",
-                                  offset=offset)
+        if "nav" in self.__dict__:
+            for blockage in self.nav.graph_blockages:
+                self.add_object_info(blockage, "blockage")
+            for node in self.nav.nodes:
+                offset = (node.center.x, node.center.y)
+                self.design.add_label(text="O",
+                                      layer="text",
+                                      offset=offset)
         if source:
             self.add_object_info(source, "source")
         if target:

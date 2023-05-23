@@ -40,9 +40,14 @@ class navigation_node:
             node.neighbors.remove(self)
 
 
-    def get_edge_cost(self, node):
-        """ Return the cost of going to node. """
+    def get_edge_cost(self, other):
+        """ Get the cost of going from this node to the other node. """
 
-        if node in self.neighbors:
-            return self.center.distance(node.center) + abs(self.center.z - node.center.z)
+        if other in self.neighbors:
+            is_vertical = self.center.x == other.center.x
+            layer_dist = self.center.distance(other.center)
+            if is_vertical != bool(self.center.z):
+                layer_dist *= 2
+            via_dist = abs(self.center.z - other.center.z) * 2
+            return layer_dist + via_dist
         return float("inf")

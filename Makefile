@@ -112,12 +112,25 @@ endif
 
 $(GF180_PDK): $(OPEN_PDKS_DIR) $(GF180_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
-	./configure --enable-gf180mcu-pdk=/pdk/gf180mcu-pdk/libraries && \
-	cd gf180mcu && \
-	make veryclean && \
-	make && \
-	make SHARED_PDKS_PATH=/pdk install"
+ifeq ($(CONDA_DIR),"")
+	@cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-gf180mcu-pdk=$(PDK_ROOT)/gf180mcu-pdk/libraries --enable-primitive-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_pr/latest \
+		--enable-sc-7t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu7t5v0/latest --enable-sc-9t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu9t5v0/latest && \
+		cd gf180mcu && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install
+else
+	@source $(TOP_DIR)/miniconda/bin/activate && \
+		cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-gf180mcu-pdk=$(PDK_ROOT)/gf180mcu-pdk/libraries --enable-primitive-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_pr/latest \
+		--enable-sc-7t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu7t5v0/latest --enable-sc-9t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu9t5v0/latest && \
+		cd gf180mcu && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install && \
+		conda deactivate
+endif
 
 $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
@@ -138,7 +151,7 @@ install: $(SRAM_LIB_DIR)
 	@make $(INSTALL_DIRS)
 .PHONY: install
 
-pdk: $(SKY130_PDK) $(GF180_PDK)
+pdk: $(GF180_PDK) $(SKY130_PDK)
 	@true
 .PHONY: pdk
 

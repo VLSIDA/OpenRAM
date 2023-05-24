@@ -188,6 +188,9 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("expand\n")
     f.write('puts "Finished expanding"\n')
     f.write("drc euclidean on\n")
+    # Workaround to address DRC CIF style not loading if 'drc check' is run before catchup
+    if OPTS.tech_name=="gf180mcu":
+      f.write("drc catchup\n")
     f.write("drc check\n")
     f.write('puts "Finished drc check"\n')
     f.write("drc catchup\n")

@@ -27,7 +27,6 @@ class hanan_router(router_tech):
         self.layers = layers
         self.design = design
         self.gds_filename = OPTS.openram_temp + "temp.gds"
-        self.track_width = 1
         self.pins = {}
         self.all_pins = set()
         self.blockages = []
@@ -123,6 +122,10 @@ class hanan_router(router_tech):
 
 
     def pin_contains(self, shape):
+        """
+        Return if this pin contains another pin or is contained by another pin.
+        """
+
         for pin in self.all_pins:
             if pin.contains(shape) or shape.contains(pin):
                 return True
@@ -130,7 +133,7 @@ class hanan_router(router_tech):
 
 
     def add_path(self, path):
-        """  """
+        """ Add the route path to the layout. """
 
         coordinates = [x.center for x in path]
         self.design.add_route(layers=self.layers,

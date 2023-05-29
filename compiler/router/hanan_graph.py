@@ -19,6 +19,7 @@ class hanan_graph:
 
     def __init__(self, router):
 
+        # This is the Hanan router that uses this graph
         self.router = router
 
 
@@ -57,21 +58,19 @@ class hanan_graph:
                 bc = shape.bc()
                 points = [vector(uc.x, uc.y - offset),
                           vector(bc.x, bc.y + offset)]
-                for p in points:
-                    x_values.append(p.x)
-                    y_values.append(p.y)
             elif aspect_ratio >= 2: # Fat pin
                 lc = shape.lc()
                 rc = shape.rc()
                 points = [vector(lc.x + offset, lc.y),
                           vector(rc.x - offset, rc.y)]
-                for p in points:
-                    x_values.append(p.x)
-                    y_values.append(p.y)
             else: # Square-like pin
                 center = shape.center()
                 x_values.append(center.x)
                 y_values.append(center.y)
+                continue
+            for p in points:
+                x_values.append(p.x)
+                y_values.append(p.y)
         # Add corners for blockages
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect

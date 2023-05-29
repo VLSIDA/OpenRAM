@@ -4,7 +4,7 @@
 # All rights reserved.
 #
 """
-Utility functions for navigation router.
+Utility functions for Hanan router.
 """
 
 def is_probe_blocked(p1, p2, blockages):

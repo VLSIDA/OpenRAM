@@ -10,12 +10,12 @@ from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from .direction import direction
-from .navigation_node import navigation_node
-from .navigation_utils import *
+from .hanan_node import hanan_node
+from .hanan_utils import *
 
 
-class navigation_graph:
-    """ This is the navigation graph created from the blockages. """
+class hanan_graph:
+    """ This is the Hanan graph created from the blockages. """
 
     def __init__(self, router):
 
@@ -30,7 +30,7 @@ class navigation_graph:
 
     def create_graph(self, layout_source, layout_target):
         """ Create the Hanan graph to run routing on later. """
-        debug.info(0, "Creating the navigation graph for source '{0}' and target'{1}'.".format(layout_source, layout_target))
+        debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(layout_source, layout_target))
 
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(layout_source)
@@ -96,7 +96,7 @@ class navigation_graph:
         # Create graph nodes from Hanan points
         self.nodes = []
         for point in hanan_points:
-            self.nodes.append(navigation_node(point))
+            self.nodes.append(hanan_node(point))
 
         # Connect closest points avoiding blockages
         for i in range(len(self.nodes)):

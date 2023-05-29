@@ -12,12 +12,12 @@ from openram.tech import GDS
 from openram.tech import layer as tech_layer
 from openram import OPTS
 from .router_tech import router_tech
-from .navigation_graph import navigation_graph
+from .hanan_graph import hanan_graph
 
 
-class navigation_router(router_tech):
+class hanan_router(router_tech):
     """
-    This is the router class that implements navigation graph routing algorithm.
+    This is the router class that implements Hanan graph routing algorithm.
     """
 
     def __init__(self, layers, design, bbox=None, pin_type=None):
@@ -51,7 +51,7 @@ class navigation_router(router_tech):
         # Find blockages
         self.find_blockages()
 
-        # Create the navigation graph
+        # Create the hanan graph
         # TODO: Remove this part later and route all pins
         vdds = list(self.pins["vdd"])
         vdds.sort()
@@ -64,11 +64,11 @@ class navigation_router(router_tech):
         next(pin_iter)
         next(pin_iter)
         vdd_1 = next(pin_iter)
-        self.nav = navigation_graph(self)
-        self.nav.create_graph(vdd_0, vdd_1)
+        self.hg = hanan_graph(self)
+        self.hg.create_graph(vdd_0, vdd_1)
 
         # Find the shortest path from source to target
-        path = self.nav.find_shortest_path(vdd_0, vdd_1)
+        path = self.hg.find_shortest_path(vdd_0, vdd_1)
 
         # Create the path shapes on layout
         if path:
@@ -151,9 +151,9 @@ class navigation_router(router_tech):
 
         # Display the inflated blockage
         if "nav" in self.__dict__:
-            for blockage in self.nav.graph_blockages:
+            for blockage in self.hg.graph_blockages:
                 self.add_object_info(blockage, "blockage")
-            for node in self.nav.nodes:
+            for node in self.hg.nodes:
                 offset = (node.center.x, node.center.y)
                 self.design.add_label(text="O",
                                       layer="text",

@@ -52,8 +52,17 @@ class navigation_router(router_tech):
         self.find_blockages()
 
         # Create the navigation graph
-        pin_iter = iter(self.pins["vdd"])
+        # TODO: Remove this part later and route all pins
+        vdds = list(self.pins["vdd"])
+        vdds.sort()
+        pin_iter = iter(vdds)
         vdd_0 = next(pin_iter)
+        next(pin_iter)
+        next(pin_iter)
+        next(pin_iter)
+        next(pin_iter)
+        next(pin_iter)
+        next(pin_iter)
         vdd_1 = next(pin_iter)
         self.nav = navigation_graph(self)
         self.nav.create_graph(vdd_0, vdd_1)
@@ -62,7 +71,11 @@ class navigation_router(router_tech):
         path = self.nav.find_shortest_path(vdd_0, vdd_1)
 
         # Create the path shapes on layout
-        self.add_path(path)
+        if path:
+            self.add_path(path)
+            debug.info(0, "Successfully routed")
+        else:
+            debug.info(0, "No path was found!")
 
         self.write_debug_gds(gds_name="after.gds", source=vdd_0, target=vdd_1)
 
@@ -101,16 +114,17 @@ class navigation_router(router_tech):
                 rect = [ll, ur]
                 new_shape = pin_layout("blockage{}".format(len(self.blockages)),
                                        rect,
-                                       lpp).inflated_pin(multiple=1)
+                                       lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
                 if new_shape not in self.all_pins and not self.pin_contains(new_shape):
+                    new_shape = new_shape.inflated_pin(multiple=1)
                     self.blockages.append(new_shape)
 
 
     def pin_contains(self, shape):
         for pin in self.all_pins:
-            if pin.contains(shape):
+            if pin.contains(shape) or shape.contains(pin):
                 return True
         return False
 
@@ -118,17 +132,10 @@ class navigation_router(router_tech):
     def add_path(self, path):
         """  """
 
-        for i in range(len(path) - 1):
-            self.connect_nodes(path[i], path[i + 1])
-
-
-    def connect_nodes(self, a, b):
-        """ Connect nodes 'a' and 'b' with a wire. """
-
-        if a.center.x == b.center.x and a.center.y == b.center.y:
-            self.design.add_via_center(self.layers, vector(a.center.x, b.center.y))
-        else:
-            self.design.add_path(self.get_layer(a.center.z), [a.center, b.center])
+        coordinates = [x.center for x in path]
+        self.design.add_route(layers=self.layers,
+                              coordinates=coordinates,
+                              layer_widths=self.layer_widths)
 
 
     def write_debug_gds(self, gds_name="debug_route.gds", source=None, target=None):

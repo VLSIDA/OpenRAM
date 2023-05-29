@@ -31,9 +31,10 @@ def is_probe_blocked(p1, p2, blockages):
 
 
 def is_in_region(point, region):
-    """"""
+    """ Return if a point is in the given region. """
 
-    if is_between(region[0].x, region[1].x, point.x) and is_between(region[0].y, region[1].y, point.y):
+    ll, ur = region.rect
+    if is_between(ll.x, ur.x, point.x) and is_between(ll.y, ur.y, point.y):
         return True
     return False
 

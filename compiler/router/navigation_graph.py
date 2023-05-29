@@ -4,7 +4,10 @@
 # All rights reserved.
 #
 import heapq
+from copy import deepcopy
 from openram import debug
+from openram.base.pin_layout import pin_layout
+from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from .direction import direction
 from .navigation_node import navigation_node
@@ -19,32 +22,57 @@ class navigation_graph:
         self.router = router
 
 
+    def is_on_same_layer(self, point, shape):
+        """ Return if the point is on the same layer as the shape. """
+
+        return point.z == self.router.get_zindex(shape.lpp)
+
+
     def create_graph(self, layout_source, layout_target):
-        """  """
+        """ Create the Hanan graph to run routing on later. """
         debug.info(0, "Creating the navigation graph for source '{0}' and target'{1}'.".format(layout_source, layout_target))
 
         # Find the region to be routed and only include objects inside that region
-        s_ll, s_ur = layout_source.rect
-        t_ll, t_ur = layout_target.rect
-        region = (s_ll.min(t_ll), s_ur.min(t_ur))
-        debug.info(0, "Routing region is ll: '{0}' ur: '{1}'".format(region[0], region[1]))
+        region = deepcopy(layout_source)
+        region.bbox([layout_source, layout_target])
+        debug.info(0, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
         for blockage in self.router.blockages:
-            ll, ur = blockage.rect
-            if is_in_region(ll, region) or is_in_region(ur, region):
+            if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
         debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
-        # Obtain the x and y points for Hanan grid
+        # Obtain the x and y values for Hanan grid
         x_values = []
         y_values = []
         offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
+        # Add the source and target pins first
         for shape in [layout_source, layout_target]:
-            center = shape.center()
-            x_values.append(center.x)
-            y_values.append(center.y)
+            aspect_ratio = shape.width() / shape.height()
+            # If the pin is tall or fat, add two points on the ends
+            if aspect_ratio <= 0.5: # Tall pin
+                uc = shape.uc()
+                bc = shape.bc()
+                points = [vector(uc.x, uc.y - offset),
+                          vector(bc.x, bc.y + offset)]
+                for p in points:
+                    x_values.append(p.x)
+                    y_values.append(p.y)
+            elif aspect_ratio >= 2: # Fat pin
+                lc = shape.lc()
+                rc = shape.rc()
+                points = [vector(lc.x + offset, lc.y),
+                          vector(rc.x - offset, rc.y)]
+                for p in points:
+                    x_values.append(p.x)
+                    y_values.append(p.y)
+            else: # Square-like pin
+                center = shape.center()
+                x_values.append(center.x)
+                y_values.append(center.y)
+        # Add corners for blockages
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
             x_values.extend([ll.x - offset, ur.x + offset])
@@ -61,7 +89,7 @@ class navigation_graph:
         for point in hanan_points.copy():
             for blockage in self.graph_blockages:
                 ll, ur = blockage.rect
-                if self.router.get_zindex(blockage.lpp) == point.z and is_in_region(point, blockage.rect):
+                if self.is_on_same_layer(point, blockage) and is_in_region(point, blockage):
                     hanan_points.remove(point)
                     break
 
@@ -116,30 +144,37 @@ class navigation_graph:
         """
 
         # Find source and target nodes
-        source_center = source.center()
-        source_center = vector3d(source_center.x, source_center.y, self.router.get_zindex(source.lpp))
-        target_center = target.center()
-        target_center = vector3d(target_center.x, target_center.y, self.router.get_zindex(target.lpp))
+        sources = []
         for node in self.nodes:
-            if node.center == source_center:
-                source = node
-            if node.center == target_center:
-                target = node
+            if self.is_on_same_layer(node.center, source) and is_in_region(node.center, source):
+                sources.append(node)
+        targets = []
+        for node in self.nodes:
+            if self.is_on_same_layer(node.center, target) and is_in_region(node.center, target):
+                targets.append(node)
 
         # Heuristic function to calculate the scores
-        h = lambda node: target.center.distance(node.center) + abs(target.center.z - node.center.z)
+        def h(node):
+            """ Return the estimated distance to closest target. """
+            min_dist = float("inf")
+            for t in targets:
+                dist = t.center.distance(node.center) + abs(t.center.z - node.center.z)
+                if dist < min_dist:
+                    min_dist = dist
+            return min_dist
 
+        # Initialize data structures to be used for A* search
         queue = []
         close_set = set()
         came_from = {}
         g_scores = {}
         f_scores = {}
 
-        # Initialize score values for the source node
-        g_scores[source.id] = 0
-        f_scores[source.id] = h(source)
-
-        heapq.heappush(queue, (f_scores[source.id], source.id, source))
+        # Initialize score values for the source nodes
+        for node in sources:
+            g_scores[node.id] = 0
+            f_scores[node.id] = h(node)
+            heapq.heappush(queue, (f_scores[node.id], node.id, node))
 
         # Run the A* algorithm
         while len(queue) > 0:
@@ -152,7 +187,7 @@ class navigation_graph:
             close_set.add(current)
 
             # Check if we've reached the target
-            if current == target:
+            if current in targets:
                 path = []
                 while current.id in came_from:
                     path.append(current)

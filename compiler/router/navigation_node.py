@@ -24,6 +24,12 @@ class navigation_node:
         self.neighbors = []
 
 
+    def __lt__(self, other):
+        """  """
+
+        return self.center < other.center
+
+
     def add_neighbor(self, node):
         """ Connect two nodes. """
 

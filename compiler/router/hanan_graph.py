@@ -104,7 +104,8 @@ class hanan_graph:
                 self.nodes.append(above_node)
 
         # Remove blocked points
-        for node in self.nodes.copy():
+        for i in range(len(self.nodes) - 1, -1, -1):
+            node = self.nodes[i]
             point = node.center
             for blockage in self.graph_blockages:
                 if self.is_on_same_layer(point, blockage) and is_in_region(point, blockage):

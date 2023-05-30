@@ -24,12 +24,6 @@ class hanan_node:
         self.neighbors = []
 
 
-    def __lt__(self, other):
-        """ Override the default less than behavior. """
-
-        return self.center < other.center
-
-
     def add_neighbor(self, other):
         """ Connect two nodes. """
 
@@ -44,6 +38,14 @@ class hanan_node:
         if other in self.neighbors:
             self.neighbors.remove(other)
             other.neighbors.remove(self)
+
+
+    def remove_all_neighbors(self):
+        """ Disconnect all current neighbors. """
+
+        for neighbor in self.neighbors:
+            self.neighbors.remove(neighbor)
+            neighbor.neighbors.remove(self)
 
 
     def get_edge_cost(self, other):

@@ -46,8 +46,8 @@ class hanan_graph:
         debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
         # Obtain the x and y values for Hanan grid
-        x_values = []
-        y_values = []
+        x_values = set()
+        y_values = set()
         offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
         # Add the source and target pins first
         for shape in [layout_source, layout_target]:
@@ -65,74 +65,52 @@ class hanan_graph:
                           vector(rc.x - offset, rc.y)]
             else: # Square-like pin
                 center = shape.center()
-                x_values.append(center.x)
-                y_values.append(center.y)
+                x_values.add(center.x)
+                y_values.add(center.y)
                 continue
             for p in points:
-                x_values.append(p.x)
-                y_values.append(p.y)
+                x_values.add(p.x)
+                y_values.add(p.y)
         # Add corners for blockages
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
-            x_values.extend([ll.x - offset, ur.x + offset])
-            y_values.extend([ll.y - offset, ur.y + offset])
+            x_values.update([ll.x - offset, ur.x + offset])
+            y_values.update([ll.y - offset, ur.y + offset])
+
+        # Sort x and y values
+        x_values = list(x_values)
+        y_values = list(y_values)
+        x_values.sort()
+        y_values.sort()
 
         # Generate Hanan points here (cartesian product of all x and y values)
-        hanan_points = []
+        y_len = len(y_values)
+        self.nodes = []
         for x in x_values:
             for y in y_values:
-                hanan_points.append(vector3d(x, y, 0))
-                hanan_points.append(vector3d(x, y, 1))
+                below_node = hanan_node([x, y, 0])
+                above_node = hanan_node([x, y, 1])
+                # Connect these two neighbors
+                below_node.add_neighbor(above_node)
+                # Connect down and left nodes
+                count = len(self.nodes) // 2
+                if count % y_len: # Down
+                    below_node.add_neighbor(self.nodes[-2])
+                    above_node.add_neighbor(self.nodes[-1])
+                if count >= y_len: # Left
+                    below_node.add_neighbor(self.nodes[-(y_len * 2)])
+                    above_node.add_neighbor(self.nodes[-(y_len * 2) + 1])
+                self.nodes.append(below_node)
+                self.nodes.append(above_node)
 
         # Remove blocked points
-        for point in hanan_points.copy():
+        for node in self.nodes.copy():
+            point = node.center
             for blockage in self.graph_blockages:
-                ll, ur = blockage.rect
                 if self.is_on_same_layer(point, blockage) and is_in_region(point, blockage):
-                    hanan_points.remove(point)
+                    node.remove_all_neighbors()
+                    self.nodes.remove(node)
                     break
-
-        # Create graph nodes from Hanan points
-        self.nodes = []
-        for point in hanan_points:
-            self.nodes.append(hanan_node(point))
-
-        # Connect closest points avoiding blockages
-        for i in range(len(self.nodes)):
-            node = self.nodes[i]
-            for d in direction.cardinal_offsets():
-                min_dist = float("inf")
-                min_neighbor = None
-                for j in range(i + 1, len(self.nodes)):
-                    neighbor = self.nodes[j]
-                    # Skip if not on the same layer
-                    if node.center.z != neighbor.center.z:
-                        continue
-                    # Calculate the distance vector and distance value
-                    distance_vector = neighbor.center - node.center
-                    distance = node.center.distance(neighbor.center)
-                    # Skip if not connected rectilinearly
-                    if (distance_vector.x or (distance_vector.y * d.y <= 0)) and \
-                       (distance_vector.y or (distance_vector.x * d.x <= 0)):
-                        continue
-                    # Skip if this connection is blocked by a blockage
-                    if is_probe_blocked(node.center, neighbor.center, self.graph_blockages):
-                        continue
-                    if distance < min_dist:
-                        min_dist = distance
-                        min_neighbor = neighbor
-                if min_neighbor:
-                    node.add_neighbor(min_neighbor)
-
-        # Connect nodes that are on top of each other
-        for i in range(len(self.nodes)):
-            node = self.nodes[i]
-            for j in range(i + 1, len(self.nodes)):
-                neighbor = self.nodes[j]
-                if node.center.x == neighbor.center.x and \
-                   node.center.y == neighbor.center.y and \
-                   node.center.z != neighbor.center.z:
-                    node.add_neighbor(neighbor)
         debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
@@ -144,12 +122,11 @@ class hanan_graph:
 
         # Find source and target nodes
         sources = []
+        targets = []
         for node in self.nodes:
             if self.is_on_same_layer(node.center, source) and is_in_region(node.center, source):
                 sources.append(node)
-        targets = []
-        for node in self.nodes:
-            if self.is_on_same_layer(node.center, target) and is_in_region(node.center, target):
+            elif self.is_on_same_layer(node.center, target) and is_in_region(node.center, target):
                 targets.append(node)
 
         # Heuristic function to calculate the scores

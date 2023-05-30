@@ -29,13 +29,13 @@ class hanan_graph:
         return point.z == self.router.get_zindex(shape.lpp)
 
 
-    def create_graph(self, layout_source, layout_target):
+    def create_graph(self, source, target):
         """ Create the Hanan graph to run routing on later. """
-        debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(layout_source, layout_target))
+        debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(source, target))
 
         # Find the region to be routed and only include objects inside that region
-        region = deepcopy(layout_source)
-        region.bbox([layout_source, layout_target])
+        region = deepcopy(source)
+        region.bbox([source, target])
         debug.info(0, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area
@@ -45,12 +45,26 @@ class hanan_graph:
                 self.graph_blockages.append(blockage)
         debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
+        # Create the Hanan graph
+        x_values, y_values = self.generate_cartesian_values(source, target)
+        self.generate_hanan_nodes(x_values, y_values)
+        self.remove_blocked_nodes()
+        debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
+
+
+    def generate_cartesian_values(self, source, target):
+        """
+        Generate x and y values from all the corners of the shapes in this
+        region.
+        """
+
         # Obtain the x and y values for Hanan grid
         x_values = set()
         y_values = set()
         offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
+
         # Add the source and target pins first
-        for shape in [layout_source, layout_target]:
+        for shape in [source, target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends
             if aspect_ratio <= 0.5: # Tall pin
@@ -71,6 +85,7 @@ class hanan_graph:
             for p in points:
                 x_values.add(p.x)
                 y_values.add(p.y)
+
         # Add corners for blockages
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
@@ -82,6 +97,15 @@ class hanan_graph:
         y_values = list(y_values)
         x_values.sort()
         y_values.sort()
+
+        return x_values, y_values
+
+
+    def generate_hanan_nodes(self, x_values, y_values):
+        """
+        Generate all Hanan nodes using the cartesian values and connect the
+        orthogonal neighbors.
+        """
 
         # Generate Hanan points here (cartesian product of all x and y values)
         y_len = len(y_values)
@@ -103,6 +127,10 @@ class hanan_graph:
                 self.nodes.append(below_node)
                 self.nodes.append(above_node)
 
+
+    def remove_blocked_nodes(self):
+        """ Remove the Hanan nodes that are blocked by a blockage. """
+
         # Remove blocked points
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]
@@ -112,7 +140,6 @@ class hanan_graph:
                     node.remove_all_neighbors()
                     self.nodes.remove(node)
                     break
-        debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
     def find_shortest_path(self, source, target):

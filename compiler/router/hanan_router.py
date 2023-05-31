@@ -116,18 +116,23 @@ class hanan_router(router_tech):
                                        lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
-                if new_shape not in self.all_pins and not self.pin_contains(new_shape):
+                if new_shape not in self.all_pins and not new_shape.contained_by_any(self.all_pins) and not self.blockage_contains(new_shape):
                     new_shape = new_shape.inflated_pin(multiple=1)
+                    # Remove blockages contained by this new blockage
+                    for i in range(len(self.blockages) - 1, -1, -1):
+                        blockage = self.blockages[i]
+                        if new_shape.contains(blockage):
+                            self.blockages.remove(blockage)
                     self.blockages.append(new_shape)
 
 
-    def pin_contains(self, shape):
+    def blockage_contains(self, shape):
         """
-        Return if this pin contains another pin or is contained by another pin.
+        Return if this shape is contained by a blockage.
         """
 
-        for pin in self.all_pins:
-            if pin.contains(shape) or shape.contains(pin):
+        for blockage in self.blockages:
+            if blockage.contains(shape):
                 return True
         return False
 
@@ -153,12 +158,12 @@ class hanan_router(router_tech):
         """  """
 
         # Display the inflated blockage
-        if "nav" in self.__dict__:
+        if "hg" in self.__dict__:
             for blockage in self.hg.graph_blockages:
-                self.add_object_info(blockage, "blockage")
+                self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))
             for node in self.hg.nodes:
                 offset = (node.center.x, node.center.y)
-                self.design.add_label(text="O",
+                self.design.add_label(text="n{}".format(node.center.z),
                                       layer="text",
                                       offset=offset)
         if source:

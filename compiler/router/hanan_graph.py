@@ -29,6 +29,32 @@ class hanan_graph:
         return point.z == self.router.get_zindex(shape.lpp)
 
 
+    def is_probe_blocked(self, p1, p2):
+        """
+        Return if a probe sent from p1 to p2 encounters a blockage.
+        The probe must be sent vertically or horizontally.
+        This function assumes that p1 and p2 are on the same layer.
+        This function assumes that blockages are rectangular.
+        """
+
+        # Check if any blockage blocks this probe
+        for blockage in self.graph_blockages:
+            if not self.is_on_same_layer(p1, blockage):
+                continue
+            ll, ur = blockage.rect
+            right_x = ur[0]
+            upper_y = ur[1]
+            left_x = ll[0]
+            lower_y = ll[1]
+            # Check if blocked vertically
+            if is_between(left_x, right_x, p1.x) and (is_between(p1.y, p2.y, upper_y) or is_between(p1.y, p2.y, lower_y)):
+                return True
+            # Check if blocked horizontally
+            if is_between(upper_y, lower_y, p1.y) and (is_between(p1.x, p2.x, left_x) or is_between(p1.x, p2.x, right_x)):
+                return True
+        return False
+
+
     def create_graph(self, source, target):
         """ Create the Hanan graph to run routing on later. """
         debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(source, target))
@@ -114,16 +140,31 @@ class hanan_graph:
             for y in y_values:
                 below_node = hanan_node([x, y, 0])
                 above_node = hanan_node([x, y, 1])
+
                 # Connect these two neighbors
                 below_node.add_neighbor(above_node)
-                # Connect down and left nodes
+
+                # Find potential neighbor nodes
+                belows = []
+                aboves = []
                 count = len(self.nodes) // 2
                 if count % y_len: # Down
-                    below_node.add_neighbor(self.nodes[-2])
-                    above_node.add_neighbor(self.nodes[-1])
+                    belows.append(-2)
+                    aboves.append(-1)
                 if count >= y_len: # Left
-                    below_node.add_neighbor(self.nodes[-(y_len * 2)])
-                    above_node.add_neighbor(self.nodes[-(y_len * 2) + 1])
+                    belows.append(-(y_len * 2))
+                    aboves.append(-(y_len * 2) + 1)
+
+                # Add these connections if not blocked by a blockage
+                for i in belows:
+                    node = self.nodes[i]
+                    if not self.is_probe_blocked(below_node.center, node.center):
+                        below_node.add_neighbor(node)
+                for i in aboves:
+                    node = self.nodes[i]
+                    if not self.is_probe_blocked(above_node.center, node.center):
+                        above_node.add_neighbor(node)
+
                 self.nodes.append(below_node)
                 self.nodes.append(above_node)
 
@@ -136,6 +177,7 @@ class hanan_graph:
             node = self.nodes[i]
             point = node.center
             for blockage in self.graph_blockages:
+                # Remove if the node is inside a blockage
                 if self.is_on_same_layer(point, blockage) and is_in_region(point, blockage):
                     node.remove_all_neighbors()
                     self.nodes.remove(node)

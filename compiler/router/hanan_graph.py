@@ -11,7 +11,7 @@ from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from .direction import direction
 from .hanan_node import hanan_node
-from .hanan_utils import *
+from .hanan_probe import hanan_probe
 
 
 class hanan_graph:
@@ -21,12 +21,19 @@ class hanan_graph:
 
         # This is the Hanan router that uses this graph
         self.router = router
+        self.source_nodes = []
+        self.target_nodes = []
 
 
-    def is_on_same_layer(self, point, shape):
-        """ Return if the point is on the same layer as the shape. """
+    def inside_shape(self, point, shape):
+        """ Return if the point is inside the shape. """
 
-        return point.z == self.router.get_zindex(shape.lpp)
+        # Check if they're on the same layer
+        if point.z != self.router.get_zindex(shape.lpp):
+            return False
+        # Check if the point is inside the shape
+        ll, ur = shape.rect
+        return shape.on_segment(ll, point, ur)
 
 
     def is_probe_blocked(self, p1, p2):
@@ -34,23 +41,13 @@ class hanan_graph:
         Return if a probe sent from p1 to p2 encounters a blockage.
         The probe must be sent vertically or horizontally.
         This function assumes that p1 and p2 are on the same layer.
-        This function assumes that blockages are rectangular.
         """
 
+        probe_shape = hanan_probe(p1, p2, self.router.vert_lpp if p1.z else self.router.horiz_lpp)
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
-            if not self.is_on_same_layer(p1, blockage):
-                continue
-            ll, ur = blockage.rect
-            right_x = ur[0]
-            upper_y = ur[1]
-            left_x = ll[0]
-            lower_y = ll[1]
-            # Check if blocked vertically
-            if is_between(left_x, right_x, p1.x) and (is_between(p1.y, p2.y, upper_y) or is_between(p1.y, p2.y, lower_y)):
-                return True
-            # Check if blocked horizontally
-            if is_between(upper_y, lower_y, p1.y) and (is_between(p1.x, p2.x, left_x) or is_between(p1.x, p2.x, right_x)):
+            # Check if two shapes overlap
+            if blockage.overlaps(probe_shape):
                 return True
         return False
 
@@ -58,6 +55,9 @@ class hanan_graph:
     def create_graph(self, source, target):
         """ Create the Hanan graph to run routing on later. """
         debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(source, target))
+
+        self.source = source
+        self.target = target
 
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(source)
@@ -72,13 +72,13 @@ class hanan_graph:
         debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
         # Create the Hanan graph
-        x_values, y_values = self.generate_cartesian_values(source, target)
+        x_values, y_values = self.generate_cartesian_values()
         self.generate_hanan_nodes(x_values, y_values)
         self.remove_blocked_nodes()
         debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
-    def generate_cartesian_values(self, source, target):
+    def generate_cartesian_values(self):
         """
         Generate x and y values from all the corners of the shapes in this
         region.
@@ -90,7 +90,7 @@ class hanan_graph:
         offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
 
         # Add the source and target pins first
-        for shape in [source, target]:
+        for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends
             if aspect_ratio <= 0.5: # Tall pin
@@ -165,6 +165,13 @@ class hanan_graph:
                     if not self.is_probe_blocked(above_node.center, node.center):
                         above_node.add_neighbor(node)
 
+                # Save source and target nodes
+                for node in [below_node, above_node]:
+                    if self.inside_shape(node.center, self.source):
+                        self.source_nodes.append(node)
+                    elif self.inside_shape(node.center, self.target):
+                        self.target_nodes.append(node)
+
                 self.nodes.append(below_node)
                 self.nodes.append(above_node)
 
@@ -178,32 +185,23 @@ class hanan_graph:
             point = node.center
             for blockage in self.graph_blockages:
                 # Remove if the node is inside a blockage
-                if self.is_on_same_layer(point, blockage) and is_in_region(point, blockage):
+                if self.inside_shape(point, blockage):
                     node.remove_all_neighbors()
                     self.nodes.remove(node)
                     break
 
 
-    def find_shortest_path(self, source, target):
+    def find_shortest_path(self):
         """
         Find the shortest path from the source node to target node using the
         A* algorithm.
         """
 
-        # Find source and target nodes
-        sources = []
-        targets = []
-        for node in self.nodes:
-            if self.is_on_same_layer(node.center, source) and is_in_region(node.center, source):
-                sources.append(node)
-            elif self.is_on_same_layer(node.center, target) and is_in_region(node.center, target):
-                targets.append(node)
-
         # Heuristic function to calculate the scores
         def h(node):
-            """ Return the estimated distance to closest target. """
+            """ Return the estimated distance to the closest target. """
             min_dist = float("inf")
-            for t in targets:
+            for t in self.target_nodes:
                 dist = t.center.distance(node.center) + abs(t.center.z - node.center.z)
                 if dist < min_dist:
                     min_dist = dist
@@ -217,7 +215,7 @@ class hanan_graph:
         f_scores = {}
 
         # Initialize score values for the source nodes
-        for node in sources:
+        for node in self.source_nodes:
             g_scores[node.id] = 0
             f_scores[node.id] = h(node)
             heapq.heappush(queue, (f_scores[node.id], node.id, node))
@@ -227,13 +225,13 @@ class hanan_graph:
             # Get the closest node from the queue
             current = heapq.heappop(queue)[2]
 
-            # Return if already discovered
+            # Continue if already discovered
             if current in close_set:
                 continue
             close_set.add(current)
 
             # Check if we've reached the target
-            if current in targets:
+            if current in self.target_nodes:
                 path = []
                 while current.id in came_from:
                     path.append(current)

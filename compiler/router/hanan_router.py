@@ -67,7 +67,7 @@ class hanan_router(router_tech):
         self.hg.create_graph(vdd_0, vdd_1)
 
         # Find the shortest path from source to target
-        path = self.hg.find_shortest_path(vdd_0, vdd_1)
+        path = self.hg.find_shortest_path()
 
         # Create the path shapes on layout
         if path:

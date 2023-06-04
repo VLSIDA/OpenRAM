@@ -6,7 +6,6 @@
 import heapq
 from copy import deepcopy
 from openram import debug
-from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from .direction import direction
@@ -61,12 +60,16 @@ class hanan_graph:
 
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(source)
-        region.bbox([source, target])
+        region.bbox([target])
+        region = region.inflated_pin(multiple=1)
         debug.info(0, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
         for blockage in self.router.blockages:
+            # Set the region's lpp to current blockage's lpp so that the
+            # overlaps method works
+            region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
         debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
@@ -80,16 +83,15 @@ class hanan_graph:
 
     def generate_cartesian_values(self):
         """
-        Generate x and y values from all the corners of the shapes in this
-        region.
+        Generate x and y values from all the corners of the shapes in the
+        routing region.
         """
 
-        # Obtain the x and y values for Hanan grid
         x_values = set()
         y_values = set()
         offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
 
-        # Add the source and target pins first
+        # Add the source and target values
         for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends
@@ -133,8 +135,8 @@ class hanan_graph:
         orthogonal neighbors.
         """
 
-        # Generate Hanan points here (cartesian product of all x and y values)
         y_len = len(y_values)
+        left_offset = -(y_len * 2)
         self.nodes = []
         for x in x_values:
             for y in y_values:
@@ -144,7 +146,7 @@ class hanan_graph:
                 # Connect these two neighbors
                 below_node.add_neighbor(above_node)
 
-                # Find potential neighbor nodes
+                # Find potential orthogonal neighbor nodes
                 belows = []
                 aboves = []
                 count = len(self.nodes) // 2
@@ -152,8 +154,8 @@ class hanan_graph:
                     belows.append(-2)
                     aboves.append(-1)
                 if count >= y_len: # Left
-                    belows.append(-(y_len * 2))
-                    aboves.append(-(y_len * 2) + 1)
+                    belows.append(left_offset)
+                    aboves.append(left_offset + 1)
 
                 # Add these connections if not blocked by a blockage
                 for i in belows:
@@ -179,7 +181,6 @@ class hanan_graph:
     def remove_blocked_nodes(self):
         """ Remove the Hanan nodes that are blocked by a blockage. """
 
-        # Remove blocked points
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]
             point = node.center
@@ -225,7 +226,7 @@ class hanan_graph:
             # Get the closest node from the queue
             current = heapq.heappop(queue)[2]
 
-            # Continue if already discovered
+            # Skip this node if already discovered
             if current in close_set:
                 continue
             close_set.add(current)

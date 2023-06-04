@@ -4,7 +4,6 @@
 # All rights reserved.
 #
 from openram import debug
-from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.gdsMill import gdsMill
@@ -13,6 +12,7 @@ from openram.tech import layer as tech_layer
 from openram import OPTS
 from .router_tech import router_tech
 from .hanan_graph import hanan_graph
+from .hanan_shape import hanan_shape
 
 
 class hanan_router(router_tech):
@@ -92,7 +92,7 @@ class hanan_router(router_tech):
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
-            pin = pin_layout(pin_name, rect, layer)
+            pin = hanan_shape(pin_name, rect, layer)
             pin_set.add(pin)
         # Add these pins to the 'pins' dict
         self.pins[pin_name] = pin_set
@@ -111,7 +111,7 @@ class hanan_router(router_tech):
                 ll = vector(boundary[0], boundary[1])
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
-                new_shape = pin_layout("blockage{}".format(len(self.blockages)),
+                new_shape = hanan_shape("blockage{}".format(len(self.blockages)),
                                        rect,
                                        lpp)
                 # If there is a rectangle that is the same in the pins,
@@ -121,7 +121,14 @@ class hanan_router(router_tech):
                     # Remove blockages contained by this new blockage
                     for i in range(len(self.blockages) - 1, -1, -1):
                         blockage = self.blockages[i]
+                        # Remove the previous blockage contained by this new
+                        # blockage
                         if new_shape.contains(blockage):
+                            self.blockages.remove(blockage)
+                        # Merge the previous blockage into this new blockage if
+                        # they are aligning
+                        elif new_shape.aligns(blockage):
+                            new_shape.bbox([blockage])
                             self.blockages.remove(blockage)
                     self.blockages.append(new_shape)
 

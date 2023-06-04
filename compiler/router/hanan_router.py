@@ -53,16 +53,22 @@ class hanan_router(router_tech):
         # Create the hanan graph
         # TODO: Remove this part later and route all pins
         vdds = list(self.pins["vdd"])
-        vdds.sort()
-        pin_iter = iter(vdds)
-        vdd_0 = next(pin_iter)
-        next(pin_iter)
-        next(pin_iter)
-        next(pin_iter)
-        next(pin_iter)
-        next(pin_iter)
-        next(pin_iter)
-        vdd_1 = next(pin_iter)
+        for pin in vdds:
+            ll, ur = pin.rect
+            if ll.x == -11 and ll.y == -8.055:
+                vdd_0 = pin
+            if ll.x == 10.557500000000001 and ll.y == 11.22:
+                vdd_1 = pin
+        #vdds.sort()
+        #pin_iter = iter(vdds)
+        #vdd_0 = next(pin_iter)
+        #next(pin_iter)
+        #next(pin_iter)
+        #next(pin_iter)
+        #next(pin_iter)
+        #next(pin_iter)
+        #next(pin_iter)
+        #vdd_1 = next(pin_iter)
         self.hg = hanan_graph(self)
         self.hg.create_graph(vdd_0, vdd_1)
 
@@ -147,10 +153,43 @@ class hanan_router(router_tech):
     def add_path(self, path):
         """ Add the route path to the layout. """
 
-        coordinates = [x.center for x in path]
+        coordinates = self.prepare_path(path)
         self.design.add_route(layers=self.layers,
                               coordinates=coordinates,
                               layer_widths=self.layer_widths)
+
+
+    def prepare_path(self, path):
+        """
+        Remove unnecessary nodes on the path to reduce the number of shapes in
+        the layout.
+        """
+
+        def get_direction(a, b):
+            """ Return the direction of path from a to b. """
+            horiz = a.center.x == b.center.x
+            vert = a.center.y == b.center.y
+            return (horiz, vert)
+
+        last_added = path[0]
+        coordinates = [path[0].center]
+        direction = get_direction(path[0], path[1])
+        candidate = path[1]
+        for i in range(2, len(path)):
+            node = path[i]
+            current_direction = get_direction(candidate, node)
+            # Skip the previous candidate since the current node follows the
+            # same direction
+            if direction == current_direction:
+                candidate = node
+            else:
+                last_added = candidate
+                coordinates.append(candidate.center)
+                direction = current_direction
+                candidate = node
+        if candidate.center not in coordinates:
+            coordinates.append(candidate.center)
+        return coordinates
 
 
     def write_debug_gds(self, gds_name="debug_route.gds", source=None, target=None):

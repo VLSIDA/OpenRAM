@@ -43,6 +43,7 @@ tech_modules["bitcell_2port"] = "bitcell_2port"
 
 tech_modules["bitcell_array"] = ["sky130_bitcell_array", "bitcell_array"]
 tech_modules["replica_bitcell_array"] = ["sky130_replica_bitcell_array", "replica_bitcell_array"]
+tech_modules["capped_replica_bitcell_array"] = ["sky130_capped_replica_bitcell_array", "capped_replica_bitcell_array"]
 tech_modules["dummy_array"] = ["sky130_dummy_array", "dummy_array"]
 
 tech_modules["replica_column"] = ["sky130_replica_column", "replica_column"]

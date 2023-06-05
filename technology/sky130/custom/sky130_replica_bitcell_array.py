@@ -9,11 +9,11 @@ from math import sqrt
 from openram import debug
 from openram.base import vector
 from openram.base import round_to_grid
-from openram.modules import replica_bitcell_array
 from openram.tech import drc
 from openram.tech import array_row_multiple
 from openram.tech import array_col_multiple
 from openram import OPTS
+from .replica_bitcell_array import replica_bitcell_array
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
 
 

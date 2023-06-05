@@ -131,14 +131,16 @@ class port_address(design):
                                       offset=driver_in_pos)
 
         # Route the RBL from the enable input
+        en_pin = self.wordline_driver_array_inst.get_pin("en")
+        if self.port == 0:
+            en_pos = en_pin.bc()
+        else:
+            en_pos = en_pin.uc()
+
         if self.has_rbl:
-            en_pin = self.wordline_driver_array_inst.get_pin("en")
-            if self.port == 0:
-                en_pos = en_pin.bc()
-            else:
-                en_pos = en_pin.uc()
             rbl_in_pin = self.rbl_driver_inst.get_pin("A")
             rbl_in_pos = rbl_in_pin.center()
+            wl_en_offset = rbl_in_pos
 
             self.add_via_stack_center(from_layer=rbl_in_pin.layer,
                                       to_layer=en_pin.layer,
@@ -147,9 +149,12 @@ class port_address(design):
                           start=rbl_in_pos,
                           end=en_pos,
                           first_direction="V")
-            self.add_layout_pin_rect_center(text="wl_en",
-                                            layer=en_pin.layer,
-                                            offset=rbl_in_pos)
+        else:
+            wl_en_offset = en_pos
+
+        self.add_layout_pin_rect_center(text="wl_en",
+                                        layer=en_pin.layer,
+                                        offset=wl_en_offset)
 
     def add_modules(self):
 

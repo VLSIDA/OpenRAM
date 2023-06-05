@@ -66,7 +66,7 @@ class hanan_graph:
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
-        for blockage in self.router.blockages:
+        for blockage in self.get_blockages(source.name):
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
@@ -79,6 +79,23 @@ class hanan_graph:
         self.generate_hanan_nodes(x_values, y_values)
         self.remove_blocked_nodes()
         debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
+
+
+    def get_blockages(self, pin_name):
+        """
+        Return all blockages for this routing region, including pins with
+        different name.
+        """
+
+        # Create a copy of blockages
+        blockages = self.router.blockages[:]
+        # Create a copy of pins with different name than the routed pins
+        for name, pins, in self.router.pins.items():
+            if name == pin_name:
+                continue
+            for pin in pins:
+                blockages.append(deepcopy(pin).inflated_pin(multiple=1))
+        return blockages
 
 
     def generate_cartesian_values(self):

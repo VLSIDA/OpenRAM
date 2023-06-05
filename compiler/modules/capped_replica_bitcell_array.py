@@ -33,7 +33,10 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
-        self.rbl = rbl
+        if rbl is not None:
+            self.rbl = rbl
+        else:
+            self.rbl = [0] * len(self.all_ports)
         # This specifies which RBL to put on the left or right by port number
         # This could be an empty list
         if left_rbl is not None:
@@ -64,28 +67,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.create_instances()
 
     def add_modules(self):
-        """  Array and dummy/replica columns
-
-        d or D = dummy cell (caps to distinguish grouping)
-        r or R = replica cell (caps to distinguish grouping)
-        b or B = bitcell
-         replica columns 1
-         v              v
-        bdDDDDDDDDDDDDDDdb <- Dummy row
-        bdDDDDDDDDDDDDDDrb <- Dummy row
-        br--------------rb
-        br|   Array    |rb
-        br| row x col  |rb
-        br--------------rb
-        brDDDDDDDDDDDDDDdb <- Dummy row
-        bdDDDDDDDDDDDDDDdb <- Dummy row
-
-          ^^^^^^^^^^^^^^^
-          dummy rows cols x 1
-
-        ^ dummy columns  ^
-          1 x (rows + 4)
-        """
+        """  Array and cap rows/columns """
 
         self.replica_bitcell_array = factory.create(module_type="replica_bitcell_array",
                                                     cols=self.column_size,
@@ -132,7 +114,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                             # + right replica column(s)
                                             column_offset=1 + len(self.left_rbl) + self.column_size + self.rbl[0],
                                             rows=self.row_size + self.extra_rows,
-                                            mirror=(self.rbl[0] + 1) %2)
+                                            mirror=(self.rbl[0] + 1) % 2)
 
     def add_pins(self):
 
@@ -219,6 +201,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # row-based or column based power and ground lines.
         self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
+        # FIXME: custom sky130 replica module has a better version of this offset
         self.unused_offset = vector(0.25, 0.25)
 
         # This is a bitcell x bitcell offset to scale

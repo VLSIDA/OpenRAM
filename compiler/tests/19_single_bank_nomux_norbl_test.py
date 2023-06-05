@@ -11,24 +11,36 @@ import unittest
 from testutils import *
 
 import openram
-from openram.sram_factory import factory
 from openram import debug
+from openram.sram_factory import factory
 from openram import OPTS
 
 
-# @unittest.skip("SKIPPING 05_global_bitcell_array_test")
-class global_bitcell_array_test(openram_test):
+class single_bank_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
+        from openram import sram_config
 
-        # debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
-        # a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
-        # self.local_check(a)
+        if OPTS.tech_name == "sky130":
+            num_spare_rows = 1
+            num_spare_cols = 1
+        else:
+            num_spare_rows = 0
+            num_spare_cols = 0
 
-        debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
-        a = factory.create(module_type="global_bitcell_array", cols=[10, 6], rows=4)
+        c = sram_config(word_size=4,
+                        num_words=16,
+                        num_spare_cols=num_spare_cols,
+                        num_spare_rows=num_spare_rows)
+
+        c.words_per_row=1
+        OPTS.control_logic = "control_logic_delay"
+        factory.reset()
+        c.recompute_sizes()
+        debug.info(1, "No column mux")
+        a = factory.create("bank", sram_config=c)
         self.local_check(a)
 
         openram.end_openram()

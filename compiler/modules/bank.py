@@ -85,7 +85,8 @@ class bank(design):
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("dout{0}_{1}".format(port, bit), "OUTPUT")
         for port in self.all_ports:
-            self.add_pin("rbl_bl_{0}_{0}".format(port), "OUTPUT")
+            if self.has_rbl:
+                self.add_pin("rbl_bl_{0}_{0}".format(port), "OUTPUT")
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 self.add_pin("din{0}_{1}".format(port, bit), "INPUT")
@@ -114,11 +115,10 @@ class bank(design):
         """ Create routing amoung the modules """
         self.route_central_bus()
 
-        self.route_unused_wordlines()
-
         for port in self.all_ports:
             self.route_bitlines(port)
-            # self.route_rbl(port)
+            if self.has_rbl:
+                self.route_rbl(port)
             self.route_port_address(port)
             self.route_column_address_lines(port)
             self.route_control_lines(port)
@@ -360,6 +360,18 @@ class bank(design):
     def add_modules(self):
         """ Add all the modules using the class loader """
 
+        # delay control logic does not have RBLs
+        if OPTS.control_logic != "control_logic_delay":
+            self.has_rbl = True
+            rbl = [1, 1 if len(self.all_ports)>1 else 0]
+            left_rbl = [0]
+            right_rbl = [1] if len(self.all_ports)>1 else []
+        else:
+            self.has_rbl = False
+            rbl = [0, 0]
+            left_rbl = []
+            right_rbl = []
+
         local_array_size = OPTS.local_array_size
 
         if local_array_size > 0:
@@ -372,21 +384,25 @@ class bank(design):
             cols.append(local_array_size + final_size)
             self.bitcell_array = factory.create(module_type="global_bitcell_array",
                                                 cols=cols,
-                                                rows=self.num_rows)
+                                                rows=self.num_rows,
+                                                rbl=rbl,
+                                                left_rbl=left_rbl,
+                                                right_rbl=right_rbl)
         else:
             self.bitcell_array = factory.create(module_type="capped_replica_bitcell_array",
                                                 cols=self.num_cols + self.num_spare_cols,
                                                 rows=self.num_rows,
-                                                rbl=[1, 1 if len(self.all_ports)>1 else 0],
-                                                left_rbl=[0],
-                                                right_rbl=[1] if len(self.all_ports)>1 else [])
+                                                rbl=rbl,
+                                                left_rbl=left_rbl,
+                                                right_rbl=right_rbl)
 
         self.port_address = []
         for port in self.all_ports:
             self.port_address.append(factory.create(module_type="port_address",
                                                     cols=self.num_cols + self.num_spare_cols,
                                                     rows=self.num_rows,
-                                                    port=port))
+                                                    port=port,
+                                                    has_rbl=self.has_rbl))
 
         self.port_data = []
         self.bit_offsets = self.get_column_offsets()
@@ -394,6 +410,7 @@ class bank(design):
             self.port_data.append(factory.create(module_type="port_data",
                                                  sram_config=self.sram_config,
                                                  port=port,
+                                                 has_rbl=self.has_rbl,
                                                  bit_offsets=self.bit_offsets))
 
     def create_bitcell_array(self):
@@ -407,9 +424,10 @@ class bank(design):
         # gnd
         temp = self.bitcell_array.get_inouts()
 
-        temp.append("rbl_wl0")
+        if self.has_rbl:
+            temp.append("rbl_wl0")
         temp.extend(self.bitcell_array.get_wordline_names())
-        if len(self.all_ports) > 1:
+        if len(self.all_ports) > 1 and self.has_rbl:
             temp.append("rbl_wl1")
 
         temp.append("vdd")
@@ -432,7 +450,8 @@ class bank(design):
                                                     mod=self.port_data[port])
 
             temp = []
-            temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
+            if self.has_rbl:
+                temp.extend(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)])
             temp.extend(self.bitcell_array.get_bitline_names(port))
             if port in self.read_ports:
                 for bit in range(self.word_size + self.num_spare_cols):
@@ -480,7 +499,8 @@ class bank(design):
             temp.append("wl_en{}".format(port))
             wordline_names = self.bitcell_array.get_wordline_names(port)
             temp.extend(wordline_names)
-            temp.append("rbl_wl{}".format(port))
+            if self.has_rbl:
+                temp.append("rbl_wl{}".format(port))
             temp.extend(["vdd", "gnd"])
             self.connect_inst(temp)
 
@@ -719,8 +739,9 @@ class bank(design):
                               inst2_br_name=inst2_br_name)
 
         # Connect the replica bitlines
-        for (array_name, data_name) in zip(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)], ["rbl_bl", "rbl_br"]):
-            self.connect_bitline(inst1, inst2, array_name, data_name)
+        if self.has_rbl:
+            for (array_name, data_name) in zip(["rbl_bl_{0}_{0}".format(port), "rbl_br_{0}_{0}".format(port)], ["rbl_bl", "rbl_br"]):
+                self.connect_bitline(inst1, inst2, array_name, data_name)
 
     def route_port_data_out(self, port):
         """ Add pins for the port data out """
@@ -841,8 +862,13 @@ class bank(design):
     def route_port_address_out(self, port, side="left"):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
-        rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
+        if self.has_rbl:
+            driver_names = driver_names + ["rbl_wl"]
+            rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
+        else:
+            rbl_wl_name = None
+        # rbl_wl in next line will be ignored by zip once driver_names is exhausted in the no rbl case
         for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
             driver_wl_pin = self.port_address_inst[port].get_pin(driver_name)
@@ -875,7 +901,10 @@ class bank(design):
     def route_port_address_right(self, port):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
-        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)] + ["rbl_wl"]
+        driver_names = ["wl_{}".format(x) for x in range(self.num_rows)]
+        if self.has_rbl:
+            driver_names = driver_names + ["rbl_wl"]
+        # rbl_wl in next two lines will be ignored by zip once driver_names is exhausted in the no rbl case
         rbl_wl_name = self.bitcell_array.get_rbl_wordline_names(port)[port]
         for (driver_name, array_name) in zip(driver_names, self.bitcell_array.get_wordline_names(port) + [rbl_wl_name]):
             # The mid guarantees we exit the input cell to the right.
@@ -970,36 +999,6 @@ class bank(design):
         #         self.add_label(text=data_name,
         #                        layer="m1",
         #                        offset=data_pin.center())
-
-    def route_unused_wordlines(self):
-        """ Connect the unused RBL and dummy wordlines to gnd """
-        gnd_wl_names = []
-        return
-        # Connect unused RBL WL to gnd
-        # All RBL WL names
-        array_rbl_names = set(self.bitcell_array.get_rbl_wordline_names())
-        # List of used RBL WL names
-        rbl_wl_names = set()
-        for port in self.all_ports:
-            rbl_wl_names.add(self.bitcell_array.get_rbl_wordline_names(port)[port])
-        gnd_wl_names = list((array_rbl_names - rbl_wl_names))
-
-        for wl_name in gnd_wl_names:
-            pin = self.bitcell_array_inst.get_pin(wl_name)
-            pin_layer = pin.layer
-            layer_pitch = 1.5 * getattr(self, "{}_pitch".format(pin_layer))
-            left_pin_loc = pin.lc()
-            right_pin_loc = pin.rc()
-
-            # Place the pins a track outside of the array
-            left_loc = left_pin_loc - vector(layer_pitch, 0)
-            right_loc = right_pin_loc + vector(layer_pitch, 0)
-            self.add_power_pin("gnd", left_loc, directions=("H", "H"))
-            self.add_power_pin("gnd", right_loc, directions=("H", "H"))
-
-            # Add a path to connect to the array
-            self.add_path(pin_layer, [left_loc, left_pin_loc])
-            self.add_path(pin_layer, [right_loc, right_pin_loc])
 
     def route_control_lines(self, port):
         """ Route the control lines of the entire bank """

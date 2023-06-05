@@ -36,7 +36,10 @@ class replica_bitcell_array(bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
-        self.rbl = rbl
+        if rbl is not None:
+            self.rbl = rbl
+        else:
+            self.rbl = [0] * len(self.all_ports)
         # This specifies which RBL to put on the left or right by port number
         # This could be an empty list
         if left_rbl is not None:
@@ -47,7 +50,7 @@ class replica_bitcell_array(bitcell_base_array):
         if right_rbl is not None:
             self.right_rbl = right_rbl
         else:
-            self.right_rbl=[]
+            self.right_rbl = []
         self.rbls = self.left_rbl + self.right_rbl
 
         debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
@@ -64,28 +67,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.create_instances()
 
     def add_modules(self):
-        """  Array and dummy/replica columns
-
-        d or D = dummy cell (caps to distinguish grouping)
-        r or R = replica cell (caps to distinguish grouping)
-        b or B = bitcell
-         replica columns 1
-         v              v
-        bdDDDDDDDDDDDDDDdb <- Dummy row
-        bdDDDDDDDDDDDDDDrb <- Dummy row
-        br--------------rb
-        br|   Array    |rb
-        br| row x col  |rb
-        br--------------rb
-        brDDDDDDDDDDDDDDdb <- Dummy row
-        bdDDDDDDDDDDDDDDdb <- Dummy row
-
-          ^^^^^^^^^^^^^^^
-          dummy rows cols x 1
-
-        ^ dummy columns  ^
-          1 x (rows + 4)
-        """
+        """  Array and dummy/replica columns """
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             column_offset=1 + len(self.left_rbl),
@@ -97,6 +79,7 @@ class replica_bitcell_array(bitcell_base_array):
 
         for port in self.all_ports:
             if port in self.left_rbl:
+                # TODO: merge comments from other commit... to fix these comments...
                 # We will always have self.rbl[0] rows of replica wordlines below
                 # the array.
                 # These go from the top (where the bitcell array starts ) down
@@ -123,7 +106,9 @@ class replica_bitcell_array(bitcell_base_array):
         self.dummy_row = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
-                                            # dummy column + left replica column
+                                            # cap column + left replica column
+                                            # FIXME: these col offsets should really start at 0 because
+                                            # this is the left edge of the array... but changing them all is work
                                             column_offset=1 + len(self.left_rbl),
                                             mirror=0)
 
@@ -175,6 +160,8 @@ class replica_bitcell_array(bitcell_base_array):
         self.unused_wordline_names = []
 
         for port in self.all_ports:
+            if self.rbl[port] == 0:
+                continue  # TODO: there's probably a better way to do this check
             for bit in self.all_ports:
                 self.rbl_wordline_names[port].append("rbl_wl_{0}_{1}".format(port, bit))
                 if bit != port:
@@ -225,9 +212,12 @@ class replica_bitcell_array(bitcell_base_array):
         self.dummy_row_replica_insts = []
         # Note, this is the number of left and right even if we aren't adding the columns to this bitcell array!
         for port in self.all_ports: # TODO: tie to self.rbl or whatever
-            self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
-                                                                mod=self.dummy_row))
-            self.connect_inst(self.all_bitline_names + self.rbl_wordline_names[port] + self.supplies)
+            if self.rbl[port] != 0:
+                self.dummy_row_replica_insts.append(self.add_inst(name="dummy_row_{}".format(port),
+                                                                    mod=self.dummy_row))
+                self.connect_inst(self.all_bitline_names + self.rbl_wordline_names[port] + self.supplies)
+            else:
+                self.dummy_row_replica_insts.append(None)
 
     def create_layout(self):
 
@@ -249,8 +239,8 @@ class replica_bitcell_array(bitcell_base_array):
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
-        array_offset = self.bitcell_offset.scale(len(self.left_rbl), self.rbl[0])
-        self.translate_all(array_offset.scale(-1, -1))
+        array_offset = self.bitcell_offset.scale(-len(self.left_rbl), -self.rbl[0])
+        self.translate_all(array_offset)
 
         self.add_layout_pins()
 
@@ -359,7 +349,7 @@ class replica_bitcell_array(bitcell_base_array):
                                         height=self.height)
 
     def route_supplies(self):
-
+        """ just copy supply pins from all instances """
         for inst in self.insts:
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)

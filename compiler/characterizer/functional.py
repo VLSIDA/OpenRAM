@@ -1,18 +1,18 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import collections
-import debug
-import random
 import math
+import random
+import collections
 from numpy import binary_repr
+from openram import debug
+from openram import OPTS
 from .stimuli import *
 from .charutils import *
-from globals import OPTS
 from .simulation import simulation
 
 
@@ -44,7 +44,7 @@ class functional(simulation):
         else:
             self.output_path = output_path
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
             self.num_wmasks = 0
@@ -60,7 +60,7 @@ class functional(simulation):
             self.addr_spare_index = -int(math.log(self.words_per_row) / math.log(2))
         else:
             # This will select the entire address when one word per row
-            self.addr_spare_index = self.addr_size
+            self.addr_spare_index = self.bank_addr_size
         # If trim is set, specify the valid addresses
         self.valid_addresses = set()
         self.max_address = self.num_rows * self.words_per_row - 1
@@ -68,7 +68,7 @@ class functional(simulation):
             for i in range(self.words_per_row):
                 self.valid_addresses.add(i)
                 self.valid_addresses.add(self.max_address - i - 1)
-        self.probe_address, self.probe_data = '0' * self.addr_size, 0
+        self.probe_address, self.probe_data = '0' * self.bank_addr_size, 0
         self.set_corner(corner)
         self.set_spice_constants()
         self.set_stimulus_variables()
@@ -133,7 +133,7 @@ class functional(simulation):
 
     def create_random_memory_sequence(self):
         # Select randomly, but have 3x more reads to increase probability
-        if self.write_size:
+        if self.write_size != self.word_size:
             rw_ops = ["noop", "write", "partial_write", "read", "read"]
             w_ops = ["noop", "write", "partial_write"]
         else:
@@ -142,7 +142,7 @@ class functional(simulation):
         r_ops = ["noop", "read"]
 
         # First cycle idle is always an idle cycle
-        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
+        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.bank_addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
 
@@ -244,7 +244,7 @@ class functional(simulation):
             self.t_current += self.period
 
         # Last cycle idle needed to correctly measure the value on the second to last clock edge
-        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.addr_size, "0" * self.num_wmasks, 0, self.t_current)
+        comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.bank_addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
 
     def gen_masked_data(self, old_word, word, wmask):
@@ -363,10 +363,10 @@ class functional(simulation):
     def gen_addr(self):
         """ Generates a random address value to write to. """
         if self.valid_addresses:
-            random_value = random.sample(self.valid_addresses, 1)[0]
+            random_value = random.sample(list(self.valid_addresses), 1)[0]
         else:
             random_value = random.randint(0, self.max_address)
-        addr_bits = binary_repr(random_value, self.addr_size)
+        addr_bits = binary_repr(random_value, self.bank_addr_size)
         return addr_bits
 
     def get_data(self):
@@ -426,7 +426,7 @@ class functional(simulation):
 
         # Generate address bits
         for port in self.all_ports:
-            for bit in range(self.addr_size):
+            for bit in range(self.bank_addr_size):
                 sig_name="{0}{1}_{2} ".format(self.addr_name, port, bit)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.addr_values[port][bit], self.period, self.slew, 0.05)
 
@@ -440,7 +440,7 @@ class functional(simulation):
 
         # Generate wmask bits
         for port in self.write_ports:
-            if self.write_size:
+            if self.write_size != self.word_size:
                 self.sf.write("\n* Generation of wmask signals\n")
                 for bit in range(self.num_wmasks):
                     sig_name = "WMASK{0}_{1} ".format(port, bit)

@@ -1,15 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import drc, parameter, spice
 from abc import ABC, abstractmethod
+from openram import debug
+from openram.tech import drc, parameter, spice
 from .stimuli import *
 from .charutils import *
+
 
 class spice_measurement(ABC):
     """Base class for spice stimulus measurements."""
@@ -184,7 +185,7 @@ class voltage_when_measure(spice_measurement):
         trig_voltage = self.trig_val_of_vdd * vdd_voltage
         return (meas_name, trig_name, targ_name, trig_voltage, self.trig_dir_str, trig_td)
 
-    
+
 class voltage_at_measure(spice_measurement):
     """Generates a spice measurement to measure the voltage at a specific time.
        The time is considered variant with different periods."""
@@ -211,4 +212,3 @@ class voltage_at_measure(spice_measurement):
             meas_name = self.name
             targ_name = self.targ_name_no_port
         return (meas_name, targ_name, time_at)
-

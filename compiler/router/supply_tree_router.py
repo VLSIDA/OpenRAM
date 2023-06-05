@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -8,8 +8,8 @@
 from datetime import datetime
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-import debug
-from globals import print_time
+from openram import debug
+from openram import print_time
 from .router import router
 from . import grid_utils
 from .signal_grid import signal_grid
@@ -145,13 +145,14 @@ class supply_tree_router(router):
                     connections.append((x, y))
 
         # Route MST components
+        level=99
         for index, (src, dest) in enumerate(connections):
             if not (index % 25):
                 debug.info(1, "{0} supply segments routed, {1} remaining.".format(index, len(connections) - index))
             self.route_signal(pin_name, src, dest)
             if False and pin_name == "gnd":
-                print("\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
-                print("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages))
+                debug.info(level, "\nSRC {}: ".format(src) + str(self.pin_groups[pin_name][src].grids) + str(self.pin_groups[pin_name][src].blockages))
+                debug.info(level, ("DST {}: ".format(dest) + str(self.pin_groups[pin_name][dest].grids)  + str(self.pin_groups[pin_name][dest].blockages)))
                 self.write_debug_gds("post_{0}_{1}.gds".format(src, dest), False)
 
         #self.write_debug_gds("final_tree_router_{}.gds".format(pin_name), False)

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -16,11 +16,10 @@ Calibre means pointing the code to the proper DRC and LVS rule files.
 
 """
 
-
 import os
 import re
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 from .run_script import run_script
 
 # Keep track of statistics
@@ -35,8 +34,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification=False, out
 
     if not output_path:
         output_path = OPTS.openram_temp
-        
-    from tech import drc
+
+    from openram.tech import drc
     drc_rules = drc["drc_rules"]
 
     drc_runset = {
@@ -77,7 +76,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if not output_path:
         output_path = OPTS.openram_temp
 
-    from tech import drc
+    from openram.tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = {
         'lvsRulesFile': lvs_rules,
@@ -125,7 +124,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     f = open(run_file, "w")
     f.write("#!/bin/sh\n")
     cmd = "{0} -gui -lvs lvs_runset -batch".format(OPTS.lvs_exe[1])
-                         
+
     f.write(cmd)
     f.write("\n")
     f.close()
@@ -139,7 +138,7 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
 
     if not output_path:
         output_path = OPTS.openram_temp
-    
+
     if not output:
         output = cell_name + ".pex.sp"
 
@@ -151,7 +150,7 @@ def write_pex_script(cell_name, extract, output, final_verification=False, outpu
         run_drc(cell_name, gds_name, sp_name)
         run_lvs(cell_name, gds_name, sp_name)
 
-    from tech import drc
+    from openram.tech import drc
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
@@ -443,14 +442,14 @@ def correct_port(name, output_file_name, ref_file_name):
     output_file.write(part2)
     output_file.close()
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

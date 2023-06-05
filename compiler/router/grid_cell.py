@@ -1,10 +1,11 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+
 class grid_cell:
     """
     A single cell that can be occupied in a given layer, blocked,
@@ -20,7 +21,7 @@ class grid_cell:
 
     def reset(self):
         """
-        Reset the dynamic info about routing. 
+        Reset the dynamic info about routing.
         """
         self.min_cost=-1
         self.min_path=None
@@ -49,4 +50,3 @@ class grid_cell:
             type_string += "P"
 
         return type_string
-

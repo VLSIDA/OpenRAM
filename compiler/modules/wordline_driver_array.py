@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from tech import drc, layer
-from base import vector
-from sram_factory import factory
-from globals import OPTS
-from tech import layer_properties as layer_props
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, layer
+from openram.tech import layer_properties as layer_props
+from openram import OPTS
 
 
 class wordline_driver_array(design):
@@ -124,7 +124,7 @@ class wordline_driver_array(design):
         en_pin = self.add_layout_pin_segment_center(text="en",
                                                     layer="m2",
                                                     start=en_bottom_pos,
-                                                    end=en_top_pos) 
+                                                    end=en_top_pos)
 
         for row in range(self.rows):
             and_inst = self.wld_inst[row]

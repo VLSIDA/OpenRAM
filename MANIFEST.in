@@ -1,0 +1,26 @@
+include Makefile
+include openram.mk
+include setpaths.sh
+include requirements.txt
+include install_conda.sh
+include docker/*
+recursive-include compiler *
+recursive-include technology *
+include VERSION
+exclude .DS_Store
+exclude .idea
+exclude **/model_data
+exclude technology/sky130/*_lib
+exclude technology/sky130/tech/.magicrc
+exclude compiler/gen_stimulus.py
+exclude compiler/model_data_util.py
+exclude compiler/printGDS.py
+exclude compiler/processGDS.py
+exclude compiler/uniquifyGDS.py
+exclude compiler/view_profile.py 
+exclude compiler/run_profile.sh
+recursive-exclude open_pdks *
+recursive-exclude compiler/tests/results *
+recursive-exclude technology/freepdk45/ncsu_basekit *
+recursive-exclude outputs *
+global-exclude *.pyc *~ *.orig *.rej *.aux *.out *.toc *.synctex.gz

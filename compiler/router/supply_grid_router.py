@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 from datetime import datetime
-import debug
-from globals import print_time
-from base.vector3d import vector3d
+from openram import debug
+from openram.base.vector3d import vector3d
+from openram import print_time
 from .router import router
 from .direction import direction
 from .supply_grid import supply_grid
@@ -66,14 +66,14 @@ class supply_grid_router(router):
         # Block everything
         self.prepare_blockages()
         self.clear_blockages(self.gnd_name)
-        
-        
+
+
         # Determine the rail locations
         self.route_supply_rails(self.gnd_name, 0)
 
         # Block everything
         self.prepare_blockages()
-        self.clear_blockages(self.vdd_name)        
+        self.clear_blockages(self.vdd_name)
         # Determine the rail locations
         self.route_supply_rails(self.vdd_name, 1)
         print_time("Routing supply rails", datetime.now(), start_time, 3)
@@ -359,7 +359,7 @@ class supply_grid_router(router):
             # easier to debug.
             self.prepare_blockages()
             self.clear_blockages(self.vdd_name)
-            
+
             # Add the single component of the pin as the source
             # which unmarks it as a blockage too
             self.add_pin_component_source(pin_name, index)
@@ -392,4 +392,3 @@ class supply_grid_router(router):
         debug.info(4, "Blocking supply rail")
         for rail_name in self.supply_rail_tracks:
             self.rg.set_blocked(self.supply_rail_tracks[rail_name])
-

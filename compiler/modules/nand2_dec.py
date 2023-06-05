@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from tech import spice, parameter, drc
-from tech import cell_properties as props
-from base import logical_effort
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import spice, parameter, drc
+from openram.tech import cell_properties as props
 
 
 class nand2_dec(design):
@@ -80,20 +80,20 @@ class nand2_dec(design):
         is_nchannel = True
         stack = 2
         is_cell = False
-        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)   
+        return self.tr_r_on(self.nmos_width, is_nchannel, stack, is_cell)
 
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
-        return self.gate_c(self.nmos_width+self.pmos_width) 
-        
+        return self.gate_c(self.nmos_width+self.pmos_width)
+
     def get_intrinsic_capacitance(self):
         """Get the drain capacitances of the TXs in the gate."""
         nmos_stack = 2
         mult = 1
-        nmos_drain_c =  self.drain_c_(self.nmos_width*mult, 
+        nmos_drain_c =  self.drain_c_(self.nmos_width*mult,
                                       nmos_stack,
                                       mult)
-        pmos_drain_c =  self.drain_c_(self.pmos_width*mult, 
+        pmos_drain_c =  self.drain_c_(self.pmos_width*mult,
                                       1,
-                                      mult)                               
-        return nmos_drain_c + pmos_drain_c     
+                                      mult)
+        return nmos_drain_c + pmos_drain_c

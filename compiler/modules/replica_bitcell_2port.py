@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.base import logical_effort
+from openram.tech import cell_properties as props
+from openram.tech import parameter, drc
 from .bitcell_base import bitcell_base
-from tech import cell_properties as props
-from tech import parameter, drc
-from base import logical_effort
 
 
 class replica_bitcell_2port(bitcell_base):
@@ -52,5 +52,5 @@ class replica_bitcell_2port(bitcell_base):
 
     def is_non_inverting(self):
         """Return input to output polarity for module"""
-        
+
         return False

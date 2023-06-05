@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -15,10 +15,10 @@ a web friendly html datasheet.
 # Improve css
 
 
-from globals import OPTS
 import os
 import math
 import csv
+from openram import OPTS
 from .datasheet import datasheet
 from .table_gen import table_gen
 

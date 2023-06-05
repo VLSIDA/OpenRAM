@@ -49,6 +49,9 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
+# If conda is installed, we will use Magic from there
+CONDA_DIR := $(wildcard $(TOP_DIR)/miniconda)
+
 check-pdk-root:
 ifndef PDK_ROOT
 	$(error PDK_ROOT is undefined, please export it before running make)
@@ -58,33 +61,42 @@ $(SKY130_PDKS_DIR): check-pdk-root
 	@echo "Cloning skywater PDK..."
 	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
 		git clone https://github.com/google/skywater-pdk.git $(PDK_ROOT)/skywater-pdk
-	@cd $(SKY130_PDKS_DIR) && \
-		git checkout main && git pull && \
-		git checkout -qf $(SKY130_PDKS_GIT_COMMIT) && \
-		git submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
+	@git -C $(SKY130_PDKS_DIR) checkout $(SKY130_PDKS_GIT_COMMIT) && \
+		git -C $(SKY130_PDKS_DIR) submodule update --init libraries/sky130_fd_pr/latest libraries/sky130_fd_sc_hd/latest
 
 $(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR)
 	@echo "Cloning open_pdks..."
 	@[ -d $(OPEN_PDKS_DIR) ] || \
 		git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)
-	@cd $(OPEN_PDKS_DIR) && git pull && git checkout $(OPEN_PDKS_GIT_COMMIT)
+	@git -C $(OPEN_PDKS_DIR) checkout $(OPEN_PDKS_GIT_COMMIT)
 
 $(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
 	@echo "Installing open_pdks..."
-	$(DOCKER_CMD) sh -c ". /home/cad-user/.bashrc && cd /pdk/open_pdks && \
-	./configure --enable-sky130-pdk=/pdk/skywater-pdk/libraries --with-sky130-local-path=/pdk && \
-	cd sky130 && \
-	make veryclean && \
-	make && \
-	make SHARED_PDKS_PATH=/pdk install"
+ifeq ($(CONDA_DIR),"")
+	@cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
+		cd sky130 && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install
+else
+	@source $(TOP_DIR)/miniconda/bin/activate && \
+		cd $(PDK_ROOT)/open_pdks && \
+		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
+		cd sky130 && \
+		make veryclean && \
+		make && \
+		make SHARED_PDKS_PATH=$(PDK_ROOT) install && \
+		conda deactivate
+endif
 
 $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
-	@[ -d $(SRAM_LIB_DIR) ] || (\
-		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR) && \
-		cd $(SRAM_LIB_DIR) && git pull && git checkout $(SRAM_LIB_GIT_COMMIT))
+	@[ -d $(SRAM_LIB_DIR) ] || \
+		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR)
+	@git -C $(SRAM_LIB_DIR) checkout $(SRAM_LIB_GIT_COMMIT)
 
-install: $(SRAM_LIB_DIR) pdk
+install: $(SRAM_LIB_DIR)
 	@[ -d $(PDK_ROOT)/sky130A ] || \
 		(echo "Warning: $(PDK_ROOT)/sky130A not found!! Run make pdk first." &&  false)
 	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
@@ -215,3 +227,16 @@ wipe: uninstall
 	@rm -rf $(OPEN_PDKS_DIR)
 	@rm -rf $(SKY130_PDKS_DIR)
 .PHONY: wipe
+
+# Build the openram library
+build_library:
+	@rm -rf dist
+	@rm -rf openram.egg-info
+	@python3 -m pip install --upgrade build
+	@python3 -m build
+.PHONY: build_library
+
+# Build and install the openram library
+library: build_library
+	@python3 -m pip install --force dist/openram*.whl
+.PHONY: library

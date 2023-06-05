@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from base import logical_effort
-from tech import cell_properties as props
-from tech import spice, parameter
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import cell_properties as props
+from openram.tech import spice, parameter
 
 
 class inv_dec(design):

@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
 import unittest
 import sys, os, glob
-from globals import OPTS
-import debug
 import pdb
 import traceback
 import time
+from openram import debug
+from openram import OPTS
 
 
 class openram_test(unittest.TestCase):
@@ -47,7 +47,7 @@ class openram_test(unittest.TestCase):
 
         tempgds = "{}.gds".format(w.name)
         w.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
-        import verify
+        from openram import verify
 
         result=verify.run_drc(w.name, tempgds, None)
         if result != 0:
@@ -67,7 +67,7 @@ class openram_test(unittest.TestCase):
         if not OPTS.netlist_only:
             a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
 
-            import verify
+            from openram import verify
             # Run both DRC and LVS even if DRC might fail
             # Magic can still extract despite DRC failing, so it might be ok in some techs
             # if we ignore things like minimum metal area of pins
@@ -108,7 +108,7 @@ class openram_test(unittest.TestCase):
 
         a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
 
-        import verify
+        from openram import verify
         result=verify.run_pex(a.name, tempgds, tempspice, final_verification=False)
         if result != 0:
             self.fail("PEX ERROR: {}".format(a.name))
@@ -139,7 +139,7 @@ class openram_test(unittest.TestCase):
         Reset everything after each test.
         """
         # Reset the static duplicate name checker for unit tests.
-        from base import hierarchy_design
+        from openram.base import hierarchy_design
         hierarchy_design.name_map=[]
 
     def check_golden_data(self, data, golden_data, error_tolerance=1e-2):
@@ -167,7 +167,7 @@ class openram_test(unittest.TestCase):
 
     def isclose(self, key, value, actual_value, error_tolerance=1e-2):
         """ This is used to compare relative values. """
-        import debug
+        from openram import debug
         relative_diff = self.relative_diff(value, actual_value)
         check = relative_diff <= error_tolerance
         if check:
@@ -215,7 +215,7 @@ class openram_test(unittest.TestCase):
 
         """
         import re
-        import debug
+        from openram import debug
 
         numeric_const_pattern = r"""
         [-+]? # optional sign
@@ -294,7 +294,7 @@ class openram_test(unittest.TestCase):
 
     def isdiff(self, filename1, filename2):
         """ This is used to compare two files and display the diff if they are different.. """
-        import debug
+        from openram import debug
         import filecmp
         import difflib
         check = filecmp.cmp(filename1, filename2)
@@ -338,7 +338,7 @@ def header(filename, technology):
     print("|=========" + tst.center(60) + "=========|")
     print("|=========" + technology.center(60) + "=========|")
     print("|=========" + filename.center(60) + "=========|")
-    from globals import OPTS
+    from openram import OPTS
     if OPTS.openram_temp:
         print("|=========" + OPTS.openram_temp.center(60) + "=========|")
     print("|==============================================================================|")

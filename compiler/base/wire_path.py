@@ -1,15 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from .vector import vector
-from .utils import snap_to_grid
+from openram.tech import drc
+from openram.tech import layer as techlayer
 from .design import design
-from tech import drc
-from tech import layer as techlayer
+from .utils import snap_to_grid
+from .vector import vector
+
 
 def create_rectilinear_route(my_list):
     """ Add intermediate nodes if it isn't rectilinear. Also skip

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -8,14 +8,14 @@
 """
 This provides a set of useful generic types for the gdsMill interface.
 """
-import debug
-from .vector import vector
-import tech
 import math
 import copy
 import numpy as np
-from globals import OPTS
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .utils import round_to_grid
+from .vector import vector
 
 
 class geometry:
@@ -249,7 +249,6 @@ class instance(geometry):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. Index will return one of several pins."""
 
-        import copy
         if index == -1:
             pin = copy.deepcopy(self.mod.get_pin(name))
             pin.transform(self.offset, self.mirror, self.rotate)
@@ -267,7 +266,6 @@ class instance(geometry):
         """ Return an absolute pin that is offset and transformed based on
         this instance location. """
 
-        import copy
         pin = copy.deepcopy(self.mod.get_pins(name))
 
         new_pins = []
@@ -359,7 +357,7 @@ class instance(geometry):
                 for offset in range(len(normalized_br_offsets)):
                     for port in range(len(br_names)):
                         cell_br_meta.append([br_names[offset], row, col, port])
-                
+
                 if normalized_storage_nets == []:
                     debug.error("normalized storage nets should not be empty! Check if the GDS labels Q and Q_bar are correctly set on M1 of the cell",1)
                 Q_x = normalized_storage_nets[0][0]

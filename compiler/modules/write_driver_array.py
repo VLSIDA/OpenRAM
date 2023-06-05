@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
 import math
-from tech import drc
-from sram_factory import factory
-from base import vector
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc
+from openram import OPTS
 
 
 class write_driver_array(design):
@@ -29,7 +29,10 @@ class write_driver_array(design):
 
         self.columns = columns
         self.word_size = word_size
-        self.write_size = write_size
+        if write_size is None:
+            self.write_size = word_size
+        else:
+            self.write_size = write_size
         self.offsets = offsets
         self.column_offset = column_offset
         self.words_per_row = int(columns / word_size)
@@ -38,8 +41,10 @@ class write_driver_array(design):
         else:
             self.num_spare_cols = num_spare_cols
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
+        else:
+            self.num_wmasks = 0
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -82,10 +87,10 @@ class write_driver_array(design):
         for i in range(self.word_size + self.num_spare_cols):
             self.add_pin(self.get_bl_name() + "_{0}".format(i), "OUTPUT")
             self.add_pin(self.get_br_name() + "_{0}".format(i), "OUTPUT")
-        if self.write_size:
+        if self.write_size != self.word_size:
             for i in range(self.num_wmasks + self.num_spare_cols):
                 self.add_pin(self.en_name + "_{0}".format(i), "INPUT")
-        elif self.num_spare_cols and not self.write_size:
+        elif self.num_spare_cols and self.write_size == self.word_size:
             for i in range(self.num_spare_cols + 1):
                 self.add_pin(self.en_name + "_{0}".format(i), "INPUT")
         else:
@@ -110,7 +115,7 @@ class write_driver_array(design):
             self.local_insts.append(self.add_inst(name=name,
                                                    mod=self.driver))
 
-            if self.write_size:
+            if self.write_size != self.word_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
                                    self.get_br_name() + "_{0}".format(index),
@@ -121,7 +126,7 @@ class write_driver_array(design):
                     w = 0
                     windex+=1
 
-            elif self.num_spare_cols and not self.write_size:
+            elif self.num_spare_cols and self.write_size == self.word_size:
                 self.connect_inst([self.data_name + "_{0}".format(index),
                                    self.get_bl_name() + "_{0}".format(index),
                                    self.get_br_name() + "_{0}".format(index),
@@ -135,7 +140,7 @@ class write_driver_array(design):
 
         for i in range(self.num_spare_cols):
             index = self.word_size + i
-            if self.write_size:
+            if self.write_size != self.word_size:
                 offset = self.num_wmasks
             else:
                 offset = 1
@@ -205,7 +210,7 @@ class write_driver_array(design):
                                 width=br_pin.width(),
                                 height=br_pin.height())
 
-        if self.write_size:
+        if self.write_size != self.word_size:
             for bit in range(self.num_wmasks):
                 inst = self.local_insts[bit * self.write_size]
                 en_pin = inst.get_pin(inst.mod.en_name)
@@ -229,7 +234,7 @@ class write_driver_array(design):
                                     layer="m1",
                                     offset=en_pin.lr() + vector(-drc("minwidth_m1"),0))
 
-        elif self.num_spare_cols and not self.write_size:
+        elif self.num_spare_cols and self.write_size == self.word_size:
             # shorten enable rail to accomodate those for spare write drivers
             left_inst = self.local_insts[0]
             left_en_pin = left_inst.get_pin(inst.mod.en_name)

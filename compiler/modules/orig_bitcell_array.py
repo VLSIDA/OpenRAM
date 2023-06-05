@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram.sram_factory import factory
+from openram.tech import drc, spice
+from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-from tech import drc, spice
-from globals import OPTS
-from sram_factory import factory
 
 
 class bitcell_array(bitcell_base_array):

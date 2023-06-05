@@ -1,0 +1,54 @@
+name: deploy
+on:
+  push:
+    branches:
+      - stable
+jobs:
+  # This job upload the Python library to PyPI
+  deploy_pip:
+    if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+         python3 -m pip install virtualenv
+      - name: Build Python package
+        run: |
+         make build_library
+      - name: Upload package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+  # This job creates a new GitHub release
+  github_release:
+    if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      - name: Create a release
+        run: |
+         # Find the last two commits
+         export LATEST_TAG="$(git describe --tags --abbrev=0)"
+         export PREVIOUS_TAG="$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))"
+         # Write release notes to a file
+         touch release_notes.txt
+         printf "## Install\nPython package is available at [PyPI](https://pypi.org/project/openram/).\n" >> release_notes.txt
+         printf "## Documentation\nDocumentation is available [here](https://github.com/VLSIDA/OpenRAM/blob/stable/docs/source/index.md).\n" >> release_notes.txt
+         printf "## Changes\n" >> release_notes.txt
+         printf "Full changelog: https://github.com/VLSIDA/OpenRAM/compare/${PREVIOUS_TAG}...${LATEST_TAG}\n" >> release_notes.txt
+         printf "## Contributors\n" >> release_notes.txt
+         printf "$(git log --pretty='format:+ %an' ${LATEST_TAG}...${PREVIOUS_TAG} | sort -u)\n" >> release_notes.txt
+         # Create the release via GitHub CLI
+         gh release create ${LATEST_TAG} --verify-tag -F release_notes.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}

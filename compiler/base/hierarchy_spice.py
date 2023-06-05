@@ -1,17 +1,18 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-import re
 import os
+import re
 import math
-import tech
-from globals import OPTS
+import textwrap as tr
 from pprint import pformat
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
@@ -37,7 +38,7 @@ class spice():
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         try:
-            from tech import lvs_name
+            from openram.tech import lvs_name
             lvs_dir = OPTS.openram_tech + lvs_name + "_lvs_lib/"
         except ImportError:
             lvs_dir = OPTS.openram_tech + "lvs_lib/"
@@ -338,19 +339,21 @@ class spice():
                 return
 
             # write out the first spice line (the subcircuit)
-            sp.write("\n.SUBCKT {0} {1}\n".format(self.cell_name,
-                                                  " ".join(self.pins)))
+            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(self.pins)))
+            sp.write("\n.SUBCKT {0}\n+ {1}\n".format(self.cell_name,
+                                                     wrapped_pins))
 
             # write a PININFO line
-            pin_info = "*.PININFO"
-            for pin in self.pins:
-                if self.pin_type[pin] == "INPUT":
-                    pin_info += " {0}:I".format(pin)
-                elif self.pin_type[pin] == "OUTPUT":
-                    pin_info += " {0}:O".format(pin)
-                else:
-                    pin_info += " {0}:B".format(pin)
-            sp.write(pin_info + "\n")
+            if False:
+                pin_info = "*.PININFO"
+                for pin in self.pins:
+                    if self.pin_type[pin] == "INPUT":
+                        pin_info += " {0}:I".format(pin)
+                    elif self.pin_type[pin] == "OUTPUT":
+                        pin_info += " {0}:O".format(pin)
+                    else:
+                        pin_info += " {0}:B".format(pin)
+                sp.write(pin_info + "\n")
 
             # Also write pins as comments
             for pin in self.pins:
@@ -391,9 +394,11 @@ class spice():
                                                                    " ".join(self.conns[i])))
                     sp.write("\n")
                 else:
-                    sp.write("X{0} {1} {2}\n".format(self.insts[i].name,
-                                                     " ".join(self.conns[i]),
-                                                     self.insts[i].mod.cell_name))
+                    wrapped_connections = "\n+ ".join(tr.wrap(" ".join(self.conns[i])))
+
+                    sp.write("X{0}\n+ {1}\n+ {2}\n".format(self.insts[i].name,
+                                                           wrapped_connections,
+                                                           self.insts[i].mod.cell_name))
 
             sp.write(".ENDS {0}\n".format(self.cell_name))
 
@@ -408,6 +413,7 @@ class spice():
                 sp.write("\n".join(self.spice))
 
             sp.write("\n")
+
 
     def sp_write(self, spname, lvs=False, trim=False):
         """Writes the spice to files"""

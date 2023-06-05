@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -9,48 +9,45 @@
 This is called globals.py, but it actually parses all the arguments
 and performs the global OpenRAM setup as well.
 """
+import sys
 import os
-import debug
+import re
 import shutil
 import optparse
-import options
-import sys
-import re
 import copy
 import importlib
 import getpass
 import subprocess
+from openram import debug
+from openram import options
 
 
-VERSION = "1.1.18"
+from openram import OPENRAM_HOME
+VERSION = open(OPENRAM_HOME + "/../VERSION").read().rstrip()
 NAME = "OpenRAM v{}".format(VERSION)
-USAGE = "openram.py [options] <config file>\nUse -h for help.\n"
+USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 
 OPTS = options.options()
-CHECKPOINT_OPTS = None
 
 
 def parse_args():
-    """ Parse the optional arguments for OpenRAM """
+    """ Parse the optional arguments for OpenRAM. """
 
     global OPTS
 
     option_list = {
-        optparse.make_option("-b",
-                             "--backannotated",
+        optparse.make_option("-b", "--backannotated",
                              action="store_true",
                              dest="use_pex",
                              help="Back annotate simulation"),
-        optparse.make_option("-o",
-                             "--output",
+        optparse.make_option("-o", "--output",
                              dest="output_name",
                              help="Base output file name(s) prefix",
                              metavar="FILE"),
         optparse.make_option("-p", "--outpath",
                              dest="output_path",
                              help="Output file(s) location"),
-        optparse.make_option("-i",
-                             "--inlinecheck",
+        optparse.make_option("-i", "--inlinecheck",
                              action="store_true",
                              help="Enable inline LVS/DRC checks",
                              dest="inline_lvsdrc"),
@@ -68,36 +65,29 @@ def parse_args():
                              type="int",
                              help="Specify the number of spice simulation threads (default: 3)",
                              dest="num_sim_threads"),
-        optparse.make_option("-v",
-                             "--verbose",
+        optparse.make_option("-v", "--verbose",
                              action="count",
                              dest="verbose_level",
                              help="Increase the verbosity level"),
-        optparse.make_option("-t",
-                             "--tech",
+        optparse.make_option("-t", "--tech",
                              dest="tech_name",
                              help="Technology name"),
-        optparse.make_option("-s",
-                             "--spice",
+        optparse.make_option("-s", "--spice",
                              dest="spice_name",
                              help="Spice simulator executable name"),
-        optparse.make_option("-r",
-                             "--remove_netlist_trimming",
+        optparse.make_option("-r", "--remove_netlist_trimming",
                              action="store_false",
                              dest="trim_netlist",
                              help="Disable removal of noncritical memory cells during characterization"),
-        optparse.make_option("-c",
-                             "--characterize",
+        optparse.make_option("-c", "--characterize",
                              action="store_false",
                              dest="analytical_delay",
                              help="Perform characterization to calculate delays (default is analytical models)"),
-        optparse.make_option("-k",
-                             "--keeptemp",
+        optparse.make_option("-k", "--keeptemp",
                              action="store_true",
                              dest="keep_temp",
                              help="Keep the contents of the temp directory after a successful run"),
-        optparse.make_option("-d",
-                             "--debug",
+        optparse.make_option("-d", "--debug",
                              action="store_true",
                              dest="debug",
                              help="Run in debug mode to drop to pdb on failure")
@@ -125,7 +115,7 @@ def parse_args():
 
 
 def print_banner():
-    """ Conditionally print the banner to stdout """
+    """ Conditionally print the banner to stdout. """
     global OPTS
     if OPTS.is_unit_test:
         return
@@ -141,9 +131,6 @@ def print_banner():
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
     dev_info = "Development help: openram-dev-group@ucsc.edu"
     debug.print_raw("|=========" + dev_info.center(60) + "=========|")
-    if OPTS.openram_temp:
-        temp_info = "Temp dir: {}".format(OPTS.openram_temp)
-        debug.print_raw("|=========" + temp_info.center(60) + "=========|")
     debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
     debug.print_raw("|==============================================================================|")
 
@@ -163,8 +150,7 @@ def check_versions():
     try:
         subprocess.check_output(["git", "--version"])
     except:
-        debug.error("Git is required. Please install git.")
-        sys.exit(1)
+        debug.error("Git is required. Please install git.", -1)
 
     # FIXME: Check versions of other tools here??
     # or, this could be done in each module (e.g. verify, characterizer, etc.)
@@ -180,7 +166,7 @@ def check_versions():
     else:
         OPTS.coverage_exe = ""
         debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-        
+
     try:
         import coverage
         OPTS.coverage = 1
@@ -188,7 +174,7 @@ def check_versions():
         OPTS.coverage = 0
 
 
-def init_openram(config_file, is_unit_test=True):
+def init_openram(config_file, is_unit_test=False):
     """ Initialize the technology, paths, simulators, etc. """
 
     check_versions()
@@ -199,38 +185,38 @@ def init_openram(config_file, is_unit_test=True):
 
     read_config(config_file, is_unit_test)
 
+    install_conda()
+
     import_tech()
 
     set_default_corner()
 
     init_paths()
 
-    from sram_factory import factory
+    from openram.sram_factory import factory
     factory.reset()
 
     global OPTS
-    global CHECKPOINT_OPTS
-
-    # This is a hack. If we are running a unit test and have checkpointed
-    # the options, load them rather than reading the config file.
-    # This way, the configuration is reloaded at the start of every unit test.
-    # If a unit test fails,
-    # we don't have to worry about restoring the old config values
-    # that may have been tested.
-    if is_unit_test and CHECKPOINT_OPTS:
-        OPTS.__dict__ = CHECKPOINT_OPTS.__dict__.copy()
-        return
 
     # Setup correct bitcell names
     setup_bitcell()
 
     # Import these to find the executables for checkpointing
-    import characterizer
-    import verify
-    # Make a checkpoint of the options so we can restore
-    # after each unit test
-    if not CHECKPOINT_OPTS:
-        CHECKPOINT_OPTS = copy.copy(OPTS)
+    from openram import characterizer
+    from openram import verify
+
+
+def install_conda():
+    """ Setup conda for default tools. """
+
+    # Don't setup conda if not used
+    if not OPTS.use_conda or OPTS.is_unit_test:
+        return
+
+    debug.info(1, "Creating conda setup...");
+
+    from openram import CONDA_INSTALLER
+    subprocess.call(CONDA_INSTALLER)
 
 
 def setup_bitcell():
@@ -249,10 +235,10 @@ def setup_bitcell():
         OPTS.bitcell = "bitcell_{}port".format(OPTS.num_ports)
         OPTS.dummy_bitcell = "dummy_" + OPTS.bitcell
         OPTS.replica_bitcell = "replica_" + OPTS.bitcell
-                
+
     # See if bitcell exists
     try:
-        c = importlib.import_module("modules." + OPTS.bitcell)
+        c = importlib.import_module("openram.modules." + OPTS.bitcell)
         mod = getattr(c, OPTS.bitcell)
     except ImportError:
         # Use the pbitcell if we couldn't find a custom bitcell
@@ -283,21 +269,20 @@ def get_tool(tool_type, preferences, default_name=None):
                         2)
         else:
             debug.info(1, "Using {0}: {1}".format(tool_type, exe_name))
-            return(default_name, exe_name)
+            return (default_name, exe_name)
     else:
         for name in preferences:
             exe_name = find_exe(name)
             if exe_name != None:
                 debug.info(1, "Using {0}: {1}".format(tool_type, exe_name))
-                return(name, exe_name)
+                return (name, exe_name)
             else:
-                debug.info(1,
-                           "Could not find {0}, trying next {1} tool.".format(name, tool_type))
+                debug.info(1, "Could not find {0}, trying next {1} tool.".format(name, tool_type))
         else:
-            return(None, "")
+            return (None, "")
 
 
-def read_config(config_file, is_unit_test=True):
+def read_config(config_file, is_unit_test=False):
     """
     Read the configuration file that defines a few parameters. The
     config file is just a Python file that defines some config
@@ -378,21 +363,25 @@ def read_config(config_file, is_unit_test=True):
                                                          ports,
                                                          OPTS.tech_name)
 
+    # If write size is not defined, set it equal to word size
+    if OPTS.write_size is None:
+        OPTS.write_size = OPTS.word_size
+
+
 def end_openram():
-    """ Clean up openram for a proper exit """
+    """ Clean up openram for a proper exit. """
     cleanup_paths()
 
     if OPTS.check_lvsdrc:
-        import verify
+        from openram import verify
         verify.print_drc_stats()
         verify.print_lvs_stats()
         verify.print_pex_stats()
 
-        
+
 def purge_temp():
     """ Remove the temp directory. """
-    debug.info(1,
-               "Purging temp directory: {}".format(OPTS.openram_temp))
+    debug.info(1, "Purging temp directory: {}".format(OPTS.openram_temp))
     #import inspect
     #s = inspect.stack()
     #print("Purge {0} in dir {1}".format(s[3].filename, OPTS.openram_temp))
@@ -406,7 +395,7 @@ def purge_temp():
             os.remove(i)
         else:
             shutil.rmtree(i)
-    
+
 
 def cleanup_paths():
     """
@@ -414,57 +403,57 @@ def cleanup_paths():
     """
     global OPTS
     if OPTS.keep_temp:
-        debug.info(0,
-                   "Preserving temp directory: {}".format(OPTS.openram_temp))
+        debug.info(0, "Preserving temp directory: {}".format(OPTS.openram_temp))
         return
     elif os.path.exists(OPTS.openram_temp):
         purge_temp()
 
-        
+
 def setup_paths():
     """ Set up the non-tech related paths. """
     debug.info(2, "Setting up paths...")
 
     global OPTS
 
-    try:
-        OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-    except:
-        debug.error("$OPENRAM_HOME is not properly defined.", 1)
-
-    debug.check(os.path.isdir(OPENRAM_HOME),
-                "$OPENRAM_HOME does not exist: {0}".format(OPENRAM_HOME))
-
-    if OPENRAM_HOME not in sys.path:
-        debug.error("Please add OPENRAM_HOME to the PYTHONPATH.", -1)
+    from openram import OPENRAM_HOME
+    debug.info(1, "OpenRAM source code found in {}".format(OPENRAM_HOME))
 
     # Use a unique temp subdirectory if multithreaded
     if OPTS.num_threads > 1 or OPTS.openram_temp == "/tmp":
-
         # Make a unique subdir
         tempdir = "/openram_{0}_{1}_temp".format(getpass.getuser(),
                                                  os.getpid())
         # Only add the unique subdir one time
         if tempdir not in OPTS.openram_temp:
             OPTS.openram_temp += tempdir
-        
+
     if not OPTS.openram_temp.endswith('/'):
         OPTS.openram_temp += "/"
     debug.info(1, "Temporary files saved in " + OPTS.openram_temp)
 
-    
+
 def is_exe(fpath):
     """ Return true if the given is an executable file that exists. """
+
     return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
 
 def find_exe(check_exe):
     """
-    Check if the binary exists in any path dir
-    and return the full path.
+    Check if the binary exists in any path dir and return the full path.
     """
+
+    # Search for conda setup if used
+    if OPTS.use_conda:
+        from openram import CONDA_HOME
+        search_path = "{0}/bin{1}{2}".format(CONDA_HOME,
+                                             os.pathsep,
+                                             os.environ["PATH"])
+    else:
+        search_path = os.environ["PATH"]
+
     # Check if the preferred spice option exists in the path
-    for path in os.environ["PATH"].split(os.pathsep):
+    for path in search_path.split(os.pathsep):
         exe = os.path.join(path, check_exe)
         # if it is found, then break and use first version
         if is_exe(exe):
@@ -473,40 +462,42 @@ def find_exe(check_exe):
 
 
 def init_paths():
-    """ Create the temp and output directory if it doesn't exist """
+    """ Create the temp and output directory if it doesn't exist. """
+
     if os.path.exists(OPTS.openram_temp):
         purge_temp()
     else:
-        # make the directory if it doesn't exist
+        # Make the directory if it doesn't exist
         try:
-            debug.info(1,
-                       "Creating temp directory: {}".format(OPTS.openram_temp))
+            debug.info(1, "Creating temp directory: {}".format(OPTS.openram_temp))
             os.makedirs(OPTS.openram_temp, 0o750)
         except OSError as e:
-            if e.errno == 17:  # errno.EEXIST
+            if e.errno == 17: # errno.EEXIST
                 os.chmod(OPTS.openram_temp, 0o750)
+            else:
+                debug.error("Unable to make temp directory: {}".format(OPTS.openram_temp), -1)
     #import inspect
     #s = inspect.stack()
     #from pprint import pprint
     #pprint(s)
     #print("Test {0} in dir {1}".format(s[2].filename, OPTS.openram_temp))
-                
+
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist
     try:
         os.makedirs(OPTS.output_path, 0o750)
     except OSError as e:
-        if e.errno == 17:  # errno.EEXIST
+        if e.errno == 17: # errno.EEXIST
             os.chmod(OPTS.output_path, 0o750)
-    except:
-        debug.error("Unable to make output directory.", -1)
+        else:
+            debug.error("Unable to make output directory: {}".format(OPTS.output_path), -1)
 
 
 def set_default_corner():
     """ Set the default corner. """
 
-    import tech
+    from openram import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
         if OPTS.nominal_corner_only:
@@ -539,19 +530,38 @@ def import_tech():
     """ Dynamically adds the tech directory to the path and imports it. """
     global OPTS
 
-    debug.info(2,
-               "Importing technology: " + OPTS.tech_name)
+    debug.info(2, "Importing technology: " + OPTS.tech_name)
 
-    # environment variable should point to the technology dir
+    OPENRAM_TECH = ""
+
+    # Check if $OPENRAM_TECH is defined
     try:
         OPENRAM_TECH = os.path.abspath(os.environ.get("OPENRAM_TECH"))
     except:
-        debug.error("$OPENRAM_TECH environment variable is not defined.", 1)
+        debug.info(2,
+                   "$OPENRAM_TECH environment variable is not defined. "
+                   "Only the default technology modules will be considered if installed.")
+    # Point to the default technology modules that are part of the openram package
+    try:
+        import openram
+        if OPENRAM_TECH != "":
+            OPENRAM_TECH += ":"
+        OPENRAM_TECH += os.path.dirname(openram.__file__) + "/technology"
+    except:
+        if OPENRAM_TECH == "":
+            debug.warning("Couldn't find a tech directory. "
+                          "Install openram library or set $OPENRAM_TECH.")
+
+    debug.info(1, "Tech directory found in {}".format(OPENRAM_TECH))
+
+    # Add this environment variable to os.environ and openram namespace
+    os.environ["OPENRAM_TECH"] = OPENRAM_TECH
+    openram.OPENRAM_TECH = OPENRAM_TECH
 
     # Add all of the paths
     for tech_path in OPENRAM_TECH.split(":"):
         debug.check(os.path.isdir(tech_path),
-                    "$OPENRAM_TECH does not exist: {0}".format(tech_path))
+                    "$OPENRAM_TECH does not exist: {}".format(tech_path))
         sys.path.append(tech_path)
         debug.info(1, "Adding technology path: {}".format(tech_path))
 
@@ -559,22 +569,27 @@ def import_tech():
     try:
         tech_mod = __import__(OPTS.tech_name)
     except ImportError:
-        debug.error("Nonexistent technology module: {0}".format(OPTS.tech_name), -1)
+        debug.error("Nonexistent technology module: {}".format(OPTS.tech_name), -1)
 
     OPTS.openram_tech = os.path.dirname(tech_mod.__file__) + "/"
 
-    # Prepend the tech directory so it is sourced FIRST
+    # Append tech_path to openram.__path__ to import it from openram
     tech_path = OPTS.openram_tech
-    sys.path.insert(0, tech_path)
+    openram.__path__.append(tech_path)
     try:
-        import tech
+        from openram import tech
     except ImportError:
         debug.error("Could not load tech module.", -1)
 
-    # Prepend custom modules of the technology to the path, if they exist
-    custom_mod_path = os.path.join(tech_path, "modules/")
+    # Remove OPENRAM_TECH from sys.path because we should be done with those
+    for tech_path in OPENRAM_TECH.split(":"):
+        sys.path.remove(tech_path)
+
+    # Add the custom modules to "tech"
+    custom_mod_path = os.path.join(tech_path, "custom/")
     if os.path.exists(custom_mod_path):
-        sys.path.insert(0, custom_mod_path)
+        from openram import tech
+        tech.__path__.append(custom_mod_path)
 
 
 def print_time(name, now_time, last_time=None, indentation=2):
@@ -623,7 +638,7 @@ def report_status():
     total_size = OPTS.word_size*OPTS.num_words*OPTS.num_banks
     debug.print_raw("Total size: {} bits".format(total_size))
     if total_size >= 2**14 and not OPTS.analytical_delay:
-        debug.warning("Characterizing large memories ({0}) will have a large run-time. ".format(total_size))
+        debug.warning("Characterizing large memories ({0}) will have a large run-time.".format(total_size))
     debug.print_raw("Word size: {0}\nWords: {1}\nBanks: {2}".format(OPTS.word_size,
                                                                     OPTS.num_words,
                                                                     OPTS.num_banks))

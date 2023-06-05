@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2023 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
-from base import design
-from tech import cell_properties as props
+from openram import debug
+from openram.base import design
+from openram.tech import cell_properties as props
 
 
 class sky130_col_cap(design):

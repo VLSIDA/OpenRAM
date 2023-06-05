@@ -1,22 +1,22 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from .pgate import *
-from base import vector
-from base import logical_effort
-from base.utils import round_to_grid
-from base.errors import drc_error
 import operator
-from tech import drc, parameter, spice
 from math import ceil
-from globals import OPTS
-from sram_factory import factory
-from tech import cell_properties as cell_props
+from openram import debug
+from openram.base import vector
+from openram.base import logical_effort
+from openram.base.utils import round_to_grid
+from openram.base.errors import drc_error
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, spice
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
+from .pgate import *
 
 
 class pinv(pgate):

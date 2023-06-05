@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -23,10 +23,10 @@ class supply_grid(signal_grid):
 
     def reinit(self):
         """ Reinitialize everything for a new route. """
-        
+
         self.source = set()
         self.target = set()
-        
+
         # Reset all the cells in the map
         for p in self.map.values():
             p.reset()
@@ -77,5 +77,3 @@ class supply_grid(signal_grid):
             wave = wave_path.neighbor(direct)
 
         return wave_path
-
-

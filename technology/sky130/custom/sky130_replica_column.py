@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California
+# Copyright (c) 2016-2023 Regents of the University of California
 # All rights reserved.
 #
 
-import debug
+from openram import debug
+from openram.base import geometry
+from openram.sram_factory import factory
+from openram.tech import layer
+from openram import OPTS
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
-from sram_factory import factory
-from globals import OPTS
-from base import geometry
-from tech import layer
 
 
 class sky130_replica_column(sky130_bitcell_base_array):
@@ -220,6 +220,16 @@ class sky130_replica_column(sky130_bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
+        # for colend in [self.cell_inst[0], self.cell_inst[self.row_size]]:
+        #     inst = self.cell_inst[row]
+        #     for pin_name in ["top_gate", "bot_gate"]:
+        #         pin = inst.get_pin("gate")
+        #         self.add_layout_pin(text=pin_name,
+        #                             layer=pin.layer,
+        #                             offset=pin.ll(),
+        #                             width=pin.width(),
+        #                             height=pin.height())
+
         for row in range(self.row_size + 2):
             inst = self.cell_inst[row]
             # add only 1 label per col
@@ -235,9 +245,8 @@ class sky130_replica_column(sky130_bitcell_base_array):
                     self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
 
                 if 'VNB' or 'vnb' in self.cell_inst[row].mod.pins:
-                    print("welling")
                     try:
-                        from tech import layer_override
+                        from openram.tech import layer_override
                         if layer_override['VNB']:
                             pin = inst.get_pin("vnb")
                             self.add_label("gnd", pin.layer, pin.center())

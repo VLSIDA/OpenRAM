@@ -1,12 +1,12 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import cell_properties as props
+from openram import debug
+from openram.tech import cell_properties as props
 from .bitcell_base import bitcell_base
 
 
@@ -29,7 +29,3 @@ class bitcell_1port(bitcell_base):
         """
         self.add_graph_edges(graph, port_nets)
 
-    def is_non_inverting(self):
-        """Return input to output polarity for module"""
-        
-        return False

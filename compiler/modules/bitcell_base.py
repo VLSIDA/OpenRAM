@@ -1,16 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
-import debug
-from base import design
-from globals import OPTS
-from base import logical_effort
-from tech import parameter, drc, layer, spice
+from openram import debug
+from openram.base import design
+from openram.base import logical_effort
+from openram.tech import parameter, drc, layer, spice
+from openram import OPTS
 
 
 class bitcell_base(design):
@@ -46,7 +45,7 @@ class bitcell_base(design):
 
     def analytical_power(self, corner, load):
         """Bitcell power in nW. Only characterizes leakage."""
-        from tech import spice
+        from openram.tech import spice
         leakage = spice["bitcell_leakage"]
         # FIXME
         dynamic = 0
@@ -169,7 +168,7 @@ class bitcell_base(design):
 
         """
         return
-    
+
     def get_all_wl_names(self):
         """ Creates a list of all wordline pin names """
         row_pins = ["wl"]
@@ -207,39 +206,39 @@ class bitcell_base(design):
         is_nchannel = True
         stack = 2 # for access and inv tx
         is_cell = False
-        return self.tr_r_on(drc["minwidth_tx"], is_nchannel, stack, is_cell)    
-        
+        return self.tr_r_on(drc["minwidth_tx"], is_nchannel, stack, is_cell)
+
     def get_input_capacitance(self):
         """Input cap of input, passes width of gates to gate cap function"""
         # Input cap of both access TX connected to the wordline
-        return self.gate_c(2*parameter["6T_access_size"])      
-        
+        return self.gate_c(2*parameter["6T_access_size"])
+
     def get_intrinsic_capacitance(self):
         """Get the drain capacitances of the TXs in the gate."""
         stack = 1
         mult = 1
-        # FIXME: Need to define TX sizes of bitcell storage node. Using 
+        # FIXME: Need to define TX sizes of bitcell storage node. Using
         # min_width as a temp value
-        
-        # Add the inverter drain Cap and the bitline TX drain Cap
-        nmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
-                                      stack,
-                                      mult)
-        pmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult, 
-                                      stack,
-                                      mult)
-        
-        bl_nmos_drain_c =  self.drain_c_(parameter["6T_access_size"], 
-                                         stack,
-                                         mult)              
 
-        return nmos_drain_c + pmos_drain_c + bl_nmos_drain_c    
-        
+        # Add the inverter drain Cap and the bitline TX drain Cap
+        nmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult,
+                                      stack,
+                                      mult)
+        pmos_drain_c =  self.drain_c_(drc["minwidth_tx"]*mult,
+                                      stack,
+                                      mult)
+
+        bl_nmos_drain_c =  self.drain_c_(parameter["6T_access_size"],
+                                         stack,
+                                         mult)
+
+        return nmos_drain_c + pmos_drain_c + bl_nmos_drain_c
+
     def module_wire_c(self):
         """Capacitance of bitline"""
         # FIXME: entire bitline cap is calculated here because of the current
         # graph implementation so array dims are all re-calculated here. May
-        # be incorrect if dim calculations change 
+        # be incorrect if dim calculations change
         cells_in_col = OPTS.num_words/OPTS.words_per_row
         return cells_in_col*self.height*spice["wire_c_per_um"]
 
@@ -247,15 +246,15 @@ class bitcell_base(design):
         """Resistance of bitline"""
         # FIXME: entire bitline r is calculated here because of the current
         # graph implementation so array dims are all re-calculated. May
-        # be incorrect if dim calculations change 
+        # be incorrect if dim calculations change
         cells_in_col = OPTS.num_words/OPTS.words_per_row
-        return cells_in_col*self.height*spice["wire_r_per_um"]   
-        
-    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict): 
+        return cells_in_col*self.height*spice["wire_r_per_um"]
+
+    def cacti_rc_delay(self, inputramptime, tf, vs1, vs2, rise, extra_param_dict):
         """ Special RC delay function used by CACTI for bitline delay
         """
         import math
-        vdd = extra_param_dict['vdd'] 
+        vdd = extra_param_dict['vdd']
         m = vdd / inputramptime #v_wl = vdd for OpenRAM
         # vdd == V_b_pre in OpenRAM. Bitline swing is assumed 10% of vdd
         tstep = tf * math.log(vdd/(vdd - 0.1*vdd))
@@ -264,4 +263,16 @@ class bitcell_base(design):
         else:
             delay = math.sqrt(2*tstep*(vdd-spice["nom_threshold"])/m)
 
-        return delay  
+        return delay
+
+    def build_graph(self, graph, inst_name, port_nets):
+        """
+        Adds edges based on inputs/outputs.
+        Overrides base class function.
+        """
+        debug.error("Must override build_graph function in bitcell base class.")
+
+    def is_non_inverting(self):
+        """Return input to output polarity for module"""
+
+        return False

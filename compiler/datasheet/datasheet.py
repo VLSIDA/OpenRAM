@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from .table_gen import *
 import os
 import base64
-from globals import OPTS
+from openram import OPTS
+from .table_gen import *
 
 
 class datasheet():
@@ -31,7 +31,7 @@ class datasheet():
         if OPTS.output_datasheet_info:
             datasheet_path = OPTS.output_path
         else:
-            datasheet_path = OPTS.openram_temp    
+            datasheet_path = OPTS.openram_temp
         with open(datasheet_path + "/datasheet.info") as info:
             self.html += '<!--'
             for row in info:

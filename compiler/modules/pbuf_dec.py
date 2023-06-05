@@ -1,21 +1,21 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
 from .pgate import *
-from sram_factory import factory
 
 
 class pbuf_dec(pgate):
     """
     This is a simple buffer used for driving wordlines.
     """
-    def __init__(self, name, size=4, height=None):
+    def __init__(self, name, size=4, height=None, add_wells=True):
 
         debug.info(1, "creating {0} with size of {1}".format(name, size))
         self.add_comment("size: {}".format(size))
@@ -25,7 +25,7 @@ class pbuf_dec(pgate):
         self.height = height
 
         # Creates the netlist and layout
-        pgate.__init__(self, name, height)
+        pgate.__init__(self, name, height, add_wells)
 
     def create_netlist(self):
         self.add_pins()
@@ -51,11 +51,13 @@ class pbuf_dec(pgate):
         input_size = max(1, int(self.size / self.stage_effort))
         self.inv1 = factory.create(module_type="pinv_dec",
                                    size=input_size,
-                                   height=self.height)
+                                   height=self.height,
+                                   add_wells=self.add_wells)
 
         self.inv2 = factory.create(module_type="pinv_dec",
                                    size=self.size,
-                                   height=self.height)
+                                   height=self.height,
+                                   add_wells=self.add_wells)
 
     def create_insts(self):
         self.inv1_inst = self.add_inst(name="buf_inv1",

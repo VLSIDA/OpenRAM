@@ -1,27 +1,27 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-
+from openram import debug
+from openram import OPTS
 from .simulation import simulation
-from globals import OPTS
-import debug
 
-class elmore(simulation):    
+
+class elmore(simulation):
     """
     Delay model for the SRAM which calculates Elmore delays along the SRAM critical path.
     """
-    
+
     def __init__(self, sram, spfile, corner):
         super().__init__(sram, spfile, corner)
 
         # self.targ_read_ports = []
         # self.targ_write_ports = []
         # self.period = 0
-        # if self.write_size:
+        # if self.write_size != self.word_size:
             # self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         # else:
             # self.num_wmasks = 0
@@ -30,13 +30,13 @@ class elmore(simulation):
         self.set_corner(corner)
         self.create_signal_names()
         self.add_graph_exclusions()
-    
-    def set_params(self):    
+
+    def set_params(self):
         """Set parameters specific to the corner being simulated"""
         self.params = {}
         # Set the specific functions to use for timing defined in the SRAM module
         self.params["model_name"] = OPTS.model_name
-    
+
     def get_lib_values(self, load_slews):
         """
         Return the analytical model results for the SRAM.
@@ -45,7 +45,7 @@ class elmore(simulation):
             debug.warning("In analytical mode, all ports have the timing of the first read port.")
 
         # Probe set to 0th bit, does not matter for analytical delay.
-        self.set_probe('0' * self.addr_size, 0)
+        self.set_probe('0' * self.bank_addr_size, 0)
         self.create_graph()
         self.set_internal_spice_names()
         self.create_measurement_names()
@@ -66,7 +66,7 @@ class elmore(simulation):
         for load,slew in load_slews:
             # Calculate delay based on slew and load
             path_delays = self.graph.get_timing(bl_path, self.corner, slew, load, self.params)
-            
+
             total_delay = self.sum_delays(path_delays)
             max_delay = max(max_delay, total_delay.delay)
             debug.info(1,
@@ -84,7 +84,7 @@ class elmore(simulation):
                     elif "slew" in mname and port in self.read_ports:
                         port_data[port][mname].append(total_delay.slew / 1e3)
 
-        # Margin for error in period. Calculated by averaging required margin for a small and large 
+        # Margin for error in period. Calculated by averaging required margin for a small and large
         # memory. FIXME: margin is quite large, should be looked into.
         period_margin = 1.85
         sram_data = {"min_period": (max_delay / 1e3) * 2 * period_margin,

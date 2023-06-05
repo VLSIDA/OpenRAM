@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
+from openram import debug
+from openram.tech import drc, layer, preferred_directions
+from openram.tech import layer as tech_layers
 from .hierarchy_design import hierarchy_design
 from .vector import vector
-from tech import drc, layer, preferred_directions
-from tech import layer as tech_layers
 
 
 class contact(hierarchy_design):

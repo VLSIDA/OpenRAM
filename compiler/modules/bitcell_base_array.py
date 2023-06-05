@@ -1,14 +1,14 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from sram_factory import factory
-from globals import OPTS
+from openram import debug
+from openram.base import design
+from openram.sram_factory import factory
+from openram import OPTS
 
 
 class bitcell_base_array(design):
@@ -128,7 +128,7 @@ class bitcell_base_array(design):
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
         return temp
-        
+
     def add_bitline_pins(self):
         bitline_names = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
@@ -165,7 +165,7 @@ class bitcell_base_array(design):
         """ Add the layout pins """
         self.add_bitline_pins()
         self.add_wl_pins()
-        
+
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
         dir_y = False

@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
+from openram import debug
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import drc, parameter, layer
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 from .pinv import pinv
-from tech import drc, parameter, layer
-from globals import OPTS
-from sram_factory import factory
-from tech import cell_properties as cell_props
 
 
 class pinv_dec(pinv):
@@ -20,7 +20,7 @@ class pinv_dec(pinv):
     Other stuff is the same (netlist, sizes, etc.)
     """
 
-    def __init__(self, name, size=1, beta=parameter["beta"], height=None, add_wells=True):
+    def __init__(self, name, size=1, beta=parameter["beta"], height=None, add_wells=True, flip_io=False):
 
         debug.info(2,
                    "creating pinv_dec structure {0} with size of {1}".format(name,
@@ -37,7 +37,7 @@ class pinv_dec(pinv):
             self.supply_layer = "m1"
         else:
             self.supply_layer = "m2"
-
+        self.flip_io=flip_io
         super().__init__(name, size, beta, self.cell_height, add_wells)
 
     def determine_tx_mults(self):
@@ -76,9 +76,14 @@ class pinv_dec(pinv):
         pmos_gate_pos = pmos_gate_pin.lc()
         self.add_path("poly", [nmos_gate_pos, pmos_gate_pos])
 
+
         # Center is completely symmetric.
         contact_width = self.poly_contact.width
-        contact_offset = nmos_gate_pin.lc() \
+        if self.flip_io:
+            contact_offset = pmos_gate_pin.rc() \
+                         + vector(self.poly_extend_active + 0.6 * contact_width, 0)
+        else:
+            contact_offset = nmos_gate_pin.lc() \
                          - vector(self.poly_extend_active + 0.5 * contact_width, 0)
         via = self.add_via_stack_center(from_layer="poly",
                                         to_layer=self.route_layer,
@@ -107,8 +112,11 @@ class pinv_dec(pinv):
                           height=self.height - ll.y + 0.5 * self.pwell_contact.height + self.well_enclose_active)
 
         if "nwell" in layer:
-            ll = (self.pmos_inst.ll() - vector(2 * [self.well_enclose_active])).scale(1, 0)
-            ur = self.pmos_inst.ur() + vector(2 * [self.well_enclose_active])
+            poly_offset = 0
+            if self.flip_io:
+                poly_offset = 1.2 * self.poly_contact.width
+            ll = (self.pmos_inst.ll() - vector(2 * [self.well_enclose_active])).scale(1, 0) - vector(0, poly_offset)
+            ur = self.pmos_inst.ur() + vector(2 * [self.well_enclose_active + poly_offset])
             self.add_rect(layer="nwell",
                           offset=ll,
                           width=ur.x - ll.x,

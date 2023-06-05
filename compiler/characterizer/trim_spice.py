@@ -1,13 +1,13 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from math import log,ceil
 import re
+from math import log, ceil
+from openram import debug
 
 
 class trim_spice():
@@ -46,9 +46,9 @@ class trim_spice():
         self.col_addr_size = int(log(self.words_per_row, 2))
         self.bank_addr_size = self.col_addr_size + self.row_addr_size
         self.addr_size = self.bank_addr_size + int(log(self.num_banks, 2))
-        
+
     def trim(self, address, data_bit):
-        """ 
+        """
         Reduce the spice netlist but KEEP the given bits at the
         address (and things that will add capacitive load!)
         """
@@ -62,7 +62,7 @@ class trim_spice():
             col_address = int(address[0:self.col_addr_size], 2)
         else:
             col_address = 0
-            
+
         # 1. Keep cells in the bitcell array based on WL and BL
         wl_name = "wl_{}".format(wl_address)
         bl_name = "bl_{}".format(int(self.words_per_row*data_bit + col_address))

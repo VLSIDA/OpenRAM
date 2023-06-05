@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import vector
-from base import pin_layout
-from tech import layer_names
 import os
 import shutil
-from globals import OPTS
+from openram import debug
+from openram.base import vector
+from openram.base import pin_layout
+from openram.tech import layer_names
+from openram import OPTS
 
 
 class lef:
@@ -64,7 +64,7 @@ class lef:
         f.write('puts "Finished writing LEF cell {}"\n'.format(self.name))
         f.close()
         os.system("chmod u+x {}".format(run_file))
-        from run_script import run_script
+        from openram.verify.run_script import run_script
         (outfile, errfile, resultsfile) = run_script(self.name, "lef")
 
     def lef_write(self, lef_name):
@@ -75,7 +75,7 @@ class lef:
         #     return
 
         # To maintain the indent level easily
-        self.indent = "" 
+        self.indent = ""
 
         if OPTS.detailed_lef:
             debug.info(3, "Writing detailed LEF to {0}".format(lef_name))
@@ -88,7 +88,7 @@ class lef:
 
         for pin_name in self.pins:
             self.lef_write_pin(pin_name)
-            
+
         self.lef_write_obstructions(OPTS.detailed_lef)
         self.lef_write_footer()
         self.lef.close()
@@ -220,4 +220,3 @@ class lef:
                                                  round(item[1],
                                                        self.round_grid)))
             self.lef.write(" ;\n")
-

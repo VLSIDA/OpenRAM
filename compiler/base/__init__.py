@@ -1,3 +1,8 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 from .channel_route import *
 from .contact import *
 from .delay_data import *

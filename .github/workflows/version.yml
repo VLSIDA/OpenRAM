@@ -1,0 +1,46 @@
+name: version
+on:
+  workflow_call:
+    secrets:
+      WORKFLOW_ACCESS_TOKEN:
+        required: true
+jobs:
+  make_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+      - name: Configure git
+        run: |
+         # Configure the committer
+         git config --global user.name "vlsida-bot"
+         git config --global user.email "mrg+vlsidabot@ucsc.edu"
+         # Set remote repos
+         git remote add private-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/PrivateRAM.git
+         git remote add public-repo https://${{ secrets.WORKFLOW_ACCESS_TOKEN }}@github.com/VLSIDA/OpenRAM.git
+      - name: Make new version number
+        run: |
+         # Read the current version number
+         export CURRENT_VERSION="$(cat VERSION)"
+         # Increment the version number
+         export NEXT_VERSION="$(echo ${CURRENT_VERSION} | awk -F. -v OFS=. '{$NF += 1 ; print}')"
+         echo "${NEXT_VERSION}" > VERSION
+         # Commit the change and tag the commit
+         git commit -a -m "Bump version: ${CURRENT_VERSION} -> ${NEXT_VERSION}"
+         git tag "v${NEXT_VERSION}" HEAD
+      - name: Push changes
+        run: |
+         # Read next tag
+         export NEXT_TAG="v$(cat VERSION)"
+         # Push to private/dev
+         git pull private-repo dev
+         git push private-repo HEAD:dev ${NEXT_TAG}
+         # Push to public/dev
+         git pull public-repo dev
+         git push public-repo HEAD:dev ${NEXT_TAG}
+         # Push to public/stable
+         git pull public-repo stable
+         git push public-repo HEAD:stable ${NEXT_TAG}

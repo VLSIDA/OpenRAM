@@ -1,15 +1,15 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from tech import GDS, layer
-from tech import preferred_directions
-from tech import cell_properties as props
-from globals import OPTS
+from openram import debug
+from openram.tech import GDS, layer
+from openram.tech import preferred_directions
+from openram.tech import cell_properties as props
+from openram import OPTS
 from . import utils
 from .hierarchy_design import hierarchy_design
 
@@ -67,7 +67,7 @@ class design(hierarchy_design):
         self.setup_multiport_constants()
 
         try:
-            from tech import power_grid
+            from openram.tech import power_grid
             self.supply_stack = power_grid
         except ImportError:
             # if no power_grid is specified by tech we use sensible defaults
@@ -78,7 +78,7 @@ class design(hierarchy_design):
         for pin_name in self.pins:
             pins = self.get_pins(pin_name)
             for pin in pins:
-                print(pin_name, pin)
+                debug.info(0, "{0} {1}".format(pin_name, pin))
 
     def setup_multiport_constants(self):
         """

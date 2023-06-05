@@ -1,3 +1,8 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 from .and2_dec import *
 from .and3_dec import *
 from .and4_dec import *
@@ -67,6 +72,7 @@ from .replica_pbitcell import *
 from .row_cap_array import *
 from .row_cap_bitcell_1port import *
 from .row_cap_bitcell_2port import *
+from .rom_bank import *
 from .sense_amp_array import *
 from .sense_amp import *
 from .tri_gate_array import *
@@ -78,5 +84,4 @@ from .write_driver_array import *
 from .write_driver import *
 from .write_mask_and_array import *
 from .sram_1bank import *
-from .sram_config import *
-from .sram import *
+from .internal_base import *

@@ -1,12 +1,12 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from globals import OPTS
 import importlib
+from openram import OPTS
 
 
 class sram_factory:
@@ -39,7 +39,7 @@ class sram_factory:
         """
         overridden = False
         try:
-            from tech import tech_modules
+            from openram.tech import tech_modules
             real_module_type = tech_modules[module_type]
             # If we are given a list of modules, it is indexed by number of ports starting from 1
             if type(real_module_type) is list:
@@ -105,12 +105,14 @@ class sram_factory:
             try:
                 # Dynamically load the module
                 if real_module_type == "contact":
-                    c  = importlib.import_module("base.contact")
+                    c  = importlib.import_module("openram.base.contact")
+                elif real_module_type == "sram":
+                    c = importlib.import_module("openram.sram")
                 else:
-                    c  = importlib.import_module("modules."+real_module_type)
+                    c  = importlib.import_module("openram.modules."+real_module_type)
             except ModuleNotFoundError:
                 # Check if it is a technology specific module
-                c  = importlib.import_module("custom."+real_module_type)
+                c  = importlib.import_module("openram.custom."+real_module_type)
 
             mod = getattr(c, real_module_type)
 

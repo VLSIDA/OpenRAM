@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -25,12 +25,11 @@ drc["lvs_subcircuits"] variable, and additional options must be
 inserted in the runset.
 """
 
-
 import os
 import re
-from run_script import *
-import debug
-from globals import OPTS
+from openram import debug
+from openram.verify.run_script import *
+from openram import OPTS
 
 # Keep track of statistics
 num_drc_runs = 0
@@ -39,7 +38,7 @@ num_pex_runs = 0
 
 
 def write_drc_script(cell_name, gds_name, extract, final_verification, output_path):
-    from tech import drc
+    from openram.tech import drc
     drc_rules = drc["drc_rules"]
     drc_runset = output_path + cell_name + ".rsf"
     drc_log_file = "{0}{1}.log".format(OPTS.openram_temp, name)
@@ -73,8 +72,8 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("#!/bin/sh\n")
     f.write("assura {0} 2> {1} 1> {2}\n".format(drc_runset, drc_log_file, drc_log_file))
     f.close()
-    
-    
+
+
 def run_drc(name, gds_name, final_verification=False):
     """Run DRC check on a given top-level name which is
        implemented in gds_name."""
@@ -85,7 +84,7 @@ def run_drc(name, gds_name, final_verification=False):
     write_drc_script(name, gds_name, True, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(name, "drc")
-    
+
     # count and report errors
     errors = 0
     try:
@@ -108,7 +107,7 @@ def run_drc(name, gds_name, final_verification=False):
 
 def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_path):
 
-    from tech import drc
+    from openram.tech import drc
     lvs_rules = drc["lvs_rules"]
     lvs_runset = output_path + name + ".rsf"
     # The LVS compare rules must be defined in the tech file for Assura.
@@ -168,7 +167,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification, output_pa
     f.write("assura {0} 2> {1} 1> {2}\n".format(lvs_runset, lvs_log_file, lvs_log_file))
     f.close()
 
-    
+
 def run_lvs(name, gds_name, sp_name, final_verification=False):
     """Run LVS check on a given top-level name which is
        implemented in gds_name and sp_name. """
@@ -179,7 +178,7 @@ def run_lvs(name, gds_name, sp_name, final_verification=False):
     write_lvs_script(name, gds_name, sp_name, final_verification, OPTS.openram_temp)
 
     (outfile, errfile, resultsfile) = run_script(name, "drc")
-    
+
     errors = 0
     try:
         f = open(OPTS.openram_temp + name + ".csm", "r")
@@ -205,14 +204,14 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False):
     global num_pex_runs
     num_pex_runs += 1
 
-    
+
 def print_drc_stats():
     debug.info(1, "DRC runs: {0}".format(num_drc_runs))
 
-    
+
 def print_lvs_stats():
     debug.info(1, "LVS runs: {0}".format(num_lvs_runs))
 
-    
+
 def print_pex_stats():
     debug.info(1, "PEX runs: {0}".format(num_pex_runs))

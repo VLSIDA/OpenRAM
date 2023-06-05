@@ -1,6 +1,11 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 import copy
 from collections import defaultdict
-import debug
+from openram import debug
 
 
 class timing_graph():
@@ -119,7 +124,7 @@ class timing_graph():
             # If at the last output, include the final output load
             if i == len(path) - 2:
                 cout += load
-                
+
             if params["model_name"] == "cacti":
                 delays.append(path_edge_mod.cacti_delay(corner, cur_slew, cout, params))
                 cur_slew = delays[-1].slew
@@ -130,14 +135,14 @@ class timing_graph():
                             return_value=1)
 
         return delays
-        
+
     def get_edge_mods(self, path):
         """Return all edge mods associated with path"""
-        
+
         if len(path) == 0:
             return []
-            
-        return [self.edge_mods[(path[i], path[i+1])] for i in range(len(path)-1)]    
+
+        return [self.edge_mods[(path[i], path[i+1])] for i in range(len(path)-1)]
 
     def __str__(self):
         """ override print function output """
@@ -153,4 +158,3 @@ class timing_graph():
         """ override print function output """
 
         return str(self)
-

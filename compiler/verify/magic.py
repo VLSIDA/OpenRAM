@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -19,14 +19,12 @@ We obtained this file from Qflow ( http://opencircuitdesign.com/qflow/index.html
 and include its appropriate license.
 """
 
-
 import os
 import re
 import shutil
-import debug
-from globals import OPTS
+from openram import debug
+from openram import OPTS
 from .run_script import *
-
 # Keep track of statistics
 num_drc_runs = 0
 num_lvs_runs = 0
@@ -96,13 +94,24 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("gds warning default\n")
     # Flatten the transistors
     # Bug in Netgen 1.5.194 when using this...
-    f.write("gds flatglob *_?mos_m*\n")
+    try:
+        from openram.tech import blackbox_cells
+    except ImportError:
+        blackbox_cells = []
+
+    try:
+        from openram.tech import flatglob
+    except ImportError:
+        flatglob = []
+        f.write("gds readonly true\n")
+
+    for entry in flatglob:
+        f.write("gds flatglob " +entry + "\n")
     # These two options are temporarily disabled until Tim fixes a bug in magic related
     # to flattening channel routes and vias (hierarchy with no devices in it). Otherwise,
     # they appear to be disconnected.
     f.write("gds flatten true\n")
     f.write("gds ordering true\n")
-    f.write("gds readonly true\n")
     f.write("gds read {}\n".format(gds_name))
     f.write('puts "Finished reading gds {}"\n'.format(gds_name))
     f.write("load {}\n".format(cell_name))
@@ -164,10 +173,6 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("#!/bin/sh\n")
     f.write('export OPENRAM_TECH="{}"\n'.format(os.environ['OPENRAM_TECH']))
     # Copy the bitcell mag files if they exist
-    try:
-        from tech import blackbox_cells
-    except ImportError:
-        blackbox_cells = []
     for blackbox_cell_name in blackbox_cells:
         mag_file = OPTS.openram_tech + "maglef_lib/" + blackbox_cell_name + ".mag"
         debug.check(os.path.isfile(mag_file), "Could not find blackbox cell {}".format(mag_file))
@@ -267,7 +272,7 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     if os.path.exists(full_setup_file):
         # Copy setup.tcl file into temp dir
         shutil.copy(full_setup_file, output_path)
-            
+
         setup_file_object = open(output_path + "/setup.tcl", 'a')
         setup_file_object.write("# Increase the column sizes for ease of reading long names\n")
         setup_file_object.write("::netgen::format 120\n")
@@ -409,17 +414,9 @@ def run_pex(name, gds_name, sp_name, output=None, final_verification=False, outp
     # pex_fix did run the pex using a script while dev orignial method
     # use batch mode.
     # the dev old code using batch mode does not run and is split into functions
-    pex_runset = write_script_pex_rule(gds_name, name, sp_name, output)
+    write_script_pex_rule(gds_name, name, sp_name, output)
 
-    errfile = "{0}{1}.pex.err".format(output_path, name)
-    outfile = "{0}{1}.pex.out".format(output_path, name)
-
-    script_cmd = "{0} 2> {1} 1> {2}".format(pex_runset,
-                                            errfile,
-                                            outfile)
-    cmd = script_cmd
-    debug.info(2, cmd)
-    os.system(cmd)
+    (outfile, errfile, resultsfile) = run_script(name, "pex")
 
     # rename technology models
     pex_nelist = open(output, 'r')
@@ -528,7 +525,6 @@ def write_script_pex_rule(gds_name, cell_name, sp_name, output):
 
     f.close()
     os.system("chmod u+x {}".format(run_file))
-    return run_file
 
 
 def find_error(results):

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -11,12 +11,12 @@ various functions that can be be used to generate stimulus for other
 simulations as well.
 """
 
-import tech
-import debug
-import subprocess
 import os
+import subprocess
 import numpy as np
-from globals import OPTS
+from openram import debug
+from openram import tech
+from openram import OPTS
 
 
 class stimuli():
@@ -405,6 +405,11 @@ class stimuli():
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
+        # Wrap the command with conda activate & conda deactivate
+        # FIXME: Should use verify/run_script.py here but run_script doesn't return
+        # the return code of the subprocess. File names might also mismatch.
+        from openram import CONDA_HOME
+        cmd = "source {0}/bin/activate && {1} && conda deactivate".format(CONDA_HOME, cmd)
         debug.info(2, cmd)
         retcode = subprocess.call(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 

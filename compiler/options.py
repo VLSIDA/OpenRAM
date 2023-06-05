@@ -1,19 +1,19 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import optparse
 import os
+import optparse
 
 
 class options(optparse.Values):
     """
     Class for holding all of the OpenRAM options. All
     of these options can be over-riden in a configuration file
-    that is the sole required command-line positional argument for openram.py.
+    that is the sole required command-line positional argument for sram_compiler.py.
     """
 
     ###################
@@ -52,6 +52,14 @@ class options(optparse.Values):
     words_per_row = None
     num_spare_rows = 0
     num_spare_cols = 0
+
+    ###################
+    # ROM configuration options
+    ###################
+    rom_endian = "little"
+    rom_data = None
+    strap_spacing = 8
+    scramble_bits = True
 
     ###################
     # Optimization options
@@ -121,6 +129,9 @@ class options(optparse.Values):
     ###################
     # Tool options
     ###################
+    # Use conda to install the default tools
+    # (existing tools will be used if disabled)
+    use_conda = True
     # Variable to select the variant of spice
     spice_name = None
     # The spice executable being used which is derived from the user PATH.

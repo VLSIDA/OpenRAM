@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os
 import unittest
 from testutils import *
-import sys, os
 
-import globals
-from globals import OPTS
-from sram_factory import factory
-import debug
+import openram
+from openram import debug
+from openram.sram_factory import factory
+from openram import OPTS
+
 
 @unittest.skip("SKIPPING 19_multi_bank_test")
 class multi_bank_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
-        from modules import sram_config
+        openram.init_openram(config_file, is_unit_test=True)
+        from openram import sram_config
 
         c = sram_config(word_size=4,
                         num_words=16)
         c.num_banks=2
 
         c.words_per_row=1
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "No column mux")
         a = factory.create("bank", sram_config=c)
@@ -36,7 +36,6 @@ class multi_bank_test(openram_test):
 
         c.num_words=32
         c.words_per_row=2
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
         a = factory.create("bank", sram_config=c)
@@ -44,7 +43,6 @@ class multi_bank_test(openram_test):
 
         c.num_words=64
         c.words_per_row=4
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
         a = factory.create("bank", sram_config=c)
@@ -53,17 +51,17 @@ class multi_bank_test(openram_test):
         c.word_size=2
         c.num_words=128
         c.words_per_row=8
-        factory.reset()
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
         a = factory.create("bank", sram_config=c)
         self.local_check(a)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

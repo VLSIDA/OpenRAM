@@ -1,21 +1,21 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-from base import vector
-import debug
 import math
 from bisect import bisect_left
-from tech import layer, drc
-from globals import OPTS
-from tech import cell_properties as cell_props
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.tech import layer, drc
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 
 if cell_props.ptx.bin_spice_models:
-    from tech import nmos_bins, pmos_bins
+    from openram.tech import nmos_bins, pmos_bins
 
 
 class pgate(design):
@@ -317,7 +317,7 @@ class pgate(design):
         contact_xoffset = nmos_pos.x + nmos.active_width \
                           + self.active_space
         # Allow an nimplant below it under the rail
-        contact_yoffset = max(0.5 * self.implant_width + self.implant_enclose_active, 
+        contact_yoffset = max(0.5 * self.implant_width + self.implant_enclose_active,
                               self.get_tx_insts("nmos")[0].by())
         contact_offset = vector(contact_xoffset, contact_yoffset)
 

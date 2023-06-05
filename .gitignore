@@ -1,4 +1,5 @@
 .DS_Store
+.coverage*
 *~
 *.orig
 *.rej
@@ -13,3 +14,12 @@ technology/freepdk45/ncsu_basekit
 technology/sky130/*_lib
 technology/sky130/tech/.magicrc
 .idea
+compiler/tests/results/
+open_pdks/
+dist/
+openram.egg-info/
+miniconda/
+sky130A/
+sky130B/
+skywater-pdk/
+sky130_fd_bd_sram/

@@ -1,18 +1,18 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-from base import design
-from base import logical_effort
-from base import vector
-from tech import layer, drc, spice
-from sram_factory import factory
-from globals import OPTS
-from tech import cell_properties as cell_props
+from openram import debug
+from openram.base import design
+from openram.base import logical_effort
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer, drc, spice
+from openram.tech import cell_properties as cell_props
+from openram import OPTS
 
 
 class ptx(design):
@@ -39,7 +39,8 @@ class ptx(design):
                  connect_drain_active=False,
                  connect_source_active=False,
                  connect_poly=False,
-                 num_contacts=None):
+                 num_contacts=None,
+                 ):
 
         if "li" in layer:
             self.route_layer = "li"
@@ -47,11 +48,11 @@ class ptx(design):
             self.route_layer = "m1"
 
         # Default contacts are the lowest layer
-        if not add_source_contact:
+        if add_source_contact == None:
             add_source_contact = self.route_layer
 
         # Default contacts are the lowest layer
-        if not add_drain_contact:
+        if add_drain_contact == None:
             add_drain_contact = self.route_layer
 
         # We need to keep unique names because outputting to GDSII

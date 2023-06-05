@@ -1,17 +1,17 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
-from tech import layer, preferred_directions
-from base import vector
-from sram_factory import factory
-from globals import OPTS
-from tech import layer_properties as layer_props
+from openram import debug
+from openram.base import design
+from openram.base import vector
+from openram.sram_factory import factory
+from openram.tech import layer, preferred_directions
+from openram.tech import layer_properties as layer_props
+from openram import OPTS
 
 
 class column_mux_array(design):
@@ -175,7 +175,7 @@ class column_mux_array(design):
             # Add the column x offset to find the right select bit
             gate_offset = self.mux_inst[col].get_pin("sel").bc()
             # use the y offset from the sel pin and the x offset from the gate
-            
+
             offset = vector(gate_offset.x,
                             self.get_pin("sel_{}".format(sel_index)).cy())
 

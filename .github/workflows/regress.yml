@@ -1,0 +1,63 @@
+name: regress
+on:
+  push:
+    branches-ignore:
+      - stable
+jobs:
+  # All tests should be run from this job
+  regression_test:
+    # This job runs on pull requests or any push that doesn't have a new version
+    if: ${{ startsWith(github.event.head_commit.message, 'Bump version:') == false }}
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Library build
+        run: |
+         rm -rf ~/.local/lib/python3.8/site-packages/openram*
+         make library
+      - name: Build conda
+        run: |
+         ./install_conda.sh
+      - name: PDK Install
+        run: |
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology"
+         export PDK_ROOT="${{ github.workspace }}/pdk"
+         make pdk
+         make install
+      - name: Regress
+        run: |
+         export OPENRAM_HOME="${{ github.workspace }}/compiler"
+         export OPENRAM_TECH="${{ github.workspace }}/technology"
+         export PDK_ROOT="${{ github.workspace }}/pdk"
+         export FREEPDK45="~/FreePDK45"
+         # KLAYOUT_PATH breaks klayout installation. Unset it for now...
+         unset KLAYOUT_PATH
+         #cd $OPENRAM_HOME/.. && make pdk && make install
+         #export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
+         #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
+         #$OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
+         cd $OPENRAM_HOME/tests
+         make clean
+         make -k -j 48
+      - name: Archive
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Regress Archives
+          path: ${{ github.workspace }}/compiler/tests/results/*
+  # This job triggers sync.yml workflow
+  sync_trigger:
+    if: ${{ always() && github.ref_name == 'dev' && github.repository == 'VLSIDA/PrivateRAM' && needs.regression_test.result == 'failure' }}
+    needs: regression_test
+    uses: ./.github/workflows/sync.yml
+    secrets:
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
+  # This job triggers version.yml workflow
+  version_trigger:
+    if: ${{ github.ref_name == 'dev' }}
+    needs: regression_test
+    uses: ./.github/workflows/version.yml
+    secrets:
+      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}

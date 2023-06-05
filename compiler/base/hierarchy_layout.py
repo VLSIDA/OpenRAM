@@ -1,32 +1,32 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import os
 import sys
+import os
 import re
 from math import sqrt
-import debug
-from gdsMill import gdsMill
-import tech
-from tech import drc, GDS
-from tech import layer as tech_layer
-from tech import layer_indices as tech_layer_indices
-from tech import preferred_directions
-from tech import layer_stacks as tech_layer_stacks
-from tech import active_stack as tech_active_stack
-from sram_factory import factory
-from globals import OPTS
+from openram import debug
+from openram.gdsMill import gdsMill
+from openram import tech
+from openram.tech import drc, GDS
+from openram.tech import layer as tech_layer
+from openram.tech import layer_indices as tech_layer_indices
+from openram.tech import preferred_directions
+from openram.tech import layer_stacks as tech_layer_stacks
+from openram.tech import active_stack as tech_active_stack
+from openram.sram_factory import factory
+from openram import OPTS
 from .vector import vector
 from .pin_layout import pin_layout
 from .utils import round_to_grid
 from . import geometry
 
 try:
-    from tech import special_purposes
+    from openram.tech import special_purposes
 except ImportError:
     special_purposes = {}
 
@@ -141,30 +141,28 @@ class layout():
                                        layout.active_space)
 
         # These are for debugging previous manual rules
-        if False:
-            print("poly_width", layout.poly_width)
-            print("poly_space", layout.poly_space)
-            print("m1_width", layout.m1_width)
-            print("m1_space", layout.m1_space)
-            print("m2_width", layout.m2_width)
-            print("m2_space", layout.m2_space)
-            print("m3_width", layout.m3_width)
-            print("m3_space", layout.m3_space)
-            print("m4_width", layout.m4_width)
-            print("m4_space", layout.m4_space)
-            print("active_width", layout.active_width)
-            print("active_space", layout.active_space)
-            print("contact_width", layout.contact_width)
-            print("poly_to_active", layout.poly_to_active)
-            print("poly_extend_active", layout.poly_extend_active)
-            print("poly_to_contact", layout.poly_to_contact)
-            print("active_contact_to_gate", layout.active_contact_to_gate)
-            print("poly_contact_to_gate", layout.poly_contact_to_gate)
-            print("well_enclose_active", layout.well_enclose_active)
-            print("implant_enclose_active", layout.implant_enclose_active)
-            print("implant_space", layout.implant_space)
-            import sys
-            sys.exit(1)
+        level=99
+        debug.info(level, "poly_width".format(layout.poly_width))
+        debug.info(level, "poly_space".format(layout.poly_space))
+        debug.info(level, "m1_width".format(layout.m1_width))
+        debug.info(level, "m1_space".format(layout.m1_space))
+        debug.info(level, "m2_width".format(layout.m2_width))
+        debug.info(level, "m2_space".format(layout.m2_space))
+        debug.info(level, "m3_width".format(layout.m3_width))
+        debug.info(level, "m3_space".format(layout.m3_space))
+        debug.info(level, "m4_width".format(layout.m4_width))
+        debug.info(level, "m4_space".format(layout.m4_space))
+        debug.info(level, "active_width".format(layout.active_width))
+        debug.info(level, "active_space".format(layout.active_space))
+        debug.info(level, "contact_width".format(layout.contact_width))
+        debug.info(level, "poly_to_active".format(layout.poly_to_active))
+        debug.info(level, "poly_extend_active".format(layout.poly_extend_active))
+        debug.info(level, "poly_to_contact".format(layout.poly_to_contact))
+        debug.info(level, "active_contact_to_gate".format(layout.active_contact_to_gate))
+        debug.info(level, "poly_contact_to_gate".format(layout.poly_contact_to_gate))
+        debug.info(level, "well_enclose_active".format(layout.well_enclose_active))
+        debug.info(level, "implant_enclose_active".format(layout.implant_enclose_active))
+        debug.info(level, "implant_space".format(layout.implant_space))
 
     @classmethod
     def setup_layer_constants(layout):
@@ -173,7 +171,7 @@ class layout():
         in many places in the compiler.
         """
         try:
-            from tech import power_grid
+            from openram.tech import power_grid
             layout.pwr_grid_layers = [power_grid[0], power_grid[2]]
         except ImportError:
             layout.pwr_grid_layers = ["m3", "m4"]
@@ -202,21 +200,19 @@ class layout():
                     "{}_nonpref_pitch".format(layer_id),
                     layout.compute_pitch(layer_id, False))
 
-        if False:
-            for name in tech_layer_indices:
-                if name == "active":
-                    continue
-                try:
-                    print("{0} width {1} space {2}".format(name,
-                                                           getattr(layout, "{}_width".format(name)),
-                                                           getattr(layout, "{}_space".format(name))))
+        level=99
+        for name in tech_layer_indices:
+            if name == "active":
+                continue
+            try:
+                debug.info(level, "{0} width {1} space {2}".format(name,
+                                                       getattr(layout, "{}_width".format(name)),
+                                                       getattr(layout, "{}_space".format(name))))
 
-                    print("pitch {0} nonpref {1}".format(getattr(layout, "{}_pitch".format(name)),
-                                                         getattr(layout, "{}_nonpref_pitch".format(name))))
-                except AttributeError:
-                    pass
-            import sys
-            sys.exit(1)
+                debug.info(level, "pitch {0} nonpref {1}".format(getattr(layout, "{}_pitch".format(name)),
+                                                     getattr(layout, "{}_nonpref_pitch".format(name))))
+            except AttributeError:
+                pass
 
     @staticmethod
     def compute_pitch(layer, preferred=True):
@@ -635,10 +631,11 @@ class layout():
         """
         return self.pins
 
-    def copy_layout_pin(self, instance, pin_name, new_name=""):
+    def copy_layout_pin(self, instance, pin_name, new_name="", relative_offset=vector(0, 0)):
         """
         Create a copied version of the layout pin at the current level.
         You can optionally rename the pin to a new name.
+        You can optionally add an offset vector by which to move the pin.
         """
         pins = instance.get_pins(pin_name)
 
@@ -650,7 +647,7 @@ class layout():
                 new_name = pin_name
             self.add_layout_pin(new_name,
                                 pin.layer,
-                                pin.ll(),
+                                pin.ll() + relative_offset,
                                 pin.width(),
                                 pin.height())
 
@@ -699,13 +696,15 @@ class layout():
                                         start=left_pos,
                                         end=right_pos)
 
-    def connect_row_pins(self, layer, pins, name=None, full=False):
+    def connect_row_pins(self, layer, pins, name=None, full=False, round=False):
         """
         Connects left/right rows that are aligned.
         """
         bins = {}
         for pin in pins:
                 y = pin.cy()
+                if round:
+                    y = round_to_grid(y)
                 try:
                     bins[y].append(pin)
                 except KeyError:
@@ -788,13 +787,15 @@ class layout():
                                         end=bot_pos)
 
 
-    def connect_col_pins(self, layer, pins, name=None, full=False):
+    def connect_col_pins(self, layer, pins, name=None, full=False, round=False, directions="pref"):
         """
         Connects top/bot columns that are aligned.
         """
         bins = {}
         for pin in pins:
                 x = pin.cx()
+                if round:
+                    x = round_to_grid(x)
                 try:
                     bins[x].append(pin)
                 except KeyError:
@@ -820,7 +821,8 @@ class layout():
                 self.add_via_stack_center(from_layer=pin.layer,
                                           to_layer=layer,
                                           offset=pin.center(),
-                                          min_area=True)
+                                          min_area=True,
+                                          directions=directions)
 
             if name:
                 self.add_layout_pin_segment_center(text=name,
@@ -1257,7 +1259,6 @@ class layout():
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None, well_type=None):
         """ Add a three layer via structure. """
-        from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -1276,7 +1277,6 @@ class layout():
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
         """
-        from sram_factory import factory
         via = factory.create(module_type="contact",
                              layer_stack=layers,
                              dimensions=size,
@@ -1317,7 +1317,7 @@ class layout():
             return None
 
         intermediate_layers = self.get_metal_layers(from_layer, to_layer)
-    
+
         via = None
         cur_layer = from_layer
         while cur_layer != to_layer:
@@ -1383,10 +1383,10 @@ class layout():
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
-        import ptx
-        mos = ptx.ptx(width=width,
-                      mults=mults,
-                      tx_type=tx_type)
+        from openram.modules import ptx
+        mos = ptx(width=width,
+                  mults=mults,
+                  tx_type=tx_type)
         inst = self.add_inst(name=mos.name,
                              mod=mos,
                              offset=offset,
@@ -1897,7 +1897,7 @@ class layout():
             elif add_vias:
                 self.copy_power_pin(pin, new_name=new_name)
 
-    def add_io_pin(self, instance, pin_name, new_name, start_layer=None):
+    def add_io_pin(self, instance, pin_name, new_name, start_layer=None, directions=None):
         """
         Add a signle input or output pin up to metal 3.
         """
@@ -1907,7 +1907,7 @@ class layout():
             start_layer = pin.layer
 
         # Just use the power pin function for now to save code
-        self.add_power_pin(new_name, pin.center(), start_layer=start_layer)
+        self.add_power_pin(new_name, pin.center(), start_layer=start_layer, directions=directions)
 
     def add_power_pin(self, name, loc, directions=None, start_layer="m1"):
         # Hack for min area
@@ -2180,7 +2180,6 @@ class layout():
 
         # Find the number of vias for this pitch
         supply_vias = 1
-        from sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,
@@ -2293,7 +2292,6 @@ class layout():
 
         # Find the number of vias for this pitch
         self.supply_vias = 1
-        from sram_factory import factory
         while True:
             c = factory.create(module_type="contact",
                                layer_stack=self.m1_stack,

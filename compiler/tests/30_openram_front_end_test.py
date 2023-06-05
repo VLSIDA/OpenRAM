@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+import sys, os, re
+import shutil
+import getpass
 import unittest
 from testutils import *
-import sys, os, re, shutil
 
-import globals
-from globals import OPTS
-import debug
-import getpass
+import openram
+from openram import debug
+from openram import OPTS
 
 
 class openram_front_end_test(openram_test):
@@ -21,9 +22,9 @@ class openram_front_end_test(openram_test):
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
         config_file = "{}/tests/configs/config_front_end".format(os.getenv("OPENRAM_HOME"))
-        globals.init_openram(config_file)
+        openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(1, "Testing top-level front-end openram.py with 2-bit, 16 word SRAM.")
+        debug.info(1, "Testing top-level front-end sram_compiler.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
         out_path = "/tmp/testsram_{0}_{1}_{2}".format(OPTS.tech_name, getpass.getuser(), os.getpid())
 
@@ -54,16 +55,16 @@ class openram_front_end_test(openram_test):
         # Always perform code coverage
         if OPTS.coverage == 0:
             debug.warning("Failed to find coverage installation. This can be installed with pip3 install coverage")
-            exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
+            exe_name = "{0}/../sram_compiler.py ".format(OPENRAM_HOME)
         else:
-            exe_name = "{0}{1}/openram.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
+            exe_name = "{0}{1}/../sram_compiler.py ".format(OPTS.coverage_exe, OPENRAM_HOME)
         config_name = "{0}/tests/configs/config_front_end.py".format(OPENRAM_HOME)
-        cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
-                                                                          out_file,
-                                                                          out_path,
-                                                                          options,
-                                                                          config_name,
-                                                                          out_path)
+        cmd = "{0} -n -o {1} -p {2} {3} {4} > {5}/output.log".format(exe_name,
+                                                                     out_file,
+                                                                     out_path,
+                                                                     options,
+                                                                     config_name,
+                                                                     out_path)
         debug.info(1, cmd)
         os.system(cmd)
 
@@ -96,11 +97,12 @@ class openram_front_end_test(openram_test):
                 shutil.rmtree(out_path, ignore_errors=True)
             self.assertEqual(os.path.exists(out_path), False)
 
-        globals.end_openram()
+        openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":
-    (OPTS, args) = globals.parse_args()
+    (OPTS, args) = openram.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
     unittest.main(testRunner=debugTestRunner())

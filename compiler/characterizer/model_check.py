@@ -1,16 +1,16 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# Copyright (c) 2016-2023 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-import debug
-import tech
+from openram import debug
+from openram import tech
+from openram import OPTS
 from .stimuli import *
 from .trim_spice import *
 from .charutils import *
-from globals import OPTS
 from .delay import delay
 from .measurements import *
 
@@ -82,7 +82,7 @@ class model_check(delay):
            replicated here.
         """
         delay.create_signal_names(self)
-        
+
         # Signal names are all hardcoded, need to update to make it work for probe address and different configurations.
         wl_en_driver_signals = ["Xsram{1}Xcontrol{{}}.Xbuf_wl_en.Zb{0}_int".format(stage, OPTS.hier_seperator) for stage in range(1, self.get_num_wl_en_driver_stages())]
         wl_driver_signals = ["Xsram{2}Xbank0{2}Xwordline_driver{{}}{2}Xwl_driver_inv{0}{2}Zb{1}_int".format(self.wordline_row, stage, OPTS.hier_seperator) for stage in range(1, self.get_num_wl_driver_stages())]
@@ -448,6 +448,3 @@ class model_check(delay):
             name_dict[self.sae_model_name] = name_dict["sae_measures"]
 
         return name_dict
-
-
-

@@ -109,6 +109,7 @@ class hanan_router(router_tech):
         """  """
         debug.info(1, "Finding all blockages...")
 
+        blockages = []
         for lpp in [self.vert_lpp, self.horiz_lpp]:
             shapes = self.layout.getAllShapes(lpp)
             for boundary in shapes:
@@ -117,37 +118,31 @@ class hanan_router(router_tech):
                 ll = vector(boundary[0], boundary[1])
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
-                new_shape = hanan_shape("blockage{}".format(len(self.blockages)),
+                new_shape = hanan_shape("blockage{}".format(len(blockages)),
                                        rect,
                                        lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
-                if new_shape not in self.all_pins and not new_shape.contained_by_any(self.all_pins) and not self.blockage_contains(new_shape):
-                    new_shape = new_shape.inflated_pin(multiple=1)
-                    # Remove blockages contained by this new blockage
-                    for i in range(len(self.blockages) - 1, -1, -1):
-                        blockage = self.blockages[i]
-                        # Remove the previous blockage contained by this new
-                        # blockage
-                        if new_shape.contains(blockage):
-                            self.blockages.remove(blockage)
-                        # Merge the previous blockage into this new blockage if
-                        # they are aligning
-                        elif new_shape.aligns(blockage):
-                            new_shape.bbox([blockage])
-                            self.blockages.remove(blockage)
-                    self.blockages.append(new_shape)
+                if new_shape.contained_by_any(self.all_pins) or new_shape.contained_by_any(blockages):
+                    continue
+                # Remove blockages contained by this new blockage
+                for i in range(len(blockages) - 1, -1, -1):
+                    blockage = blockages[i]
+                    # Remove the previous blockage contained by this new
+                    # blockage
+                    if new_shape.contains(blockage):
+                        blockages.remove(blockage)
+                    # Merge the previous blockage into this new blockage if
+                    # they are aligning
+                    elif new_shape.aligns(blockage):
+                        new_shape.bbox([blockage])
+                        blockages.remove(blockage)
+                blockages.append(new_shape)
 
-
-    def blockage_contains(self, shape):
-        """
-        Return if this shape is contained by a blockage.
-        """
-
-        for blockage in self.blockages:
-            if blockage.contains(shape):
-                return True
-        return False
+        # Inflate the shapes to prevent DRC errors
+        offset = self.layer_widths[0] / 2
+        for blockage in blockages:
+            self.blockages.append(blockage.inflated_pin(spacing=offset, multiple=1))
 
 
     def add_path(self, path):

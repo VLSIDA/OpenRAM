@@ -4,6 +4,8 @@
 # All rights reserved.
 #
 from openram.base.pin_layout import pin_layout
+from openram.base.vector import vector
+from openram.tech import drc
 
 
 class hanan_shape(pin_layout):
@@ -20,7 +22,14 @@ class hanan_shape(pin_layout):
     def inflated_pin(self, spacing=None, multiple=0.5):
         """ Override the default inflated_pin behavior. """
 
-        inflated_area = self.inflate(spacing, multiple)
+        if not spacing:
+            spacing = 0
+        drc_spacing = multiple * drc("{0}_to_{0}".format(self.layer))
+        spacing = vector([spacing + drc_spacing] * 2)
+        (ll, ur) = self.rect
+        newll = ll - spacing
+        newur = ur + spacing
+        inflated_area = (newll, newur)
         return hanan_shape(self.name, inflated_area, self.layer)
 
 

@@ -8,6 +8,7 @@ from copy import deepcopy
 from openram import debug
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
+from openram.tech import drc
 from .direction import direction
 from .hanan_node import hanan_node
 from .hanan_probe import hanan_probe
@@ -90,11 +91,12 @@ class hanan_graph:
         # Create a copy of blockages
         blockages = self.router.blockages[:]
         # Create a copy of pins with different name than the routed pins
-        for name, pins, in self.router.pins.items():
+        offset = self.router.layer_widths[0] / 2
+        for name, pins in self.router.pins.items():
             if name == pin_name:
                 continue
             for pin in pins:
-                blockages.append(deepcopy(pin).inflated_pin(multiple=1))
+                blockages.append(deepcopy(pin).inflated_pin(spacing=offset, multiple=1))
         return blockages
 
 
@@ -106,34 +108,26 @@ class hanan_graph:
 
         x_values = set()
         y_values = set()
-        offset = max(self.router.horiz_track_width, self.router.vert_track_width) / 2
 
         # Add the source and target values
         for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends
             if aspect_ratio <= 0.5: # Tall pin
-                uc = shape.uc()
-                bc = shape.bc()
-                points = [vector(uc.x, uc.y - offset),
-                          vector(bc.x, bc.y + offset)]
+                points = [shape.uc(), shape.bc()]
             elif aspect_ratio >= 2: # Fat pin
-                lc = shape.lc()
-                rc = shape.rc()
-                points = [vector(lc.x + offset, lc.y),
-                          vector(rc.x - offset, rc.y)]
+                points = [shape.lc(), shape.rc()]
             else: # Square-like pin
-                center = shape.center()
-                x_values.add(center.x)
-                y_values.add(center.y)
-                continue
+                points = [shape.center()]
             for p in points:
                 x_values.add(p.x)
                 y_values.add(p.y)
 
         # Add corners for blockages
+        offset = drc["grid"]
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
+            # Add minimum offset to the blockage corner nodes to prevent overlaps
             x_values.update([ll.x - offset, ur.x + offset])
             y_values.update([ll.y - offset, ur.y + offset])
 

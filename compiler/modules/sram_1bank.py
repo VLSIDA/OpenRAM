@@ -50,6 +50,9 @@ class sram_1bank(design, verilog, lef):
             # Route a M3/M4 grid
             self.supply_stack = self.m3_stack
 
+        # delay control logic does not have RBLs
+        self.has_rbl = OPTS.control_logic != "control_logic_delay"
+
     def add_pins(self):
         """ Add pins for entire SRAM. """
 
@@ -517,8 +520,9 @@ class sram_1bank(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("dout{0}[{1}]".format(port, bit))
-        for port in self.all_ports:
-            temp.append("rbl_bl{0}".format(port))
+        if self.has_rbl:
+            for port in self.all_ports:
+                temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("bank_din{0}_{1}".format(port, bit))
@@ -693,7 +697,7 @@ class sram_1bank(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-            if OPTS.control_logic != "control_logic_delay":
+            if self.has_rbl:
                 temp.append("rbl_bl{}".format(port))
 
             # Outputs

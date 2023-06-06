@@ -5,13 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-from base import design
-import debug
-from sram_factory import factory
+
 import math
-from base import vector
-from globals import OPTS
-from base import logical_effort
+from openram import debug
+from openram import OPTS
+from openram.base import design
+from openram.base import vector
+from openram.base import logical_effort
+from openram.sram_factory import factory
+from .control_logic_base import control_logic_base
 
 
 class control_logic_delay(design):

@@ -16,11 +16,11 @@ from .bitcell_base_array import bitcell_base_array
 class replica_bitcell_array(bitcell_base_array):
     """
     Creates a bitcell array of cols x rows and then adds the replica
-    and dummy columns and rows.  Replica columns are on the left and
+    columns and dummy rows. Replica columns are on the left and
     right, respectively and connected to the given bitcell ports.
-    Dummy are the outside columns/rows with WL and BL tied to gnd.
-    Requires a regular bitcell array, replica bitcell, and dummy
-    bitcell (BL/BR disconnected).
+    Dummy rows are on the top and bottom passing through the RBL WLs.
+    Requires a regular bitcell array and (if using replica topology)
+    replica bitcell and dummy bitcell (BL/BR disconnected).
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
@@ -36,17 +36,21 @@ class replica_bitcell_array(bitcell_base_array):
         self.column_size = cols
         self.row_size = rows
         # This is how many RBLs are in all the arrays
+        # Even if the RBL is not placed in this array, the module still needs
+        # to place dummy rows with rbl wordlines so that they will have the same
+        # load as the regular wordlines (and so the arrays are the same size)
         if rbl is not None:
             self.rbl = rbl
         else:
             self.rbl = [0] * len(self.all_ports)
-        # This specifies which RBL to put on the left or right by port number
-        # This could be an empty list
+        # This specifies how many RBLs to put on the left by port number.
+        # For example, left_rbl = [0, 1] means there will be two
+        # RBLs on the left, one for port 0 and another for port 1.
         if left_rbl is not None:
             self.left_rbl = left_rbl
         else:
             self.left_rbl = []
-        # This could be an empty list
+        # Similar to left_rbl but on the right side of the array
         if right_rbl is not None:
             self.right_rbl = right_rbl
         else:
@@ -54,7 +58,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.rbls = self.left_rbl + self.right_rbl
 
         debug.check(sum(self.rbl) >= len(self.left_rbl) + len(self.right_rbl),
-                    "Invalid number of RBLs for port configuration.")
+                    "Cannot have more left + right RBLs than total RBLs")
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -78,19 +82,14 @@ class replica_bitcell_array(bitcell_base_array):
         self.replica_columns = {}
 
         for port in self.all_ports:
+            # We will always have self.rbl[0] dummy rows below the array
+            # for the replica wordlines.
             if port in self.left_rbl:
-                # TODO: merge comments from other commit... to fix these comments...
-                # We will always have self.rbl[0] rows of replica wordlines below
-                # the array.
-                # These go from the top (where the bitcell array starts ) down
+                # These go top down starting from the bottom of the bitcell array.
                 replica_bit = self.rbl[0] - port - 1
                 column_offset = len(self.left_rbl)
-
             elif port in self.right_rbl:
-
-                # We will always have self.rbl[0] rows of replica wordlines below
-                # the array.
-                # These go from the bottom up
+                # These go bottom up starting from the top of the bitcell array.
                 replica_bit = self.rbl[0] + self.row_size + port - 1
                 column_offset = len(self.left_rbl) + self.column_size + 1
             else:
@@ -102,7 +101,7 @@ class replica_bitcell_array(bitcell_base_array):
                                                         column_offset=column_offset,
                                                         replica_bit=replica_bit)
 
-        # Dummy row
+        # Dummy row (for replica wordlines)
         self.dummy_row = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
@@ -133,7 +132,7 @@ class replica_bitcell_array(bitcell_base_array):
         self.add_pin("gnd", "GROUND")
 
     def add_bitline_pins(self):
-        # The bit is which port the RBL is for
+        # The bit represents which port the RBL is for
         for bit in self.rbls:
             for port in self.all_ports:
                 self.rbl_bitline_names[bit].append("rbl_bl_{0}_{1}".format(port, bit))

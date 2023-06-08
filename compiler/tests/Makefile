@@ -117,9 +117,14 @@ BROKEN_STAMPS = \
 	sky130/14_replica_column_1rw_test.ok \
 	sky130/14_replica_pbitcell_1rw1r_array_test.ok \
 	sky130/14_replica_pbitcell_1rw_array_test.ok \
-	sky130/15_global_bitcell_array_1rw_1r_test.ok \
-	sky130/15_global_bitcell_array_test.ok \
-	sky130/15_local_bitcell_array_test.ok \
+	sky130/15_global_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/15_global_bitcell_array_norbl_1rw_test.ok \
+	sky130/15_global_bitcell_array_rbl_1rw_1r_test.ok \
+	sky130/15_global_bitcell_array_rbl_1rw_test.ok \
+	sky130/15_local_bitcell_array_dummies_1rw_test.ok \
+	sky130/15_local_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/15_local_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/15_local_bitcell_array_norbl_1rw_test.ok \
 	sky130/18_port_address_512rows_test.ok \
 	sky130/18_port_data_spare_cols_test.ok \
 	sky130/19_single_bank_2mux_test.ok \

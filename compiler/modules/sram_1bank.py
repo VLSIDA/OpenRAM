@@ -1296,20 +1296,20 @@ class sram_1bank(design, verilog, lef):
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal + "{}".format(port))
                 self.connect_vbus(src_pin, dest_pin)
-        """
-        for port in self.all_ports:
-            # Only input (besides pins) is the replica bitline
-            src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
-            dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
-            self.add_wire(self.m3_stack,
-                          [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
-            self.add_via_stack_center(from_layer=src_pin.layer,
-                                      to_layer="m4",
-                                      offset=src_pin.center())
-            self.add_via_stack_center(from_layer=dest_pin.layer,
-                                      to_layer="m3",
-                                      offset=dest_pin.center())
-        """
+
+        if self.has_rbl:
+            for port in self.all_ports:
+                # Only input (besides pins) is the replica bitline
+                src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
+                dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
+                self.add_wire(self.m3_stack,
+                              [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
+                self.add_via_stack_center(from_layer=src_pin.layer,
+                                          to_layer="m4",
+                                          offset=src_pin.center())
+                self.add_via_stack_center(from_layer=dest_pin.layer,
+                                          to_layer="m3",
+                                          offset=dest_pin.center())
 
     def route_row_addr_dff(self):
         """

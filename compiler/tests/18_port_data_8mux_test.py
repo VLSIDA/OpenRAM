@@ -38,7 +38,7 @@ class port_data_test(openram_test):
         c.words_per_row=8
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
 
         openram.end_openram()

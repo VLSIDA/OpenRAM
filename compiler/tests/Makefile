@@ -32,6 +32,7 @@ BROKEN_STAMPS = \
 	%/20_psram_1bank_2mux_test.ok \
 	%/21_hspice_delay_test.ok \
 	%/21_hspice_setuphold_test.ok \
+	%/21_xyce_delay_test.ok \
 	%/22_psram_1bank_2mux_func_test.ok \
 	%/22_psram_1bank_4mux_func_test.ok \
 	%/22_psram_1bank_8mux_func_test.ok \
@@ -70,7 +71,6 @@ BROKEN_STAMPS = \
 	freepdk45/14_rom_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
 	freepdk45/19_rom_bank_test.ok \
-	freepdk45/21_xyce_delay_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \
@@ -80,7 +80,6 @@ BROKEN_STAMPS = \
 	scn4m_subm/16_rom_control_logic_test.ok \
 	scn4m_subm/19_rom_bank_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
-	scn4m_subm/21_xyce_delay_test.ok \
 	sky130/01_library_test.ok \
 	sky130/03_wire_test.ok \
 	sky130/04_column_mux_pbitcell_test.ok \
@@ -157,7 +156,6 @@ BROKEN_STAMPS = \
 	sky130/21_ngspice_delay_extra_rows_test.ok \
 	sky130/21_ngspice_delay_test.ok \
 	sky130/21_regression_delay_test.ok \
-	sky130/21_xyce_delay_test.ok \
 	sky130/22_psram_1bank_2mux_func_test.ok \
 	sky130/22_psram_1bank_4mux_func_test.ok \
 	sky130/22_psram_1bank_8mux_func_test.ok \

@@ -99,11 +99,12 @@ class control_logic_delay(control_logic_base):
         self.nand2 = factory.create(module_type="pnand2",
                                     height=dff_height)
 
+        # TODO: is this needed? Should this be used or inferred from the pinout_list?
         debug.check(OPTS.delay_chain_stages % 2,
                     "Must use odd number of delay chain stages for inverting delay chain.")
-        self.delay_chain=factory.create(module_type = "multi_delay_chain",
-                                              fanout_list = 29 * [ OPTS.delay_chain_fanout_per_stage ], # TODO: generate this programatically
-                                              pinout_list = [2, 12, 13, 15, 29]) # TODO: generate this list programatically
+        self.delay_chain = factory.create(module_type="multi_delay_chain",
+                                          fanout_list=29 * [OPTS.delay_chain_fanout_per_stage], # TODO: generate this programatically
+                                          pinout_list=[2, 12, 13, 15, 29]) # TODO: generate this list programatically
 
     def setup_signal_busses(self):
         """ Setup bus names, determine the size of the busses etc """

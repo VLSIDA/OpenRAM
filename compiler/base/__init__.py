@@ -16,6 +16,7 @@ from .lef import *
 from .logical_effort import *
 from .pin_layout import *
 from .power_data import *
+from .rom_verilog import *
 from .route import *
 from .timing_graph import *
 from .utils import *

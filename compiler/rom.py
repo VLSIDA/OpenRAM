@@ -39,7 +39,7 @@ class rom():
         from openram.base import design
         design.name_map=[]
 
-        debug.info(2, "create rom of size {0} with {1} num of words".format(self.word_size,
+        debug.print_raw("create rom of word size {0} with {1} num of words".format(self.word_size,
                                                                                        self.num_words))
         start_time = datetime.datetime.now()
 
@@ -48,7 +48,7 @@ class rom():
         import openram.modules.rom_bank as rom
 
         self.r = rom(name, rom_config)
-
+        
         self.r.create_netlist()
         if not OPTS.netlist_only:
             self.r.create_layout()
@@ -138,20 +138,22 @@ class rom():
 
 
         # Write the config file
+        # Should also save the provided data file
         start_time = datetime.datetime.now()
         from shutil import copyfile
         copyfile(OPTS.config_file, OPTS.output_path + OPTS.output_name + '.py')
+        copyfile(self.rom_data, OPTS.output_path + self.rom_data)
         debug.print_raw("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 
         # TODO: Write the datasheet
 
-        # TODO: Write a verilog model
-        # start_time = datetime.datetime.now()
-        # vname = OPTS.output_path + self.r.name + '.v'
-        # debug.print_raw("Verilog: Writing to {0}".format(vname))
-        # self.verilog_write(vname)
-        # print_time("Verilog", datetime.datetime.now(), start_time)
+        #Write a verilog model
+        start_time = datetime.datetime.now()
+        vname = OPTS.output_path + self.r.name + '.v'
+        debug.print_raw("Verilog: Writing to {0}".format(vname))
+        self.verilog_write(vname)
+        print_time("Verilog", datetime.datetime.now(), start_time)
 
         # Write out options if specified
         if OPTS.output_extended_config:

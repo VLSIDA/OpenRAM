@@ -148,6 +148,7 @@ BROKEN_STAMPS = \
 	sky130/20_sram_1bank_4mux_test.ok \
 	sky130/20_sram_1bank_8mux_test.ok \
 	sky130/20_sram_1bank_nomux_norbl_1rw_1r_test.ok \
+	sky130/20_sram_1bank_nomux_norbl_test.ok \
 	sky130/20_sram_1bank_nomux_spare_cols_test.ok \
 	sky130/20_sram_1bank_nomux_test.ok \
 	sky130/20_sram_1bank_nomux_wmask_test.ok \

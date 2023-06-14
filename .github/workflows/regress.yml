@@ -23,14 +23,14 @@ jobs:
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
-         #cd $OPENRAM_HOME/tests
-         #export PDK_ROOT="${{ github.workspace }}/pdk"
-         #make pdk
-         #make install
+         export PDK_ROOT="${{ github.workspace }}/pdk"
+         make pdk
+         make install
       - name: Regress
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
+         export PDK_ROOT="${{ github.workspace }}/pdk"
          export FREEPDK45="~/FreePDK45"
          # KLAYOUT_PATH breaks klayout installation. Unset it for now...
          unset KLAYOUT_PATH

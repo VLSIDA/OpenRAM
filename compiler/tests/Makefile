@@ -4,7 +4,6 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
-TEST_TECHS ?= scn4m_subm freepdk45
 TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
@@ -107,11 +106,65 @@ BROKEN_STAMPS = \
 	sky130/23_lib_sram_model_corners_test.ok \
 	sky130/23_lib_sram_model_test.ok \
 	sky130/23_lib_sram_prune_test.ok \
-	sky131/23_lib_sram_test.ok
+	sky130/23_lib_sram_test.ok \
+	sky130/03_wire_test.ok \
+	sky130/04_dummy_pbitcell_1rw1r1w_test.ok \
+	sky130/04_dummy_pbitcell_1rw_test.ok \
+	sky130/04_replica_pbitcell_1rw1r1w_test.ok \
+	sky130/04_replica_pbitcell_1rw_test.ok \
+	sky130/06_hierarchical_decoder_132row_test.ok \
+	sky130/06_hierarchical_decoder_512row_test.ok \
+	sky130/06_hierarchical_decoder_64row_test.ok \
+	sky130/06_hierarchical_decoder_pbitcell_test.ok \
+	sky130/10_write_driver_array_spare_cols_test.ok \
+	sky130/10_write_driver_array_wmask_spare_cols_test.ok \
+	sky130/14_capped_replica_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/14_capped_replica_bitcell_array_norbl_1rw_test.ok \
+	sky130/14_replica_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/14_replica_bitcell_array_norbl_1rw_test.ok \
+	sky130/14_replica_column_1rw_1r_test.ok \
+	sky130/14_replica_column_1rw_test.ok \
+	sky130/14_replica_pbitcell_1rw1r_array_test.ok \
+	sky130/14_replica_pbitcell_1rw_array_test.ok \
+	sky130/15_global_bitcell_array_1rw_1r_test.ok \
+	sky130/15_global_bitcell_array_test.ok \
+	sky130/15_local_bitcell_array_test.ok \
+	sky130/18_port_address_512rows_test.ok \
+	sky130/18_port_data_spare_cols_test.ok \
+	sky130/19_single_bank_2mux_test.ok \
+	sky130/19_single_bank_4mux_test.ok \
+	sky130/19_single_bank_8mux_test.ok \
+	sky130/19_single_bank_global_bitline_test.ok \
+	sky130/19_single_bank_nomux_test.ok \
+	sky130/19_single_bank_spare_cols_test.ok \
+	sky130/19_single_bank_wmask_test.ok \
+	sky130/20_sram_1bank_2mux_1rw_1r_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_1w_1r_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_global_test.ok \
+	sky130/20_sram_1bank_2mux_test.ok \
+	sky130/20_sram_1bank_2mux_wmask_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_wmask_test.ok \
+	sky130/20_sram_1bank_4mux_test.ok \
+	sky130/20_sram_1bank_8mux_test.ok \
+	sky130/20_sram_1bank_nomux_spare_cols_test.ok \
+	sky130/20_sram_1bank_nomux_test.ok \
+	sky130/20_sram_1bank_nomux_wmask_test.ok \
+	sky130/20_sram_1bank_ring_test.ok \
+	sky130/21_model_delay_test.ok \
+	sky130/21_ngspice_delay_extra_rows_test.ok \
+	sky130/21_ngspice_delay_test.ok \
+	sky130/21_regression_delay_test.ok \
+	sky130/21_xyce_delay_test.ok \
+	sky130/25_verilog_multibank_test.ok \
+	sky130/25_verilog_sram_test.ok \
+	sky130/30_openram_back_end_library_test.ok \
+	sky130/30_openram_back_end_test.ok \
+	sky130/30_openram_front_end_library_test.ok \
+	sky130/30_openram_front_end_test.ok \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
-TECH_TEST_STAMPS=$(foreach T, $(TEST_TECHS), $(addprefix $T/, $(TEST_STAMPS)))
+TECH_TEST_STAMPS=$(foreach T, $(TECHS), $(addprefix $T/, $(TEST_STAMPS)))
 
 # Filter out the tests after creating the tech stamps
 WORKING_TECH_TEST_STAMPS=$(shell shuf -e -- $(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS)))

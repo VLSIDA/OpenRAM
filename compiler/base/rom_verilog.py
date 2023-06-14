@@ -23,7 +23,7 @@ class rom_verilog:
 
         self.vf.write("// OpenROM ROM model\n")
 
-        #basic info 
+        #basic info
         self.vf.write("// Words: {0}\n".format(self.num_words))
         self.vf.write("// Word size: {0}\n".format(self.word_size))
         self.vf.write("// Word per Row: {0}\n".format(self.words_per_row))
@@ -40,7 +40,7 @@ class rom_verilog:
             self.gnd_name = spice["ground"]
         except KeyError:
             self.gnd_name = "gnd"
-        
+
         #add multiple banks later
         self.vf.write("module {0}(\n".format(self.name))
         self.vf.write("`ifdef USE_POWER_PINS\n")
@@ -88,7 +88,7 @@ class rom_verilog:
         else:
             raise ValueError(f"Data type: {self.data_type} is not supported!")
         self.vf.write(f"  end\n\n")
-            
+
         for port in self.all_ports:
             self.register_inputs(port)
 

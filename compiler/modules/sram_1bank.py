@@ -25,14 +25,9 @@ class sram_1bank(design, verilog, lef):
     Procedures specific to a one bank SRAM.
     """
     def __init__(self, name, sram_config):
-        print("sram_1bank debug: init")
         design.__init__(self, name)
-        print("sram_1bank debug: design init")
         lef.__init__(self, ["m1", "m2", "m3", "m4"])
-        print("sram_1bank debug: lef init")
         verilog.__init__(self)
-        print("sram_1bank debug: verilog init")
-
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 

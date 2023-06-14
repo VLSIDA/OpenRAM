@@ -80,18 +80,15 @@ class rom_verilog:
         self.vf.write("  reg [DATA_WIDTH-1:0]    mem [0:ROM_DEPTH-1];\n\n")
 
         #write memory init here
-        self.vf.write("  inital begin\n")
+        self.vf.write(f"  initial begin\n")
         if self.data_type == "bin":
-            self.vf.write(f"    //binary data\n")
-            self.vf.write(f"    $memreadb(\"{self.rom_data}\",mem)\n")
+            self.vf.write(f"    $readmemb(\"{self.rom_data}\",mem,0,ROM_DEPTH-1);\n")
         elif self.data_type == "hex":
-            self.vf.write(f"    //hex data\n")
-            self.vf.write(f"    $memreadh(\"{self.rom_data}\",mem)\n")
+            self.vf.write(f"    $readmemh(\"{self.rom_data}\",mem,0, ROM_DEPTH-1);\n")
         else:
-            raise ValueError(f"Data type {self.data_type} is not supported!")
-
-        self.vf.write("  end\n\n")
-
+            raise ValueError(f"Data type: {self.data_type} is not supported!")
+        self.vf.write(f"  end\n\n")
+            
         for port in self.all_ports:
             self.register_inputs(port)
 
@@ -115,8 +112,10 @@ class rom_verilog:
         Create the input regs for the given port.
         """
         self.vf.write("  reg  csb{0}_reg;\n".format(port))
+        self.vf.write("  reg [ADDR_WIDTH-1:0]  addr{0}_reg;\n".format(port))
         if port in self.read_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  dout{0};\n".format(port))
+
 
     def add_flops(self, port):
         """

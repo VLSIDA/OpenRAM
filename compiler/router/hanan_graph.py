@@ -96,7 +96,7 @@ class hanan_graph:
             if name == pin_name:
                 continue
             for pin in pins:
-                blockages.append(deepcopy(pin).inflated_pin(spacing=offset, multiple=1))
+                blockages.append(deepcopy(pin).inflated_pin(multiple=1, extra_spacing=offset))
         return blockages
 
 
@@ -110,13 +110,16 @@ class hanan_graph:
         y_values = set()
 
         # Add the source and target values
+        offset = self.router.layer_widths[0] / 2
+        x_offset = vector(offset, 0)
+        y_offset = vector(0, offset)
         for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends
             if aspect_ratio <= 0.5: # Tall pin
-                points = [shape.uc(), shape.bc()]
+                points = [shape.bc() + y_offset, shape.uc() - y_offset]
             elif aspect_ratio >= 2: # Fat pin
-                points = [shape.lc(), shape.rc()]
+                points = [shape.lc() + x_offset, shape.rc() - x_offset]
             else: # Square-like pin
                 points = [shape.center()]
             for p in points:
@@ -251,9 +254,14 @@ class hanan_graph:
                 path.append(current)
                 return path
 
+            # Get the previous node to better calculate the next costs
+            prev_node = None
+            if current.id in came_from:
+                prev_node = came_from[current.id]
+
             # Update neighbor scores
             for node in current.neighbors:
-                tentative_score = current.get_edge_cost(node) + g_scores[current.id]
+                tentative_score = current.get_edge_cost(node, prev_node) + g_scores[current.id]
                 if node.id not in g_scores or tentative_score < g_scores[node.id]:
                     came_from[node.id] = current
                     g_scores[node.id] = tentative_score

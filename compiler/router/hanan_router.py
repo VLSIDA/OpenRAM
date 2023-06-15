@@ -142,7 +142,7 @@ class hanan_router(router_tech):
         # Inflate the shapes to prevent DRC errors
         offset = self.layer_widths[0] / 2
         for blockage in blockages:
-            self.blockages.append(blockage.inflated_pin(spacing=offset, multiple=1))
+            self.blockages.append(blockage.inflated_pin(multiple=1, extra_spacing=offset))
 
 
     def add_path(self, path):
@@ -160,19 +160,13 @@ class hanan_router(router_tech):
         the layout.
         """
 
-        def get_direction(a, b):
-            """ Return the direction of path from a to b. """
-            horiz = a.center.x == b.center.x
-            vert = a.center.y == b.center.y
-            return (horiz, vert)
-
         last_added = path[0]
         coordinates = [path[0].center]
-        direction = get_direction(path[0], path[1])
+        direction = path[0].get_direction(path[1])
         candidate = path[1]
         for i in range(2, len(path)):
             node = path[i]
-            current_direction = get_direction(candidate, node)
+            current_direction = node.get_direction(candidate)
             # Skip the previous candidate since the current node follows the
             # same direction
             if direction == current_direction:

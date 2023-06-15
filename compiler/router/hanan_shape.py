@@ -19,16 +19,13 @@ class hanan_shape(pin_layout):
         pin_layout.__init__(self, name, rect, layer_name_pp)
 
 
-    def inflated_pin(self, spacing=None, multiple=0.5):
+    def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0):
         """ Override the default inflated_pin behavior. """
 
-        if not spacing:
-            spacing = 0
-        drc_spacing = multiple * drc("{0}_to_{0}".format(self.layer))
-        spacing = vector([spacing + drc_spacing] * 2)
-        (ll, ur) = self.rect
-        newll = ll - spacing
-        newur = ur + spacing
+        ll, ur = self.inflate(spacing, multiple)
+        extra = vector([extra_spacing] * 2)
+        newll = ll - extra
+        newur = ur + extra
         inflated_area = (newll, newur)
         return hanan_shape(self.name, inflated_area, self.layer)
 

@@ -105,9 +105,29 @@ class control_logic_delay(control_logic_base):
                                           pinout_list=self.delay_chain_pinout_list)
 
     def calculate_delay_chain_size(self):
-        self.delay_chain_pinout_list = []
-        # calculate it... dummy values for now
-        self.delay_chain_pinout_list = [2, 12, 13, 15, 29]
+        """
+        calculate the pinouts needed for the delay chain based on:
+        wl driver delay, bl minus vth delay, precharge duration
+        delays 1 & 2 need to be even for polarity
+        delays 3 - 5 need to be odd for polarity
+        """
+        # TODO: calculate relevant delay constants
+        stage_delay = None
+        precharge_duration = None
+        bitline_vth_delay = None
+
+        delays = []
+        # hardcode 2 delay stages as keepout between p_en and wl_en
+        delays[1] = 2
+        delays[3] = delays[1] + precharge_duration / stage_delay
+        # delays[2] can be any even value less than delays[3]
+        delays[2] = delays[3] - 1
+        # delays[4] hardcoded 2 delays[ ]stages as keepout between p_en and wl_en
+        delays[4] = delays[3] + 2
+        delays[5] = delays[4] + bitline_vth_delay / stage_delay
+        self.delay_chain_pinout_list = delays
+        # FIXME: fanout should be used to control delay chain height
+        # for now, use default/user-defined fanout constant
         self.delay_chain_fanout_list = self.delay_chain_pinout_list[-1] * [OPTS.delay_chain_fanout_per_stage]
 
     def setup_signal_busses(self):

@@ -111,20 +111,27 @@ class control_logic_delay(control_logic_base):
         delays 1 & 2 need to be even for polarity
         delays 3 - 5 need to be odd for polarity
         """
-        # TODO: calculate relevant delay constants
-        stage_delay = None
-        precharge_duration = None
-        bitline_vth_delay = None
+        bitcell = factory.create(module_type=OPTS.bitcell)
+        inverter_stage_delay = logical_effort("inv", 1, 1, OPTS.delay_chain_fanout_per_stage, 1, True).get_absolute_delay()
+        # FIXME: bad approximation?
+        precharge_duration = logical_effort("precharge", 1, 1, bitcell.module_wire_c(), 1, True).get_absolute_delay()
+        # time for bitline to drop from vdd by threshold voltage
+        # FIXME: bad approximation?
+        bitline_vth_delay = precharge_duration / 2
 
         delays = []
         # hardcode 2 delay stages as keepout between p_en and wl_en
         delays[1] = 2
-        delays[3] = delays[1] + precharge_duration / stage_delay
+        delays[3] = delays[1] + precharge_duration / inverter_stage_delay
+        # round up to nearest odd integer
+        delays[3] = 1 - (2 * ((1 - delays[3]) // 2))
         # delays[2] can be any even value less than delays[3]
         delays[2] = delays[3] - 1
-        # delays[4] hardcoded 2 delays[ ]stages as keepout between p_en and wl_en
+        # hardcode 2 delay stages as keepout between p_en and wl_en
         delays[4] = delays[3] + 2
-        delays[5] = delays[4] + bitline_vth_delay / stage_delay
+        delays[5] = delays[4] + bitline_vth_delay / inverter_stage_delay
+        # round up to nearest odd integer
+        delays[5] = 1 - (2 * ((1 - delays[5]) // 2))
         self.delay_chain_pinout_list = delays
         # FIXME: fanout should be used to control delay chain height
         # for now, use default/user-defined fanout constant

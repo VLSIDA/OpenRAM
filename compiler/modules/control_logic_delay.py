@@ -108,8 +108,8 @@ class control_logic_delay(control_logic_base):
         """
         calculate the pinouts needed for the delay chain based on:
         wl driver delay, bl minus vth delay, precharge duration
-        delays 1 & 2 need to be even for polarity
-        delays 3 - 5 need to be odd for polarity
+        delays 0 & 1 need to be even for polarity
+        delays 2 - 4 need to be odd for polarity
         """
         bitcell = factory.create(module_type=OPTS.bitcell)
         inverter_stage_delay = logical_effort("inv", 1, 1, OPTS.delay_chain_fanout_per_stage, 1, True).get_absolute_delay()
@@ -119,19 +119,19 @@ class control_logic_delay(control_logic_base):
         # FIXME: bad approximation?
         bitline_vth_delay = precharge_duration / 2
 
-        delays = []
+        delays = [None] * 5
         # hardcode 2 delay stages as keepout between p_en and wl_en
-        delays[1] = 2
-        delays[3] = delays[1] + precharge_duration / inverter_stage_delay
+        delays[0] = 2
+        delays[2] = delays[0] + precharge_duration / inverter_stage_delay
         # round up to nearest odd integer
-        delays[3] = 1 - (2 * ((1 - delays[3]) // 2))
-        # delays[2] can be any even value less than delays[3]
-        delays[2] = delays[3] - 1
+        delays[2] = 1 - (2 * ((1 - delays[2]) // 2))
+        # delays[1] can be any even value less than delays[2]
+        delays[1] = delays[2] - 1
         # hardcode 2 delay stages as keepout between p_en and wl_en
-        delays[4] = delays[3] + 2
-        delays[5] = delays[4] + bitline_vth_delay / inverter_stage_delay
+        delays[3] = delays[2] + 2
+        delays[4] = delays[3] + bitline_vth_delay / inverter_stage_delay
         # round up to nearest odd integer
-        delays[5] = 1 - (2 * ((1 - delays[5]) // 2))
+        delays[4] = 1 - (2 * ((1 - delays[4]) // 2))
         self.delay_chain_pinout_list = delays
         # FIXME: fanout should be used to control delay chain height
         # for now, use default/user-defined fanout constant
@@ -153,9 +153,9 @@ class control_logic_delay(control_logic_base):
 
         # list of output control signals (for making a vertical bus)
         if self.port_type == "rw":
-            self.internal_bus_list = ["glitch2", "glitch3", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch1", "glitch2", "delay0", "delay1", "delay2", "delay3", "delay4", "gated_clk_bar", "gated_clk_buf", "we", "we_bar", "clk_buf", "cs"]
         else:
-            self.internal_bus_list = ["glitch2", "glitch3", "delay1", "delay2", "delay3", "delay4", "delay5", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
+            self.internal_bus_list = ["glitch1", "glitch2", "delay0", "delay1", "delay2", "delay3", "delay4", "gated_clk_bar", "gated_clk_buf", "clk_buf", "cs"]
         # leave space for the bus plus one extra space
         self.internal_bus_width = (len(self.internal_bus_list) + 1) * self.m2_pitch
 
@@ -205,11 +205,11 @@ class control_logic_delay(control_logic_base):
         row += 1
         self.place_wlen_row(row)
         row += 1
-        self.place_glitch2_row(row)
+        self.place_glitch1_row(row)
         row += 1
-        self.place_glitch3_row(row)
+        self.place_glitch2_row(row)
 
-        self.control_center_y = self.glitch3_nand_inst.uy() + self.m3_pitch
+        self.control_center_y = self.glitch2_nand_inst.uy() + self.m3_pitch
 
     def route_all(self):
         """ Routing between modules """
@@ -232,36 +232,43 @@ class control_logic_delay(control_logic_base):
         """ Create the delay chain """
         self.delay_inst=self.add_inst(name="multi_delay_chain",
                                       mod=self.delay_chain)
-        self.connect_inst(["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_buf", "delay0", "delay1", "delay2", "delay3", "delay4", "vdd", "gnd"])
 
     def route_delay(self):
         # this is a bit of a hack because I would prefer to just name these pins delay in the layout
         # instead I have this which duplicates the out_pin naming logic from multi_delay_chain.py
         out_pins = ["out{}".format(str(pin)) for pin in self.delay_chain.pinout_list]
         delay_map = zip(["in", out_pins[0], out_pins[1], out_pins[2], out_pins[3], out_pins[4]], \
-            ["gated_clk_buf", "delay1", "delay2", "delay3", "delay4", "delay5"])
+            ["gated_clk_buf", "delay0", "delay1", "delay2", "delay3", "delay4"])
 
         self.connect_vertical_bus(delay_map,
                                   self.delay_inst,
                                   self.input_bus,
                                   self.m2_stack[::-1])
 
-    # glitch{1-3} are internal timing signals based on different in/out
+    # glitch{0-2} are internal timing signals based on different in/out
     # points on the delay chain for adjustable start time and duration
     def create_glitches(self):
+        self.glitch0_nand_inst = self.add_inst(name="nand2_glitch0",
+                                               mod=self.nand2)
+        self.connect_inst(["delay0", "delay2", "glitch0", "vdd", "gnd"])
+
         self.glitch1_nand_inst = self.add_inst(name="nand2_glitch1",
                                                mod=self.nand2)
-        self.connect_inst(["delay1", "delay3", "glitch1", "vdd", "gnd"])
+        self.connect_inst(["gated_clk_buf", "delay3", "glitch1", "vdd", "gnd"])
 
         self.glitch2_nand_inst = self.add_inst(name="nand2_glitch2",
                                                mod=self.nand2)
-        self.connect_inst(["gated_clk_buf", "delay4", "glitch2", "vdd", "gnd"])
+        self.connect_inst(["delay1", "delay4", "glitch2", "vdd", "gnd"])
 
-        self.glitch3_nand_inst = self.add_inst(name="nand2_glitch3",
-                                               mod=self.nand2)
-        self.connect_inst(["delay2", "delay5", "glitch3", "vdd", "gnd"])
+    # glitch0 is placed in place_pen_row()
 
-    # glitch1 is placed in place_pen_row()
+    def place_glitch1_row(self, row):
+        x_offset = self.control_x_offset
+
+        x_offset = self.place_util(self.glitch1_nand_inst, x_offset, row)
+
+        self.row_end_inst.append(self.glitch1_nand_inst)
 
     def place_glitch2_row(self, row):
         x_offset = self.control_x_offset
@@ -270,26 +277,19 @@ class control_logic_delay(control_logic_base):
 
         self.row_end_inst.append(self.glitch2_nand_inst)
 
-    def place_glitch3_row(self, row):
-        x_offset = self.control_x_offset
-
-        x_offset = self.place_util(self.glitch3_nand_inst, x_offset, row)
-
-        self.row_end_inst.append(self.glitch3_nand_inst)
-
     def route_glitches(self):
-        glitch2_map = zip(["A", "B", "Z"], ["gated_clk_buf", "delay4", "glitch2"])
+        glitch1_map = zip(["A", "B", "Z"], ["gated_clk_buf", "delay3", "glitch1"])
+
+        self.connect_vertical_bus(glitch1_map, self.glitch1_nand_inst, self.input_bus)
+
+        glitch2_map = zip(["A", "B", "Z"], ["delay1", "delay4", "glitch2"])
 
         self.connect_vertical_bus(glitch2_map, self.glitch2_nand_inst, self.input_bus)
-
-        glitch3_map = zip(["A", "B", "Z"], ["delay2", "delay5", "glitch3"])
-
-        self.connect_vertical_bus(glitch3_map, self.glitch3_nand_inst, self.input_bus)
 
     def create_wlen_row(self):
         self.wl_en_unbuf_and_inst = self.add_inst(name="and_wl_en_unbuf",
                                                   mod=self.wl_en_and)
-        self.connect_inst(["cs", "glitch2", "wl_en_unbuf", "vdd", "gnd"])
+        self.connect_inst(["cs", "glitch1", "wl_en_unbuf", "vdd", "gnd"])
 
         self.wl_en_driver_inst=self.add_inst(name="buf_wl_en",
                                       mod=self.wl_en_driver)
@@ -304,7 +304,7 @@ class control_logic_delay(control_logic_base):
         self.row_end_inst.append(self.wl_en_driver_inst)
 
     def route_wlen(self):
-        in_map = zip(["A", "B"], ["cs", "glitch2"])
+        in_map = zip(["A", "B"], ["cs", "glitch1"])
         self.connect_vertical_bus(in_map, self.wl_en_unbuf_and_inst, self.input_bus)
 
         out_pin = self.wl_en_unbuf_and_inst.get_pin("Z")
@@ -321,21 +321,21 @@ class control_logic_delay(control_logic_base):
     def create_pen_row(self):
         self.p_en_bar_driver_inst=self.add_inst(name="buf_p_en_bar",
                                                 mod=self.p_en_bar_driver)
-        self.connect_inst(["glitch1", "p_en_bar", "vdd", "gnd"])
+        self.connect_inst(["glitch0", "p_en_bar", "vdd", "gnd"])
 
     def place_pen_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.glitch1_nand_inst, x_offset, row)
+        x_offset = self.place_util(self.glitch0_nand_inst, x_offset, row)
         x_offset = self.place_util(self.p_en_bar_driver_inst, x_offset, row)
 
         self.row_end_inst.append(self.p_en_bar_driver_inst)
 
     def route_pen(self):
-        in_map = zip(["A", "B"], ["delay1", "delay3"])
-        self.connect_vertical_bus(in_map, self.glitch1_nand_inst, self.input_bus)
+        in_map = zip(["A", "B"], ["delay0", "delay2"])
+        self.connect_vertical_bus(in_map, self.glitch0_nand_inst, self.input_bus)
 
-        out_pin = self.glitch1_nand_inst.get_pin("Z") # same code here as wl_en, refactor?
+        out_pin = self.glitch0_nand_inst.get_pin("Z") # same code here as wl_en, refactor?
         out_pos = out_pin.center()
         in_pin = self.p_en_bar_driver_inst.get_pin("A")
         in_pos = in_pin.center()
@@ -355,7 +355,7 @@ class control_logic_delay(control_logic_base):
 
         self.s_en_gate_inst = self.add_inst(name="and_s_en",
                                             mod=self.sen_and3)
-        self.connect_inst(["glitch3", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
+        self.connect_inst(["glitch2", "gated_clk_bar", input_name, "s_en", "vdd", "gnd"])
 
     def place_sen_row(self, row):
         x_offset = self.control_x_offset
@@ -371,15 +371,15 @@ class control_logic_delay(control_logic_base):
         else:
             input_name = "cs"
 
-        sen_map = zip(["A", "B", "C"], ["glitch3", "gated_clk_bar", input_name])
+        sen_map = zip(["A", "B", "C"], ["glitch2", "gated_clk_bar", input_name])
         self.connect_vertical_bus(sen_map, self.s_en_gate_inst, self.input_bus)
 
         self.connect_output(self.s_en_gate_inst, "Z", "s_en")
 
     def create_wen_row(self):
-        self.glitch3_bar_inv_inst = self.add_inst(name="inv_glitch3_bar",
+        self.glitch2_bar_inv_inst = self.add_inst(name="inv_glitch2_bar",
                                                   mod=self.inv)
-        self.connect_inst(["glitch3", "glitch3_bar", "vdd", "gnd"])
+        self.connect_inst(["glitch2", "glitch2_bar", "vdd", "gnd"])
 
         if self.port_type == "rw":
             input_name = "we"
@@ -388,21 +388,21 @@ class control_logic_delay(control_logic_base):
 
         self.w_en_gate_inst = self.add_inst(name="and_w_en",
                                             mod=self.wen_and)
-        self.connect_inst([input_name, "glitch2", "glitch3_bar", "w_en", "vdd", "gnd"])
+        self.connect_inst([input_name, "glitch1", "glitch2_bar", "w_en", "vdd", "gnd"])
 
     def place_wen_row(self, row):
         x_offset = self.control_x_offset
 
-        x_offset = self.place_util(self.glitch3_bar_inv_inst, x_offset, row)
+        x_offset = self.place_util(self.glitch2_bar_inv_inst, x_offset, row)
         x_offset = self.place_util(self.w_en_gate_inst, x_offset, row)
 
         self.row_end_inst.append(self.w_en_gate_inst)
 
     def route_wen(self): # w_en comes from a 3and but one of the inputs needs to be inverted
-        glitch3_map = zip(["A"], ["glitch3"])
-        self.connect_vertical_bus(glitch3_map, self.glitch3_bar_inv_inst, self.input_bus)
+        glitch2_map = zip(["A"], ["glitch2"])
+        self.connect_vertical_bus(glitch2_map, self.glitch2_bar_inv_inst, self.input_bus)
 
-        out_pin = self.glitch3_bar_inv_inst.get_pin("Z")
+        out_pin = self.glitch2_bar_inv_inst.get_pin("Z")
         out_pos = out_pin.center()
         in_pin = self.w_en_gate_inst.get_pin("C")
         in_pos = in_pin.center()
@@ -418,7 +418,7 @@ class control_logic_delay(control_logic_base):
             input_name = "cs"
 
         # This is the second gate over, so it needs to be on M3
-        wen_map = zip(["A", "B"], [input_name, "glitch2"])
+        wen_map = zip(["A", "B"], [input_name, "glitch1"])
         self.connect_vertical_bus(wen_map,
                                   self.w_en_gate_inst,
                                   self.input_bus,

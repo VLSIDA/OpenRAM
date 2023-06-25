@@ -21,11 +21,12 @@ class multi_delay_chain(design):
     Supplying an empty pinout list will result in an output only on the last stage.
     """
 
-    def __init__(self, name, fanout_list, pinout_list = None):
+    def __init__(self, name, fanout_list, pinout_list=None):
         """init function"""
         super().__init__(name)
-        debug.info(1, "creating delay chain {0}".format(str(fanout_list)))
+        debug.info(1, "creating delay chain with {0}".format("fanouts: " + str(fanout_list) + " pinouts: " + str(pinout_list)))
         self.add_comment("fanouts: {0}".format(str(fanout_list)))
+        self.add_comment("pinouts: {0}".format(str(pinout_list)))
 
         # Two fanouts are needed so that we can route the vdd/gnd connections
         for f in fanout_list:

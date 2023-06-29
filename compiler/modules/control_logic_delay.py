@@ -11,7 +11,8 @@ from openram import debug
 from openram import OPTS
 from openram.base import design
 from openram.base import vector
-from openram.base import logical_effort
+from openram.base import logical_effort, convert_farad_to_relative_c
+from openram.tech import drc, spice
 from openram.sram_factory import factory
 from .control_logic_base import control_logic_base
 
@@ -69,7 +70,7 @@ class control_logic_delay(control_logic_base):
                                            size_list=size_list,
                                            height=dff_height)
 
-        # wl_en_unbuf is the weak timing signal that feeds wl_en_driver
+        # this is the weak timing signal that feeds wl_en_driver
         self.wl_en_and = factory.create(module_type="pand2",
                                         size=1,
                                         height=dff_height)
@@ -99,39 +100,51 @@ class control_logic_delay(control_logic_base):
         self.nand2 = factory.create(module_type="pnand2",
                                     height=dff_height)
 
-        self.calculate_delay_chain_size()
+        self.compute_delay_chain_size()
         self.delay_chain = factory.create(module_type="multi_delay_chain",
                                           fanout_list=self.delay_chain_fanout_list,
                                           pinout_list=self.delay_chain_pinout_list)
 
-    def calculate_delay_chain_size(self):
+    def compute_delay_chain_size(self):
         """
-        calculate the pinouts needed for the delay chain based on:
-        wl driver delay, bl minus vth delay, precharge duration
+        calculate the pinouts needed for the delay chain based on
+        wordline, bitline, and precharge delays
         delays 0 & 1 need to be even for polarity
         delays 2 - 4 need to be odd for polarity
         """
         bitcell = factory.create(module_type=OPTS.bitcell)
+        # 2 access tx gate per cell
+        wordline_cap = OPTS.num_cols * (2 * spice["min_tx_gate_c"] + spice["wire_unit_c"] * 1e15 * bitcell.width * drc("minwidth_m1"))
+        wordline_cap = convert_farad_to_relative_c(wordline_cap)
+        # 1 access tx drain per cell
+        bitline_cap = OPTS.num_rows * (spice["min_tx_drain_c"] + spice["wire_unit_c"] * 1e15 * bitcell.height * drc("minwidth_m2"))
+        bitline_cap = convert_farad_to_relative_c(bitline_cap)
+
         inverter_stage_delay = logical_effort("inv", 1, 1, OPTS.delay_chain_fanout_per_stage, 1, True).get_absolute_delay()
-        # FIXME: bad approximation?
-        precharge_duration = logical_effort("precharge", 1, 1, bitcell.module_wire_c(), 1, True).get_absolute_delay()
+        # model precharge as a minimum sized inverter with the bitline as its load
+        # FIXME: need to add p_en line and tx delays :/
+        precharge_delay = logical_effort("precharge", 1, 1, bitline_cap, 1, True).get_absolute_delay()
+        # size is a pessimistic version of wordline_driver module's FO4 sizing
+        # FIXME: need to add other gates to this and also to everything else smh
+        wordline_delay = logical_effort("wordline", int(OPTS.num_cols / 4) + 1, 1, wordline_cap, 1, True).get_absolute_delay()
         # time for bitline to drop from vdd by threshold voltage
         # FIXME: bad approximation?
-        bitline_vth_delay = precharge_duration / 2
+        bitline_vth_delay = precharge_delay * .5
+        sense_enable_delay = wordline_delay + bitline_vth_delay
 
         delays = [None] * 5
         # hardcode 2 delay stages as keepout between p_en and wl_en
         delays[0] = 2
-        delays[2] = delays[0] + precharge_duration / inverter_stage_delay
+        delays[2] = delays[0] + precharge_delay / inverter_stage_delay
         # round up to nearest odd integer
-        delays[2] = 1 - (2 * ((1 - delays[2]) // 2))
+        delays[2] = int(1 - (2 * ((1 - delays[2]) // 2)))
         # delays[1] can be any even value less than delays[2]
         delays[1] = delays[2] - 1
         # hardcode 2 delay stages as keepout between p_en and wl_en
         delays[3] = delays[2] + 2
-        delays[4] = delays[3] + bitline_vth_delay / inverter_stage_delay
+        delays[4] = delays[3] + sense_enable_delay / inverter_stage_delay
         # round up to nearest odd integer
-        delays[4] = 1 - (2 * ((1 - delays[4]) // 2))
+        delays[4] = int(1 - (2 * ((1 - delays[4]) // 2)))
         self.delay_chain_pinout_list = delays
         # FIXME: fanout should be used to control delay chain height
         # for now, use default/user-defined fanout constant

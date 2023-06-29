@@ -14,12 +14,14 @@ class hanan_shape(pin_layout):
     the Hanan router.
     """
 
-    def __init__(self, name, rect, layer_name_pp):
+    def __init__(self, name, rect, layer_name_pp, inflated_from=None):
 
         pin_layout.__init__(self, name, rect, layer_name_pp)
 
+        self.inflated_from = inflated_from
 
-    def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0):
+
+    def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0, keep_link=False):
         """ Override the default inflated_pin behavior. """
 
         ll, ur = self.inflate(spacing, multiple)
@@ -27,7 +29,7 @@ class hanan_shape(pin_layout):
         newll = ll - extra
         newur = ur + extra
         inflated_area = (newll, newur)
-        return hanan_shape(self.name, inflated_area, self.layer)
+        return hanan_shape(self.name, inflated_area, self.layer, self if keep_link else None)
 
 
     def aligns(self, other):

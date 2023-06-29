@@ -144,6 +144,11 @@ class hanan_router(router_tech):
         for blockage in blockages:
             self.blockages.append(blockage.inflated_pin(multiple=1, extra_spacing=offset))
 
+        # Add vdd and gnd pins as blockages as well
+        # NOTE: This is done to make vdd and gnd pins DRC-safe
+        for pin in self.all_pins:
+            self.blockages.append(pin.inflated_pin(multiple=1, extra_spacing=offset, keep_link=True))
+
 
     def add_path(self, path):
         """ Add the route path to the layout. """

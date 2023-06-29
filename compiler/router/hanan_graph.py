@@ -47,7 +47,8 @@ class hanan_graph:
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
-            if blockage.overlaps(probe_shape):
+            # Inflated blockages of pins don't block probes
+            if blockage.overlaps(probe_shape) and blockage.name != self.source.name:
                 return True
         return False
 
@@ -67,7 +68,7 @@ class hanan_graph:
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
-        for blockage in self.get_blockages(source.name):
+        for blockage in self.router.blockages:
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
@@ -80,24 +81,6 @@ class hanan_graph:
         self.generate_hanan_nodes(x_values, y_values)
         self.remove_blocked_nodes()
         debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
-
-
-    def get_blockages(self, pin_name):
-        """
-        Return all blockages for this routing region, including pins with
-        different name.
-        """
-
-        # Create a copy of blockages
-        blockages = self.router.blockages[:]
-        # Create a copy of pins with different name than the routed pins
-        offset = self.router.layer_widths[0] / 2
-        for name, pins in self.router.pins.items():
-            if name == pin_name:
-                continue
-            for pin in pins:
-                blockages.append(deepcopy(pin).inflated_pin(multiple=1, extra_spacing=offset))
-        return blockages
 
 
     def generate_cartesian_values(self):
@@ -200,7 +183,9 @@ class hanan_graph:
             point = node.center
             for blockage in self.graph_blockages:
                 # Remove if the node is inside a blockage
-                if self.inside_shape(point, blockage):
+                # If the blockage is an inflated routable, remove if outside
+                # the routable shape
+                if self.inside_shape(point, blockage) and (blockage.name != self.source.name or not self.inside_shape(point, blockage.inflated_from)):
                     node.remove_all_neighbors()
                     self.nodes.remove(node)
                     break

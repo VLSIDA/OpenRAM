@@ -50,39 +50,21 @@ class hanan_router(router_tech):
         # Find blockages
         self.find_blockages()
 
-        # Create the hanan graph
-        # TODO: Remove this part later and route all pins
-        vdds = list(self.pins["vdd"])
-        for pin in vdds:
-            ll, ur = pin.rect
-            if ll.x == -11 and ll.y == -8.055:
-                vdd_0 = pin
-            if ll.x == 10.557500000000001 and ll.y == 11.22:
-                vdd_1 = pin
-        #vdds.sort()
-        #pin_iter = iter(vdds)
-        #vdd_0 = next(pin_iter)
-        #next(pin_iter)
-        #next(pin_iter)
-        #next(pin_iter)
-        #next(pin_iter)
-        #next(pin_iter)
-        #next(pin_iter)
-        #vdd_1 = next(pin_iter)
-        self.hg = hanan_graph(self)
-        self.hg.create_graph(vdd_0, vdd_1)
+        # Route vdd and gnd
+        for pin_name in [vdd_name, gnd_name]:
+            pins = self.pins[pin_name]
+            # Create minimum spanning tree connecting all pins
+            for source, target in self.get_mst_pairs(list(pins)):
+                # Create the hanan graph
+                hg = hanan_graph(self)
+                hg.create_graph(source, target)
+                # Find the shortest path from source to target
+                path = hg.find_shortest_path()
+                debug.check(path is not None, "Couldn't route {} to {}".format(source, target))
+                # Create the path shapes on layout
+                self.add_path(path)
 
-        # Find the shortest path from source to target
-        path = self.hg.find_shortest_path()
-
-        # Create the path shapes on layout
-        if path:
-            self.add_path(path)
-            debug.info(0, "Successfully routed")
-        else:
-            debug.info(0, "No path was found!")
-
-        self.write_debug_gds(gds_name="after.gds", source=vdd_0, target=vdd_1)
+        self.write_debug_gds(gds_name="after.gds")
 
 
     def find_pins(self, pin_name):
@@ -148,6 +130,52 @@ class hanan_router(router_tech):
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
             self.blockages.append(pin.inflated_pin(multiple=1, extra_spacing=offset, keep_link=True))
+
+
+    def get_mst_pairs(self, pins):
+        """
+        Return the pin pairs from the minimum spanning tree in a graph that
+        connects all pins together.
+        """
+
+        pin_count = len(pins)
+
+        # Create an adjacency matrix that connects all pins
+        edges = [[0] * pin_count for i in range(pin_count)]
+        for i in range(pin_count):
+            for j in range(pin_count):
+                if i == j:
+                    continue
+                edges[i][j] = pins[i].distance(pins[j])
+
+        pin_connected = [False] * pin_count
+        pin_connected[0] = True
+
+        # Add the minimum cost edge in each iteration (Prim's)
+        mst_pairs = []
+        for i in range(pin_count - 1):
+            min_cost = float("inf")
+            s = 0
+            t = 0
+            # Iterate over already connected pins
+            for m in range(pin_count):
+                # Skip if not connected
+                if not pin_connected[m]:
+                    continue
+                # Iterate over this pin's neighbors
+                for n in range(pin_count):
+                    # Skip if already connected or isn't a neighbor
+                    if pin_connected[n] or edges[m][n] == 0:
+                        continue
+                    # Choose this edge if it's better the the current one
+                    if edges[m][n] < min_cost:
+                        min_cost = edges[m][n]
+                        s = m
+                        t = n
+            pin_connected[t] = True
+            mst_pairs.append((pins[s], pins[t]))
+
+        return mst_pairs
 
 
     def add_path(self, path):

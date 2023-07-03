@@ -48,7 +48,7 @@ class hanan_graph:
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
             # Inflated blockages of pins don't block probes
-            if blockage.overlaps(probe_shape) and blockage.name != self.source.name:
+            if blockage.overlaps(probe_shape) and (blockage.name != self.source.name or not blockage.inflated_from.overlaps(probe_shape)):
                 return True
         return False
 
@@ -69,6 +69,9 @@ class hanan_graph:
         # Find the blockages that are in the routing area
         self.graph_blockages = []
         for blockage in self.router.blockages:
+            # FIXME: Include pins as blockages as well to prevent DRC errors
+            if blockage.name == self.source.name:
+                continue
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
@@ -92,10 +95,9 @@ class hanan_graph:
         x_values = set()
         y_values = set()
 
-        # Add the source and target values
-        offset = self.router.layer_widths[0] / 2
-        x_offset = vector(offset, 0)
-        y_offset = vector(0, offset)
+        # Add inner values for blockages of the routed type
+        x_offset = vector(self.router.offset, 0)
+        y_offset = vector(0, self.router.offset)
         for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
             # If the pin is tall or fat, add two points on the ends

@@ -31,6 +31,9 @@ class hanan_router(router_tech):
         self.all_pins = set()
         self.blockages = []
 
+        # Set the offset here
+        self.offset = self.layer_widths[0] / 2
+
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ Route the given pins in the given order. """
@@ -38,10 +41,7 @@ class hanan_router(router_tech):
         self.write_debug_gds(gds_name="before.gds")
 
         # Prepare gdsMill to find pins and blockages
-        self.design.gds_write(self.gds_filename)
-        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
-        self.reader = gdsMill.Gds2reader(self.layout)
-        self.reader.loadFromFile(self.gds_filename)
+        self.prepare_gds_reader()
 
         # Find pins to be routed
         self.find_pins(vdd_name)
@@ -50,21 +50,38 @@ class hanan_router(router_tech):
         # Find blockages
         self.find_blockages()
 
+        # Add vdd and gnd pins as blockages as well
+        # NOTE: This is done to make vdd and gnd pins DRC-safe
+        for pin in self.all_pins:
+            self.blockages.append(pin.inflated_pin(multiple=1, extra_spacing=self.offset, keep_link=True))
+
         # Route vdd and gnd
         for pin_name in [vdd_name, gnd_name]:
             pins = self.pins[pin_name]
             # Create minimum spanning tree connecting all pins
             for source, target in self.get_mst_pairs(list(pins)):
-                # Create the hanan graph
+                # Create the Hanan graph
                 hg = hanan_graph(self)
                 hg.create_graph(source, target)
                 # Find the shortest path from source to target
                 path = hg.find_shortest_path()
-                debug.check(path is not None, "Couldn't route {} to {}".format(source, target))
+                debug.check(path is not None, "Couldn't route from {} to {}".format(source, target))
                 # Create the path shapes on layout
                 self.add_path(path)
+                # Find the recently added shapes
+                self.prepare_gds_reader()
+                self.find_blockages(pin_name)
 
         self.write_debug_gds(gds_name="after.gds")
+
+
+    def prepare_gds_reader(self):
+        """  """
+
+        self.design.gds_write(self.gds_filename)
+        self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
+        self.reader = gdsMill.Gds2reader(self.layout)
+        self.reader.loadFromFile(self.gds_filename)
 
 
     def find_pins(self, pin_name):
@@ -80,16 +97,28 @@ class hanan_router(router_tech):
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
-            pin = hanan_shape(pin_name, rect, layer)
-            pin_set.add(pin)
+            new_pin = hanan_shape(pin_name, rect, layer)
+            # Skip this pin if it's contained by another pin of the same type
+            if new_pin.contained_by_any(pin_set):
+                continue
+            # Remove any previous pin of the same type contained by this new pin
+            for pin in list(pin_set):
+                if new_pin.contains(pin):
+                    pin_set.remove(pin)
+                elif new_pin.aligns(pin):
+                    new_pin.bbox([pin])
+                    pin_set.remove(pin)
+            pin_set.add(new_pin)
         # Add these pins to the 'pins' dict
         self.pins[pin_name] = pin_set
         self.all_pins.update(pin_set)
 
 
-    def find_blockages(self):
+    def find_blockages(self, shape_name=None):
         """  """
-        debug.info(1, "Finding all blockages...")
+        debug.info(1, "Finding blockages...")
+
+        prev_blockages = self.blockages[:]
 
         blockages = []
         for lpp in [self.vert_lpp, self.horiz_lpp]:
@@ -100,12 +129,16 @@ class hanan_router(router_tech):
                 ll = vector(boundary[0], boundary[1])
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
-                new_shape = hanan_shape("blockage{}".format(len(blockages)),
-                                       rect,
-                                       lpp)
+                if shape_name is None:
+                    name = "blockage{}".format(len(blockages))
+                else:
+                    name = shape_name
+                new_shape = hanan_shape(name, rect, lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
-                if new_shape.contained_by_any(self.all_pins) or new_shape.contained_by_any(blockages):
+                if new_shape.contained_by_any(self.all_pins) or \
+                   new_shape.contained_by_any(prev_blockages) or \
+                   new_shape.contained_by_any(blockages):
                     continue
                 # Remove blockages contained by this new blockage
                 for i in range(len(blockages) - 1, -1, -1):
@@ -122,14 +155,24 @@ class hanan_router(router_tech):
                 blockages.append(new_shape)
 
         # Inflate the shapes to prevent DRC errors
-        offset = self.layer_widths[0] / 2
         for blockage in blockages:
-            self.blockages.append(blockage.inflated_pin(multiple=1, extra_spacing=offset))
-
-        # Add vdd and gnd pins as blockages as well
-        # NOTE: This is done to make vdd and gnd pins DRC-safe
-        for pin in self.all_pins:
-            self.blockages.append(pin.inflated_pin(multiple=1, extra_spacing=offset, keep_link=True))
+            self.blockages.append(blockage.inflated_pin(multiple=1,
+                                                        extra_spacing=self.offset,
+                                                        keep_link=shape_name is not None))
+            # Remove blockages contained by this new blockage
+            for i in range(len(prev_blockages) - 1, -1, -1):
+                prev_blockage = prev_blockages[i]
+                # Remove the previous blockage contained by this new
+                # blockage
+                if blockage.contains(prev_blockage):
+                    prev_blockages.remove(prev_blockage)
+                    self.blockages.remove(prev_blockage)
+                # Merge the previous blockage into this new blockage if
+                # they are aligning
+                elif blockage.aligns(prev_blockage):
+                    blockage.bbox([prev_blockage])
+                    prev_blockages.remove(prev_blockage)
+                    self.blockages.remove(prev_blockage)
 
 
     def get_mst_pairs(self, pins):
@@ -214,26 +257,32 @@ class hanan_router(router_tech):
         return coordinates
 
 
-    def write_debug_gds(self, gds_name="debug_route.gds", source=None, target=None):
+    def write_debug_gds(self, gds_name="debug_route.gds", hg=None, source=None, target=None):
         """  """
 
-        self.add_router_info(source, target)
+        self.add_router_info(hg, source, target)
         self.design.gds_write(gds_name)
         self.del_router_info()
 
 
-    def add_router_info(self, source=None, target=None):
+    def add_router_info(self, hg=None, source=None, target=None):
         """  """
 
         # Display the inflated blockage
-        if "hg" in self.__dict__:
-            for blockage in self.hg.graph_blockages:
-                self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))
-            for node in self.hg.nodes:
+        if hg:
+            for blockage in self.blockages:
+                if blockage in hg.graph_blockages:
+                    self.add_object_info(blockage, "blockage{}++[{}]".format(self.get_zindex(blockage.lpp), blockage.name))
+                else:
+                    self.add_object_info(blockage, "blockage{}[{}]".format(self.get_zindex(blockage.lpp), blockage.name))
+            for node in hg.nodes:
                 offset = (node.center.x, node.center.y)
                 self.design.add_label(text="n{}".format(node.center.z),
                                       layer="text",
                                       offset=offset)
+        else:
+            for blockage in self.blockages:
+                self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))
         if source:
             self.add_object_info(source, "source")
         if target:

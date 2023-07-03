@@ -12,5 +12,5 @@ class hanan_probe:
 
     def __init__(self, p1, p2, lpp):
 
-        self.rect = (p1, p2)
+        self.rect = (p1.min(p2), p1.max(p2))
         self.lpp = lpp

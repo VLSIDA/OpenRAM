@@ -15,7 +15,6 @@ an analytical model or spice simulation is used for characterization.
 
 import sys
 import datetime
-from globals import *
 
 # You don't need the next two lines if you're sure that openram package is installed
 from common import *

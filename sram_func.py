@@ -15,7 +15,6 @@ number of cycles and period to be simulated.
 
 import sys
 import datetime
-from globals import *
 
 # You don't need the next two lines if you're sure that openram package is installed
 from common import *
@@ -49,7 +48,7 @@ openram.init_openram(config_file=config_file, is_unit_test=False)
 openram.print_banner()
 
 # Configure the SRAM organization (duplicated from openram.py)
-from characterizer.fake_sram import fake_sram
+from openram.characterizer.fake_sram import fake_sram
 s = fake_sram(name=OPTS.output_name,
               word_size=OPTS.word_size,
               num_words=OPTS.num_words,

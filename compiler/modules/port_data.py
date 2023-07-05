@@ -543,7 +543,7 @@ class port_data(design):
         if self.col_addr_size==0:
             return
 
-        start_bit = 1 if self.port == 0 else 0
+        start_bit = 1 if self.port == 0 and self.has_rbl else 0
 
         self.connect_bitlines(inst1=self.column_mux_array_inst,
                               inst2=self.precharge_array_inst,

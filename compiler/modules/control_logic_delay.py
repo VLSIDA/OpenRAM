@@ -142,21 +142,26 @@ class control_logic_delay(control_logic_base):
         # time for bitline to drop from vdd by threshold voltage once wordline enabled
         bitline_vth_swing = (spice["nom_supply_voltage"] - spice["nom_threshold"]) / spice["nom_supply_voltage"]
         bitline_vth_delay = abs(math.log(1 - bitline_vth_swing)) * spice["wire_unit_r"] * bitline_area * bitline_cap_ff
-        print("delays: delay_stage {} precharge {} pen {} wl {} wlen {} vth {}".format(inverter_stage_delay, precharge_delay, pen_signal_delay, wordline_delay, wlen_signal_delay, bitline_vth_delay))
+        # print("delays: delay_stage {} precharge {} pen {} wl {} wlen {} vth {}".format(inverter_stage_delay, precharge_delay, pen_signal_delay, wordline_delay, wlen_signal_delay, bitline_vth_delay))
 
         delays = [None] * 5
         # keepout between p_en rising and wl_en falling
-        delays[0] = int((wlen_signal_delay + wordline_delay) / inverter_stage_delay) # could possibly subtract pen_signal_delay?
+        delays[0] = (wlen_signal_delay + wordline_delay) / inverter_stage_delay # could possibly subtract pen_signal_delay?
+        delays[0] = int(delays[0] * OPTS.delay_control_scaling_factor)
+        # round up to nearest even integer
         delays[0] += delays[0] % 2
         delays[2] = delays[0] + (pen_signal_delay + precharge_delay) / inverter_stage_delay
+        delays[2] *= OPTS.delay_control_scaling_factor
         # round up to nearest odd integer
         delays[2] = int(1 - (2 * ((1 - delays[2]) // 2)))
         # delays[1] can be any even value less than delays[2]
         delays[1] = delays[2] - 1
         # keepout between p_en falling and wl_en rising
         delays[3] = delays[2] + pen_signal_delay / inverter_stage_delay
+        delays[3] *= OPTS.delay_control_scaling_factor
         delays[3] = int(1 - (2 * ((1 - delays[3]) // 2)))
         delays[4] = delays[3] + (wlen_signal_delay + wordline_delay + bitline_vth_delay) / inverter_stage_delay
+        delays[4] *= OPTS.delay_control_scaling_factor
         delays[4] = int(1 - (2 * ((1 - delays[4]) // 2)))
         self.delay_chain_pinout_list = delays
         # FIXME: fanout should be used to control delay chain height

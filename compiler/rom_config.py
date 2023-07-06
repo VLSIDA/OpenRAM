@@ -16,14 +16,14 @@ from openram import OPTS
 class rom_config:
     """ This is a structure that is used to hold the ROM configuration options. """
 
-    def __init__(self, word_size, rom_data, words_per_row=None, rom_endian="little", scramble_bits=True, strap_spacing=8):
+    def __init__(self, word_size, rom_data, words_per_row=None, rom_endian="little", scramble_bits=True, strap_spacing=8, data_type="hex"):
         self.word_size = word_size
         self.word_bits = self.word_size * 8
         self.rom_data = rom_data
         self.strap_spacing = strap_spacing
         # TODO: This currently does nothing. It should change the behavior of the chunk funciton.
         self.endian = rom_endian
-
+        self.data_type = data_type
         # This should pretty much always be true. If you want to make silicon art you might set to false
         self.scramble_bits = scramble_bits
         # This will get over-written when we determine the organization
@@ -57,18 +57,12 @@ class rom_config:
     def compute_sizes(self):
         """  Computes the organization of the memory using data size by trying to make it a rectangle."""
 
-        # Read data as hexidecimal text file
-        hex_file = open(self.rom_data, 'r')
-        hex_data = hex_file.read()
-
-        # Convert from hex into an int
-        data_int = int(hex_data, 16)
-        # Then from int into a right aligned, zero padded string
-        bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
-
-        # Then turn the string into a list of ints
-        bin_data = list(bin_string)
-        raw_data = [int(x) for x in bin_data]
+        if self.data_type == "hex":
+            raw_data = self.read_data_hex()
+        elif self.data_type == "bin":
+            raw_data = self.read_data_bin()
+        else:
+            debug.error(f"Invalid input data type: {self.data_type}", -1)
 
         # data size in bytes
         data_size = len(raw_data) / 8
@@ -92,6 +86,35 @@ class rom_config:
         # Set word_per_row in OPTS
         OPTS.words_per_row = self.words_per_row
         debug.info(1, "Read rom data file: length {0} bytes, {1} words, set number of cols to {2}, rows to {3}, with {4} words per row".format(data_size, self.num_words, self.cols, self.rows, self.words_per_row))
+
+    def read_data_hex(self) -> List[int]:
+        # Read data as hexidecimal text file
+        with open(self.rom_data, 'r') as hex_file:
+            hex_data = hex_file.read()
+
+        # Convert from hex into an int
+        data_int = int(hex_data, 16)
+        # Then from int into a right aligned, zero padded string
+        bin_string = bin(data_int)[2:].zfill(len(hex_data) * 4)
+
+        # Then turn the string into a list of ints
+        bin_data = list(bin_string)
+        raw_data = [int(x) for x in bin_data]
+        return raw_data
+
+    def read_data_bin(self) -> List[int]:
+
+        # Read data as a binary file
+        with open(self.rom_data, 'rb') as bin_file:
+            bin_data = bin_file.read()
+
+        # Convert from a list of bytes to a single string of bits
+        bin_string = "".join(f"{n:08b}" for n in bin_data)
+
+        # Then turn the string into a list of ints
+        bin_data = list(bin_string)
+        raw_data = [int(x) for x in bin_data]
+        return raw_data
 
 
     def chunk_data(self, raw_data: List[int]):

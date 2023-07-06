@@ -3,6 +3,9 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := install
 
+# Set the shell here
+SHELL := /bin/bash
+
 # Skywater PDK SRAM library
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
 # Use this for release

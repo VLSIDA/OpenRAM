@@ -24,7 +24,7 @@ from .fake_sram import *
 debug.info(1, "Initializing characterizer...")
 OPTS.spice_exe = ""
 
-if not OPTS.analytical_delay:
+if not OPTS.analytical_delay or OPTS.top_process in ["memfunc", "memchar"]:
     if OPTS.spice_name:
         # Capitalize Xyce
         if OPTS.spice_name == "xyce":

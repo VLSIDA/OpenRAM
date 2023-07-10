@@ -31,6 +31,8 @@ class hanan_router(router_tech):
         self.pins = {}
         self.all_pins = set()
         self.blockages = []
+        self.new_pins = {}
+        self.fake_pins = []
 
         # Set the offset here
         self.offset = self.layer_widths[0] / 2
@@ -152,6 +154,7 @@ class hanan_router(router_tech):
                 new_shape = hanan_shape(name, rect, lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
+                # Also ignore the new pins
                 if new_shape.contained_by_any(self.all_pins) or \
                    new_shape.contained_by_any(prev_blockages) or \
                    new_shape.contained_by_any(blockages):
@@ -191,7 +194,7 @@ class hanan_router(router_tech):
                     self.blockages.remove(prev_blockage)
 
 
-    def add_side_pin(self, pin_name, side, width=3, bbox=None):
+    def add_side_pin(self, pin_name, side, width=3, num_connects=4, bbox=None):
         """ Add supply pin to one side of the layout. """
 
         vertical = side in ["left", "right"]
@@ -235,15 +238,38 @@ class hanan_router(router_tech):
                 shape_width -= margin * 2
 
         # Add this new pin
+        layer = self.get_layer(int(vertical))
         pin = self.design.add_layout_pin(text=pin_name,
-                                         layer=self.get_layer(int(vertical)),
+                                         layer=layer,
                                          offset=offset,
                                          width=shape_width,
                                          height=shape_height)
-        return pin
+        # Add fake pins on this new pin evenly
+        fake_pins = []
+        if vertical:
+            space = (shape_height - (2 * wideness) - num_connects * self.track_wire) / (num_connects + 1)
+            start_offset = vector(offset.x, offset.y + wideness)
+        else:
+            space = (shape_width - (2 * wideness) - num_connects * self.track_wire) / (num_connects + 1)
+            start_offset = vector(offset.x + wideness, offset.y)
+        for i in range(1, num_connects + 1):
+            if vertical:
+                offset = vector(start_offset.x, start_offset.y + i * (space + self.track_wire))
+                ll = vector(offset.x, offset.y - self.track_wire)
+                ur = vector(offset.x + wideness, offset.y)
+            else:
+                offset = vector(start_offset.x + i * (space + self.track_wire), start_offset.y)
+                ll = vector(offset.x - self.track_wire, offset.y)
+                ur = vector(offset.x, offset.y + wideness)
+            rect = [ll, ur]
+            fake_pin = hanan_shape(name=pin_name,
+                                   rect=rect,
+                                   layer_name_pp=layer)
+            fake_pins.append(fake_pin)
+        return pin, fake_pins
 
 
-    def add_ring_pin(self, pin_name, width=3):
+    def add_ring_pin(self, pin_name, width=3, num_connects=4):
         """ Add suply ring to the layout. """
 
         bbox = self.design.get_bbox()
@@ -251,7 +277,7 @@ class hanan_router(router_tech):
         # Add side pins
         new_pins = []
         for side in ["top", "bottom", "right", "left"]:
-            new_shape = self.add_side_pin(pin_name, side, width, bbox)
+            new_shape, fake_pins = self.add_side_pin(pin_name, side, width, num_connects, bbox)
             ll, ur = new_shape.rect
             rect = [ll, ur]
             layer = self.get_layer(side in ["left", "right"])
@@ -259,6 +285,8 @@ class hanan_router(router_tech):
                                   rect=rect,
                                   layer_name_pp=layer)
             new_pins.append(new_pin)
+            self.pins[pin_name].update(fake_pins)
+            self.fake_pins.extend(fake_pins)
 
         # Add vias to the corners
         shift = self.track_wire + self.track_space
@@ -275,6 +303,13 @@ class hanan_router(router_tech):
                     self.design.add_via_center(layers=self.layers,
                                                offset=offset)
 
+        # Save side pins for routing
+        self.new_pins[pin_name] = new_pins
+        for pin in new_pins:
+            self.blockages.append(pin.inflated_pin(multiple=1,
+                                                   extra_spacing=self.offset,
+                                                   keep_link=True))
+
 
     def get_mst_pairs(self, pins):
         """
@@ -288,7 +323,11 @@ class hanan_router(router_tech):
         edges = [[0] * pin_count for i in range(pin_count)]
         for i in range(pin_count):
             for j in range(pin_count):
+                # Skip if they're the same pin
                 if i == j:
+                    continue
+                # Skip if both pins are fake
+                if pins[i] in self.fake_pins and pins[j] in self.fake_pins:
                     continue
                 edges[i][j] = pins[i].distance(pins[j])
 
@@ -358,6 +397,12 @@ class hanan_router(router_tech):
         return coordinates
 
 
+    def get_new_pins(self, name):
+        """  """
+
+        return self.new_pins[name]
+
+
     def write_debug_gds(self, gds_name="debug_route.gds", hg=None, source=None, target=None):
         """  """
 
@@ -384,6 +429,8 @@ class hanan_router(router_tech):
         else:
             for blockage in self.blockages:
                 self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))
+        for pin in self.fake_pins:
+            self.add_object_info(pin, "fake")
         if source:
             self.add_object_info(source, "source")
         if target:

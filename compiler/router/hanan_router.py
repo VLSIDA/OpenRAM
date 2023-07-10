@@ -26,6 +26,7 @@ class hanan_router(router_tech):
 
         self.layers = layers
         self.design = design
+        self.pin_type = pin_type
         self.gds_filename = OPTS.openram_temp + "temp.gds"
         self.pins = {}
         self.all_pins = set()
@@ -40,6 +41,9 @@ class hanan_router(router_tech):
         #debug.info(1, "Running router for {}...".format(pins))
         self.write_debug_gds(gds_name="before.gds")
 
+        self.vdd_name = vdd_name
+        self.gnd_name = gnd_name
+
         # Prepare gdsMill to find pins and blockages
         self.prepare_gds_reader()
 
@@ -49,6 +53,18 @@ class hanan_router(router_tech):
 
         # Find blockages
         self.find_blockages()
+
+        # Add side pins
+        if self.pin_type in ["top", "bottom", "right", "left"]:
+            self.add_side_pin(vdd_name)
+            self.add_side_pin(gnd_name)
+        elif self.pin_type == "ring":
+            self.add_ring_pin(vdd_name)
+            self.add_ring_pin(gnd_name)
+        else:
+            debug.warning("Side supply pins aren't created.")
+
+        self.write_debug_gds(gds_name="after.gds")
 
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
@@ -173,6 +189,91 @@ class hanan_router(router_tech):
                     blockage.bbox([prev_blockage])
                     prev_blockages.remove(prev_blockage)
                     self.blockages.remove(prev_blockage)
+
+
+    def add_side_pin(self, pin_name, side, width=3, bbox=None):
+        """ Add supply pin to one side of the layout. """
+
+        vertical = side in ["left", "right"]
+        inner = pin_name == self.gnd_name
+
+        if bbox is None:
+            bbox = self.design.get_bbox()
+        ll, ur = bbox
+
+        # Calculate wires' wideness
+        wideness = self.track_wire * width + self.track_space * (width - 1)
+
+        # Calculate the offset for the inner ring
+        if inner:
+            margin = wideness * 2
+        else:
+            margin = 0
+
+        if side == "top":
+            offset = vector(ll.x + margin, ur.y - wideness - margin)
+        elif side == "bottom":
+            offset = vector(ll.x + margin, ll.y + margin)
+        elif side == "left":
+            offset = vector(ll.x + margin, ll.y + margin)
+        elif side == "right":
+            offset = vector(ur.x - wideness - margin, ll.y + margin)
+
+        shape = ur - ll
+
+        if vertical:
+            shape_width = wideness
+            shape_height = shape.y
+        else:
+            shape_width = shape.x
+            shape_height = wideness
+
+        if inner:
+            if vertical:
+                shape_height -= margin * 2
+            else:
+                shape_width -= margin * 2
+
+        # Add this new pin
+        pin = self.design.add_layout_pin(text=pin_name,
+                                         layer=self.get_layer(int(vertical)),
+                                         offset=offset,
+                                         width=shape_width,
+                                         height=shape_height)
+        return pin
+
+
+    def add_ring_pin(self, pin_name, width=3):
+        """ Add suply ring to the layout. """
+
+        bbox = self.design.get_bbox()
+
+        # Add side pins
+        new_pins = []
+        for side in ["top", "bottom", "right", "left"]:
+            new_shape = self.add_side_pin(pin_name, side, width, bbox)
+            ll, ur = new_shape.rect
+            rect = [ll, ur]
+            layer = self.get_layer(side in ["left", "right"])
+            new_pin = hanan_shape(name=pin_name,
+                                  rect=rect,
+                                  layer_name_pp=layer)
+            new_pins.append(new_pin)
+
+        # Add vias to the corners
+        shift = self.track_wire + self.track_space
+        half_wide = self.track_wire / 2
+        for i in range(4):
+            ll, ur = new_pins[i].rect
+            if i % 2:
+                top_left = vector(ur.x - (width - 1) * shift - half_wide, ll.y + (width - 1) * shift + half_wide)
+            else:
+                top_left = vector(ll.x + half_wide, ur.y - half_wide)
+            for j in range(width):
+                for k in range(width):
+                    offset = vector(top_left.x + j * shift, top_left.y - k * shift)
+                    self.design.add_via_center(layers=self.layers,
+                                               offset=offset)
 
 
     def get_mst_pairs(self, pins):

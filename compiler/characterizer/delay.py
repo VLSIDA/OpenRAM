@@ -230,8 +230,7 @@ class delay(simulation):
         bit_col = self.get_data_bit_column_number(probe_address, probe_data)
         bit_row = self.get_address_row_number(probe_address)
         if OPTS.top_process == "memchar":
-            cell_name = self.cell_format.format(self.sram.name, bit_row, bit_col, OPTS.hier_seperator)
-            #cell_name = "X{0}{3}xbank0{3}xreplica_bitcell_array{3}xbitcell_array{3}xbit_r{1}_c{2}".format(self.sram.name, bit_row, bit_col, OPTS.hier_seperator)
+            cell_name = self.cell_name.format(bit_row, bit_col)
             storage_names = ("Q", "Q_bar")
         else:
             (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, bit_row, bit_col)
@@ -1256,31 +1255,23 @@ class delay(simulation):
                     meas_buff.clear()
         self.read_meas_lists.append(self.sen_path_meas + self.bl_path_meas)
 
-    def guess_spice_names(self):
+    def set_spice_names(self):
         """This is run in place of set_internal_spice_names function from
         simulation.py when running stand-alone characterizer."""
-        with open(self.sp_file, "r") as file:
-            bl_prefix = None
-            br_prefix = None
-            replica_bitcell_array_name = None
-            for line in file:
-                if re.search(r"bl_\d_\d", line):
-                    bl_prefix = "bl_"
-                    br_prefix = "br_"
-                if re.search(r"bl\d_\d", line):
-                    bl_prefix = "bl"
-                    br_prefix = "br"
-                if re.search(r"Xreplica_bitcell_array", line):
-                    replica_bitcell_array_name = "replica_bitcell_array"
-                if bl_prefix and replica_bitcell_array_name:
-                    break
-            debug.check(bl_prefix, "Could not guess the bitline name.")
-            self.bl_name = "X{0}{1}xbank0{1}{2}{{}}_{3}".format(self.sram.name, OPTS.hier_seperator, bl_prefix, self.bitline_column)
-            self.br_name = "X{0}{1}xbank0{1}{2}{{}}_{3}".format(self.sram.name, OPTS.hier_seperator, br_prefix, self.bitline_column)
-            self.sen_name = "X{0}{1}xbank0{1}s_en".format(self.sram.name, OPTS.hier_seperator)
-            if not replica_bitcell_array_name:
-                replica_bitcell_array_name = "bitcell_array"
-            self.cell_format = "X{{0}}{{3}}xbank0{{3}}xbitcell_array{{3}}x{0}{{3}}xbitcell_array{{3}}xbit_r{{1}}_c{{2}}".format(replica_bitcell_array_name)
+        self.bl_name = OPTS.bl_format.format(name=self.sram.name,
+                                             hier_sep=OPTS.hier_seperator,
+                                             row="{}",
+                                             col=self.bitline_column)
+        self.br_name = OPTS.br_format.format(name=self.sram.name,
+                                             hier_sep=OPTS.hier_seperator,
+                                             row="{}",
+                                             col=self.bitline_column)
+        self.sen_name = OPTS.sen_format.format(name=self.sram.name,
+                                               hier_sep=OPTS.hier_seperator)
+        self.cell_name = OPTS.cell_format.format(name=self.sram.name,
+                                                 hier_sep=OPTS.hier_seperator,
+                                                 row="{}",
+                                                 col="{}")
 
     def analysis_init(self, probe_address, probe_data):
         """Sets values which are dependent on the data address/bit being tested."""
@@ -1288,7 +1279,7 @@ class delay(simulation):
         self.set_probe(probe_address, probe_data)
         self.prepare_netlist()
         if OPTS.top_process == "memchar":
-            self.guess_spice_names()
+            self.set_spice_names()
             self.create_measurement_names()
             self.create_measurement_objects()
             self.recover_measurment_objects()

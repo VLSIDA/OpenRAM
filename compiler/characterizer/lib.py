@@ -802,7 +802,8 @@ class lib:
 
         # information of checks
         # run it only the first time
-        datasheet.write("{0},{1},".format(self.sram.drc_errors, self.sram.lvs_errors))
+        if OPTS.top_process != "memchar":
+            datasheet.write("{0},{1},".format(self.sram.drc_errors, self.sram.lvs_errors))
 
         # write area
         datasheet.write(str(self.sram.width * self.sram.height) + ',')

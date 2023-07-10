@@ -68,7 +68,7 @@ class spice():
         self.trim_insts = set()
         # Keep track of any comments to add the the spice
         try:
-            self.commments
+            self.comments
         except AttributeError:
             self.comments = []
 
@@ -82,7 +82,7 @@ class spice():
         """ Add a comment to the spice file """
 
         try:
-            self.commments
+            self.comments
         except AttributeError:
             self.comments = []
 

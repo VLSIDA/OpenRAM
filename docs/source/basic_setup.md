@@ -30,14 +30,36 @@ you don't have to worry about updating/installing these tools. OpenRAM installs
 Anaconda silently in the background (without affecting any existing Anaconda
 setup you have).
 
+You don't have to manually activate/deactivate the Anaconda environment. OpenRAM
+automatically manages this before and after running the tools.
+
 OpenRAM uses Anaconda by default, but you can turn this feature off by setting
 `use_conda = False` in your config file. Then, OpenRAM will use the tools you
 have installed on your system.
+
+You can also tell OpenRAM where Anaconda should be installed or which Anaconda
+setup it should use. You can set the `$CONDA_HOME` variable like this:
+```
+export CONDA_HOME="/path/to/conda/setup"
+```
 
 > **Note**: If you want to install Anaconda without running OpenRAM (for example
 > to run unit tests, which do not install Anaconda), you can run:
 > ```
 > ./install_conda.sh
+> ```
+
+> **Note**: You can uninstall OpenRAM's Anaconda installation by simply deleting
+> the folder Anaconda is installed to. You can run:
+> ```
+> rm -rf miniconda
+> ```
+
+> **Note**: You can change a tool's version with the following commands:
+> ```
+> source ./miniconda/bin/activate
+> conda uninstall <tool>
+> conda install -y -c vlsida-eda <tool>=<version>
 > ```
 
 

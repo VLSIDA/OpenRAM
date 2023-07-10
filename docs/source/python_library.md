@@ -47,6 +47,13 @@ point to that OpenRAM installation directory.
 If you don't want to use this feature, you can simply unset these environment
 variables.
 
+> **Note**: If you are a developer working on the source code on local clone of
+> the repository and want to use the Python library at the same time, you should
+> set both `OPENRAM_HOME` and `OPENRAM_TECH` to point to the local clone (follow
+> [Basic Setup](./basic_setup.md#go-back)). This way, the library will use the
+> source code located at these paths and you won't have to rebuild the library
+> after every change.
+
 
 
 ## Usage

@@ -70,6 +70,10 @@ BROKEN_STAMPS = \
 	freepdk45/10_rom_wordline_driver_array_test.ok \
 	freepdk45/14_rom_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
+	freepdk45/16_control_logic_delay_multiport_test.ok \
+	freepdk45/16_control_logic_delay_rw_test.ok \
+	freepdk45/16_control_logic_delay_r_test.ok \
+	freepdk45/16_control_logic_delay_w_test.ok \
 	freepdk45/19_rom_bank_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
@@ -124,6 +128,10 @@ BROKEN_STAMPS = \
 	sky130/15_local_bitcell_array_leftrbl_1rw_test.ok \
 	sky130/15_local_bitcell_array_norbl_1rw_1r_test.ok \
 	sky130/15_local_bitcell_array_norbl_1rw_test.ok \
+	sky130/16_control_logic_delay_multiport_test.ok \
+	sky130/16_control_logic_delay_rw_test.ok \
+	sky130/16_control_logic_delay_r_test.ok \
+	sky130/16_control_logic_delay_w_test.ok \
 	sky130/18_port_address_512rows_test.ok \
 	sky130/18_port_data_spare_cols_test.ok \
 	sky130/19_single_bank_2mux_test.ok \

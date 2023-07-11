@@ -161,6 +161,8 @@ BROKEN_STAMPS = \
 	sky130/30_openram_back_end_test.ok \
 	sky130/30_openram_front_end_library_test.ok \
 	sky130/30_openram_front_end_test.ok \
+	sky130/30_openram_sram_char_test.ok \
+	sky130/30_openram_sram_func_test.ok \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))

@@ -22,16 +22,29 @@ class hanan_router(router_tech):
 
     def __init__(self, layers, design, bbox=None, pin_type=None):
 
+        # `router_tech` contains tech constants for the router
         router_tech.__init__(self, layers, route_track_width=1)
 
+        # Layers that can be used for routing
         self.layers = layers
+        # This is the `hierarchy_layout` object
         self.design = design
+        # Side supply pin type
+        # (can be "top", "bottom", "right", "left", and "ring")
         self.pin_type = pin_type
+        # Temporary GDSII file name to find pins and blockages
         self.gds_filename = OPTS.openram_temp + "temp.gds"
+        # Dictionary for vdd and gnd pins
         self.pins = {}
+        # Set of all the pins
         self.all_pins = set()
+        # This is all the blockages including the pins. The graph class handles
+        # pins as blockages while considering their routability
         self.blockages = []
+        # New pins are the side supply pins
         self.new_pins = {}
+        # Fake pins are imaginary pins on the side supply pins to route other
+        # pins to them
         self.fake_pins = []
 
         # Set the offset here
@@ -40,9 +53,11 @@ class hanan_router(router_tech):
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ Route the given pins in the given order. """
-        #debug.info(1, "Running router for {}...".format(pins))
+        debug.info(1, "Running router for {} and {}...".format(vdd_name, gnd_name))
+        # FIXME: Comment-out later
         self.write_debug_gds(gds_name="before.gds")
 
+        # Save pin names
         self.vdd_name = vdd_name
         self.gnd_name = gnd_name
 
@@ -66,17 +81,20 @@ class hanan_router(router_tech):
         else:
             debug.warning("Side supply pins aren't created.")
 
+        # FIXME: Comment-out later
         self.write_debug_gds(gds_name="after.gds")
 
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            self.blockages.append(pin.inflated_pin(multiple=1, extra_spacing=self.offset, keep_link=True))
+            self.blockages.append(pin.inflated_pin(multiple=1,
+                                                   extra_spacing=self.offset,
+                                                   keep_link=True))
 
         # Route vdd and gnd
         for pin_name in [vdd_name, gnd_name]:
             pins = self.pins[pin_name]
-            # Create minimum spanning tree connecting all pins
+            # Route closest pins according to the minimum spanning tree
             for source, target in self.get_mst_pairs(list(pins)):
                 # Create the Hanan graph
                 hg = hanan_graph(self)
@@ -90,11 +108,12 @@ class hanan_router(router_tech):
                 self.prepare_gds_reader()
                 self.find_blockages(pin_name)
 
+        # FIXME: Comment-out later
         self.write_debug_gds(gds_name="after.gds")
 
 
     def prepare_gds_reader(self):
-        """  """
+        """ Write the current layout to a temporary file to read the layout. """
 
         self.design.gds_write(self.gds_filename)
         self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
@@ -103,8 +122,8 @@ class hanan_router(router_tech):
 
 
     def find_pins(self, pin_name):
-        """  """
-        debug.info(1, "Finding all pins for {}".format(pin_name))
+        """ Find the pins with the given name. """
+        debug.info(2, "Finding all pins for {}".format(pin_name))
 
         shape_list = self.layout.getAllPinShapes(str(pin_name))
         pin_set = set()
@@ -133,9 +152,10 @@ class hanan_router(router_tech):
 
 
     def find_blockages(self, shape_name=None):
-        """  """
+        """ Find all blockages in the routing layers. """
         debug.info(1, "Finding blockages...")
 
+        # Keep current blockages here
         prev_blockages = self.blockages[:]
 
         blockages = []
@@ -213,6 +233,7 @@ class hanan_router(router_tech):
         else:
             margin = 0
 
+        # Calculate the lower left coordinate
         if side == "top":
             offset = vector(ll.x + margin, ur.y - wideness - margin)
         elif side == "bottom":
@@ -222,15 +243,14 @@ class hanan_router(router_tech):
         elif side == "right":
             offset = vector(ur.x - wideness - margin, ll.y + margin)
 
+        # Calculate width and height
         shape = ur - ll
-
         if vertical:
             shape_width = wideness
             shape_height = shape.y
         else:
             shape_width = shape.x
             shape_height = wideness
-
         if inner:
             if vertical:
                 shape_height -= margin * 2
@@ -244,6 +264,7 @@ class hanan_router(router_tech):
                                          offset=offset,
                                          width=shape_width,
                                          height=shape_height)
+
         # Add fake pins on this new pin evenly
         fake_pins = []
         if vertical:
@@ -270,7 +291,7 @@ class hanan_router(router_tech):
 
 
     def add_ring_pin(self, pin_name, width=3, num_connects=4):
-        """ Add suply ring to the layout. """
+        """ Add the supply ring to the layout. """
 
         bbox = self.design.get_bbox()
 

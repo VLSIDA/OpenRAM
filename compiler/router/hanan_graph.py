@@ -55,7 +55,7 @@ class hanan_graph:
 
     def create_graph(self, source, target):
         """ Create the Hanan graph to run routing on later. """
-        debug.info(0, "Creating the Hanan graph for source '{0}' and target'{1}'.".format(source, target))
+        debug.info(2, "Creating the Hanan graph for source '{}' and target'{}'.".format(source, target))
 
         self.source = source
         self.target = target
@@ -64,7 +64,7 @@ class hanan_graph:
         region = deepcopy(source)
         region.bbox([target])
         region = region.inflated_pin(multiple=1)
-        debug.info(0, "Routing region is {}".format(region.rect))
+        debug.info(3, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
@@ -77,13 +77,13 @@ class hanan_graph:
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
-        debug.info(0, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
+        debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
         # Create the Hanan graph
         x_values, y_values = self.generate_cartesian_values()
         self.generate_hanan_nodes(x_values, y_values)
         self.remove_blocked_nodes()
-        debug.info(0, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
+        debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
     def generate_cartesian_values(self):

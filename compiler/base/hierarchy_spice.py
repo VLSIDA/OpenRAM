@@ -17,6 +17,7 @@ from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
 from .logical_effort import convert_relative_c_to_farad, convert_farad_to_relative_c
+from .pin_spice import pin_spice
 
 
 class spice():
@@ -49,14 +50,10 @@ class spice():
         if not os.path.exists(self.lvs_file):
             self.lvs_file = self.sp_file
 
-        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = set()
         # Holds the pins for this module (in order)
         self.pins = []
-        # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
-        # for each instance, this is the set of nets/nodes that map to the pins for this instance
-        self.pin_type = {}
         # An (optional) list of indices to reorder the pins to match the spice.
         self.pin_indices = []
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
@@ -90,105 +87,96 @@ class spice():
 
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
-        self.pins.append(name)
-        self.pin_type[name]=pin_type
-        debug.check(pin_type in self.valid_signal_types,
-                    "Invalid signaltype for {0}: {1}".format(name,
-                                                             pin_type))
+        new_pin = pin_spice(name, pin_type)
+        debug.check(new_pin not in self.pins, "cannot add duplicate spice pin")
+        self.pins.append(new_pin)
 
     def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
-        # The type list can be a single type for all pins
+        # The pin type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-        if type(pin_type)==str:
+        if type(pin_type) == str:
             for pin in pin_list:
-                debug.check(pin_type in self.valid_signal_types,
-                            "Invalid signaltype for {0}: {1}".format(pin,
-                                                                     pin_type))
                 self.add_pin(pin, pin_type)
 
         elif len(pin_type)==len(pin_list):
-            for (pin, ptype) in zip(pin_list, pin_type):
-                debug.check(ptype in self.valid_signal_types,
-                            "Invalid signaltype for {0}: {1}".format(pin,
-                                                                     ptype))
-                self.add_pin(pin, ptype)
+            for (pin, type) in zip(pin_list, pin_type):
+                self.add_pin(pin, type)
         else:
-            debug.error("Mismatch in type and pin list lengths.", -1)
+            debug.error("Pin type must be a string or list of strings the same length as pin_list", -1)
 
     def add_pin_indices(self, index_list):
-        """
-        Add pin indices for all the cell's pins.
-        """
+        """ Add pin indices for all the cell's pins. """
         self.pin_indices = index_list
 
     def get_ordered_inputs(self, input_list):
-        """
-        Return the inputs reordered to match the pins.
-        """
+        """ Return the inputs reordered to match the pins. """
         if not self.pin_indices:
             return input_list
 
         new_list = [input_list[x] for x in self.pin_indices]
         return new_list
 
-    def add_pin_types(self, type_list):
-        """
-        Add pin types for all the cell's pins.
-        """
-        # This only works if self.pins == bitcell.pin_names
+    def update_pin_types(self, type_list):
+        """ Change pin types for all the cell's pins. """
         if len(type_list) != len(self.pins):
             debug.error("{} spice subcircuit number of port types does not match number of pins\
                       \n SPICE names={}\
                       \n Module names={}\
                       ".format(self.name, self.pins, type_list), 1)
-        self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
+        for pin, type in zip(self.pins, type_list):
+            pin.set_pin_type(type)
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
-        pin_type = self.pin_type[name]
-        debug.check(pin_type in self.valid_signal_types,
-                    "Invalid signaltype for {0}: {1}".format(name, pin_type))
-        return pin_type
+        for pin in self.pins:
+            if pin.name == name:
+                return pin.type
+        debug.error("Spice pin {} not found".format(name))
 
     def get_pin_dir(self, name):
         """ Returns the direction of the pin. (Supply/ground are INOUT). """
-        if self.pin_type[name] in ["POWER", "GROUND"]:
+        pin_type = self.get_pin_type(name)
+        if pin_type in ["POWER", "GROUND"]:
             return "INOUT"
         else:
-            return self.pin_type[name]
+            return pin_type
 
     def get_inputs(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
+        """
+        These use pin types to determine pin lists.
+        Returns names only to maintain historical interface.
+        """
         input_list = []
         for pin in self.pins:
-            if self.pin_type[pin]=="INPUT":
-                input_list.append(pin)
+            if pin.type == "INPUT":
+                input_list.append(pin.name)
         return input_list
 
     def get_outputs(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
+        """
+        These use pin types to determine pin lists.
+        Returns names only to maintain historical interface.
+        """
         output_list = []
         for pin in self.pins:
-            if self.pin_type[pin]=="OUTPUT":
-                output_list.append(pin)
+            if pin.type == "OUTPUT":
+                output_list.append(pin.name)
         return output_list
-
-    def copy_pins(self, other_module, suffix=""):
-        """ This will copy all of the pins from the other module and add an optional suffix."""
-        for pin in other_module.pins:
-            self.add_pin(pin + suffix, other_module.get_pin_type(pin))
 
     def get_inouts(self):
         """ These use pin types to determine pin lists. These
         may be over-ridden by submodules that didn't use pin directions yet."""
         inout_list = []
         for pin in self.pins:
-            if self.pin_type[pin]=="INOUT":
-                inout_list.append(pin)
+            if pin.type == "INOUT":
+                inout_list.append(pin.name)
         return inout_list
+
+    def copy_pins(self, other_module, suffix=""):
+        """ This will copy all of the pins from the other module and add an optional suffix."""
+        for pin in other_module.pins:
+            self.add_pin(pin.name + suffix, pin.type)
 
     def connect_inst(self, args, check=True):
         """

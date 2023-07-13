@@ -8,10 +8,10 @@ from openram.base.vector import vector
 from openram.tech import drc
 
 
-class hanan_shape(pin_layout):
+class graph_shape(pin_layout):
     """
     This class inherits the pin_layout class to change some of its behavior for
-    the Hanan router.
+    the graph router.
     """
 
     def __init__(self, name, rect, layer_name_pp, inflated_from=None):
@@ -29,7 +29,7 @@ class hanan_shape(pin_layout):
         newll = ll - extra
         newur = ur + extra
         inflated_area = (newll, newur)
-        return hanan_shape(self.name, inflated_area, self.layer, self if keep_link else None)
+        return graph_shape(self.name, inflated_area, self.layer, self if keep_link else None)
 
 
     def aligns(self, other):

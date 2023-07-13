@@ -4,7 +4,7 @@
 # All rights reserved.
 #
 
-class hanan_probe:
+class graph_probe:
     """
     This class represents a probe sent from one point to another on Hanan graph.
     This is used to mimic the pin_layout class to utilize its methods.

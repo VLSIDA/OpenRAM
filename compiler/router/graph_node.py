@@ -8,16 +8,16 @@ from openram.base.vector3d import vector3d
 from openram.tech import drc
 
 
-class hanan_node:
-    """ This class represents a node on the Hanan graph. """
+class graph_node:
+    """ This class represents a node on the graph. """
 
     # This is used to assign unique ids to nodes
     next_id = 0
 
     def __init__(self, center):
 
-        self.id = hanan_node.next_id
-        hanan_node.next_id += 1
+        self.id = graph_node.next_id
+        graph_node.next_id += 1
         if isinstance(center, vector3d):
             self.center = center
         else:

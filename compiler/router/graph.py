@@ -10,16 +10,16 @@ from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.tech import drc
 from .direction import direction
-from .hanan_node import hanan_node
-from .hanan_probe import hanan_probe
+from .graph_node import graph_node
+from .graph_probe import graph_probe
 
 
-class hanan_graph:
-    """ This is the Hanan graph created from the blockages. """
+class graph:
+    """ This is the graph created from the blockages. """
 
     def __init__(self, router):
 
-        # This is the Hanan router that uses this graph
+        # This is the graph router that uses this graph
         self.router = router
         self.source_nodes = []
         self.target_nodes = []
@@ -43,7 +43,7 @@ class hanan_graph:
         This function assumes that p1 and p2 are on the same layer.
         """
 
-        probe_shape = hanan_probe(p1, p2, self.router.vert_lpp if p1.z else self.router.horiz_lpp)
+        probe_shape = graph_probe(p1, p2, self.router.vert_lpp if p1.z else self.router.horiz_lpp)
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
@@ -54,8 +54,8 @@ class hanan_graph:
 
 
     def create_graph(self, source, target):
-        """ Create the Hanan graph to run routing on later. """
-        debug.info(2, "Creating the Hanan graph for source '{}' and target'{}'.".format(source, target))
+        """ Create the graph to run routing on later. """
+        debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
         self.source = source
         self.target = target
@@ -79,9 +79,9 @@ class hanan_graph:
                 self.graph_blockages.append(blockage)
         debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
-        # Create the Hanan graph
+        # Create the graph
         x_values, y_values = self.generate_cartesian_values()
-        self.generate_hanan_nodes(x_values, y_values)
+        self.generate_graph_nodes(x_values, y_values)
         self.remove_blocked_nodes()
         debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
@@ -128,9 +128,9 @@ class hanan_graph:
         return x_values, y_values
 
 
-    def generate_hanan_nodes(self, x_values, y_values):
+    def generate_graph_nodes(self, x_values, y_values):
         """
-        Generate all Hanan nodes using the cartesian values and connect the
+        Generate all graph nodes using the cartesian values and connect the
         orthogonal neighbors.
         """
 
@@ -139,8 +139,8 @@ class hanan_graph:
         self.nodes = []
         for x in x_values:
             for y in y_values:
-                below_node = hanan_node([x, y, 0])
-                above_node = hanan_node([x, y, 1])
+                below_node = graph_node([x, y, 0])
+                above_node = graph_node([x, y, 1])
 
                 # Connect these two neighbors
                 below_node.add_neighbor(above_node)
@@ -178,7 +178,7 @@ class hanan_graph:
 
 
     def remove_blocked_nodes(self):
-        """ Remove the Hanan nodes that are blocked by a blockage. """
+        """ Remove the graph nodes that are blocked by a blockage. """
 
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]

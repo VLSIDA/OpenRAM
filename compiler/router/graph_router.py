@@ -11,13 +11,14 @@ from openram.tech import GDS
 from openram.tech import layer as tech_layer
 from openram import OPTS
 from .router_tech import router_tech
-from .hanan_graph import hanan_graph
-from .hanan_shape import hanan_shape
+from .graph import graph
+from .graph_shape import graph_shape
 
 
-class hanan_router(router_tech):
+class graph_router(router_tech):
     """
-    This is the router class that implements Hanan graph routing algorithm.
+    This is the router class that uses the Hanan grid method to route pins using
+    a graph.
     """
 
     def __init__(self, layers, design, bbox=None, pin_type=None):
@@ -96,8 +97,8 @@ class hanan_router(router_tech):
             pins = self.pins[pin_name]
             # Route closest pins according to the minimum spanning tree
             for source, target in self.get_mst_pairs(list(pins)):
-                # Create the Hanan graph
-                hg = hanan_graph(self)
+                # Create the graph
+                hg = graph(self)
                 hg.create_graph(source, target)
                 # Find the shortest path from source to target
                 path = hg.find_shortest_path()
@@ -134,7 +135,7 @@ class hanan_router(router_tech):
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
-            new_pin = hanan_shape(pin_name, rect, layer)
+            new_pin = graph_shape(pin_name, rect, layer)
             # Skip this pin if it's contained by another pin of the same type
             if new_pin.contained_by_any(pin_set):
                 continue
@@ -171,7 +172,7 @@ class hanan_router(router_tech):
                     name = "blockage{}".format(len(blockages))
                 else:
                     name = shape_name
-                new_shape = hanan_shape(name, rect, lpp)
+                new_shape = graph_shape(name, rect, lpp)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
                 # Also ignore the new pins
@@ -283,7 +284,7 @@ class hanan_router(router_tech):
                 ll = vector(offset.x - self.track_wire, offset.y)
                 ur = vector(offset.x, offset.y + wideness)
             rect = [ll, ur]
-            fake_pin = hanan_shape(name=pin_name,
+            fake_pin = graph_shape(name=pin_name,
                                    rect=rect,
                                    layer_name_pp=layer)
             fake_pins.append(fake_pin)
@@ -302,7 +303,7 @@ class hanan_router(router_tech):
             ll, ur = new_shape.rect
             rect = [ll, ur]
             layer = self.get_layer(side in ["left", "right"])
-            new_pin = hanan_shape(name=pin_name,
+            new_pin = graph_shape(name=pin_name,
                                   rect=rect,
                                   layer_name_pp=layer)
             new_pins.append(new_pin)

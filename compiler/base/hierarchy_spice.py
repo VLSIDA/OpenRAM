@@ -13,6 +13,8 @@ from pprint import pformat
 from openram import debug
 from openram import tech
 from openram import OPTS
+
+from compiler.base.net_spice import net_spice
 from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
@@ -58,7 +60,8 @@ class spice():
         self.pin_indices = []
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
-        self.conns = []
+        # internal nets, which may or may not be connected to pins of the same name
+        self.nets = []
         # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
         self.no_instances = False
         # If we are doing a trimmed netlist, these are the instance that will be filtered
@@ -178,16 +181,13 @@ class spice():
         for pin in other_module.pins:
             self.add_pin(pin.name + suffix, pin.type)
 
-    def connect_inst(self, args, check=True):
+    def connect_inst(self, args):
         """
         Connects the pins of the last instance added
-        It is preferred to use the function with the check to find if
-        there is a problem. The check option can be set to false
-        where we dynamically generate groups of connections after a
-        group of modules are generated.
         """
 
-        num_pins = len(self.insts[-1].mod.pins)
+        spice_pins = self.insts[-1].spice_pins
+        num_pins = len(spice_pins)
         num_args = len(args)
 
         # Order the arguments if the hard cell has a custom port order
@@ -195,11 +195,11 @@ class spice():
 
         if (check and num_pins != num_args):
             if num_pins < num_args:
-                mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
+                mod_pins = spice_pins + [""] * (num_args - num_pins)
                 arg_pins = ordered_args
             else:
                 arg_pins = ordered_args + [""] * (num_pins - num_args)
-                mod_pins = self.insts[-1].mod.pins
+                mod_pins = spice_pins
 
             modpins_string = "\n".join(["{0} -> {1}".format(arg, mod) for (arg, mod) in zip(arg_pins, mod_pins)])
             debug.error("Connection mismatch:\nInst ({0}) -> Mod ({1})\n{2}".format(num_args,
@@ -207,27 +207,22 @@ class spice():
                                                                                     modpins_string),
                         1)
 
-        self.conns.append(ordered_args)
+        ordered_nets = self.create_nets(ordered_args)
+        self.insts[-1].connect_spice_pins(ordered_nets)
 
-        # This checks if we don't have enough instance port connections for the number of insts
-        if check and (len(self.insts)!=len(self.conns)):
-            insts_string=pformat(self.insts)
-            conns_string=pformat(self.conns)
+        # TODO: replace functionality that checked if user forgot to connect an inst before connecting the next
 
-            debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
-                                                                                        len(self.insts),
-                                                                                        len(self.conns)))
-            debug.error("Instances: \n" + str(insts_string))
-            debug.error("-----")
-            debug.error("Connections: \n" + str(conns_string), 1)
-
-    def get_conns(self, inst):
-        """Returns the connections of a given instance."""
-        for i in range(len(self.insts)):
-            if inst is self.insts[i]:
-                return self.conns[i]
-        # If not found, returns None
-        return None
+    def create_nets(self, names_list):
+        nets = []
+        for name in names_list:
+            try:
+                i = self.nets.index(name)
+                nets.append(self.nets[i])
+            except ValueError:
+                net = net_spice(name)
+                self.nets.append(net)
+                nets.append(net)
+        return nets
 
     def sp_read(self):
         """
@@ -246,6 +241,7 @@ class spice():
             subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
+            # FIXME: needs to use new pins interface
             self.pins = subckt_line.split(" ")[2:]
         else:
             debug.info(4, "no spfile {0}".format(self.sp_file))
@@ -345,7 +341,7 @@ class spice():
 
             # Also write pins as comments
             for pin in self.pins:
-                sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
+                sp.write("* {1:6}: {0} \n".format(pin, pin.type))
 
             for line in self.comments:
                 sp.write("* {}\n".format(line))

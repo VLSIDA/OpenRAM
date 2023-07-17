@@ -181,8 +181,10 @@ class instance(geometry):
         # change attributes in these spice objects
         self.spice_pins = copy.deepcopy(self.mod.pins)
         self.spice_nets = copy.deepcopy(self.mod.nets)
-        for spice_obj in self.spice_pins + self.spice_nets:
-            spice_obj.set_inst(self)
+        for pin in self.spice_pins.values():
+            pin.set_inst(self)
+        for net in self.spice_nets.values():
+            net.set_inst(self)
 
         if OPTS.netlist_only:
             self.width = 0

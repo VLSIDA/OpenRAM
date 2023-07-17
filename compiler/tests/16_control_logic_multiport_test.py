@@ -33,7 +33,7 @@ class control_logic_test(openram_test):
         OPTS.num_w_ports = 1
         OPTS.num_r_ports = 1
 
-        debug.info(1, "Testing sample for control_logic for multiport, only write control logic")
+        debug.info(1, "Testing sample for control_logic for multiport, combined read-write control logic")
         a = factory.create(module_type="control_logic", num_rows=128, words_per_row=1, word_size=8, port_type="rw")
         self.local_check(a)
 

@@ -49,6 +49,9 @@ class sram_1bank(design, verilog, lef):
             # Route a M3/M4 grid
             self.supply_stack = self.m3_stack
 
+        # delay control logic does not have RBLs
+        self.has_rbl = OPTS.control_logic != "control_logic_delay"
+
     def add_pins(self):
         """ Add pins for entire SRAM. """
 
@@ -516,8 +519,9 @@ class sram_1bank(design, verilog, lef):
         for port in self.read_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("dout{0}[{1}]".format(port, bit))
-        for port in self.all_ports:
-            temp.append("rbl_bl{0}".format(port))
+        if self.has_rbl:
+            for port in self.all_ports:
+                temp.append("rbl_bl{0}".format(port))
         for port in self.write_ports:
             for bit in range(self.word_size + self.num_spare_cols):
                 temp.append("bank_din{0}_{1}".format(port, bit))
@@ -692,7 +696,8 @@ class sram_1bank(design, verilog, lef):
             if port in self.readwrite_ports:
                 temp.append("web{}".format(port))
             temp.append("clk{}".format(port))
-            temp.append("rbl_bl{}".format(port))
+            if self.has_rbl:
+                temp.append("rbl_bl{}".format(port))
 
             # Outputs
             if port in self.read_ports:
@@ -1291,18 +1296,19 @@ class sram_1bank(design, verilog, lef):
                 dest_pin = self.bank_inst.get_pin(signal + "{}".format(port))
                 self.connect_vbus(src_pin, dest_pin)
 
-        for port in self.all_ports:
-            # Only input (besides pins) is the replica bitline
-            src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
-            dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
-            self.add_wire(self.m3_stack,
-                          [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
-            self.add_via_stack_center(from_layer=src_pin.layer,
-                                      to_layer="m4",
-                                      offset=src_pin.center())
-            self.add_via_stack_center(from_layer=dest_pin.layer,
-                                      to_layer="m3",
-                                      offset=dest_pin.center())
+        if self.has_rbl:
+            for port in self.all_ports:
+                # Only input (besides pins) is the replica bitline
+                src_pin = self.control_logic_insts[port].get_pin("rbl_bl")
+                dest_pin = self.bank_inst.get_pin("rbl_bl_{0}_{0}".format(port))
+                self.add_wire(self.m3_stack,
+                              [src_pin.center(), vector(src_pin.cx(), dest_pin.cy()), dest_pin.rc()])
+                self.add_via_stack_center(from_layer=src_pin.layer,
+                                          to_layer="m4",
+                                          offset=src_pin.center())
+                self.add_via_stack_center(from_layer=dest_pin.layer,
+                                          to_layer="m3",
+                                          offset=dest_pin.center())
 
     def route_row_addr_dff(self):
         """

@@ -68,9 +68,13 @@ class options(optparse.Values):
     # Approximate percentage of delay compared to bitlines
     rbl_delay_percentage = 0.5
 
-    # Allow manual adjustment of the delay chain over automatic
-    auto_delay_chain_sizing = False
+    # delay chain is automatically sized in delay based control logic
+    # this multiplier can be used to add a guard band to the standard timing
+    # lowering it can improve performance but may cause sram to fail
+    delay_control_scaling_factor = 1.0
+    # stages for delay chain in rbl control logic only
     delay_chain_stages = 9
+    # fanout per stage for any control logic
     delay_chain_fanout_per_stage = 4
 
     accuracy_requirement = 0.75

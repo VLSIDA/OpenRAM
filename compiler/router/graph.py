@@ -83,6 +83,18 @@ class graph:
         return False
 
 
+    def is_via_blocked(self, point):
+        """ Return if a via on the given point is blocked by another via. """
+
+        for via in self.graph_vias:
+            ll, ur = via.rect
+            center = via.center()
+            if via.on_segment(ll, point, ur) and \
+               (center.x != point.x or center.y != point.y):
+                return True
+        return False
+
+
     def create_graph(self, source, target):
         """ Create the graph to run routing on later. """
         debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
@@ -109,7 +121,17 @@ class graph:
         for shape in [source, target]:
             if shape not in self.graph_blockages:
                 self.graph_blockages.append(shape)
+
+        # Find the vias that are in the routing area
+        self.graph_vias = []
+        for via in self.router.vias:
+            # Set the regions's lpp to current via's lpp so that the
+            # overlaps method works
+            region.lpp = via.lpp
+            if region.overlaps(via):
+                self.graph_vias.append(via)
         debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
+        debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
 
         # Create the graph
         x_values, y_values = self.generate_cartesian_values()
@@ -197,9 +219,9 @@ class graph:
         for i in range(0, len(self.nodes), 2):
             search(i, lambda count: (count / 2) % y_len, 2) # Down
             search(i, lambda count: (count / 2) >= y_len, y_len * 2) # Left
-            # FIXME: Avoid vias for inter-layer edges
             if not hasattr(self.nodes[i], "remove") and \
-               not hasattr(self.nodes[i + 1], "remove"):
+               not hasattr(self.nodes[i + 1], "remove") and \
+               not self.is_via_blocked(self.nodes[i].center):
                 self.nodes[i].add_neighbor(self.nodes[i + 1])
 
         # Remove marked nodes

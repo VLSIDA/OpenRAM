@@ -42,6 +42,8 @@ class graph_router(router_tech):
         # This is all the blockages including the pins. The graph class handles
         # pins as blockages while considering their routability
         self.blockages = []
+        # This is all the vias between routing layers
+        self.vias = []
         # New pins are the side supply pins
         self.new_pins = {}
         # Fake pins are imaginary pins on the side supply pins to route other
@@ -69,8 +71,9 @@ class graph_router(router_tech):
         self.find_pins(vdd_name)
         self.find_pins(gnd_name)
 
-        # Find blockages
+        # Find blockages and vias
         self.find_blockages()
+        self.find_vias()
 
         # Add side pins
         if self.pin_type in ["top", "bottom", "right", "left"]:
@@ -106,6 +109,7 @@ class graph_router(router_tech):
                 # Find the recently added shapes
                 self.prepare_gds_reader()
                 self.find_blockages(pin_name)
+                self.find_vias()
 
         # FIXME: Comment-out later
         self.write_debug_gds(gds_name="after.gds")
@@ -212,6 +216,33 @@ class graph_router(router_tech):
                     blockage.bbox([prev_blockage])
                     prev_blockages.remove(prev_blockage)
                     self.blockages.remove(prev_blockage)
+
+
+    def find_vias(self):
+        """  """
+        debug.info(2, "Finding vias...")
+
+        # Prepare lpp values here
+        from openram.tech import layer
+        via_lpp = layer[self.via_layer_name]
+        valid_lpp = self.horiz_lpp
+
+        shapes = self.layout.getAllShapes(via_lpp)
+        for boundary in shapes:
+            # gdsMill boundaries are in (left, bottom, right, top) order
+            # so repack and snap to the grid
+            ll = vector(boundary[0], boundary[1])
+            ur = vector(boundary[2], boundary[3])
+            rect = [ll, ur]
+            new_shape = graph_shape("via", rect, valid_lpp)
+            # If there is a rectangle that is the same in the pins,
+            # it isn't a blockage
+            # Also ignore the new pins
+            if new_shape.contained_by_any(self.vias):
+                continue
+            self.vias.append(new_shape.inflated_pin(spacing=self.track_space,
+                                                    multiple=1,
+                                                    extra_spacing=self.offset))
 
 
     def add_side_pin(self, pin_name, side, width=3, num_connects=4, bbox=None):

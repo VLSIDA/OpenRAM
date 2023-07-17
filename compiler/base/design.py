@@ -41,8 +41,8 @@ class design(hierarchy_design):
         if prop and prop.hard_cell:
             # The pins get added from the spice file, so just check
             # that they matched here
-            debug.check(prop.port_names == self.pins,
-                        "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+            debug.check(prop.port_names == list(self.pins),
+                        "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, list(self.pins)))
             self.add_pin_indices(prop.port_indices)
             self.add_pin_names(prop.port_map)
             self.update_pin_types(prop.port_types)
@@ -51,7 +51,7 @@ class design(hierarchy_design):
             (width, height) = utils.get_libcell_size(self.cell_name,
                                                      GDS["unit"],
                                                      layer[prop.boundary_layer])
-            self.pin_map = utils.get_libcell_pins(self.pins,
+            self.pin_map = utils.get_libcell_pins(list(self.pins),
                                                   self.cell_name,
                                                   GDS["unit"])
 

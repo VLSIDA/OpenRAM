@@ -13,13 +13,13 @@ from pprint import pformat
 from openram import debug
 from openram import tech
 from openram import OPTS
-
-from compiler.base.net_spice import net_spice
+from collections import OrderedDict
 from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
 from .logical_effort import convert_relative_c_to_farad, convert_farad_to_relative_c
 from .pin_spice import pin_spice
+from .net_spice import net_spice
 
 
 class spice():
@@ -55,14 +55,15 @@ class spice():
         # Holds subckts/mods for this module
         self.mods = set()
         # Holds the pins for this module (in order)
-        self.pins = []
+        # on Python3.7+ regular dictionaries guarantee order too, but we allow use of v3.5+
+        self.pins = OrderedDict()
         # An (optional) list of indices to reorder the pins to match the spice.
         self.pin_indices = []
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
         # internal nets, which may or may not be connected to pins of the same name
-        self.nets = []
-        # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
+        self.nets = {}
+        # If this is set, it will not output subckt or instances of this (for row/col caps etc.)
         self.no_instances = False
         # If we are doing a trimmed netlist, these are the instance that will be filtered
         self.trim_insts = set()
@@ -90,9 +91,8 @@ class spice():
 
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
-        new_pin = pin_spice(name, pin_type)
-        debug.check(new_pin not in self.pins, "cannot add duplicate spice pin")
-        self.pins.append(new_pin)
+        debug.check(name not in self.pins, "cannot add duplicate spice pin {}".format(name))
+        self.pins[name] = pin_spice(name, pin_type)
 
     def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
@@ -122,20 +122,17 @@ class spice():
 
     def update_pin_types(self, type_list):
         """ Change pin types for all the cell's pins. """
-        if len(type_list) != len(self.pins):
-            debug.error("{} spice subcircuit number of port types does not match number of pins\
-                      \n SPICE names={}\
-                      \n Module names={}\
-                      ".format(self.name, self.pins, type_list), 1)
-        for pin, type in zip(self.pins, type_list):
+        debug.check(len(type_list) == len(self.pins),
+            "{} spice subcircuit number of port types does not match number of pins\
+              \n pin names={}\n port types={}".format(self.name, list(self.pins), type_list))
+        for pin, type in zip(self.pins.values(), type_list):
             pin.set_pin_type(type)
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
-        for pin in self.pins:
-            if pin.name == name:
-                return pin.type
-        debug.error("Spice pin {} not found".format(name))
+        pin = self.pins.get(name)
+        debug.check(pin is not None, "Spice pin {} not found".format(name))
+        return pin.type
 
     def get_pin_dir(self, name):
         """ Returns the direction of the pin. (Supply/ground are INOUT). """
@@ -148,10 +145,10 @@ class spice():
     def get_inputs(self):
         """
         These use pin types to determine pin lists.
-        Returns names only to maintain historical interface.
+        Returns names only, to maintain historical interface.
         """
         input_list = []
-        for pin in self.pins:
+        for pin in self.pins.values():
             if pin.type == "INPUT":
                 input_list.append(pin.name)
         return input_list
@@ -159,26 +156,28 @@ class spice():
     def get_outputs(self):
         """
         These use pin types to determine pin lists.
-        Returns names only to maintain historical interface.
+        Returns names only, to maintain historical interface.
         """
         output_list = []
-        for pin in self.pins:
+        for pin in self.pins.values():
             if pin.type == "OUTPUT":
                 output_list.append(pin.name)
         return output_list
 
     def get_inouts(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
+        """
+        These use pin types to determine pin lists.
+        Returns names only, to maintain historical interface.
+        """
         inout_list = []
-        for pin in self.pins:
+        for pin in self.pins.values():
             if pin.type == "INOUT":
                 inout_list.append(pin.name)
         return inout_list
 
     def copy_pins(self, other_module, suffix=""):
         """ This will copy all of the pins from the other module and add an optional suffix."""
-        for pin in other_module.pins:
+        for pin in other_module.pins.values():
             self.add_pin(pin.name + suffix, pin.type)
 
     def connect_inst(self, args):
@@ -186,7 +185,7 @@ class spice():
         Connects the pins of the last instance added
         """
 
-        spice_pins = self.insts[-1].spice_pins
+        spice_pins = list(self.insts[-1].spice_pins)
         num_pins = len(spice_pins)
         num_args = len(args)
 
@@ -241,8 +240,7 @@ class spice():
             subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
-            # FIXME: needs to use new pins interface
-            self.pins = subckt_line.split(" ")[2:]
+            self.add_pin_list(subckt_line.split(" ")[2:])
         else:
             debug.info(4, "no spfile {0}".format(self.sp_file))
             self.spice = []
@@ -263,10 +261,10 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins,
+            debug.check(lvs_pins == list(self.pins),
                         "Spice netlists for LVS and simulation have port mismatches:\n{0} (LVS {1})\nvs\n{2} (sim {3})".format(lvs_pins,
                                                                                                                                self.lvs_file,
-                                                                                                                               self.pins,
+                                                                                                                               list(self.pins),
                                                                                                                                self.sp_file))
 
     def check_net_in_spice(self, net_name):
@@ -299,6 +297,8 @@ class spice():
         return False
 
     def sp_write_file(self, sp, usedMODS, lvs=False, trim=False):
+        # FIXME: this function refers to conns for connections but that no longer exists.
+        # it should be possible to just query the instances themselves for their connections.
         """
         Recursive spice subcircuit write;
         Writes the spice subcircuit from the library or the dynamically generated one.
@@ -319,29 +319,17 @@ class spice():
 
             if len(self.insts) == 0:
                 return
-            if self.pins == []:
+            if len(self.pins) == 0:
                 return
 
             # write out the first spice line (the subcircuit)
-            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(self.pins)))
+            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(list(self.pins))))
             sp.write("\n.SUBCKT {0}\n+ {1}\n".format(self.cell_name,
                                                      wrapped_pins))
 
-            # write a PININFO line
-            if False:
-                pin_info = "*.PININFO"
-                for pin in self.pins:
-                    if self.pin_type[pin] == "INPUT":
-                        pin_info += " {0}:I".format(pin)
-                    elif self.pin_type[pin] == "OUTPUT":
-                        pin_info += " {0}:O".format(pin)
-                    else:
-                        pin_info += " {0}:B".format(pin)
-                sp.write(pin_info + "\n")
-
             # Also write pins as comments
-            for pin in self.pins:
-                sp.write("* {1:6}: {0} \n".format(pin, pin.type))
+            for pin in self.pins.values():
+                sp.write("* {1:6}: {0} \n".format(pin.name, pin.type))
 
             for line in self.comments:
                 sp.write("* {}\n".format(line))

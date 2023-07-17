@@ -90,7 +90,6 @@ class graph:
         # Create the graph
         x_values, y_values = self.generate_cartesian_values()
         self.generate_graph_nodes(x_values, y_values)
-        self.remove_blocked_nodes()
         self.save_end_nodes()
         debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
@@ -109,6 +108,7 @@ class graph:
         y_offset = vector(0, self.router.offset)
         for shape in [self.source, self.target]:
             aspect_ratio = shape.width() / shape.height()
+            # FIXME: Aspect ratio may not be the best way to determine this
             # If the pin is tall or fat, add two points on the ends
             if aspect_ratio <= 0.5: # Tall pin
                 points = [shape.bc() + y_offset, shape.uc() - y_offset]
@@ -124,7 +124,7 @@ class graph:
         offset = drc["grid"]
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
-            # Add minimum offset to the blockage corner nodes to prevent overlaps
+            # Add minimum offset to the blockage corner nodes to prevent overlap
             x_values.update([ll.x - offset, ur.x + offset])
             y_values.update([ll.y - offset, ur.y + offset])
 
@@ -143,44 +143,45 @@ class graph:
         orthogonal neighbors.
         """
 
-        y_len = len(y_values)
-        left_offset = -(y_len * 2)
+        # Generate all nodes
         self.nodes = []
         for x in x_values:
             for y in y_values:
-                below_node = graph_node([x, y, 0])
-                above_node = graph_node([x, y, 1])
+                for z in [0, 1]:
+                    self.nodes.append(graph_node([x, y, z]))
 
-                # Connect these two neighbors
-                below_node.add_neighbor(above_node)
+        # Mark nodes that will be removed
+        self.mark_blocked_nodes()
 
-                # Find potential orthogonal neighbor nodes
-                belows = []
-                aboves = []
-                count = len(self.nodes) // 2
-                if count % y_len: # Down
-                    belows.append(-2)
-                    aboves.append(-1)
-                if count >= y_len: # Left
-                    belows.append(left_offset)
-                    aboves.append(left_offset + 1)
+        # Connect closest nodes that won't be removed
+        def search(index, condition, shift):
+            """ Search and connect neighbor nodes. """
+            base_nodes = self.nodes[index:index+2]
+            found = [hasattr(base_nodes[0], "remove"),
+                     hasattr(base_nodes[1], "remove")]
+            while condition(index) and not all(found):
+                nodes = self.nodes[index - shift:index - shift + 2]
+                for k in range(2):
+                    if not found[k] and not hasattr(nodes[k], "remove"):
+                        found[k] = True
+                        if not self.is_probe_blocked(base_nodes[k].center, nodes[k].center):
+                            base_nodes[k].add_neighbor(nodes[k])
+                index -= shift
+        y_len = len(y_values)
+        for i in range(0, len(self.nodes), 2):
+            search(i, lambda count: (count / 2) % y_len, 2) # Down
+            search(i, lambda count: (count / 2) >= y_len, y_len * 2) # Left
+            # FIXME: Avoid vias for inter-layer edges
+            if not hasattr(self.nodes[i], "remove") and \
+               not hasattr(self.nodes[i + 1], "remove"):
+                self.nodes[i].add_neighbor(self.nodes[i + 1])
 
-                # Add these connections if not blocked by a blockage
-                for i in belows:
-                    node = self.nodes[i]
-                    if not self.is_probe_blocked(below_node.center, node.center):
-                        below_node.add_neighbor(node)
-                for i in aboves:
-                    node = self.nodes[i]
-                    if not self.is_probe_blocked(above_node.center, node.center):
-                        above_node.add_neighbor(node)
-
-                self.nodes.append(below_node)
-                self.nodes.append(above_node)
+        # Remove marked nodes
+        self.remove_blocked_nodes()
 
 
-    def remove_blocked_nodes(self):
-        """ Remove the graph nodes that are blocked by a blockage. """
+    def mark_blocked_nodes(self):
+        """ Mark graph nodes to be removed that are blocked by a blockage. """
 
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]
@@ -190,9 +191,18 @@ class graph:
                 # If the blockage is an inflated routable, remove if outside
                 # the routable shape
                 if self.inside_shape(point, blockage) and (not self.is_routable(blockage) or not self.inside_shape(point, blockage.inflated_from)):
-                    node.remove_all_neighbors()
-                    self.nodes.remove(node)
+                    node.remove = True
                     break
+
+
+    def remove_blocked_nodes(self):
+        """ Remove graph nodes that are marked to be removed. """
+
+        for i in range(len(self.nodes) - 1, -1, -1):
+            node = self.nodes[i]
+            if hasattr(node, "remove"):
+                node.remove_all_neighbors()
+                self.nodes.remove(node)
 
 
     def save_end_nodes(self):

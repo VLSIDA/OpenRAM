@@ -152,7 +152,7 @@ class graph_router(router_tech):
 
     def find_blockages(self, shape_name=None):
         """ Find all blockages in the routing layers. """
-        debug.info(1, "Finding blockages...")
+        debug.info(2, "Finding blockages...")
 
         # Keep current blockages here
         prev_blockages = self.blockages[:]

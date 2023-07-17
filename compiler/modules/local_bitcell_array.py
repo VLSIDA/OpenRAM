@@ -31,7 +31,10 @@ class local_bitcell_array(bitcell_base_array):
         self.rows = rows
         self.cols = cols
         # This is how many RBLs are in all the arrays
-        self.rbl = rbl
+        if rbl is not None:
+            self.rbl = rbl
+        else:
+            self.rbl = [0] * len(self.all_ports)
         # This specifies which RBL to put on the left or right by port number
         # This could be an empty list
         if left_rbl is not None:
@@ -84,8 +87,11 @@ class local_bitcell_array(bitcell_base_array):
                                             left_rbl=self.left_rbl,
                                             right_rbl=self.right_rbl)
 
+        # FIXME: this won't allow asymetric configurations such as rbl=[0, 1]
+        #        but neither does a lot of this code...
+        rows = self.rows + (sum(self.rbl) != 0)
         self.wl_array = factory.create(module_type="wordline_buffer_array",
-                                       rows=self.rows + 1,
+                                       rows=rows,
                                        cols=self.cols)
 
     def add_pins(self):
@@ -136,7 +142,8 @@ class local_bitcell_array(bitcell_base_array):
             self.wl_insts.append(self.add_inst(name="wl_driver{}".format(port),
                                                mod=self.wl_array))
             temp = []
-            temp += [self.get_rbl_wordline_names(port)[port]]
+            if self.rbl[port] != 0:
+                temp += [self.get_rbl_wordline_names(port)[port]]
             if port == 0:
                 temp += self.get_wordline_names(port)
             else:
@@ -180,8 +187,9 @@ class local_bitcell_array(bitcell_base_array):
         self.bitcell_array_inst.place(bitcell_array_offset)
 
         if len(self.all_ports) > 1:
+            rbl_wl_adder = self.cell.height * (self.rbl[1] != 0)
             wl_offset = vector(self.bitcell_array_inst.rx() + self.wl_array.width + driver_to_array_spacing,
-                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + self.cell.height)
+                               self.bitcell_array.get_replica_bottom() + self.wl_array.height + rbl_wl_adder)
             self.wl_insts[1].place(wl_offset,
                                    mirror="XY")
 
@@ -209,10 +217,16 @@ class local_bitcell_array(bitcell_base_array):
 
         # Route the global wordlines
         for port in self.all_ports:
-            if port == 0:
-                wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)
+            if self.rbl[port] != 0:
+                if port == 0:
+                    wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)
+                else:
+                    wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)[::-1]
             else:
-                wordline_names = [self.get_rbl_wordline_names(port)[port]] + self.get_wordline_names(port)[::-1]
+                if port == 0:
+                    wordline_names = self.get_wordline_names(port)
+                else:
+                    wordline_names = self.get_wordline_names(port)[::-1]
 
             wordline_pins = self.wl_array.get_inputs()
 

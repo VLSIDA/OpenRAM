@@ -16,32 +16,26 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-# @unittest.skip("SKIPPING 05_local_bitcell_array_test")
-class local_bitcell_array_1rw_1r_test(openram_test):
+class single_bank_nomux_norbl_1rw_1r_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
+        from openram import sram_config
 
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r without replica")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1])
-        self.local_check(a)
+        c = sram_config(word_size=4,
+                        num_words=16)
 
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], right_rbl=[1])
-        self.local_check(a)
-
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0])
-        self.local_check(a)
-
-        debug.info(2, "Testing 4x4 local bitcell array for cell_1rw_1r with replica column")
-        a = factory.create(module_type="local_bitcell_array", cols=4, rows=4, rbl=[1, 1], left_rbl=[0], right_rbl=[1])
+        c.words_per_row=1
+        OPTS.control_logic = "control_logic_delay"
+        c.recompute_sizes()
+        debug.info(1, "No column mux")
+        a = factory.create(module_type="bank", sram_config=c)
         self.local_check(a)
 
         openram.end_openram()

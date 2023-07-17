@@ -37,28 +37,28 @@ class port_data_wmask_test(openram_test):
         c.words_per_row = 1
         c.recompute_sizes()
         debug.info(1, "No column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
 
         c.num_words = 32
         c.words_per_row = 2
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
 
         c.num_words = 64
         c.words_per_row = 4
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
 
         c.num_words = 128
         c.words_per_row = 8
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
 
         OPTS.num_rw_ports = 0
@@ -70,27 +70,27 @@ class port_data_wmask_test(openram_test):
         c.words_per_row = 1
         c.recompute_sizes()
         debug.info(1, "No column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
-        a = factory.create("port_data", sram_config=c, port=1)
+        a = factory.create("port_data", sram_config=c, port=1, has_rbl=True)
         self.local_check(a)
         #
         c.num_words = 32
         c.words_per_row = 2
         c.recompute_sizes()
         debug.info(1, "Two way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
-        a = factory.create("port_data", sram_config=c, port=1)
+        a = factory.create("port_data", sram_config=c, port=1, has_rbl=True)
         self.local_check(a)
 
         c.num_words = 64
         c.words_per_row = 4
         c.recompute_sizes()
         debug.info(1, "Four way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
-        a = factory.create("port_data", sram_config=c, port=1)
+        a = factory.create("port_data", sram_config=c, port=1, has_rbl=True)
         self.local_check(a)
 
         c.word_size = 8
@@ -98,9 +98,9 @@ class port_data_wmask_test(openram_test):
         c.words_per_row = 8
         c.recompute_sizes()
         debug.info(1, "Eight way column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
-        a = factory.create("port_data", sram_config=c, port=1)
+        a = factory.create("port_data", sram_config=c, port=1, has_rbl=True)
         self.local_check(a)
 
         openram.end_openram()

@@ -25,6 +25,12 @@ class graph:
         self.target_nodes = []
 
 
+    def is_routable(self, shape):
+        """ Return if a shape is routable in this graph. """
+
+        return shape.name == self.source.name
+
+
     def inside_shape(self, point, shape):
         """ Return if the point is inside the shape. """
 
@@ -48,7 +54,7 @@ class graph:
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
             # Inflated blockages of pins don't block probes
-            if blockage.overlaps(probe_shape) and (blockage.name != self.source.name or not blockage.inflated_from.overlaps(probe_shape)):
+            if blockage.overlaps(probe_shape) and (not self.is_routable(blockage) or not blockage.inflated_from.overlaps(probe_shape)):
                 return True
         return False
 
@@ -57,7 +63,7 @@ class graph:
         """ Create the graph to run routing on later. """
         debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
-        # Save source and target nodes
+        # Save source and target information
         self.source = source
         self.target = target
 
@@ -72,7 +78,7 @@ class graph:
         self.graph_blockages = []
         for blockage in self.router.blockages:
             # FIXME: Include pins as blockages as well to prevent DRC errors
-            if blockage.name == self.source.name:
+            if self.is_routable(blockage):
                 continue
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
@@ -85,6 +91,7 @@ class graph:
         x_values, y_values = self.generate_cartesian_values()
         self.generate_graph_nodes(x_values, y_values)
         self.remove_blocked_nodes()
+        self.save_end_nodes()
         debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
@@ -168,13 +175,6 @@ class graph:
                     if not self.is_probe_blocked(above_node.center, node.center):
                         above_node.add_neighbor(node)
 
-                # Save source and target nodes
-                for node in [below_node, above_node]:
-                    if self.inside_shape(node.center, self.source):
-                        self.source_nodes.append(node)
-                    elif self.inside_shape(node.center, self.target):
-                        self.target_nodes.append(node)
-
                 self.nodes.append(below_node)
                 self.nodes.append(above_node)
 
@@ -189,10 +189,20 @@ class graph:
                 # Remove if the node is inside a blockage
                 # If the blockage is an inflated routable, remove if outside
                 # the routable shape
-                if self.inside_shape(point, blockage) and (blockage.name != self.source.name or not self.inside_shape(point, blockage.inflated_from)):
+                if self.inside_shape(point, blockage) and (not self.is_routable(blockage) or not self.inside_shape(point, blockage.inflated_from)):
                     node.remove_all_neighbors()
                     self.nodes.remove(node)
                     break
+
+
+    def save_end_nodes(self):
+        """ Save graph nodes that are inside source and target pins. """
+
+        for node in self.nodes:
+            if self.inside_shape(node.center, self.source):
+                self.source_nodes.append(node)
+            elif self.inside_shape(node.center, self.target):
+                self.target_nodes.append(node)
 
 
     def find_shortest_path(self):

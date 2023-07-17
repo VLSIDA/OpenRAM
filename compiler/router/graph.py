@@ -57,13 +57,15 @@ class graph:
         """ Create the graph to run routing on later. """
         debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
+        # Save source and target nodes
         self.source = source
         self.target = target
 
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(source)
         region.bbox([target])
-        region = region.inflated_pin(multiple=1)
+        region = region.inflated_pin(spacing=self.router.track_space,
+                                     multiple=1)
         debug.info(3, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area

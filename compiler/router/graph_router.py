@@ -82,13 +82,11 @@ class graph_router(router_tech):
         else:
             debug.warning("Side supply pins aren't created.")
 
-        # FIXME: Comment-out later
-        self.write_debug_gds(gds_name="after.gds")
-
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            self.blockages.append(pin.inflated_pin(multiple=1,
+            self.blockages.append(pin.inflated_pin(spacing=self.track_space,
+                                                   multiple=1,
                                                    extra_spacing=self.offset,
                                                    keep_link=True))
 
@@ -196,7 +194,8 @@ class graph_router(router_tech):
 
         # Inflate the shapes to prevent DRC errors
         for blockage in blockages:
-            self.blockages.append(blockage.inflated_pin(multiple=1,
+            self.blockages.append(blockage.inflated_pin(spacing=self.track_space,
+                                                        multiple=1,
                                                         extra_spacing=self.offset,
                                                         keep_link=shape_name is not None))
             # Remove blockages contained by this new blockage
@@ -328,7 +327,8 @@ class graph_router(router_tech):
         # Save side pins for routing
         self.new_pins[pin_name] = new_pins
         for pin in new_pins:
-            self.blockages.append(pin.inflated_pin(multiple=1,
+            self.blockages.append(pin.inflated_pin(spacing=self.track_space,
+                                                   multiple=1,
                                                    extra_spacing=self.offset,
                                                    keep_link=True))
 

@@ -53,9 +53,33 @@ class graph:
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
-            # Inflated blockages of pins don't block probes
-            if blockage.overlaps(probe_shape) and (not self.is_routable(blockage) or not blockage.inflated_from.overlaps(probe_shape)):
-                return True
+            if blockage.overlaps(probe_shape):
+                # Probe is blocked if the shape isn't routable
+                if not self.is_routable(blockage):
+                    return True
+                elif blockage.inflated_from is None:
+                    continue
+                elif blockage.inflated_from.overlaps(probe_shape):
+                    continue
+                else:
+                    return True
+        return False
+
+
+    def is_node_blocked(self, node):
+        """ Return if a node is blocked by a blockage. """
+
+        for blockage in self.graph_blockages:
+            # Check if two shapes overlap
+            if self.inside_shape(node.center, blockage):
+                if not self.is_routable(blockage):
+                    return True
+                elif blockage.inflated_from is None:
+                    return False
+                elif self.inside_shape(node.center, blockage.inflated_from):
+                    return False
+                else:
+                    return True
         return False
 
 
@@ -77,14 +101,14 @@ class graph:
         # Find the blockages that are in the routing area
         self.graph_blockages = []
         for blockage in self.router.blockages:
-            # FIXME: Include pins as blockages as well to prevent DRC errors
-            if self.is_routable(blockage):
-                continue
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
+        for shape in [source, target]:
+            if shape not in self.graph_blockages:
+                self.graph_blockages.append(shape)
         debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
 
         # Create the graph
@@ -106,7 +130,9 @@ class graph:
         # Add inner values for blockages of the routed type
         x_offset = vector(self.router.offset, 0)
         y_offset = vector(0, self.router.offset)
-        for shape in [self.source, self.target]:
+        for shape in self.graph_blockages:
+            if not self.is_routable(shape):
+                continue
             aspect_ratio = shape.width() / shape.height()
             # FIXME: Aspect ratio may not be the best way to determine this
             # If the pin is tall or fat, add two points on the ends
@@ -185,14 +211,8 @@ class graph:
 
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]
-            point = node.center
-            for blockage in self.graph_blockages:
-                # Remove if the node is inside a blockage
-                # If the blockage is an inflated routable, remove if outside
-                # the routable shape
-                if self.inside_shape(point, blockage) and (not self.is_routable(blockage) or not self.inside_shape(point, blockage.inflated_from)):
-                    node.remove = True
-                    break
+            if self.is_node_blocked(node):
+                node.remove = True
 
 
     def remove_blocked_nodes(self):

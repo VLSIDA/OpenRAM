@@ -214,13 +214,10 @@ class spice():
     def create_nets(self, names_list):
         nets = []
         for name in names_list:
-            try:
-                i = self.nets.index(name)
-                nets.append(self.nets[i])
-            except ValueError:
-                net = net_spice(name)
-                self.nets.append(net)
-                nets.append(net)
+            # setdefault adds to the dict if it doesn't find the net in it already
+            # then it returns the net it found or created, a net_spice object
+            net = self.nets.setdefault(name, net_spice(name))
+            nets.append(net)
         return nets
 
     def sp_read(self):

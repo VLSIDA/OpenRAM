@@ -192,7 +192,7 @@ class spice():
         # Order the arguments if the hard cell has a custom port order
         ordered_args = self.get_ordered_inputs(args)
 
-        if (check and num_pins != num_args):
+        if (num_pins != num_args):
             if num_pins < num_args:
                 mod_pins = spice_pins + [""] * (num_args - num_pins)
                 arg_pins = ordered_args

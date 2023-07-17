@@ -13,7 +13,7 @@ class pin_spice:
     """
     A class to represent a spice netlist pin.
     mod is the parent module that created this pin.
-    mod_net is the net object of this pin's parent module.
+    mod_net is the net object of this pin's parent module. It must have the same name as the pin.
     inst is the instance this pin is a part of, if any.
     inst_net is the net object from mod's nets which connects to this pin.
     """
@@ -45,6 +45,9 @@ class pin_spice:
         self.inst = inst
 
     def set_inst_net(self, net):
+        debug.check(self.inst_net is None,
+                "pin {} is already connected to net {} so it cannot also be connected to net {}\
+                ".format(self.name, self.inst_net.name, net.name))
         debug.check(isinstance(net, net_spice), "net must be a net_spice object")
         self.inst_net = net
 

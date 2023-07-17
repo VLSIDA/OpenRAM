@@ -285,9 +285,17 @@ class instance(geometry):
         return new_pins
 
     def connect_spice_pins(self, nets_list):
-        for i in range(len(self.pins)):
-            self.pins[i].set_inst_net(nets_list[i])
-            nets_list[i].connect_pin(self.pins[i])
+        """
+        add the connection between instance pins and module nets
+        to both of their respective objects
+        nets_list must be the same length as self.spice_pins
+        """
+        debug.check(len(self.spice_pins) == len(nets_list),
+            "must provide list of nets the same length as pin list\
+             when connecting an instance")
+        for i in range(len(self.spice_pins)):
+            self.spice_pins[i].set_inst_net(nets_list[i])
+            nets_list[i].connect_pin(self.spice_pins[i])
 
     def calculate_transform(self, node):
         #set up the rotation matrix

@@ -10,7 +10,8 @@ word_size = 1
 
 check_lvsdrc = True
 
-rom_data = "macros/rom_configs/example_1kbyte.dat"
+rom_data = "rom_configs/example_1kbyte.bin"
+data_type = "bin"
 
 output_name = "rom_1kbyte"
 output_path = "macro/{output_name}".format(**locals())

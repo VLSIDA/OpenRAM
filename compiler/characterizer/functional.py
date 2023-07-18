@@ -363,7 +363,7 @@ class functional(simulation):
     def gen_addr(self):
         """ Generates a random address value to write to. """
         if self.valid_addresses:
-            random_value = random.sample(self.valid_addresses, 1)[0]
+            random_value = random.sample(list(self.valid_addresses), 1)[0]
         else:
             random_value = random.randint(0, self.max_address)
         addr_bits = binary_repr(random_value, self.bank_addr_size)

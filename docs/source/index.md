@@ -9,8 +9,10 @@ navigate through the documentation.
 ## Table of Contents
 1. [OpenRAM Dependencies](#openram-dependencies)
 1. [Supported Technologies](#supported-technologies)
+1. [Online Playground](./OpenRAM.ipynb)
 1. [Basic Setup](./basic_setup.md#go-back)
-1. [Basic Usage](./basic_usage.md#go-back)
+1. [Basic SRAM Usage](./basic_usage.md#go-back)
+1. [Basic ROM Usage](./basic_rom_usage.md#go-back)
 1. [Python Library](./python_library.md#go-back)
 1. [Bitcells](./bitcells.md#go-back)
 1. [Architecture](./architecture.md#go-back)
@@ -108,10 +110,11 @@ Commercial tools (optional):
     * Michael Grimes
     * Jennifer Sowash
     * Jesse Cirimelli-Low
-    <img align="right" height="100" src="../assets/images/logos/vlsida.png">
+    <img align="right" height="100" src="../assets/images/logos/vlsida.png">https://www.youtube.com/watch?v=rd5j8mG24H4&t=0s
 * Many other past students:
     * Jeff Butera
     * Tom Golubev
     * Marcelo Sero
     * Seokjoong Kim
+    * Sage Walker
 

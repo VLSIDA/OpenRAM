@@ -28,7 +28,6 @@ class sram_1bank(design, verilog, lef):
         design.__init__(self, name)
         lef.__init__(self, ["m1", "m2", "m3", "m4"])
         verilog.__init__(self)
-
         self.sram_config = sram_config
         sram_config.set_local_config(self)
 

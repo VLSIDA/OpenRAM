@@ -21,7 +21,7 @@ class port_address_test(openram_test):
         openram.init_openram(config_file, is_unit_test=True)
 
         debug.info(1, "Port address 512 rows")
-        a = factory.create("port_address", cols=256, rows=512, port=0)
+        a = factory.create("port_address", cols=256, rows=512, port=0, has_rbl=True)
         self.local_check(a)
 
         openram.end_openram()

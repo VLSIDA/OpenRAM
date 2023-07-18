@@ -110,7 +110,7 @@ Commercial tools (optional):
     * Michael Grimes
     * Jennifer Sowash
     * Jesse Cirimelli-Low
-    <img align="right" height="100" src="../assets/images/logos/vlsida.png">https://www.youtube.com/watch?v=rd5j8mG24H4&t=0s
+    <img align="right" height="100" src="../assets/images/logos/vlsida.png">
 * Many other past students:
     * Jeff Butera
     * Tom Golubev

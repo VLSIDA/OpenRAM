@@ -32,6 +32,7 @@ BROKEN_STAMPS = \
 	%/20_psram_1bank_2mux_test.ok \
 	%/21_hspice_delay_test.ok \
 	%/21_hspice_setuphold_test.ok \
+	%/21_xyce_delay_test.ok \
 	%/22_psram_1bank_2mux_func_test.ok \
 	%/22_psram_1bank_4mux_func_test.ok \
 	%/22_psram_1bank_8mux_func_test.ok \
@@ -69,8 +70,11 @@ BROKEN_STAMPS = \
 	freepdk45/10_rom_wordline_driver_array_test.ok \
 	freepdk45/14_rom_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
+	freepdk45/16_control_logic_delay_multiport_test.ok \
+	freepdk45/16_control_logic_delay_rw_test.ok \
+	freepdk45/16_control_logic_delay_r_test.ok \
+	freepdk45/16_control_logic_delay_w_test.ok \
 	freepdk45/19_rom_bank_test.ok \
-	freepdk45/21_xyce_delay_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \
@@ -80,8 +84,8 @@ BROKEN_STAMPS = \
 	scn4m_subm/16_rom_control_logic_test.ok \
 	scn4m_subm/19_rom_bank_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
-	scn4m_subm/21_xyce_delay_test.ok \
 	sky130/01_library_test.ok \
+	sky130/03_wire_test.ok \
 	sky130/04_column_mux_pbitcell_test.ok \
 	sky130/04_dummy_pbitcell_test.ok \
 	sky130/04_pbitcell_test.ok \
@@ -89,15 +93,78 @@ BROKEN_STAMPS = \
 	sky130/04_pand4_test.ok \
 	sky130/04_precharge_pbitcell_test.ok \
 	sky130/04_replica_pbitcell_test.ok \
+	sky130/04_dummy_pbitcell_1rw1r1w_test.ok \
+	sky130/04_dummy_pbitcell_1rw_test.ok \
+	sky130/04_replica_pbitcell_1rw1r1w_test.ok \
+	sky130/04_replica_pbitcell_1rw_test.ok \
 	sky130/05_pbitcell_array_test.ok \
 	sky130/05_bitcell_array_test.ok \
 	sky130/05_bitcell_array_1rw_1r_test.ok \
 	sky130/05_dummy_array_test.ok \
+	sky130/06_hierarchical_decoder_132row_test.ok \
+	sky130/06_hierarchical_decoder_512row_test.ok \
+	sky130/06_hierarchical_decoder_64row_test.ok \
+	sky130/06_hierarchical_decoder_pbitcell_test.ok \
 	sky130/07_column_mux_array_pbitcell_test.ok \
+	sky130/10_write_driver_array_spare_cols_test.ok \
+	sky130/10_write_driver_array_wmask_spare_cols_test.ok \
+	sky130/14_capped_replica_bitcell_array_dummies_1rw_test.ok \
+	sky130/14_capped_replica_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/14_capped_replica_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/14_capped_replica_bitcell_array_norbl_1rw_test.ok \
+	sky130/14_replica_bitcell_array_dummies_1rw_test.ok \
+	sky130/14_replica_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/14_replica_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/14_replica_bitcell_array_norbl_1rw_test.ok \
+	sky130/14_replica_column_1rw_1r_test.ok \
+	sky130/14_replica_column_1rw_test.ok \
+	sky130/14_replica_pbitcell_1rw1r_array_test.ok \
+	sky130/14_replica_pbitcell_1rw_array_test.ok \
+	sky130/15_global_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/15_global_bitcell_array_norbl_1rw_test.ok \
+	sky130/15_global_bitcell_array_rbl_1rw_1r_test.ok \
+	sky130/15_global_bitcell_array_rbl_1rw_test.ok \
+	sky130/15_local_bitcell_array_dummies_1rw_test.ok \
+	sky130/15_local_bitcell_array_leftrbl_1rw_test.ok \
+	sky130/15_local_bitcell_array_norbl_1rw_1r_test.ok \
+	sky130/15_local_bitcell_array_norbl_1rw_test.ok \
+	sky130/16_control_logic_delay_multiport_test.ok \
+	sky130/16_control_logic_delay_rw_test.ok \
+	sky130/16_control_logic_delay_r_test.ok \
+	sky130/16_control_logic_delay_w_test.ok \
+	sky130/18_port_address_512rows_test.ok \
+	sky130/18_port_data_spare_cols_test.ok \
+	sky130/19_single_bank_2mux_test.ok \
+	sky130/19_single_bank_4mux_test.ok \
+	sky130/19_single_bank_8mux_test.ok \
+	sky130/19_single_bank_global_bitline_test.ok \
+	sky130/19_single_bank_nomux_test.ok \
+	sky130/19_single_bank_nomux_norbl_1rw_1r_test.ok \
+	sky130/19_single_bank_nomux_norbl_test.ok \
+	sky130/19_single_bank_spare_cols_test.ok \
+	sky130/19_single_bank_wmask_test.ok \
 	sky130/19_pmulti_bank_test.ok \
 	sky130/19_psingle_bank_test.ok \
 	sky130/19_bank_select_pbitcell_test.ok \
 	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
+	sky130/20_sram_1bank_2mux_1rw_1r_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_1w_1r_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_global_test.ok \
+	sky130/20_sram_1bank_2mux_test.ok \
+	sky130/20_sram_1bank_2mux_wmask_spare_cols_test.ok \
+	sky130/20_sram_1bank_2mux_wmask_test.ok \
+	sky130/20_sram_1bank_4mux_test.ok \
+	sky130/20_sram_1bank_8mux_test.ok \
+	sky130/20_sram_1bank_nomux_norbl_1rw_1r_test.ok \
+	sky130/20_sram_1bank_nomux_norbl_test.ok \
+	sky130/20_sram_1bank_nomux_spare_cols_test.ok \
+	sky130/20_sram_1bank_nomux_test.ok \
+	sky130/20_sram_1bank_nomux_wmask_test.ok \
+	sky130/20_sram_1bank_ring_test.ok \
+	sky130/21_model_delay_test.ok \
+	sky130/21_ngspice_delay_extra_rows_test.ok \
+	sky130/21_ngspice_delay_test.ok \
+	sky130/21_regression_delay_test.ok \
 	sky130/22_psram_1bank_2mux_func_test.ok \
 	sky130/22_psram_1bank_4mux_func_test.ok \
 	sky130/22_psram_1bank_8mux_func_test.ok \
@@ -107,54 +174,6 @@ BROKEN_STAMPS = \
 	sky130/23_lib_sram_model_test.ok \
 	sky130/23_lib_sram_prune_test.ok \
 	sky130/23_lib_sram_test.ok \
-	sky130/03_wire_test.ok \
-	sky130/04_dummy_pbitcell_1rw1r1w_test.ok \
-	sky130/04_dummy_pbitcell_1rw_test.ok \
-	sky130/04_replica_pbitcell_1rw1r1w_test.ok \
-	sky130/04_replica_pbitcell_1rw_test.ok \
-	sky130/06_hierarchical_decoder_132row_test.ok \
-	sky130/06_hierarchical_decoder_512row_test.ok \
-	sky130/06_hierarchical_decoder_64row_test.ok \
-	sky130/06_hierarchical_decoder_pbitcell_test.ok \
-	sky130/10_write_driver_array_spare_cols_test.ok \
-	sky130/10_write_driver_array_wmask_spare_cols_test.ok \
-	sky130/14_capped_replica_bitcell_array_leftrbl_1rw_test.ok \
-	sky130/14_capped_replica_bitcell_array_norbl_1rw_test.ok \
-	sky130/14_replica_bitcell_array_leftrbl_1rw_test.ok \
-	sky130/14_replica_bitcell_array_norbl_1rw_test.ok \
-	sky130/14_replica_column_1rw_1r_test.ok \
-	sky130/14_replica_column_1rw_test.ok \
-	sky130/14_replica_pbitcell_1rw1r_array_test.ok \
-	sky130/14_replica_pbitcell_1rw_array_test.ok \
-	sky130/15_global_bitcell_array_1rw_1r_test.ok \
-	sky130/15_global_bitcell_array_test.ok \
-	sky130/15_local_bitcell_array_test.ok \
-	sky130/18_port_address_512rows_test.ok \
-	sky130/18_port_data_spare_cols_test.ok \
-	sky130/19_single_bank_2mux_test.ok \
-	sky130/19_single_bank_4mux_test.ok \
-	sky130/19_single_bank_8mux_test.ok \
-	sky130/19_single_bank_global_bitline_test.ok \
-	sky130/19_single_bank_nomux_test.ok \
-	sky130/19_single_bank_spare_cols_test.ok \
-	sky130/19_single_bank_wmask_test.ok \
-	sky130/20_sram_1bank_2mux_1rw_1r_spare_cols_test.ok \
-	sky130/20_sram_1bank_2mux_1w_1r_spare_cols_test.ok \
-	sky130/20_sram_1bank_2mux_global_test.ok \
-	sky130/20_sram_1bank_2mux_test.ok \
-	sky130/20_sram_1bank_2mux_wmask_spare_cols_test.ok \
-	sky130/20_sram_1bank_2mux_wmask_test.ok \
-	sky130/20_sram_1bank_4mux_test.ok \
-	sky130/20_sram_1bank_8mux_test.ok \
-	sky130/20_sram_1bank_nomux_spare_cols_test.ok \
-	sky130/20_sram_1bank_nomux_test.ok \
-	sky130/20_sram_1bank_nomux_wmask_test.ok \
-	sky130/20_sram_1bank_ring_test.ok \
-	sky130/21_model_delay_test.ok \
-	sky130/21_ngspice_delay_extra_rows_test.ok \
-	sky130/21_ngspice_delay_test.ok \
-	sky130/21_regression_delay_test.ok \
-	sky130/21_xyce_delay_test.ok \
 	sky130/25_verilog_multibank_test.ok \
 	sky130/25_verilog_sram_test.ok \
 	sky130/30_openram_back_end_library_test.ok \

@@ -32,9 +32,9 @@ class port_data_1rw_1r_test(openram_test):
         c.words_per_row=1
         c.recompute_sizes()
         debug.info(1, "No column mux")
-        a = factory.create("port_data", sram_config=c, port=0)
+        a = factory.create("port_data", sram_config=c, port=0, has_rbl=True)
         self.local_check(a)
-        a = factory.create("port_data", sram_config=c, port=1)
+        a = factory.create("port_data", sram_config=c, port=1, has_rbl=True)
         self.local_check(a)
 
         openram.end_openram()

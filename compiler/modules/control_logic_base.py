@@ -328,8 +328,6 @@ class control_logic_base(design):
     def route_dffs(self):
         if self.port_type == "rw":
             dff_out_map = zip(["dout_bar_0", "dout_bar_1", "dout_1"], ["cs", "we", "we_bar"])
-        elif self.port_type == "r":
-            dff_out_map = zip(["dout_bar_0", "dout_0"], ["cs", "cs_bar"])
         else:
             dff_out_map = zip(["dout_bar_0"], ["cs"])
         self.connect_vertical_bus(dff_out_map, self.ctrl_dff_inst, self.input_bus, self.m2_stack[::-1])

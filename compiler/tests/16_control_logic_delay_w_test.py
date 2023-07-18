@@ -11,28 +11,22 @@ import unittest
 from testutils import *
 
 import openram
-from openram.sram_factory import factory
 from openram import debug
+from openram.sram_factory import factory
 from openram import OPTS
 
 
-# @unittest.skip("SKIPPING 05_global_bitcell_array_test")
-class global_bitcell_array_test(openram_test):
+class control_logic_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        # debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
-        # a = factory.create(module_type="global_bitcell_array", cols=[4, 4], rows=4)
-        # self.local_check(a)
-
-        debug.info(2, "Testing 2 x 4x4 global bitcell array for 6t_cell")
-        a = factory.create(module_type="global_bitcell_array", cols=[10, 6], rows=4)
+        debug.info(1, "Testing sample for control_logic_w")
+        a = factory.create(module_type="control_logic_delay", num_rows=128, words_per_row=1, word_size=32, port_type="w")
         self.local_check(a)
 
         openram.end_openram()
-
 
 # run the test from the command line
 if __name__ == "__main__":

@@ -30,9 +30,19 @@ class sky130_capped_replica_bitcell_array(sky130_bitcell_base_array):
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         self.add_comment("rbl: {0} left_rbl: {1} right_rbl: {2}".format(rbl, left_rbl, right_rbl))
 
+        # This is how many RBLs are in all the arrays
         self.rbl = rbl
-        self.left_rbl = left_rbl
-        self.right_rbl = right_rbl
+        # This specifies which RBL to put on the left or right by port number
+        # This could be an empty list
+        if left_rbl is not None:
+            self.left_rbl = left_rbl
+        else:
+            self.left_rbl = []
+        # This could be an empty list
+        if right_rbl is not None:
+            self.right_rbl = right_rbl
+        else:
+            self.right_rbl = []
 
         self.create_netlist()
         if not OPTS.netlist_only:

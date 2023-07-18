@@ -292,19 +292,25 @@ class instance(geometry):
         to both of their respective objects
         nets_list must be the same length as self.spice_pins
         """
+        if len(nets_list) == 0 and len(self.spice_pins) == 0:
+            # this is the only valid case to skip the following debug check
+            # because this with no pins are often connected arbitrarily
+            self.connected = True
+            return
         debug.check(not self.connected,
                     "instance {} has already been connected".format(self.name))
         debug.check(len(self.spice_pins) == len(nets_list),
             "must provide list of nets the same length as pin list\
              when connecting an instance")
-        for i in range(len(self.spice_pins)):
-            self.spice_pins[i].set_inst_net(nets_list[i])
-            nets_list[i].connect_pin(self.spice_pins[i])
+        for pin in self.spice_pins.values():
+            net = nets_list.pop(0)
+            pin.set_inst_net(net)
+            net.connect_pin(pin)
         self.connected = True
 
     def get_connections(self):
         conns = []
-        for pin in self.spice_pins:
+        for pin in self.spice_pins.values():
             conns.append(pin.inst_net.name)
         return conns
 

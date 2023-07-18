@@ -90,13 +90,13 @@ class spice():
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
         debug.check(name not in self.pins, "cannot add duplicate spice pin {}".format(name))
-        self.pins[name] = pin_spice(name, pin_type)
+        self.pins[name] = pin_spice(name, pin_type, self)
 
     def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
         # The pin type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-        if type(pin_type) == str:
+        if isinstance(pin_type, str):
             for pin in pin_list:
                 self.add_pin(pin, pin_type)
 
@@ -124,7 +124,7 @@ class spice():
             "{} spice subcircuit number of port types does not match number of pins\
               \n pin names={}\n port types={}".format(self.name, list(self.pins), type_list))
         for pin, type in zip(self.pins.values(), type_list):
-            pin.set_pin_type(type)
+            pin.set_type(type)
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
@@ -212,7 +212,7 @@ class spice():
         for name in names_list:
             # setdefault adds to the dict if it doesn't find the net in it already
             # then it returns the net it found or created, a net_spice object
-            net = self.nets.setdefault(name, net_spice(name))
+            net = self.nets.setdefault(name, net_spice(name, self))
             nets.append(net)
         return nets
 
@@ -764,9 +764,10 @@ class pin_spice():
         self.inst = inst
 
     def set_inst_net(self, net):
-        debug.check(self.inst_net is None,
-                "pin {} is already connected to net {} so it cannot also be connected to net {}\
-                ".format(self.name, self.inst_net.name, net.name))
+        if self.inst_net is not None:
+            debug.error("pin {} is already connected to net {}\
+                        so it cannot also be connected to net {}\
+                        ".format(self.name, self.inst_net.name, net.name), 1)
         debug.check(isinstance(net, net_spice), "net must be a net_spice object")
         self.inst_net = net
 
@@ -789,6 +790,23 @@ class pin_spice():
         """
         return self._hash
 
+    def __deepcopy__(original, memo):
+        """
+        This function is defined so that instances of modules can make deep
+        copies of their parent module's pins dictionary. It is only expected
+        to be called by the instance class __init__ function. Mod and mod_net
+        should not be deep copies but references to the existing mod and net
+        objects they refer to in the original. If inst is already defined this
+        function will throw an error because that means it was called on a pin
+        from an instance, which is not defined behavior.
+        """
+        debug.check(original.inst is None,
+                    "cannot make a deepcopy of a spice pin from an inst")
+        pin = pin_spice(original.name, original.type, original.mod)
+        if original.mod_net is not None:
+            pin.set_mod_net(original.mod_net)
+        return pin
+
 
 class net_spice():
     """
@@ -797,9 +815,10 @@ class net_spice():
     inst is the instance this net is a part of, if any.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, mod):
         self.name = name
         self.pins = []
+        self.mod = mod
         self.inst = None
 
         # TODO: evaluate if this makes sense... and works
@@ -812,9 +831,12 @@ class net_spice():
         else:
             self.pins.append(pin)
 
+    def set_inst(self, inst):
+        self.inst = inst
+
     def __str__(self):
         """ override print function output """
-        return "(pin_name={} type={})".format(self.name, self.type)
+        return "(net_name={} type={})".format(self.name, self.type)
 
     def __repr__(self):
         """ override repr function output """
@@ -830,3 +852,21 @@ class net_spice():
         Provides a speedup if pin_spice is used as a key for dicts.
         """
         return self._hash
+
+    def __deepcopy__(original, memo):
+        """
+        This function is defined so that instances of modules can make deep
+        copies of their parent module's nets dictionary. It is only expected
+        to be called by the instance class __init__ function. Mod and mod_net
+        should not be deep copies but references to the existing mod and net
+        objects they refer to in the original. If inst is already defined this
+        function will throw an error because that means it was called on a pin
+        from an instance, which is not defined behavior.
+        """
+        debug.check(original.inst is None,
+                    "cannot make a deepcopy of a spice net from an inst")
+        net = net_spice(original.name, original.mod)
+        if original.pins != []:
+            # TODO: honestly I'm not sure if this is right but we'll see...
+            net.pins = original.pins
+        return net

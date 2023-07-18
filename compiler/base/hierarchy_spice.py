@@ -209,8 +209,6 @@ class spice():
         ordered_nets = self.create_nets(ordered_args)
         self.insts[-1].connect_spice_pins(ordered_nets)
 
-        # TODO: replace functionality that checked if user forgot to connect an inst before connecting the next
-
     def create_nets(self, names_list):
         nets = []
         for name in names_list:
@@ -294,8 +292,6 @@ class spice():
         return False
 
     def sp_write_file(self, sp, usedMODS, lvs=False, trim=False):
-        # FIXME: this function refers to conns for connections but that no longer exists.
-        # it should be possible to just query the instances themselves for their connections.
         """
         Recursive spice subcircuit write;
         Writes the spice subcircuit from the library or the dynamically generated one.
@@ -308,11 +304,11 @@ class spice():
             # If spice isn't defined, we dynamically generate one.
 
             # recursively write the modules
-            for i in self.mods:
-                if self.contains(i, usedMODS):
+            for mod in self.mods:
+                if self.contains(mod, usedMODS):
                     continue
-                usedMODS.append(i)
-                i.sp_write_file(sp, usedMODS, lvs, trim)
+                usedMODS.append(mod)
+                mod.sp_write_file(sp, usedMODS, lvs, trim)
 
             if len(self.insts) == 0:
                 return
@@ -331,43 +327,44 @@ class spice():
             for line in self.comments:
                 sp.write("* {}\n".format(line))
 
-            # every instance must have a set of connections, even if it is empty.
-            if len(self.insts) != len(self.conns):
-                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.cell_name,
-                                                                                            len(self.insts),
-                                                                                            len(self.conns)))
-                debug.error("Instances: \n" + str(self.insts))
-                debug.error("-----")
-                debug.error("Connections: \n" + str(self.conns), 1)
+            # every instance must be connected with the connect_inst function
+            # TODO: may run into empty pin lists edge case, not sure yet
+            connected = True
+            for inst in self.insts:
+                if inst.connected:
+                    continue
+                debug.error("Instance {} spice pins not connected".format(str(inst)))
+                connected = False
+            debug.check(connected, "{0} : Not all instance spice pins are connected.".format(self.cell_name))
 
-            for i in range(len(self.insts)):
+            for inst in self.insts:
                 # we don't need to output connections of empty instances.
                 # these are wires and paths
-                if self.conns[i] == []:
+                if len(inst.spice_pins) == 0:
                     continue
 
                 # Instance with no devices in it needs no subckt/instance
-                if self.insts[i].mod.no_instances:
+                if inst.mod.no_instances:
                     continue
 
                 # If this is a trimmed netlist, skip it by adding comment char
-                if trim and self.insts[i].name in self.trim_insts:
+                if trim and inst.name in self.trim_insts:
                     sp.write("* ")
 
-                if lvs and hasattr(self.insts[i].mod, "lvs_device"):
-                    sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
-                                                                   " ".join(self.conns[i])))
+                if lvs and hasattr(inst.mod, "lvs_device"):
+                    sp.write(inst.mod.lvs_device.format(inst.name,
+                                                        " ".join(inst.get_connections())))
                     sp.write("\n")
-                elif hasattr(self.insts[i].mod, "spice_device"):
-                    sp.write(self.insts[i].mod.spice_device.format(self.insts[i].name,
-                                                                   " ".join(self.conns[i])))
+                elif hasattr(inst.mod, "spice_device"):
+                    sp.write(inst.mod.spice_device.format(inst.name,
+                                                          " ".join(inst.get_connections())))
                     sp.write("\n")
                 else:
-                    wrapped_connections = "\n+ ".join(tr.wrap(" ".join(self.conns[i])))
+                    wrapped_connections = "\n+ ".join(tr.wrap(" ".join(inst.get_connections())))
 
-                    sp.write("X{0}\n+ {1}\n+ {2}\n".format(self.insts[i].name,
+                    sp.write("X{0}\n+ {1}\n+ {2}\n".format(inst.name,
                                                            wrapped_connections,
-                                                           self.insts[i].mod.cell_name))
+                                                           inst.mod.cell_name))
 
             sp.write(".ENDS {0}\n".format(self.cell_name))
 
@@ -696,6 +693,12 @@ class spice():
                 aliases.append(net)
         return aliases
 
+    def get_instance_connections(self):
+        conns = []
+        for inst in self.instances:
+            conns.append(inst.get_connections())
+        return conns
+
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
         """
         Checks if the alias_net in input mod is the same as the input net for this mod (self).
@@ -708,7 +711,7 @@ class spice():
                 return True
         # Check connections of all other subinsts
         mod_set = set()
-        for subinst, inst_conns in zip(self.insts, self.conns):
+        for subinst, inst_conns in zip(self.insts, self.get_instance_connections()):
             for inst_conn, mod_pin in zip(inst_conns, subinst.mod.pins):
                 if self.is_net_alias_name_check(known_net, inst_conn, net_alias, mod):
                     return True

@@ -176,6 +176,8 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
+        # track if the instance's spice pin connections have been made
+        self.connected = False
 
         # deepcopy because this instance needs to 
         # change attributes in these spice objects
@@ -290,12 +292,21 @@ class instance(geometry):
         to both of their respective objects
         nets_list must be the same length as self.spice_pins
         """
+        debug.check(not self.connected,
+                    "instance {} has already been connected".format(self.name))
         debug.check(len(self.spice_pins) == len(nets_list),
             "must provide list of nets the same length as pin list\
              when connecting an instance")
         for i in range(len(self.spice_pins)):
             self.spice_pins[i].set_inst_net(nets_list[i])
             nets_list[i].connect_pin(self.spice_pins[i])
+        self.connected = True
+
+    def get_connections(self):
+        conns = []
+        for pin in self.spice_pins:
+            conns.append(pin.inst_net.name)
+        return conns
 
     def calculate_transform(self, node):
         #set up the rotation matrix

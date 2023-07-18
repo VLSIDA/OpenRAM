@@ -139,7 +139,7 @@ class hierarchy_design(spice, layout):
                         1)
         port_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
-        for subinst, conns in zip(self.insts, self.conns):
+        for subinst, conns in zip(self.insts, self.get_instance_connections()):
             if subinst in self.graph_inst_exclude:
                 continue
             subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
@@ -157,7 +157,7 @@ class hierarchy_design(spice, layout):
                         1)
         port_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
-        for subinst, conns in zip(self.insts, self.conns):
+        for subinst, conns in zip(self.insts, self.get_instance_connections()):
             subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             for si_port, conn in zip(subinst_ports, conns):

@@ -28,6 +28,8 @@ ROM_SRCS=$(filter-out disabled-% %_common.py,$(sort $(notdir $(wildcard $(ROM_CO
 ROM_DIRS=$(basename $(ROM_SRCS))
 ROM_STAMPS=$(addsuffix .ok,$(ROM_DIRS))
 
+DIRS=$(SRAM_DIRS) $(ROM_DIRS)
+
 configs:
 	@echo
 	@echo "Using OpenRAM at $(OPENRAM_HOME)"

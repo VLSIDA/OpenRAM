@@ -693,7 +693,7 @@ class spice():
 
     def get_instance_connections(self):
         conns = []
-        for inst in self.instances:
+        for inst in self.insts:
             conns.append(inst.get_connections())
         return conns
 

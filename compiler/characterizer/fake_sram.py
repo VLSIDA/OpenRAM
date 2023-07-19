@@ -71,11 +71,13 @@ class fake_sram(sram_config):
             OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports)])
         for port in range(OPTS.num_rw_ports):
             self.pins.extend(['din{0}[{1}]'.format(port, bit)
-                              for bit in range(self.word_size)])
+                              for bit in range(self.word_size + self.num_spare_cols)])
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
-                              for bit in range(self.word_size)])
+                              for bit in range(self.word_size + self.num_spare_cols)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
+            self.pins.extend(['spare_wen{0}[{1}]'.format(port, bit)
+                              for bit in range(self.num_spare_cols)])
             if self.num_wmasks != 0:
                 self.pins.extend(['wmask{0}[{1}]'.format(port, bit)
                                   for bit in range(self.num_wmasks)])
@@ -85,16 +87,18 @@ class fake_sram(sram_config):
         start_port = OPTS.num_rw_ports
         for port in range(start_port, start_port + OPTS.num_r_ports):
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
-                              for bit in range(self.word_size)])
+                              for bit in range(self.word_size + self.num_spare_cols)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
-                              for bit in range(self.addr_size)])
+                              for bit in range(self.word_size)])
 
             self.pins.extend(['csb{}'.format(port)])
 
         start_port += OPTS.num_r_ports
         for port in range(start_port, start_port + OPTS.num_w_ports):
             self.pins.extend(['din{0}[{1}]'.format(port, bit)
-                              for bit in range(self.word_size)])
+                              for bit in range(self.word_size + self.num_spare_cols)])
+            self.pins.extend(['spare_wen{0}[{1}]'.format(port, bit)
+                              for bit in range(self.num_spare_cols)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
                               for bit in range(self.addr_size)])
             if self.num_wmasks != 0:

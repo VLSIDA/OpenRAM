@@ -97,6 +97,7 @@ $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
 	@[ -d $(SRAM_LIB_DIR) ] || \
 		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR)
+	@git -C $(SRAM_LIB_DIR) fetch
 	@git -C $(SRAM_LIB_DIR) checkout $(SRAM_LIB_GIT_COMMIT)
 
 install: $(SRAM_LIB_DIR)

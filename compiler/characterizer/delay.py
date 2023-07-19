@@ -387,7 +387,7 @@ class delay(simulation):
 
         self.sf.write("\n* SRAM output loads\n")
         for port in self.read_ports:
-            for i in range(self.word_size):
+            for i in range(self.word_size + self.num_spare_cols):
                 self.sf.write("CD{0}{1} {2}{0}_{1} 0 {3}f\n".format(port, i, self.dout_name, self.load))
 
     def write_delay_stimulus(self):
@@ -482,7 +482,7 @@ class delay(simulation):
         # generate data and addr signals
         self.sf.write("\n* Generation of data and address signals\n")
         for write_port in self.write_ports:
-            for i in range(self.word_size):
+            for i in range(self.word_size + self.num_spare_cols):
                 self.stim.gen_constant(sig_name="{0}{1}_{2} ".format(self.din_name, write_port, i),
                                        v_val=0)
         for port in self.all_ports:
@@ -1409,8 +1409,8 @@ class delay(simulation):
         inverse_address = self.calculate_inverse_address()
 
         # For now, ignore data patterns and write ones or zeros
-        data_ones = "1" * self.word_size
-        data_zeros = "0" * self.word_size
+        data_ones = "1" * (self.word_size + self.num_spare_cols)
+        data_zeros = "0" * (self.word_size + self.num_spare_cols)
         wmask_ones = "1" * self.num_wmasks
 
         if self.t_current == 0:
@@ -1534,7 +1534,7 @@ class delay(simulation):
         """ Generates the PWL data inputs for a simulation timing test. """
 
         for write_port in self.write_ports:
-            for i in range(self.word_size):
+            for i in range(self.word_size + self.num_spare_cols):
                 sig_name="{0}{1}_{2} ".format(self.din_name, write_port, i)
                 self.stim.gen_pwl(sig_name, self.cycle_times, self.data_values[write_port][i], self.period, self.slew, 0.05)
 

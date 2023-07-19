@@ -69,18 +69,44 @@ class graph:
     def is_node_blocked(self, node):
         """ Return if a node is blocked by a blockage. """
 
+        def diff(a, b):
+            """
+            Return the absolute difference of two numbers avoiding precision
+            errors.
+            """
+            decimals = len(str(drc["grid"]).split(".")[1])
+            return round(abs(a - b), decimals)
+
+        blocked = False
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
             if self.inside_shape(node.center, blockage):
                 if not self.is_routable(blockage):
-                    return True
-                elif blockage.inflated_from is None:
-                    return False
-                elif self.inside_shape(node.center, blockage.inflated_from):
-                    return False
+                    blocked = True
+                    continue
+                if blockage.inflated_from is not None:
+                    blockage = blockage.inflated_from
+                if self.inside_shape(node.center, blockage):
+                    offset = self.router.offset
+                    p = node.center
+                    lengths = [blockage.width(), blockage.height()]
+                    centers = blockage.center()
+                    ll, ur = blockage.rect
+                    safe = [True, True]
+                    for i in range(2):
+                        if lengths[i] >= offset * 2:
+                            min_diff = min(diff(ll[i], p[i]), diff(ur[i], p[i]))
+                            if min_diff < offset:
+                                safe[i] = False
+                        elif diff(centers[i], p[i]) > 0:
+                            safe[i] = False
+                    if not all(safe):
+                        blocked = True
+                    elif blockage in [self.source, self.target]:
+                        return False
                 else:
-                    return True
-        return False
+                    blocked = True
+        return blocked
 
 
     def is_via_blocked(self, point):

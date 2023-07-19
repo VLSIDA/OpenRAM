@@ -3,6 +3,9 @@ include $(TOP_DIR)/openram.mk
 
 .DEFAULT_GOAL := install
 
+# Set the shell here
+SHELL := /bin/bash
+
 # Skywater PDK SRAM library
 SRAM_LIB_DIR ?= $(PDK_ROOT)/sky130_fd_bd_sram
 # Use this for release
@@ -10,7 +13,7 @@ SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 # Use this for development
 #SRAM_LIB_GIT_REPO ?= git@github.com:VLSIDA/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= a83b6468c48434d927b90058b22047843c58027b
+SRAM_LIB_GIT_COMMIT ?= 060f3638be6269dd9aa82cfbbdfd9525943c1582
 
 # Open PDKs
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
@@ -94,6 +97,7 @@ $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
 	@[ -d $(SRAM_LIB_DIR) ] || \
 		git clone $(SRAM_LIB_GIT_REPO) $(SRAM_LIB_DIR)
+	@git -C $(SRAM_LIB_DIR) fetch
 	@git -C $(SRAM_LIB_DIR) checkout $(SRAM_LIB_GIT_COMMIT)
 
 install: $(SRAM_LIB_DIR)

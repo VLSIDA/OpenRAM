@@ -10,13 +10,14 @@ import datetime
 from math import ceil, log
 from openram.base import vector
 from openram.base import design
+from openram.base import rom_verilog
 from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import drc, layer, parameter
 from openram.router import router_tech
 
 
-class rom_bank(design):
+class rom_bank(design,rom_verilog):
 
     """
     Rom data bank with row and column decoder + control logic

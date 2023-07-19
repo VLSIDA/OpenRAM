@@ -18,13 +18,14 @@ from openram import OPTS
 class port_data(design):
     """
     Create the data port (column mux, sense amps, write driver, etc.) for the given port number.
-    Port 0 always has the RBL on the left while port 1 is on the right.
+    When RBLs present: port 0 always has the RBL on the left while port 1 is on the right.
     """
 
-    def __init__(self, sram_config, port, num_spare_cols=None, bit_offsets=None, name="",):
+    def __init__(self, sram_config, port, has_rbl, num_spare_cols=None, bit_offsets=None, name="",):
 
         sram_config.set_local_config(self)
         self.port = port
+        self.has_rbl = has_rbl
         if self.write_size != self.word_size:
             self.num_wmasks = int(math.ceil(self.word_size / self.write_size))
         else:
@@ -115,8 +116,9 @@ class port_data(design):
     def add_pins(self):
         """ Adding pins for port data module"""
 
-        self.add_pin("rbl_bl", "INOUT")
-        self.add_pin("rbl_br", "INOUT")
+        if self.has_rbl:
+            self.add_pin("rbl_bl", "INOUT")
+            self.add_pin("rbl_br", "INOUT")
         for bit in range(self.num_cols):
             self.add_pin("bl_{0}".format(bit), "INOUT")
             self.add_pin("br_{0}".format(bit), "INOUT")
@@ -202,15 +204,19 @@ class port_data(design):
             precharge_width = cell.width + strap.width
         else:
             precharge_width = cell.width
-        if self.port == 0:
-            # Append an offset on the left
-            precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
+        if self.has_rbl:
+            if self.port == 0:
+                # Append an offset on the left
+                precharge_bit_offsets = [self.bit_offsets[0] - precharge_width] + self.bit_offsets
+            else:
+                # Append an offset on the right
+                precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
         else:
-            # Append an offset on the right
-            precharge_bit_offsets = self.bit_offsets + [self.bit_offsets[-1] + precharge_width]
+            precharge_bit_offsets = self.bit_offsets
 
+        # has_rbl is a boolean treated as 1 if true 0 if false typical python
         self.precharge_array = factory.create(module_type="precharge_array",
-                                              columns=self.num_cols + self.num_spare_cols + 1,
+                                              columns=self.num_cols + self.num_spare_cols + self.has_rbl,
                                               offsets=precharge_bit_offsets,
                                               bitcell_bl=self.bl_names[self.port],
                                               bitcell_br=self.br_names[self.port],
@@ -294,7 +300,7 @@ class port_data(design):
                                                   mod=self.precharge_array)
         temp = []
         # Use left BLs for RBL
-        if self.port==0:
+        if self.port==0 and self.has_rbl:
             temp.append("rbl_bl")
             temp.append("rbl_br")
         for bit in range(self.num_cols):
@@ -306,7 +312,7 @@ class port_data(design):
             temp.append("sparebr_{0}".format(bit))
 
         # Use right BLs for RBL
-        if self.port==1:
+        if self.port==1 and self.has_rbl:
             temp.append("rbl_bl")
             temp.append("rbl_br")
         temp.extend(["p_en_bar", "vdd"])
@@ -537,7 +543,7 @@ class port_data(design):
         if self.col_addr_size==0:
             return
 
-        start_bit = 1 if self.port == 0 else 0
+        start_bit = 1 if self.port == 0 and self.has_rbl else 0
 
         self.connect_bitlines(inst1=self.column_mux_array_inst,
                               inst2=self.precharge_array_inst,
@@ -558,7 +564,7 @@ class port_data(design):
             inst1 = self.precharge_array_inst
             inst1_bls_templ="{inst}_{bit}"
 
-            if self.port==0:
+            if self.port==0 and self.has_rbl:
                 start_bit=1
             else:
                 start_bit=0
@@ -683,11 +689,11 @@ class port_data(design):
         """ Add the bitline pins for the given port """
 
         # Connect one bitline to the RBL and offset the indices for the other BLs
-        if self.port==0:
+        if self.port==0 and self.has_rbl:
             self.copy_layout_pin(self.precharge_array_inst, "bl_0", "rbl_bl")
             self.copy_layout_pin(self.precharge_array_inst, "br_0", "rbl_br")
             bit_offset=1
-        elif self.port==1:
+        elif self.port==1 and self.has_rbl:
             self.copy_layout_pin(self.precharge_array_inst, "bl_{}".format(self.num_cols + self.num_spare_cols), "rbl_bl")
             self.copy_layout_pin(self.precharge_array_inst, "br_{}".format(self.num_cols + self.num_spare_cols), "rbl_br")
             bit_offset=0

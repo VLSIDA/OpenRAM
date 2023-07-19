@@ -11,7 +11,8 @@ navigate through the documentation.
 1. [Supported Technologies](#supported-technologies)
 1. [Online Playground](./OpenRAM.ipynb)
 1. [Basic Setup](./basic_setup.md#go-back)
-1. [Basic Usage](./basic_usage.md#go-back)
+1. [Basic SRAM Usage](./basic_usage.md#go-back)
+1. [Basic ROM Usage](./basic_rom_usage.md#go-back)
 1. [Python Library](./python_library.md#go-back)
 1. [Bitcells](./bitcells.md#go-back)
 1. [Architecture](./architecture.md#go-back)
@@ -115,4 +116,5 @@ Commercial tools (optional):
     * Tom Golubev
     * Marcelo Sero
     * Seokjoong Kim
+    * Sage Walker
 

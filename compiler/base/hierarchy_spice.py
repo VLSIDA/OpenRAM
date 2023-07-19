@@ -737,7 +737,7 @@ class pin_spice():
     inst_net is the net object from mod's nets which connects to this pin.
     """
 
-    valid_pin_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND"]
+    valid_pin_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND", "BIAS"]
 
     def __init__(self, name, type, mod):
         self.name = name

@@ -28,6 +28,8 @@ ROM_SRCS=$(filter-out disabled-% %_common.py,$(sort $(notdir $(wildcard $(ROM_CO
 ROM_DIRS=$(basename $(ROM_SRCS))
 ROM_STAMPS=$(addsuffix .ok,$(ROM_DIRS))
 
+DIRS=$(SRAM_DIRS) $(ROM_DIRS)
+
 configs:
 	@echo
 	@echo "Using OpenRAM at $(OPENRAM_HOME)"
@@ -80,12 +82,12 @@ sram: $(WORKING_SRAM_STAMPS)
 %.ok: sram_configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	@python3 -u $(SRAM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
+	@OPENRAM_TMP=$*/tmp python3 -u $(SRAM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
 
 %.ok: rom_configs/%.py
 	@echo "Building $*"
 	@mkdir -p $*
-	@python3 -u $(ROM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
+	@OPENRAM_TMP=$*/tmp python3 -u $(ROM_COMPILER) $(OPENRAM_OPTS) -o $* -p $(MACRO_DIR)/$* $(MACRO_DIR)/$< && touch $@
 
 .DELETE_ON_ERROR: $(WORKING_SRAM_STAMPS) $(WORKING_ROM_STAMPS)
 

@@ -104,6 +104,8 @@ class options(optparse.Values):
     sim_data_path = None
     # A list of load/slew tuples
     use_specified_load_slew = None
+    # Spice simulation raw file
+    spice_raw_file = None
 
     ###################
     # Run-time vs accuracy options.
@@ -126,14 +128,18 @@ class options(optparse.Values):
     # Output config with all options
     output_extended_config = False
     # Output temporary file used to format HTML page
-    output_datasheet_info = False
+    output_datasheet_info = True
     # Determines which analytical model to use.
     # Available Models: elmore, linear_regression
     model_name = "elmore"
+    # Write graph to a file
+    write_graph = False
 
     ###################
     # Tool options
     ###################
+    # Top process that was ran (openram, memchar, memfunc)
+    top_process = None
     # Use conda to install the default tools
     # (existing tools will be used if disabled)
     use_conda = True
@@ -174,6 +180,11 @@ class options(optparse.Values):
     # Purge the temp directory after a successful
     # run (doesn't purge on errors, anyhow)
 
+    # Bitline, s_en and cell names used in characterizer
+    bl_format = "X{name}{hier_sep}xbank0{hier_sep}bl_{row}_{col}"
+    br_format = "X{name}{hier_sep}xbank0{hier_sep}br_{row}_{col}"
+    sen_format = "X{name}{hier_sep}xbank0{hier_sep}s_en"
+    cell_format = "X{name}{hier_sep}xbank0{hier_sep}xbitcell_array{hier_sep}xreplica_bitcell_array{hier_sep}xbitcell_array{hier_sep}xbit_r{row}_c{col}"
     # Route the input/output pins to the perimeter
     perimeter_pins = True
 

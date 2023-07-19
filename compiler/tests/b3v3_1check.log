@@ -1,0 +1,5 @@
+BSIM3V3.1 Parameter Check
+Model = p
+W = 6e-07, L = 8e-07
+Warning: Pd = 0 is less than W.
+Warning: Ps = 0 is less than W.

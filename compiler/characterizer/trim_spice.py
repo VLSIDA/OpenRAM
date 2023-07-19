@@ -85,14 +85,15 @@ class trim_spice():
 
         wl_regex = r"wl\d*_{}".format(wl_address)
         bl_regex = r"bl\d*_{}".format(int(self.words_per_row*data_bit + col_address))
+        bl_no_port_regex = r"bl_{}".format(int(self.words_per_row*data_bit + col_address))
+
         self.remove_insts("bitcell_array",[wl_regex,bl_regex])
 
         # 2. Keep sense amps basd on BL
-        # FIXME: The bit lines are not indexed the same in sense_amp_array
-        #self.remove_insts("sense_amp_array",[bl_regex])
+        self.remove_insts("sense_amp_array",[bl_no_port_regex])
 
         # 3. Keep column muxes basd on BL
-        self.remove_insts("column_mux_array", [bl_regex])
+        self.remove_insts("single_level_column_mux_array", [bl_no_port_regex])
 
         # 4. Keep write driver based on DATA
         data_regex = r"data_{}".format(data_bit)

@@ -358,11 +358,16 @@ class spice():
                                                           " ".join(inst.get_connections())))
                     sp.write("\n")
                 else:
-                    wrapped_connections = "\n+ ".join(tr.wrap(" ".join(inst.get_connections())))
-
-                    sp.write("X{0}\n+ {1}\n+ {2}\n".format(inst.name,
-                                                           wrapped_connections,
-                                                           inst.mod.cell_name))
+                    if trim and inst.name in self.trim_insts:
+                        wrapped_connections = "\n*+ ".join(tr.wrap(" ".join(inst.get_connections())))
+                        sp.write("X{0}\n*+ {1}\n*+ {2}\n".format(inst.name,
+                                                                 wrapped_connections,
+                                                                 inst.mod.cell_name))
+                    else:
+                        wrapped_connections = "\n+ ".join(tr.wrap(" ".join(inst.get_connections())))
+                        sp.write("X{0}\n+ {1}\n+ {2}\n".format(inst.name,
+                                                               wrapped_connections,
+                                                               inst.mod.cell_name))
 
             sp.write(".ENDS {0}\n".format(self.cell_name))
 

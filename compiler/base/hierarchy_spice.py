@@ -13,6 +13,7 @@ from pprint import pformat
 from openram import debug
 from openram import tech
 from openram import OPTS
+from collections import OrderedDict
 from .delay_data import delay_data
 from .wire_spice_model import wire_spice_model
 from .power_data import power_data
@@ -49,20 +50,18 @@ class spice():
         if not os.path.exists(self.lvs_file):
             self.lvs_file = self.sp_file
 
-        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = set()
         # Holds the pins for this module (in order)
-        self.pins = []
-        # The type map of each pin: INPUT, OUTPUT, INOUT, POWER, GROUND
-        # for each instance, this is the set of nets/nodes that map to the pins for this instance
-        self.pin_type = {}
+        # on Python3.7+ regular dictionaries guarantee order too, but we allow use of v3.5+
+        self.pins = OrderedDict()
         # An (optional) list of indices to reorder the pins to match the spice.
         self.pin_indices = []
         # THE CONNECTIONS MUST MATCH THE ORDER OF THE PINS (restriction imposed by the
         # Spice format)
-        self.conns = []
-        # If this is set, it will out output subckt or isntances of this (for row/col caps etc.)
+        # internal nets, which may or may not be connected to pins of the same name
+        self.nets = {}
+        # If this is set, it will not output subckt or instances of this (for row/col caps etc.)
         self.no_instances = False
         # If we are doing a trimmed netlist, these are the instance that will be filtered
         self.trim_insts = set()
@@ -90,128 +89,114 @@ class spice():
 
     def add_pin(self, name, pin_type="INOUT"):
         """ Adds a pin to the pins list. Default type is INOUT signal. """
-        self.pins.append(name)
-        self.pin_type[name]=pin_type
-        debug.check(pin_type in self.valid_signal_types,
-                    "Invalid signaltype for {0}: {1}".format(name,
-                                                             pin_type))
+        debug.check(name not in self.pins, "cannot add duplicate spice pin {}".format(name))
+        self.pins[name] = pin_spice(name, pin_type, self)
 
     def add_pin_list(self, pin_list, pin_type="INOUT"):
         """ Adds a pin_list to the pins list """
-        # The type list can be a single type for all pins
+        # The pin type list can be a single type for all pins
         # or a list that is the same length as the pin list.
-        if type(pin_type)==str:
+        if isinstance(pin_type, str):
             for pin in pin_list:
-                debug.check(pin_type in self.valid_signal_types,
-                            "Invalid signaltype for {0}: {1}".format(pin,
-                                                                     pin_type))
                 self.add_pin(pin, pin_type)
 
         elif len(pin_type)==len(pin_list):
-            for (pin, ptype) in zip(pin_list, pin_type):
-                debug.check(ptype in self.valid_signal_types,
-                            "Invalid signaltype for {0}: {1}".format(pin,
-                                                                     ptype))
-                self.add_pin(pin, ptype)
+            for (pin, type) in zip(pin_list, pin_type):
+                self.add_pin(pin, type)
         else:
-            debug.error("Mismatch in type and pin list lengths.", -1)
+            debug.error("Pin type must be a string or list of strings the same length as pin_list", -1)
 
     def add_pin_indices(self, index_list):
-        """
-        Add pin indices for all the cell's pins.
-        """
+        """ Add pin indices for all the cell's pins. """
         self.pin_indices = index_list
 
     def get_ordered_inputs(self, input_list):
-        """
-        Return the inputs reordered to match the pins.
-        """
+        """ Return the inputs reordered to match the pins. """
         if not self.pin_indices:
             return input_list
 
         new_list = [input_list[x] for x in self.pin_indices]
         return new_list
 
-    def add_pin_types(self, type_list):
-        """
-        Add pin types for all the cell's pins.
-        """
-        # This only works if self.pins == bitcell.pin_names
-        if len(type_list) != len(self.pins):
-            debug.error("{} spice subcircuit number of port types does not match number of pins\
-                      \n SPICE names={}\
-                      \n Module names={}\
-                      ".format(self.name, self.pins, type_list), 1)
-        self.pin_type = {pin: type for pin, type in zip(self.pins, type_list)}
+    def update_pin_types(self, type_list):
+        """ Change pin types for all the cell's pins. """
+        debug.check(len(type_list) == len(self.pins),
+            "{} spice subcircuit number of port types does not match number of pins\
+              \n pin names={}\n port types={}".format(self.name, list(self.pins), type_list))
+        for pin, type in zip(self.pins.values(), type_list):
+            pin.set_type(type)
 
     def get_pin_type(self, name):
         """ Returns the type of the signal pin. """
-        pin_type = self.pin_type[name]
-        debug.check(pin_type in self.valid_signal_types,
-                    "Invalid signaltype for {0}: {1}".format(name, pin_type))
-        return pin_type
+        pin = self.pins.get(name)
+        debug.check(pin is not None, "Spice pin {} not found".format(name))
+        return pin.type
 
     def get_pin_dir(self, name):
         """ Returns the direction of the pin. (Supply/ground are INOUT). """
-        if self.pin_type[name] in ["POWER", "GROUND"]:
+        pin_type = self.get_pin_type(name)
+        if pin_type in ["POWER", "GROUND"]:
             return "INOUT"
         else:
-            return self.pin_type[name]
+            return pin_type
 
     def get_inputs(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
+        """
+        These use pin types to determine pin lists.
+        Returns names only, to maintain historical interface.
+        """
         input_list = []
-        for pin in self.pins:
-            if self.pin_type[pin]=="INPUT":
-                input_list.append(pin)
+        for pin in self.pins.values():
+            if pin.type == "INPUT":
+                input_list.append(pin.name)
         return input_list
 
     def get_outputs(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
+        """
+        These use pin types to determine pin lists.
+        Returns names only, to maintain historical interface.
+        """
         output_list = []
-        for pin in self.pins:
-            if self.pin_type[pin]=="OUTPUT":
-                output_list.append(pin)
+        for pin in self.pins.values():
+            if pin.type == "OUTPUT":
+                output_list.append(pin.name)
         return output_list
+
+    def get_inouts(self):
+        """
+        These use pin types to determine pin lists.
+        Returns names only, to maintain historical interface.
+        """
+        inout_list = []
+        for pin in self.pins.values():
+            if pin.type == "INOUT":
+                inout_list.append(pin.name)
+        return inout_list
 
     def copy_pins(self, other_module, suffix=""):
         """ This will copy all of the pins from the other module and add an optional suffix."""
-        for pin in other_module.pins:
-            self.add_pin(pin + suffix, other_module.get_pin_type(pin))
+        for pin in other_module.pins.values():
+            self.add_pin(pin.name + suffix, pin.type)
 
-    def get_inouts(self):
-        """ These use pin types to determine pin lists. These
-        may be over-ridden by submodules that didn't use pin directions yet."""
-        inout_list = []
-        for pin in self.pins:
-            if self.pin_type[pin]=="INOUT":
-                inout_list.append(pin)
-        return inout_list
-
-    def connect_inst(self, args, check=True):
+    def connect_inst(self, args):
         """
         Connects the pins of the last instance added
-        It is preferred to use the function with the check to find if
-        there is a problem. The check option can be set to false
-        where we dynamically generate groups of connections after a
-        group of modules are generated.
         """
 
-        num_pins = len(self.insts[-1].mod.pins)
+        spice_pins = list(self.insts[-1].spice_pins)
+        num_pins = len(spice_pins)
         num_args = len(args)
 
         # Order the arguments if the hard cell has a custom port order
         ordered_args = self.get_ordered_inputs(args)
 
-        if (check and num_pins != num_args):
+        if (num_pins != num_args):
             if num_pins < num_args:
-                mod_pins = self.insts[-1].mod.pins + [""] * (num_args - num_pins)
+                mod_pins = spice_pins + [""] * (num_args - num_pins)
                 arg_pins = ordered_args
             else:
                 arg_pins = ordered_args + [""] * (num_pins - num_args)
-                mod_pins = self.insts[-1].mod.pins
+                mod_pins = spice_pins
 
             modpins_string = "\n".join(["{0} -> {1}".format(arg, mod) for (arg, mod) in zip(arg_pins, mod_pins)])
             debug.error("Connection mismatch:\nInst ({0}) -> Mod ({1})\n{2}".format(num_args,
@@ -219,27 +204,17 @@ class spice():
                                                                                     modpins_string),
                         1)
 
-        self.conns.append(ordered_args)
+        ordered_nets = self.create_nets(ordered_args)
+        self.insts[-1].connect_spice_pins(ordered_nets)
 
-        # This checks if we don't have enough instance port connections for the number of insts
-        if check and (len(self.insts)!=len(self.conns)):
-            insts_string=pformat(self.insts)
-            conns_string=pformat(self.conns)
-
-            debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.name,
-                                                                                        len(self.insts),
-                                                                                        len(self.conns)))
-            debug.error("Instances: \n" + str(insts_string))
-            debug.error("-----")
-            debug.error("Connections: \n" + str(conns_string), 1)
-
-    def get_conns(self, inst):
-        """Returns the connections of a given instance."""
-        for i in range(len(self.insts)):
-            if inst is self.insts[i]:
-                return self.conns[i]
-        # If not found, returns None
-        return None
+    def create_nets(self, names_list):
+        nets = []
+        for name in names_list:
+            # setdefault adds to the dict if it doesn't find the net in it already
+            # then it returns the net it found or created, a net_spice object
+            net = self.nets.setdefault(name, net_spice(name, self))
+            nets.append(net)
+        return nets
 
     def sp_read(self):
         """
@@ -258,7 +233,7 @@ class spice():
             subckt = re.compile("^.subckt {}".format(self.cell_name), re.IGNORECASE)
             subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
-            self.pins = subckt_line.split(" ")[2:]
+            self.add_pin_list(subckt_line.split(" ")[2:])
         else:
             debug.info(4, "no spfile {0}".format(self.sp_file))
             self.spice = []
@@ -279,10 +254,10 @@ class spice():
             subckt_line = list(filter(subckt.search, self.lvs))[0]
             # parses line into ports and remove subckt
             lvs_pins = subckt_line.split(" ")[2:]
-            debug.check(lvs_pins == self.pins,
+            debug.check(lvs_pins == list(self.pins),
                         "Spice netlists for LVS and simulation have port mismatches:\n{0} (LVS {1})\nvs\n{2} (sim {3})".format(lvs_pins,
                                                                                                                                self.lvs_file,
-                                                                                                                               self.pins,
+                                                                                                                               list(self.pins),
                                                                                                                                self.sp_file))
 
     def check_net_in_spice(self, net_name):
@@ -327,84 +302,72 @@ class spice():
             # If spice isn't defined, we dynamically generate one.
 
             # recursively write the modules
-            for i in self.mods:
-                if self.contains(i, usedMODS):
+            for mod in self.mods:
+                if self.contains(mod, usedMODS):
                     continue
-                usedMODS.append(i)
-                i.sp_write_file(sp, usedMODS, lvs, trim)
+                usedMODS.append(mod)
+                mod.sp_write_file(sp, usedMODS, lvs, trim)
 
             if len(self.insts) == 0:
                 return
-            if self.pins == []:
+            if len(self.pins) == 0:
                 return
 
             # write out the first spice line (the subcircuit)
-            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(self.pins)))
+            wrapped_pins = "\n+ ".join(tr.wrap(" ".join(list(self.pins))))
             sp.write("\n.SUBCKT {0}\n+ {1}\n".format(self.cell_name,
                                                      wrapped_pins))
 
-            # write a PININFO line
-            if False:
-                pin_info = "*.PININFO"
-                for pin in self.pins:
-                    if self.pin_type[pin] == "INPUT":
-                        pin_info += " {0}:I".format(pin)
-                    elif self.pin_type[pin] == "OUTPUT":
-                        pin_info += " {0}:O".format(pin)
-                    else:
-                        pin_info += " {0}:B".format(pin)
-                sp.write(pin_info + "\n")
-
             # Also write pins as comments
-            for pin in self.pins:
-                sp.write("* {1:6}: {0} \n".format(pin, self.pin_type[pin]))
+            for pin in self.pins.values():
+                sp.write("* {1:6}: {0} \n".format(pin.name, pin.type))
 
             for line in self.comments:
                 sp.write("* {}\n".format(line))
 
-            # every instance must have a set of connections, even if it is empty.
-            if len(self.insts) != len(self.conns):
-                debug.error("{0} : Not all instance pins ({1}) are connected ({2}).".format(self.cell_name,
-                                                                                            len(self.insts),
-                                                                                            len(self.conns)))
-                debug.error("Instances: \n" + str(self.insts))
-                debug.error("-----")
-                debug.error("Connections: \n" + str(self.conns), 1)
+            # every instance must be connected with the connect_inst function
+            # TODO: may run into empty pin lists edge case, not sure yet
+            connected = True
+            for inst in self.insts:
+                if inst.connected:
+                    continue
+                debug.error("Instance {} spice pins not connected".format(str(inst)))
+                connected = False
+            debug.check(connected, "{0} : Not all instance spice pins are connected.".format(self.cell_name))
 
-            for i in range(len(self.insts)):
+            for inst in self.insts:
                 # we don't need to output connections of empty instances.
                 # these are wires and paths
-                if self.conns[i] == []:
+                if len(inst.spice_pins) == 0:
                     continue
 
                 # Instance with no devices in it needs no subckt/instance
-                if self.insts[i].mod.no_instances:
+                if inst.mod.no_instances:
                     continue
 
                 # If this is a trimmed netlist, skip it by adding comment char
-                if trim and self.insts[i].name in self.trim_insts:
+                if trim and inst.name in self.trim_insts:
                     sp.write("* ")
 
-                if lvs and hasattr(self.insts[i].mod, "lvs_device"):
-                    sp.write(self.insts[i].mod.lvs_device.format(self.insts[i].name,
-                                                                   " ".join(self.conns[i])))
+                if lvs and hasattr(inst.mod, "lvs_device"):
+                    sp.write(inst.mod.lvs_device.format(inst.name,
+                                                        " ".join(inst.get_connections())))
                     sp.write("\n")
-                elif hasattr(self.insts[i].mod, "spice_device"):
-                    sp.write(self.insts[i].mod.spice_device.format(self.insts[i].name,
-                                                                   " ".join(self.conns[i])))
+                elif hasattr(inst.mod, "spice_device"):
+                    sp.write(inst.mod.spice_device.format(inst.name,
+                                                          " ".join(inst.get_connections())))
                     sp.write("\n")
                 else:
-                    if trim and self.insts[i].name in self.trim_insts:
-                        wrapped_connections = "\n*+ ".join(tr.wrap(" ".join(self.conns[i])))
-                        sp.write("X{0}\n*+ {1}\n*+ {2}\n".format(self.insts[i].name,
+                    if trim and inst.name in self.trim_insts:
+                        wrapped_connections = "\n*+ ".join(tr.wrap(" ".join(inst.get_connections())))
+                        sp.write("X{0}\n*+ {1}\n*+ {2}\n".format(inst.name,
                                                                  wrapped_connections,
-                                                                 self.insts[i].mod.cell_name))
+                                                                 inst.mod.cell_name))
                     else:
-                        wrapped_connections = "\n+ ".join(tr.wrap(" ".join(self.conns[i])))
-                        sp.write("X{0}\n+ {1}\n+ {2}\n".format(self.insts[i].name,
+                        wrapped_connections = "\n+ ".join(tr.wrap(" ".join(inst.get_connections())))
+                        sp.write("X{0}\n+ {1}\n+ {2}\n".format(inst.name,
                                                                wrapped_connections,
-                                                               self.insts[i].mod.cell_name))
-
+                                                               inst.mod.cell_name))
 
             sp.write(".ENDS {0}\n".format(self.cell_name))
 
@@ -733,6 +696,12 @@ class spice():
                 aliases.append(net)
         return aliases
 
+    def get_instance_connections(self):
+        conns = []
+        for inst in self.insts:
+            conns.append(inst.get_connections())
+        return conns
+
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):
         """
         Checks if the alias_net in input mod is the same as the input net for this mod (self).
@@ -745,7 +714,7 @@ class spice():
                 return True
         # Check connections of all other subinsts
         mod_set = set()
-        for subinst, inst_conns in zip(self.insts, self.conns):
+        for subinst, inst_conns in zip(self.insts, self.get_instance_connections()):
             for inst_conn, mod_pin in zip(inst_conns, subinst.mod.pins):
                 if self.is_net_alias_name_check(known_net, inst_conn, net_alias, mod):
                     return True
@@ -762,3 +731,149 @@ class spice():
         return self == mod and \
                child_net.lower() == alias_net.lower() and \
                parent_net.lower() == alias_net.lower()
+
+
+class pin_spice():
+    """
+    A class to represent a spice netlist pin.
+    mod is the parent module that created this pin.
+    mod_net is the net object of this pin's parent module. It must have the same name as the pin.
+    inst is the instance this pin is a part of, if any.
+    inst_net is the net object from mod's nets which connects to this pin.
+    """
+
+    valid_pin_types = ["INOUT", "INPUT", "OUTPUT", "POWER", "GROUND", "BIAS"]
+
+    def __init__(self, name, type, mod):
+        self.name = name
+        self.set_type(type)
+        self.mod = mod
+        self.mod_net = None
+        self.inst = None
+        self.inst_net = None
+
+        # TODO: evaluate if this makes sense... and works
+        self._hash = hash(self.name)
+
+    def set_type(self, type):
+        debug.check(type in pin_spice.valid_pin_types,
+                    "Invalid pin type for {0}: {1}".format(self.name, type))
+        self.type = type
+
+    def set_mod_net(self, net):
+        debug.check(isinstance(net, net_spice), "net must be a net_spice object")
+        debug.check(net.name == self.name, "module spice net must have same name as spice pin")
+        self.mod_net = net
+
+    def set_inst(self, inst):
+        self.inst = inst
+
+    def set_inst_net(self, net):
+        if self.inst_net is not None:
+            debug.error("pin {} is already connected to net {}\
+                        so it cannot also be connected to net {}\
+                        ".format(self.name, self.inst_net.name, net.name), 1)
+        debug.check(isinstance(net, net_spice), "net must be a net_spice object")
+        self.inst_net = net
+
+    def __str__(self):
+        """ override print function output """
+        return "(pin_name={} type={})".format(self.name, self.type)
+
+    def __repr__(self):
+        """ override repr function output """
+        return self.name
+
+    def __eq__(self, name):
+        return (name == self.name) if isinstance(name, str) else super().__eq__(name)
+
+    def __hash__(self):
+        """
+        Implement the hash function for sets etc.
+        Only hash name since spice does not allow two pins to share a name.
+        Provides a speedup if pin_spice is used as a key for dicts.
+        """
+        return self._hash
+
+    def __deepcopy__(original, memo):
+        """
+        This function is defined so that instances of modules can make deep
+        copies of their parent module's pins dictionary. It is only expected
+        to be called by the instance class __init__ function. Mod and mod_net
+        should not be deep copies but references to the existing mod and net
+        objects they refer to in the original. If inst is already defined this
+        function will throw an error because that means it was called on a pin
+        from an instance, which is not defined behavior.
+        """
+        debug.check(original.inst is None,
+                    "cannot make a deepcopy of a spice pin from an inst")
+        pin = pin_spice(original.name, original.type, original.mod)
+        if original.mod_net is not None:
+            pin.set_mod_net(original.mod_net)
+        return pin
+
+
+class net_spice():
+    """
+    A class to represent a spice net.
+    mod is the parent module that created this net.
+    pins are all the pins connected to this net.
+    inst is the instance this net is a part of, if any.
+    """
+
+    def __init__(self, name, mod):
+        self.name = name
+        self.pins = []
+        self.mod = mod
+        self.inst = None
+
+        # TODO: evaluate if this makes sense... and works
+        self._hash = hash(self.name)
+
+    def connect_pin(self, pin):
+        debug.check(isinstance(pin, pin_spice), "pin must be a pin_spice object")
+        if pin in self.pins:
+            debug.warning("pin {} was already connected to net {} ... why was it connected again?".format(pin.name, self.name))
+        else:
+            self.pins.append(pin)
+
+    def set_inst(self, inst):
+        self.inst = inst
+
+    def __str__(self):
+        """ override print function output """
+        return "(net_name={} type={})".format(self.name, self.type)
+
+    def __repr__(self):
+        """ override repr function output """
+        return self.name
+
+    def __eq__(self, name):
+        return (name == self.name) if isinstance(name, str) else super().__eq__(name)
+
+    def __hash__(self):
+        """
+        Implement the hash function for sets etc.
+        Only hash name since spice does not allow two nets to share a name
+        (on the same level of hierarchy, or rather they will be the same net).
+        Provides a speedup if net_spice is used as a key for dicts.
+        """
+        return self._hash
+
+    def __deepcopy__(original, memo):
+        """
+        This function is defined so that instances of modules can make deep
+        copies of their parent module's nets dictionary. It is only expected
+        to be called by the instance class __init__ function. Mod
+        should not be a deep copy but a reference to the existing mod
+        object it refers to in the original. If inst is already defined this
+        function will throw an error because that means it was called on a net
+        from an instance, which is not defined behavior.
+        """
+        debug.check(original.inst is None,
+                    "cannot make a deepcopy of a spice net from an inst")
+        net = net_spice(original.name, original.mod)
+        if original.pins != []:
+            # TODO: honestly I'm not sure if this is right but we'll see...
+            net.pins = original.pins
+        return net

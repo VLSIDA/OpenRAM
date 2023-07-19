@@ -816,6 +816,7 @@ class pin_spice():
 class net_spice():
     """
     A class to represent a spice net.
+    mod is the parent module that created this net.
     pins are all the pins connected to this net.
     inst is the instance this net is a part of, if any.
     """
@@ -853,8 +854,9 @@ class net_spice():
     def __hash__(self):
         """
         Implement the hash function for sets etc.
-        Only hash name since spice does not allow two pins to share a name.
-        Provides a speedup if pin_spice is used as a key for dicts.
+        Only hash name since spice does not allow two nets to share a name
+        (on the same level of hierarchy, or rather they will be the same net).
+        Provides a speedup if net_spice is used as a key for dicts.
         """
         return self._hash
 
@@ -862,10 +864,10 @@ class net_spice():
         """
         This function is defined so that instances of modules can make deep
         copies of their parent module's nets dictionary. It is only expected
-        to be called by the instance class __init__ function. Mod and mod_net
-        should not be deep copies but references to the existing mod and net
-        objects they refer to in the original. If inst is already defined this
-        function will throw an error because that means it was called on a pin
+        to be called by the instance class __init__ function. Mod
+        should not be a deep copy but a reference to the existing mod
+        object it refers to in the original. If inst is already defined this
+        function will throw an error because that means it was called on a net
         from an instance, which is not defined behavior.
         """
         debug.check(original.inst is None,

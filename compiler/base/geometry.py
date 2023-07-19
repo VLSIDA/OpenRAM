@@ -179,7 +179,7 @@ class instance(geometry):
         # track if the instance's spice pin connections have been made
         self.connected = False
 
-        # deepcopy because this instance needs to 
+        # deepcopy because this instance needs to
         # change attributes in these spice objects
         self.spice_pins = copy.deepcopy(self.mod.pins)
         self.spice_nets = copy.deepcopy(self.mod.nets)

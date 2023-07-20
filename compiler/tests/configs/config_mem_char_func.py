@@ -10,6 +10,10 @@ word_size = 2
 num_words = 16
 
 tech_name = OPTS.tech_name
+if tech_name == "sky130":
+    num_spare_cols = 1
+    num_spare_rows = 1
+
 output_name = "sram"
 
 analytical_delay = False

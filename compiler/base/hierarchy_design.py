@@ -135,11 +135,11 @@ class hierarchy_design(spice, layout):
         # Translate port names to external nets
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,
-                                                                              self.pins),
+                                                                              list(self.pins)),
                         1)
-        port_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
+        port_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
-        for subinst, conns in zip(self.insts, self.conns):
+        for subinst, conns in zip(self.insts, self.get_instance_connections()):
             if subinst in self.graph_inst_exclude:
                 continue
             subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
@@ -153,11 +153,11 @@ class hierarchy_design(spice, layout):
         # Translate port names to external nets
         if len(port_nets) != len(self.pins):
             debug.error("Port length mismatch:\nExt nets={}, Ports={}".format(port_nets,
-                                                                              self.pins),
+                                                                              list(self.pins)),
                         1)
-        port_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
+        port_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
         debug.info(3, "Instance name={}".format(inst_name))
-        for subinst, conns in zip(self.insts, self.conns):
+        for subinst, conns in zip(self.insts, self.get_instance_connections()):
             subinst_name = inst_name + "{}x".format(OPTS.hier_seperator) + subinst.name
             subinst_ports = self.translate_nets(conns, port_dict, inst_name)
             for si_port, conn in zip(subinst_ports, conns):
@@ -186,7 +186,7 @@ class hierarchy_design(spice, layout):
         """
         # The final pin names will depend on the spice hierarchy, so
         # they are passed as an input.
-        pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
+        pin_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
         input_pins = self.get_inputs()
         output_pins = self.get_outputs()
         inout_pins = self.get_inouts()
@@ -197,7 +197,7 @@ class hierarchy_design(spice, layout):
 
     def __str__(self):
         """ override print function output """
-        pins = ",".join(self.pins)
+        pins = ",".join(list(self.pins))
         insts = ["    {}".format(x) for x in self.insts]
         objs = ["    {}".format(x) for x in self.objs]
         s = "********** design {0} **********".format(self.cell_name)
@@ -208,7 +208,7 @@ class hierarchy_design(spice, layout):
 
     def __repr__(self):
         """ override print function output """
-        text="( design: " + self.name + " pins=" + str(self.pins) + " " + str(self.width) + "x" + str(self.height) + " )\n"
+        text="( design: " + self.name + " pins=" + str(list(self.pins)) + " " + str(self.width) + "x" + str(self.height) + " )\n"
         for i in self.objs:
             text+=str(i) + ",\n"
         for i in self.insts:

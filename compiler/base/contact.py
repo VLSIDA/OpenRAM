@@ -66,8 +66,6 @@ class contact(hierarchy_design):
         self.offset = vector(0, 0)
         self.implant_type = implant_type
         self.well_type = well_type
-        # Module does not have pins, but has empty pin list.
-        self.pins = []
         self.create_layout()
 
     def create_layout(self):

@@ -161,8 +161,8 @@ class geometry:
 
 class instance(geometry):
     """
-    An instance of an instance/module with a specified location and
-    rotation
+    An instance of a module with a specified location, rotation,
+    spice pins, and spice nets
     """
     def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
         """Initializes an instance to represent a module"""
@@ -176,6 +176,18 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
+        # track if the instance's spice pin connections have been made
+        self.connected = False
+
+        # deepcopy because this instance needs to
+        # change attributes in these spice objects
+        self.spice_pins = copy.deepcopy(self.mod.pins)
+        self.spice_nets = copy.deepcopy(self.mod.nets)
+        for pin in self.spice_pins.values():
+            pin.set_inst(self)
+        for net in self.spice_nets.values():
+            net.set_inst(self)
+
         if OPTS.netlist_only:
             self.width = 0
             self.height = 0
@@ -273,6 +285,34 @@ class instance(geometry):
             p.transform(self.offset, self.mirror, self.rotate)
             new_pins.append(p)
         return new_pins
+
+    def connect_spice_pins(self, nets_list):
+        """
+        add the connection between instance pins and module nets
+        to both of their respective objects
+        nets_list must be the same length as self.spice_pins
+        """
+        if len(nets_list) == 0 and len(self.spice_pins) == 0:
+            # this is the only valid case to skip the following debug check
+            # because this with no pins are often connected arbitrarily
+            self.connected = True
+            return
+        debug.check(not self.connected,
+                    "instance {} has already been connected".format(self.name))
+        debug.check(len(self.spice_pins) == len(nets_list),
+            "must provide list of nets the same length as pin list\
+             when connecting an instance")
+        for pin in self.spice_pins.values():
+            net = nets_list.pop(0)
+            pin.set_inst_net(net)
+            net.connect_pin(pin)
+        self.connected = True
+
+    def get_connections(self):
+        conns = []
+        for pin in self.spice_pins.values():
+            conns.append(pin.inst_net.name)
+        return conns
 
     def calculate_transform(self, node):
         #set up the rotation matrix

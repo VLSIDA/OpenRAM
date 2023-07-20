@@ -89,7 +89,7 @@ class fake_sram(sram_config):
             self.pins.extend(['dout{0}[{1}]'.format(port, bit)
                               for bit in range(self.word_size + self.num_spare_cols)])
             self.pins.extend(['addr{0}[{1}]'.format(port, bit)
-                              for bit in range(self.word_size)])
+                              for bit in range(self.addr_size)])
 
             self.pins.extend(['csb{}'.format(port)])
 

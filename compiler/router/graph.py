@@ -57,12 +57,11 @@ class graph:
                 # Probe is blocked if the shape isn't routable
                 if not self.is_routable(blockage):
                     return True
-                elif blockage.inflated_from is None:
+                if blockage.inflated_from is not None:
+                    blockage = blockage.inflated_from
+                if blockage.overlaps(probe_shape):
                     continue
-                elif blockage.inflated_from.overlaps(probe_shape):
-                    continue
-                else:
-                    return True
+                return True
         return False
 
 
@@ -90,7 +89,7 @@ class graph:
                     offset = self.router.offset
                     p = node.center
                     lengths = [blockage.width(), blockage.height()]
-                    centers = blockage.center()
+                    centers = blockage.center().snap_to_grid()
                     ll, ur = blockage.rect
                     safe = [True, True]
                     for i in range(2):
@@ -114,7 +113,7 @@ class graph:
 
         for via in self.graph_vias:
             ll, ur = via.rect
-            center = via.center()
+            center = via.center().snap_to_grid()
             if via.on_segment(ll, point, ur) and \
                (center.x != point.x or center.y != point.y):
                 return True
@@ -191,6 +190,7 @@ class graph:
             else: # Square-like pin
                 points = [shape.center()]
             for p in points:
+                p.snap_to_grid()
                 x_values.add(p.x)
                 y_values.add(p.y)
 

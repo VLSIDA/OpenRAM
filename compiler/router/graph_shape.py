@@ -21,6 +21,17 @@ class graph_shape(pin_layout):
         self.inflated_from = inflated_from
 
 
+    def get_inflated_from(self):
+        """
+        Return `self` if `self.inflated_from` is None. Otherwise, return
+        `self.inflated_from`.
+        """
+
+        if self.inflated_from is None:
+            return self
+        return self.inflated_from
+
+
     def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0, keep_link=False):
         """ Override the default inflated_pin behavior. """
 

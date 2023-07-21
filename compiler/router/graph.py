@@ -57,8 +57,7 @@ class graph:
                 # Probe is blocked if the shape isn't routable
                 if not self.is_routable(blockage):
                     return True
-                if blockage.inflated_from is not None:
-                    blockage = blockage.inflated_from
+                blockage = blockage.get_inflated_from()
                 if blockage.overlaps(probe_shape):
                     continue
                 return True
@@ -83,8 +82,7 @@ class graph:
                 if not self.is_routable(blockage):
                     blocked = True
                     continue
-                if blockage.inflated_from is not None:
-                    blockage = blockage.inflated_from
+                blockage = blockage.get_inflated_from()
                 if self.inside_shape(node.center, blockage):
                     offset = self.router.offset
                     p = node.center

@@ -6,6 +6,7 @@
 from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
 from openram.tech import drc
+from .graph_utils import snap_to_grid
 
 
 class graph_shape(pin_layout):
@@ -18,6 +19,9 @@ class graph_shape(pin_layout):
 
         pin_layout.__init__(self, name, rect, layer_name_pp)
 
+        # Snap the shape to the grid here
+        ll, ur = self.rect
+        self.rect = [snap_to_grid(ll), snap_to_grid(ur)]
         self.inflated_from = inflated_from
 
 

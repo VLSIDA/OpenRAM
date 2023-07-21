@@ -12,6 +12,7 @@ from openram.tech import drc
 from .direction import direction
 from .graph_node import graph_node
 from .graph_probe import graph_probe
+from .graph_utils import snap_to_grid
 
 
 class graph:
@@ -87,7 +88,7 @@ class graph:
                     offset = self.router.offset
                     p = node.center
                     lengths = [blockage.width(), blockage.height()]
-                    centers = blockage.center().snap_to_grid()
+                    centers = snap_to_grid(blockage.center())
                     ll, ur = blockage.rect
                     safe = [True, True]
                     for i in range(2):
@@ -111,7 +112,7 @@ class graph:
 
         for via in self.graph_vias:
             ll, ur = via.rect
-            center = via.center().snap_to_grid()
+            center = snap_to_grid(via.center())
             if via.on_segment(ll, point, ur) and \
                (center.x != point.x or center.y != point.y):
                 return True
@@ -187,7 +188,7 @@ class graph:
             else: # Square-like pin
                 points = [shape.center()]
             for p in points:
-                p.snap_to_grid()
+                p = snap_to_grid(p)
                 x_values.add(p.x)
                 y_values.add(p.y)
 

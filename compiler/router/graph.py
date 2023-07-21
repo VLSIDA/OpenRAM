@@ -129,8 +129,7 @@ class graph:
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(source)
         region.bbox([target])
-        region = region.inflated_pin(spacing=self.router.track_space,
-                                     multiple=1)
+        region = region.inflated_pin(spacing=self.router.track_space)
         debug.info(3, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area

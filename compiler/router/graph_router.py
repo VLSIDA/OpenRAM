@@ -89,7 +89,6 @@ class graph_router(router_tech):
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
             self.blockages.append(pin.inflated_pin(spacing=self.track_space,
-                                                   multiple=1,
                                                    extra_spacing=self.offset,
                                                    keep_link=True))
 
@@ -199,7 +198,6 @@ class graph_router(router_tech):
         # Inflate the shapes to prevent DRC errors
         for blockage in blockages:
             self.blockages.append(blockage.inflated_pin(spacing=self.track_space,
-                                                        multiple=1,
                                                         extra_spacing=self.offset,
                                                         keep_link=shape_name is not None))
             # Remove blockages contained by this new blockage
@@ -241,7 +239,6 @@ class graph_router(router_tech):
             if new_shape.contained_by_any(self.vias):
                 continue
             self.vias.append(new_shape.inflated_pin(spacing=self.track_space,
-                                                    multiple=1,
                                                     extra_spacing=self.offset))
 
 
@@ -359,7 +356,6 @@ class graph_router(router_tech):
         self.new_pins[pin_name] = new_pins
         for pin in new_pins:
             self.blockages.append(pin.inflated_pin(spacing=self.track_space,
-                                                   multiple=1,
                                                    extra_spacing=self.offset,
                                                    keep_link=True))
 

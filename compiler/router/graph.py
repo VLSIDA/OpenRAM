@@ -12,7 +12,7 @@ from openram.tech import drc
 from .direction import direction
 from .graph_node import graph_node
 from .graph_probe import graph_probe
-from .graph_utils import snap_to_grid
+from .graph_utils import *
 
 
 class graph:
@@ -68,14 +68,6 @@ class graph:
     def is_node_blocked(self, node):
         """ Return if a node is blocked by a blockage. """
 
-        def diff(a, b):
-            """
-            Return the absolute difference of two numbers avoiding precision
-            errors.
-            """
-            decimals = len(str(drc["grid"]).split(".")[1])
-            return round(abs(a - b), decimals)
-
         blocked = False
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
@@ -93,10 +85,10 @@ class graph:
                     safe = [True, True]
                     for i in range(2):
                         if lengths[i] >= offset * 2:
-                            min_diff = min(diff(ll[i], p[i]), diff(ur[i], p[i]))
+                            min_diff = snap_offset_to_grid(min(abs(ll[i] - p[i]), abs(ur[i] - p[i])))
                             if min_diff < offset:
                                 safe[i] = False
-                        elif diff(centers[i], p[i]) > 0:
+                        elif centers[i] != p[i]:
                             safe[i] = False
                     if not all(safe):
                         blocked = True
@@ -193,12 +185,14 @@ class graph:
                 y_values.add(p.y)
 
         # Add corners for blockages
-        offset = drc["grid"]
+        offset = vector(drc["grid"], drc["grid"])
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
+            nll = snap_to_grid(ll - offset)
+            nur = snap_to_grid(ur + offset)
             # Add minimum offset to the blockage corner nodes to prevent overlap
-            x_values.update([ll.x - offset, ur.x + offset])
-            y_values.update([ll.y - offset, ur.y + offset])
+            x_values.update([nll.x, nur.x])
+            y_values.update([nll.y, nur.y])
 
         # Sort x and y values
         x_values = list(x_values)

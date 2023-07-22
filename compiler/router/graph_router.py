@@ -13,6 +13,7 @@ from openram import OPTS
 from .router_tech import router_tech
 from .graph import graph
 from .graph_shape import graph_shape
+from .graph_utils import snap
 
 
 class graph_router(router_tech):
@@ -51,7 +52,7 @@ class graph_router(router_tech):
         self.fake_pins = []
 
         # Set the offset here
-        self.offset = self.layer_widths[0] / 2
+        self.offset = snap(self.layer_widths[0] / 2)
 
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):

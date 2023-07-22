@@ -10,16 +10,9 @@ from openram.base import vector
 from openram.tech import drc
 
 
-def snap_to_grid(v):
-    """ Use custom `snap_to_grid` since `vector.snap_to_grid` isn't working. """
+def snap(a):
+    """ Use custom `snap` since `vector.snap_to_grid` isn't working. """
 
-    return vector(snap_offset_to_grid(v.x), snap_offset_to_grid(v.y))
-
-
-def snap_offset_to_grid(offset):
-    """
-    Use custom `snap_offset_to_grid` since `vector.snap_offset_to_grid` isn't
-    working.
-    """
-
-    return round(offset, len(str(drc["grid"]).split('.')[1]))
+    if isinstance(a, vector):
+        return vector(snap(a.x), snap(a.y))
+    return round(a, len(str(drc["grid"]).split('.')[1]))

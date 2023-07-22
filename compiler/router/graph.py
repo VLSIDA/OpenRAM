@@ -12,7 +12,7 @@ from openram.tech import drc
 from .direction import direction
 from .graph_node import graph_node
 from .graph_probe import graph_probe
-from .graph_utils import *
+from .graph_utils import snap
 
 
 class graph:
@@ -80,12 +80,12 @@ class graph:
                     offset = self.router.offset
                     p = node.center
                     lengths = [blockage.width(), blockage.height()]
-                    centers = snap_to_grid(blockage.center())
+                    centers = blockage.center()
                     ll, ur = blockage.rect
                     safe = [True, True]
                     for i in range(2):
                         if lengths[i] >= offset * 2:
-                            min_diff = snap_offset_to_grid(min(abs(ll[i] - p[i]), abs(ur[i] - p[i])))
+                            min_diff = snap(min(abs(ll[i] - p[i]), abs(ur[i] - p[i])))
                             if min_diff < offset:
                                 safe[i] = False
                         elif centers[i] != p[i]:
@@ -104,7 +104,7 @@ class graph:
 
         for via in self.graph_vias:
             ll, ur = via.rect
-            center = snap_to_grid(via.center())
+            center = via.center()
             if via.on_segment(ll, point, ur) and \
                (center.x != point.x or center.y != point.y):
                 return True
@@ -180,7 +180,7 @@ class graph:
             else: # Square-like pin
                 points = [shape.center()]
             for p in points:
-                p = snap_to_grid(p)
+                p = snap(p)
                 x_values.add(p.x)
                 y_values.add(p.y)
 
@@ -188,8 +188,8 @@ class graph:
         offset = vector(drc["grid"], drc["grid"])
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
-            nll = snap_to_grid(ll - offset)
-            nur = snap_to_grid(ur + offset)
+            nll = snap(ll - offset)
+            nur = snap(ur + offset)
             # Add minimum offset to the blockage corner nodes to prevent overlap
             x_values.update([nll.x, nur.x])
             y_values.update([nll.y, nur.y])

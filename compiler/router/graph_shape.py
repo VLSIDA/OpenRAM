@@ -6,7 +6,7 @@
 from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
 from openram.tech import drc
-from .graph_utils import snap_to_grid
+from .graph_utils import snap
 
 
 class graph_shape(pin_layout):
@@ -21,8 +21,26 @@ class graph_shape(pin_layout):
 
         # Snap the shape to the grid here
         ll, ur = self.rect
-        self.rect = [snap_to_grid(ll), snap_to_grid(ur)]
+        self.rect = [snap(ll), snap(ur)]
         self.inflated_from = inflated_from
+
+
+    def center(self):
+        """ Override the default `center` behavior. """
+
+        return snap(super().center())
+
+
+    def height(self):
+        """ Override the default `height` behavior. """
+
+        return snap(super().height())
+
+
+    def width(self):
+        """ Override the default `width` behavior. """
+
+        return snap(super().width())
 
 
     def get_inflated_from(self):

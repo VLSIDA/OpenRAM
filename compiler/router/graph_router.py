@@ -206,7 +206,11 @@ class graph_router(router_tech):
 
         # Inflate the shapes to prevent DRC errors
         for blockage in blockages:
-            self.blockages.append(blockage.inflated_pin(spacing=self.track_space,
+            if self.get_zindex(blockage.lpp) == 1:
+                spacing = self.vert_layer_spacing
+            else:
+                spacing = self.horiz_layer_spacing
+            self.blockages.append(blockage.inflated_pin(spacing=spacing,
                                                         extra_spacing=self.offset,
                                                         keep_link=shape_name is not None))
             # Remove blockages contained by this new blockage

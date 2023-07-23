@@ -127,12 +127,7 @@ class graph:
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
-        for blockage in self.router.blockages:
-            # Set the region's lpp to current blockage's lpp so that the
-            # overlaps method works
-            region.lpp = blockage.lpp
-            if region.overlaps(blockage):
-                self.graph_blockages.append(blockage)
+        self.find_graph_blockages(region)
         for shape in [source, target]:
             if shape not in self.graph_blockages:
                 self.graph_blockages.append(shape)
@@ -145,14 +140,29 @@ class graph:
             region.lpp = via.lpp
             if region.overlaps(via):
                 self.graph_vias.append(via)
-        debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
-        debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
 
         # Create the graph
         x_values, y_values = self.generate_cartesian_values()
+        region.bbox(self.graph_blockages)
+        self.find_graph_blockages(region)
         self.generate_graph_nodes(x_values, y_values)
         self.save_end_nodes()
+        debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
+        debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
         debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
+
+
+    def find_graph_blockages(self, region):
+        """ Find blockages that overlap the routing region. """
+
+        for blockage in self.router.blockages:
+            # Set the region's lpp to current blockage's lpp so that the
+            # overlaps method works
+            if blockage in self.graph_blockages:
+                continue
+            region.lpp = blockage.lpp
+            if region.overlaps(blockage):
+                self.graph_blockages.append(blockage)
 
 
     def generate_cartesian_values(self):

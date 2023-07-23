@@ -8,6 +8,7 @@ from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.gdsMill import gdsMill
 from openram.tech import GDS
+from openram.tech import drc
 from openram.tech import layer as tech_layer
 from openram import OPTS
 from .router_tech import router_tech
@@ -90,7 +91,13 @@ class graph_router(router_tech):
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            self.blockages.append(pin.inflated_pin(spacing=self.track_space,
+            xdiff = self.layer_widths[0] - pin.width()
+            ydiff = self.layer_widths[0] - pin.height()
+            diff = max(xdiff, ydiff)
+            spacing = self.track_space + drc["grid"]
+            if diff > 0:
+                spacing += diff
+            self.blockages.append(pin.inflated_pin(spacing=spacing,
                                                    extra_spacing=self.offset,
                                                    keep_link=True))
 

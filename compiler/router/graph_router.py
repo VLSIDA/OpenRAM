@@ -77,6 +77,7 @@ class graph_router(router_tech):
         self.find_vias()
 
         # Add side pins
+        self.calculate_ring_bbox()
         if self.pin_type in ["top", "bottom", "right", "left"]:
             self.add_side_pin(vdd_name)
             self.add_side_pin(gnd_name)
@@ -243,15 +244,37 @@ class graph_router(router_tech):
                                                     extra_spacing=self.offset))
 
 
-    def add_side_pin(self, pin_name, side, width=3, num_connects=4, bbox=None):
+    def calculate_ring_bbox(self, width=3):
+        """ Calculate the ring-safe bounding box of the layout. """
+
+        ll, ur = self.design.get_bbox()
+        wideness = self.track_wire * width + self.track_space * (width - 1)
+        total_wideness = wideness * 4
+        for blockage in self.blockages:
+            bll, bur = blockage.rect
+            if self.get_zindex(blockage.lpp) == 1: # Vertical
+                diff = ll.x + total_wideness - bll.x
+                if diff > 0:
+                    ll = vector(ll.x - diff, ll.y)
+                diff = ur.x - total_wideness - bur.x
+                if diff < 0:
+                    ur = vector(ur.x - diff, ur.y)
+            else: # Horizontal
+                diff = ll.y + total_wideness - bll.y
+                if diff > 0:
+                    ll = vector(ll.x, ll.y - diff)
+                diff = ur.y - total_wideness - bur.y
+                if diff < 0:
+                    ur = vector(ur.x, ur.y - diff)
+        self.ring_bbox = [ll, ur]
+
+
+    def add_side_pin(self, pin_name, side, width=3, num_connects=4):
         """ Add supply pin to one side of the layout. """
 
+        ll, ur = self.ring_bbox
         vertical = side in ["left", "right"]
         inner = pin_name == self.gnd_name
-
-        if bbox is None:
-            bbox = self.design.get_bbox()
-        ll, ur = bbox
 
         # Calculate wires' wideness
         wideness = self.track_wire * width + self.track_space * (width - 1)
@@ -322,12 +345,10 @@ class graph_router(router_tech):
     def add_ring_pin(self, pin_name, width=3, num_connects=4):
         """ Add the supply ring to the layout. """
 
-        bbox = self.design.get_bbox()
-
         # Add side pins
         new_pins = []
         for side in ["top", "bottom", "right", "left"]:
-            new_shape, fake_pins = self.add_side_pin(pin_name, side, width, num_connects, bbox)
+            new_shape, fake_pins = self.add_side_pin(pin_name, side, width, num_connects)
             ll, ur = new_shape.rect
             rect = [ll, ur]
             layer = self.get_layer(side in ["left", "right"])

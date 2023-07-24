@@ -237,7 +237,6 @@ class graph_router(router_tech):
     def inflate_shape(self, shape, is_pin=False, is_via=False):
         """ Inflate a given shape with spacing rules. """
 
-        # FIXME: Shapes might be wider than the route_tech settings
         # Pins must keep their center lines away from any blockage to prevent
         # the nodes from being unconnected
         if is_pin:
@@ -256,6 +255,11 @@ class graph_router(router_tech):
                 spacing = self.vert_layer_spacing
             else:
                 spacing = self.horiz_layer_spacing
+        # If the shape is wider than the supply wire width, its spacing can be
+        # different
+        wide = min(shape.width(), shape.height())
+        if wide > self.layer_widths[0]:
+            spacing = self.get_layer_space(self.get_zindex(shape.lpp), wide)
         return shape.inflated_pin(spacing=spacing,
                                   extra_spacing=self.offset)
 

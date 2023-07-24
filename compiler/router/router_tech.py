@@ -67,6 +67,11 @@ class router_tech:
             self.vert_layer_minwidth = max(self.vert_layer_minwidth, max_via_size)
             self.horiz_layer_minwidth = max(self.horiz_layer_minwidth, max_via_size)
 
+            # Update spacing for the new widths
+            max_width = max(self.vert_layer_minwidth, self.horiz_layer_minwidth)
+            self.vert_layer_spacing = self.get_layer_space(1, max_width)
+            self.horiz_layer_spacing = self.get_layer_space(0, max_width)
+
             self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
             self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
 
@@ -114,18 +119,21 @@ class router_tech:
         These are the width and spacing of a supply layer given a supply rail
         of the given number of min wire widths.
         """
-        if zindex==1:
-            layer_name = self.vert_layer_name
-        elif zindex==0:
-            layer_name = self.horiz_layer_name
-        else:
-            debug.error("Invalid zindex for track", -1)
-
-        min_wire_width = drc("minwidth_{0}".format(layer_name), 0, math.inf)
-
-        min_width = self.route_track_width * drc("minwidth_{0}".format(layer_name), self.route_track_width * min_wire_width, math.inf)
-        min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), self.route_track_width * min_wire_width, math.inf)
-
+        min_width = self.get_layer_width(zindex)
+        min_spacing = self.get_layer_space(zindex, min_width)
         return (min_width, min_spacing)
 
+    def get_layer_width(self, zindex):
+        """  """
+        layer_name = self.get_layer(zindex)
+        min_wire_width = drc("minwidth_{0}".format(layer_name), 0, math.inf)
+        min_width = self.route_track_width * drc("minwidth_{0}".format(layer_name), self.route_track_width * min_wire_width, math.inf)
+        return min_width
 
+    def get_layer_space(self, zindex, width):
+        """  """
+        if width is None:
+            width = self.get_layer_width(zindex)
+        layer_name = self.get_layer(zindex)
+        min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), self.route_track_width * width, math.inf)
+        return min_spacing

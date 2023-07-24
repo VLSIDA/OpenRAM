@@ -59,8 +59,6 @@ class graph_router(router_tech):
     def route(self, vdd_name="vdd", gnd_name="gnd"):
         """ Route the given pins in the given order. """
         debug.info(1, "Running router for {} and {}...".format(vdd_name, gnd_name))
-        # FIXME: Comment-out later
-        self.write_debug_gds(gds_name="before.gds")
 
         # Save pin names
         self.vdd_name = vdd_name
@@ -91,15 +89,7 @@ class graph_router(router_tech):
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            xdiff = self.layer_widths[0] - pin.width()
-            ydiff = self.layer_widths[0] - pin.height()
-            diff = max(xdiff, ydiff) / 2
-            spacing = self.track_space + drc["grid"]
-            if diff > 0:
-                spacing += diff
-            self.blockages.append(pin.inflated_pin(spacing=spacing,
-                                                   extra_spacing=self.offset,
-                                                   keep_link=True))
+            self.blockages.append(self.inflate_shape(pin, is_pin=True))
 
         # Route vdd and gnd
         for pin_name in [vdd_name, gnd_name]:
@@ -111,6 +101,8 @@ class graph_router(router_tech):
                 hg.create_graph(source, target)
                 # Find the shortest path from source to target
                 path = hg.find_shortest_path()
+                # TODO: Exponentially increase the routing area and retry if no
+                # path was found
                 debug.check(path is not None, "Couldn't route from {} to {}".format(source, target))
                 # Create the path shapes on layout
                 self.add_path(path)
@@ -118,9 +110,6 @@ class graph_router(router_tech):
                 self.prepare_gds_reader()
                 self.find_blockages(pin_name)
                 self.find_vias()
-
-        # FIXME: Comment-out later
-        self.write_debug_gds(gds_name="after.gds")
 
 
     def prepare_gds_reader(self):
@@ -206,13 +195,7 @@ class graph_router(router_tech):
 
         # Inflate the shapes to prevent DRC errors
         for blockage in blockages:
-            if self.get_zindex(blockage.lpp) == 1:
-                spacing = self.vert_layer_spacing
-            else:
-                spacing = self.horiz_layer_spacing
-            self.blockages.append(blockage.inflated_pin(spacing=spacing,
-                                                        extra_spacing=self.offset,
-                                                        keep_link=shape_name is not None))
+            self.blockages.append(self.inflate_shape(blockage))
             # Remove blockages contained by this new blockage
             for i in range(len(prev_blockages) - 1, -1, -1):
                 prev_blockage = prev_blockages[i]
@@ -251,8 +234,33 @@ class graph_router(router_tech):
             # Also ignore the new pins
             if new_shape.contained_by_any(self.vias):
                 continue
-            self.vias.append(new_shape.inflated_pin(spacing=self.track_space,
-                                                    extra_spacing=self.offset))
+            self.vias.append(self.inflate_shape(new_shape, is_via=True))
+
+
+    def inflate_shape(self, shape, is_pin=False, is_via=False):
+        """ Inflate a given shape with spacing rules. """
+
+        # FIXME: Shapes might be wider than the route_tech settings
+        # Pins must keep their center lines away from any blockage to prevent
+        # the nodes from being unconnected
+        if is_pin:
+            xdiff = self.layer_widths[0] - shape.width()
+            ydiff = self.layer_widths[0] - shape.height()
+            diff = max(xdiff, ydiff) / 2
+            spacing = self.track_space + drc["grid"]
+            if diff > 0:
+                spacing += diff
+        # Vias are inflated by the maximum spacing rule
+        elif is_via:
+            spacing = self.track_space
+        # Blockages are inflated by their layer's corresponding spacing rule
+        else:
+            if self.get_zindex(shape.lpp) == 1:
+                spacing = self.vert_layer_spacing
+            else:
+                spacing = self.horiz_layer_spacing
+        return shape.inflated_pin(spacing=spacing,
+                                  extra_spacing=self.offset)
 
 
     def calculate_ring_bbox(self, width=3):
@@ -388,9 +396,7 @@ class graph_router(router_tech):
         # Save side pins for routing
         self.new_pins[pin_name] = new_pins
         for pin in new_pins:
-            self.blockages.append(pin.inflated_pin(spacing=self.track_space,
-                                                   extra_spacing=self.offset,
-                                                   keep_link=True))
+            self.blockages.append(self.inflate_shape(pin, is_pin=True))
 
 
     def get_mst_pairs(self, pins):

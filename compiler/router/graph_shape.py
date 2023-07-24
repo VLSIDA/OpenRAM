@@ -54,7 +54,7 @@ class graph_shape(pin_layout):
         return self.inflated_from
 
 
-    def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0, keep_link=False):
+    def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0):
         """ Override the default inflated_pin behavior. """
 
         ll, ur = self.inflate(spacing, multiple)
@@ -62,7 +62,7 @@ class graph_shape(pin_layout):
         newll = ll - extra
         newur = ur + extra
         inflated_area = (newll, newur)
-        return graph_shape(self.name, inflated_area, self.layer, self if keep_link else None)
+        return graph_shape(self.name, inflated_area, self.layer, self)
 
 
     def aligns(self, other):

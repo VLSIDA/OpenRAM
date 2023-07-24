@@ -128,24 +128,20 @@ class graph:
         # Find the blockages that are in the routing area
         self.graph_blockages = []
         self.find_graph_blockages(region)
-        for shape in [source, target]:
-            if shape not in self.graph_blockages:
-                self.graph_blockages.append(shape)
 
         # Find the vias that are in the routing area
         self.graph_vias = []
-        for via in self.router.vias:
-            # Set the regions's lpp to current via's lpp so that the
-            # overlaps method works
-            region.lpp = via.lpp
-            if region.overlaps(via):
-                self.graph_vias.append(via)
+        self.find_graph_vias(region)
 
-        # Create the graph
+        # Generate the cartesian values from shapes in the area
         x_values, y_values = self.generate_cartesian_values()
+        # Adjust the routing region to include "edge" shapes
         region.bbox(self.graph_blockages)
+        # Find and include edge shapes to prevent DRC errors
         self.find_graph_blockages(region)
+        # Generate the graph nodes from cartesian values
         self.generate_graph_nodes(x_values, y_values)
+        # Save the graph nodes that lie in source and target shapes
         self.save_end_nodes()
         debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
         debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
@@ -156,13 +152,33 @@ class graph:
         """ Find blockages that overlap the routing region. """
 
         for blockage in self.router.blockages:
-            # Set the region's lpp to current blockage's lpp so that the
-            # overlaps method works
+            # Skip if already included
             if blockage in self.graph_blockages:
                 continue
+            # Set the region's lpp to current blockage's lpp so that the
+            # overlaps method works
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
+        # FIXME: Don't include source and target if they're already included
+        # in inflated form
+        for shape in [self.source, self.target]:
+            if shape not in self.graph_blockages:
+                self.graph_blockages.append(shape)
+
+
+    def find_graph_vias(self, region):
+        """ Find vias that overlap the routing region. """
+
+        for via in self.router.vias:
+            # Skip if already included
+            if via in self.graph_vias:
+                continue
+            # Set the regions's lpp to current via's lpp so that the
+            # overlaps method works
+            region.lpp = via.lpp
+            if region.overlaps(via):
+                self.graph_vias.append(via)
 
 
     def generate_cartesian_values(self):

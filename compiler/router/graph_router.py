@@ -97,10 +97,10 @@ class graph_router(router_tech):
             # Route closest pins according to the minimum spanning tree
             for source, target in self.get_mst_pairs(list(pins)):
                 # Create the graph
-                hg = graph(self)
-                hg.create_graph(source, target)
+                g = graph(self)
+                g.create_graph(source, target)
                 # Find the shortest path from source to target
-                path = hg.find_shortest_path()
+                path = g.find_shortest_path()
                 # TODO: Exponentially increase the routing area and retry if no
                 # path was found
                 debug.check(path is not None, "Couldn't route from {} to {}".format(source, target))
@@ -130,7 +130,6 @@ class graph_router(router_tech):
         for shape in shape_list:
             layer, boundary = shape
             # gdsMill boundaries are in (left, bottom, right, top) order
-            # so repack and snap to the grid
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
@@ -163,7 +162,6 @@ class graph_router(router_tech):
             shapes = self.layout.getAllShapes(lpp)
             for boundary in shapes:
                 # gdsMill boundaries are in (left, bottom, right, top) order
-                # so repack and snap to the grid
                 ll = vector(boundary[0], boundary[1])
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
@@ -224,7 +222,6 @@ class graph_router(router_tech):
         shapes = self.layout.getAllShapes(via_lpp)
         for boundary in shapes:
             # gdsMill boundaries are in (left, bottom, right, top) order
-            # so repack and snap to the grid
             ll = vector(boundary[0], boundary[1])
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
@@ -486,30 +483,32 @@ class graph_router(router_tech):
 
 
     def get_new_pins(self, name):
-        """  """
+        """ Return the new supply pins added by this router. """
 
         return self.new_pins[name]
 
 
-    def write_debug_gds(self, gds_name="debug_route.gds", hg=None, source=None, target=None):
-        """  """
+    def write_debug_gds(self, gds_name="debug_route.gds", g=None, source=None, target=None):
+        """ Write the debug GDSII file for the router. """
 
-        self.add_router_info(hg, source, target)
+        self.add_router_info(g, source, target)
         self.design.gds_write(gds_name)
         self.del_router_info()
 
 
-    def add_router_info(self, hg=None, source=None, target=None):
-        """  """
+    def add_router_info(self, g=None, source=None, target=None):
+        """
+        Add debug information to the text layer about the graph and router.
+        """
 
         # Display the inflated blockage
-        if hg:
+        if g:
             for blockage in self.blockages:
-                if blockage in hg.graph_blockages:
+                if blockage in g.graph_blockages:
                     self.add_object_info(blockage, "blockage{}++[{}]".format(self.get_zindex(blockage.lpp), blockage.name))
                 else:
                     self.add_object_info(blockage, "blockage{}[{}]".format(self.get_zindex(blockage.lpp), blockage.name))
-            for node in hg.nodes:
+            for node in g.nodes:
                 offset = (node.center.x, node.center.y)
                 self.design.add_label(text="n{}".format(node.center.z),
                                       layer="text",
@@ -526,14 +525,14 @@ class graph_router(router_tech):
 
 
     def del_router_info(self):
-        """  """
+        """ Delete router information from the text layer. """
 
         lpp = tech_layer["text"]
         self.design.objs = [x for x in self.design.objs if x.lpp != lpp]
 
 
     def add_object_info(self, obj, label):
-        """  """
+        """ Add debug information to the text layer about an object. """
 
         ll, ur = obj.rect
         self.design.add_rect(layer="text",

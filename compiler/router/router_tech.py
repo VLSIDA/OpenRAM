@@ -124,14 +124,14 @@ class router_tech:
         return (min_width, min_spacing)
 
     def get_layer_width(self, zindex):
-        """  """
+        """ Return the minimum width of a layer. """
         layer_name = self.get_layer(zindex)
         min_wire_width = drc("minwidth_{0}".format(layer_name), 0, math.inf)
         min_width = self.route_track_width * drc("minwidth_{0}".format(layer_name), self.route_track_width * min_wire_width, math.inf)
         return min_width
 
     def get_layer_space(self, zindex, width):
-        """  """
+        """ Return the minimum spacing of a layer given wire width. """
         if width is None:
             width = self.get_layer_width(zindex)
         layer_name = self.get_layer(zindex)

@@ -93,7 +93,7 @@ class graph_router(router_tech):
         for pin in self.all_pins:
             xdiff = self.layer_widths[0] - pin.width()
             ydiff = self.layer_widths[0] - pin.height()
-            diff = max(xdiff, ydiff)
+            diff = max(xdiff, ydiff) / 2
             spacing = self.track_space + drc["grid"]
             if diff > 0:
                 spacing += diff

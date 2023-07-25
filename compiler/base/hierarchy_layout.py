@@ -476,6 +476,13 @@ class layout():
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
 
+    def add_existing_inst(self, inst):
+        self.mods.add(inst.mod)
+        self.inst_names.add(self.name)
+        self.insts.append(inst)
+        debug.info(3, "adding existing instance{}".format(self.insts[-1]))
+        return self.insts[-1]
+
     def get_inst(self, name):
         """ Retrieve an instance by name """
         for inst in self.insts:

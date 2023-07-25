@@ -40,11 +40,13 @@ class pattern():
         self.parent_design = parent_design
         self.name = name
         self.core_block = core_block
+        self.num_core_x = num_core_x
+        self.num_core_y = num_core_y
+        self.cores_per_x_block = cores_per_x_block
+        self.cores_per_y_block = cores_per_y_block
         self.x_block = x_block
         self.y_block = y_block
         self.xy_block = xy_block
-        self.cores_per_x_block = cores_per_x_block
-        self.cores_per_y_block = cores_per_y_block
         self.initial_x_block = initial_x_block
         self.initial_y_block = initial_y_block
         self.final_x_block = final_x_block
@@ -99,7 +101,6 @@ class pattern():
         for dy in range(len(block)):
             for dx in range(len(block[0])):
                 inst = block[dy][dx]
-                print(inst.name)
                 self.parent_design.cell_inst[x + dx, y + dy] = self.parent_design.add_existing_inst(inst)
                 self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(x+dx, y+dy))
 
@@ -107,9 +108,14 @@ class pattern():
     def connect_array(self) -> None:
         x = 0
         y = 0
-        self.connect_block(self.core_block, x,y)
-
-        
+        for i in range(self.num_core_y):
+            for j in range (self.num_core_x):
+                print("connecting {} {}".format(x,y))
+                self.connect_block(self.core_block, x,y)
+                x += len(self.core_block[0])
+            x = 0
+            y += len(self.core_block)
+    
     def place_array(self) -> None:
 
         array_x = 0

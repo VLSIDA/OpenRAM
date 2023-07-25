@@ -79,7 +79,15 @@ class bitcell_array(bitcell_base_array):
         core_block[0][1] = geometry.instance("core_1_0", mod=self.cell, mirror="MX")
         core_block[1][0] = geometry.instance("core_0_1", mod=self.cell, mirror="MY")
         core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, mirror="XY")
-        self.pattern = pattern(self, "bitcell_array", core_block, self.row_size/2, self.column_size/2)
+        num_core_x = self.row_size/len(core_block[0])
+        num_core_y = self.column_size/len(core_block)
+        debug.check(num_core_x.is_integer(), "number of core blocks must be an integer")
+        debug.check(num_core_y.is_integer(), "number of core blocks must be an integer")
+        num_core_x = int(num_core_x)
+        num_core_y = int(num_core_y)
+
+        self.pattern = pattern(self, "bitcell_array", core_block, num_core_x, num_core_y)
+        self.pattern.connect_array()
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

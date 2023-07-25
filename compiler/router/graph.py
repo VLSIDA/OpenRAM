@@ -58,7 +58,7 @@ class graph:
                 # Probe is blocked if the shape isn't routable
                 if not self.is_routable(blockage):
                     return True
-                blockage = blockage.get_inflated_from()
+                blockage = blockage.get_core()
                 if blockage.overlaps(probe_shape):
                     continue
                 return True
@@ -75,7 +75,7 @@ class graph:
                 if not self.is_routable(blockage):
                     blocked = True
                     continue
-                blockage = blockage.get_inflated_from()
+                blockage = blockage.get_core()
                 if self.inside_shape(node.center, blockage):
                     offset = self.router.offset
                     p = node.center
@@ -163,7 +163,7 @@ class graph:
         # Make sure that the source or target fake pins are included as blockage
         for shape in [self.source, self.target]:
             for blockage in self.graph_blockages:
-                blockage = blockage.get_inflated_from()
+                blockage = blockage.get_core()
                 if shape == blockage:
                     break
             else:
@@ -199,7 +199,7 @@ class graph:
         for shape in self.graph_blockages:
             if not self.is_routable(shape):
                 continue
-            shape = shape.get_inflated_from()
+            shape = shape.get_core()
             aspect_ratio = shape.width() / shape.height()
             # FIXME: Aspect ratio may not be the best way to determine this
             # If the pin is tall or fat, add two points on the ends

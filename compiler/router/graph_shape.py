@@ -15,14 +15,15 @@ class graph_shape(pin_layout):
     the graph router.
     """
 
-    def __init__(self, name, rect, layer_name_pp, inflated_from=None):
+    def __init__(self, name, rect, layer_name_pp, core=None):
 
         pin_layout.__init__(self, name, rect, layer_name_pp)
 
         # Snap the shape to the grid here
         ll, ur = self.rect
         self.rect = [snap(ll), snap(ur)]
-        self.inflated_from = inflated_from
+        # Core is the original shape from which this shape is inflated
+        self.core = core
 
 
     def center(self):
@@ -43,15 +44,14 @@ class graph_shape(pin_layout):
         return snap(super().width())
 
 
-    def get_inflated_from(self):
+    def get_core(self):
         """
-        Return `self` if `self.inflated_from` is None. Otherwise, return
-        `self.inflated_from`.
+        Return `self` if `self.core` is None. Otherwise, return `self.core`.
         """
 
-        if self.inflated_from is None:
+        if self.core is None:
             return self
-        return self.inflated_from
+        return self.core
 
 
     def inflated_pin(self, spacing=None, multiple=0.5, extra_spacing=0):

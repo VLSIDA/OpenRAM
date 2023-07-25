@@ -23,9 +23,6 @@ class sram_1bank_2mux_1rw_1r_spare_cols_test(openram_test):
         openram.init_openram(config_file, is_unit_test=True)
         from openram import sram_config
 
-        if OPTS.tech_name == "freepdk45":
-            OPTS.route_supplies = False
-
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 1
         OPTS.num_w_ports = 0

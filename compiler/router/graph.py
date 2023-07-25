@@ -199,6 +199,7 @@ class graph:
         for shape in self.graph_blockages:
             if not self.is_routable(shape):
                 continue
+            shape = shape.get_inflated_from()
             aspect_ratio = shape.width() / shape.height()
             # FIXME: Aspect ratio may not be the best way to determine this
             # If the pin is tall or fat, add two points on the ends

@@ -160,10 +160,13 @@ class graph:
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
-        # FIXME: Don't include source and target if they're already included
-        # in inflated form
+        # Make sure that the source or target fake pins are included as blockage
         for shape in [self.source, self.target]:
-            if shape not in self.graph_blockages:
+            for blockage in self.graph_blockages:
+                blockage = blockage.get_inflated_from()
+                if shape == blockage:
+                    break
+            else:
                 self.graph_blockages.append(shape)
 
 

@@ -22,7 +22,7 @@ from openram.sram_factory import factory
 from openram import OPTS
 from .vector import vector
 from .pin_layout import pin_layout
-from .utils import round_to_grid
+from .utils import round_to_grid, ceil
 from . import geometry
 
 try:
@@ -838,8 +838,7 @@ class layout():
 
         from_id = tech_layer_indices[from_layer]
         to_id   = tech_layer_indices[to_layer]
-
-        layer_list = [x for x in tech_layer_indices.keys() if tech_layer_indices[x] >= from_id and tech_layer_indices[x] < to_id]
+        layer_list = [x for x in tech_layer_indices.keys() if tech_layer_indices[x] > from_id and tech_layer_indices[x] < to_id]
 
         return layer_list
 
@@ -1368,12 +1367,11 @@ class layout():
         min_width = drc("minwidth_{}".format(layer))
 
         if preferred_directions[layer] == "V":
-            new_height = max(min_area / width, min_width)
+            new_height = ceil(max(min_area / width, min_width))
             new_width = width
         else:
-            new_width = max(min_area / height, min_width)
+            new_width = ceil(max(min_area / height, min_width))
             new_height = height
-
         debug.check(min_area <= round_to_grid(new_height*new_width), "Min area violated.")
 
         self.add_rect_center(layer=layer,

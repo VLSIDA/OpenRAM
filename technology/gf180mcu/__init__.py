@@ -22,7 +22,7 @@ os.environ["MGC_TMPDIR"] = "/tmp"
 
 # OpenPDK needed for magicrc, tech file and spice models of transistors
 if 'PDK_ROOT' in os.environ:
-    open_pdks = os.path.join(os.environ['PDK_ROOT'], 'gf180mcuA', 'libs.tech')
+    open_pdks = os.path.join(os.environ['PDK_ROOT'], 'gf180mcuD', 'libs.tech')
 else:
     raise SystemError("Unable to find open_pdks tech file. Set PDK_ROOT.")
 
@@ -34,7 +34,7 @@ if not os.path.exists(gf180_lib_ngspice):
 os.environ["SPICE_MODEL_DIR"] = spice_model_dir
 
 open_pdks = os.path.abspath(open_pdks)
-gf180_magicrc = os.path.join(open_pdks, 'magic', "gf180mcuA.magicrc")
+gf180_magicrc = os.path.join(open_pdks, 'magic', "gf180mcuD.magicrc")
 if not os.path.exists(gf180_magicrc):
     raise SystemError("Did not find {} under {}".format(gf180_magicrc, open_pdks))
 os.environ["OPENRAM_MAGICRC"] = gf180_magicrc

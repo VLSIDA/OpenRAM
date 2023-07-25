@@ -36,7 +36,7 @@ class rom_poly_tap(design):
 
         self.place_via()
         self.add_boundary()
-        self.extend_poly()
+        # self.extend_poly()
 
         if self.add_tap or self.place_poly:
             self.place_active_tap()

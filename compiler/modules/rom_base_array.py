@@ -10,7 +10,7 @@
 import math
 from .bitcell_base_array import bitcell_base_array
 from openram.base import vector
-from openram import OPTS, debug
+from openram import debug
 from openram.sram_factory import factory
 from openram.tech import drc, layer
 
@@ -156,7 +156,7 @@ class rom_base_array(bitcell_base_array):
         name = "bit_r{0}_c{1}".format(row, col)
 
         # when col = 0, bl_h is connected to precharge, otherwise connect to previous bl connection
-        # when col = col_size - 1 connected column_sizeto gnd otherwise create new bl connection
+        # when col = col_size - 1 connected to gnd otherwise create new bl connection
         # debug.info(1, "Create cell: r{0}, c{1}".format(row, col))
         if row == self.row_size:
 

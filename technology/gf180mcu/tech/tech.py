@@ -31,7 +31,7 @@ tech_modules["bitcell_1port"] = "gf180_bitcell"
 cell_properties = d.cell_properties()
 
 # is there a better way to tell if the user overrode the port order than this?
-# this is needed to correctly create the bitcell_pins list in the bitcell_base_array 
+# this is needed to correctly create the bitcell_pins list in the bitcell_base_array
 cell_properties.override_bitcell_1port_order = True
 cell_properties.bitcell_1port.port_order = ['bl', 'br', 'gnd', 'vdd', 'vpb', 'vnb', 'wl']
 cell_properties.bitcell_1port.port_types = ["OUTPUT", "OUTPUT", "GROUND", "POWER", "BIAS", "BIAS", "INPUT"]
@@ -189,8 +189,13 @@ drc = d.design_rules("gf180")
 # grid size
 drc["grid"] = 0.005
 
-drc["minwidth_tx"] = 0.28
-#drc["minlength_channel"] = 0.150
+# minwidth_tx with contact (no dog bone transistors)
+drc["minwidth_tx"] = 0.5
+# PL.2 Min gate width/channel length for 6V pmos (0.7 for 6V nmos)
+drc["minlength_channel"] = 0.7
+
+drc["minlength_channel_pmos"] = 0.55
+drc["minlength_channel_nmos"] = 0.7
 
 drc["pwell_to_nwell"] = 0 # assuming same potential
 
@@ -199,11 +204,13 @@ drc.add_layer("nwell",
               spacing=0.6)
 
 drc.add_layer("pwell",
-              width=0.74, # 0.6 for 1.5v
-              spacing=0.86) # equal potential 1.7 otherwise
+              width=0.74, # 0.6 for 3.3v
+              spacing=0.86) # equal potential
 
+# PL.1 minwidth of interconnect poly 5/6V
+# PL.3a poly spacing 5/6V
 drc.add_layer("poly",
-              width=0.18,
+              width=0.2,
               spacing=0.24)
 
 drc["poly_extend_active"] = 0.22
@@ -216,9 +223,14 @@ drc["poly_to_active"] = 0.1
 
 #drc["poly_to_field_poly"] = 0.210
 
+#
+# DF.1a - minwidth of active (5/6V)
+# DF.3a - minspacing of active of the same type (5/6V)
+# DF.9 - minarea of active area=0.2025 (5/6V)
 drc.add_layer("active",
-              width=0.22,
-              spacing=0.280)
+              width=0.3,
+              spacing=0.36,
+              area=0.2025)
 
 drc.add_enclosure("dnwell",
                 layer="pwell",
@@ -250,22 +262,27 @@ drc.add_layer("implant",
 drc.add_layer("contact",
               width=0.22,
               spacing=0.25)
-
+# CO.4 - active enclosure of contact
+# extension is not a true drc rule, used to extend active to reach active min area
 drc.add_enclosure("active",
                   layer="contact",
-                  enclosure=0.01,
-                  extension=0.01)
+                  enclosure=0.07,
+                  extension=0.07)
+
 drc.add_enclosure("poly",
                   layer="contact",
                   enclosure=0.07,
                   extension=0.07)
 
-drc["active_contact_to_gate"] = 0.145
+drc["active_contact_to_gate"] = 0.15
 
 drc["poly_contact_to_gate"] = 0.165
 
 #drc["npc_enclose_poly"] = 0.1
 
+# M1.1 - width
+# M1.2a - space
+# M1.3 - area
 drc.add_layer("m1",
               width=0.23,
               spacing=0.23,

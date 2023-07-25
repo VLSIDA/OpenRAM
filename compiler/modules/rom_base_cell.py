@@ -80,6 +80,8 @@ class rom_base_cell(design):
         self.cell_inst = self.add_inst( name=self.name + "_nmos",
                                         mod=self.nmos,
                                         )
+        print("bitmos", self.cell_inst.height, self.cell_inst.width)
+
         if self.bit_value == 0:
             self.connect_inst(["bl", "wl", "bl", "gnd"])
         else:
@@ -103,6 +105,8 @@ class rom_base_cell(design):
 
         self.copy_layout_pin(self.cell_inst, "S", "S")
         self.copy_layout_pin(self.cell_inst, "D", "D")
+        self.copy_layout_pin(self.cell_inst, "G", "G")
+
         self.source_pos = self.cell_inst.get_pin("S").center()
 
     def place_poly(self):

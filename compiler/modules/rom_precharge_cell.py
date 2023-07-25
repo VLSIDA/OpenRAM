@@ -24,6 +24,8 @@ class rom_precharge_cell(rom_base_cell):
 
         self.place_tap()
         self.extend_well()
+        print("precharge", self.height, self.width)
+
 
     def add_modules(self):
         if OPTS.tech_name == "sky130":
@@ -42,6 +44,7 @@ class rom_precharge_cell(rom_base_cell):
         self.cell_inst = self.add_inst( name="precharge_pmos",
                                         mod=self.pmos,
                                         )
+        print("premos", self.cell_inst.height, self.cell_inst.width)
         self.connect_inst(["bitline", "gate", "vdd", "vdd"])
 
     def add_pins(self):
@@ -55,10 +58,10 @@ class rom_precharge_cell(rom_base_cell):
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
     def extend_well(self):
-
-        well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width
+        print(self.nwell_enclose_active)
+        well_y = self.get_pin("vdd").cy() - 0.5 * self.tap.height - self.nwell_enclose_active
         well_ll = vector(0, well_y)
-        height = self.get_pin("D").cy() + 0.5 * self.nwell_width - well_y
+        height = self.get_pin("D").cy() + self.nwell_enclose_active - well_y
         self.add_rect("nwell", well_ll, self.width , height)
 
     def place_tap(self):
@@ -67,7 +70,7 @@ class rom_precharge_cell(rom_base_cell):
         self.tap_offset = abs(tap_y)
         pos  = vector(source.cx(), tap_y )
 
-        self.add_via_center(layers=self.active_stack,
+        self.tap = self.add_via_center(layers=self.active_stack,
                 offset=pos,
                 implant_type="n",
                 well_type="n",

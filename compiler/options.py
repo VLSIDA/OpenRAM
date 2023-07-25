@@ -185,6 +185,10 @@ class options(optparse.Values):
     br_format = "X{name}{hier_sep}xbank0{hier_sep}br_{row}_{col}"
     sen_format = "X{name}{hier_sep}xbank0{hier_sep}s_en"
     cell_format = "X{name}{hier_sep}xbank0{hier_sep}xbitcell_array{hier_sep}xreplica_bitcell_array{hier_sep}xbitcell_array{hier_sep}xbit_r{row}_c{col}"
+
+    # Random seed for functional simulation
+    functional_seed = None
+
     # Route the input/output pins to the perimeter
     perimeter_pins = True
 

@@ -7,6 +7,7 @@
 #
 import math
 import random
+import time
 import collections
 from os import path
 import shutil
@@ -31,6 +32,13 @@ class functional(simulation):
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
+        elif OPTS.functional_seed:
+            random.seed(OPTS.functional_seed)
+        else:
+            seed = time.time_ns()
+            random.seed(seed)
+            debug.info(1, "Random seed for functional simulation: {}".format(seed))
+
 
         if not spfile:
             # self.sp_file is assigned in base class

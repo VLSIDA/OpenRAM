@@ -629,7 +629,7 @@ class layout():
         """
         Return a pin list of all pins
         """
-        return self.pins
+        return list(self.pins)
 
     def copy_layout_pin(self, instance, pin_name, new_name="", relative_offset=vector(0, 0)):
         """
@@ -1523,6 +1523,7 @@ class layout():
         """ Return the pin shapes as blockages for non-top-level blocks. """
         # FIXME: We don't have a body contact in ptx, so just ignore it for now
         import copy
+        # FIXME: this may not work now that self.pins is a dict as defined in hierarchy_spice
         pin_names = copy.deepcopy(self.pins)
         if self.name.startswith("pmos") or self.name.startswith("nmos"):
             pin_names.remove("B")

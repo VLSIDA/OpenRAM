@@ -25,6 +25,8 @@ class model_delay_test(openram_test):
         openram.init_openram(config_file, is_unit_test=True)
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
+        OPTS.spice_name = "Xyce"
+        OPTS.num_sim_threads = 8
 
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload

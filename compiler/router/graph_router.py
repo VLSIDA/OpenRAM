@@ -136,6 +136,23 @@ class graph_router(router_tech):
         self.reader.loadFromFile(self.gds_filename)
 
 
+    def merge_shapes(self, merger, shape_list):
+        """
+        Merge shapes in the list into the merger if they are contained or
+        aligned by the merger.
+        """
+
+        merger_core = merger.get_core()
+        for shape in list(shape_list):
+            shape_core = shape.get_core()
+            if merger_core.contains(shape_core):
+                shape_list.remove(shape)
+            elif merger_core.aligns(shape_core):
+                merger.bbox([shape])
+                merger_core.bbox([shape_core])
+                shape_list.remove(shape)
+
+
     def find_pins(self, pin_name):
         """ Find the pins with the given name. """
         debug.info(2, "Finding all pins for {}".format(pin_name))
@@ -150,15 +167,10 @@ class graph_router(router_tech):
             rect = [ll, ur]
             new_pin = graph_shape(pin_name, rect, layer)
             # Skip this pin if it's contained by another pin of the same type
-            if new_pin.contained_by_any(pin_set):
+            if new_pin.core_contained_by_any(pin_set):
                 continue
             # Remove any previous pin of the same type contained by this new pin
-            for pin in list(pin_set):
-                if new_pin.contains(pin):
-                    pin_set.remove(pin)
-                elif new_pin.aligns(pin):
-                    new_pin.bbox([pin])
-                    pin_set.remove(pin)
+            self.merge_shapes(new_pin, pin_set)
             pin_set.add(new_pin)
         # Add these pins to the 'pins' dict
         self.pins[pin_name] = pin_set
@@ -169,10 +181,6 @@ class graph_router(router_tech):
         """ Find all blockages in the routing layers. """
         debug.info(2, "Finding blockages...")
 
-        # Keep current blockages here
-        prev_blockages = self.blockages[:]
-
-        blockages = []
         for lpp in [self.vert_lpp, self.horiz_lpp]:
             shapes = self.layout.getAllShapes(lpp)
             for boundary in shapes:
@@ -181,52 +189,24 @@ class graph_router(router_tech):
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
                 if shape_name is None:
-                    name = "blockage{}".format(len(blockages))
+                    name = "blockage"
                 else:
                     name = shape_name
                 new_shape = graph_shape(name, rect, lpp)
+                new_shape = self.inflate_shape(new_shape)
                 # If there is a rectangle that is the same in the pins,
                 # it isn't a blockage
                 # Also ignore the new pins
-                if new_shape.contained_by_any(self.all_pins) or \
-                   new_shape.contained_by_any(prev_blockages) or \
-                   new_shape.contained_by_any(blockages):
+                if new_shape.core_contained_by_any(self.all_pins) or \
+                   new_shape.core_contained_by_any(self.blockages):
                     continue
                 # Remove blockages contained by this new blockage
-                for i in range(len(blockages) - 1, -1, -1):
-                    blockage = blockages[i]
-                    # Remove the previous blockage contained by this new
-                    # blockage
-                    if new_shape.contains(blockage):
-                        blockages.remove(blockage)
-                    # Merge the previous blockage into this new blockage if
-                    # they are aligning
-                    elif new_shape.aligns(blockage):
-                        new_shape.bbox([blockage])
-                        blockages.remove(blockage)
-                blockages.append(new_shape)
-
-        # Inflate the shapes to prevent DRC errors
-        for blockage in blockages:
-            self.blockages.append(self.inflate_shape(blockage))
-            # Remove blockages contained by this new blockage
-            for i in range(len(prev_blockages) - 1, -1, -1):
-                prev_blockage = prev_blockages[i]
-                # Remove the previous blockage contained by this new
-                # blockage
-                if blockage.contains(prev_blockage):
-                    prev_blockages.remove(prev_blockage)
-                    self.blockages.remove(prev_blockage)
-                # Merge the previous blockage into this new blockage if
-                # they are aligning
-                elif blockage.aligns(prev_blockage):
-                    blockage.bbox([prev_blockage])
-                    prev_blockages.remove(prev_blockage)
-                    self.blockages.remove(prev_blockage)
+                self.merge_shapes(new_shape, self.blockages)
+                self.blockages.append(new_shape)
 
 
     def find_vias(self):
-        """  """
+        """ Find all vias in the routing layers. """
         debug.info(2, "Finding vias...")
 
         # Prepare lpp values here

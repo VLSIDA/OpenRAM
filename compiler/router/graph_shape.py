@@ -76,6 +76,20 @@ class graph_shape(pin_layout):
         self.rect = [snap(newll), snap(newur)]
 
 
+    def core_contained_by_any(self, shape_list):
+        """
+        Return if the core of this shape is contained by any shape's core in the
+        given list.
+        """
+
+        self_core = self.get_core()
+        for shape in shape_list:
+            shape_core = shape.get_core()
+            if shape_core.contains(self_core):
+                return True
+        return False
+
+
     def aligns(self, other):
         """ Return if the other shape aligns with this shape. """
 

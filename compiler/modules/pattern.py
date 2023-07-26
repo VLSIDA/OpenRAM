@@ -129,16 +129,19 @@ class pattern():
         place_x = 0
         place_y = 0
         for i in range(self.num_core_y):
+            x = 0
+            place_x = 0
             for j in range (self.num_core_x):
                 print("placing {} {}".format(x,y))
                 self.place_block(self.core_block, x, y, place_x, place_y)
                 place_x += self.core_block_width
                 x += len(self.core_block[0])
-            x = 0
-            place_x = 0
             y += len(self.core_block)
             place_y += self.core_block_height
-
+        self.parent_design.width = x
+        self.parent_design.height = y
+        
+        
 
 
         

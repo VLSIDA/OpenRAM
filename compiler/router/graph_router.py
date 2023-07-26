@@ -96,20 +96,35 @@ class graph_router(router_tech):
             pins = self.pins[pin_name]
             # Route closest pins according to the minimum spanning tree
             for source, target in self.get_mst_pairs(list(pins)):
-                # Create the graph
-                g = graph(self)
-                g.create_graph(source, target)
-                # Find the shortest path from source to target
-                path = g.find_shortest_path()
-                # TODO: Exponentially increase the routing area and retry if no
-                # path was found
-                debug.check(path is not None, "Couldn't route from {} to {}".format(source, target))
-                # Create the path shapes on layout
-                self.add_path(path)
-                # Find the recently added shapes
-                self.prepare_gds_reader()
-                self.find_blockages(pin_name)
-                self.find_vias()
+                # This is the routing region scale
+                scale = 1
+                while True:
+                    # Create the graph
+                    g = graph(self)
+                    region = g.create_graph(source, target, scale)
+                    # Find the shortest path from source to target
+                    path = g.find_shortest_path()
+                    # If there is no path found, exponentially try again with a
+                    # larger routing region
+                    if path is None:
+                        rll, rur = region
+                        bll, bur = self.ring_bbox
+                        # Stop scaling the region and throw an error
+                        if rll.x < bll.x and rll.y < bll.y and \
+                           rur.x > bur.x and rur.y > bur.y:
+                            self.write_debug_gds(gds_name="{}error.gds".format(OPTS.openram_temp), g=g, source=source, target=target)
+                            debug.error("Couldn't route from {} to {}.".format(source, target), -1)
+                        # Exponentially scale the region
+                        scale *= 2
+                        debug.info(0, "Retry routing in larger routing region with scale {}".format(scale))
+                        continue
+                    # Create the path shapes on layout
+                    self.add_path(path)
+                    # Find the recently added shapes
+                    self.prepare_gds_reader()
+                    self.find_blockages(pin_name)
+                    self.find_vias()
+                    break
 
 
     def prepare_gds_reader(self):

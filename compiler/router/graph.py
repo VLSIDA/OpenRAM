@@ -65,7 +65,7 @@ class graph:
         return False
 
 
-    def is_node_blocked(self, node):
+    def is_node_blocked(self, node, pin_safe=True):
         """ Return if a node is blocked by a blockage. """
 
         blocked = False
@@ -92,7 +92,7 @@ class graph:
                             safe[i] = False
                     if not all(safe):
                         blocked = True
-                    elif blockage in [self.source, self.target]:
+                    elif pin_safe and blockage in [self.source, self.target]:
                         return False
                 else:
                     blocked = True
@@ -104,7 +104,7 @@ class graph:
 
         # If the nodes are blocked by a blockage other than a via
         for node in nodes:
-            if self.is_node_blocked(node):
+            if self.is_node_blocked(node, pin_safe=False):
                 return True
         # If the nodes are blocked by a via
         point = node.center

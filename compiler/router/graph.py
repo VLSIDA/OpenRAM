@@ -50,7 +50,7 @@ class graph:
         This function assumes that p1 and p2 are on the same layer.
         """
 
-        probe_shape = graph_probe(p1, p2, self.router.vert_lpp if p1.z else self.router.horiz_lpp)
+        probe_shape = graph_probe(p1, p2, self.router.get_lpp(p1.z))
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
             # Check if two shapes overlap

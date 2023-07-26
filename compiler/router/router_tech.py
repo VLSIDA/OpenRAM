@@ -114,6 +114,14 @@ class router_tech:
         else:
             debug.error("Invalid zindex {}".format(zindex), -1)
 
+    def get_lpp(self, zindex):
+        if zindex == 1:
+            return self.vert_lpp
+        elif zindex == 0:
+            return self.horiz_lpp
+        else:
+            debug.error("Invalid zindex {}".format(zindex), -1)
+
     def get_layer_width_space(self, zindex):
         """
         These are the width and spacing of a supply layer given a supply rail

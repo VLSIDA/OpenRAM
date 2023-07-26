@@ -92,10 +92,6 @@ class pattern():
         if(self.xy_block):
             debug.check(self.xy_block_height == self.x_block_height, "xy_block does not align with x_block")
             debug.check(self.xy_block_width == self.y_block_width, "xy_block does not align with y_block")
-    
-    def place_block(self, block: block, x: float, y: float, x_count: int, y_count: int) -> None:
-        return 
-
 
     def connect_block(self, block: block, x: int, y: int) -> None:
         for dy in range(len(block)):
@@ -104,6 +100,16 @@ class pattern():
                 self.parent_design.cell_inst[x + dx, y + dy] = self.parent_design.add_existing_inst(inst)
                 self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(x+dx, y+dy))
 
+    def place_block(self, block: block, x: int, y: int, place_x: float, place_y: float) -> None:
+        x_offset = 0
+        y_offset = 0
+        for dy in range(len(block)):
+            for dx in range(len(block[0])):
+                inst = self.parent_design.cell_inst[x + dx, y +dy]
+                inst.place((place_x + x_offset, place_y + y_offset), inst.mirror, inst.rotate)
+                x_offset += inst.width
+            x_offset = 0
+            y_offset += inst.height
 
     def connect_array(self) -> None:
         x = 0
@@ -118,16 +124,23 @@ class pattern():
     
     def place_array(self) -> None:
 
-        array_x = 0
-        array_y = 0
-        # if(self.initial_x_block and self.initial_y_block):
-        #     self.place_block(array, self.xy_block, array_x, array_y)
-        #     array_x += self.xy_block_width
-        # if(self.initial_x_block):
-        #     self.place_block(array, self.xy_block, array_x, array_y)
-        #     array_x += self.x_block_width
-        self.connect_array()
-        self.place_block(self.core_block, array_x, array_y, 0, 0)
+        x = 0
+        y = 0
+        place_x = 0
+        place_y = 0
+        for i in range(self.num_core_y):
+            for j in range (self.num_core_x):
+                print("placing {} {}".format(x,y))
+                self.place_block(self.core_block, x, y, place_x, place_y)
+                place_x += self.core_block_width
+                x += len(self.core_block[0])
+            x = 0
+            place_x = 0
+            y += len(self.core_block)
+            place_y += self.core_block_height
+
+
+
         
 
     def connect_pins(self, array: design) -> None:

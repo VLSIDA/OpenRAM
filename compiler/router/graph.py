@@ -234,6 +234,12 @@ class graph:
             x_values.update([nll.x, nur.x])
             y_values.update([nll.y, nur.y])
 
+        # Add center values for existing vias
+        for via in self.graph_vias:
+            point = via.center()
+            x_values.add(p.x)
+            y_values.add(p.y)
+
         # Sort x and y values
         x_values = list(x_values)
         y_values = list(y_values)

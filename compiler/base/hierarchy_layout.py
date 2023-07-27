@@ -9,6 +9,7 @@ import sys
 import os
 import re
 from math import sqrt
+from copy import deepcopy
 from openram import debug
 from openram.gdsMill import gdsMill
 from openram import tech
@@ -476,9 +477,12 @@ class layout():
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
         return self.insts[-1]
 
-    def add_existing_inst(self, inst):
+    def add_existing_inst(self, inst, name):
+        inst = deepcopy(inst)
         self.mods.add(inst.mod)
-        self.inst_names.add(self.name)
+        if name:
+            inst.name = name
+        self.inst_names.add(inst.name)
         self.insts.append(inst)
         debug.info(3, "adding existing instance{}".format(self.insts[-1]))
         return self.insts[-1]

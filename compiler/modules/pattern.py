@@ -97,7 +97,7 @@ class pattern():
         for dy in range(len(block)):
             for dx in range(len(block[0])):
                 inst = block[dy][dx]
-                self.parent_design.cell_inst[x + dx, y + dy] = self.parent_design.add_existing_inst(inst)
+                self.parent_design.cell_inst[x + dx, y + dy] = self.parent_design.add_existing_inst(inst,"bit_r{}_c{}".format(y +dy, x+dx))
                 self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(x+dx, y+dy))
 
     def place_block(self, block: block, x: int, y: int, place_x: float, place_y: float) -> None:
@@ -106,10 +106,20 @@ class pattern():
         for dy in range(len(block)):
             for dx in range(len(block[0])):
                 inst = self.parent_design.cell_inst[x + dx, y +dy]
-                inst.place((place_x + x_offset, place_y + y_offset), inst.mirror, inst.rotate)
+                self.place_inst(inst, (place_x + x_offset, place_y + y_offset))
+                #inst.place((place_x + x_offset, place_y + y_offset), inst.mirror, inst.rotate)
                 x_offset += inst.width
             x_offset = 0
             y_offset += inst.height
+
+    def place_inst(self, inst, offset) -> None:
+        x = offset[0]
+        y = offset[1]
+        if "X" in inst.mirror:
+            y += inst.height
+        if "Y" in inst.mirror:
+            x += inst.width
+        inst.place((x, y), inst.mirror, inst.rotate)
 
     def connect_array(self) -> None:
         x = 0

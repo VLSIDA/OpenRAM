@@ -150,11 +150,3 @@ class pattern():
         self.parent_design.width = place_x
         self.parent_design.height = place_y
         
-        
-
-
-        
-
-    def connect_pins(self, array: design) -> None:
-        array.connect_isnt()
-

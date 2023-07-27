@@ -57,20 +57,6 @@ class bitcell_array(bitcell_base_array):
         """ Add the modules used in this design """
         self.cell = factory.create(module_type=OPTS.bitcell)
 
-    # def create_instances(self):
-    #     """ Create the module instances used in this design """
-    #     self.cell_inst = {}
-    #     for col in range(self.column_size):
-    #         for row in range(self.row_size):
-    #             name = "bit_r{0}_c{1}".format(row, col)
-    #             self.cell_inst[row, col]=self.add_inst(name=name,
-    #                                                    mod=self.cell)
-    #             self.connect_inst(self.get_bitcell_pins(row, col))
-    #
-    #             # If it is a "core" cell, it could be trimmed for sim time
-    #             if col>0 and col<self.column_size-1 and row>0 and row<self.row_size-1:
-    #                 self.trim_insts.add(name)
-
     def create_instances(self):
         self.cell_inst={}
         core_block = [[0 for x in range(2)] for y in range(2)]

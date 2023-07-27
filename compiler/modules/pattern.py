@@ -93,21 +93,20 @@ class pattern():
             debug.check(self.xy_block_height == self.x_block_height, "xy_block does not align with x_block")
             debug.check(self.xy_block_width == self.y_block_width, "xy_block does not align with y_block")
 
-    def connect_block(self, block: block, x: int, y: int) -> None:
-        for dy in range(len(block)):
-            for dx in range(len(block[0])):
-                inst = block[dy][dx]
-                self.parent_design.cell_inst[x + dx, y + dy] = self.parent_design.add_existing_inst(inst,"bit_r{}_c{}".format(y +dy, x+dx))
-                self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(x+dx, y+dy))
+    def connect_block(self, block: block, col: int, row: int) -> None:
+        for dr in range(len(block)):
+            for dc in range(len(block[0])):
+                inst = block[dc][dr]
+                self.parent_design.cell_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,"bit_r{}_c{}".format(row +dr, col+dc))
+                self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(row+dr, col+dc))
 
-    def place_block(self, block: block, x: int, y: int, place_x: float, place_y: float) -> None:
+    def place_block(self, block: block, row: int, col: int, place_x: float, place_y: float) -> None:
         x_offset = 0
         y_offset = 0
-        for dy in range(len(block)):
-            for dx in range(len(block[0])):
-                inst = self.parent_design.cell_inst[x + dx, y +dy]
+        for dr in range(len(block)):
+            for dc in range(len(block[0])):
+                inst = self.parent_design.cell_inst[row + dr, col +dc]
                 self.place_inst(inst, (place_x + x_offset, place_y + y_offset))
-                #inst.place((place_x + x_offset, place_y + y_offset), inst.mirror, inst.rotate)
                 x_offset += inst.width
             x_offset = 0
             y_offset += inst.height
@@ -122,34 +121,34 @@ class pattern():
         inst.place((x, y), inst.mirror, inst.rotate)
 
     def connect_array(self) -> None:
-        x = 0
-        y = 0
+        row = 0
+        col = 0
         for i in range(self.num_core_y):
             for j in range (self.num_core_x):
-                print("connecting {} {}".format(x,y))
-                self.connect_block(self.core_block, x,y)
-                x += len(self.core_block[0])
-            x = 0
-            y += len(self.core_block)
+                print("connecting {} {}".format(row,col))
+                self.connect_block(self.core_block, col, row)
+                col += len(self.core_block[0])
+            col = 0
+            row += len(self.core_block)
     
     def place_array(self) -> None:
 
-        x = 0
-        y = 0
+        row = 0
+        col = 0
         place_x = 0
         place_y = 0
         for i in range(self.num_core_y):
-            x = 0
+            col = 0
             place_x = 0
             for j in range (self.num_core_x):
-                print("placing {} {}".format(x,y))
-                self.place_block(self.core_block, x, y, place_x, place_y)
+                print("placing {} {}".format(row,col))
+                self.place_block(self.core_block, row, col, place_x, place_y)
                 place_x += self.core_block_width
-                x += len(self.core_block[0])
-            y += len(self.core_block)
+                col += len(self.core_block[0])
+            row += len(self.core_block)
             place_y += self.core_block_height
-        self.parent_design.width = x
-        self.parent_design.height = y
+        self.parent_design.width = place_x
+        self.parent_design.height = place_y
         
         
 

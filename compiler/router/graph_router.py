@@ -75,6 +75,10 @@ class graph_router(router_tech):
         self.find_blockages()
         self.find_vias()
 
+        # Convert blockages and vias if they overlap a pin
+        self.convert_vias()
+        self.convert_blockages()
+
         # Add side pins
         self.calculate_ring_bbox()
         if self.pin_type in ["top", "bottom", "right", "left"]:
@@ -227,6 +231,40 @@ class graph_router(router_tech):
             if new_shape.contained_by_any(self.vias):
                 continue
             self.vias.append(self.inflate_shape(new_shape, is_via=True))
+
+
+    def convert_vias(self):
+        """ Convert the vias that overlap a pin. """
+
+        for via in self.vias:
+            via_core = via.get_core()
+            for pin in self.all_pins:
+                pin_core = pin.get_core()
+                via_core.lpp = pin_core.lpp
+                if via_core.overlaps(pin_core):
+                    via.rename(pin.name)
+                    break
+
+
+    def convert_blockages(self):
+        """ Convert the blockages that overlap a pin. """
+
+        for blockage in self.blockages:
+            blockage_core = blockage.get_core()
+            for pin in self.all_pins:
+                pin_core = pin.get_core()
+                if blockage_core.overlaps(pin_core):
+                    blockage.rename(pin.name)
+                    break
+            else:
+                for via in self.vias:
+                    if via.name == "via":
+                        continue
+                    via_core = via.get_core()
+                    via_core.lpp = blockage_core.lpp
+                    if blockage_core.overlaps(via_core):
+                        blockage.rename(via.name)
+                        break
 
 
     def inflate_shape(self, shape, is_pin=False, is_via=False):

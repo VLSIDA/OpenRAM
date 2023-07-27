@@ -44,6 +44,13 @@ class graph_shape(pin_layout):
         return snap(super().width())
 
 
+    def rename(self, new_name):
+        """ Change the name of `self` and `self.core`. """
+
+        self.name = new_name
+        self.get_core().name = new_name
+
+
     def get_core(self):
         """
         Return `self` if `self.core` is None. Otherwise, return `self.core`.

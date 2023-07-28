@@ -12,6 +12,7 @@ from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
 from .pattern import pattern
 from openram.base import geometry, instance
+from math import ceil
 
 class bitcell_array(bitcell_base_array):
     """
@@ -60,18 +61,11 @@ class bitcell_array(bitcell_base_array):
     def create_instances(self):
         self.cell_inst={}
         core_block = [[0 for x in range(2)] for y in range(2)]
-        core_block[0][0] = geometry.instance("core_0_0", mod=self.cell)
-        core_block[0][1] = geometry.instance("core_1_0", mod=self.cell)
-        core_block[1][0] = geometry.instance("core_0_1", mod=self.cell)
-        core_block[1][1] = geometry.instance("core_1_1", mod=self.cell) 
-        num_core_x = self.row_size/len(core_block[0])
-        num_core_y = self.column_size/len(core_block)
-        debug.check(num_core_x.is_integer(), "number of core blocks must be an integer")
-        debug.check(num_core_y.is_integer(), "number of core blocks must be an integer")
-        num_core_x = int(num_core_x)
-        num_core_y = int(num_core_y)
-
-        self.pattern = pattern(self, "bitcell_array", core_block, num_core_x, num_core_y)
+        core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
+        core_block[0][1] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True)
+        core_block[1][0] = geometry.instance("core_0_1", mod=self.cell, is_bitcell=True)
+        core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True) 
+        self.pattern = pattern(self, "bitcell_array", core_block, self.row_size, self.column_size)
         self.pattern.connect_array()
 
     def analytical_power(self, corner, load):

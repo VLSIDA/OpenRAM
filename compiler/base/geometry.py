@@ -164,7 +164,7 @@ class instance(geometry):
     An instance of an instance/module with a specified location and
     rotation
     """
-    def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
+    def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0, is_bitcell=False):
         """Initializes an instance to represent a module"""
         super().__init__()
         debug.check(mirror not in ["R90", "R180", "R270"],
@@ -176,6 +176,7 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
+        self.is_bitcell = is_bitcell
         if OPTS.netlist_only:
             self.width = 0
             self.height = 0

@@ -31,7 +31,7 @@ class array_test(openram_test):
             num_spare_rows = 0
             num_spare_cols = 0
 
-        a = factory.create(module_type="bitcell_array", cols=8 + num_spare_cols, rows=8 + num_spare_rows)
+        a = factory.create(module_type="bitcell_array", cols=4 + num_spare_cols, rows=2 + num_spare_rows)
         self.local_check(a)
 
         openram.end_openram()

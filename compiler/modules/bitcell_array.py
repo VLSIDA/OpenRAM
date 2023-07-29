@@ -64,8 +64,8 @@ class bitcell_array(bitcell_base_array):
         core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
         core_block[0][1] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True)
         core_block[1][0] = geometry.instance("core_0_1", mod=self.cell, is_bitcell=True)
-        core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True) 
-        self.pattern = pattern(self, "bitcell_array", core_block, self.row_size, self.column_size)
+        core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True)
+        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.row_size, num_cols=self.column_size)
         self.pattern.connect_array()
 
     def analytical_power(self, corner, load):

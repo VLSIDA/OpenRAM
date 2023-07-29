@@ -49,8 +49,10 @@ class pattern():
         self.num_cores_y = num_cores_y
         if num_cores_x == 0:
             self.num_cores_x = ceil(num_cols/len(core_block[0]))
+            print('num_cores_x:', self.num_cores_x)
         if num_cores_y == 0:
-            self.num_cores_y = ceil(num_rows/len(core_block))  
+            self.num_cores_y = ceil(num_rows/len(core_block))
+            print('num_cores_y:', self.num_cores_y)
 
         self.cores_per_x_block = cores_per_x_block
         self.cores_per_y_block = cores_per_y_block
@@ -61,6 +63,7 @@ class pattern():
         self.initial_y_block = initial_y_block
         self.final_x_block = final_x_block
         self.final_y_block = final_y_block
+        print(self.num_cols)
         if not OPTS.netlist_only:
             self.verify_interblock_dimensions() 
   
@@ -113,11 +116,16 @@ class pattern():
                         self.bit_rows.append(0)
                     if(len(self.bit_cols) <= row + dr):
                         self.bit_cols.append(0)
-                    if(self.bit_rows[col+dc] < self.num_cols and self.bit_cols[row+dr] < self.num_rows):
+                    # print(self.bit_rows[col+dc], self.num_rows, self.bit_cols[row+dr], self.num_cols)
+                    if(self.bit_rows[col+dc] < self.num_rows and self.bit_cols[row+dr] < self.num_cols):
                         if(inst.is_bitcell):
                             self.bit_rows[col+dc] += 1
                             self.bit_cols[row+dr] += 1
+                            print(self.bit_rows)
+                            print(self.bit_cols)
+                            print('-----------------------------------')
                             self.parent_design.cell_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,"bit_r{}_c{}".format(row +dr, col+dc))
+                            print('inst:', row+dr, col+dc)
                             self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(row+dr, col+dc))
 
     def connect_array(self) -> None:
@@ -132,8 +140,8 @@ class pattern():
                 col += len(self.core_block[0])
             col = 0
             row += len(self.core_block)
-        print(self.bit_rows)
-        print(self.bit_cols)
+        # print(self.bit_rows)
+        # print(self.bit_cols)
         print(self.parent_design.cell_inst)
 
     def place_inst(self, inst, offset) -> None:
@@ -157,7 +165,7 @@ class pattern():
                         self.bit_rows.append(0)
                     if(len(self.bit_cols) <= row + dr):
                         self.bit_cols.append(0)
-                    if(self.bit_rows[col+dc] < self.num_cols and self.bit_cols[row+dr] < self.num_rows):
+                    if(self.bit_rows[col+dc] < self.num_rows and self.bit_cols[row+dr] < self.num_cols):
                         inst = self.parent_design.cell_inst[row + dr, col +dc]
                         if(inst.is_bitcell):
                             self.bit_rows[col+dc] += 1

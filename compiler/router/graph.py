@@ -43,6 +43,30 @@ class graph:
         return shape.on_segment(ll, point, ur)
 
 
+    def get_safe_pin_values(self, pin):
+        """ Get the safe x and y values of the given pin. """
+
+        pin = pin.get_core()
+        offset = self.router.offset
+        spacing = self.router.track_space
+        size_limit = snap(offset * 4 + spacing)
+
+        x_values = []
+        y_values = []
+        if pin.width() > size_limit:
+            x_values.append(snap(pin.lx() + offset))
+            x_values.append(snap(pin.rx() - offset))
+        else:
+            x_values.append(snap(pin.cx()))
+        if pin.height() > size_limit:
+            y_values.append(snap(pin.by() + offset))
+            y_values.append(snap(pin.uy() - offset))
+        else:
+            y_values.append(snap(pin.cy()))
+
+        return x_values, y_values
+
+
     def is_probe_blocked(self, p1, p2):
         """
         Return if a probe sent from p1 to p2 encounters a blockage.
@@ -68,6 +92,17 @@ class graph:
     def is_node_blocked(self, node, pin_safe=True):
         """ Return if a node is blocked by a blockage. """
 
+        def closest(value, checklist):
+            """ Return the distance of the closest value in the checklist. """
+            min_diff = float("inf")
+            for other in checklist:
+                diff = snap(abs(value - other))
+                if diff < min_diff:
+                    min_diff = diff
+            return min_diff
+
+        offset = self.router.offset
+        spacing = self.router.track_space + offset + drc["grid"]
         blocked = False
         for blockage in self.graph_blockages:
             # Check if two shapes overlap
@@ -77,7 +112,6 @@ class graph:
                     continue
                 blockage = blockage.get_core()
                 if self.inside_shape(node.center, blockage):
-                    offset = self.router.offset
                     p = node.center
                     lengths = [blockage.width(), blockage.height()]
                     centers = blockage.center()
@@ -92,8 +126,15 @@ class graph:
                             safe[i] = False
                     if not all(safe):
                         blocked = True
-                    elif pin_safe and blockage in [self.source, self.target]:
-                        return False
+                        continue
+                    xs, ys = self.get_safe_pin_values(blockage)
+                    xdiff = closest(p.x, xs)
+                    ydiff = closest(p.y, ys)
+                    if xdiff == 0 and ydiff == 0:
+                        if pin_safe and blockage in [self.source, self.target]:
+                            return False
+                    elif xdiff < spacing and ydiff < spacing:
+                        blocked = False
                 else:
                     blocked = True
         return blocked
@@ -204,25 +245,15 @@ class graph:
         y_values = set()
 
         # Add inner values for blockages of the routed type
-        x_offset = vector(self.router.offset, 0)
-        y_offset = vector(0, self.router.offset)
+        offset = self.router.offset
+        spacing = self.router.track_space
+        size_limit = snap(offset * 4 + spacing)
         for shape in self.graph_blockages:
             if not self.is_routable(shape):
                 continue
-            shape = shape.get_core()
-            aspect_ratio = shape.width() / shape.height()
-            # FIXME: Aspect ratio may not be the best way to determine this
-            # If the pin is tall or fat, add two points on the ends
-            if aspect_ratio <= 0.5: # Tall pin
-                points = [shape.bc() + y_offset, shape.uc() - y_offset]
-            elif aspect_ratio >= 2: # Fat pin
-                points = [shape.lc() + x_offset, shape.rc() - x_offset]
-            else: # Square-like pin
-                points = [shape.center()]
-            for p in points:
-                p = snap(p)
-                x_values.add(p.x)
-                y_values.add(p.y)
+            xs, ys = self.get_safe_pin_values(shape)
+            x_values.update(xs)
+            y_values.update(ys)
 
         # Add corners for blockages
         offset = vector(drc["grid"], drc["grid"])
@@ -236,7 +267,7 @@ class graph:
 
         # Add center values for existing vias
         for via in self.graph_vias:
-            point = via.center()
+            p = via.center()
             x_values.add(p.x)
             y_values.add(p.y)
 

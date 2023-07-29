@@ -486,10 +486,8 @@ class graph_router(router_tech):
     def add_path(self, path):
         """ Add the route path to the layout. """
 
-        coordinates = self.prepare_path(path)
-        self.design.add_route(layers=self.layers,
-                              coordinates=coordinates,
-                              layer_widths=self.layer_widths)
+        nodes = self.prepare_path(path)
+        self.add_route(nodes)
 
 
     def prepare_path(self, path):
@@ -499,7 +497,7 @@ class graph_router(router_tech):
         """
 
         last_added = path[0]
-        coordinates = [path[0].center]
+        nodes = [path[0]]
         direction = path[0].get_direction(path[1])
         candidate = path[1]
         for i in range(2, len(path)):
@@ -511,12 +509,36 @@ class graph_router(router_tech):
                 candidate = node
             else:
                 last_added = candidate
-                coordinates.append(candidate.center)
+                nodes.append(candidate)
                 direction = current_direction
                 candidate = node
-        if candidate.center not in coordinates:
-            coordinates.append(candidate.center)
-        return coordinates
+        if candidate not in nodes:
+            nodes.append(candidate)
+        return nodes
+
+
+    def add_route(self, nodes):
+        """
+        Custom `add_route` function since `hierarchy_layout.add_route` isn't
+        working for this router.
+        """
+
+        for i in range(0, len(nodes) - 1):
+            start = nodes[i].center
+            end = nodes[i + 1].center
+            direction = nodes[i].get_direction(nodes[i + 1])
+            diff = start - end
+            offset = start.min(end)
+            offset = vector(offset.x - self.offset, offset.y - self.offset)
+            if direction == (1, 1): # Via
+                offset = vector(start.x, start.y)
+                self.design.add_via_center(layers=self.layers,
+                                           offset=offset)
+            else: # Wire
+                self.design.add_rect(layer=self.get_layer(start.z),
+                                     offset=offset,
+                                     width=abs(diff.x) + self.track_wire,
+                                     height=abs(diff.y) + self.track_wire)
 
 
     def get_new_pins(self, name):

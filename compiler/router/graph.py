@@ -46,6 +46,7 @@ class graph:
     def get_safe_pin_values(self, pin):
         """ Get the safe x and y values of the given pin. """
 
+        # Constant values
         pin = pin.get_core()
         offset = self.router.offset
         spacing = self.router.track_space
@@ -53,6 +54,9 @@ class graph:
 
         x_values = []
         y_values = []
+        # If one axis size of the pin is greater than the limit, we will take
+        # two points at both ends. Otherwise, we will only take the center of
+        # this pin.
         if pin.width() > size_limit:
             x_values.append(snap(pin.lx() + offset))
             x_values.append(snap(pin.rx() - offset))
@@ -105,14 +109,16 @@ class graph:
         spacing = self.router.track_space + offset + drc["grid"]
         blocked = False
         for blockage in self.graph_blockages:
-            # Check if two shapes overlap
+            # Check if the node is inside the blockage
             if self.inside_shape(node.center, blockage):
                 if not self.is_routable(blockage):
                     blocked = True
                     continue
                 blockage = blockage.get_core()
+                # Check if the node is inside the blockage's core
                 if self.inside_shape(node.center, blockage):
                     p = node.center
+                    # Check if the node is too close to one edge of the shape
                     lengths = [blockage.width(), blockage.height()]
                     centers = blockage.center()
                     ll, ur = blockage.rect
@@ -127,6 +133,7 @@ class graph:
                     if not all(safe):
                         blocked = True
                         continue
+                    # Check if the node is in a safe region of the shape
                     xs, ys = self.get_safe_pin_values(blockage)
                     xdiff = closest(p.x, xs)
                     ydiff = closest(p.y, ys)
@@ -251,6 +258,7 @@ class graph:
         for shape in self.graph_blockages:
             if not self.is_routable(shape):
                 continue
+            # Get the safe pin values
             xs, ys = self.get_safe_pin_values(shape)
             x_values.update(xs)
             y_values.update(ys)
@@ -259,9 +267,9 @@ class graph:
         offset = vector(drc["grid"], drc["grid"])
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
+            # Add minimum offset to the blockage corner nodes to prevent overlap
             nll = snap(ll - offset)
             nur = snap(ur + offset)
-            # Add minimum offset to the blockage corner nodes to prevent overlap
             x_values.update([nll.x, nur.x])
             y_values.update([nll.y, nur.y])
 

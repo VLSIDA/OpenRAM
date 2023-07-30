@@ -53,7 +53,7 @@ class graph_router(router_tech):
         self.fake_pins = []
 
         # Set the offset here
-        self.offset = snap(self.layer_widths[0] / 2)
+        self.offset = snap(self.track_wire / 2)
 
 
     def route(self, vdd_name="vdd", gnd_name="gnd"):
@@ -149,8 +149,11 @@ class graph_router(router_tech):
         merger_core = merger.get_core()
         for shape in list(shape_list):
             shape_core = shape.get_core()
+            # If merger contains the shape, remove it from the list
             if merger_core.contains(shape_core):
                 shape_list.remove(shape)
+            # If the merger aligns with the shape, expand the merger and remove
+            # the shape from the list
             elif merger_core.aligns(shape_core):
                 merger.bbox([shape])
                 merger_core.bbox([shape_core])
@@ -173,7 +176,7 @@ class graph_router(router_tech):
             # Skip this pin if it's contained by another pin of the same type
             if new_pin.core_contained_by_any(pin_set):
                 continue
-            # Remove any previous pin of the same type contained by this new pin
+            # Merge previous pins into this one if possible
             self.merge_shapes(new_pin, pin_set)
             pin_set.add(new_pin)
         # Add these pins to the 'pins' dict
@@ -181,7 +184,7 @@ class graph_router(router_tech):
         self.all_pins.update(pin_set)
 
 
-    def find_blockages(self, shape_name=None):
+    def find_blockages(self, name="blockage"):
         """ Find all blockages in the routing layers. """
         debug.info(2, "Finding blockages...")
 
@@ -192,19 +195,14 @@ class graph_router(router_tech):
                 ll = vector(boundary[0], boundary[1])
                 ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
-                if shape_name is None:
-                    name = "blockage"
-                else:
-                    name = shape_name
                 new_shape = graph_shape(name, rect, lpp)
                 new_shape = self.inflate_shape(new_shape)
-                # If there is a rectangle that is the same in the pins,
-                # it isn't a blockage
-                # Also ignore the new pins
+                # Skip this blockage if it's contained by a pin or an existing
+                # blockage
                 if new_shape.core_contained_by_any(self.all_pins) or \
                    new_shape.core_contained_by_any(self.blockages):
                     continue
-                # Remove blockages contained by this new blockage
+                # Merge previous blockages into this one if possible
                 self.merge_shapes(new_shape, self.blockages)
                 self.blockages.append(new_shape)
 
@@ -225,43 +223,47 @@ class graph_router(router_tech):
             ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
             new_shape = graph_shape("via", rect, valid_lpp)
-            # If there is a rectangle that is the same in the pins,
-            # it isn't a blockage
-            # Also ignore the new pins
+            # Skip this via if it's contained by an existing via blockage
             if new_shape.contained_by_any(self.vias):
                 continue
             self.vias.append(self.inflate_shape(new_shape, is_via=True))
 
 
     def convert_vias(self):
-        """ Convert the vias that overlap a pin. """
+        """ Convert vias that overlap a pin. """
 
         for via in self.vias:
             via_core = via.get_core()
             for pin in self.all_pins:
                 pin_core = pin.get_core()
                 via_core.lpp = pin_core.lpp
+                # If the via overlaps a pin, change its name
                 if via_core.overlaps(pin_core):
                     via.rename(pin.name)
                     break
 
 
     def convert_blockages(self):
-        """ Convert the blockages that overlap a pin. """
+        """ Convert blockages that overlap a pin. """
 
+        # NOTE: You need to run `convert_vias()` before since a blockage may
+        # be connected to a pin through a via.
         for blockage in self.blockages:
             blockage_core = blockage.get_core()
             for pin in self.all_pins:
                 pin_core = pin.get_core()
+                # If the blockage overlaps a pin, change its name
                 if blockage_core.overlaps(pin_core):
                     blockage.rename(pin.name)
                     break
             else:
                 for via in self.vias:
+                    # Skip if this via isn't connected to a pin
                     if via.name == "via":
                         continue
                     via_core = via.get_core()
                     via_core.lpp = blockage_core.lpp
+                    # If the blockage overlaps a pin via, change its name
                     if blockage_core.overlaps(via_core):
                         blockage.rename(via.name)
                         break
@@ -297,11 +299,14 @@ class graph_router(router_tech):
                                   extra_spacing=self.offset)
 
 
-    def calculate_ring_bbox(self, width=3):
+    def calculate_ring_bbox(self, num_vias=3):
         """ Calculate the ring-safe bounding box of the layout. """
 
         ll, ur = self.design.get_bbox()
-        wideness = self.track_wire * width + self.track_space * (width - 1)
+        # Calculate the "wideness" of a side supply pin
+        wideness = self.track_wire * num_vias + self.track_space * (num_vias - 1)
+        # Total wideness is used to find it any pin overlaps in this region. If
+        # so, the bbox is shifted to prevent this overlap.
         total_wideness = wideness * 4
         for blockage in self.blockages:
             bll, bur = blockage.rect
@@ -322,7 +327,7 @@ class graph_router(router_tech):
         self.ring_bbox = [ll, ur]
 
 
-    def add_side_pin(self, pin_name, side, width=3, num_connects=4):
+    def add_side_pin(self, pin_name, side, num_vias=3, num_fake_pins=4):
         """ Add supply pin to one side of the layout. """
 
         ll, ur = self.ring_bbox
@@ -330,7 +335,7 @@ class graph_router(router_tech):
         inner = pin_name == self.gnd_name
 
         # Calculate wires' wideness
-        wideness = self.track_wire * width + self.track_space * (width - 1)
+        wideness = self.track_wire * num_vias + self.track_space * (num_vias - 1)
 
         # Calculate the offset for the inner ring
         if inner:
@@ -373,12 +378,12 @@ class graph_router(router_tech):
         # Add fake pins on this new pin evenly
         fake_pins = []
         if vertical:
-            space = (shape_height - (2 * wideness) - num_connects * self.track_wire) / (num_connects + 1)
+            space = (shape_height - (2 * wideness) - num_fake_pins * self.track_wire) / (num_fake_pins + 1)
             start_offset = vector(offset.x, offset.y + wideness)
         else:
-            space = (shape_width - (2 * wideness) - num_connects * self.track_wire) / (num_connects + 1)
+            space = (shape_width - (2 * wideness) - num_fake_pins * self.track_wire) / (num_fake_pins + 1)
             start_offset = vector(offset.x + wideness, offset.y)
-        for i in range(1, num_connects + 1):
+        for i in range(1, num_fake_pins + 1):
             if vertical:
                 offset = vector(start_offset.x, start_offset.y + i * (space + self.track_wire))
                 ll = vector(offset.x, offset.y - self.track_wire)
@@ -395,13 +400,13 @@ class graph_router(router_tech):
         return pin, fake_pins
 
 
-    def add_ring_pin(self, pin_name, width=3, num_connects=4):
+    def add_ring_pin(self, pin_name, num_vias=3, num_fake_pins=4):
         """ Add the supply ring to the layout. """
 
         # Add side pins
         new_pins = []
         for side in ["top", "bottom", "right", "left"]:
-            new_shape, fake_pins = self.add_side_pin(pin_name, side, width, num_connects)
+            new_shape, fake_pins = self.add_side_pin(pin_name, side, num_vias, num_fake_pins)
             ll, ur = new_shape.rect
             rect = [ll, ur]
             layer = self.get_layer(side in ["left", "right"])
@@ -418,11 +423,11 @@ class graph_router(router_tech):
         for i in range(4):
             ll, ur = new_pins[i].rect
             if i % 2:
-                top_left = vector(ur.x - (width - 1) * shift - half_wide, ll.y + (width - 1) * shift + half_wide)
+                top_left = vector(ur.x - (num_vias - 1) * shift - half_wide, ll.y + (num_vias - 1) * shift + half_wide)
             else:
                 top_left = vector(ll.x + half_wide, ur.y - half_wide)
-            for j in range(width):
-                for k in range(width):
+            for j in range(num_vias):
+                for k in range(num_vias):
                     offset = vector(top_left.x + j * shift, top_left.y - k * shift)
                     self.design.add_via_center(layers=self.layers,
                                                offset=offset)
@@ -572,6 +577,9 @@ class graph_router(router_tech):
                 self.design.add_label(text="n{}".format(node.center.z),
                                       layer="text",
                                       offset=offset)
+                #debug.info(0, "Neighbors of {}".format(node.center))
+                #for neighbor in node.neighbors:
+                #    debug.info(0, "  {}".format(neighbor.center))
         else:
             for blockage in self.blockages:
                 self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))

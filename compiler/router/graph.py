@@ -252,9 +252,6 @@ class graph:
         y_values = set()
 
         # Add inner values for blockages of the routed type
-        offset = self.router.offset
-        spacing = self.router.track_space
-        size_limit = snap(offset * 4 + spacing)
         for shape in self.graph_blockages:
             if not self.is_routable(shape):
                 continue

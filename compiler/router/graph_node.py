@@ -63,14 +63,12 @@ class graph_node:
         if other in self.neighbors:
             is_vertical = self.center.x == other.center.x
             layer_dist = self.center.distance(other.center)
-            # Edge is on non-preferred direction
+            # Double the cost if the edge is in non-preferred direction
             if is_vertical != bool(self.center.z):
                 layer_dist *= 2
-                # Wire bends towards non-preferred direction
-                # NOTE: Adding a fixed cost prevents multiple dog-legs in
-                # non-preferred direction
-                if prev_node and self.get_direction(prev_node) != self.get_direction(other):
-                    layer_dist += drc["grid"]
-            via_dist = abs(self.center.z - other.center.z) * 2
+            # Add a constant wire cost to prevent dog-legs
+            if prev_node and self.get_direction(prev_node) != self.get_direction(other):
+                layer_dist += drc["grid"]
+            via_dist = abs(self.center.z - other.center.z)
             return layer_dist + via_dist
         return float("inf")

@@ -143,9 +143,11 @@ class pattern():
 
                             
 
-    def place_block(self, block: block, row: int, col: int, place_x: float, place_y: float) -> None:
+    def place_block(self, block: block, row: int, col: int, place_x: float, place_y: float, bx, by):
         x_offset = 0
         y_offset = 0
+        bounding_x = bx
+        bounding_y = by
         for dr in range(len(block)):
             for dc in range(len(block[0])):
                 if(self.bit_rows.count(self.num_rows) != self.num_cols and self.bit_cols.count(self.bit_cols) != self.num_rows):
@@ -159,12 +161,16 @@ class pattern():
                             self.bit_rows[col+dc] += 1
                             self.bit_cols[row+dr] += 1
                         self.place_inst(inst, (place_x + x_offset, place_y + y_offset))
+                        if(place_x + x_offset + inst.width > bounding_x):
+                            bounding_x = place_x + x_offset + inst.width
+                        if(place_y + y_offset + inst.height > bounding_y):
+                            bounding_y = place_y + y_offset + inst.height
                         x_offset += inst.width
             x_offset = 0
             y_offset += inst.height
+        return bounding_x, bounding_y
 
-   
-    def place_array(self) -> None:
+    def place_array(self):
         self.bit_rows = []
         self.bit_cols = []
 
@@ -172,24 +178,18 @@ class pattern():
         col = 0
         place_x = 0
         place_y = 0
+        bounding_x = 0
+        bounding_y = 0
         for i in range(self.num_cores_y):
             col = 0
             place_x = 0
-            for j in range (self.num_cores_x):
-                self.place_block(self.core_block, row, col, place_x, place_y)
+            for j in range(self.num_cores_x):
+                self.parent_design.width, self.parent_design.height= self.place_block(self.core_block, row, col, place_x, place_y, bounding_x, bounding_y)
                 if(self.bit_rows.count(self.num_rows) == self.num_cols and self.bit_cols.count(self.bit_cols) == self.num_rows):
-                    self.parent_design.width = place_x
-                    self.parent_design.height= place_y
-                    print("early")
                     return
 
-                self.parent_design.width = place_x
                 place_x += self.core_block_width
                 col += len(self.core_block[0])
- 
             row += len(self.core_block)
-            self.parent_design.height = place_y
             place_y += self.core_block_height
-        print(self.parent_design.width, self.parent_design.height)
-        print("late")
 

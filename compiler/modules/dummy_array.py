@@ -6,7 +6,8 @@
 from openram.sram_factory import factory
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-
+from openram.base import geometry 
+from .pattern import pattern
 
 class dummy_array(bitcell_base_array):
     """
@@ -32,7 +33,7 @@ class dummy_array(bitcell_base_array):
 
     def create_layout(self):
 
-        self.place_array("dummy_r{0}_c{1}", self.mirror)
+        self.place_array()
 
         self.add_layout_pins()
 
@@ -50,13 +51,22 @@ class dummy_array(bitcell_base_array):
 
     def create_instances(self):
         """ Create the module instances used in this design """
-        self.cell_inst = {}
-        for col in range(self.column_size):
-            for row in range(self.row_size):
-                name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row, col]=self.add_inst(name=name,
-                                                       mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(row, col))
+        self.cell_inst={}
+        core_block = [[0 for x in range(2)] for y in range(2)]
+        if not self.mirror:
+            core_block[0][0] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)
+            core_block[0][1] = geometry.instance("core_1_0", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+            core_block[1][0] = geometry.instance("core_0_1", mod=self.dummy_cell, is_bitcell=True, mirror='MY')
+            core_block[1][1] = geometry.instance("core_1_1", mod=self.dummy_cell, is_bitcell=True, mirror='XY')
+        else:
+            core_block[0][0] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True, mirror='MY')
+            core_block[0][1] = geometry.instance("core_1_0", mod=self.dummy_cell, is_bitcell=True, mirror='XY')
+            core_block[1][0] = geometry.instance("core_0_1", mod=self.dummy_cell, is_bitcell=True)
+            core_block[1][1] = geometry.instance("core_1_1", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+
+        self.pattern = pattern(self, "dummy_array", core_block, num_rows=self.row_size, num_cols=self.column_size)
+        self.pattern.connect_array()
+
 
     def add_pins(self):
         # bitline pins are not added because they are floating

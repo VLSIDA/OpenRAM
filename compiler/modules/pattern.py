@@ -177,13 +177,19 @@ class pattern():
             place_x = 0
             for j in range (self.num_cores_x):
                 self.place_block(self.core_block, row, col, place_x, place_y)
-                place_x += self.core_block_width
-                col += len(self.core_block[0])
                 if(self.bit_rows.count(self.num_rows) == self.num_cols and self.bit_cols.count(self.bit_cols) == self.num_rows):
+                    self.parent_design.width = place_x
+                    self.parent_design.height= place_y
+                    print("early")
                     return
 
+                self.parent_design.width = place_x
+                place_x += self.core_block_width
+                col += len(self.core_block[0])
+ 
             row += len(self.core_block)
+            self.parent_design.height = place_y
             place_y += self.core_block_height
-        self.parent_design.width = place_x
-        self.parent_design.height = place_y
-        
+        print(self.parent_design.width, self.parent_design.height)
+        print("late")
+

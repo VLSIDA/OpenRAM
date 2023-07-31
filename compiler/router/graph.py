@@ -141,7 +141,7 @@ class graph:
                         if pin_safe and blockage in [self.source, self.target]:
                             return False
                     elif xdiff < spacing or ydiff < spacing:
-                        blocked = False
+                        blocked = True
                 else:
                     blocked = True
         return blocked

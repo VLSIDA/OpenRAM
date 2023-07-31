@@ -105,8 +105,9 @@ class graph:
                     min_diff = diff
             return min_diff
 
+        wide = self.router.track_wire
         offset = self.router.offset
-        spacing = self.router.track_space + offset + drc["grid"]
+        spacing = snap(self.router.track_space + offset + drc["grid"])
         blocked = False
         for blockage in self.graph_blockages:
             # Check if the node is inside the blockage
@@ -124,7 +125,7 @@ class graph:
                     ll, ur = blockage.rect
                     safe = [True, True]
                     for i in range(2):
-                        if lengths[i] >= offset * 2:
+                        if lengths[i] >= wide:
                             min_diff = snap(min(abs(ll[i] - p[i]), abs(ur[i] - p[i])))
                             if min_diff < offset:
                                 safe[i] = False
@@ -140,7 +141,7 @@ class graph:
                     if xdiff == 0 and ydiff == 0:
                         if pin_safe and blockage in [self.source, self.target]:
                             return False
-                    elif xdiff < spacing or ydiff < spacing:
+                    elif xdiff < spacing and ydiff < spacing:
                         blocked = True
                 else:
                     blocked = True

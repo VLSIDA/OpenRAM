@@ -19,7 +19,7 @@ class supply_router(router):
     def __init__(self, layers, design, bbox=None, pin_type=None):
 
         # `router_tech` contains tech constants for the router
-        graph_router.__init__(self, layers, design, bbox)
+        router.__init__(self, layers, design, bbox)
 
         # Side supply pin type
         # (can be "top", "bottom", "right", "left", and "ring")

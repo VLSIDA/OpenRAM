@@ -48,7 +48,7 @@ class graph:
 
         # Constant values
         pin = pin.get_core()
-        offset = self.router.offset
+        offset = self.router.half_wire
         spacing = self.router.track_space
         size_limit = snap(offset * 4 + spacing)
 
@@ -98,16 +98,12 @@ class graph:
 
         def closest(value, checklist):
             """ Return the distance of the closest value in the checklist. """
-            min_diff = float("inf")
-            for other in checklist:
-                diff = snap(abs(value - other))
-                if diff < min_diff:
-                    min_diff = diff
-            return min_diff
+            diffs = [abs(value - other) for other in checklist]
+            return snap(min(diffs))
 
         wide = self.router.track_wire
-        offset = self.router.offset
-        spacing = snap(self.router.track_space + offset + drc["grid"])
+        half_wide = self.router.half_wire
+        spacing = snap(self.router.track_space + half_wide + drc["grid"])
         blocked = False
         for blockage in self.graph_blockages:
             # Check if the node is inside the blockage
@@ -126,8 +122,8 @@ class graph:
                     safe = [True, True]
                     for i in range(2):
                         if lengths[i] >= wide:
-                            min_diff = snap(min(abs(ll[i] - p[i]), abs(ur[i] - p[i])))
-                            if min_diff < offset:
+                            min_diff = closest(p[i], [ll[i], ur[i]])
+                            if min_diff < half_wide:
                                 safe[i] = False
                         elif centers[i] != p[i]:
                             safe[i] = False
@@ -262,7 +258,7 @@ class graph:
             y_values.update(ys)
 
         # Add corners for blockages
-        offset = vector(drc["grid"], drc["grid"])
+        offset = vector([drc["grid"]] * 2)
         for blockage in self.graph_blockages:
             ll, ur = blockage.rect
             # Add minimum offset to the blockage corner nodes to prevent overlap

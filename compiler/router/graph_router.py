@@ -45,7 +45,7 @@ class graph_router(router_tech):
         self.fake_pins = []
 
         # Set the offset here
-        self.offset = snap(self.track_wire / 2)
+        self.half_wire = snap(self.track_wire / 2)
 
 
     def prepare_gds_reader(self):
@@ -213,7 +213,7 @@ class graph_router(router_tech):
         if wide > self.layer_widths[0]:
             spacing = self.get_layer_space(self.get_zindex(shape.lpp), wide)
         return shape.inflated_pin(spacing=spacing,
-                                  extra_spacing=self.offset)
+                                  extra_spacing=self.half_wire)
 
 
     def add_path(self, path):
@@ -262,7 +262,8 @@ class graph_router(router_tech):
             direction = nodes[i].get_direction(nodes[i + 1])
             diff = start - end
             offset = start.min(end)
-            offset = vector(offset.x - self.offset, offset.y - self.offset)
+            offset = vector(offset.x - self.half_wire,
+                            offset.y - self.half_wire)
             if direction == (1, 1): # Via
                 offset = vector(start.x, start.y)
                 self.design.add_via_center(layers=self.layers,
@@ -274,7 +275,7 @@ class graph_router(router_tech):
                                      height=abs(diff.y) + self.track_wire)
 
 
-    def write_debug_gds(self, gds_name="debug_route.gds", g=None, source=None, target=None):
+    def write_debug_gds(self, gds_name, g=None, source=None, target=None):
         """ Write the debug GDSII file for the router. """
 
         self.add_router_info(g, source, target)
@@ -299,9 +300,6 @@ class graph_router(router_tech):
                 self.design.add_label(text="n{}".format(node.center.z),
                                       layer="text",
                                       offset=offset)
-                #debug.info(0, "Neighbors of {}".format(node.center))
-                #for neighbor in node.neighbors:
-                #    debug.info(0, "  {}".format(neighbor.center))
         else:
             for blockage in self.blockages:
                 self.add_object_info(blockage, "blockage{}".format(self.get_zindex(blockage.lpp)))

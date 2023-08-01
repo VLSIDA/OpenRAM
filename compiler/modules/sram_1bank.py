@@ -255,17 +255,12 @@ class sram_1bank(design, verilog, lef):
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
-        elif OPTS.route_supplies == "grid":
-            from openram.router import supply_grid_router as router
-        elif OPTS.route_supplies == "tree":
-            from openram.router import supply_tree_router as router
         else:
-            from openram.router import supply_graph_router as router
-        rtr=router(layers=self.supply_stack,
-                   design=self,
-                   bbox=bbox,
-                   pin_type=OPTS.supply_pin_type)
-
+            from openram.router import supply_router as router
+        rtr = router(layers=self.supply_stack,
+                     design=self,
+                     bbox=bbox,
+                     pin_type=OPTS.supply_pin_type)
         rtr.route()
 
         if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:

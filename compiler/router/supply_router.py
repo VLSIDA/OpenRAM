@@ -7,11 +7,11 @@ from openram import debug
 from openram.base.vector import vector
 from openram import OPTS
 from .graph import graph
-from .graph_router import graph_router
+from .router import router
 from .graph_shape import graph_shape
 
 
-class supply_graph_router(graph_router):
+class supply_router(router):
     """
     This is the supply router that uses the Hanan grid graph method.
     """

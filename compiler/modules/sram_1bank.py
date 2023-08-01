@@ -367,10 +367,10 @@ class sram_1bank(design, verilog, lef):
                         pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
         from openram.router import signal_escape_router as router
-        rtr=router(layers=self.m3_stack,
-                   design=self,
-                   bbox=bbox)
-        rtr.escape_route(pins_to_route)
+        rtr = router(layers=self.m3_stack,
+                     design=self,
+                     bbox=bbox)
+        rtr.route(pins_to_route)
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """

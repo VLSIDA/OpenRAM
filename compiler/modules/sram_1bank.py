@@ -260,7 +260,7 @@ class sram_1bank(design, verilog, lef):
         elif OPTS.route_supplies == "tree":
             from openram.router import supply_tree_router as router
         else:
-            from openram.router import graph_router as router
+            from openram.router import supply_graph_router as router
         rtr=router(layers=self.supply_stack,
                    design=self,
                    bbox=bbox,

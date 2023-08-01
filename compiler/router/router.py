@@ -31,6 +31,10 @@ class router(router_tech):
         self.design = design
         # Temporary GDSII file name to find pins and blockages
         self.gds_filename = OPTS.openram_temp + "temp.gds"
+        # Bounding box can be given with margin, or created by default
+        if bbox is None:
+            bbox = self.design.get_bbox()
+        self.bbox = bbox
         # Dictionary for vdd and gnd pins
         self.pins = {}
         # Set of all the pins

@@ -16,10 +16,10 @@ class supply_router(router):
     This is the supply router that uses the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design, bbox=None, pin_type=None):
+    def __init__(self, layers, design, pin_type=None):
 
         # `router_tech` contains tech constants for the router
-        router.__init__(self, layers, design, bbox)
+        router.__init__(self, layers, design)
 
         # Side supply pin type
         # (can be "top", "bottom", "right", "left", and "ring")
@@ -106,7 +106,7 @@ class supply_router(router):
     def calculate_ring_bbox(self, num_vias=3):
         """ Calculate the ring-safe bounding box of the layout. """
 
-        ll, ur = self.design.get_bbox()
+        ll, ur = self.bbox
         # Calculate the "wideness" of a side supply pin
         wideness = self.track_wire * num_vias + self.track_space * (num_vias - 1)
         # Total wideness is used to find it any pin overlaps in this region. If

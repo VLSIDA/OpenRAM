@@ -111,20 +111,12 @@ class rom_bank(design,rom_verilog):
         self.place_top_level_pins()
         self.route_output_buffers()
 
-        rt = router_tech(self.supply_stack, 1)
-        init_bbox = self.get_bbox(side="ring",
-                                  margin=rt.track_width)
-        # We need the initial bbox for the supply rings later
-        # because the perimeter pins will change the bbox
+        self.route_supplies()
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            bbox = self.get_bbox(side="ring",
-                                 margin=11*rt.track_width)
-            self.route_escape_pins(bbox)
-
-        self.route_supplies(init_bbox)
+            self.route_escape_pins()
 
 
     def setup_layout_constants(self):
@@ -449,7 +441,7 @@ class rom_bank(design,rom_verilog):
             pin_num = msb - self.col_bits
             self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
-    def route_supplies(self, bbox=None):
+    def route_supplies(self):
 
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
@@ -462,7 +454,6 @@ class rom_bank(design,rom_verilog):
             from openram.router import supply_router as router
         rtr = router(layers=self.supply_stack,
                      design=self,
-                     bbox=bbox,
                      pin_type=OPTS.supply_pin_type)
         rtr.route()
 
@@ -488,7 +479,7 @@ class rom_bank(design,rom_verilog):
                                         pin.width(),
                                         pin.height())
 
-    def route_escape_pins(self, bbox):
+    def route_escape_pins(self):
         pins_to_route = []
 
         for bit in range(self.col_bits):
@@ -504,6 +495,5 @@ class rom_bank(design,rom_verilog):
         pins_to_route.append("cs")
         from openram.router import signal_escape_router as router
         rtr = router(layers=self.m3_stack,
-                     design=self,
-                     bbox=bbox)
+                     design=self)
         rtr.route(pins_to_route)

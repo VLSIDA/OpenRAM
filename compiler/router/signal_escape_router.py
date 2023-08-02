@@ -16,10 +16,10 @@ class signal_escape_router(router):
     This is the signal escape router that uses the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design, bbox=None, pin_type=None):
+    def __init__(self, layers, design):
 
         # `router_tech` contains tech constants for the router
-        router.__init__(self, layers, design, bbox)
+        router.__init__(self, layers, design)
 
         # New pins are the side supply pins
         self.new_pins = {}

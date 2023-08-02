@@ -53,10 +53,7 @@ class signal_escape_router(router):
             self.blockages.append(self.inflate_shape(pin, is_pin=True))
 
         # Route vdd and gnd
-        for name in pin_names:
-            # Route each pin to the perimeter
-            source = next(iter(self.pins[name]))
-            target = self.get_closest_perimeter_fake_pin(source)
+        for source, target, _ in self.get_route_pairs(pin_names):
             # Change fake pin's name so the graph will treat it as routable
             target.name = source.name
             # This is the routing region scale
@@ -144,3 +141,14 @@ class signal_escape_router(router):
                 min_dist = dist
                 close_fake = fake
         return close_fake
+
+
+    def get_route_pairs(self, pin_names):
+        """  """
+
+        to_route = []
+        for name in pin_names:
+            pin = next(iter(self.pins[name]))
+            fake = self.get_closest_perimeter_fake_pin(pin)
+            to_route.append((pin, fake, pin.distance(fake)))
+        return sorted(to_route, key=lambda x: x[2])

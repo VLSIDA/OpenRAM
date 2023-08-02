@@ -114,7 +114,6 @@ class rom_bank(design,rom_verilog):
         rt = router_tech(self.supply_stack, 1)
         init_bbox = self.get_bbox(side="ring",
                                   margin=rt.track_width)
-        self.route_supplies(init_bbox)
         # We need the initial bbox for the supply rings later
         # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
@@ -125,7 +124,7 @@ class rom_bank(design,rom_verilog):
                                  margin=11*rt.track_width)
             self.route_escape_pins(bbox)
 
-
+        self.route_supplies(init_bbox)
 
 
     def setup_layout_constants(self):
@@ -459,15 +458,12 @@ class rom_bank(design,rom_verilog):
         if not OPTS.route_supplies:
             # Do not route the power supply (leave as must-connect pins)
             return
-        elif OPTS.route_supplies == "grid":
-            from openram.router import supply_grid_router as router
         else:
-            from openram.router import supply_tree_router as router
-        rtr=router(layers=self.supply_stack,
-                   design=self,
-                   bbox=bbox,
-                   pin_type=OPTS.supply_pin_type)
-
+            from openram.router import supply_router as router
+        rtr = router(layers=self.supply_stack,
+                     design=self,
+                     bbox=bbox,
+                     pin_type=OPTS.supply_pin_type)
         rtr.route()
 
         if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
@@ -507,7 +503,7 @@ class rom_bank(design,rom_verilog):
         pins_to_route.append("clk")
         pins_to_route.append("cs")
         from openram.router import signal_escape_router as router
-        rtr=router(layers=self.m3_stack,
-                   design=self,
-                   bbox=bbox)
-        rtr.escape_route(pins_to_route)
+        rtr = router(layers=self.m3_stack,
+                     design=self,
+                     bbox=bbox)
+        rtr.route(pins_to_route)

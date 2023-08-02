@@ -108,7 +108,7 @@ class pattern():
         for dr in range(len(block)):
             for dc in range(len(block[0])):
                 if(self.bit_rows.count(self.num_rows) != self.num_cols and self.bit_cols.count(self.bit_cols) != self.num_rows):
-                    inst = block[dc][dr]
+                    inst = block[dr][dc]
                     if(len(self.bit_rows) <= col + dc):
                         self.bit_rows.append(0)
                     if(len(self.bit_cols) <= row + dr):

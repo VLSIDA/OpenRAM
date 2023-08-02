@@ -61,7 +61,6 @@ class bitcell_array(bitcell_base_array):
     def create_instances(self):
         self.cell_inst={}
         core_block = [[0 for x in range(1)] for y in range(2)]
-        # block[row][col]
         core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
         core_block[1][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
 

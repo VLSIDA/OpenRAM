@@ -9,7 +9,8 @@ from openram.sram_factory import factory
 from openram.tech import layer_properties as layer_props
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-
+from openram.base import geometry
+from openram.modules import pattern
 
 class replica_column(bitcell_base_array):
     """
@@ -59,10 +60,7 @@ class replica_column(bitcell_base_array):
         self.create_instances()
 
     def create_layout(self):
-        self.place_instances()
-
-        self.height = self.cell_inst[-1].uy()
-        self.width = self.cell_inst[0].rx()
+        self.place_array()
 
         self.add_layout_pins()
 
@@ -88,63 +86,37 @@ class replica_column(bitcell_base_array):
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell)
 
     def create_instances(self):
-        self.cell_inst = []
+        self.cell_inst = {}
+        core_block = [[0 for x in range(1)] for y in range(self.total_size)]  
 
+        current_row = self.row_start
         for row in range(self.total_size):
-            name = "rbc_{0}".format(row)
-
             # Regular array cells are replica cells
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                self.cell_inst.append(self.add_inst(name=name,
-                                                    mod=self.replica_cell))
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-            else:
-                self.cell_inst.append(self.add_inst(name=name,
-                                                    mod=self.dummy_cell))
-                self.connect_inst(self.get_bitcell_pins(row, 0))
-
-    def place_instances(self):
-        # Flip the mirrors if we have an odd number of replica+dummy rows at the bottom
-        # so that we will start with mirroring rather than not mirroring
-        rbl_offset = (self.left_rbl) % 2
-
-        # if our bitcells are mirrored on the y axis, check if we are in global
-        # column that needs to be flipped.
-        dir_y = False
-        xoffset = 0
-        if self.cell.mirror.y and self.column_offset % 2:
-            dir_y = True
-            xoffset = self.replica_cell.width
-
-        for row in range(self.total_size):
-            # name = "bit_r{0}_{1}".format(row, "rbl")
-            dir_x = self.cell.mirror.x and (row + rbl_offset) % 2
-
-            offset = vector(xoffset, self.cell.height * (row + (row + rbl_offset) % 2))
-
-            if dir_x and dir_y:
-                dir_key = "XY"
-            elif dir_x:
-                dir_key = "MX"
-            elif dir_y:
-                dir_key = "MY"
-            else:
-                dir_key = ""
-
-            self.cell_inst[row].place(offset=offset,
-                                      mirror=dir_key)
+                if current_row % 2:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
+                else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
+            else: 
+                if current_row %2:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+                else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
+            current_row += 1
+        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size)
+        self.pattern.connect_array()
 
     def add_layout_pins(self):
         for port in self.all_ports:
-            bl_pin = self.cell_inst[0].get_pin(self.cell.get_bl_name(port))
+            bl_pin = self.cell_inst[0,0].get_pin(self.cell.get_bl_name(port))
             self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
                                 layer=bl_pin.layer,
                                 offset=bl_pin.ll().scale(1, 0),
                                 width=bl_pin.width(),
                                 height=self.height)
-            bl_pin = self.cell_inst[0].get_pin(self.cell.get_br_name(port))
+            bl_pin = self.cell_inst[0,0].get_pin(self.cell.get_br_name(port))
             self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
                                 layer=bl_pin.layer,
                                 offset=bl_pin.ll().scale(1, 0),
@@ -153,7 +125,7 @@ class replica_column(bitcell_base_array):
 
         for port in self.all_ports:
             for row in range(self.total_size):
-                wl_pin = self.cell_inst[row].get_pin(self.cell.get_wl_name(port))
+                wl_pin = self.cell_inst[row,0].get_pin(self.cell.get_wl_name(port))
                 self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
@@ -162,7 +134,7 @@ class replica_column(bitcell_base_array):
 
     def route_supplies(self):
 
-        for inst in self.cell_inst:
+        for inst in self.cell_inst.values():
             for pin_name in ["vdd", "gnd"]:
                 self.copy_layout_pin(inst, pin_name)
 

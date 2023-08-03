@@ -227,7 +227,8 @@ class router(router_tech):
         """ Add the route path to the layout. """
 
         nodes = self.prepare_path(path)
-        self.add_route(nodes)
+        shapes = self.add_route(nodes)
+        return shapes
 
 
     def prepare_path(self, path):
@@ -263,6 +264,7 @@ class router(router_tech):
         working for this router.
         """
 
+        new_shapes = []
         for i in range(0, len(nodes) - 1):
             start = nodes[i].center
             end = nodes[i + 1].center
@@ -276,10 +278,12 @@ class router(router_tech):
                 self.design.add_via_center(layers=self.layers,
                                            offset=offset)
             else: # Wire
-                self.design.add_rect(layer=self.get_layer(start.z),
-                                     offset=offset,
-                                     width=abs(diff.x) + self.track_wire,
-                                     height=abs(diff.y) + self.track_wire)
+                shape = self.design.add_rect(layer=self.get_layer(start.z),
+                                             offset=offset,
+                                             width=abs(diff.x) + self.track_wire,
+                                             height=abs(diff.y) + self.track_wire)
+                new_shapes.append(shape)
+        return new_shapes
 
 
     def write_debug_gds(self, gds_name, g=None, source=None, target=None):

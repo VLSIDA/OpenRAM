@@ -79,12 +79,14 @@ class signal_escape_router(router):
                     debug.info(0, "Retry routing in larger routing region with scale {}".format(scale))
                     continue
                 # Create the path shapes on layout
-                self.add_path(path)
+                new_shapes = self.add_path(path)
+                self.new_pins[source.name] = new_shapes[0]
                 # Find the recently added shapes
                 self.prepare_gds_reader()
                 self.find_blockages(name)
                 self.find_vias()
                 break
+        self.replace_layout_pins()
 
 
     def add_perimeter_fake_pins(self):
@@ -152,3 +154,16 @@ class signal_escape_router(router):
             fake = self.get_closest_perimeter_fake_pin(pin)
             to_route.append((pin, fake, pin.distance(fake)))
         return sorted(to_route, key=lambda x: x[2])
+
+
+    def replace_layout_pins(self):
+        """  """
+
+        for name, pin in self.new_pins.items():
+            pin = graph_shape(pin.name, pin.boundary, pin.lpp)
+            # Find the intersection of this pin on the perimeter
+            for fake in self.fake_pins:
+                edge = pin.intersection(fake)
+                if edge:
+                    break
+            self.design.replace_layout_pin(name, edge)

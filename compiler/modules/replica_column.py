@@ -105,7 +105,7 @@ class replica_column(bitcell_base_array):
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
             current_row += 1
-        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size)
+        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size, name_template="rbc_r{0}_c{1}")
         self.pattern.connect_array()
 
     def add_layout_pins(self):

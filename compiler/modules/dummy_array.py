@@ -53,11 +53,11 @@ class dummy_array(bitcell_base_array):
         """ Create the module instances used in this design """
         self.cell_inst={}
         core_block = [[0 for x in range(1)] for y in range(2)]
-        core_block[0][(0+self.mirror) %2] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)
-        core_block[0][(1+self.mirror) %2] = geometry.instance("core_1_0", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+        core_block[(0+self.mirror) %2][0] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)
+        core_block[(1+self.mirror) %2][0] = geometry.instance("core_1_0", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
 
 
-        self.pattern = pattern(self, "dummy_array", core_block, num_rows=self.row_size, num_cols=self.column_size)
+        self.pattern = pattern(self, "dummy_array", core_block, num_rows=self.row_size, num_cols=self.column_size, name_template="bit_r{0}_c{1}")
         self.pattern.connect_array()
 
 

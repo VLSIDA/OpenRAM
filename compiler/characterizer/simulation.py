@@ -619,6 +619,10 @@ class simulation():
 
         bl_names = []
         exclude_set = self.get_bl_name_search_exclusions()
+        print(paths)
+        print(cell_bl)
+        print(cell_mod)
+        print(exclude_set)
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":

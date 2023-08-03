@@ -23,6 +23,7 @@ class pattern():
                  core_block:block,
                  num_rows:int,
                  num_cols:int,
+                 name_template,
                  num_cores_x: Optional[int] = 0,
                  num_cores_y: Optional[int] = 0,
                  cores_per_x_block: int = 1,
@@ -50,6 +51,7 @@ class pattern():
         self.core_block = core_block
         self.num_rows = num_rows
         self.num_cols = num_cols
+        self.name_template = name_template
         self.num_cores_x = num_cores_x
         self.num_cores_y = num_cores_y
         if num_cores_x == 0:
@@ -122,7 +124,7 @@ class pattern():
                         if(inst.is_bitcell):
                             self.bit_rows[col+dc] += 1
                             self.bit_cols[row+dr] += 1
-                            self.parent_design.cell_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,"bit_r{}_c{}".format(row +dr, col+dc))
+                            self.parent_design.cell_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
                             self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(row+dr, col+dc))
 
     def connect_array(self) -> None:

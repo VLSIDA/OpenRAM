@@ -64,12 +64,12 @@ class bitcell_array(bitcell_base_array):
         core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
         core_block[1][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
 
-        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.row_size, num_cols=self.column_size)
+        self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.row_size, num_cols=self.column_size,name_template="bit_r{0}_c{1}")
         self.pattern.connect_array()
 
-        for key in self.cell_inst.keys():
-            if key != (0,0):
-                self.trim_insts.add(self.cell_inst[key].name)
+        #for key in self.cell_inst.keys():
+        #    if key != (0,0):
+        #        self.trim_insts.add(self.cell_inst[key].name)
 
     def analytical_power(self, corner, load):
         """Power of Bitcell array and bitline in nW."""

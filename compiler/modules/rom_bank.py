@@ -111,12 +111,15 @@ class rom_bank(design,rom_verilog):
         self.place_top_level_pins()
         self.route_output_buffers()
 
-        self.route_supplies()
+        # FIXME: Somehow ROM layout behaves weird and doesn't add all the pin
+        # shapes before routing supplies
+        init_bbox = self.get_bbox()
+        self.route_supplies(init_bbox)
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            self.route_escape_pins()
+            self.route_escape_pins(init_bbox)
 
 
     def setup_layout_constants(self):
@@ -441,7 +444,7 @@ class rom_bank(design,rom_verilog):
             pin_num = msb - self.col_bits
             self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
-    def route_supplies(self):
+    def route_supplies(self, bbox):
 
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
@@ -454,6 +457,7 @@ class rom_bank(design,rom_verilog):
             from openram.router import supply_router as router
         rtr = router(layers=self.supply_stack,
                      design=self,
+                     bbox=bbox,
                      pin_type=OPTS.supply_pin_type)
         rtr.route()
 
@@ -479,7 +483,7 @@ class rom_bank(design,rom_verilog):
                                         pin.width(),
                                         pin.height())
 
-    def route_escape_pins(self):
+    def route_escape_pins(self, bbox):
         pins_to_route = []
 
         for bit in range(self.col_bits):
@@ -495,5 +499,6 @@ class rom_bank(design,rom_verilog):
         pins_to_route.append("cs")
         from openram.router import signal_escape_router as router
         rtr = router(layers=self.m3_stack,
+                     bbox=bbox,
                      design=self)
         rtr.route(pins_to_route)

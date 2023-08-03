@@ -20,7 +20,7 @@ class router(router_tech):
     This is the base class for routers that use the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design):
+    def __init__(self, layers, design, bbox=None):
 
         # `router_tech` contains tech constants for the router
         router_tech.__init__(self, layers, route_track_width=1)
@@ -32,7 +32,13 @@ class router(router_tech):
         # Temporary GDSII file name to find pins and blockages
         self.gds_filename = OPTS.openram_temp + "temp.gds"
         # Calculate the bounding box for routing around the perimeter
-        self.bbox = self.design.get_bbox(margin=11 * self.track_width)
+        # FIXME: We wouldn't do this if `rom_bank` wasn't behaving weird
+        if bbox is None:
+            self.bbox = self.design.get_bbox(margin=11 * self.track_width)
+        else:
+            ll, ur = bbox
+            margin = vector([11 * self.track_width] * 2)
+            self.bbox = [ll - margin, ur + margin]
         # Dictionary for vdd and gnd pins
         self.pins = {}
         # Set of all the pins

@@ -243,7 +243,7 @@ class sram_1bank(design, verilog, lef):
     def create_modules(self):
         debug.error("Must override pure virtual function.", -1)
 
-    def route_supplies(self):
+    def route_supplies(self, bbox=None):
         """ Route the supply grid and connect the pins to them. """
 
         # Copy the pins to the top level
@@ -259,6 +259,7 @@ class sram_1bank(design, verilog, lef):
             from openram.router import supply_router as router
         rtr = router(layers=self.supply_stack,
                      design=self,
+                     bbox=bbox,
                      pin_type=OPTS.supply_pin_type)
         rtr.route()
 
@@ -322,7 +323,7 @@ class sram_1bank(design, verilog, lef):
             # Grid is left with many top level pins
             pass
 
-    def route_escape_pins(self):
+    def route_escape_pins(self, bbox=None):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -367,6 +368,7 @@ class sram_1bank(design, verilog, lef):
 
         from openram.router import signal_escape_router as router
         rtr = router(layers=self.m3_stack,
+                     bbox=bbox,
                      design=self)
         rtr.route(pins_to_route)
 
@@ -1072,14 +1074,15 @@ class sram_1bank(design, verilog, lef):
         # Some technologies have an isolation
         self.add_dnwell(inflate=2.5)
 
+        init_bbox = self.get_bbox()
         # Route the supplies together and/or to the ring/stripes.
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            self.route_escape_pins()
+            self.route_escape_pins(init_bbox)
 
-        self.route_supplies()
+        self.route_supplies(init_bbox)
 
 
     def route_dffs(self, add_routes=True):

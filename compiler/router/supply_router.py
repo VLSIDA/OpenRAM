@@ -16,10 +16,10 @@ class supply_router(router):
     This is the supply router that uses the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design, pin_type=None):
+    def __init__(self, layers, design, bbox=None, pin_type=None):
 
         # `router_tech` contains tech constants for the router
-        router.__init__(self, layers, design)
+        router.__init__(self, layers, design, bbox)
 
         # Side supply pin type
         # (can be "top", "bottom", "right", "left", and "ring")
@@ -52,7 +52,6 @@ class supply_router(router):
         self.convert_blockages()
 
         # Add side pins
-        self.calculate_ring_bbox()
         if self.pin_type in ["top", "bottom", "right", "left"]:
             self.add_side_pin(vdd_name)
             self.add_side_pin(gnd_name)
@@ -84,7 +83,7 @@ class supply_router(router):
                     # larger routing region
                     if path is None:
                         rll, rur = region
-                        bll, bur = self.ring_bbox
+                        bll, bur = self.bbox
                         # Stop scaling the region and throw an error
                         if rll.x < bll.x and rll.y < bll.y and \
                            rur.x > bur.x and rur.y > bur.y:
@@ -103,38 +102,10 @@ class supply_router(router):
                     break
 
 
-    def calculate_ring_bbox(self, num_vias=3):
-        """ Calculate the ring-safe bounding box of the layout. """
-
-        ll, ur = self.bbox
-        # Calculate the "wideness" of a side supply pin
-        wideness = self.track_wire * num_vias + self.track_space * (num_vias - 1)
-        # Total wideness is used to find it any pin overlaps in this region. If
-        # so, the bbox is shifted to prevent this overlap.
-        total_wideness = wideness * 4
-        for blockage in self.blockages:
-            bll, bur = blockage.rect
-            if self.get_zindex(blockage.lpp) == 1: # Vertical
-                diff = ll.x + total_wideness - bll.x
-                if diff > 0:
-                    ll = vector(ll.x - diff, ll.y)
-                diff = ur.x - total_wideness - bur.x
-                if diff < 0:
-                    ur = vector(ur.x - diff, ur.y)
-            else: # Horizontal
-                diff = ll.y + total_wideness - bll.y
-                if diff > 0:
-                    ll = vector(ll.x, ll.y - diff)
-                diff = ur.y - total_wideness - bur.y
-                if diff < 0:
-                    ur = vector(ur.x, ur.y - diff)
-        self.ring_bbox = [ll, ur]
-
-
     def add_side_pin(self, pin_name, side, num_vias=3, num_fake_pins=4):
         """ Add supply pin to one side of the layout. """
 
-        ll, ur = self.ring_bbox
+        ll, ur = self.bbox
         vertical = side in ["left", "right"]
         inner = pin_name == self.gnd_name
 

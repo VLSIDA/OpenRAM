@@ -14,7 +14,6 @@ from openram.base import channel_route
 from openram.base import design
 from openram.base import verilog
 from openram.base import lef
-from openram.router import router_tech
 from openram.sram_factory import factory
 from openram.tech import spice
 from openram import OPTS, print_time

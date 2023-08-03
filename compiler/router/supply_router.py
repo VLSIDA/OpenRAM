@@ -7,8 +7,8 @@ from openram import debug
 from openram.base.vector import vector
 from openram import OPTS
 from .graph import graph
-from .router import router
 from .graph_shape import graph_shape
+from .router import router
 
 
 class supply_router(router):

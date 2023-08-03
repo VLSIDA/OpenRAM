@@ -10,9 +10,9 @@ from openram.tech import GDS
 from openram.tech import drc
 from openram.tech import layer as tech_layer
 from openram import OPTS
-from .router_tech import router_tech
 from .graph_shape import graph_shape
 from .graph_utils import snap
+from .router_tech import router_tech
 
 
 class router(router_tech):

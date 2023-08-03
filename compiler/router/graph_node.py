@@ -3,7 +3,6 @@
 # Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
-from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.tech import drc
 

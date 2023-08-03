@@ -87,7 +87,7 @@ class replica_column(bitcell_base_array):
 
     def create_instances(self):
         self.cell_inst = {}
-        core_block = [[0 for x in range(1)] for y in range(self.total_size)]  
+        core_block = [[0 for x in range(1)] for y in range(self.total_size)]
 
         current_row = self.row_start
         for row in range(self.total_size):
@@ -99,7 +99,7 @@ class replica_column(bitcell_base_array):
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
-            else: 
+            else:
                 if current_row %2:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
                 else:

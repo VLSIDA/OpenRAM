@@ -66,7 +66,7 @@ class bitcell_array(bitcell_base_array):
 
         self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.row_size, num_cols=self.column_size)
         self.pattern.connect_array()
-        
+
         for key in self.cell_inst.keys():
             if key != (0,0):
                 self.trim_insts.add(self.cell_inst[key].name)

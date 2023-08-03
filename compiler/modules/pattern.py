@@ -1,3 +1,8 @@
+# See LICENSE for licensing information.
+#
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# All rights reserved.
+#
 from openram import debug
 from openram.base.geometry import instance,geometry
 from typing import List
@@ -7,7 +12,7 @@ from openram.globals import OPTS
 from math import ceil
 class pattern():
     """
-    This class is used to desribe the internals of a bitcell array. It describes 
+    This class is used to desribe the internals of a bitcell array. It describes
     instance modules, rotation, and ordering
 
     """
@@ -22,18 +27,18 @@ class pattern():
                  num_cores_y: Optional[int] = 0,
                  cores_per_x_block: int = 1,
                  cores_per_y_block: int = 1,
-                 x_block: Optional[block] = None, 
-                 y_block: Optional[block] = None, 
+                 x_block: Optional[block] = None,
+                 y_block: Optional[block] = None,
                  xy_block: Optional[block] = None,
                  initial_x_block:bool = False,
                  initial_y_block:bool = False,
                  final_x_block:bool = False,
                  final_y_block:bool = False
-                 ): 
+                 ):
         """
         a "block" is a 2d list of instances
         core_block defines the main block that is tiled
-        num_core defines the number of times the core block is to be tiled 
+        num_core defines the number of times the core block is to be tiled
         (i.e. bitcells in dimension / bitcells in core_block)
         x_block defines a block that is inserted to the right of the core_block
         y_block defines a block that is inserted below the core block
@@ -43,7 +48,7 @@ class pattern():
         self.parent_design = parent_design
         self.name = name
         self.core_block = core_block
-        self.num_rows = num_rows 
+        self.num_rows = num_rows
         self.num_cols = num_cols
         self.num_cores_x = num_cores_x
         self.num_cores_y = num_cores_y
@@ -62,22 +67,22 @@ class pattern():
         self.final_x_block = final_x_block
         self.final_y_block = final_y_block
         if not OPTS.netlist_only:
-            self.verify_interblock_dimensions() 
-  
+            self.verify_interblock_dimensions()
+
     def compute_and_verify_intrablock_dimensions(self, block: block) -> List[int]:
         for row in block:
             row_height = row[0].height
             for inst in row:
                 debug.check(row_height == inst.height, "intrablock instances within the same row are different heights")
-        
+
         for y in range(len(block[0])):
             debug.check(all([row[y].width for row in block]), "intrablock instances within the same column are different widths")
-                
+
         block_width = sum([instance.width for instance in block[0]])
-        block_height = sum([row[0].height for row in block]) 
+        block_height = sum([row[0].height for row in block])
 
         return [block_width, block_height]
-        
+
     def verify_interblock_dimensions(self) -> None:
         """
         Ensure the individual blocks are valid and interblock dimensions are valid
@@ -95,14 +100,14 @@ class pattern():
             (self.y_block_width, self.y_block_height) = self.compute_and_verify_intrablock_dimensions(self.y_block)
         if self.xy_block:
             (self.xy_block_width, self.xy_block_height) = self.compute_and_verify_intrablock_dimensions(self.xy_block)
-        if(self.x_block): 
+        if(self.x_block):
             debug.check(self.core_block_width * self.cores_per_x_block == self.x_block_width, "core_block does not align with x_block")
         if(self.y_block):
             debug.check(self.core_block_height * self.cores_per_y_block == self.y_block_height, "core_block does not aligns with y_block")
         if(self.xy_block):
             debug.check(self.xy_block_height == self.x_block_height, "xy_block does not align with x_block")
             debug.check(self.xy_block_width == self.y_block_width, "xy_block does not align with y_block")
-        
+
 
     def connect_block(self, block: block, col: int, row: int):
         for dr in range(len(block)):
@@ -141,7 +146,7 @@ class pattern():
             x += inst.width
         inst.place((x, y), inst.mirror, inst.rotate)
 
-                            
+
 
     def place_block(self, block: block, row: int, col: int, place_x: float, place_y: float, bx, by):
         x_offset = 0

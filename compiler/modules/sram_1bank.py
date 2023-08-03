@@ -251,11 +251,7 @@ class sram_1bank(design, verilog, lef):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
 
-        if not OPTS.route_supplies:
-            # Do not route the power supply (leave as must-connect pins)
-            return
-        else:
-            from openram.router import supply_router as router
+        from openram.router import supply_router as router
         rtr = router(layers=self.supply_stack,
                      design=self,
                      bbox=bbox,
@@ -284,7 +280,7 @@ class sram_1bank(design, verilog, lef):
                                         pin.width(),
                                         pin.height())
 
-        elif OPTS.route_supplies and OPTS.supply_pin_type == "single":
+        elif OPTS.supply_pin_type == "single":
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
 
@@ -1080,8 +1076,8 @@ class sram_1bank(design, verilog, lef):
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
             self.route_escape_pins(init_bbox)
-
-        self.route_supplies(init_bbox)
+        if OPTS.route_supplies:
+            self.route_supplies(init_bbox)
 
 
     def route_dffs(self, add_routes=True):

@@ -113,7 +113,8 @@ class rom_bank(design,rom_verilog):
         # FIXME: Somehow ROM layout behaves weird and doesn't add all the pin
         # shapes before routing supplies
         init_bbox = self.get_bbox()
-        self.route_supplies(init_bbox)
+        if OPTS.route_supplies:
+            self.route_supplies(init_bbox)
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
@@ -449,11 +450,7 @@ class rom_bank(design,rom_verilog):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name)
 
-        if not OPTS.route_supplies:
-            # Do not route the power supply (leave as must-connect pins)
-            return
-        else:
-            from openram.router import supply_router as router
+        from openram.router import supply_router as router
         rtr = router(layers=self.supply_stack,
                      design=self,
                      bbox=bbox,

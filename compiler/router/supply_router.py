@@ -65,7 +65,7 @@ class supply_router(router):
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            self.blockages.append(self.inflate_shape(pin, is_pin=True))
+            self.blockages.append(self.inflate_shape(pin))
 
         # Route vdd and gnd
         for pin_name in [vdd_name, gnd_name]:
@@ -239,7 +239,7 @@ class supply_router(router):
         # Save side pins for routing
         self.new_pins[pin_name] = new_pins
         for pin in new_pins:
-            self.blockages.append(self.inflate_shape(pin, is_pin=True))
+            self.blockages.append(self.inflate_shape(pin))
 
 
     def get_mst_pairs(self, pins):

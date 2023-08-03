@@ -50,9 +50,10 @@ class signal_escape_router(router):
         # Add vdd and gnd pins as blockages as well
         # NOTE: This is done to make vdd and gnd pins DRC-safe
         for pin in self.all_pins:
-            self.blockages.append(self.inflate_shape(pin, is_pin=True))
+            self.blockages.append(self.inflate_shape(pin))
 
         # Route vdd and gnd
+        i = 0
         for source, target, _ in self.get_route_pairs(pin_names):
             # Change fake pin's name so the graph will treat it as routable
             target.name = source.name

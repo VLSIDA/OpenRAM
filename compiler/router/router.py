@@ -145,7 +145,7 @@ class router(router_tech):
             # Skip this via if it's contained by an existing via blockage
             if new_shape.contained_by_any(self.vias):
                 continue
-            self.vias.append(self.inflate_shape(new_shape, is_via=True))
+            self.vias.append(self.inflate_shape(new_shape))
 
 
     def convert_vias(self):
@@ -188,32 +188,31 @@ class router(router_tech):
                         break
 
 
-    def inflate_shape(self, shape, is_pin=False, is_via=False):
+    def inflate_shape(self, shape):
         """ Inflate a given shape with spacing rules. """
 
-        # Pins must keep their center lines away from any blockage to prevent
-        # the nodes from being unconnected
-        if is_pin:
-            xdiff = self.layer_widths[0] - shape.width()
-            ydiff = self.layer_widths[0] - shape.height()
-            diff = max(xdiff, ydiff) / 2
-            spacing = self.track_space + drc["grid"]
-            if diff > 0:
-                spacing += diff
-        # Vias are inflated by the maximum spacing rule
-        elif is_via:
-            spacing = self.track_space
-        # Blockages are inflated by their layer's corresponding spacing rule
+        # Get the layer-specific spacing rule
+        if self.get_zindex(shape.lpp) == 1:
+            spacing = self.vert_layer_spacing
         else:
-            if self.get_zindex(shape.lpp) == 1:
-                spacing = self.vert_layer_spacing
-            else:
-                spacing = self.horiz_layer_spacing
+            spacing = self.horiz_layer_spacing
         # If the shape is wider than the supply wire width, its spacing can be
         # different
         wide = min(shape.width(), shape.height())
         if wide > self.layer_widths[0]:
             spacing = self.get_layer_space(self.get_zindex(shape.lpp), wide)
+
+        # Shapes must keep their center lines away from any blockage to prevent
+        # the nodes from being unconnected
+        xdiff = self.track_wire - shape.width()
+        ydiff = self.track_wire - shape.height()
+        diff = snap(max(xdiff, ydiff) / 2)
+        if diff > 0:
+            spacing += diff
+
+        # Add minimum unit to the spacing to keep nodes out of inflated regions
+        spacing += drc["grid"]
+
         return shape.inflated_pin(spacing=spacing,
                                   extra_spacing=self.half_wire)
 

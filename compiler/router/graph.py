@@ -9,7 +9,6 @@ from openram import debug
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.tech import drc
-from .direction import direction
 from .graph_node import graph_node
 from .graph_probe import graph_probe
 from .graph_utils import snap

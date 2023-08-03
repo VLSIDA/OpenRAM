@@ -18,7 +18,7 @@ class signal_escape_router(router):
 
     def __init__(self, layers, design, bbox=None):
 
-        # `router_tech` contains tech constants for the router
+        # `router` is the base router class
         router.__init__(self, layers, design, bbox)
 
         # New pins are the side supply pins
@@ -146,7 +146,7 @@ class signal_escape_router(router):
 
 
     def get_route_pairs(self, pin_names):
-        """  """
+        """ Return the pairs to be routed. """
 
         to_route = []
         for name in pin_names:
@@ -157,7 +157,7 @@ class signal_escape_router(router):
 
 
     def replace_layout_pins(self):
-        """  """
+        """ Replace the old layout pins with new ones around the perimeter. """
 
         for name, pin in self.new_pins.items():
             pin = graph_shape(pin.name, pin.boundary, pin.lpp)

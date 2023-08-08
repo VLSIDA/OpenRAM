@@ -22,6 +22,7 @@ class graph_node:
         else:
             self.center = vector3d(center)
         self.neighbors = []
+        self.remove = False
 
 
     def add_neighbor(self, other):

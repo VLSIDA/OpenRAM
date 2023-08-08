@@ -301,12 +301,12 @@ class graph:
         def search(index, condition, shift):
             """ Search and connect neighbor nodes. """
             base_nodes = self.nodes[index:index+2]
-            found = [hasattr(base_nodes[0], "remove"),
-                     hasattr(base_nodes[1], "remove")]
+            found = [base_nodes[0].remove,
+                     base_nodes[1].remove]
             while condition(index) and not all(found):
                 nodes = self.nodes[index - shift:index - shift + 2]
                 for k in range(2):
-                    if not found[k] and not hasattr(nodes[k], "remove"):
+                    if not found[k] and not nodes[k].remove:
                         found[k] = True
                         if not self.is_probe_blocked(base_nodes[k].center, nodes[k].center):
                             base_nodes[k].add_neighbor(nodes[k])
@@ -315,8 +315,8 @@ class graph:
         for i in range(0, len(self.nodes), 2):
             search(i, lambda count: (count / 2) % y_len, 2) # Down
             search(i, lambda count: (count / 2) >= y_len, y_len * 2) # Left
-            if not hasattr(self.nodes[i], "remove") and \
-               not hasattr(self.nodes[i + 1], "remove") and \
+            if not self.nodes[i].remove and \
+               not self.nodes[i + 1].remove and \
                not self.is_via_blocked(self.nodes[i:i+2]):
                 self.nodes[i].add_neighbor(self.nodes[i + 1])
 
@@ -338,7 +338,7 @@ class graph:
 
         for i in range(len(self.nodes) - 1, -1, -1):
             node = self.nodes[i]
-            if hasattr(node, "remove"):
+            if node.remove:
                 node.remove_all_neighbors()
                 self.nodes.remove(node)
 

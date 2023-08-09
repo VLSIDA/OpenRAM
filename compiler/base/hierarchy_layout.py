@@ -478,12 +478,13 @@ class layout():
         return self.insts[-1]
 
     def add_existing_inst(self, inst, name):
-        inst = deepcopy(inst)
-        self.mods.add(inst.mod)
+        new_inst = deepcopy(inst)
+        new_inst.mod = inst.mod
+        self.mods.add(new_inst.mod)
         if name:
-            inst.name = name
-        self.inst_names.add(inst.name)
-        self.insts.append(inst)
+            new_inst.name = name
+        self.inst_names.add(new_inst.name)
+        self.insts.append(new_inst)
         debug.info(3, "adding existing instance{}".format(self.insts[-1]))
         return self.insts[-1]
 

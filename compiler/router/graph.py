@@ -78,22 +78,34 @@ class graph:
         """
 
         probe_shape = graph_probe(p1, p2, self.router.get_lpp(p1.z))
+        pll, pur = probe_shape.rect
         # Check if any blockage blocks this probe
         for blockage in self.graph_blockages:
-            # Check if two shapes overlap
-            if blockage.overlaps(probe_shape):
-                # Probe is blocked if the shape isn't routable
-                if not self.is_routable(blockage):
-                    return True
-                blockage = blockage.get_core()
-                if blockage.overlaps(probe_shape):
-                    continue
+            bll, bur = blockage.rect
+            # Not overlapping
+            if bll.x > pur.x or pll.x > bur.x or bll.y > pur.y or pll.y > bur.y:
+                continue
+            # Not on the same layer
+            if not blockage.same_lpp(blockage.lpp, probe_shape.lpp):
+                continue
+            # Probe is blocked if the shape isn't routable
+            if not self.is_routable(blockage):
+                return True
+            blockage = blockage.get_core()
+            bll, bur = blockage.rect
+            # Not overlapping
+            if bll.x > pur.x or pll.x > bur.x or bll.y > pur.y or pll.y > bur.y:
                 return True
         return False
 
 
     def is_node_blocked(self, node, pin_safe=True):
         """ Return if a node is blocked by a blockage. """
+
+        p = node.center
+        x = p.x
+        y = p.y
+        z = p.z
 
         def closest(value, checklist):
             """ Return the distance of the closest value in the checklist. """
@@ -105,41 +117,47 @@ class graph:
         spacing = snap(self.router.track_space + half_wide + drc["grid"])
         blocked = False
         for blockage in self.graph_blockages:
-            # Check if the node is inside the blockage
-            if self.inside_shape(node.center, blockage):
-                if not self.is_routable(blockage):
-                    blocked = True
-                    continue
-                blockage = blockage.get_core()
-                # Check if the node is inside the blockage's core
-                if self.inside_shape(node.center, blockage):
-                    p = node.center
-                    # Check if the node is too close to one edge of the shape
-                    lengths = [blockage.width(), blockage.height()]
-                    centers = blockage.center()
-                    ll, ur = blockage.rect
-                    safe = [True, True]
-                    for i in range(2):
-                        if lengths[i] >= wide:
-                            min_diff = closest(p[i], [ll[i], ur[i]])
-                            if min_diff < half_wide:
-                                safe[i] = False
-                        elif centers[i] != p[i]:
-                            safe[i] = False
-                    if not all(safe):
-                        blocked = True
-                        continue
-                    # Check if the node is in a safe region of the shape
-                    xs, ys = self.get_safe_pin_values(blockage)
-                    xdiff = closest(p.x, xs)
-                    ydiff = closest(p.y, ys)
-                    if xdiff == 0 and ydiff == 0:
-                        if pin_safe and blockage in [self.source, self.target]:
-                            return False
-                    elif xdiff < spacing and ydiff < spacing:
-                        blocked = True
-                else:
-                    blocked = True
+            ll, ur = blockage.rect
+            # Not overlapping
+            if ll.x > x or x > ur.x or ll.y > y or y > ur.y:
+                continue
+            # Not on the same layer
+            if self.router.get_zindex(blockage.lpp) != z:
+                continue
+            # Blocked if not routable
+            if not self.is_routable(blockage):
+                blocked = True
+                continue
+            blockage = blockage.get_core()
+            ll, ur = blockage.rect
+            # Not overlapping
+            if ll.x > x or x > ur.x or ll.y > y or y > ur.y:
+                blocked = True
+                continue
+            # Check if the node is too close to one edge of the shape
+            lengths = [blockage.width(), blockage.height()]
+            centers = blockage.center()
+            ll, ur = blockage.rect
+            safe = [True, True]
+            for i in range(2):
+                if lengths[i] >= wide:
+                    min_diff = closest(p[i], [ll[i], ur[i]])
+                    if min_diff < half_wide:
+                        safe[i] = False
+                elif centers[i] != p[i]:
+                    safe[i] = False
+            if not all(safe):
+                blocked = True
+                continue
+            # Check if the node is in a safe region of the shape
+            xs, ys = self.get_safe_pin_values(blockage)
+            xdiff = closest(p.x, xs)
+            ydiff = closest(p.y, ys)
+            if xdiff == 0 and ydiff == 0:
+                if pin_safe and blockage in [self.source, self.target]:
+                    return False
+            elif xdiff < spacing and ydiff < spacing:
+                blocked = True
         return blocked
 
 
@@ -151,12 +169,17 @@ class graph:
             if self.is_node_blocked(node, pin_safe=False):
                 return True
         # If the nodes are blocked by a via
-        point = node.center
+        x = node.center.x
+        y = node.center.y
+        z = node.center.z
         for via in self.graph_vias:
             ll, ur = via.rect
+            # Not overlapping
+            if ll.x > x or x > ur.x or ll.y > y or y > ur.y:
+                continue
             center = via.center()
-            if via.on_segment(ll, point, ur) and \
-               (center.x != point.x or center.y != point.y):
+            # If not in the center
+            if center.x != x or center.y != y:
                 return True
         return False
 

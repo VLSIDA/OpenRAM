@@ -115,7 +115,7 @@ class options(optparse.Values):
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
     # Whether we should do the final power routing
-    route_supplies = "tree"
+    route_supplies = True
     supply_pin_type = "ring"
     # This determines whether LVS and DRC is checked at all.
     check_lvsdrc = False

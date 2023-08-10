@@ -14,7 +14,6 @@ from openram.base import channel_route
 from openram.base import design
 from openram.base import verilog
 from openram.base import lef
-from openram.router import router_tech
 from openram.sram_factory import factory
 from openram.tech import spice
 from openram import OPTS, print_time
@@ -252,18 +251,11 @@ class sram_1bank(design, verilog, lef):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
 
-        if not OPTS.route_supplies:
-            # Do not route the power supply (leave as must-connect pins)
-            return
-        elif OPTS.route_supplies == "grid":
-            from openram.router import supply_grid_router as router
-        else:
-            from openram.router import supply_tree_router as router
-        rtr=router(layers=self.supply_stack,
-                   design=self,
-                   bbox=bbox,
-                   pin_type=OPTS.supply_pin_type)
-
+        from openram.router import supply_router as router
+        rtr = router(layers=self.supply_stack,
+                     design=self,
+                     bbox=bbox,
+                     pin_type=OPTS.supply_pin_type)
         rtr.route()
 
         if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
@@ -288,7 +280,7 @@ class sram_1bank(design, verilog, lef):
                                         pin.width(),
                                         pin.height())
 
-        elif OPTS.route_supplies and OPTS.supply_pin_type == "single":
+        elif OPTS.supply_pin_type == "single":
             # Update these as we may have routed outside the region (perimeter pins)
             lowest_coord = self.find_lowest_coords()
 
@@ -326,7 +318,7 @@ class sram_1bank(design, verilog, lef):
             # Grid is left with many top level pins
             pass
 
-    def route_escape_pins(self, bbox):
+    def route_escape_pins(self, bbox=None):
         """
         Add the top-level pins for a single bank SRAM with control.
         """
@@ -370,10 +362,10 @@ class sram_1bank(design, verilog, lef):
                         pins_to_route.append("spare_wen{0}[{1}]".format(port, bit))
 
         from openram.router import signal_escape_router as router
-        rtr=router(layers=self.m3_stack,
-                   design=self,
-                   bbox=bbox)
-        rtr.escape_route(pins_to_route)
+        rtr = router(layers=self.m3_stack,
+                     bbox=bbox,
+                     design=self)
+        rtr.route(pins_to_route)
 
     def compute_bus_sizes(self):
         """ Compute the independent bus widths shared between two and four bank SRAMs """
@@ -1077,24 +1069,15 @@ class sram_1bank(design, verilog, lef):
         # Some technologies have an isolation
         self.add_dnwell(inflate=2.5)
 
+        init_bbox = self.get_bbox()
         # Route the supplies together and/or to the ring/stripes.
-        # This is done with the original bbox since the escape routes need to
-        # be outside of the ring for OpenLane
-        rt = router_tech(self.supply_stack, 1)
-        init_bbox = self.get_bbox(side="ring",
-                                  margin=rt.track_width)
-
-        # We need the initial bbox for the supply rings later
-        # because the perimeter pins will change the bbox
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            bbox = self.get_bbox(side="ring",
-                                 margin=11*rt.track_width)
-            self.route_escape_pins(bbox)
-
-        self.route_supplies(init_bbox)
+            self.route_escape_pins(init_bbox)
+        if OPTS.route_supplies:
+            self.route_supplies(init_bbox)
 
 
     def route_dffs(self, add_routes=True):

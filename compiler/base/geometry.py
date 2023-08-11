@@ -200,8 +200,16 @@ class instance(geometry):
                 self.width = round_to_grid(mod.width)
                 self.height = round_to_grid(mod.height)
         self.compute_boundary(offset, mirror, rotate)
-
         debug.info(4, "creating instance: " + self.name)
+
+    def __deepcopy__(original, memo):
+        new_inst = instance(original.name+"_copy", original.mod)
+        new_inst.rotate = original.rotate
+        new_inst.offset = original.offset
+        new_inst.mirror = original.mirror
+        new_inst.is_bitcell = original.is_bitcell
+        return new_inst
+
 
     def get_blockages(self, lpp, top=False):
         """ Retrieve blockages of all modules in this instance.

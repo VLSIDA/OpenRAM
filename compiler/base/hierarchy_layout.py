@@ -479,7 +479,6 @@ class layout():
 
     def add_existing_inst(self, inst, name):
         new_inst = deepcopy(inst)
-        new_inst.mod = inst.mod
         self.mods.add(new_inst.mod)
         if name:
             new_inst.name = name

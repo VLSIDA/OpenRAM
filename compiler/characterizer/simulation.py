@@ -235,7 +235,7 @@ class simulation():
         self.add_wmask(wmask, port)
         self.add_spare_wen("1" * self.num_spare_cols, port)
 
-        #Add noops to all other ports.
+        # Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(unselected_port)
@@ -267,7 +267,7 @@ class simulation():
                 self.add_wmask("0" * self.num_wmasks, port)
             self.add_spare_wen("0" * self.num_spare_cols, port)
 
-        #Add noops to all other ports.
+        # Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(unselected_port)
@@ -356,14 +356,14 @@ class simulation():
 
         self.add_noop_one_port(port)
 
-        #Add noops to all other ports.
+        # Add noops to all other ports.
         for unselected_port in self.all_ports:
             if unselected_port != port:
                 self.add_noop_one_port(unselected_port)
 
     def append_cycle_comment(self, port, comment):
         """Add comment to list to be printed in stimulus file"""
-        #Clean up time before appending. Make spacing dynamic as well.
+        # Clean up time before appending. Make spacing dynamic as well.
         time = "{0:.2f} ns:".format(self.t_current)
         time_spacing = len(time) + 6
         self.cycle_comments.append("Cycle {0:<6d} Port {1:<6} {2:<{3}}: {4}".format(len(self.cycle_times),
@@ -388,7 +388,7 @@ class simulation():
             split_word2 = [x + '_' * (n != 0 and n % 4 == 0) for n, x in enumerate(split_word)]
             # Join the word unreversed back together
             new_word = ''.join(reversed(split_word2))
-            return(new_word)
+            return (new_word)
 
         # Split extra cols
         if self.num_spare_cols > 0:
@@ -414,9 +414,9 @@ class simulation():
             comment = "\tWriting {0}  to  address {1} (from port {2}) during cycle {3} ({4}ns - {5}ns)".format(word,
                                                                                                                addr,
                                                                                                                port,
-                                                                                                               int(t_current/self.period),
+                                                                                                               int(t_current / self.period),
                                                                                                                t_current,
-                                                                                                               t_current+self.period)
+                                                                                                               t_current + self.period)
         elif op == "partial_write":
             str = "\tWriting (partial) {0}  to  address {1} with mask bit {2} (from port {3}) during cycle {4} ({5}ns - {6}ns)"
             comment = str.format(word,
@@ -454,7 +454,7 @@ class simulation():
             for i in range(abits):
                 pin_names.append("{0}{1}_{2}".format(addr_name, port, i))
 
-        #Control signals not finalized.
+        # Control signals not finalized.
         for port in range(total_ports):
             pin_names.append("CSB{0}".format(port))
         for port in range(total_ports):
@@ -493,11 +493,12 @@ class simulation():
 
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
-        self.sram.bank.graph_exclude_precharge()
-        self.sram.graph_exclude_addr_dff()
-        self.sram.graph_exclude_data_dff()
-        self.sram.graph_exclude_ctrl_dffs()
-        self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
+        if OPTS.top_process != 'memchar':
+            self.sram.bank.graph_exclude_precharge()
+            self.sram.graph_exclude_addr_dff()
+            self.sram.graph_exclude_data_dff()
+            self.sram.graph_exclude_ctrl_dffs()
+            self.sram.bank.bitcell_array.graph_exclude_replica_col_bits()
 
     def set_internal_spice_names(self):
         """
@@ -515,9 +516,9 @@ class simulation():
                 self.sen_name = sen_with_port
                 debug.warning("Error occurred while determining SEN name. Can cause faults in simulation.")
 
-            column_addr = self.get_column_addr()
+            # column_addr = self.get_column_addr()
             bl_name_port, br_name_port = self.get_bl_name(self.graph.all_paths, port)
-            port_pos = -1 - len(str(column_addr)) - len(str(port))
+            # port_pos = -1 - len(str(column_addr)) - len(str(port))
 
             if bl_name_port.endswith(str(port) + "_" + str(self.bitline_column)): # single port SRAM case, bl will not be numbered eg bl_0
                 self.bl_name = bl_name_port
@@ -535,7 +536,7 @@ class simulation():
                                      '{}{}_{}'.format(self.dout_name, port, self.probe_data))
 
             self.sen_name = self.get_sen_name(self.graph.all_paths)
-            #debug.info(2, "s_en {}".format(self.sen_name))
+            # debug.info(2, "s_en {}".format(self.sen_name))
 
             self.bl_name = "bl{0}_{1}".format(port, OPTS.word_size - 1)
             self.br_name = "br{0}_{1}".format(port, OPTS.word_size - 1)
@@ -563,10 +564,10 @@ class simulation():
         Creates timing graph to generate the timing paths for the SRAM output.
         """
 
-        #Make exclusions dependent on the bit being tested.
+        # Make exclusions dependent on the bit being tested.
         self.sram.clear_exclude_bits() # Removes previous bit exclusions
         self.sram.graph_exclude_bits(self.wordline_row, self.bitline_column)
-        port=self.read_ports[0] #FIXME, port_data requires a port specification, assuming single port for now
+        port=self.read_ports[0] # FIXME, port_data requires a port specification, assuming single port for now
         if self.words_per_row > 1:
             self.sram.graph_clear_column_mux(port)
             self.sram.graph_exclude_column_mux(self.bitline_column, port)

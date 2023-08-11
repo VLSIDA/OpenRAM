@@ -42,7 +42,13 @@ class setup_hold():
         self.stim_sp = "sh_stim.sp"
         temp_stim = OPTS.openram_temp + self.stim_sp
         self.sf = open(temp_stim, "w")
-        self.stim = stimuli(self.sf, self.corner)
+
+        # creates and opens the measure file for writing
+        self.meas_sp = "sh_meas.sp"
+        temp_meas = OPTS.openram_temp + self.meas_sp
+        self.mf = open(temp_meas, "w")
+
+        self.stim = stimuli(self.sf, self.mf, self.corner)
 
         self.write_header(correct_value)
 
@@ -56,6 +62,7 @@ class setup_hold():
                         correct_value=correct_value)
 
         self.write_clock()
+        self.sf.write(".include {}\n".format(temp_meas))
 
         self.write_measures(mode=mode,
                             correct_value=correct_value)
@@ -63,6 +70,7 @@ class setup_hold():
         self.stim.write_control(4 * self.period)
 
         self.sf.close()
+        self.mf.close()
 
     def write_header(self, correct_value):
         """ Write the header file with all the models and the power supplies. """
@@ -131,7 +139,7 @@ class setup_hold():
         else:
             dout_rise_or_fall = "FALL"
 
-        self.sf.write("\n* Measure statements for pass/fail verification\n")
+        self.mf.write("\n* Measure statements for pass/fail verification\n")
         trig_name = "clk"
         targ_name = "Q"
         trig_val = targ_val = 0.5 * self.vdd_voltage
@@ -168,29 +176,33 @@ class setup_hold():
                             target_time=feasible_bound,
                             correct_value=correct_value)
         self.stim.run_sim(self.stim_sp)
-        ideal_clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))
+        ideal_clk_to_q = convert_to_float(parse_spice_list("timing",
+                                                           "clk2q_delay"))
         # We use a 1/2 speed clock for some reason...
         setuphold_time = (feasible_bound - 2 * self.period)
         if mode == "SETUP": # SETUP is clk-din, not din-clk
             passing_setuphold_time = -1 * setuphold_time
         else:
             passing_setuphold_time = setuphold_time
-        debug.info(2, "*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}".format(mode,
-                                                                                      correct_value,
-                                                                                      ideal_clk_to_q,
-                                                                                      setuphold_time))
+        debug.info(2, "*** {0} CHECK: {1} Ideal Clk-to-Q: {2} Setup/Hold: {3}"
+                   .format(mode,
+                           correct_value,
+                           ideal_clk_to_q,
+                           setuphold_time))
 
         if type(ideal_clk_to_q)!=float:
             debug.error("Initial hold time fails for data value feasible "
-                        "bound {0} Clk-to-Q {1} Setup/Hold {2}".format(feasible_bound,
-                                                                       ideal_clk_to_q,
-                                                                       setuphold_time),
+                        "bound {0} Clk-to-Q {1} Setup/Hold {2}"
+                         .format(feasible_bound,
+                                 ideal_clk_to_q,
+                                 setuphold_time),
                         2)
 
-        debug.info(2, "Checked initial {0} time {1}, data at {2}, clock at {3} ".format(mode,
-                                                                                        setuphold_time,
-                                                                                        feasible_bound,
-                                                                                        2 * self.period))
+        debug.info(2, "Checked initial {0} time {1}, data at {2}, clock at {3} "
+                       .format(mode,
+                               setuphold_time,
+                               feasible_bound,
+                               2 * self.period))
 
         while True:
             target_time = (feasible_bound + infeasible_bound) / 2
@@ -198,11 +210,12 @@ class setup_hold():
                                 target_time=target_time,
                                 correct_value=correct_value)
 
-            debug.info(2, "{0} value: {1} Target time: {2} Infeasible: {3} Feasible: {4}".format(mode,
-                                                                                                 correct_value,
-                                                                                                 target_time,
-                                                                                                 infeasible_bound,
-                                                                                                 feasible_bound))
+            debug.info(2, "{0} value: {1} Target time: {2} Infeasible: {3} Feasible: {4}"
+                           .format(mode,
+                                   correct_value,
+                                   target_time,
+                                   infeasible_bound,
+                                   feasible_bound))
 
             self.stim.run_sim(self.stim_sp)
             clk_to_q = convert_to_float(parse_spice_list("timing", "clk2q_delay"))

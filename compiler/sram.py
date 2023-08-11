@@ -60,6 +60,14 @@ class sram():
         if not OPTS.is_unit_test:
             print_time("SRAM creation", datetime.datetime.now(), start_time)
 
+    def get_sp_name(self):
+        if OPTS.use_pex:
+            # Use the extracted spice file
+            return self.pex_name
+        else:
+            # Use generated spice file for characterization
+            return self.sp_name
+
     def sp_write(self, name, lvs=False, trim=False):
         self.s.sp_write(name, lvs, trim)
 
@@ -95,17 +103,39 @@ class sram():
         # is loaded and the right tools are selected
         from openram import verify
         from openram.characterizer import functional
+        from openram.characterizer import delay
 
         # Save the spice file
         start_time = datetime.datetime.now()
         spname = OPTS.output_path + self.s.name + ".sp"
         debug.print_raw("SP: Writing to {0}".format(spname))
         self.sp_write(spname)
+
+        # Save a functional simulation file with default period
         functional(self.s,
-                   os.path.basename(spname),
+                   spname,
                    cycles=200,
                    output_path=OPTS.output_path)
         print_time("Spice writing", datetime.datetime.now(), start_time)
+
+        # Save stimulus and measurement file
+        start_time = datetime.datetime.now()
+        debug.print_raw("DELAY: Writing stimulus...")
+        d = delay(self.s, spname, ("TT", 5, 25), output_path=OPTS.output_path)
+        if (self.s.num_spare_rows == 0):
+            probe_address = "1" * self.s.addr_size
+        else:
+            probe_address = "0" + "1" * (self.s.addr_size - 1)
+        probe_data = self.s.word_size - 1
+        d.analysis_init(probe_address, probe_data)
+        d.targ_read_ports.extend(self.s.read_ports)
+        d.targ_write_ports = [self.s.write_ports[0]]
+        d.write_delay_stimulus()
+        print_time("DELAY", datetime.datetime.now(), start_time)
+
+        # Save trimmed spice file
+        temp_trim_sp = "{0}trimmed.sp".format(OPTS.output_path)
+        self.sp_write(temp_trim_sp, lvs=False, trim=True)
 
         if not OPTS.netlist_only:
             # Write the layout
@@ -153,8 +183,6 @@ class sram():
         else:
             # Use generated spice file for characterization
             sp_file = spname
-
-        # Save a functional simulation file
 
         # Characterize the design
         start_time = datetime.datetime.now()

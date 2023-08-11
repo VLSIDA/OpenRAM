@@ -1212,7 +1212,7 @@ class pbitcell(bitcell_base):
         if self.dummy_bitcell:
             return
 
-        pin_dict = {pin: port for pin, port in zip(self.pins, port_nets)}
+        pin_dict = {pin: port for pin, port in zip(list(self.pins), port_nets)}
 
         # Edges added wl->bl, wl->br for every port except write ports
         rw_pin_names = zip(self.r_wl_names, self.r_bl_names, self.r_br_names)

@@ -5,11 +5,17 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+from openram import OPTS
+word_size = 2
+num_words = 16
 
-from enum import Enum
+tech_name = OPTS.tech_name
+if tech_name == "sky130":
+    num_spare_cols = 1
+    num_spare_rows = 1
 
-class sram_op(Enum):
-    READ_ZERO = 0
-    READ_ONE = 1
-    WRITE_ZERO = 2
-    WRITE_ONE = 3
+output_name = "sram"
+
+analytical_delay = False
+nominal_corner_only = True
+spice_name = "Xyce"

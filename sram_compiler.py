@@ -32,6 +32,8 @@ if len(args) != 1:
     print(openram.USAGE)
     sys.exit(2)
 
+# Set top process to openram
+OPTS.top_process = 'openram'
 
 # These depend on arguments, so don't load them until now.
 from openram import debug
@@ -76,4 +78,3 @@ s.save()
 # Delete temp files etc.
 openram.end_openram()
 openram.print_time("End", datetime.datetime.now(), start_time)
-

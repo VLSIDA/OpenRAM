@@ -46,7 +46,8 @@ Measures the timing/power through SPICE simulation:
 * Testing Support Modules
     * Other modules are derivatives of the simulation module used in the unit tests
 
-
+## Stand-alone Charaterizer
+The stand-alone characterizer is a script ([sram_char.py]()sram_char.py) that can be run without generating an SRAM. 
 
 ## Characterization Options
 * Characterization by Configuration File 

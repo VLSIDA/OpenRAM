@@ -14,7 +14,6 @@ from openram.base import rom_verilog
 from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import drc, layer, parameter
-from openram.router import router_tech
 
 
 class rom_bank(design,rom_verilog):
@@ -111,21 +110,16 @@ class rom_bank(design,rom_verilog):
         self.place_top_level_pins()
         self.route_output_buffers()
 
-        rt = router_tech(self.supply_stack, 1)
-        init_bbox = self.get_bbox(side="ring",
-                                  margin=rt.track_width)
-        self.route_supplies(init_bbox)
-        # We need the initial bbox for the supply rings later
-        # because the perimeter pins will change the bbox
+        # FIXME: Somehow ROM layout behaves weird and doesn't add all the pin
+        # shapes before routing supplies
+        init_bbox = self.get_bbox()
+        if OPTS.route_supplies:
+            self.route_supplies(init_bbox)
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
             # reach past the power ring or stripes on the sides
-            bbox = self.get_bbox(side="ring",
-                                 margin=11*rt.track_width)
-            self.route_escape_pins(bbox)
-
-
+            self.route_escape_pins(init_bbox)
 
 
     def setup_layout_constants(self):
@@ -450,24 +444,17 @@ class rom_bank(design,rom_verilog):
             pin_num = msb - self.col_bits
             self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
-    def route_supplies(self, bbox=None):
+    def route_supplies(self, bbox):
 
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name)
 
-        if not OPTS.route_supplies:
-            # Do not route the power supply (leave as must-connect pins)
-            return
-        elif OPTS.route_supplies == "grid":
-            from openram.router import supply_grid_router as router
-        else:
-            from openram.router import supply_tree_router as router
-        rtr=router(layers=self.supply_stack,
-                   design=self,
-                   bbox=bbox,
-                   pin_type=OPTS.supply_pin_type)
-
+        from openram.router import supply_router as router
+        rtr = router(layers=self.supply_stack,
+                     design=self,
+                     bbox=bbox,
+                     pin_type=OPTS.supply_pin_type)
         rtr.route()
 
         if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
@@ -507,7 +494,7 @@ class rom_bank(design,rom_verilog):
         pins_to_route.append("clk")
         pins_to_route.append("cs")
         from openram.router import signal_escape_router as router
-        rtr=router(layers=self.m3_stack,
-                   design=self,
-                   bbox=bbox)
-        rtr.escape_route(pins_to_route)
+        rtr = router(layers=self.m3_stack,
+                     bbox=bbox,
+                     design=self)
+        rtr.route(pins_to_route)

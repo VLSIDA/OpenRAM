@@ -7,13 +7,17 @@
 #
 import math
 import random
+import time
 import collections
+from os import path
+import shutil
 from numpy import binary_repr
 from openram import debug
 from openram import OPTS
 from .stimuli import *
 from .charutils import *
 from .simulation import simulation
+from .measurements import voltage_at_measure
 
 
 class functional(simulation):
@@ -28,16 +32,23 @@ class functional(simulation):
         # Seed the characterizer with a constant seed for unit tests
         if OPTS.is_unit_test:
             random.seed(12345)
+        elif OPTS.functional_seed:
+            random.seed(OPTS.functional_seed)
+        else:
+            seed = time.time_ns()
+            random.seed(seed)
+            debug.info(1, "Random seed for functional simulation: {}".format(seed))
+
 
         if not spfile:
             # self.sp_file is assigned in base class
             sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
+        # Copy sp file to temp dir
+        self.temp_spice = path.join(OPTS.openram_temp, "sram.sp")
+        shutil.copy(self.sp_file, self.temp_spice)
 
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-
-        if period:
-            self.period = period
 
         if not output_path:
             self.output_path = OPTS.openram_temp
@@ -73,13 +84,20 @@ class functional(simulation):
         self.set_spice_constants()
         self.set_stimulus_variables()
 
+        # Override default period
+        if period:
+            self.period = period
+
         # For the debug signal names
         self.wordline_row = 0
         self.bitline_column = 0
         self.create_signal_names()
-        self.add_graph_exclusions()
-        self.create_graph()
-        self.set_internal_spice_names()
+        #self.add_graph_exclusions()
+        #self.create_graph()
+        #self.set_internal_spice_names()
+        self.bl_name = "xsram:xbank0:bl_0_{}"
+        self.br_name = "xsram:xbank0:br_0_{}"
+        self.sen_name = "xsram:s_en"
         self.q_name, self.qbar_name = self.get_bit_name()
         debug.info(2, "q:\t\t{0}".format(self.q_name))
         debug.info(2, "qbar:\t{0}".format(self.qbar_name))
@@ -144,7 +162,6 @@ class functional(simulation):
         # First cycle idle is always an idle cycle
         comment = self.gen_cycle_comment("noop", "0" * self.word_size, "0" * self.bank_addr_size, "0" * self.num_wmasks, 0, self.t_current)
         self.add_noop_all_ports(comment)
-
 
         # 1. Write all the write ports 2x to seed a bunch of locations.
         for i in range(3):
@@ -267,7 +284,7 @@ class functional(simulation):
         self.read_check.append([word,
                                 "{0}{1}".format(self.dout_name, port),
                                 self.t_current + self.period,
-                                int(self.t_current/self.period)])
+                                int(self.t_current / self.period)])
 
     def read_stim_results(self):
         # Extract dout values from spice timing.lis
@@ -275,7 +292,8 @@ class functional(simulation):
             sp_read_value = ""
             for bit in range(self.word_size + self.num_spare_cols):
                 measure_name = "v{0}_{1}ck{2}".format(dout_port.lower(), bit, cycle)
-                value = parse_spice_list("timing", measure_name)
+                # value = parse_spice_list("timing", measure_name)
+                value = self.measures[measure_name].retrieve_measure(port=0)
                 # FIXME: Ignore the spare columns for now
                 if bit >= self.word_size:
                     value = 0
@@ -294,10 +312,11 @@ class functional(simulation):
                                                                                                                                 self.v_low,
                                                                                                                                 self.v_high)
                 except ValueError:
-                    error ="FAILED: {0}_{1} value {2} at time {3}n is not a float.".format(dout_port,
+                    error ="FAILED: {0}_{1} value {2} at time {3}n is not a float. Measure: {4}".format(dout_port,
                                                                                            bit,
                                                                                            value,
-                                                                                           eo_period)
+                                                                                           eo_period,
+                                                                                           measure_name)
 
                     return (0, error)
             self.read_results.append([sp_read_value, dout_port, eo_period, cycle])
@@ -318,8 +337,8 @@ class functional(simulation):
                                    cycle,
                                    self.read_results[i][2],
                                    check_name)
-                return(0, error)
-        return(1, "SUCCESS")
+                return (0, error)
+        return (1, "SUCCESS")
 
     def gen_wmask(self):
         wmask = ""
@@ -347,7 +366,7 @@ class functional(simulation):
     def gen_data(self):
         """ Generates a random word to write. """
         # Don't use 0 or max value
-        random_value = random.randint(1, self.max_data - 1)
+        random_value = random.randint(1, self.max_data)
         data_bits = binary_repr(random_value, self.word_size)
         if self.num_spare_cols>0:
             random_value = random.randint(0, self.max_col_data)
@@ -380,13 +399,16 @@ class functional(simulation):
     def write_functional_stimulus(self):
         """ Writes SPICE stimulus. """
         self.stim_sp = "functional_stim.sp"
-        temp_stim = "{0}/{1}".format(self.output_path, self.stim_sp)
+        temp_stim = path.join(self.output_path, self.stim_sp)
         self.sf = open(temp_stim, "w")
         self.sf.write("* Functional test stimulus file for {0}ns period\n\n".format(self.period))
-        self.stim = stimuli(self.sf, self.corner)
+        self.meas_sp = "functional_meas.sp"
+        temp_meas = path.join(self.output_path, self.meas_sp)
+        self.mf = open(temp_meas, "w")
+        self.stim = stimuli(self.sf, self.mf, self.corner)
 
         # Write include statements
-        self.stim.write_include(self.sp_file)
+        self.stim.write_include(self.temp_spice)
 
         # Write Vdd/Gnd statements
         self.sf.write("\n* Global Power Supplies\n")
@@ -470,6 +492,7 @@ class functional(simulation):
 
         # Generate dout value measurements
         self.sf.write("\n * Generation of dout measurements\n")
+        self.measures = {}
 
         for (word, dout_port, eo_period, cycle) in self.read_check:
             t_initial = eo_period
@@ -477,28 +500,37 @@ class functional(simulation):
             num_bits = self.word_size + self.num_spare_cols
             for bit in range(num_bits):
                 signal_name = "{0}_{1}".format(dout_port, bit)
-                measure_name = "V{0}ck{1}".format(signal_name, cycle)
+                measure_name = "v{0}ck{1}".format(signal_name, cycle)
                 voltage_value = self.stim.get_voltage(word[num_bits - bit - 1])
 
                 self.stim.add_comment("* CHECK {0} {1} = {2} time = {3}".format(signal_name,
                                                                                 measure_name,
                                                                                 voltage_value,
                                                                                 eo_period))
-                self.stim.gen_meas_value(meas_name=measure_name,
-                                         dout=signal_name,
-                                         t_initial=t_initial,
-                                         t_final=t_final)
+                # TODO: Convert to measurement statement instead of stimuli
+                meas = voltage_at_measure(measure_name, signal_name)
+                self.measures[measure_name] = meas
+                meas.write_measure(self.stim, ((t_initial + t_final) / 2, 0))
+                # self.stim.gen_meas_value(meas_name=measure_name,
+                #                          dout=signal_name,
+                #                          t_initial=t_initial,
+                #                          t_final=t_final
 
+        self.sf.write(".include {0}\n".format(temp_meas))
         self.stim.write_control(self.cycle_times[-1] + self.period)
         self.sf.close()
+        self.mf.close()
 
     # FIXME: Similar function to delay.py, refactor this
     def get_bit_name(self):
         """ Get a bit cell name """
-        (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
-        storage_names = cell_inst.mod.get_storage_net_names()
-        debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
-                                              "supported for characterization. Storage nets={0}").format(storage_names))
+        # TODO: Find a way to get the cell_name and storage_names statically
+        # (cell_name, cell_inst) = self.sram.get_cell_name(self.sram.name, 0, 0)
+        # storage_names = cell_inst.mod.get_storage_net_names()
+        # debug.check(len(storage_names) == 2, ("Only inverting/non-inverting storage nodes"
+        #                                       "supported for characterization. Storage nets={0}").format(storage_names))
+        cell_name = "xsram:xbank0:xbitcell_array:xbitcell_array:xbit_r0_c0"
+        storage_names = ("Q", "Q_bar")
         q_name = cell_name + OPTS.hier_seperator + str(storage_names[0])
         qbar_name = cell_name + OPTS.hier_seperator + str(storage_names[1])
 

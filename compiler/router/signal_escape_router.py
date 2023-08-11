@@ -1,104 +1,169 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2023 Regents of the University of California and The Board
-# of Regents for the Oklahoma Agricultural and Mechanical College
-# (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
-from datetime import datetime
 from openram import debug
-from openram import print_time
+from openram.base.vector import vector
+from openram import OPTS
+from .graph import graph
+from .graph_shape import graph_shape
 from .router import router
-from .signal_grid import signal_grid
 
 
 class signal_escape_router(router):
     """
-    A router that routes signals to perimeter and makes pins.
+    This is the signal escape router that uses the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design, bbox=None, margin=0):
+    def __init__(self, layers, design, bbox=None):
+
+        # `router` is the base router class
+        router.__init__(self, layers, design, bbox)
+
+        # New pins are the side supply pins
+        self.new_pins = {}
+
+
+    def route(self, pin_names):
+        """ Route the given pins to the perimeter. """
+        debug.info(1, "Running signal escape router...")
+
+        # Prepare gdsMill to find pins and blockages
+        self.prepare_gds_reader()
+
+        # Find pins to be routed
+        for name in pin_names:
+            self.find_pins(name)
+
+        # Find blockages and vias
+        self.find_blockages()
+        self.find_vias()
+
+        # Convert blockages and vias if they overlap a pin
+        self.convert_vias()
+        self.convert_blockages()
+
+        # Add fake pins on the perimeter to do the escape routing on
+        self.add_perimeter_fake_pins()
+
+        # Add vdd and gnd pins as blockages as well
+        # NOTE: This is done to make vdd and gnd pins DRC-safe
+        for pin in self.all_pins:
+            self.blockages.append(self.inflate_shape(pin))
+
+        # Route vdd and gnd
+        for source, target, _ in self.get_route_pairs(pin_names):
+            # Change fake pin's name so the graph will treat it as routable
+            target.name = source.name
+            # This is the routing region scale
+            scale = 1
+            while True:
+                # Create the graph
+                g = graph(self)
+                region = g.create_graph(source, target, scale)
+                # Find the shortest path from source to target
+                path = g.find_shortest_path()
+                # If there is no path found, exponentially try again with a
+                # larger routing region
+                if path is None:
+                    rll, rur = region
+                    bll, bur = self.bbox
+                    # Stop scaling the region and throw an error
+                    if rll.x < bll.x and rll.y < bll.y and \
+                       rur.x > bur.x and rur.y > bur.y:
+                        self.write_debug_gds(gds_name="{}error.gds".format(OPTS.openram_temp), g=g, source=source, target=target)
+                        debug.error("Couldn't route from {} to {}.".format(source, target), -1)
+                    # Exponentially scale the region
+                    scale *= 2
+                    debug.info(0, "Retry routing in larger routing region with scale {}".format(scale))
+                    continue
+                # Create the path shapes on layout
+                new_shapes = self.add_path(path)
+                self.new_pins[source.name] = new_shapes[0]
+                # Find the recently added shapes
+                self.prepare_gds_reader()
+                self.find_blockages(name)
+                self.find_vias()
+                break
+        self.replace_layout_pins()
+
+
+    def add_perimeter_fake_pins(self):
         """
-        This will route on layers in design. It will get the blockages from
-        either the gds file name or the design itself (by saving to a gds file).
+        Add the fake pins on the perimeter to where the signals will be routed.
         """
-        router.__init__(self,
-                        layers=layers,
-                        design=design,
-                        bbox=bbox,
-                        margin=margin)
 
-    def perimeter_dist(self, pin_name):
-        """
-        Return the shortest Manhattan distance to the bounding box perimeter.
-        """
-        loc = self.cell.get_pin(pin_name).center()
-        x_dist = min(loc.x - self.ll.x, self.ur.x - loc.x)
-        y_dist = min(loc.y - self.ll.y, self.ur.y - loc.y)
+        ll, ur = self.bbox
+        wide = self.track_wire
 
-        return min(x_dist, y_dist)
+        for side in ["top", "bottom", "left", "right"]:
+            vertical = side in ["left", "right"]
 
-    def escape_route(self, pin_names):
-        """
-        Takes a list of tuples (name, side) and routes them. After routing,
-        it removes the old pin and places a new one on the perimeter.
-        """
-        self.create_routing_grid(signal_grid)
+            # Calculate the lower left coordinate
+            if side == "top":
+                offset = vector(ll.x, ur.y - wide)
+            elif side == "bottom":
+                offset = vector(ll.x, ll.y)
+            elif side == "left":
+                offset = vector(ll.x, ll.y)
+            elif side == "right":
+                offset = vector(ur.x - wide, ll.y)
 
-        start_time = datetime.now()
-        self.find_pins_and_blockages(pin_names)
-        print_time("Finding pins and blockages",datetime.now(), start_time, 3)
+            # Calculate width and height
+            shape = ur - ll
+            if vertical:
+                shape_width = wide
+                shape_height = shape.y
+            else:
+                shape_width = shape.x
+                shape_height = wide
 
-        # Order the routes by closest to the perimeter first
-        # This prevents some pins near the perimeter from being blocked by other pins
-        ordered_pin_names = sorted(pin_names, key=lambda x: self.perimeter_dist(x))
+            # Add this new pin
+            # They must lie on the non-preferred direction since the side supply
+            # pins will lie on the preferred direction
+            layer = self.get_layer(int(not vertical))
+            nll = vector(offset.x, offset.y)
+            nur = vector(offset.x + shape_width, offset.y + shape_height)
+            rect = [nll, nur]
+            pin = graph_shape(name="fake",
+                              rect=rect,
+                              layer_name_pp=layer)
+            self.fake_pins.append(pin)
 
-        # Route the supply pins to the supply rails
-        # Route vdd first since we want it to be shorter
-        start_time = datetime.now()
-        for pin_name in ordered_pin_names:
-            self.route_signal(pin_name)
-            # if pin_name == "dout0[1]":
-            #     self.write_debug_gds("postroute.gds", True)
 
-        print_time("Maze routing pins",datetime.now(), start_time, 3)
+    def get_closest_perimeter_fake_pin(self, pin):
+        """ Return the closest fake pin for the given pin. """
 
-        #self.write_debug_gds("final_escape_router.gds",False)
+        min_dist = float("inf")
+        close_fake = None
+        for fake in self.fake_pins:
+            dist = pin.distance(fake)
+            if dist < min_dist:
+                min_dist = dist
+                close_fake = fake
+        return close_fake
 
-        return True
 
-    def route_signal(self, pin_name, side="all"):
+    def get_route_pairs(self, pin_names):
+        """ Return the pairs to be routed. """
 
-        for detour_scale in [5 * pow(2, x) for x in range(5)]:
-            debug.info(1, "Escape routing {0} with scale {1}".format(pin_name, detour_scale))
+        to_route = []
+        for name in pin_names:
+            pin = next(iter(self.pins[name]))
+            fake = self.get_closest_perimeter_fake_pin(pin)
+            to_route.append((pin, fake, pin.distance(fake)))
+        return sorted(to_route, key=lambda x: x[2])
 
-            # Clear everything in the routing grid.
-            self.rg.reinit()
 
-            # This is inefficient since it is non-incremental, but it was
-            # easier to debug.
-            self.prepare_blockages()
-            self.clear_blockages(pin_name)
+    def replace_layout_pins(self):
+        """ Replace the old layout pins with new ones around the perimeter. """
 
-            # Add the single component of the pin as the source
-            # which unmarks it as a blockage too
-            self.add_source(pin_name)
-
-            # Marks the grid cells all along the perimeter as a target
-            self.add_perimeter_target(side)
-
-            # if pin_name == "dout0[3]":
-            #     self.write_debug_gds("pre_route.gds", False)
-            #     breakpoint()
-
-            # Actually run the A* router
-            if self.run_router(detour_scale=detour_scale):
-                new_pin = self.get_perimeter_pin()
-                self.cell.replace_layout_pin(pin_name, new_pin)
-                return
-
-            # if pin_name == "dout0[3]":
-            #     self.write_debug_gds("pre_route.gds", False)
-            #     breakpoint()
-
-        self.write_debug_gds("debug_route.gds", True)
+        for name, pin in self.new_pins.items():
+            pin = graph_shape(pin.name, pin.boundary, pin.lpp)
+            # Find the intersection of this pin on the perimeter
+            for fake in self.fake_pins:
+                edge = pin.intersection(fake)
+                if edge:
+                    break
+            self.design.replace_layout_pin(name, edge)

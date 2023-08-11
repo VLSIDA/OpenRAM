@@ -7,6 +7,7 @@
 #
 import os
 import re
+from enum import Enum
 from openram import debug
 from openram import OPTS
 
@@ -107,3 +108,33 @@ def check_dict_values_is_float(dict):
         if type(value)!=float:
             return False
     return True
+
+
+def bidir_search(func, upper, lower, time_out=9):
+    """
+    Performs bidirectional search over given function with given
+    upper and lower bounds.
+    """
+    time_count = 0
+    while time_count < time_out:
+        val = (upper + lower) / 2
+        if func(val):
+            return (True, val)
+        time_count += 1
+    return (False, 0)
+
+
+class bit_polarity(Enum):
+    NONINVERTING = 0
+    INVERTING = 1
+
+
+class sram_op(Enum):
+    READ_ZERO = 0
+    READ_ONE = 1
+    WRITE_ZERO = 2
+    WRITE_ONE = 3
+    DISABLED_READ_ZERO = 4
+    DISABLED_READ_ONE = 5
+    DISABLED_WRITE_ZERO = 6
+    DISABLED_WRITE_ONE = 7

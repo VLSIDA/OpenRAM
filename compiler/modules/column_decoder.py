@@ -42,7 +42,7 @@ class column_decoder(design):
     def create_instances(self):
         self.column_decoder_inst = self.add_inst(name="column_decoder",
                                                  mod=self.column_decoder)
-        self.connect_inst(self.pins)
+        self.connect_inst(list(self.pins))
 
     def create_layout(self):
         self.column_decoder_inst.place(vector(0,0))

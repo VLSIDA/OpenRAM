@@ -54,10 +54,10 @@ class dummy_array(bitcell_base_array):
         self.cell_inst={}
         if self.cell.mirror.y:
             core_block = [[0 for x in range(2)] for y in range(2)]
-            core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
-            core_block[1][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
-            core_block[0][1] = geometry.instance("core_0_1", mod=self.cell, is_bitcell=True, mirror='MY')
-            core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True, mirror='XY')
+            core_block[(0+self.mirror) %2][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
+            core_block[(1+self.mirror) %2][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
+            core_block[(0+self.mirror) %2][1] = geometry.instance("core_0_1", mod=self.cell, is_bitcell=True, mirror='MY')
+            core_block[(1+self.mirror) %2][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True, mirror='XY')
         else: 
             core_block = [[0 for x in range(1)] for y in range(2)]
             core_block[(0+self.mirror) %2][0] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)

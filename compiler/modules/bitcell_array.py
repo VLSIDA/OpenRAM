@@ -76,7 +76,8 @@ class bitcell_array(bitcell_base_array):
         self.pattern.connect_array()
 
         for key in self.cell_inst.keys():
-            if key != (0,0):
+            (row, col) = key
+            if col>0 and col<self.column_size-1 and row>0 and row<self.row_size-1:
                 self.trim_insts.add(self.cell_inst[key].name)
 
     def analytical_power(self, corner, load):

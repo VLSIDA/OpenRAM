@@ -18,7 +18,7 @@ class lef:
     """
     SRAM LEF Class open GDS file, read pins information, obstruction
     and write them to LEF file.
-    This is inherited by the sram_1bank class.
+    This is inherited by the sram_base class.
     """
     def __init__(self, layers):
         # LEF db units per micron

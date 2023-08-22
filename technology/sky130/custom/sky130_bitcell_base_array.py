@@ -23,44 +23,6 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 
-    def place_array(self, name_template, row_offset=0, col_offset=0):
-        yoffset = 0.0
-
-        for row in range(0, len(self.array_layout)):
-            xoffset = 0.0
-            for col in range(0, len(self.array_layout[row])):
-                self.place_inst = self.insts[(col) + (row) * len(self.array_layout[row])]
-
-                if row % 2 == 0:
-                    if col == 0:
-                        self.place_inst.place(offset=[xoffset, yoffset + self.cell.height], mirror="MX")
-                    elif col % 4 == 0:
-                        self.place_inst.place(offset=[xoffset, yoffset + self.cell.height], mirror="MX")
-                    elif col % 4 == 3 :
-                        self.place_inst.place(offset=[xoffset, yoffset + self.cell.height], mirror="MX")
-                    elif col % 4 == 2:
-                        self.place_inst.place(offset=[xoffset + self.cell.width, yoffset + self.cell.height], mirror="XY")
-                    else:
-                        self.place_inst.place(offset=[xoffset, yoffset + self.cell.height], mirror="MX")
-                else:
-                    if col == 0:
-                        self.place_inst.place(offset=[xoffset, yoffset])
-                    elif col % 4 == 0:
-                        self.place_inst.place(offset=[xoffset, yoffset])
-                    elif col % 4 == 3 :
-                        self.place_inst.place(offset=[xoffset, yoffset])
-                    elif col % 4 == 2:
-                        self.place_inst.place(offset=[xoffset + self.cell.width, yoffset], mirror="MY")
-                        # self.place_inst.place(offset=[xoffset, yoffset])
-                    else:
-                        self.place_inst.place(offset=[xoffset, yoffset])
-
-                xoffset += self.place_inst.width
-            yoffset += self.place_inst.height
-
-        self.width = max([x.rx() for x in self.insts])
-        self.height = max([x.uy() for x in self.insts])
-
     def get_bitcell_pins(self, row, col, swap = False):
         """
         Creates a list of connections in the bitcell,
@@ -139,49 +101,28 @@ class sky130_bitcell_base_array(bitcell_base_array):
                 for pin_name in ["vdd", "gnd"]:
                     self.copy_layout_pin(inst, pin_name)
 
-                if row == 2: #add only 1 label per col
+                # if row == 2: #add only 1 label per col
+                #
+                #     if 'VPB' or 'vpb' in self.cell_inst[row, col].mod.pins:
+                #         pin = inst.get_pin("vpb")
+                #         self.objs.append(geometry.rectangle(layer["nwell"],
+                #                                             pin.ll(),
+                #                                             pin.width(),
+                #                                             pin.height()))
+                #         self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
+                #
+                #     if 'VNB' or 'vnb'in self.cell_inst[row, col].mod.pins:
+                #         try:
+                #             from openram.tech import layer_override
+                #             if layer_override['VNB']:
+                #                 pin = inst.get_pin("vnb")
+                #                 self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
+                #                 self.objs.append(geometry.rectangle(layer["pwellp"],
+                #                                                     pin.ll(),
+                #                                                     pin.width(),
+                #                                                     pin.height()))
+                #         except:
+                #             pin = inst.get_pin("vnb")
+                #             self.add_label("vdd", pin.layer, pin.center())
 
-                    if 'VPB' or 'vpb' in self.cell_inst[row, col].mod.pins:
-                        pin = inst.get_pin("vpb")
-                        self.objs.append(geometry.rectangle(layer["nwell"],
-                                                            pin.ll(),
-                                                            pin.width(),
-                                                            pin.height()))
-                        self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
-
-                    if 'VNB' or 'vnb'in self.cell_inst[row, col].mod.pins:
-                        try:
-                            from openram.tech import layer_override
-                            if layer_override['VNB']:
-                                pin = inst.get_pin("vnb")
-                                self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
-                                self.objs.append(geometry.rectangle(layer["pwellp"],
-                                                                    pin.ll(),
-                                                                    pin.width(),
-                                                                    pin.height()))
-                        except:
-                            pin = inst.get_pin("vnb")
-                            self.add_label("vdd", pin.layer, pin.center())
-
-    def add_bitline_pins(self):
-        bitline_names = self.cell.get_all_bitline_names()
-        for col in range(self.column_size):
-            for port in self.all_ports:
-                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
-                text = "bl_{0}_{1}".format(port, col)
-                #if "Y" in self.cell_inst[0, col].mirror:
-                #    text = text.replace("bl", "br")
-                self.add_layout_pin(text=text,
-                                    layer=bl_pin.layer,
-                                    offset=bl_pin.ll().scale(1, 0),
-                                    width=bl_pin.width(),
-                                    height=self.height)
-                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
-                text = "br_{0}_{1}".format(port, col)
-                #if "Y" in self.cell_inst[0, col].mirror:
-                #    text = text.replace("br", "bl")
-                self.add_layout_pin(text=text,
-                                    layer=br_pin.layer,
-                                    offset=br_pin.ll().scale(1, 0),
-                                    width=br_pin.width(),
-                                    height=self.height)
+    

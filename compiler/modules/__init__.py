@@ -41,7 +41,6 @@ from .local_bitcell_array import *
 from .nand2_dec import *
 from .nand3_dec import *
 from .nand4_dec import *
-from .orig_bitcell_array import *
 from .pand2 import *
 from .pand3 import *
 from .pand4 import *

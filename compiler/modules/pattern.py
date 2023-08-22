@@ -9,7 +9,9 @@ from typing import List
 from typing import Optional
 from openram.base import design
 from openram.globals import OPTS
-from math import ceil
+from math import ceil, floor
+from copy import deepcopy
+
 class pattern():
     """
     This class is used to desribe the internals of a bitcell array. It describes
@@ -68,6 +70,8 @@ class pattern():
         self.initial_y_block = initial_y_block
         self.final_x_block = final_x_block
         self.final_y_block = final_y_block
+        self.bits_per_row = ceil(self.num_rows/self.num_cores_x)
+        self.bits_per_col = ceil(self.num_cols/self.num_cores_y)
         if not OPTS.netlist_only:
             self.verify_interblock_dimensions()
 
@@ -113,23 +117,39 @@ class pattern():
 
     def connect_block(self, block: block, col: int, row: int):
         for dr in range(len(block)):
+            row_done = False
             for dc in range(len(block[0])):
-                if(self.bit_rows.count(self.num_rows) != self.num_cols and self.bit_cols.count(self.bit_cols) != self.num_rows):
+                if(self.bit_rows.count(self.num_rows) <= self.num_cols and self.bit_cols.count(self.bit_cols) <= self.num_rows):
                     inst = block[dr][dc]
                     if(len(self.bit_rows) <= col + dc):
                         self.bit_rows.append(0)
                     if(len(self.bit_cols) <= row + dr):
                         self.bit_cols.append(0)
-                    if(self.bit_rows[col+dc] < self.num_rows and self.bit_cols[row+dr] < self.num_cols):
+                    if(row_done or self.bit_cols[row+dr] >= self.num_cols):
+                        row_done = True
+                        continue
+                    if((self.bit_rows[col+dc] < self.num_rows) and (self.bit_cols[row+dr] < self.num_cols)):
+                        print(row+dr, col+dc)
                         if(inst.is_bitcell):
+                            #x_bit = sum(bit > 0 for bit in self.bit_rows)
+                            #y_bit = sum(bit > 0 for bit in self.bit_cols)
+                            #print(x_bit, y_bit)
+                            self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
+                            self.parent_design.all_inst[row + dr, col + dc] = self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]]
+                            self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(self.bit_rows[col+dc], self.bit_cols[row+dr]))
                             self.bit_rows[col+dc] += 1
                             self.bit_cols[row+dr] += 1
-                            self.parent_design.cell_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
-                            self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(row+dr, col+dc))
+
+                        else:
+                            self.parent_design.all_inst[row + dr, col + dc] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
+                            self.parent_design.connect_inst(self.parent_design.get_strap_pins(self.bit_rows[col+dc], self.bit_cols[row+dr]))
+                    else:
+                        row_done = True
 
     def connect_array(self) -> None:
         self.bit_rows = []
         self.bit_cols = []
+        #debug_array = [[None]*12 for _ in range(6)] 
         row = 0
         col = 0
         for i in range(self.num_cores_y):
@@ -138,7 +158,7 @@ class pattern():
                 col += len(self.core_block[0])
             col = 0
             row += len(self.core_block)
-
+        
     def place_inst(self, inst, offset) -> None:
         x = offset[0]
         y = offset[1]
@@ -148,55 +168,27 @@ class pattern():
             x += inst.width
         inst.place((x, y), inst.mirror, inst.rotate)
 
-
-
-    def place_block(self, block: block, row: int, col: int, place_x: float, place_y: float, bx, by):
-        x_offset = 0
-        y_offset = 0
-        bounding_x = bx
-        bounding_y = by
-        for dr in range(len(block)):
-            for dc in range(len(block[0])):
-                if(self.bit_rows.count(self.num_rows) != self.num_cols and self.bit_cols.count(self.bit_cols) != self.num_rows):
-                    if(len(self.bit_rows) <= col + dc):
-                        self.bit_rows.append(0)
-                    if(len(self.bit_cols) <= row + dr):
-                        self.bit_cols.append(0)
-                    if(self.bit_rows[col+dc] < self.num_rows and self.bit_cols[row+dr] < self.num_cols):
-                        inst = self.parent_design.cell_inst[row + dr, col +dc]
-                        if(inst.is_bitcell):
-                            self.bit_rows[col+dc] += 1
-                            self.bit_cols[row+dr] += 1
-                        self.place_inst(inst, (place_x + x_offset, place_y + y_offset))
-                        if(place_x + x_offset + inst.width > bounding_x):
-                            bounding_x = place_x + x_offset + inst.width
-                        if(place_y + y_offset + inst.height > bounding_y):
-                            bounding_y = place_y + y_offset + inst.height
-                        x_offset += inst.width
-            x_offset = 0
-            y_offset += inst.height
-        return bounding_x, bounding_y
-
     def place_array(self):
-        self.bit_rows = []
-        self.bit_cols = []
 
-        row = 0
-        col = 0
-        place_x = 0
-        place_y = 0
-        bounding_x = 0
-        bounding_y = 0
-        for i in range(self.num_cores_y):
-            col = 0
-            place_x = 0
-            for j in range(self.num_cores_x):
-                self.parent_design.width, self.parent_design.height= self.place_block(self.core_block, row, col, place_x, place_y, bounding_x, bounding_y)
-                if(self.bit_rows.count(self.num_rows) == self.num_cols and self.bit_cols.count(self.bit_cols) == self.num_rows):
-                    return
+        (row_max, col_max) = list(self.parent_design.all_inst.keys())[-1]
+        y = 0
+        for row in range(row_max+1):
+            x = 0
+            for col in range(col_max+1):
+                inst = self.parent_design.all_inst[row, col]
+                self.place_inst(inst, (x, y))
+                x += inst.width
+            y += inst.height
 
-                place_x += self.core_block_width
-                col += len(self.core_block[0])
-            row += len(self.core_block)
-            place_y += self.core_block_height
+        self.parent_design.width = max([x.rx() for x in self.parent_design.insts])
+        self.parent_design.height = max([x.uy() for x in self.parent_design.insts])
 
+    def append_row_to_block(block, row):
+        block.append(row)
+    
+    def append_block_under_block(base_block, under_block):
+        base_block = base_block + under_block
+
+    def append_block_right_block(base_block, right_block):
+        for row in base_block:
+            row = row + right_block

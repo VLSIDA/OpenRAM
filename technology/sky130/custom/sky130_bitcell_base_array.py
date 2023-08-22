@@ -93,8 +93,8 @@ class sky130_bitcell_base_array(bitcell_base_array):
             if "VGND" in inst.mod.pins:
                 self.copy_layout_pin(inst, "VGND", "gnd")
         
-        for row in range(self.pattern.row_max+1):  
-            inst = self.all_inst[row,0]
+        for col in range(self.column_size):  
+            inst = self.cell_inst[0,col]
             pin = inst.get_pin("vpb")
             self.objs.append(geometry.rectangle(layer["nwell"],
                                                  pin.ll(),

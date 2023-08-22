@@ -97,16 +97,16 @@ class sky130_replica_column(sky130_bitcell_base_array):
         """ Create the module instances used in this design """
         self.all_inst={}
         self.cell_inst={}
-        replica_row_opt1 = [geometry.instance("00_rep_opt1", mod=self.replica_cell, is_bitcell=True, mirror='MX')] \
+        replica_row_opt1 = [geometry.instance("00_rep_opt1", mod=self.replica_cell, is_bitcell=True, mirror='XY')] \
                      + [geometry.instance("01_strap1", mod=self.strap, is_bitcell=False, mirror='MX')]
   
-        replica_row_opt1a = [geometry.instance("10_opt1a", mod=self.replica_cell2, is_bitcell=True)] \
+        replica_row_opt1a = [geometry.instance("10_opt1a", mod=self.replica_cell2, is_bitcell=True, mirror='MY')] \
                       + [geometry.instance("11_strapa", mod=self.strap2, is_bitcell=False)]
 
         replica_dummy_row_opt1 = [geometry.instance("00_rep_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='MX')] \
                      + [geometry.instance("01_rep_strap", mod=self.strap, is_bitcell=False, mirror='MX')]
   
-        replica_dummy_row_opt1a = [geometry.instance("10_opt1a", mod=self.dummy_cell2, is_bitcell=True)] \
+        replica_dummy_row_opt1a = [geometry.instance("10_opt1a", mod=self.dummy_cell2, is_bitcell=True, mirror='MY')] \
                       + [geometry.instance("11_strapa", mod=self.strap2, is_bitcell=False)]
 
         bit_block = []

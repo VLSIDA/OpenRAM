@@ -36,7 +36,7 @@ class pattern():
                  initial_x_block:bool = False,
                  initial_y_block:bool = False,
                  final_x_block:bool = False,
-                 final_y_block:bool = False
+                 final_y_block:bool = False,
                  ):
         """
         a "block" is a 2d list of instances
@@ -72,6 +72,9 @@ class pattern():
         self.final_y_block = final_y_block
         self.bits_per_row = ceil(self.num_rows/self.num_cores_x)
         self.bits_per_col = ceil(self.num_cols/self.num_cores_y)
+        self.bit_rows = []
+        self.bit_cols = []
+        self.parent_design.all_inst = {}
         if not OPTS.netlist_only:
             self.verify_interblock_dimensions()
 
@@ -130,8 +133,6 @@ class pattern():
                         continue
                     if((self.bit_rows[col+dc] < self.num_rows) and (self.bit_cols[row+dr] < self.num_cols)):
                         if(inst.is_bitcell):
-                            #x_bit = sum(bit > 0 for bit in self.bit_rows)
-                            #y_bit = sum(bit > 0 for bit in self.bit_cols)
                             #print(x_bit, y_bit)
                             self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
                             self.parent_design.all_inst[row + dr, col + dc] = self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]]
@@ -146,8 +147,7 @@ class pattern():
                         row_done = True
 
     def connect_array(self) -> None:
-        self.bit_rows = []
-        self.bit_cols = []
+
         #debug_array = [[None]*12 for _ in range(6)] 
         row = 0
         col = 0
@@ -157,6 +157,26 @@ class pattern():
                 col += len(self.core_block[0])
             col = 0
             row += len(self.core_block)
+
+    def connect_array_raw(self) -> None:
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
+                inst = self.core_block[row][col]
+                if(len(self.bit_rows) <= col):
+                    self.bit_rows.append(0)
+                if(len(self.bit_cols) <= row):
+                    self.bit_cols.append(0)
+                if(inst.is_bitcell):
+                    self.parent_design.cell_inst[self.bit_rows[col], self.bit_cols[row]] = self.parent_design.add_existing_inst(inst,self.name_template.format(row, col))
+                    self.parent_design.all_inst[row, col] = self.parent_design.cell_inst[self.bit_rows[col], self.bit_cols[row]]
+                    self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(self.bit_rows[col], self.bit_cols[row]))
+                    self.bit_rows[col] += 1
+                    self.bit_cols[row] += 1
+
+                else:
+                    self.parent_design.all_inst[row, col] = self.parent_design.add_existing_inst(inst,self.name_template.format(row, col))
+                    self.parent_design.connect_inst(self.parent_design.get_strap_pins(self.bit_rows[col], self.bit_cols[row]))
+
         
     def place_inst(self, inst, offset) -> None:
         x = offset[0]

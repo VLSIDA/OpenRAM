@@ -132,12 +132,6 @@ class replica_column(bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
-    def route_supplies(self):
-
-        for inst in self.cell_inst.values():
-            for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
-
     def get_bitline_names(self, port=None):
         if port == None:
             return self.all_bitline_names

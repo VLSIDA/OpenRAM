@@ -28,7 +28,7 @@ class sky130_replica_column(sky130_bitcell_base_array):
         # Row size is the number of rows with word lines
         self.row_size = sum(rbl) + rows
         # Start of regular word line rows
-        self.row_start = rbl[0] + 1
+        self.row_start = rbl[0]
         # End of regular word line rows
         self.row_end = self.row_start + rows
         super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, name=name)
@@ -63,7 +63,7 @@ class sky130_replica_column(sky130_bitcell_base_array):
         self.place_array()
 
         self.add_layout_pins()
-
+        self.route_supplies()
         self.add_boundary()
         self.DRC_LVS()
 

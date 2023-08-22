@@ -33,7 +33,7 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
-            self.add_supply_pins()
+            #self.add_supply_pins()
 
     def add_modules(self):
         """ Add the modules used in this design """
@@ -49,14 +49,14 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         """ Create the module instances used in this design """
         self.all_inst={}
         self.cell_inst={}
-        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.cell, is_bitcell=True)] \
-                     + [geometry.instance("01_strap", mod=self.strap, is_bitcell=False)]\
-                     + [geometry.instance("02_opt1", mod=self.cell, is_bitcell=True)] \
-                     + [geometry.instance("03_strap_p", mod=self.strap_p, is_bitcell=False)]
+        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.cell, is_bitcell=True, mirror='MX')] \
+                     + [geometry.instance("01_strap", mod=self.strap, is_bitcell=False, mirror='MX')]\
+                     + [geometry.instance("02_opt1", mod=self.cell, is_bitcell=True, mirror='XY')] \
+                     + [geometry.instance("03_strap_p", mod=self.strap_p, is_bitcell=False, mirror='MX')]
   
         bit_row_opt1a = [geometry.instance("10_opt1a", mod=self.cella, is_bitcell=True)] \
                       + [geometry.instance("11_strapa", mod=self.strapa, is_bitcell=False)] \
-                      + [geometry.instance("12_opt1a", mod=self.cella, is_bitcell=True)] \
+                      + [geometry.instance("12_opt1a", mod=self.cella, is_bitcell=True, mirror='MY')] \
                       + [geometry.instance("13_strapa_p", mod=self.strapa_p, is_bitcell=False)]
 
         bit_block = []

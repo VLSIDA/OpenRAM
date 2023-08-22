@@ -129,7 +129,6 @@ class pattern():
                         row_done = True
                         continue
                     if((self.bit_rows[col+dc] < self.num_rows) and (self.bit_cols[row+dr] < self.num_cols)):
-                        print(row+dr, col+dc)
                         if(inst.is_bitcell):
                             #x_bit = sum(bit > 0 for bit in self.bit_rows)
                             #y_bit = sum(bit > 0 for bit in self.bit_cols)
@@ -170,11 +169,11 @@ class pattern():
 
     def place_array(self):
 
-        (row_max, col_max) = list(self.parent_design.all_inst.keys())[-1]
+        (self.row_max, self.col_max) = list(self.parent_design.all_inst.keys())[-1]
         y = 0
-        for row in range(row_max+1):
+        for row in range(self.row_max+1):
             x = 0
-            for col in range(col_max+1):
+            for col in range(self.col_max+1):
                 inst = self.parent_design.all_inst[row, col]
                 self.place_inst(inst, (x, y))
                 x += inst.width

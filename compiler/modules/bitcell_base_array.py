@@ -158,9 +158,10 @@ class bitcell_base_array(design):
                                     height=wl_pin.height())
 
     def route_supplies(self):
-        for inst in self.cell_inst.values():
+        for inst in self.insts:
             for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
+                if pin_name in inst.mod.get_pin_names():
+                    self.copy_layout_pin(inst, pin_name)
 
     def add_layout_pins(self):
         """ Add the layout pins """

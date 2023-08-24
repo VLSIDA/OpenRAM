@@ -45,10 +45,10 @@ class replica_column(bitcell_base_array):
         debug.check(replica_bit < self.row_start or replica_bit >= self.row_end,
                     "Replica bit cannot be in the regular array.")
 
-        if layer_props.replica_column.even_rows:
-            debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
-                        "sky130 currently requires rows to be even and to start with X mirroring"
-                        + " (left_rbl must be odd) for LVS.")
+        #if layer_props.replica_column.even_rows:
+        #    debug.check(rows % 2 == 0 and (self.left_rbl + 1) % 2 == 0,
+        #                "sky130 currently requires rows to be even and to start with X mirroring"
+        #                + " (left_rbl must be odd) for LVS.")
 
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -95,62 +95,18 @@ class replica_column(bitcell_base_array):
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                if current_row % 2:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
-                else:
+                if current_row % 2 == 0:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
-            else:
-                if current_row %2:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
                 else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
+            else:
+                if current_row %2 == 0:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
+                else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
             current_row += 1
         self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size, name_template="rbc_r{0}_c{1}")
         self.pattern.connect_array()
-
-    def add_layout_pins(self):
-        for port in self.all_ports:
-            bl_pin = self.cell_inst[0,0].get_pin(self.cell.get_bl_name(port))
-            self.add_layout_pin(text="bl_{0}_{1}".format(port, 0),
-                                layer=bl_pin.layer,
-                                offset=bl_pin.ll().scale(1, 0),
-                                width=bl_pin.width(),
-                                height=self.height)
-            bl_pin = self.cell_inst[0,0].get_pin(self.cell.get_br_name(port))
-            self.add_layout_pin(text="br_{0}_{1}".format(port, 0),
-                                layer=bl_pin.layer,
-                                offset=bl_pin.ll().scale(1, 0),
-                                width=bl_pin.width(),
-                                height=self.height)
-
-        for port in self.all_ports:
-            for row in range(self.total_size):
-                wl_pin = self.cell_inst[row,0].get_pin(self.cell.get_wl_name(port))
-                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
-                                    layer=wl_pin.layer,
-                                    offset=wl_pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=wl_pin.height())
-
-    def get_bitline_names(self, port=None):
-        if port == None:
-            return self.all_bitline_names
-        else:
-            return self.bitline_names[port]
-
-    def get_bitcell_pins(self, row, col):
-        """
-        Creates a list of connections in the bitcell,
-        indexed by column and row, for instance use in bitcell_array
-        """
-        bitcell_pins = []
-        for port in self.all_ports:
-            bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
-        bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
-        bitcell_pins.append("vdd")
-        bitcell_pins.append("gnd")
-
-        return bitcell_pins
 
     def get_bitcell_pins_col_cap(self, row, col):
         """

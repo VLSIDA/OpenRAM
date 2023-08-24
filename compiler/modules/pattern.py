@@ -122,7 +122,7 @@ class pattern():
         for dr in range(len(block)):
             row_done = False
             for dc in range(len(block[0])):
-                if(self.bit_rows.count(self.num_rows) <= self.num_cols and self.bit_cols.count(self.bit_cols) <= self.num_rows):
+                if(self.bit_rows.count(self.num_rows) <= self.num_cols and self.bit_cols.count(self.num_cols) <= self.num_rows):
                     inst = block[dr][dc]
                     if(len(self.bit_rows) <= col + dc):
                         self.bit_rows.append(0)
@@ -211,3 +211,11 @@ class pattern():
     def append_block_right_block(base_block, right_block):
         for row in base_block:
             row = row + right_block
+
+    def rotate_list(lst, n):
+        # Loop through the range of n positions to rotate
+        for i in range(n):
+            # Remove the last element of the list and insert it at the beginning
+            lst.insert(0, lst.pop())
+        # Return the rotated list
+        return lst

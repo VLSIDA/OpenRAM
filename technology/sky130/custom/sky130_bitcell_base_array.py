@@ -86,33 +86,34 @@ class sky130_bitcell_base_array(bitcell_base_array):
 
     def route_supplies(self):
         # Copy a vdd/gnd layout pin from every cell
-        print("routing power")
+        super().route_supplies()
         for inst in self.insts:
             if "VPWR" in inst.mod.pins:
                 self.copy_layout_pin(inst, "VPWR", "vdd")
             if "VGND" in inst.mod.pins:
                 self.copy_layout_pin(inst, "VGND", "gnd")
-        
-        for col in range(self.column_size):  
-            inst = self.cell_inst[0,col]
-            pin = inst.get_pin("vpb")
-            self.objs.append(geometry.rectangle(layer["nwell"],
-                                                 pin.ll(),
-                                                 pin.width(),
-                                                 pin.height()))
-            self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
-            
-            try:
-                from openram.tech import layer_override
-                if layer_override['VNB']:
-                     pin = inst.get_pin("vnb")
-                     self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
-                     self.objs.append(geometry.rectangle(layer["pwellp"],
-                                                         pin.ll(),
-                                                         pin.width(),
-                                                         pin.height()))
-            except:
-                pin = inst.get_pin("vnb")
-                self.add_label("vdd", pin.layer, pin.center())
+
+        if hasattr(self, 'cell_inst'):
+            for col in range(self.column_size):  
+                inst = self.cell_inst[0,col]
+                pin = inst.get_pin("vpb")
+                self.objs.append(geometry.rectangle(layer["nwell"],
+                                                     pin.ll(),
+                                                     pin.width(),
+                                                     pin.height()))
+                self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
+                
+                try:
+                    from openram.tech import layer_override
+                    if layer_override['VNB']:
+                         pin = inst.get_pin("vnb")
+                         self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
+                         self.objs.append(geometry.rectangle(layer["pwellp"],
+                                                             pin.ll(),
+                                                             pin.width(),
+                                                             pin.height()))
+                except:
+                    pin = inst.get_pin("vnb")
+                    self.add_label("vdd", pin.layer, pin.center())
 
 

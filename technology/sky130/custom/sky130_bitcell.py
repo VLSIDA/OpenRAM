@@ -6,7 +6,7 @@
 #
 
 from openram import debug
-from openram.modules import bitcell_base
+from openram.modules.bitcell_base import bitcell_base
 from openram.tech import cell_properties as props
 
 

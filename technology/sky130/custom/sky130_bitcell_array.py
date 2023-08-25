@@ -6,7 +6,8 @@
 #
 
 from openram import debug
-from openram.modules import bitcell_array, pattern
+from openram.modules.bitcell_array import bitcell_array
+from openram.modules import pattern
 from openram.sram_factory import factory
 from openram.base import geometry
 from openram import OPTS

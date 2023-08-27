@@ -232,32 +232,30 @@ class replica_bitcell_array(bitcell_base_array):
         self.vertical_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[0]))
         self.horizontal_pitch = 1.1 * getattr(self, "{}_pitch".format(self.supply_stack[2]))
 
-        # This is a bitcell x bitcell offset to scale
-        self.bitcell_offset = vector(self.cell.width, self.cell.height)
-        self.col_end_offset = vector(self.cell.width, self.cell.height)
-        self.row_end_offset = vector(self.cell.width, self.cell.height)
-
         # Everything is computed with the main array
-        self.bitcell_array_inst.place(offset=0)
+        self.bitcell_array_inst.place(offset=(0,0))
 
         self.add_replica_columns()
 
         # Array was at (0, 0) but move everything so it is at the lower left
         # We move DOWN the number of left RBL even if we didn't add the column to this bitcell array
         # Note that this doesn't include the row/col cap
-        array_offset = self.bitcell_offset.scale(-len(self.left_rbl), -self.rbl[0])
-        self.translate_all(array_offset)
+        
+        #rbc_width = (self.replica_col_insts[0].width, 0)
+        #dummy_height = max(x for x in map(lambda x: x if x != None else 0, self.))
+        #array_offset = self.bitcell_offset.scale(-len(self.left_rbl), -self.rbl[0])
+        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
+        
+        self.translate_all(ll)
 
         self.add_layout_pins()
 
         self.route_supplies()
         
-        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
-
         self.width = max([x.rx() for x in self.insts]) - min([x.lx() for x in self.insts])
         self.height = max([x.uy() for x in self.insts]) - min([y.by() for y in self.insts])
 
-        self.add_boundary(ll)
+        self.add_boundary()
 
         self.DRC_LVS()
 

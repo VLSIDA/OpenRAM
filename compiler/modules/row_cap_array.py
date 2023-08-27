@@ -12,9 +12,10 @@ class row_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
+    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
+        self.location = location
         self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -69,35 +70,12 @@ class row_cap_array(bitcell_base_array):
 
         return bitcell_pins
 
-    def place_array(self, name_template, row_offset=0):
-        xoffset = 0.0
-        for col in range(self.column_size):
-            yoffset = self.cell.height
-            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
-
-            for row in range(self.row_size):
-                tempy, dir_x = self._adjust_y_offset(yoffset, row + 1, row_offset)
-
-                if dir_x and dir_y:
-                    dir_key = "XY"
-                elif dir_x:
-                    dir_key = "MX"
-                elif dir_y:
-                    dir_key = "MY"
-                else:
-                    dir_key = ""
-
-                self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                               mirror=dir_key)
-                yoffset += self.cell.height
-            xoffset += self.cell.width
-
     def add_layout_pins(self):
         """ Add the layout pins """
 
         row_list = self.cell.get_all_wl_names()
 
-        for row in range(1, self.row_size - 1):
+        for row in range(0, self.row_size - 2):
             for cell_row in row_list:
                 wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
                 self.add_layout_pin(text=cell_row + "_{0}".format(row),
@@ -106,7 +84,7 @@ class row_cap_array(bitcell_base_array):
                                     width=self.width,
                                     height=wl_pin.height())
 
-        for row in range(1, self.row_size - 1):
+        for row in range(0, self.row_size - 2):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:

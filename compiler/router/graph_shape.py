@@ -72,17 +72,6 @@ class graph_shape(pin_layout):
         return graph_shape(self.name, inflated_area, self.layer, self)
 
 
-    def multiply(self, scale):
-        """ Multiply the width and height with the scale value. """
-
-        width = (self.width() * (scale - 1)) / 2
-        height = (self.height() * (scale - 1)) / 2
-        ll, ur = self.rect
-        newll = vector(ll.x - width, ll.y - height)
-        newur = vector(ur.x + width, ur.y + height)
-        self.rect = [snap(newll), snap(newur)]
-
-
     def core_contained_by_any(self, shape_list):
         """
         Return if the core of this shape is contained by any shape's core in the

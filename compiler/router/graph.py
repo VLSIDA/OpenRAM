@@ -184,7 +184,7 @@ class graph:
         return False
 
 
-    def create_graph(self, source, target, scale=1):
+    def create_graph(self, source, target):
         """ Create the graph to run routing on later. """
         debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
@@ -195,7 +195,6 @@ class graph:
         # Find the region to be routed and only include objects inside that region
         region = deepcopy(source)
         region.bbox([target])
-        region.multiply(scale)
         region = region.inflated_pin(spacing=self.router.track_space)
         debug.info(3, "Routing region is {}".format(region.rect))
 
@@ -220,9 +219,6 @@ class graph:
         debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
         debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
         debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
-
-        # Return the region to scale later if no path is found
-        return region.rect
 
 
     def find_graph_blockages(self, region):

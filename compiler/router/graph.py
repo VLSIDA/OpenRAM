@@ -418,6 +418,7 @@ class graph:
                     path.append(current)
                     current = came_from[current.id]
                 path.append(current)
+                path.reverse()
                 return path
 
             # Get the previous node to better calculate the next costs

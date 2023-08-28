@@ -67,7 +67,7 @@ class signal_escape_router(router):
                 debug.error("Couldn't route from {} to {}.".format(source, target), -1)
             # Create the path shapes on layout
             new_shapes = self.add_path(path)
-            self.new_pins[source.name] = new_shapes[0]
+            self.new_pins[source.name] = new_shapes[-1]
             # Find the recently added shapes
             self.prepare_gds_reader()
             self.find_blockages(name)

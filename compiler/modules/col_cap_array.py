@@ -82,17 +82,21 @@ class col_cap_array(bitcell_base_array):
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        column_list = self.cell.get_all_bitline_names()
-
+        bitline_names = self.cell.get_all_bitline_names()
         for col in range(self.column_size):
-            for cell_column in column_list:
-                bl_pin = self.cell_inst[0, col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column + "_{0}".format(col),
+            for port in self.all_ports:
+                bl_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port])
+                self.add_layout_pin(text="bl_{0}_{1}".format(port, col),
                                     layer=bl_pin.layer,
                                     offset=bl_pin.ll().scale(1, 0),
                                     width=bl_pin.width(),
                                     height=self.height)
-
+                br_pin = self.cell_inst[0, col].get_pin(bitline_names[2 * port + 1])
+                self.add_layout_pin(text="br_{0}_{1}".format(port, col),
+                                    layer=br_pin.layer,
+                                    offset=br_pin.ll().scale(1, 0),
+                                    width=br_pin.width(),
+                                    height=self.height)
         # Add vdd/gnd via stacks
         for row in range(self.row_size):
             for col in range(self.column_size):

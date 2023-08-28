@@ -23,7 +23,7 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
         self.location = location
     def add_modules(self):
         """ Add the modules used in this design """
-        if self.column_offset == 0:
+        if self.location == "left":
             self.top_corner = factory.create(module_type="corner", location="ul")
             self.bottom_corner =factory.create(module_type="corner", location="ll")
             #self.rowend1 = factory.create(module_type="row_cap", version="rowend_replica")
@@ -44,18 +44,25 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
         self.cell_inst={}
         
         bit_block = []
-        top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False, mirror="XY")
-        bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False)
-        rowend = geometry.instance("row_cap_rowend", mod=self.rowend, is_bitcell=True)
-        rowenda = geometry.instance("row_cap_rowenda", mod=self.rowenda, is_bitcell=True, mirror="XY")
         
-        pattern.append_row_to_block(bit_block, [top_corner])
+        if self.location == "left":
+            top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False, mirror="MY")
+            bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="XY")
+            rowend = geometry.instance("row_cap_rowend", mod=self.rowend, is_bitcell=True, mirror="XY")
+            rowenda = geometry.instance("row_cap_rowenda", mod=self.rowenda, is_bitcell=True, mirror="MY")
+        elif self.location == "right":
+            top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False)
+            bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="MX")
+            rowend = geometry.instance("row_cap_rowend", mod=self.rowend, is_bitcell=True, mirror="MX")
+            rowenda = geometry.instance("row_cap_rowenda", mod=self.rowenda, is_bitcell=True)
+
+        pattern.append_row_to_block(bit_block, [bottom_corner])
         for row in range(1,self.row_size-1):
             if row % 2 == 0:
                 pattern.append_row_to_block(bit_block, [rowend])
             else:
                 pattern.append_row_to_block(bit_block, [rowenda])
-        pattern.append_row_to_block(bit_block, [bottom_corner])
+        pattern.append_row_to_block(bit_block, [top_corner])
         self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
         self.pattern.connect_array_raw()
         

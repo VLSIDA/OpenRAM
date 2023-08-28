@@ -204,10 +204,12 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         self.add_end_caps()
         
+        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
+
+        self.translate_all(ll)
         self.width = max([x.rx() for x in self.insts]) - min([x.lx() for x in self.insts])
         self.height = max([x.uy() for x in self.insts]) - min([y.by() for y in self.insts])
         
-        self.add_layout_pins()
 
         self.route_supplies()
 
@@ -219,6 +221,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         
         self.translate_all(ll)
 
+        self.add_layout_pins()
         self.add_boundary()
 
         self.DRC_LVS()

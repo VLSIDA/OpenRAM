@@ -37,12 +37,18 @@ class sky130_col_cap_array(col_cap_array, sky130_bitcell_base_array):
     def create_instances(self):
         self.all_inst={}
         self.cell_inst={}
- 
-        bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True)] \
-                + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False)]\
-                + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="MY")] \
-                + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False)]
         
+        if self.location == "top":
+            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True)] \
+                    + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False)]\
+                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="MY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False)]
+        elif self.location == "bottom":
+            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True, mirror="MX")] \
+                    + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False, mirror="MX")]\
+                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="XY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False, mirror="MX")]
+
         bit_row = pattern.rotate_list(bit_row, self.column_offset * 2)
         bit_block = []
         pattern.append_row_to_block(bit_block, bit_row)

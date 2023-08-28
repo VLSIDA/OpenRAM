@@ -73,12 +73,23 @@ class row_cap_array(bitcell_base_array):
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        row_list = self.cell.get_all_wl_names()
+        #row_list = self.cell.get_all_wl_names()
 
+        #for row in range(0, self.row_size - 2):
+        #    for cell_row in row_list:
+        #        wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
+        #        self.add_layout_pin(text=cell_row + "_{0}".format(row),
+        #                            layer=wl_pin.layer,
+        #                            offset=wl_pin.ll().scale(0, 1),
+        #                            width=self.width,
+        #                            height=wl_pin.height())
+
+        wl_names = self.cell.get_all_wl_names()
+        
         for row in range(0, self.row_size - 2):
-            for cell_row in row_list:
-                wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row + "_{0}".format(row),
+            for port in self.all_ports:
+                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,

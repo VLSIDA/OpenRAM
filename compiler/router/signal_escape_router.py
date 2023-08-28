@@ -76,6 +76,27 @@ class signal_escape_router(router):
         self.replace_layout_pins()
 
 
+    def get_closest_edge(self, point):
+        """ Return a point's the closest edge and the edge's axis direction. """
+
+        ll, ur = self.bbox
+
+        # Snap the pin to the perimeter and break the iteration
+        ll_diff_x = abs(point.x - ll.x)
+        ll_diff_y = abs(point.y - ll.y)
+        ur_diff_x = abs(point.x - ur.x)
+        ur_diff_y = abs(point.y - ur.y)
+        min_diff = min(ll_diff_x, ll_diff_y, ur_diff_x, ur_diff_y)
+
+        if min_diff == ll_diff_x:
+            return "left", True
+        if min_diff == ll_diff_y:
+            return "bottom", False
+        if min_diff == ur_diff_x:
+            return "right", True
+        return "top", False
+
+
     def prepare_path(self, path):
         """
         Override the `prepare_path` method from the `router` class to prevent
@@ -88,28 +109,20 @@ class signal_escape_router(router):
         for i in range(len(nodes)):
             node = nodes[i]
             c = node.center
-
             # Haven't overflown yet
             if ll.x < c.x and c.x < ur.x and ll.y < c.y and c.y < ur.y:
                 new_nodes.append(node)
                 continue
-
             # Snap the pin to the perimeter and break the iteration
-            ll_diff_x = abs(c.x - ll.x)
-            ll_diff_y = abs(c.y - ll.y)
-            ur_diff_x = abs(c.x - ur.x)
-            ur_diff_y = abs(c.y - ur.y)
-            min_diff = min(ll_diff_x, ll_diff_y, ur_diff_x, ur_diff_y)
-
-            if min_diff == ll_diff_x:
+            edge, _ = self.get_closest_edge(c)
+            if edge == "left":
                 fake_center = vector3d(ll.x + self.half_wire, c.y, c.z)
-            if min_diff == ll_diff_y:
+            if edge == "bottom":
                 fake_center = vector3d(c.x, ll.y + self.half_wire, c.z)
-            if min_diff == ur_diff_x:
+            if edge == "right":
                 fake_center = vector3d(ur.x - self.half_wire, c.y, c.z)
-            if min_diff == ur_diff_y:
+            if edge == "top":
                 fake_center = vector3d(c.x, ur.y - self.half_wire, c.z)
-
             node.center = fake_center
             new_nodes.append(node)
             break
@@ -168,26 +181,18 @@ class signal_escape_router(router):
         c = pin.center()
 
         # Find the closest edge
-        ll_diff_x = abs(c.x - ll.x)
-        ll_diff_y = abs(c.y - ll.y)
-        ur_diff_x = abs(c.x - ur.x)
-        ur_diff_y = abs(c.y - ur.y)
-        min_diff = min(ll_diff_x, ll_diff_y, ur_diff_x, ur_diff_y)
+        edge, vertical = self.get_closest_edge(c)
 
         # Keep the fake pin out of the SRAM layout are so that they won't be
         # blocked by previous signals if they're on the same orthogonal line
-        if min_diff == ll_diff_x:
+        if edge == "left":
             fake_center = vector(ll.x - self.track_wire * 2, c.y)
-            vertical = True
-        if min_diff == ll_diff_y:
+        if edge == "bottom":
             fake_center = vector(c.x, ll.y - self.track_wire * 2)
-            vertical = False
-        if min_diff == ur_diff_x:
+        if edge == "right":
             fake_center = vector(ur.x + self.track_wire * 2, c.y)
-            vertical = True
-        if min_diff == ur_diff_y:
+        if edge == "top":
             fake_center = vector(c.x, ur.y + self.track_wire * 2)
-            vertical = False
 
         # Create the fake pin shape
         layer = self.get_layer(int(not vertical))

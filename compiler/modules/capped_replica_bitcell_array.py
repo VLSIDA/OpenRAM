@@ -203,28 +203,29 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.replica_bitcell_array_inst.place(offset=0)
 
         self.add_end_caps()
-        
-        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
 
+        ll = vector(-1 * self.dummy_col_insts[0].width, -1 * self.dummy_row_insts[0].height)
         self.translate_all(ll)
-        self.width = max([x.rx() for x in self.insts]) - min([x.lx() for x in self.insts])
-        self.height = max([x.uy() for x in self.insts]) - min([y.by() for y in self.insts])
+        self.capped_rba_width = self.dummy_col_insts[0].width + self.dummy_row_insts[0].width + self.dummy_col_insts[1].width 
+        self.capped_rba_height = self.dummy_col_insts[0].height
         
 
+        self.route_power_ring(self.supply_stack[2], self.supply_stack[0])
         self.route_supplies()
 
         self.route_unused_wordlines()
 
-        self.width = max([x.rx() for x in self.insts]) - min([x.lx() for x in self.insts])
-        self.height = max([x.uy() for x in self.insts]) - min([y.by() for y in self.insts])
-        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
-        
-        self.translate_all(ll)
-
+        self.reset_coordinates()
         self.add_layout_pins()
         self.add_boundary()
-
         self.DRC_LVS()
+    
+
+    def route_power_ring(self, v_layer, h_layer):
+        self.bbox = (vector(0,0), vector(self.capped_rba_width, self.capped_rba_height))
+        self.supply_rail_width = drc["minwidth_m1"]
+        self.supply_rail_pitch = 3 * self.supply_rail_width
+        self.add_power_ring(v_layer, h_layer)
 
     def get_main_array_top(self):
         return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array.get_main_array_top()
@@ -288,13 +289,13 @@ class capped_replica_bitcell_array(bitcell_base_array):
             if "wl" in pin_name:
                 # wordlines
                 pin_offset = pin.ll().scale(0, 1)
-                pin_width  = self.width
+                pin_width  = self.capped_rba_width
                 pin_height = pin.height()
             else:
                 # bitlines
                 pin_offset = pin.ll().scale(1, 0)
                 pin_width  = pin.width()
-                pin_height = self.height
+                pin_height = self.capped_rba_height
 
             self.add_layout_pin(text=pin_name,
                                 layer=pin.layer,
@@ -309,55 +310,79 @@ class capped_replica_bitcell_array(bitcell_base_array):
         else:
             bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
 
-        vdd_dir = bitcell.vdd_dir
-        gnd_dir = bitcell.gnd_dir
-
+        #vdd_dir = bitcell.vdd_dir
+        #gnd_dir = bitcell.gnd_dir
+    
         # vdd/gnd are only connected in the perimeter cells
-        supply_insts = self.dummy_col_insts + self.dummy_row_insts
+        #supply_insts = self.dummy_col_insts + self.dummy_row_insts
+        inst = self.dummy_row_insts[1]
+        if "vdd" in inst.mod.pins:
+            array_pins = inst.get_pins("vdd")
+            for array_pin in array_pins:
+                supply_pin = self.top_vdd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-        # For the wordlines
-        top_bot_mult = 1
-        left_right_mult = 1
+            array_pins = inst.get_pins("gnd")
+            for array_pin in array_pins:
+                supply_pin = self.top_gnd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+        inst = self.dummy_row_insts[0]
+        if "vdd" in inst.mod.pins:
+            array_pins = inst.get_pins("vdd")
+            for array_pin in array_pins:
+                supply_pin = self.bottom_vdd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-        # There are always vertical pins for the WLs on the left/right if we have unused wordlines
-        self.left_gnd_locs = self.route_side_pin("gnd", "left", left_right_mult)
-        self.right_gnd_locs = self.route_side_pin("gnd", "right", left_right_mult)
-        # This needs to be big enough so that they aren't in the same supply routing grid
-        left_right_mult = 4
+            array_pins = inst.get_pins("gnd")
+            for array_pin in array_pins:
+                supply_pin = self.bottom_gnd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+        inst = self.dummy_col_insts[0]
+        if "vdd" in inst.mod.pins:
+            array_pins = inst.get_pins("vdd")
+            for array_pin in array_pins:
+                supply_pin = self.left_vdd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-        if gnd_dir == "V":
-            self.top_gnd_locs = self.route_side_pin("gnd", "top", top_bot_mult)
-            self.bot_gnd_locs = self.route_side_pin("gnd", "bot", top_bot_mult)
-            # This needs to be big enough so that they aren't in the same supply routing grid
-            top_bot_mult = 4
+            array_pins = inst.get_pins("gnd")
+            for array_pin in array_pins:
+                supply_pin = self.left_gnd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+        inst = self.dummy_col_insts[1]
+        if "vdd" in inst.mod.pins:
+            array_pins = inst.get_pins("vdd")
+            for array_pin in array_pins:
+                supply_pin = self.right_vdd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-        if vdd_dir == "V":
-            self.top_vdd_locs = self.route_side_pin("vdd", "top", top_bot_mult)
-            self.bot_vdd_locs = self.route_side_pin("vdd", "bot", top_bot_mult)
-        elif vdd_dir == "H":
-            self.left_vdd_locs = self.route_side_pin("vdd", "left", left_right_mult)
-            self.right_vdd_locs = self.route_side_pin("vdd", "right", left_right_mult)
-        else:
-            debug.error("Invalid vdd direction {}".format(vdd_dir), -1)
-
-        for inst in supply_insts:
-            for pin in inst.get_pins("vdd"):
-                if vdd_dir == "V":
-                    self.connect_side_pin(pin, "top", self.top_vdd_locs[0].y)
-                    self.connect_side_pin(pin, "bot", self.bot_vdd_locs[0].y)
-                elif vdd_dir == "H":
-                    self.connect_side_pin(pin, "left", self.left_vdd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_vdd_locs[0].x)
-
-        for inst in supply_insts:
-            for pin in inst.get_pins("gnd"):
-                if gnd_dir == "V":
-                    self.connect_side_pin(pin, "top", self.top_gnd_locs[0].y)
-                    self.connect_side_pin(pin, "bot", self.bot_gnd_locs[0].y)
-                elif gnd_dir == "H":
-                    self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                    self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
-
+            array_pins = inst.get_pins("gnd")
+            for array_pin in array_pins:
+                supply_pin = self.right_gnd_pin
+                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                self.add_via_stack_center(from_layer = array_pin.layer,
+                                          to_layer = supply_pin.layer,
+                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))       
     def route_unused_wordlines(self):
         """
         Connect the unused RBL and dummy wordlines to gnd

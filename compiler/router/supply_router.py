@@ -73,7 +73,7 @@ class supply_router(router):
             for source, target in self.get_mst_pairs(list(pins)):
                 # Create the graph
                 g = graph(self)
-                region = g.create_graph(source, target)
+                g.create_graph(source, target)
                 # Find the shortest path from source to target
                 path = g.find_shortest_path()
                 # If no path is found, throw an error
@@ -81,11 +81,10 @@ class supply_router(router):
                     self.write_debug_gds(gds_name="{}error.gds".format(OPTS.openram_temp), g=g, source=source, target=target)
                     debug.error("Couldn't route from {} to {}.".format(source, target), -1)
                 # Create the path shapes on layout
-                self.add_path(path)
+                new_wires, new_vias = self.add_path(path)
                 # Find the recently added shapes
-                self.prepare_gds_reader()
-                self.find_blockages(pin_name)
-                self.find_vias()
+                self.find_blockages(pin_name, new_wires)
+                self.find_vias(new_vias)
 
 
     def add_side_pin(self, pin_name, side, num_vias=3, num_fake_pins=4):

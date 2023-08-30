@@ -67,12 +67,11 @@ class signal_escape_router(router):
                 self.write_debug_gds(gds_name="{}error.gds".format(OPTS.openram_temp), g=g, source=source, target=target)
                 debug.error("Couldn't route from {} to {}.".format(source, target), -1)
             # Create the path shapes on layout
-            new_shapes = self.add_path(path)
-            self.new_pins[source.name] = new_shapes[-1]
+            new_wires, new_vias = self.add_path(path)
+            self.new_pins[source.name] = new_wires[-1]
             # Find the recently added shapes
-            self.prepare_gds_reader()
-            self.find_blockages(name)
-            self.find_vias()
+            self.find_blockages(name, new_wires)
+            self.find_vias(new_vias)
         self.replace_layout_pins()
 
 

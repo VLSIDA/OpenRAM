@@ -16,7 +16,7 @@ class row_cap_array(bitcell_base_array):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
         self.location = location
-        self.no_instances = True
+        #self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()

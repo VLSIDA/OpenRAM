@@ -68,6 +68,7 @@ class sky130_col_cap_array(col_cap_array, sky130_bitcell_base_array):
         bitcell_pins.append("gnd") # gnd
         bitcell_pins.append("vdd") # vpb
         bitcell_pins.append("gnd") # vnb
+        bitcell_pins.append("gnd")# poly gate for parasitic tx
         #bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
 
         return bitcell_pins

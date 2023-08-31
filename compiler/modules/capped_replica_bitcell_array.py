@@ -224,8 +224,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
     def route_power_ring(self, v_layer, h_layer):
         self.bbox = (vector(0,0), vector(self.capped_rba_width, self.capped_rba_height))
         self.supply_rail_width = drc["minwidth_m1"]
-        self.supply_rail_pitch = 3 * self.supply_rail_width
-        self.add_power_ring(v_layer, h_layer)
+        self.supply_rail_pitch = 6 * self.supply_rail_width
+        self.add_power_ring(v_layer=v_layer, h_layer=h_layer)
 
     def get_main_array_top(self):
         return self.replica_bitcell_array_inst.by() + self.replica_bitcell_array.get_main_array_top()
@@ -309,80 +309,83 @@ class capped_replica_bitcell_array(bitcell_base_array):
             bitcell = factory.create(module_type="pbitcell")
         else:
             bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
+        top = True
+        bottom = True
+        left = False
+        right = False
+        
+        if top:
+            inst = self.dummy_row_insts[1]
+            if "vdd" in inst.mod.pins:
+                array_pins = inst.get_pins("vdd")
+                for array_pin in array_pins:
+                    supply_pin = self.top_vdd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-        #vdd_dir = bitcell.vdd_dir
-        #gnd_dir = bitcell.gnd_dir
-    
-        # vdd/gnd are only connected in the perimeter cells
-        #supply_insts = self.dummy_col_insts + self.dummy_row_insts
-        inst = self.dummy_row_insts[1]
-        if "vdd" in inst.mod.pins:
-            array_pins = inst.get_pins("vdd")
-            for array_pin in array_pins:
-                supply_pin = self.top_vdd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                array_pins = inst.get_pins("gnd")
+                for array_pin in array_pins:
+                    supply_pin = self.top_gnd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+        if bottom:
+            inst = self.dummy_row_insts[0]
+            if "vdd" in inst.mod.pins:
+                array_pins = inst.get_pins("vdd")
+                for array_pin in array_pins:
+                    supply_pin = self.bottom_vdd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-            array_pins = inst.get_pins("gnd")
-            for array_pin in array_pins:
-                supply_pin = self.top_gnd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
-        inst = self.dummy_row_insts[0]
-        if "vdd" in inst.mod.pins:
-            array_pins = inst.get_pins("vdd")
-            for array_pin in array_pins:
-                supply_pin = self.bottom_vdd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                array_pins = inst.get_pins("gnd")
+                for array_pin in array_pins:
+                    supply_pin = self.bottom_gnd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+        if left:
+            inst = self.dummy_col_insts[0]
+            if "vdd" in inst.mod.pins:
+                array_pins = inst.get_pins("vdd")
+                for array_pin in array_pins:
+                    supply_pin = self.left_vdd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-            array_pins = inst.get_pins("gnd")
-            for array_pin in array_pins:
-                supply_pin = self.bottom_gnd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(array_pin.center()[0], supply_pin.center()[1]))
-        inst = self.dummy_col_insts[0]
-        if "vdd" in inst.mod.pins:
-            array_pins = inst.get_pins("vdd")
-            for array_pin in array_pins:
-                supply_pin = self.left_vdd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                array_pins = inst.get_pins("gnd")
+                for array_pin in array_pins:
+                    supply_pin = self.left_gnd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+        if right:
+            inst = self.dummy_col_insts[1]
+            if "vdd" in inst.mod.pins:
+                array_pins = inst.get_pins("vdd")
+                for array_pin in array_pins:
+                    supply_pin = self.right_vdd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-            array_pins = inst.get_pins("gnd")
-            for array_pin in array_pins:
-                supply_pin = self.left_gnd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
-        inst = self.dummy_col_insts[1]
-        if "vdd" in inst.mod.pins:
-            array_pins = inst.get_pins("vdd")
-            for array_pin in array_pins:
-                supply_pin = self.right_vdd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))
-
-            array_pins = inst.get_pins("gnd")
-            for array_pin in array_pins:
-                supply_pin = self.right_gnd_pin
-                self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
-                self.add_via_stack_center(from_layer = array_pin.layer,
-                                          to_layer = supply_pin.layer,
-                                          offset = vector(supply_pin.center()[0], array_pin.center()[1]))       
+                array_pins = inst.get_pins("gnd")
+                for array_pin in array_pins:
+                    supply_pin = self.right_gnd_pin
+                    self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
+                    self.add_via_stack_center(from_layer = array_pin.layer,
+                                              to_layer = supply_pin.layer,
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))       
     def route_unused_wordlines(self):
         """
         Connect the unused RBL and dummy wordlines to gnd

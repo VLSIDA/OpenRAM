@@ -114,14 +114,15 @@ cell_properties.bitcell_2port.vdd_dir = "H"
 cell_properties.bitcell_2port.gnd_layer = "m2"
 cell_properties.bitcell_2port.gnd_dir = "H"
 
-cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'br', 'vdd', 'gnd', 'vpb', 'vnb'],
-                                             ['INPUT', 'INPUT','POWER', 'GROUND',  'BIAS', 'BIAS'],
+cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'br', 'vdd', 'gnd', 'vpb', 'vnb', 'gate'],
+                                             ['INPUT', 'INPUT','POWER', 'GROUND',  'BIAS', 'BIAS', 'INPUT'],
                                              {'bl': 'bl',
                                               'br': 'br',
                                               'vdd': 'vdd',
                                               'gnd': 'gnd',
                                               'vnb': 'vnb',
-                                              'vpb': 'vpb'})
+                                              'vpb': 'vpb',
+                                              'gate': 'gate'})
 cell_properties.col_cap_1port_bitcell.boundary_layer = "mem"
 
 cell_properties.col_cap_1port_strap_power = d.cell(['vdd', 'vpb', 'vnb'],

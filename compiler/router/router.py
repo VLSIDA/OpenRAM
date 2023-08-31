@@ -59,8 +59,6 @@ class router(router_tech):
     def prepare_gds_reader(self):
         """ Write the current layout to a temporary file to read the layout. """
 
-        # NOTE: Avoid using this function if possible since it is too slow to
-        # write/read these files
         self.design.gds_write(self.gds_filename)
         self.layout = gdsMill.VlsiLayout(units=GDS["unit"])
         self.reader = gdsMill.Gds2reader(self.layout)
@@ -111,26 +109,16 @@ class router(router_tech):
         self.all_pins.update(pin_set)
 
 
-    def find_blockages(self, name="blockage", shape_list=None):
+    def find_blockages(self, name="blockage"):
         """ Find all blockages in the routing layers. """
         debug.info(2, "Finding blockages...")
 
         for lpp in [self.vert_lpp, self.horiz_lpp]:
-            # If the list of shapes is given, don't get them from gdsMill
-            if shape_list is None:
-                shapes = self.layout.getAllShapes(lpp)
-            else:
-                shapes = shape_list
+            shapes = self.layout.getAllShapes(lpp)
             for boundary in shapes:
-                if shape_list is not None:
-                    if boundary.lpp != lpp:
-                        continue
-                    ll = boundary.ll()
-                    ur = boundary.ur()
-                else:
-                    # gdsMill boundaries are in (left, bottom, right, top) order
-                    ll = vector(boundary[0], boundary[1])
-                    ur = vector(boundary[2], boundary[3])
+                # gdsMill boundaries are in (left, bottom, right, top) order
+                ll = vector(boundary[0], boundary[1])
+                ur = vector(boundary[2], boundary[3])
                 rect = [ll, ur]
                 new_shape = graph_shape(name, rect, lpp)
                 new_shape = self.inflate_shape(new_shape)
@@ -144,28 +132,20 @@ class router(router_tech):
                 self.blockages.append(new_shape)
 
 
-    def find_vias(self, shape_list=None):
+    def find_vias(self):
         """ Find all vias in the routing layers. """
         debug.info(2, "Finding vias...")
 
         # Prepare lpp values here
         from openram.tech import layer
         via_lpp = layer[self.via_layer_name]
-        valid_lpp = self.horiz_lpp # Just a temporary lpp to prevent errors
+        valid_lpp = self.horiz_lpp
 
-        # If the list of shapes is given, don't get them from gdsMill
-        if shape_list is None:
-            shapes = self.layout.getAllShapes(via_lpp)
-        else:
-            shapes = shape_list
+        shapes = self.layout.getAllShapes(via_lpp)
         for boundary in shapes:
-            if shape_list is not None:
-                ll = boundary.ll()
-                ur = boundary.ur()
-            else:
-                # gdsMill boundaries are in (left, bottom, right, top) order
-                ll = vector(boundary[0], boundary[1])
-                ur = vector(boundary[2], boundary[3])
+            # gdsMill boundaries are in (left, bottom, right, top) order
+            ll = vector(boundary[0], boundary[1])
+            ur = vector(boundary[2], boundary[3])
             rect = [ll, ur]
             new_shape = graph_shape("via", rect, valid_lpp)
             # Skip this via if it's contained by an existing via blockage
@@ -284,8 +264,7 @@ class router(router_tech):
         working for this router.
         """
 
-        new_wires = []
-        new_vias = []
+        new_shapes = []
         for i in range(0, len(nodes) - 1):
             start = nodes[i].center
             end = nodes[i + 1].center
@@ -296,16 +275,15 @@ class router(router_tech):
                             offset.y - self.half_wire)
             if direction == (1, 1): # Via
                 offset = vector(start.x, start.y)
-                via = self.design.add_via_center(layers=self.layers,
-                                                 offset=offset)
-                new_vias.append(via)
+                self.design.add_via_center(layers=self.layers,
+                                           offset=offset)
             else: # Wire
-                wire = self.design.add_rect(layer=self.get_layer(start.z),
-                                            offset=offset,
-                                            width=abs(diff.x) + self.track_wire,
-                                            height=abs(diff.y) + self.track_wire)
-                new_wires.append(wire)
-        return new_wires, new_vias
+                shape = self.design.add_rect(layer=self.get_layer(start.z),
+                                             offset=offset,
+                                             width=abs(diff.x) + self.track_wire,
+                                             height=abs(diff.y) + self.track_wire)
+                new_shapes.append(shape)
+        return new_shapes
 
 
     def write_debug_gds(self, gds_name, g=None, source=None, target=None):

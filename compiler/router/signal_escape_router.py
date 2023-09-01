@@ -54,6 +54,8 @@ class signal_escape_router(router):
             self.blockages.append(self.inflate_shape(pin))
 
         # Route vdd and gnd
+        routed_count = 0
+        routed_max = len(pin_names)
         for source, target, _ in self.get_route_pairs(pin_names):
             # Change fake pin's name so the graph will treat it as routable
             target.name = source.name
@@ -72,6 +74,8 @@ class signal_escape_router(router):
             # Find the recently added shapes
             self.find_blockages(name, new_wires)
             self.find_vias(new_vias)
+            routed_count += 1
+            debug.info(2, "Routed {} of {} signal pins".format(routed_count, routed_max))
         self.replace_layout_pins()
 
 

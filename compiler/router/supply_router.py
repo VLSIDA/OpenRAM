@@ -67,6 +67,8 @@ class supply_router(router):
             self.blockages.append(self.inflate_shape(pin))
 
         # Route vdd and gnd
+        routed_count = 0
+        routed_max = len(self.pins[vdd_name]) + len(self.pins[gnd_name])
         for pin_name in [vdd_name, gnd_name]:
             pins = self.pins[pin_name]
             # Route closest pins according to the minimum spanning tree
@@ -85,6 +87,9 @@ class supply_router(router):
                 # Find the recently added shapes
                 self.find_blockages(pin_name, new_wires)
                 self.find_vias(new_vias)
+                # Report routed count
+                routed_count += 1
+                debug.info(2, "Routed {} of {} supply pins".format(routed_count, routed_max))
 
 
     def add_side_pin(self, pin_name, side, num_vias=3, num_fake_pins=4):

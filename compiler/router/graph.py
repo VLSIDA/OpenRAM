@@ -186,7 +186,7 @@ class graph:
 
     def create_graph(self, source, target):
         """ Create the graph to run routing on later. """
-        debug.info(2, "Creating the graph for source '{}' and target'{}'.".format(source, target))
+        debug.info(3, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
         # Save source and target information
         self.source = source
@@ -196,7 +196,7 @@ class graph:
         region = deepcopy(source)
         region.bbox([target])
         region = region.inflated_pin(spacing=self.router.track_width + self.router.track_space)
-        debug.info(3, "Routing region is {}".format(region.rect))
+        debug.info(4, "Routing region is {}".format(region.rect))
 
         # Find the blockages that are in the routing area
         self.graph_blockages = []
@@ -216,9 +216,9 @@ class graph:
         self.generate_graph_nodes(x_values, y_values)
         # Save the graph nodes that lie in source and target shapes
         self.save_end_nodes()
-        debug.info(3, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
-        debug.info(3, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
-        debug.info(3, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
+        debug.info(4, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
+        debug.info(4, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
+        debug.info(4, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
 
 
     def find_graph_blockages(self, region):

@@ -223,7 +223,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
     def route_power_ring(self, v_layer, h_layer):
         self.bbox = (vector(0,0), vector(self.capped_rba_width, self.capped_rba_height))
-        self.supply_rail_width = drc["minwidth_m1"]
+        self.supply_rail_width = drc["minwidth_m3"]
         self.supply_rail_pitch = 6 * self.supply_rail_width
         self.add_power_ring(v_layer=v_layer, h_layer=h_layer)
 

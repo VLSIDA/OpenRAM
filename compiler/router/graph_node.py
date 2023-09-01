@@ -69,6 +69,6 @@ class graph_node:
             # Add a constant wire cost to prevent dog-legs
             if prev_node and self.get_direction(prev_node) != self.get_direction(other):
                 layer_dist += drc["grid"]
-            via_dist = abs(self.center.z - other.center.z)
+            via_dist = abs(self.center.z - other.center.z) * 2
             return layer_dist + via_dist
         return float("inf")

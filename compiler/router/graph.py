@@ -9,6 +9,8 @@ from openram import debug
 from openram.base.vector import vector
 from openram.base.vector3d import vector3d
 from openram.tech import drc
+from .bbox import bbox
+from .bbox_node import bbox_node
 from .graph_node import graph_node
 from .graph_probe import graph_probe
 from .graph_utils import snap
@@ -80,11 +82,8 @@ class graph:
         probe_shape = graph_probe(p1, p2, self.router.get_lpp(p1.z))
         pll, pur = probe_shape.rect
         # Check if any blockage blocks this probe
-        for blockage in self.graph_blockages:
+        for blockage in self.blockage_bbox_tree.iterate_shape(probe_shape):
             bll, bur = blockage.rect
-            # Not overlapping
-            if bll.x > pur.x or pll.x > bur.x or bll.y > pur.y or pll.y > bur.y:
-                continue
             # Not on the same layer
             if not blockage.same_lpp(blockage.lpp, probe_shape.lpp):
                 continue
@@ -116,11 +115,8 @@ class graph:
         half_wide = self.router.half_wire
         spacing = snap(self.router.track_space + half_wide + drc["grid"])
         blocked = False
-        for blockage in self.graph_blockages:
+        for blockage in self.blockage_bbox_tree.iterate_point(p):
             ll, ur = blockage.rect
-            # Not overlapping
-            if ll.x > x or x > ur.x or ll.y > y or y > ur.y:
-                continue
             # Not on the same layer
             if self.router.get_zindex(blockage.lpp) != z:
                 continue
@@ -168,11 +164,16 @@ class graph:
         for node in nodes:
             if self.is_node_blocked(node, pin_safe=False):
                 return True
+
+        # Skip if no via is present
+        if len(self.graph_vias) == 0:
+            return False
+
         # If the nodes are blocked by a via
         x = node.center.x
         y = node.center.y
         z = node.center.z
-        for via in self.graph_vias:
+        for via in self.via_bbox_tree.iterate_point(node.center):
             ll, ur = via.rect
             # Not overlapping
             if ll.x > x or x > ur.x or ll.y > y or y > ur.y:
@@ -212,6 +213,8 @@ class graph:
         region.bbox(self.graph_blockages)
         # Find and include edge shapes to prevent DRC errors
         self.find_graph_blockages(region)
+        # Build the bbox tree
+        self.build_bbox_trees()
         # Generate the graph nodes from cartesian values
         self.generate_graph_nodes(x_values, y_values)
         # Save the graph nodes that lie in source and target shapes
@@ -255,6 +258,21 @@ class graph:
             region.lpp = via.lpp
             if region.overlaps(via):
                 self.graph_vias.append(via)
+
+
+    def build_bbox_trees(self):
+        """ Build bbox trees for blockages and vias in the routing region. """
+
+        # Bbox tree for blockages
+        self.blockage_bbox_tree = bbox_node(bbox(self.graph_blockages[0]))
+        for i in range(1, len(self.graph_blockages)):
+            self.blockage_bbox_tree.insert(bbox(self.graph_blockages[i]))
+        # Bbox tree for vias
+        if len(self.graph_vias) == 0:
+            return
+        self.via_bbox_tree = bbox_node(bbox(self.graph_vias[0]))
+        for i in range(1, len(self.graph_vias)):
+            self.via_bbox_tree.insert(bbox(self.graph_vias[i]))
 
 
     def generate_cartesian_values(self):

@@ -65,7 +65,7 @@ class graph_node:
             layer_dist = self.center.distance(other.center)
             # Double the cost if the edge is in non-preferred direction
             if is_vertical != bool(self.center.z):
-                layer_dist *= 2
+                layer_dist *= 4
             # Add a constant wire cost to prevent dog-legs
             if prev_node and self.get_direction(prev_node) != self.get_direction(other):
                 layer_dist += drc["grid"]

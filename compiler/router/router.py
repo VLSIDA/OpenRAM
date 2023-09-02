@@ -87,7 +87,7 @@ class router(router_tech):
 
     def find_pins(self, pin_name):
         """ Find the pins with the given name. """
-        debug.info(2, "Finding all pins for {}".format(pin_name))
+        debug.info(4, "Finding all pins for {}".format(pin_name))
 
         shape_list = self.layout.getAllPinShapes(str(pin_name))
         pin_set = set()
@@ -111,7 +111,7 @@ class router(router_tech):
 
     def find_blockages(self, name="blockage"):
         """ Find all blockages in the routing layers. """
-        debug.info(2, "Finding blockages...")
+        debug.info(4, "Finding blockages...")
 
         for lpp in [self.vert_lpp, self.horiz_lpp]:
             shapes = self.layout.getAllShapes(lpp)
@@ -134,7 +134,7 @@ class router(router_tech):
 
     def find_vias(self):
         """ Find all vias in the routing layers. """
-        debug.info(2, "Finding vias...")
+        debug.info(4, "Finding vias...")
 
         # Prepare lpp values here
         from openram.tech import layer

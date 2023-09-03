@@ -185,7 +185,7 @@ class graph:
         return False
 
 
-    def create_graph(self, source, target, scale=1):
+    def create_graph(self, source, target):
         """ Create the graph to run routing on later. """
         debug.info(3, "Creating the graph for source '{}' and target'{}'.".format(source, target))
 
@@ -222,9 +222,6 @@ class graph:
         debug.info(4, "Number of blockages detected in the routing region: {}".format(len(self.graph_blockages)))
         debug.info(4, "Number of vias detected in the routing region: {}".format(len(self.graph_vias)))
         debug.info(4, "Number of nodes in the routing graph: {}".format(len(self.nodes)))
-
-        # Return the region to scale later if no path is found
-        return region.rect
 
 
     def find_graph_blockages(self, region):
@@ -439,6 +436,7 @@ class graph:
                     path.append(current)
                     current = came_from[current.id]
                 path.append(current)
+                path.reverse()
                 return path
 
             # Get the previous node to better calculate the next costs

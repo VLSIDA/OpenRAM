@@ -41,7 +41,7 @@ openram.init_openram(config_file=args[0], is_unit_test=False)
 
 openram.print_banner()
 
-# Configure the SRAM organization (duplicated from openram.py)
+# Configure the SRAM organization (duplicated from sram_compiler.py)
 from openram.characterizer import fake_sram
 s = fake_sram(name=OPTS.output_name,
               word_size=OPTS.word_size,

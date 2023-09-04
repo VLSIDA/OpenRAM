@@ -193,8 +193,11 @@ class sram():
 
         # Write the config file
         start_time = datetime.datetime.now()
-        from shutil import copyfile
-        copyfile(OPTS.config_file, OPTS.output_path + OPTS.output_name + '.py')
+        try:
+            from shutil import copyfile
+            copyfile(OPTS.config_file, OPTS.output_path + OPTS.output_name + '.py')
+        except shutil.SameFileError:
+            pass
         debug.print_raw("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)
 

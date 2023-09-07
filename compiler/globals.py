@@ -146,7 +146,7 @@ def check_versions():
     if not (major_python_version == major_required and minor_python_version >= minor_required):
         debug.error("Python {0}.{1} or greater is required.".format(major_required, minor_required), -1)
 
-    # Verify any version of git is isntalled before proceeding
+    # Verify any version of git is installed before proceeding
     try:
         subprocess.check_output(["git", "--version"])
     except:
@@ -481,7 +481,6 @@ def init_paths():
     #from pprint import pprint
     #pprint(s)
     #print("Test {0} in dir {1}".format(s[2].filename, OPTS.openram_temp))
-
 
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

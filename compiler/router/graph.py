@@ -98,7 +98,7 @@ class graph:
         return False
 
 
-    def is_node_blocked(self, node, pin_safe=True):
+    def is_node_blocked(self, node):
         """ Return if a node is blocked by a blockage. """
 
         p = node.center
@@ -150,7 +150,7 @@ class graph:
             xdiff = closest(p.x, xs)
             ydiff = closest(p.y, ys)
             if xdiff == 0 and ydiff == 0:
-                if pin_safe and blockage in [self.source, self.target]:
+                if blockage in [self.source, self.target]:
                     return False
             elif xdiff < spacing and ydiff < spacing:
                 blocked = True
@@ -162,7 +162,7 @@ class graph:
 
         # If the nodes are blocked by a blockage other than a via
         for node in nodes:
-            if self.is_node_blocked(node, pin_safe=False):
+            if self.is_node_blocked(node):
                 return True
 
         # Skip if no via is present

@@ -133,7 +133,6 @@ class pattern():
                         continue
                     if((self.bit_rows[col+dc] < self.num_rows) and (self.bit_cols[row+dr] < self.num_cols)):
                         if(inst.is_bitcell):
-                            #print(x_bit, y_bit)
                             self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]] = self.parent_design.add_existing_inst(inst,self.name_template.format(row +dr, col+dc))
                             self.parent_design.all_inst[row + dr, col + dc] = self.parent_design.cell_inst[self.bit_rows[col+dc], self.bit_cols[row+dr]]
                             self.parent_design.connect_inst(self.parent_design.get_bitcell_pins(self.bit_rows[col+dc], self.bit_cols[row+dr]))

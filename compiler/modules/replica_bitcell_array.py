@@ -107,16 +107,19 @@ class replica_bitcell_array(bitcell_base_array):
         for port in self.all_ports:
             if port in self.left_rbl:
                 row_offset = self.row_size
+                mirror = row_offset % 2 + 1 
             elif port in self.right_rbl:
                 row_offset = 0
+                mirror = 0 
             else:
                 continue
+                
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
                                             row_offset=row_offset,
                                             column_offset=len(self.left_rbl),
-                                            mirror='R0')
+                                            mirror=mirror)
 
     def add_pins(self):
 

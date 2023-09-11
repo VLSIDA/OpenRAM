@@ -18,11 +18,8 @@ class sky130_dummy_array(dummy_array, sky130_bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, row_offset=0 ,mirror=0, location="", name=""):
-        self.location = location
-        self.row_offset = row_offset
-        self.mirror = mirror
-        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+    #def __init__(self, rows, cols, column_offset=0, row_offset=0 ,mirror=0, location="", name=""):
+    #    super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
 
     def add_modules(self):
         """ Add the modules used in this design """

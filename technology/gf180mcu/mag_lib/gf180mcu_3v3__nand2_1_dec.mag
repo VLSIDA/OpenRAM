@@ -1,7 +1,7 @@
 magic
 tech gf180mcuD
 magscale 1 10
-timestamp 1694483516
+timestamp 1694484283
 << nwell >>
 rect 625 -40 1305 580
 << nmos >>
@@ -152,11 +152,11 @@ rect 863 56 1200 58
 rect 863 8 919 56
 rect 39 -28 277 -26
 << labels >>
-rlabel metal1 s 78 350 78 350 4 B
-rlabel metal1 s 78 211 78 211 4 A
 rlabel metal1 s 1106 439 1106 439 4 Y
 rlabel metal2 s 891 33 891 33 4 VDD
 rlabel metal2 s 250 56 250 56 4 GND
+rlabel polycontact 77 211 77 211 1 B
+rlabel polycontact 77 350 77 350 1 A
 << properties >>
 string FIXED_BBOX 0 0 1305 522
 << end >>

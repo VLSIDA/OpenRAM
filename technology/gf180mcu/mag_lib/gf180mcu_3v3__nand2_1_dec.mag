@@ -1,7 +1,7 @@
 magic
 tech gf180mcuD
 magscale 1 10
-timestamp 1694478861
+timestamp 1694479459
 << nwell >>
 rect 620 0 1339 620
 << nmos >>
@@ -90,11 +90,11 @@ rect 46 367 49 413
 rect 95 367 98 413
 rect 46 353 98 367
 rect 346 340 396 430
-rect 1111 340 1157 508
-rect 346 338 1157 340
+rect 1056 340 1104 505
+rect 346 338 1104 340
 rect 346 292 763 338
-rect 997 292 1157 338
-rect 346 290 1157 292
+rect 997 292 1104 338
+rect 346 290 1104 292
 rect 46 274 98 288
 rect 46 228 49 274
 rect 95 228 98 274
@@ -152,11 +152,22 @@ rect 858 96 1195 98
 rect 858 48 914 96
 rect 34 12 272 14
 << labels >>
-rlabel metal1 s 1133 485 1133 485 4 Y
 rlabel metal1 s 73 390 73 390 4 B
 rlabel metal1 s 73 251 73 251 4 A
 rlabel metal2 s 886 73 886 73 4 VDD
 rlabel metal2 s 245 96 245 96 4 GND
+rlabel metal1 s 72 228 72 228 4 A
+port 1 nsew
+rlabel metal1 s 72 409 72 409 4 B
+port 2 nsew
+rlabel metal2 s 886 72 886 72 4 vdd
+port 4 nsew
+rlabel metal2 s 244 314 244 314 4 gnd
+port 5 nsew
+rlabel metal1 1080 483 1080 483 1 Y
 << properties >>
 string FIXED_BBOX 0 0 1339 620
+string GDS_END 11704
+string GDS_FILE sram_address_control_cell.gds
+string GDS_START 6968
 << end >>

@@ -259,8 +259,7 @@ class layout():
                 contact_width = contact1.first_layer_width
         layer_space = getattr(layout, layer1 + "_space")
 
-        #print(layer_stack)
-        #print(contact1)
+
         pitch = contact_width + layer_space
 
         return round_to_grid(pitch)

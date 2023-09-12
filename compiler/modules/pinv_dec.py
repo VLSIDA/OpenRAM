@@ -242,12 +242,10 @@ class pinv_dec(pinv):
         source_pos = self.nmos_inst.get_pin("S").center()
         self.add_via_stack_center(offset=source_pos,
                                   from_layer=self.route_layer,
-                                  to_layer=self.supply_layer,
-                                  min_area=True)
+                                  to_layer=self.supply_layer)
 
         source_pos = self.pmos_inst.get_pin("S").center()
         self.add_via_stack_center(offset=source_pos,
                                   from_layer=self.route_layer,
-                                  to_layer=self.supply_layer,
-                                  min_area=True)
+                                  to_layer=self.supply_layer)
 

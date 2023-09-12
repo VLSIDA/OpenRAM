@@ -176,10 +176,7 @@ class rom_address_control_buf(design):
                             well_type="n")
         self.add_via_stack_center(offset=contact_pos,
                                   from_layer=self.active_stack[2],
-                                  to_layer=self.route_layer,
-                                  min_area=True)
-
-        # self.add_segment_center(layer=self.)
+                                  to_layer=self.route_layer)
 
         contact_pos = vector(left_edge, gnd_pin.cy())
         self.add_via_center(layers=self.active_stack,
@@ -188,5 +185,4 @@ class rom_address_control_buf(design):
                             well_type="p")
         self.add_via_stack_center(offset=contact_pos,
                                   from_layer=self.active_stack[2],
-                                  to_layer=self.route_layer,
-                                  min_area=True)
+                                  to_layer=self.route_layer)

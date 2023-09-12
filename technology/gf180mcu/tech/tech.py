@@ -240,8 +240,7 @@ drc["poly_to_active"] = 0.1
 # DF.9 - minarea of active area=0.2025
 drc.add_layer("active",
               width=0.22,
-              spacing=0.33,
-              area=0.2025)
+              spacing=0.33)
 
 drc.add_enclosure("dnwell",
                 layer="pwell",
@@ -278,7 +277,7 @@ drc.add_layer("contact",
 drc.add_enclosure("active",
                   layer="contact",
                   enclosure=0.07,
-                  extension=0.07)
+                  extension=0.175)
 
 drc.add_enclosure("poly",
                   layer="contact",
@@ -296,18 +295,17 @@ drc["poly_contact_to_gate"] = 0.165
 # M1.3 - area
 drc.add_layer("m1",
               width=0.23,
-              spacing=0.23,
-              area=0.1444)
+              spacing=0.23)
 
 drc.add_enclosure("m1",
                   layer="contact",
                   enclosure=0,
-                  extension=0.06)
+                  extension=0.205)
 
 drc.add_enclosure("m1",
                   layer="via1",
                   enclosure=0,
-                  extension=0.06)
+                  extension=0.205)
 
 drc.add_layer("via1",
               width=0.26,

@@ -21,11 +21,11 @@ class rom_address_control_array(design):
         self.size=inv_size
         self.cols = cols
         self.route_layer = route_layer
-        dff = factory.create(module_type="dff")
         if name=="":
             name = "rom_inv_array_{0}".format(cols)
         if inv_height == None:
-            self.inv_height = dff.height * 0.5
+
+            self.inv_height = drc("minwidth_{}".format(route_layer)) * 14
         else:
             self.inv_height = inv_height
 
@@ -34,6 +34,7 @@ class rom_address_control_array(design):
             self.inv_layer = "li"
         else:
             self.inv_layer = "m1"
+            self.route_layer = "m2"
         super().__init__(name)
         self.create_netlist()
         self.create_layout()

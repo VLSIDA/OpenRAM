@@ -24,6 +24,7 @@ File containing the process technology parameters for Global Foundaries 180nm
 tech_modules = d.module_type()
 
 tech_modules["bitcell_1port"] = "gf180_bitcell"
+tech_modules["nand2_dec"] = "nand2_dec"
 
 ###################################################
 # Custom cell properties
@@ -47,6 +48,14 @@ cell_properties.bitcell_1port.wl_layer = "m3"
 cell_properties.bitcell_1port.bl_layer = "m2"
 cell_properties.bitcell_1port.vdd_layer = "m1"
 cell_properties.bitcell_1port.gnd_layer = "m1"
+
+cell_properties.nand2_dec.port_order = ['A', 'B', 'Z', 'vdd', 'gnd']
+cell_properties.nand2_dec.port_map = {'A': 'A',
+                                      'B': 'B',
+                                      'Z': 'Y',
+                                      'vdd': 'VDD',
+                                      'gnd': 'GND'}
+
 
 cell_properties.ptx.model_is_subckt = True
 
@@ -194,7 +203,7 @@ drc["grid"] = 0.005
 # minwidth_tx with contact (no dog bone transistors)
 drc["minwidth_tx"] = 0.5
 # PL.2 Min gate width/channel length for 6V pmos (0.7 for 6V nmos)
-drc["minlength_channel"] = 0.7
+drc["minlength_channel"] = 0.28
 
 drc["minlength_channel_pmos"] = 0.55
 drc["minlength_channel_nmos"] = 0.7
@@ -209,10 +218,10 @@ drc.add_layer("pwell",
               width=0.74, # 0.6 for 3.3v
               spacing=0.86) # equal potential
 
-# PL.1 minwidth of interconnect poly 5/6V
-# PL.3a poly spacing 5/6V
+# PL.1 minwidth of interconnect poly 3v3
+# PL.3a poly spacing 3v3
 drc.add_layer("poly",
-              width=0.2,
+              width=0.28,
               spacing=0.24)
 
 drc["poly_extend_active"] = 0.22
@@ -226,12 +235,12 @@ drc["poly_to_active"] = 0.1
 #drc["poly_to_field_poly"] = 0.210
 
 #
-# DF.1a - minwidth of active (5/6V)
-# DF.3a - minspacing of active of the same type (5/6V)
-# DF.9 - minarea of active area=0.2025 (5/6V)
+# DF.1a - minwidth of active (3v3)
+# min space of tap to diff across butted junction
+# DF.9 - minarea of active area=0.2025
 drc.add_layer("active",
-              width=0.3,
-              spacing=0.36,
+              width=0.22,
+              spacing=0.33,
               area=0.2025)
 
 drc.add_enclosure("dnwell",
@@ -292,12 +301,12 @@ drc.add_layer("m1",
 
 drc.add_enclosure("m1",
                   layer="contact",
-                  enclosure=0.06,
+                  enclosure=0,
                   extension=0.06)
 
 drc.add_enclosure("m1",
                   layer="via1",
-                  enclosure=0.06,
+                  enclosure=0,
                   extension=0.06)
 
 drc.add_layer("via1",

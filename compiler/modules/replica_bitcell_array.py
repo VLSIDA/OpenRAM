@@ -87,7 +87,7 @@ class replica_bitcell_array(bitcell_base_array):
             if port in self.left_rbl:
                 # These go top down starting from the bottom of the bitcell array.
                 replica_bit = self.rbl[0] - port - 1
-                column_offset = len(self.left_rbl)
+                column_offset = 0
             elif port in self.right_rbl:
                 # These go bottom up starting from the top of the bitcell array.
                 replica_bit = self.rbl[0] + self.row_size + port - 1

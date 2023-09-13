@@ -214,7 +214,8 @@ class rom_wordline_driver_array(design):
                     directions="nonpref")
         self.add_via_stack_center(offset=offset,
                                 from_layer=self.active_stack[2],
-                                to_layer=self.supply_layer)
+                                to_layer=self.supply_layer,
+                                directions="nonpref")
         if well_type == "p":
             pin = "gnd_tap"
             self.gnd_taps.append(self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset))

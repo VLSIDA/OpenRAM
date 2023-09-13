@@ -17,23 +17,16 @@ class rom_precharge_array(design):
     """
     An array of inverters to create the inverted address lines for the rom decoder
     """
-    def __init__(self, cols, name="", bitline_layer="m2", strap_spacing=None, strap_layer="m3", tap_direction="row"):
+    def __init__(self, cols, name="", bitline_layer="m2", strap_spacing=0, strap_layer="m3", tap_direction="row"):
         self.cols = cols
         self.strap_layer = strap_layer
         self.bitline_layer = bitline_layer
         self.tap_direction = tap_direction
-
+        self.strap_spacing = strap_spacing
         if "li" in layer:
             self.supply_layer = "li"
         else:
             self.supply_layer = "m1"
-
-
-        if strap_spacing != None:
-            self.strap_spacing = strap_spacing
-        else:
-            self.strap_spacing = 0
-
 
         if strap_spacing != 0:
             self.num_straps = ceil(self.cols / self.strap_spacing)
@@ -158,11 +151,17 @@ class rom_precharge_array(design):
         self.add_segment_center(layer="poly", start=offset_start, end=offset_end)
         self.add_segment_center(layer="poly", start=self.pmos_insts[-1].get_pin("G").center(), end=offset_end)
 
+
+        gate_y = self.pmos_insts[0].get_pin('G').cy()
+        start = vector( self.get_pin("gate").lx(), gate_y)
+        end = vector( self.get_pin("precharge_r").rx(), gate_y )
+
+        self.add_segment_center(layer="poly", start=start, end=end)
+
     def extend_well(self):
         self.well_offset = self.pmos.tap_offset
-        well_y = self.pmos_insts[0].get_pin("vdd").cy() - 0.5 * self.nwell_width
 
-        well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width
+        well_y = self.get_pin("vdd").by() - self.nwell_enclose_active
         well_ll = vector(0, well_y)
 
         self.add_rect("nwell", well_ll, self.width , self.height - well_y)

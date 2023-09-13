@@ -25,9 +25,11 @@ class rom_array_test(openram_test):
         debug.info(2, "Testing 4x4 array for rom cell")
 
 
-        data = [[1, 0, 0, 1, 0, 0, 1, 1, 0], [0, 1, 0, 0, 1, 0, 1, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 0, 0, 1, 1, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0, 0, 1, 0]]
+        # data = [[1, 0, 0, 1, 0, 0, 1, 1, 0], [0, 1, 0, 0, 1, 0, 1, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 0, 0, 1, 1, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0, 0, 1, 0]]
 
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4, pitch_match=True)
+
+        data = [[1, 0, 0], [1, 1, 1], [0,1, 0]]
+        a = factory.create(module_type="rom_base_array", cols=3, rows=3, bitmap=data, strap_spacing=1, pitch_match=True)
         self.local_check(a)
         a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
 

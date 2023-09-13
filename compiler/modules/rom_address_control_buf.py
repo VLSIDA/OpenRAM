@@ -10,6 +10,8 @@ from openram.base import design
 from openram.sram_factory import factory
 from openram.base import vector
 from openram.tech import layer, drc
+from openram import OPTS
+
 
 
 
@@ -111,16 +113,25 @@ class rom_address_control_buf(design):
         Aint_in = self.addr_bar_nand.get_pin("B")
         A_in = self.inv_inst.get_pin("A")
 
-
+        vdd_rail = self.addr_nand.get_pin("vdd")
         # Find the center of the pmos poly/gate
         poly_right = clk1_pin.cx() + self.poly_enclose_contact + 0.5 * self.contact_width
 
         ppoly_center = poly_right - 0.7 * self.poly_width
+        poly_y = A_out.cy()
+        if OPTS.tech_name == "gf180mcu":
+            poly_y = vdd_rail.cy() + 0.5 * drc("minwidth_tx") * 3 + self.poly_extend_active
+            ppoly_center = A_out.cx() + 0.5 * self.interconnect_width + 0.5 * self.poly_width
+        else:
+            ppoly_center = poly_right - 0.7 * self.poly_width
+            poly_y = A_out.cy()
 
         contact_offset = vector(ppoly_center, clk2_pin.cy())
+        self.add_layout_pin_rect_center("cont", offset=contact_offset, layer="poly")
+        self.add_layout_pin_rect_center("ppoly", offset=vector(ppoly_center, poly_y), layer="poly")
 
         # Route the two shared clk inputs together by connecting poly
-        self.add_segment_center("poly", contact_offset, vector(ppoly_center, A_out.cy()))
+        self.add_segment_center("poly", contact_offset, vector(ppoly_center, poly_y))
 
 
         clk_offset = vector(clk2_pin.cx(), self.addr_nand.uy())

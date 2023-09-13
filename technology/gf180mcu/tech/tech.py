@@ -52,7 +52,7 @@ cell_properties.bitcell_1port.gnd_layer = "m1"
 cell_properties.nand2_dec.port_order = ['A', 'B', 'Z', 'vdd', 'gnd']
 cell_properties.nand2_dec.port_map = {'A': 'A',
                                       'B': 'B',
-                                      'Z': 'Y',
+                                      'Z': 'Z',
                                       'vdd': 'VDD',
                                       'gnd': 'GND'}
 
@@ -96,6 +96,8 @@ active_stack = ("active", "contact", "m1")
 m1_stack = ("m1", "via1", "m2")
 m2_stack = ("m2", "via2", "m3")
 m3_stack = ("m3", "via3", "m4")
+m4_stack = ("m4", "via4", "m5")
+
 
 layer_indices = {"poly": 0,
                  "active": 0,
@@ -104,7 +106,8 @@ layer_indices = {"poly": 0,
                  "m1": 1,
                  "m2": 2,
                  "m3": 3,
-                 "m4": 4}
+                 "m4": 4,
+                 "m5": 5}
 
 # The FEOL stacks get us up to m1
 feol_stacks = [poly_stack,
@@ -113,22 +116,24 @@ feol_stacks = [poly_stack,
 # The BEOL stacks are m1 and up
 beol_stacks = [m1_stack,
                m2_stack,
-               m3_stack]
+               m3_stack,
+               m4_stack]
 
 layer_stacks = feol_stacks + beol_stacks
 
 preferred_directions = {"poly": "V",
                         "active": "V",
-                        "m1": "H",
-                        "m2": "V",
-                        "m3": "H",
-                        "m4": "V"}
+                        "m1": "V",
+                        "m2": "H",
+                        "m3": "V",
+                        "m4": "H",
+                        "m5": "V"}
 
 ###################################################
 # Power grid
 ###################################################
 # Use M3/M4
-power_grid = m3_stack
+power_grid = m4_stack
 
 ###################################################
 ##GDS Layer Map
@@ -201,8 +206,8 @@ drc = d.design_rules("gf180")
 drc["grid"] = 0.005
 
 # minwidth_tx with contact (no dog bone transistors)
-drc["minwidth_tx"] = 0.5
-# PL.2 Min gate width/channel length for 6V pmos (0.7 for 6V nmos)
+drc["minwidth_tx"] = 0.57
+# PL.2 Min gate width/channel length for 3V3 pmos
 drc["minlength_channel"] = 0.28
 
 drc["minlength_channel_pmos"] = 0.55
@@ -305,7 +310,7 @@ drc.add_enclosure("m1",
 drc.add_enclosure("m1",
                   layer="via1",
                   enclosure=0,
-                  extension=0.205)
+                  extension=0.15)
 
 drc.add_layer("via1",
               width=0.26,
@@ -362,6 +367,23 @@ drc.add_enclosure("m4",
                   layer="via4",
                   enclosure=0.06)
 
+drc.add_layer("via4",
+              width=0.26,
+              spacing=0.26)
+
+# Magic wants 0.36um width but PDK says 0.28
+drc.add_layer("m5",
+              width=0.36,
+              spacing=0.28,
+              area=0.1444)
+
+drc.add_enclosure("m5",
+                  layer="via4",
+                  enclosure=0.06)
+
+drc.add_enclosure("m5",
+                  layer="via5",
+                  enclosure=0.06)
 
 drc.add_layer("via5",
               width=0.26,

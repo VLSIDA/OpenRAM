@@ -26,7 +26,7 @@ class precharge_test(openram_test):
         debug.info(2, "Testing rom precharge bitcell")
 
 
-        tx = factory.create(module_type="rom_precharge_cell", module_name="precharge_cell", bitline_layer="m2", supply_layer="m1")
+        tx = factory.create(module_type="rom_precharge_array", module_name="rom_precharge_array", cols=8, strap_spacing=2, tap_direction="col")
         self.local_check(tx)
 
         openram.end_openram()

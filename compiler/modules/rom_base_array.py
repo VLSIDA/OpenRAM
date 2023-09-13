@@ -88,6 +88,8 @@ class rom_base_array(bitcell_base_array):
         else:
             self.poly_tap = factory.create(module_type="rom_poly_tap", add_active_tap=True)
             self.end_poly_tap = factory.create(module_type="rom_poly_tap", place_poly=True)
+
+        print("poly tap width", self.poly_tap.width, "height", self.poly_tap.height, self.tap_direction)
         self.precharge_array = factory.create(module_type="rom_precharge_array",
                                               cols=self.column_size,
                                               strap_spacing=self.strap_spacing,
@@ -100,6 +102,7 @@ class rom_base_array(bitcell_base_array):
         self.route_pitch = drc("{0}_to_{0}".format(self.bitline_layer))
 
     def add_pins(self):
+        print(self.get_wordline_names())
         for bl_name in self.get_bitline_names():
             self.add_pin(bl_name, "OUTPUT")
         for wl_name in self.get_wordline_names():
@@ -215,7 +218,7 @@ class rom_base_array(bitcell_base_array):
             self.remove_layout_pin("gnd")
 
             active_tap_pins = [self.active_tap_list[i].get_pin("active_tap") for i in range(len(self.active_tap_list))]
-            self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp")
+            self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp", directions="nonpref")
 
             gnd_y = gnd_l.y
             min_x = float('inf')
@@ -246,7 +249,6 @@ class rom_base_array(bitcell_base_array):
         self.cell_pos = {}
         self.strap_pos = {}
         pitch_offset = 0
-
         for row in range(self.row_size + 1):
 
             if row % self.tap_spacing == 0 and self.pitch_match and row != self.row_size:
@@ -331,7 +333,7 @@ class rom_base_array(bitcell_base_array):
         else:
             output_layer = "m3"
         rail_y = self.precharge_inst.get_pins("vdd")[0].cy()
-
+        print("cols ", self.bitline_names[0])
         for bl in range(self.column_size):
 
             src_pin = self.cell_list[0][bl].get_pin("S")
@@ -382,3 +384,5 @@ class rom_base_array(bitcell_base_array):
         poly_tap_pins = [self.poly_tap_list[i].get_pin("poly_tap") for i in range(len(self.poly_tap_list))]
 
         self.connect_row_pins(layer=self.wordline_layer, pins=poly_tap_pins)
+        self.connect_row_pins(layer="poly", pins=poly_tap_pins)
+

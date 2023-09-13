@@ -35,17 +35,19 @@ class rom_poly_tap(design):
     def create_layout(self):
 
         self.place_via()
-        self.add_boundary()
         # self.extend_poly()
 
         if self.add_tap or self.place_poly:
             self.place_active_tap()
 
+        self.add_boundary()
+
+
     def add_boundary(self):
         contact_width = self.poly_contact.width
         self.height = self.dummy.height
         self.width = contact_width + self.pitch_offset
-
+        print("pitch off", self.pitch_offset)
         super().add_boundary()
 
     def place_via(self):
@@ -60,14 +62,9 @@ class rom_poly_tap(design):
         contact_x = contact_width * 0.5 + self.contact_x_offset
         self.contact_offset = vector(contact_x, contact_y)
 
-        if OPTS.tech_name == "sky130":
-            directions="pref"
-        else:
-            directions="nonpref"
         self.via = self.add_via_stack_center(from_layer="poly",
                                   to_layer=self.strap_layer,
-                                  offset=self.contact_offset,
-                                  directions=directions)
+                                  offset=self.contact_offset)
         self.add_layout_pin_rect_center("poly_tap", self.strap_layer, self.contact_offset)
 
     def extend_poly(self):

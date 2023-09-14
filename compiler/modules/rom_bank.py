@@ -297,7 +297,7 @@ class rom_bank(design,rom_verilog):
 
     def place_bitline_inverter(self):
         self.bitline_inv_inst.place(offset=[0,0], rotate=90)
-        inv_y_offset = self.array_inst.by() - self.bitline_inv_inst.width - 2 * self.m1_pitch
+        inv_y_offset = self.array_inst.by() - self.bitline_inv_inst.width - 1.5 * self.m1_pitch
 
         inv_x_offset = self.array_inst.get_pin("bl_0_0").cx() - self.bitline_inv_inst.get_pin("out_0").cx()
         self.inv_offset = vector(inv_x_offset, inv_y_offset)

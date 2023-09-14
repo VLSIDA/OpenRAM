@@ -299,7 +299,7 @@ drc["poly_contact_to_gate"] = 0.165
 # M1.2a - space
 # M1.3 - area
 drc.add_layer("m1",
-              width=0.23,
+              width=0.26,
               spacing=0.23)
 
 drc.add_enclosure("m1",

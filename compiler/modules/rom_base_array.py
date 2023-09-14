@@ -234,12 +234,12 @@ class rom_base_array(bitcell_base_array):
                 bottom = vector(pin.cx(), pin.by())
                 top = vector(pin.cx(), gnd_y)
                 self.add_via_stack_center(offset=top, from_layer=self.bitline_layer, to_layer=self.supply_stack[0])
-                self.add_via_center(offset=bottom, layers=self.supply_stack)
+                # self.add_via_center(offset=bottom, layers=self.supply_stack)
 
                 self.add_layout_pin_rect_ends(name="gnd", layer=self.supply_stack[0], start=bottom, end=top)
 
             self.remove_layout_pin("gnd_tmp")
-            self.add_segment_center(layer=self.supply_stack[2], start=vector(min_x, bottom.y), end=vector(max_x, bottom.y))
+            # self.add_segment_center(layer=self.supply_stack[2], start=vector(min_x, bottom.y), end=vector(max_x, bottom.y))
             self.add_segment_center(layer=self.bitline_layer, start=gnd_l, end=vector(min_x, gnd_l.y))
             self.add_segment_center(layer=self.bitline_layer, start=gnd_r, end=vector(max_x, gnd_r.y))
 

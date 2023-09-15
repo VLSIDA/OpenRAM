@@ -80,7 +80,6 @@ class rom_base_cell(design):
         self.cell_inst = self.add_inst( name=self.name + "_nmos",
                                         mod=self.nmos,
                                         )
-        print("bitmos", self.cell_inst.height, self.cell_inst.width)
 
         if self.bit_value == 0:
             self.connect_inst(["bl", "wl", "bl", "gnd"])

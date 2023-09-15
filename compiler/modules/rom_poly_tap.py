@@ -35,7 +35,6 @@ class rom_poly_tap(design):
     def create_layout(self):
 
         self.place_via()
-        # self.extend_poly()
 
         if self.add_tap or self.place_poly:
             self.place_active_tap()
@@ -47,7 +46,6 @@ class rom_poly_tap(design):
         contact_width = self.poly_contact.width
         self.height = self.dummy.height
         self.width = contact_width + self.pitch_offset
-        print("pitch off", self.pitch_offset)
         super().add_boundary()
 
     def place_via(self):
@@ -83,12 +81,9 @@ class rom_poly_tap(design):
         tap_y = self.via.cy() + self.dummy.width * 0.5
         contact_pos = vector(tap_x, tap_y)
 
-        # edge of the next nmos
-        active_edge = self.dummy.width - self.dummy.cell_inst.height - self.poly_extend_active
 
-        # edge of the active contact
-        tap_edge = tap_x + 0.5 * self.active_contact.height
-        self.pitch_offset += (self.active_space * 2) - (tap_edge - active_edge) + self.contact_x_offset
+        # This pitch offset is used throughout the memory bank to make sure the pitch of the decoder outputs matches the pitch of the array inputs
+        self.pitch_offset = 0.5 * self.active_contact.width + self.active_space + 0.5 * self.contact_width + self.active_enclose_contact
 
         if self.tx_type == "nmos" and self.add_tap:
             self.add_via_center(layers=self.active_stack,

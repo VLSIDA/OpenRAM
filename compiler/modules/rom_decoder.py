@@ -231,6 +231,14 @@ class rom_decoder(design):
 
             self.add_path(self.inv_route_layer, [addr_out_pin.center(), addr_middle, addr_pin.center()])
             self.add_path(self.inv_route_layer, [addr_bar_out_pin.center(), addr_bar_middle, addr_bar_pin.center()])
+
+            self.add_via_stack_center(offset=addr_pin.center(),
+                                      from_layer=addr_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_bar_pin.center(),
+                                      from_layer=addr_bar_pin.layer,
+                                      to_layer=self.inv_route_layer)
             self.copy_layout_pin(self.buf_inst, "A{}_in".format(i), "A{}".format(i))
 
     def route_supplies(self):

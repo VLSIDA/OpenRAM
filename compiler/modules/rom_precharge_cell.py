@@ -24,7 +24,6 @@ class rom_precharge_cell(rom_base_cell):
 
         self.place_tap()
         self.extend_well()
-        print("precharge", self.height, self.width)
 
 
     def add_modules(self):
@@ -44,7 +43,6 @@ class rom_precharge_cell(rom_base_cell):
         self.cell_inst = self.add_inst( name="precharge_pmos",
                                         mod=self.pmos,
                                         )
-        print("premos", self.cell_inst.height, self.cell_inst.width)
         self.connect_inst(["bitline", "gate", "vdd", "vdd"])
 
     def add_pins(self):
@@ -58,7 +56,6 @@ class rom_precharge_cell(rom_base_cell):
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
     def extend_well(self):
-        print(self.nwell_enclose_active)
         well_y = self.get_pin("vdd").cy() - 0.5 * self.tap.height - self.nwell_enclose_active
         well_ll = vector(0, well_y)
         height = self.get_pin("D").cy() + self.nwell_enclose_active - well_y
@@ -91,5 +88,4 @@ class rom_precharge_cell(rom_base_cell):
         pass
 
     def short_gate(self):
-        print("not shorting")
         pass

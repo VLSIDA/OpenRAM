@@ -120,3 +120,14 @@ class rom_address_control_array(design):
         for pin in tmp_pins:
             self.copy_layout_pin(self, "vdd_edge", "vdd")
         self.remove_layout_pin("vdd_edge")
+
+        tmp_pins = []
+        for pin in self.get_pins("gnd"):
+            edge = vector(pin.rx() + 0.5 * self.route_width, pin.cy())
+            tmp_pins.append(self.add_layout_pin_rect_center("gnd_edge", layer=self.route_layer, offset=edge))
+        self.copy_layout_pin_shapes("gnd")
+        self.remove_layout_pin("gnd")
+
+        for pin in tmp_pins:
+            self.copy_layout_pin(self, "gnd_edge", "gnd")
+        self.remove_layout_pin("gnd_edge")

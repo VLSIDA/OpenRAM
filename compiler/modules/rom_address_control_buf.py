@@ -127,8 +127,6 @@ class rom_address_control_buf(design):
             poly_y = A_out.cy()
 
         contact_offset = vector(ppoly_center, clk2_pin.cy())
-        self.add_layout_pin_rect_center("cont", offset=contact_offset, layer="poly")
-        self.add_layout_pin_rect_center("ppoly", offset=vector(ppoly_center, poly_y), layer="poly")
 
         # Route the two shared clk inputs together by connecting poly
         self.add_segment_center("poly", contact_offset, vector(ppoly_center, poly_y))
@@ -180,7 +178,6 @@ class rom_address_control_buf(design):
         left_edge = self.inv_inst.get_pin("Z").cx() - 2 * self.contact_width - 2 * self.active_contact_to_gate - 4 * self.active_enclose_contact - self.poly_width - self.active_space
 
         contact_pos = vector(left_edge, source_pin.cy())
-        self.add_layout_pin_rect_center("left_edge", offset=contact_pos, layer="m1")
         self.add_via_center(layers=self.active_stack,
                             offset=contact_pos,
                             implant_type="n",

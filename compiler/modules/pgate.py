@@ -48,6 +48,11 @@ class pgate(design):
 
         # This is the space from a S/D contact to the supply rail
         contact_to_vdd_rail_space = 0.5 * self.route_layer_width + self.route_layer_space
+
+        # This is a result of the m1 extend contact drc rule being really long in comparison to sky130.
+        # Currently the "extend" drc rule acts to fulfil minimum metal areas on contacts and isnt reflective of an actual drc rule
+        if OPTS.tech_name == "gf180mcu":
+            contact_to_vdd_rail_space += 0.5 * self.route_layer_space
         # This is a poly-to-poly of a flipped cell
         poly_to_poly_gate_space = self.poly_extend_active + 0.5 * self.poly_space
 

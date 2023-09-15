@@ -942,14 +942,19 @@ class layout():
 
         return (bot_rect, top_rect)
 
-    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True):
+    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True, new_name=None):
         """
         Route together all of the pins of a given name that horizontally align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or top or botom if specified.
+        New top level pin can be renamed with new_name, otherwise the new pin will keep the same name as old pins
         TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
+        if new_name is not None:
+            pin_name = new_name
+        else:
+            pin_name = name
 
         bins = {}
         if not insts:
@@ -1009,16 +1014,17 @@ class layout():
             left_pos = vector(left_x + 0.5 * via_width, y)
             right_pos = vector(right_x + 0.5 * via_width, y)
 
-#            self.add_layout_pin_rect_ends(name=name,
-#                                          layer=pin_layer,
-#                                          start=left_pos,
-#                                          end=right_pos,
-#                                          width=via_height)
-            self.add_layout_pin_segment_center(text=name,
-                                               layer=pin_layer,
-                                               start=left_pos,
-                                               end=right_pos,
-                                               width=via_height)
+            # self.add_layout_pin_rect_ends(name=name,
+            #                                 layer=pin_layer,
+            #                                 start=left_pos,
+            #                                 end=right_pos,
+            #                                 width=via_height)
+
+            self.add_layout_pin_segment_center(text=pin_name,
+                                            layer=pin_layer,
+                                            start=left_pos,
+                                            end=right_pos,
+                                            width=via_height)
 
     def add_layout_end_pin_segment_center(self, text, layer, start, end):
         """

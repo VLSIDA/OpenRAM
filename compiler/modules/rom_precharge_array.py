@@ -134,7 +134,16 @@ class rom_precharge_array(design):
             self.add_layout_pin_rect_center(bl, self.bitline_layer, source_pin.center())
 
     def route_supply(self):
-        self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer)
+
+        # Hacky way to route all the vdd pins together and then create a layout pin on only one side.
+        self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer, new_name="vdd_tmp")
+
+        tmp_vdd = self.get_pin("vdd_tmp")
+
+        self.add_layout_pin_rect_center("vdd", layer=self.strap_layer, offset=tmp_vdd.lc(), height=tmp_vdd.height())
+        self.add_segment_center(layer=self.strap_layer, start=tmp_vdd.lc(), end=tmp_vdd.rc(), width=tmp_vdd.height())
+        self.remove_layout_pin("vdd_tmp")
+
 
     def connect_taps(self):
         array_pins = [self.tap_insts[i].get_pin("poly_tap") for i in range(len(self.tap_insts))]

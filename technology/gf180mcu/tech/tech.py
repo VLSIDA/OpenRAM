@@ -416,7 +416,7 @@ spice["pmos"] = "pfet_03v3"
 spice["power"]="vccd1"
 spice["ground"]="vssd1"
 
-spice["fet_libraries"] = {"TT": [[os.environ.get("SPICE_MODEL_DIR") + "/sky130.lib.spice", "tt"]]}
+spice["fet_libraries"] = {"TT": [[os.environ.get("SPICE_MODEL_DIR") + "/sm141064.ngspice", "typical"]]}
 
 # spice stimulus related variables
 spice["feasible_period"] = 10        # estimated feasible period in ns
@@ -476,5 +476,8 @@ parameter["bitcell_drain_cap"] = 0.1        # In Femto-Farad, approximation of d
 drc_name = "magic"
 lvs_name = "netgen"
 pex_name = "magic"
+
+
+flatglob = ["*_?mos_m*"]
 
 ignore_drc_lvs_on = ["wl_strap"]

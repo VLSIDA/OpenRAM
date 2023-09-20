@@ -3,7 +3,15 @@ CONDA_INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-py38_22.11.1
 CONDA_INSTALLER_FILE="miniconda_installer_py38.sh"
 CONDA_HOME="${CONDA_HOME:-miniconda}"
 
-TOOLS="klayout magic netgen ngspice trilinos xyce"
+# The tool name format is "<tool>=<version>".
+# If you want to use the latest version, just use "<tool>".
+TOOLS=""
+TOOLS+="klayout=0.28.3 "
+TOOLS+="magic=8.3.363 "
+TOOLS+="netgen=1.5.253 "
+TOOLS+="ngspice=26 "
+TOOLS+="trilinos=12.12.1 "
+TOOLS+="xyce=7.4"
 
 # Install miniconda if not already installed
 if [[ ! -d "${CONDA_HOME}/bin" ]]

@@ -187,6 +187,7 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write("select top cell\n")
     f.write("expand\n")
     f.write('puts "Finished expanding"\n')
+    f.write("drc style drc(full)")
     f.write("drc euclidean on\n")
     f.write("drc check\n")
     f.write('puts "Finished drc check"\n')

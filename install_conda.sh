@@ -7,7 +7,7 @@ CONDA_HOME="${CONDA_HOME:-miniconda}"
 # If you want to use the latest version, just use "<tool>".
 TOOLS=""
 TOOLS+="klayout=0.28.3 "
-TOOLS+="magic=8.3.363 "
+TOOLS+="magic=8.3.431 "
 TOOLS+="netgen=1.5.253 "
 TOOLS+="ngspice=26 "
 TOOLS+="trilinos=12.12.1 "

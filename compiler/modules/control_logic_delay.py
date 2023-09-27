@@ -100,12 +100,18 @@ class control_logic_delay(control_logic_base):
         self.nand2 = factory.create(module_type="pnand2",
                                     height=dff_height)
 
-        self.compute_delay_chain_size()
+        # TODO: compute the delay chain pinouts using elmore delay
+        # self.compute_delay_chain_size()
+        # for now, use these user-defined values for delay chain sizing
+        self.delay_chain_pinout_list = OPTS.multi_delay_chain_pinouts
+        self.delay_chain_fanout_list = [4] * self.delay_chain_pinout_list[4]
+
         self.delay_chain = factory.create(module_type="multi_delay_chain",
                                           fanout_list=self.delay_chain_fanout_list,
                                           pinout_list=self.delay_chain_pinout_list)
 
     def compute_delay_chain_size(self):
+        # FIXME: this function is not called because it is incomplete
         """
         calculate the pinouts needed for the delay chain based on
         wordline, bitline, and precharge delays

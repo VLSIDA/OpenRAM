@@ -63,17 +63,28 @@ class options(optparse.Values):
     scramble_bits = True
 
     ###################
-    # Optimization options
+    # Control logic options
     ###################
     # Approximate percentage of delay compared to bitlines
     rbl_delay_percentage = 0.5
 
-    # delay chain is automatically sized in delay based control logic
+    # FIXME: delay_control_scaling_factor is not used because
+    #        the multi-delay chain is not being sized automatically
+    # if delay chain is automatically sized in delay based control logic
     # this multiplier can be used to add a guard band to the standard timing
     # lowering it can improve performance but may cause sram to fail
-    delay_control_scaling_factor = 1.0
+    # delay_control_scaling_factor = 1.0
+
+    # multi delay chain is NOT automatically sized, needs to be set by user
+    # list indexes 0 & 1 need to be even for polarity
+    # list indexes 2 - 4 need to be odd for polarity
+    # these default values are the ones used on the September 2023 Chipignite Shuttle
+    # to test delay based control logic with sky130 1rw1r 8x1024 bit (1KB) with 8 column mux
+    multi_delay_chain_pinouts = [2, 10, 11, 17, 31]
+
     # stages for delay chain in rbl control logic only
     delay_chain_stages = 9
+
     # fanout per stage for any control logic
     delay_chain_fanout_per_stage = 4
 

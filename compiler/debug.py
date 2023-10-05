@@ -7,6 +7,7 @@
 #
 import sys
 import os
+import datetime
 import pdb
 import inspect
 from openram import globals
@@ -62,6 +63,9 @@ def print_raw(str):
 
 
 def log(str):
+    # Add timestamp at the beginning of the string
+    timestr = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    str = "[{}] {}".format(timestr, str)
     if globals.OPTS.output_name != '':
         if log.create_file:
             # We may have not yet read the config, so we need to ensure

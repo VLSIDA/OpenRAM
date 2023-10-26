@@ -571,7 +571,7 @@ def import_tech():
                 tech_found = tech_dir
                 break;
                 
-	# If the tech_name param specified by the user is not present in the technology folder, emit an error and quit
+    # If the tech_name param specified by the user is not present in the technology folder, emit an error and quit
     if (tech_found is None):
         debug.error(f"You specified \'tech_name={OPTS.tech_name}\' in your config file, but that technology is not present in the technologies folder!")
         quit()

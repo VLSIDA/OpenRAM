@@ -564,6 +564,12 @@ def import_tech():
         sys.path.append(tech_path)
         debug.info(1, "Adding technology path: {}".format(tech_path))
 
+    # Validate tech_name param
+    techname_lower = OPTS.tech_name.lower()
+    if (techname_lower is None) or (techname_lower!="sky130" and techname_lower!="scn3m_subm" and techname_lower!="scn4m_subm") :
+        debug.error("tech_name in config file should be sky130|scn3m_subm|scn4m_subm")
+        quit()
+        
     # Import the tech
     try:
         tech_mod = __import__(OPTS.tech_name)

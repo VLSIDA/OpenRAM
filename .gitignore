@@ -21,6 +21,10 @@ openram.egg-info/
 miniconda/
 sky130A/
 sky130B/
+gf180mcuA/
+gf180mcuB/
+gf180mcuC/
+gf180mcuD/
 skywater-pdk/
 sky130_fd_bd_sram/
 docker/openram-ubuntu.log

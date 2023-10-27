@@ -18,7 +18,7 @@ class rom_decoder(design):
         # array gets rotated 90deg so rows/cols switch
         if "li" in layer:
             self.output_layer = "m1"
-            self.inv_route_layer = "m2"
+            self.inv_route_layer = "m1"
         else:
             self.output_layer = "m1"
             self.inv_route_layer = "m3"
@@ -239,6 +239,15 @@ class rom_decoder(design):
             self.add_via_stack_center(offset=addr_bar_pin.center(),
                                       from_layer=addr_bar_pin.layer,
                                       to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_out_pin.center(),
+                                      from_layer=addr_out_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_bar_out_pin.center(),
+                                      from_layer=addr_bar_out_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
             self.copy_layout_pin(self.buf_inst, "A{}_in".format(i), "A{}".format(i))
 
     def route_supplies(self):

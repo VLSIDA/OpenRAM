@@ -119,12 +119,12 @@ class rom_address_control_buf(design):
 
         ppoly_center = poly_right - 0.7 * self.poly_width
         poly_y = A_out.cy()
+
+        # Placement of gate contacts for NAND cell are different in gf180 which requires tech-specific placement.
         if OPTS.tech_name == "gf180mcu":
             poly_y = vdd_rail.cy() + 0.5 * drc("minwidth_tx") * 3 + self.poly_extend_active
             ppoly_center = A_out.cx() + 0.5 * self.interconnect_width + 0.5 * self.poly_width
-        else:
-            ppoly_center = poly_right - 0.7 * self.poly_width
-            poly_y = A_out.cy()
+
 
         contact_offset = vector(ppoly_center, clk2_pin.cy())
 

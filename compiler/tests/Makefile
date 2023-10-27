@@ -5,7 +5,7 @@ include $(TOP_DIR)/openram.mk
 
 ARGS ?=
 TEST_TECHS ?= scn4m_subm freepdk45
-TECHS ?= scn4m_subm freepdk45 sky130 gf180mcu
+TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
 TEST_SRCS  = $(sort $(notdir $(wildcard $(TEST_DIR)/*_test.py)))

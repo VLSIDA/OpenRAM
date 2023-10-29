@@ -325,14 +325,15 @@ class replica_bitcell_array(bitcell_base_array):
 
         # Replica wordlines (go by the row instead of replica column because we may have to add a pin
         # even though the column is in another local bitcell array)
-        for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
-            for (wl_name, pin_name) in zip(names, self.dummy_rows[0].get_wordline_names()):
-                pin = inst.get_pin(pin_name)
-                self.add_layout_pin(text=wl_name,
-                                    layer=pin.layer,
-                                    offset=pin.ll().scale(0, 1),
-                                    width=self.width,
-                                    height=pin.height())
+        if self.rbl != [0,0]:
+            for (names, inst) in zip(self.rbl_wordline_names, self.dummy_row_replica_insts):
+                for (wl_name, pin_name) in zip(names, self.dummy_rows[0].get_wordline_names()):
+                    pin = inst.get_pin(pin_name)
+                    self.add_layout_pin(text=wl_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(0, 1),
+                                        width=self.width,
+                                        height=pin.height())
 
         # Main array bl/br
         for pin_name in self.all_bitline_names:

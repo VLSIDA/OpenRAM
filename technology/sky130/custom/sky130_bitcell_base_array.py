@@ -11,7 +11,7 @@ from openram.modules import bitcell_base_array
 from openram.sram_factory import factory
 from openram.tech import layer
 from openram import OPTS
-
+from openram.modules import pattern
 
 class sky130_bitcell_base_array(bitcell_base_array):
     """

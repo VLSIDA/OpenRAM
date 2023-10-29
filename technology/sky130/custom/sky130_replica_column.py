@@ -43,27 +43,27 @@ class sky130_replica_column(replica_column, sky130_bitcell_base_array):
         self.cell_inst={}
 
         replica_row_opt1 = [geometry.instance("rep_00_opt1", mod=self.replica_cell, is_bitcell=True, mirror='XY')] \
-                     + [geometry.instance("rep_01_strap", mod=self.strap_p, is_bitcell=False, mirror='MX')]\
+                     + [geometry.instance("rep_01_strap_p", mod=self.strap_p, is_bitcell=False, mirror='MX')]\
                      + [geometry.instance("rep_02_opt1", mod=self.replica_cell, is_bitcell=True, mirror='MX')] \
-                     + [geometry.instance("rep_03_strap_p", mod=self.strap, is_bitcell=False, mirror='MX')]
+                     + [geometry.instance("rep_03_strap", mod=self.strap, is_bitcell=False, mirror='MX')]
   
         replica_row_opt1a = [geometry.instance("rep_10_opt1a", mod=self.replica_cell2, is_bitcell=True, mirror='MY')] \
-                      + [geometry.instance("rep_11_strapa", mod=self.strap_p, is_bitcell=False)] \
+                      + [geometry.instance("rep_11_strap_p", mod=self.strap_p, is_bitcell=False)] \
                       + [geometry.instance("rep_12_opt1a", mod=self.replica_cell2, is_bitcell=True)] \
-                      + [geometry.instance("rep_13_strapa_p", mod=self.strapa, is_bitcell=False)]
+                      + [geometry.instance("rep_13_strapaa", mod=self.strapa, is_bitcell=False)]
 
         dummy_row_opt1 = [geometry.instance("dummy_00_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='XY')] \
-                     + [geometry.instance("dummy_01_strap", mod=self.strap_p, is_bitcell=False, mirror='MX')]\
+                     + [geometry.instance("dummy_01_strap_p", mod=self.strap_p, is_bitcell=False, mirror='MX')]\
                      + [geometry.instance("dummy_02_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='MX')] \
-                     + [geometry.instance("dummy_03_strap_p", mod=self.strap, is_bitcell=False, mirror='MX')]
+                     + [geometry.instance("dummy_03_strap", mod=self.strap, is_bitcell=False, mirror='MX')]
   
         dummy_row_opt1a = [geometry.instance("dummy_10_opt1a", mod=self.dummy_cell2, is_bitcell=True, mirror='MY')] \
-                      + [geometry.instance("dummy_11_strapa", mod=self.strap_p, is_bitcell=False)] \
+                      + [geometry.instance("dummy_11_strap_p", mod=self.strap_p, is_bitcell=False)] \
                       + [geometry.instance("dummy_12_opt1a", mod=self.dummy_cell2, is_bitcell=True)] \
-                      + [geometry.instance("dummy_13_strapa_p", mod=self.strapa, is_bitcell=False)]
+                      + [geometry.instance("dummy_13_strapa", mod=self.strapa, is_bitcell=False)]
 
         bit_block = []
-        if self.column_offset % 2:
+        if self.column_offset % 2 == 0:
             replica_row_opt1 = replica_row_opt1[0:2]
             replica_row_opt1a = replica_row_opt1a[0:2]
             dummy_row_opt1 = dummy_row_opt1[0:2]
@@ -73,19 +73,19 @@ class sky130_replica_column(replica_column, sky130_bitcell_base_array):
             replica_row_opt1a = replica_row_opt1a[2:4]
             dummy_row_opt1 = dummy_row_opt1[2:4]
             dummy_row_opt1a = dummy_row_opt1a[2:4]
-
+        print(self.row_start)
         current_row = self.row_start
         for row in range(self.total_size):
             # Regular array cells are replica cells
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                if current_row % 2 == 0:
+                if current_row % 2 == 1:
                     pattern.append_row_to_block(bit_block, replica_row_opt1)
                 else:
                     pattern.append_row_to_block(bit_block, replica_row_opt1a)
             else:
-                if current_row % 2 == 0:
+                if current_row % 2 == 1:
                     pattern.append_row_to_block(bit_block, dummy_row_opt1)
                 else:
                     pattern.append_row_to_block(bit_block, dummy_row_opt1a)

@@ -27,5 +27,6 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
     bitcell (Bl/BR disconnected).
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
+        debug.check((cols+ sum(rbl)) % 2==0, "must have an even number of cols including replica cols; you can add a spare col to fix this")
         super().__init__(rows, cols, rbl, left_rbl, right_rbl, name)
 

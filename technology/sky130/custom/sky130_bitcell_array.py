@@ -20,8 +20,6 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
     Assumes bit-lines and word lines are connected by abutment.
     """
     def __init__(self, rows, cols, column_offset=0, name=""):
-        if rows % 2 == 0:
-            debug.error("Invalid number of rows {}. number of rows (excluding dummy rows) must be odd to connect to col ends".format(rows), -1)
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
 
     def add_modules(self):
@@ -53,7 +51,8 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         pattern.append_row_to_block(bit_block, bit_row_opt1)
         pattern.append_row_to_block(bit_block, bit_row_opt1a)
         for row in bit_block:
-            row = pattern.rotate_list(row, self.column_offset * 2) 
+            row = pattern.rotate_list(row, self.column_offset * 2)
+        print(bit_block)
         self.pattern = pattern(self, "bitcell_array", bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="bit_r{0}_c{1}")
         self.pattern.connect_array()
 

@@ -100,14 +100,13 @@ class replica_column(bitcell_base_array):
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
             else:
-                if current_row %2 == 0:
+                if current_row % 2 == 0:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
 
             current_row += 1
         if self.cell.mirror.y:
-            print(self.column_offset)
             for row in range(self.total_size):
                 if self.column_offset % 2 == 0:
                     if core_block[row][0].mirror=='MX':

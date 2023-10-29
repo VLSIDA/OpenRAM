@@ -193,7 +193,7 @@ class pattern():
         for row in range(self.row_max+1):
             x = 0
             for col in range(self.col_max+1):
-                inst = self.parent_design.all_inst[row, col]
+                inst = self.parent_design.all_inst[self.row_max - row, col]
                 self.place_inst(inst, (x, y))
                 x += inst.width
             y += inst.height

@@ -64,6 +64,9 @@ all: | configs
 example: $(EXAMPLE_STAMPS)
 .PHONY: example
 
+sp: sky130_sram_1kbyte_1rw_32x256_8 sky130_sram_2kbyte_1rw_32x512_8 sky130_sram_4kbyte_1rw_32x1024_8 sky130_sram_4kbyte_1rw_64x512_8
+.PHONY: sp
+
 sky130: $(SKY130_STAMPS)
 .PHONY: sky130
 

@@ -56,13 +56,13 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
             rowend = geometry.instance("row_cap_rowend", mod=self.rowend, is_bitcell=True, mirror="MX")
             rowenda = geometry.instance("row_cap_rowenda", mod=self.rowenda, is_bitcell=True)
 
-        pattern.append_row_to_block(bit_block, [bottom_corner])
-        for row in range(1,self.row_size-1):
-            if row % 2 == 0:
+        pattern.append_row_to_block(bit_block, [top_corner])
+        for row in range(1, self.row_size-1):
+            if row % 2 == 1:
                 pattern.append_row_to_block(bit_block, [rowend])
             else:
                 pattern.append_row_to_block(bit_block, [rowenda])
-        pattern.append_row_to_block(bit_block, [top_corner])
+        pattern.append_row_to_block(bit_block, [bottom_corner])
         self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
         self.pattern.connect_array_raw()
         

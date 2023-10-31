@@ -223,8 +223,7 @@ class ptx(design):
                             + 2 * self.active_contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
         # Active height is either the transistor width or the wide enough to enclose the active contact
-        self.active_height = max(self.tx_width, self.active_contact.width + 2 * self.active_enclose_contact)
-
+        self.active_height = max(self.tx_width, drc["minwidth_contact"] + 2 * self.active_enclose_contact)
         # Poly height must include poly extension over active
         self.poly_height = self.active_height + 2 * self.poly_extend_active
 

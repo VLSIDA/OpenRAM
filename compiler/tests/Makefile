@@ -64,7 +64,7 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
 	%/50_riscv_8k_1rw_func_test.ok \
-	freepdk45/04_rom_address_control_buf.ok \
+	freepdk45/04_rom_address_control_buf_test.ok \
 	freepdk45/05_rom_array_test.ok \
 	freepdk45/06_rom_decoder_test.ok \
 	freepdk45/07_rom_column_mux_array_test.ok \
@@ -73,6 +73,7 @@ BROKEN_STAMPS = \
 	freepdk45/10_rom_wordline_driver_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
 	freepdk45/19_rom_bank_test.ok \
+	scn4m_subm/04_rom_address_control_buf_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \

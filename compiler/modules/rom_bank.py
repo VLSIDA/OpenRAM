@@ -427,7 +427,11 @@ class rom_bank(design,rom_verilog):
         inv_out_pins = [self.bitline_inv_inst.get_pin("out_{}".format(bl)) for bl in range(self.cols)]
         mux_pins = [self.mux_inst.get_pin("bl_{}".format(bl)) for bl in range(self.cols)]
 
-        self.connect_col_pins(self.route_stack[2], array_out_pins + inv_in_pins, round=True, directions="nonpref")
+        if "li" in layer:
+            output_layer = "m1"
+        else:
+            output_layer = "m3"
+        self.connect_col_pins(output_layer, array_out_pins + inv_in_pins, round=True, directions="nonpref")
         self.connect_col_pins(self.interconnect_layer, inv_out_pins + mux_pins, round=True, directions="nonpref")
 
     def route_output_buffers(self):

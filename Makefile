@@ -19,6 +19,7 @@ SRAM_LIB_GIT_COMMIT ?= dd64256961317205343a3fd446908b42bafba388
 OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
 OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
 OPEN_PDKS_GIT_COMMIT ?= 1.0.311
+# Uncomment this for gf180 development
 # OPEN_PDKS_GIT_COMMIT ?= 1.0.395
 #OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A

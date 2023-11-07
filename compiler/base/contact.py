@@ -41,7 +41,7 @@ class contact(hierarchy_design):
             self.add_comment("implant type: {}\n".format(implant_type))
             self.add_comment("well_type: {}\n".format(well_type))
 
-        self.is_well_contact = implant_type == well_type
+        self.is_well_contact = (implant_type == well_type) and implant_type is not None
 
         # If we have a special tap layer, use it
         self.layer_stack = layer_stack

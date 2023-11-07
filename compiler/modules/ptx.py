@@ -130,7 +130,6 @@ class ptx(design):
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
 
-        # self.channel_length = drc("minlength_channel") if OPTS.tech_name != "gf180mcu" else drc("minlength_channel_" + self.tx_type)
         self.channel_length = drc("minlength_channel")
         if cell_props.ptx.model_is_subckt:
             # sky130
@@ -198,9 +197,6 @@ class ptx(design):
                                              layer_stack=self.active_stack,
                                              directions=("V", "V"),
                                              dimensions=(1, self.num_contacts))
-
-        if OPTS.tech_name == "gf180mcu":
-            self.poly_width = self.channel_length
 
         # This is the extra poly spacing due to the poly contact to poly contact pitch
         # of contacted gates

@@ -6,6 +6,7 @@
 # All rights reserved.
 #
 import os
+import sys
 
 
 # Attempt to add the source code to the PYTHONPATH here before running globals.init_openram()

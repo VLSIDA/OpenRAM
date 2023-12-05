@@ -5,7 +5,6 @@
 #
 from openram.base.pin_layout import pin_layout
 from openram.base.vector import vector
-from openram.tech import drc
 from .graph_utils import snap
 
 

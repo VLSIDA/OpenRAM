@@ -7,7 +7,6 @@ import heapq
 from copy import deepcopy
 from openram import debug
 from openram.base.vector import vector
-from openram.base.vector3d import vector3d
 from openram.tech import drc
 from .bbox import bbox
 from .bbox_node import bbox_node

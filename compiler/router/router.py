@@ -257,7 +257,6 @@ class router(router_tech):
         the layout.
         """
 
-        last_added = path[0]
         nodes = [path[0]]
         direction = path[0].get_direction(path[1])
         candidate = path[1]
@@ -269,7 +268,6 @@ class router(router_tech):
             if direction == current_direction:
                 candidate = node
             else:
-                last_added = candidate
                 nodes.append(candidate)
                 direction = current_direction
                 candidate = node

@@ -95,7 +95,7 @@ class router_tech:
         Check if the layers and purposes are the same.
         Ignore if purpose is a None.
         """
-        if lpp1[1] == None or lpp2[1] == None:
+        if lpp1[1] is None or lpp2[1] is None:
             return lpp1[0] == lpp2[0]
 
         return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
@@ -107,9 +107,9 @@ class router_tech:
             return 1
 
     def get_layer(self, zindex):
-        if zindex==1:
+        if zindex == 1:
             return self.vert_layer_name
-        elif zindex==0:
+        elif zindex == 0:
             return self.horiz_layer_name
         else:
             debug.error("Invalid zindex {}".format(zindex), -1)

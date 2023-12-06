@@ -187,7 +187,11 @@ class pinv_dec(pinv):
 
         # Pick point at right most of NMOS and connect over to PMOS
         nmos_drain_pos = nmos_drain_pin.lc()
-        right_side = vector(self.width, nmos_drain_pos.y)
+
+        if self.flip_io:
+            right_side = vector(self.pmos_inst.get_pin("D").cx(), nmos_drain_pos.y)
+        else:
+            right_side = vector(self.width, nmos_drain_pos.y)
 
         self.add_layout_pin_segment_center("Z",
                                            self.route_layer,

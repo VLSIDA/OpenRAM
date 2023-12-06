@@ -6,4 +6,5 @@
 
 export OPENRAM_HOME="`pwd`/compiler"
 export OPENRAM_TECH="`pwd`/technology"
+export PDK_ROOT="$HOME/gf/pdk"
 export PYTHONPATH=$OPENRAM_HOME

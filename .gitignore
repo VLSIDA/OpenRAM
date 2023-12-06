@@ -13,6 +13,7 @@ outputs
 technology/freepdk45/ncsu_basekit
 technology/sky130/*_lib
 technology/sky130/tech/.magicrc
+technology/gf180mcu/*_lib
 .idea
 compiler/tests/results/
 open_pdks/
@@ -21,6 +22,10 @@ openram.egg-info/
 miniconda/
 sky130A/
 sky130B/
+gf180mcuA/
+gf180mcuB/
+gf180mcuC/
+gf180mcuD/
 skywater-pdk/
 sky130_fd_bd_sram/
 docker/openram-ubuntu.log

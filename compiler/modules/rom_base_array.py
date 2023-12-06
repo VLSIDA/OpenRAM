@@ -10,7 +10,7 @@
 import math
 from .bitcell_base_array import bitcell_base_array
 from openram.base import vector
-from openram import OPTS, debug
+from openram import debug
 from openram.sram_factory import factory
 from openram.tech import drc, layer
 
@@ -22,7 +22,9 @@ class rom_base_array(bitcell_base_array):
 
         self.data = bitmap
         self.tap_direction = tap_direction
-        self.pitch_match = pitch_match
+        # This attribute is redundant with the tap direction
+        # TODO: consolidate pitch matching logic to just be based on tap direction
+        self.pitch_match = tap_direction == "row"
         self.bitline_layer = bitline_layer
         self.strap_spacing = strap_spacing
         self.wordline_layer = wordline_layer
@@ -88,6 +90,7 @@ class rom_base_array(bitcell_base_array):
         else:
             self.poly_tap = factory.create(module_type="rom_poly_tap", add_active_tap=True)
             self.end_poly_tap = factory.create(module_type="rom_poly_tap", place_poly=True)
+
         self.precharge_array = factory.create(module_type="rom_precharge_array",
                                               cols=self.column_size,
                                               strap_spacing=self.strap_spacing,
@@ -156,7 +159,7 @@ class rom_base_array(bitcell_base_array):
         name = "bit_r{0}_c{1}".format(row, col)
 
         # when col = 0, bl_h is connected to precharge, otherwise connect to previous bl connection
-        # when col = col_size - 1 connected column_sizeto gnd otherwise create new bl connection
+        # when col = col_size - 1 connected to gnd otherwise create new bl connection
         # debug.info(1, "Create cell: r{0}, c{1}".format(row, col))
         if row == self.row_size:
 
@@ -202,8 +205,8 @@ class rom_base_array(bitcell_base_array):
         pitch = drc["{0}_to_{0}".format(self.wordline_layer)]
         drain_l = self.cell_list[self.row_size][0].get_pin("D")
         drain_r = self.cell_list[self.row_size][self.column_size - 1].get_pin("D")
-        gnd_l = drain_l.center() + vector(-0.5 * self.route_width, pitch + via_width + self.route_pitch)
-        gnd_r = drain_r.center() + vector(0.5 * self.route_width, pitch + via_width + self.route_pitch)
+        gnd_l = drain_l.center() + vector(-0.5 * self.route_width, 0.5 * pitch + via_width + self.route_pitch)
+        gnd_r = drain_r.center() + vector(0.5 * self.route_width, 0.5 * pitch + via_width + self.route_pitch)
         self.add_layout_pin_rect_ends(name="gnd", layer=self.bitline_layer, start=gnd_l, end=gnd_r)
 
 
@@ -215,7 +218,7 @@ class rom_base_array(bitcell_base_array):
             self.remove_layout_pin("gnd")
 
             active_tap_pins = [self.active_tap_list[i].get_pin("active_tap") for i in range(len(self.active_tap_list))]
-            self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp")
+            self.connect_col_pins(layer=self.supply_stack[0], pins=active_tap_pins, name="gnd_tmp", directions="nonpref")
 
             gnd_y = gnd_l.y
             min_x = float('inf')
@@ -231,12 +234,10 @@ class rom_base_array(bitcell_base_array):
                 bottom = vector(pin.cx(), pin.by())
                 top = vector(pin.cx(), gnd_y)
                 self.add_via_stack_center(offset=top, from_layer=self.bitline_layer, to_layer=self.supply_stack[0])
-                self.add_via_center(offset=bottom, layers=self.supply_stack)
 
                 self.add_layout_pin_rect_ends(name="gnd", layer=self.supply_stack[0], start=bottom, end=top)
 
             self.remove_layout_pin("gnd_tmp")
-            self.add_segment_center(layer=self.supply_stack[2], start=vector(min_x, bottom.y), end=vector(max_x, bottom.y))
             self.add_segment_center(layer=self.bitline_layer, start=gnd_l, end=vector(min_x, gnd_l.y))
             self.add_segment_center(layer=self.bitline_layer, start=gnd_r, end=vector(max_x, gnd_r.y))
 
@@ -246,7 +247,6 @@ class rom_base_array(bitcell_base_array):
         self.cell_pos = {}
         self.strap_pos = {}
         pitch_offset = 0
-
         for row in range(self.row_size + 1):
 
             if row % self.tap_spacing == 0 and self.pitch_match and row != self.row_size:
@@ -310,7 +310,7 @@ class rom_base_array(bitcell_base_array):
                 directions="nonpref")
         self.add_via_stack_center(offset=tap_pos,
                         from_layer=self.active_stack[2],
-                        to_layer=self.wordline_layer)
+                        to_layer=self.wordline_layer, directions="nonpref")
         self.gnd_taps.append(self.add_layout_pin_rect_center("gnd_tap", self.wordline_layer, tap_pos))
 
     def place_precharge(self):
@@ -326,8 +326,11 @@ class rom_base_array(bitcell_base_array):
 
     def place_bitline_contacts(self):
 
+        if "li" in layer:
+            output_layer = "m1"
+        else:
+            output_layer = "m3"
         rail_y = self.precharge_inst.get_pins("vdd")[0].cy()
-
         for bl in range(self.column_size):
 
             src_pin = self.cell_list[0][bl].get_pin("S")
@@ -340,9 +343,12 @@ class rom_base_array(bitcell_base_array):
 
             output_pos = vector(corrected.x, rail_y)
 
-            self.add_segment_center(self.bitline_layer, corrected, output_pos)
+            if output_layer != self.bitline_layer:
+                self.add_via_stack_center(from_layer=self.bitline_layer, to_layer=output_layer, offset=corrected)
 
-            self.add_layout_pin_rect_center(self.bitline_names[0][bl], self.bitline_layer, output_pos )
+            self.add_segment_center(output_layer, corrected, output_pos)
+
+            self.add_layout_pin_rect_center(self.bitline_names[0][bl], output_layer, output_pos )
 
     def route_precharge(self):
         for bl in range(self.column_size):
@@ -375,3 +381,5 @@ class rom_base_array(bitcell_base_array):
         poly_tap_pins = [self.poly_tap_list[i].get_pin("poly_tap") for i in range(len(self.poly_tap_list))]
 
         self.connect_row_pins(layer=self.wordline_layer, pins=poly_tap_pins)
+        self.connect_row_pins(layer="poly", pins=poly_tap_pins)
+

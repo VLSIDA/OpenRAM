@@ -13,9 +13,9 @@ from openram.tech import drc
 
 class rom_poly_tap(design):
 
-    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_active_tap=False, place_poly=None):
+    def __init__(self, name="", cell_name=None, tx_type="nmos", strap_layer="m2", add_active_tap=False, place_poly=False):
         super().__init__(name, cell_name)
-        self.strap_layer=strap_layer
+        self.strap_layer = strap_layer
         self.tx_type = tx_type
         self.add_tap = add_active_tap
         if place_poly is None:
@@ -35,16 +35,17 @@ class rom_poly_tap(design):
     def create_layout(self):
 
         self.place_via()
-        self.add_boundary()
+
         if self.add_tap or self.place_poly:
             self.place_active_tap()
-            self.extend_poly()
+
+        self.add_boundary()
+
 
     def add_boundary(self):
         contact_width = self.poly_contact.width
         self.height = self.dummy.height
         self.width = contact_width + self.pitch_offset
-
         super().add_boundary()
 
     def place_via(self):
@@ -69,8 +70,8 @@ class rom_poly_tap(design):
         if self.tx_type == "pmos":
             y_offset = -self.height
         start = self.via.center() + vector(0, y_offset)
-
-        self.add_segment_center("poly", start, vector(self.via.cx() + self.pitch_offset, self.via.cy() + y_offset))
+        if self.place_poly:
+            self.add_segment_center("poly", start, vector(self.via.cx() + self.pitch_offset, self.via.cy() + y_offset))
         self.add_segment_center("poly", start, vector(0, self.via.cy() + y_offset))
 
     def place_active_tap(self):
@@ -80,12 +81,9 @@ class rom_poly_tap(design):
         tap_y = self.via.cy() + self.dummy.width * 0.5
         contact_pos = vector(tap_x, tap_y)
 
-        # edge of the next nmos
-        active_edge = self.dummy.width - self.dummy.cell_inst.height - self.poly_extend_active
 
-        # edge of the active contact
-        tap_edge = tap_x + 0.5 * self.active_contact.height
-        self.pitch_offset += (self.active_space * 2) - (tap_edge - active_edge) + self.contact_x_offset
+        # This pitch offset is used throughout the memory bank to make sure the pitch of the decoder outputs matches the pitch of the array inputs
+        self.pitch_offset = 0.5 * self.active_contact.width + self.active_space + 0.5 * self.contact_width + self.active_enclose_contact
 
         if self.tx_type == "nmos" and self.add_tap:
             self.add_via_center(layers=self.active_stack,

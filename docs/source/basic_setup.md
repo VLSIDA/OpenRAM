@@ -139,7 +139,9 @@ make install
 You can also run these from the package installation directory if you have the
 OpenRAM library.
 
+## GF180 Setup
 
+OpenRAM currently **does not** support gf180mcu for SRAM generation. However ROM generation for gf180mcu is supported as an experimental feature. To set up gf180mcu, first change ```OPEN_PDKS_GIT_COMMIT``` in ```OpenRAM/Makefile``` to version 1.0.395. Then follow the setup instructions for Sky130 but run ```make gf180-pdk``` instead of ```make pdk```.
 
 [SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
 [FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents

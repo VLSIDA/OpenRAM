@@ -25,8 +25,12 @@ class rom_precharge_cell(rom_base_cell):
         self.place_tap()
         self.extend_well()
 
+
     def add_modules(self):
-        width = pgate.nearest_bin("pmos", drc["minwidth_tx"])
+        if OPTS.tech_name == "sky130":
+            width = pgate.nearest_bin("pmos", drc["minwidth_tx"])
+        else:
+            width = drc("minwidth_tx")
         self.pmos  = factory.create(module_type="ptx",
                                     module_name="pre_pmos_mod",
                                     tx_type="pmos",
@@ -52,20 +56,18 @@ class rom_precharge_cell(rom_base_cell):
         self.poly_size = (self.cell_inst.width + self.active_space) - (self.cell_inst.height + 2 * self.poly_extend_active)
 
     def extend_well(self):
-
-        well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width
+        well_y = self.get_pin("vdd").cy() - 0.5 * self.tap.height - self.nwell_enclose_active
         well_ll = vector(0, well_y)
-        height = self.get_pin("D").cy() + 0.5 * self.nwell_width - well_y
+        height = self.get_pin("D").cy() + self.nwell_enclose_active - well_y
         self.add_rect("nwell", well_ll, self.width , height)
 
     def place_tap(self):
         source = self.cell_inst.get_pin("S")
-
-        tap_y = source.cy() - self.contact_width - 2 * self.active_enclose_contact - self.active_space
+        tap_y = source.cy() - self.contact_width - 5 * self.active_enclose_contact - self.active_space
         self.tap_offset = abs(tap_y)
         pos  = vector(source.cx(), tap_y )
 
-        self.add_via_center(layers=self.active_stack,
+        self.tap = self.add_via_center(layers=self.active_stack,
                 offset=pos,
                 implant_type="n",
                 well_type="n",
@@ -83,4 +85,7 @@ class rom_precharge_cell(rom_base_cell):
         self.remove_layout_pin("S")
 
     def place_bitline(self):
+        pass
+
+    def short_gate(self):
         pass

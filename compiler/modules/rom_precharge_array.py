@@ -17,30 +17,16 @@ class rom_precharge_array(design):
     """
     An array of inverters to create the inverted address lines for the rom decoder
     """
-    def __init__(self, cols, name="", bitline_layer=None, strap_spacing=None, strap_layer="m2", tap_direction="row"):
+    def __init__(self, cols, name="", bitline_layer="m2", strap_spacing=0, strap_layer="m3", tap_direction="row"):
         self.cols = cols
         self.strap_layer = strap_layer
+        self.bitline_layer = bitline_layer
         self.tap_direction = tap_direction
-
+        self.strap_spacing = strap_spacing
         if "li" in layer:
             self.supply_layer = "li"
         else:
             self.supply_layer = "m1"
-
-        if bitline_layer is not None:
-            self.bitline_layer = bitline_layer
-        else:
-            self.bitline_layer = self.supply_layer
-
-
-        if name=="":
-            name = "rom_inv_array_{0}".format(cols)
-
-        if strap_spacing != None:
-            self.strap_spacing = strap_spacing
-        else:
-            self.strap_spacing = 0
-
 
         if strap_spacing != 0:
             self.num_straps = ceil(self.cols / self.strap_spacing)
@@ -125,21 +111,19 @@ class rom_precharge_array(design):
         # columns are bit lines
         cell_x = 0
 
-
         for col in range(self.cols):
 
             if col % self.strap_spacing == 0:
-                self.tap_insts[strap_num].place(vector(cell_x, cell_y + self.poly_tap.height))
+                self.tap_insts[strap_num].place(vector(cell_x + self.poly_space, cell_y + self.poly_tap.height))
                 strap_num += 1
 
                 if self.tap_direction == "col":
                         cell_x += self.poly_tap.pitch_offset
 
             self.pmos_insts[col].place(vector(cell_x, cell_y))
-            self.add_label("debug", "li", vector(cell_x, cell_y))
             cell_x += self.pmos.width
 
-        self.tap_insts[strap_num].place(vector(cell_x, cell_y + self.poly_tap.height))
+        self.tap_insts[strap_num].place(vector(cell_x + self.poly_space, cell_y + self.poly_tap.height))
 
     def create_layout_pins(self):
         self.copy_layout_pin(self.tap_insts[0], "poly_tap", "gate")
@@ -151,7 +135,15 @@ class rom_precharge_array(design):
 
     def route_supply(self):
 
-        self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer)
+        # Hacky way to route all the vdd pins together and then create a layout pin on only one side.
+        self.route_horizontal_pins("vdd", insts=self.pmos_insts, layer=self.strap_layer, new_name="vdd_tmp")
+
+        tmp_vdd = self.get_pin("vdd_tmp")
+
+        self.add_layout_pin_rect_center("vdd", layer=self.strap_layer, offset=tmp_vdd.lc(), height=tmp_vdd.height())
+        self.add_segment_center(layer=self.strap_layer, start=tmp_vdd.lc(), end=tmp_vdd.rc(), width=tmp_vdd.height())
+        self.remove_layout_pin("vdd_tmp")
+
 
     def connect_taps(self):
         array_pins = [self.tap_insts[i].get_pin("poly_tap") for i in range(len(self.tap_insts))]
@@ -161,17 +153,24 @@ class rom_precharge_array(design):
         for tap in self.tap_insts:
             tap_pin = tap.get_pin("poly_tap")
             start = vector(tap_pin.cx(), tap_pin.by())
-            end = vector(start.x, tap.mod.get_pin("poly_tap").cy())
+            end = vector(start.x, self.pmos_insts[0].get_pin("G").cy())
             self.add_segment_center(layer="poly", start=start, end=end)
         offset_start = vector(end.x - self.poly_tap.width + self.poly_extend_active, end.y)
         offset_end = end + vector(0.5*self.poly_width, 0)
         self.add_segment_center(layer="poly", start=offset_start, end=offset_end)
+        self.add_segment_center(layer="poly", start=self.pmos_insts[-1].get_pin("G").center(), end=offset_end)
+
+
+        gate_y = self.pmos_insts[0].get_pin('G').cy()
+        start = vector( self.get_pin("gate").lx(), gate_y)
+        end = vector( self.get_pin("precharge_r").rx(), gate_y )
+
+        self.add_segment_center(layer="poly", start=start, end=end)
 
     def extend_well(self):
         self.well_offset = self.pmos.tap_offset
-        well_y = self.pmos_insts[0].get_pin("vdd").cy() - 0.5 * self.nwell_width
 
-        well_y = self.get_pin("vdd").cy() - 0.5 * self.nwell_width
+        well_y = self.get_pin("vdd").by() - self.nwell_enclose_active
         well_ll = vector(0, well_y)
 
         self.add_rect("nwell", well_ll, self.width , self.height - well_y)

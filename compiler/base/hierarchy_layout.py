@@ -22,7 +22,7 @@ from openram.sram_factory import factory
 from openram import OPTS
 from .vector import vector
 from .pin_layout import pin_layout
-from .utils import round_to_grid
+from .utils import round_to_grid, ceil
 from . import geometry
 
 try:
@@ -187,7 +187,7 @@ class layout():
                 pass
 
             # Skip computing the pitch for non-routing layers
-            if layer_id in ["active", "nwell"]:
+            if layer_id in ["active", "nwell", "pwell"]:
                 continue
 
             # Add the pitch
@@ -259,8 +259,7 @@ class layout():
                 contact_width = contact1.first_layer_width
         layer_space = getattr(layout, layer1 + "_space")
 
-        #print(layer_stack)
-        #print(contact1)
+
         pitch = contact_width + layer_space
 
         return round_to_grid(pitch)
@@ -838,8 +837,7 @@ class layout():
 
         from_id = tech_layer_indices[from_layer]
         to_id   = tech_layer_indices[to_layer]
-
-        layer_list = [x for x in tech_layer_indices.keys() if tech_layer_indices[x] >= from_id and tech_layer_indices[x] < to_id]
+        layer_list = [x for x in tech_layer_indices.keys() if tech_layer_indices[x] > from_id and tech_layer_indices[x] < to_id]
 
         return layer_list
 
@@ -944,14 +942,19 @@ class layout():
 
         return (bot_rect, top_rect)
 
-    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True):
+    def route_horizontal_pins(self, name, insts=None, layer=None, xside="cx", yside="cy", full_width=True, new_name=None):
         """
         Route together all of the pins of a given name that horizontally align.
         Uses local_insts if insts not specified.
         Uses center of pin by default, or top or botom if specified.
+        New top level pin can be renamed with new_name, otherwise the new pin will keep the same name as old pins
         TODO: Add equally spaced option for IR drop min, right now just 2
         """
 
+        if new_name is not None:
+            pin_name = new_name
+        else:
+            pin_name = name
 
         bins = {}
         if not insts:
@@ -1011,16 +1014,17 @@ class layout():
             left_pos = vector(left_x + 0.5 * via_width, y)
             right_pos = vector(right_x + 0.5 * via_width, y)
 
-#            self.add_layout_pin_rect_ends(name=name,
-#                                          layer=pin_layer,
-#                                          start=left_pos,
-#                                          end=right_pos,
-#                                          width=via_height)
-            self.add_layout_pin_segment_center(text=name,
-                                               layer=pin_layer,
-                                               start=left_pos,
-                                               end=right_pos,
-                                               width=via_height)
+            # self.add_layout_pin_rect_ends(name=name,
+            #                                 layer=pin_layer,
+            #                                 start=left_pos,
+            #                                 end=right_pos,
+            #                                 width=via_height)
+
+            self.add_layout_pin_segment_center(text=pin_name,
+                                            layer=pin_layer,
+                                            start=left_pos,
+                                            end=right_pos,
+                                            width=via_height)
 
     def add_layout_end_pin_segment_center(self, text, layer, start, end):
         """
@@ -1368,12 +1372,11 @@ class layout():
         min_width = drc("minwidth_{}".format(layer))
 
         if preferred_directions[layer] == "V":
-            new_height = max(min_area / width, min_width)
+            new_height = ceil(max(min_area / width, min_width))
             new_width = width
         else:
-            new_width = max(min_area / height, min_width)
+            new_width = ceil(max(min_area / height, min_width))
             new_height = height
-
         debug.check(min_area <= round_to_grid(new_height*new_width), "Min area violated.")
 
         self.add_rect_center(layer=layer,

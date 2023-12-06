@@ -16,22 +16,21 @@ from openram.sram_factory import factory
 from openram import OPTS
 
 
-class rom_array_test(openram_test):
+class precharge_test(openram_test):
 
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
 
-        debug.info(2, "Testing 4x4 array for rom cell")
+        # check precharge in single port
+        debug.info(2, "Testing rom address control buffer")
 
 
-        data = [[1, 0, 0, 1, 0, 0, 1, 1, 0], [0, 1, 0, 0, 1, 0, 1, 0, 0], [0, 0, 1, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0, 1], [0, 1, 0, 0, 1, 1, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 1, 0, 0, 0, 1, 0]]
-
-        a = factory.create(module_type="rom_base_array", cols=9, rows=8, bitmap=data, strap_spacing=4, pitch_match=True)
-        self.local_check(a)
-        a.sp_write(OPTS.openram_temp + 'simulation_file.sp')
+        tx = factory.create(module_type="rom_address_control_buf", module_name="address_control_cell", size=6)
+        self.local_check(tx)
 
         openram.end_openram()
+
 
 # run the test from the command line
 if __name__ == "__main__":

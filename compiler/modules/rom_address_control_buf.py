@@ -10,6 +10,8 @@ from openram.base import design
 from openram.sram_factory import factory
 from openram.base import vector
 from openram.tech import layer, drc
+from openram import OPTS
+
 
 
 
@@ -25,8 +27,11 @@ class rom_address_control_buf(design):
         self.size = size
         if "li" in layer:
             self.inv_layer = "li"
+            self.non_inverting_layer = "m2"
         else:
             self.inv_layer = "m1"
+            self.route_layer = "m2"
+            self.non_inverting_layer = "m3"
         super().__init__(name)
         self.create_netlist()
         self.create_layout()
@@ -47,11 +52,11 @@ class rom_address_control_buf(design):
 
     def create_modules(self):
 
-        self.inv = factory.create(module_type="pinv_dec", module_name="inv_array_mod", add_wells=False, size=self.size)
-        self.nand = factory.create(module_type="nand2_dec", height=self.inv.height)
         # For layout constants
         self.cell = factory.create(module_type="rom_base_cell")
+        self.nand = factory.create(module_type="nand2_dec")
 
+        self.inv = factory.create(module_type="pinv_dec", module_name="inv_array_mod", add_wells=False, size=self.size, height=self.nand.height)
     def add_pins(self):
 
         self.add_pin("A_in", "INPUT")
@@ -108,16 +113,23 @@ class rom_address_control_buf(design):
         Aint_in = self.addr_bar_nand.get_pin("B")
         A_in = self.inv_inst.get_pin("A")
 
-
+        vdd_rail = self.addr_nand.get_pin("vdd")
         # Find the center of the pmos poly/gate
         poly_right = clk1_pin.cx() + self.poly_enclose_contact + 0.5 * self.contact_width
 
         ppoly_center = poly_right - 0.7 * self.poly_width
+        poly_y = A_out.cy()
+
+        # Placement of gate contacts for NAND cell are different in gf180 which requires tech-specific placement.
+        if OPTS.tech_name == "gf180mcu":
+            poly_y = vdd_rail.cy() + 0.5 * drc("minwidth_tx") * 3 + self.poly_extend_active
+            ppoly_center = A_out.cx() + 0.5 * self.interconnect_width + 0.5 * self.poly_width
+
 
         contact_offset = vector(ppoly_center, clk2_pin.cy())
 
         # Route the two shared clk inputs together by connecting poly
-        self.add_segment_center("poly", contact_offset, vector(ppoly_center, A_out.cy()))
+        self.add_segment_center("poly", contact_offset, vector(ppoly_center, poly_y))
 
 
         clk_offset = vector(clk2_pin.cx(), self.addr_nand.uy())
@@ -129,18 +141,18 @@ class rom_address_control_buf(design):
         # Route first NAND output to second NAND input
         start = A_out.center()
         end = Aint_in.center()
-        self.add_path("m2", [start, end])
-        self.add_via_stack_center(Aint_in.center(), self.inv_layer, "m2")
-        self.add_via_stack_center(A_out.center(), self.inv_layer, "m2")
+        self.add_path(self.non_inverting_layer, [start, end])
+        self.add_via_stack_center(Aint_in.center(), self.inv_layer, self.non_inverting_layer)
+        self.add_via_stack_center(A_out.center(), self.inv_layer, self.non_inverting_layer)
 
         # Route first NAND to output pin
-        self.add_segment_center("m2", end, vector(end.x, self.addr_bar_nand.uy()))
-        self.add_layout_pin_rect_center("A_out", offset=vector(end.x, self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
+        self.add_segment_center(self.non_inverting_layer, end, vector(end.x, self.addr_bar_nand.uy()))
+        self.add_layout_pin_rect_center("A_out", offset=vector(end.x, self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer=self.non_inverting_layer)
 
         # Route second NAND to output pin
-        self.add_via_stack_center(Abar_out.center(), self.inv_layer, "m2")
-        self.add_segment_center("m2", Abar_out.center(), vector(Abar_out.cx(), self.addr_bar_nand.uy()))
-        self.add_layout_pin_rect_center("Abar_out", offset=vector(Abar_out.cx(), self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer="m2")
+        self.add_via_stack_center(Abar_out.center(), self.inv_layer, self.non_inverting_layer)
+        self.add_segment_center(self.non_inverting_layer, Abar_out.center(), vector(Abar_out.cx(), self.addr_bar_nand.uy()))
+        self.add_layout_pin_rect_center("Abar_out", offset=vector(Abar_out.cx(), self.addr_bar_nand.uy() - 0.5 * self.m2_width), layer=self.non_inverting_layer)
 
         # Route inverter output to NAND
         end = vector(Abar_int_out.cx(), Abar_in.cy() + 0.5 * self.interconnect_width)
@@ -166,7 +178,6 @@ class rom_address_control_buf(design):
         left_edge = self.inv_inst.get_pin("Z").cx() - 2 * self.contact_width - 2 * self.active_contact_to_gate - 4 * self.active_enclose_contact - self.poly_width - self.active_space
 
         contact_pos = vector(left_edge, source_pin.cy())
-
         self.add_via_center(layers=self.active_stack,
                             offset=contact_pos,
                             implant_type="n",

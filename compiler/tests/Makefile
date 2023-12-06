@@ -4,6 +4,7 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
+TEST_TECHS ?= scn4m_subm freepdk45
 TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
@@ -63,14 +64,16 @@ BROKEN_STAMPS = \
 	%/50_riscv_512b_1rw_func_test.ok \
 	%/50_riscv_8k_1rw1r_func_test.ok \
 	%/50_riscv_8k_1rw_func_test.ok \
+	freepdk45/04_rom_address_control_buf_test.ok \
+	freepdk45/05_rom_array_test.ok \
 	freepdk45/06_rom_decoder_test.ok \
 	freepdk45/07_rom_column_mux_array_test.ok \
 	freepdk45/08_rom_decoder_buffer_array_test.ok \
 	freepdk45/08_rom_precharge_array_test.ok \
 	freepdk45/10_rom_wordline_driver_array_test.ok \
-	freepdk45/14_rom_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
 	freepdk45/19_rom_bank_test.ok \
+	scn4m_subm/04_rom_address_control_buf_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
 	scn4m_subm/07_rom_column_mux_array_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \

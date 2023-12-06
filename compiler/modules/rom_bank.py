@@ -113,8 +113,7 @@ class rom_bank(design,rom_verilog):
         # FIXME: Somehow ROM layout behaves weird and doesn't add all the pin
         # shapes before routing supplies
         init_bbox = self.get_bbox()
-        if OPTS.route_supplies:
-            self.route_supplies(init_bbox)
+        self.route_supplies(init_bbox)
         # Route the pins to the perimeter
         if OPTS.perimeter_pins:
             # We now route the escape routes far enough out so that they will
@@ -297,7 +296,7 @@ class rom_bank(design,rom_verilog):
 
     def place_bitline_inverter(self):
         self.bitline_inv_inst.place(offset=[0,0], rotate=90)
-        inv_y_offset = self.array_inst.by() - self.bitline_inv_inst.width - 2 * self.m1_pitch
+        inv_y_offset = self.array_inst.by() - self.bitline_inv_inst.width - 1.5 * self.m1_pitch
 
         inv_x_offset = self.array_inst.get_pin("bl_0_0").cx() - self.bitline_inv_inst.get_pin("out_0").cx()
         self.inv_offset = vector(inv_x_offset, inv_y_offset)
@@ -368,8 +367,11 @@ class rom_bank(design,rom_verilog):
 
         # Route precharge to col decoder
         start = prechrg_control.center()
-        mid1 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, prechrg_control.cy())
-        mid2 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, col_decode_prechrg.cy())
+
+        path_x = self.control_inst.rx() + 1.2 * self.route_layer_pitch
+
+        mid1 = vector(path_x, prechrg_control.cy())
+        mid2 = vector(path_x, col_decode_prechrg.cy())
         end = col_decode_prechrg.center()
         self.add_path(self.route_stack[0], [start, mid1, mid2, end])
 
@@ -378,7 +380,7 @@ class rom_bank(design,rom_verilog):
                                   offset=end)
 
         start = mid1
-        mid1 = vector(self.control_inst.rx() + self.interconnect_layer_pitch, start.y)
+        mid1 = vector(path_x, start.y)
         mid2 = vector(mid1.x, col_decode_clk.cy())
         end = col_decode_clk.center()
         self.add_path(self.route_stack[0], [start, mid1, mid2, end])
@@ -387,6 +389,10 @@ class rom_bank(design,rom_verilog):
         # Route precharge to main array
         mid = vector(col_decode_prechrg.cx(), array_prechrg.cy() )
         self.add_path(self.route_stack[0], [array_prechrg.center(), mid, col_decode_prechrg.center()])
+
+        self.add_via_stack_center(from_layer=self.route_stack[0],
+                                  to_layer=array_prechrg.layer,
+                                  offset=array_prechrg.center())
 
 
     def route_clock(self):
@@ -409,6 +415,10 @@ class rom_bank(design,rom_verilog):
                                   to_layer=row_decode_clk.layer,
                                   offset=addr_control_clk)
 
+        self.add_via_stack_center(from_layer=self.route_stack[2],
+                                  to_layer=row_decode_prechrg.layer,
+                                  offset=row_decode_prechrg.center())
+
         self.add_segment_center(row_decode_clk.layer, addr_control_clk, row_decode_clk.rc())
 
     def route_array_outputs(self):
@@ -417,7 +427,11 @@ class rom_bank(design,rom_verilog):
         inv_out_pins = [self.bitline_inv_inst.get_pin("out_{}".format(bl)) for bl in range(self.cols)]
         mux_pins = [self.mux_inst.get_pin("bl_{}".format(bl)) for bl in range(self.cols)]
 
-        self.connect_col_pins(self.interconnect_layer, array_out_pins + inv_in_pins, round=True, directions="nonpref")
+        if "li" in layer:
+            output_layer = "m1"
+        else:
+            output_layer = "m3"
+        self.connect_col_pins(output_layer, array_out_pins + inv_in_pins, round=True, directions="nonpref")
         self.connect_col_pins(self.interconnect_layer, inv_out_pins + mux_pins, round=True, directions="nonpref")
 
     def route_output_buffers(self):
@@ -450,34 +464,36 @@ class rom_bank(design,rom_verilog):
             for inst in self.insts:
                 self.copy_power_pins(inst, pin_name)
 
-        from openram.router import supply_router as router
-        rtr = router(layers=self.supply_stack,
-                     design=self,
-                     bbox=bbox,
-                     pin_type=OPTS.supply_pin_type)
-        rtr.route()
+        if OPTS.route_supplies:
 
-        if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
-            # Find the lowest leftest pin for vdd and gnd
-            for pin_name in ["vdd", "gnd"]:
-                # Copy the pin shape(s) to rectangles
-                for pin in self.get_pins(pin_name):
-                    self.add_rect(layer=pin.layer,
-                                  offset=pin.ll(),
-                                  width=pin.width(),
-                                  height=pin.height())
+            from openram.router import supply_router as router
+            rtr = router(layers=self.supply_stack,
+                        design=self,
+                        bbox=bbox,
+                        pin_type=OPTS.supply_pin_type)
+            rtr.route()
 
-                # Remove the pin shape(s)
-                self.remove_layout_pin(pin_name)
+            if OPTS.supply_pin_type in ["left", "right", "top", "bottom", "ring"]:
+                # Find the lowest leftest pin for vdd and gnd
+                for pin_name in ["vdd", "gnd"]:
+                    # Copy the pin shape(s) to rectangles
+                    for pin in self.get_pins(pin_name):
+                        self.add_rect(layer=pin.layer,
+                                    offset=pin.ll(),
+                                    width=pin.width(),
+                                    height=pin.height())
 
-                # Get new pins
-                pins = rtr.get_new_pins(pin_name)
-                for pin in pins:
-                    self.add_layout_pin(pin_name,
-                                        pin.layer,
-                                        pin.ll(),
-                                        pin.width(),
-                                        pin.height())
+                    # Remove the pin shape(s)
+                    self.remove_layout_pin(pin_name)
+
+                    # Get new pins
+                    pins = rtr.get_new_pins(pin_name)
+                    for pin in pins:
+                        self.add_layout_pin(pin_name,
+                                            pin.layer,
+                                            pin.ll(),
+                                            pin.width(),
+                                            pin.height())
 
     def route_escape_pins(self, bbox):
         pins_to_route = []

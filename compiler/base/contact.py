@@ -10,7 +10,7 @@ from openram.tech import drc, layer, preferred_directions
 from openram.tech import layer as tech_layers
 from .hierarchy_design import hierarchy_design
 from .vector import vector
-
+from .utils import ceil
 
 class contact(hierarchy_design):
     """
@@ -41,7 +41,7 @@ class contact(hierarchy_design):
             self.add_comment("implant type: {}\n".format(implant_type))
             self.add_comment("well_type: {}\n".format(well_type))
 
-        self.is_well_contact = implant_type == well_type
+        self.is_well_contact = (implant_type == well_type) and implant_type is not None
 
         # If we have a special tap layer, use it
         self.layer_stack = layer_stack
@@ -125,6 +125,8 @@ class contact(hierarchy_design):
 
         self.first_layer_minwidth = drc("minwidth_{0}".format(self.first_layer_name))
         self.first_layer_enclosure = drc("{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name))
+        self.first_layer_minarea = drc("minarea_{0}".format(self.first_layer_name))
+
         # If there's a different rule for active
         # FIXME: Make this more elegant
         if self.is_well_contact and self.first_layer_name == "active" and "tap_extend_contact" in drc.keys():
@@ -135,7 +137,7 @@ class contact(hierarchy_design):
         self.second_layer_minwidth = drc("minwidth_{0}".format(self.second_layer_name))
         self.second_layer_enclosure = drc("{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name))
         self.second_layer_extend = drc("{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name))
-
+        self.second_layer_minarea = drc("minarea_{0}".format(self.second_layer_name))
         # In some technologies, the minimum width may be larger
         # than the overlap requirement around the via, so
         # check this for each dimension.
@@ -143,7 +145,7 @@ class contact(hierarchy_design):
             self.first_layer_horizontal_enclosure = max(self.first_layer_enclosure,
                                                         (self.first_layer_minwidth - self.contact_array_width) / 2)
             self.first_layer_vertical_enclosure = max(self.first_layer_extend,
-                                                      (self.first_layer_minwidth - self.contact_array_height) / 2)
+                                                     (self.first_layer_minwidth - self.contact_array_height) / 2)
         elif self.directions[0] == "H":
             self.first_layer_horizontal_enclosure = max(self.first_layer_extend,
                                                         (self.first_layer_minwidth - self.contact_array_width) / 2)
@@ -166,7 +168,7 @@ class contact(hierarchy_design):
             self.second_layer_vertical_enclosure = max(self.second_layer_enclosure,
                                                        (self.second_layer_minwidth - self.contact_array_width) / 2)
         else:
-            debug.error("Invalid secon layer direction: ".format(self.directions[1]), -1)
+            debug.error("Invalid second layer direction: ".format(self.directions[1]), -1)
 
     def create_contact_array(self):
         """ Create the contact array at the origin"""
@@ -221,6 +223,18 @@ class contact(hierarchy_design):
             first_layer_name = "tap"
         else:
             first_layer_name = self.first_layer_name
+
+        area = self.first_layer_width * self.first_layer_height
+        if area < self.first_layer_minarea and self.is_well_contact:
+            if self.directions[0] == "V":
+                area_extend = (self.first_layer_minarea / self.first_layer_width) - self.first_layer_height
+                self.first_layer_height = ceil(self.first_layer_height + area_extend)
+                self.first_layer_position = self.first_layer_position - vector(0, area_extend / 2)
+            elif self.directions[0] == "H":
+                area_extend = (self.first_layer_minarea / self.first_layer_height) - self.first_layer_width
+                self.first_layer_width = ceil(self.first_layer_height + area_extend)
+                self.first_layer_position = self.first_layer_position - vector(area_extend / 2, 0)
+
         self.add_rect(layer=first_layer_name,
                       offset=self.first_layer_position,
                       width=self.first_layer_width,
@@ -236,6 +250,7 @@ class contact(hierarchy_design):
                                       self.second_layer_minwidth)
         self.second_layer_height = max(self.contact_array_height + 2 * self.second_layer_vertical_enclosure,
                                        self.second_layer_minwidth)
+
         self.add_rect(layer=self.second_layer_name,
                       offset=self.second_layer_position,
                       width=self.second_layer_width,

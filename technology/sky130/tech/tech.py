@@ -114,15 +114,15 @@ cell_properties.bitcell_2port.vdd_dir = "H"
 cell_properties.bitcell_2port.gnd_layer = "m2"
 cell_properties.bitcell_2port.gnd_dir = "H"
 
-cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'vdd', 'gnd', 'br', 'gate', 'vpb', 'vnb'],
-                                             ['INPUT', 'POWER', 'GROUND', 'INPUT', 'INPUT', 'BIAS', 'BIAS'],
+cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'br', 'vdd', 'gnd', 'vpb', 'vnb', 'gate'],
+                                             ['INPUT', 'INPUT','POWER', 'GROUND',  'BIAS', 'BIAS', 'INPUT'],
                                              {'bl': 'bl',
                                               'br': 'br',
                                               'vdd': 'vdd',
                                               'gnd': 'gnd',
-                                              'gate': 'gate',
                                               'vnb': 'vnb',
-                                              'vpb': 'vpb'})
+                                              'vpb': 'vpb',
+                                              'gate': 'gate'})
 cell_properties.col_cap_1port_bitcell.boundary_layer = "mem"
 
 cell_properties.col_cap_1port_strap_power = d.cell(['vdd', 'vpb', 'vnb'],
@@ -415,8 +415,8 @@ label_purpose = 5
 # pin_read purposes
 special_purposes = {layer["nwell"][0]: [layer["nwell"][1], 5, 59, 16]}
 #layer_override = {"VNB\x00": ["pwell",122]}
-layer_override = {"VNB": layer["pwellp"]}
-layer_override_name = {"VNB": "pwellp"}
+layer_override = {"vnb": layer["pwellp"], "VNB": layer["pwellp"]}
+layer_override_name = {"vnb": "pwellp", "VNB": "pwellp"}
 layer_override_purpose = {122: (64, 59)}
 # Layer names for external PDKs
 layer_names = {}

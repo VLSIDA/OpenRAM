@@ -129,12 +129,14 @@ class ptx(design):
         # be decided in the layout later.
         area_sd = 2.5 * self.poly_width * self.tx_width
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
+
+        self.channel_length = drc("minlength_channel")
         if cell_props.ptx.model_is_subckt:
             # sky130
             main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
                                                                     self.mults,
                                                                     self.tx_width,
-                                                                    drc("minwidth_poly"))
+                                                                    self.channel_length)
             # Perimeters are in microns
             # Area is in u since it is microns square
             area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
@@ -143,7 +145,7 @@ class ptx(design):
             main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
                                                                       self.mults,
                                                                       self.tx_width,
-                                                                      drc("minwidth_poly"))
+                                                                      self.channel_length)
             area_str = "pd={0:.2f}u ps={0:.2f}u as={1:.2f}p ad={1:.2f}p".format(perimeter_sd,
                                                                                 area_sd)
         self.spice_device = main_str + area_str
@@ -160,17 +162,17 @@ class ptx(design):
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2} l={3} mult=1".format("nshort" if self.tx_type == "nmos" else "pshort",
                                                                                  self.mults,
                                                                                  self.tx_width,
-                                                                                 drc("minwidth_poly"))
+                                                                                 self.channel_length)
         elif cell_props.ptx.model_is_subckt:
             self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
                                                                             self.mults,
                                                                             self.tx_width,
-                                                                            drc("minwidth_poly"))
+                                                                            self.channel_length)
         else:
             self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
                                                                              self.mults,
                                                                              self.tx_width,
-                                                                             drc("minwidth_poly"))
+                                                                             self.channel_length)
 
     def setup_layout_constants(self):
         """
@@ -216,11 +218,11 @@ class ptx(design):
         self.active_width = 2 * self.end_to_contact + self.active_contact.width \
                             + 2 * self.active_contact_to_gate + self.poly_width + (self.mults - 1) * self.poly_pitch
 
-        # Active height is just the transistor width
+        # Active height is either the transistor width or the wide enough to enclose the active contact
         self.active_height = self.tx_width
-
         # Poly height must include poly extension over active
-        self.poly_height = self.tx_width + 2 * self.poly_extend_active
+        self.poly_height = self.active_height + 2 * self.poly_extend_active
+
 
         self.active_offset = vector([self.well_enclose_active] * 2)
 

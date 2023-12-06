@@ -9,15 +9,19 @@ from math import ceil, log
 from openram.sram_factory import factory
 from openram.base import vector, design
 from openram import OPTS
-from openram.tech import drc
-
+from openram.tech import drc, layer
 class rom_decoder(design):
     def __init__(self, num_outputs, fanout, strap_spacing, name="", route_layer="m1", output_layer="m1", invert_outputs=False):
 
         # word lines in the base array become the address lines/cols in the decoder
         # bit lines in the base array become the word lines/rows in the decoder
         # array gets rotated 90deg so rows/cols switch
-
+        if "li" in layer:
+            self.output_layer = "m1"
+            self.inv_route_layer = "m1"
+        else:
+            self.output_layer = "m1"
+            self.inv_route_layer = "m3"
         self.strap_spacing=strap_spacing
         self.num_outputs = num_outputs
         self.num_inputs = ceil(log(num_outputs, 2))
@@ -28,8 +32,6 @@ class rom_decoder(design):
         b = factory.create(module_type=OPTS.bitcell)
         self.cell_height = b.height
         self.route_layer = route_layer
-        self.output_layer = output_layer
-        self.inv_route_layer = "m2"
         self.fanout=fanout
         self.invert_outputs=invert_outputs
         self.create_netlist()
@@ -203,13 +205,12 @@ class rom_decoder(design):
         for j in range(self.num_outputs):
 
             self.copy_layout_pin(self.wordline_buf_inst, "out_{}".format(j), "wl_{}".format(j))
-            offset = self.wordline_buf_inst.get_pin("out_{}".format(j)).center()
 
         array_pins = [self.array_inst.get_pin("bl_0_{}".format(bl)) for bl in range(self.num_outputs)]
         driver_pins = [self.wordline_buf_inst.get_pin("in_{}".format(bl)) for bl in range(self.num_outputs)]
 
         route_pins = array_pins + driver_pins
-        self.connect_row_pins(self.output_layer, route_pins, round=True)
+        self.connect_row_pins(self.inv_route_layer, route_pins, round=True)
 
     def connect_inputs(self):
 
@@ -230,6 +231,23 @@ class rom_decoder(design):
 
             self.add_path(self.inv_route_layer, [addr_out_pin.center(), addr_middle, addr_pin.center()])
             self.add_path(self.inv_route_layer, [addr_bar_out_pin.center(), addr_bar_middle, addr_bar_pin.center()])
+
+            self.add_via_stack_center(offset=addr_pin.center(),
+                                      from_layer=addr_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_bar_pin.center(),
+                                      from_layer=addr_bar_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_out_pin.center(),
+                                      from_layer=addr_out_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
+            self.add_via_stack_center(offset=addr_bar_out_pin.center(),
+                                      from_layer=addr_bar_out_pin.layer,
+                                      to_layer=self.inv_route_layer)
+
             self.copy_layout_pin(self.buf_inst, "A{}_in".format(i), "A{}".format(i))
 
     def route_supplies(self):

@@ -88,8 +88,6 @@ class rom_wordline_driver_array(design):
         Add a pin for each row of vdd/gnd which
         are must-connects next level up.
         """
-        # self.route_vertical_pins("vdd", self.wld_inst, xside="cx", layer=self.supply_layer)
-        # self.route_vertical_pins("gnd", self.wld_inst, xside="cx", layer=self.supply_layer)
         if not self.invert_outputs:
             vdd_pins = [pin for inst in self.wld_inst for pin in inst.get_pins("vdd")]
             gnd_pins = [pin for inst in self.wld_inst for pin in inst.get_pins("gnd")]
@@ -110,13 +108,13 @@ class rom_wordline_driver_array(design):
 
         # Place the top level supply pins on the edge of the module
         for pin in self.get_pins("gnd_tmp"):
-            bottom = vector(pin.cx(), pin.by() - 0.5 * supply_width)
-            top = vector(pin.cx(), pin.uy() + 0.5 * supply_width)
+            bottom = vector(pin.cx(), pin.by())
+            top = vector(pin.cx(), pin.uy())
             self.add_layout_pin_rect_ends(layer=self.supply_layer, start=bottom, end=top, name="gnd")
 
         for pin in self.get_pins("vdd_tmp"):
-            bottom = vector(pin.cx(), pin.by() - 0.5 * supply_width)
-            top = vector(pin.cx(), pin.uy() + 0.5 * supply_width)
+            bottom = vector(pin.cx(), pin.by())
+            top = vector(pin.cx(), pin.uy())
             self.add_layout_pin_rect_ends(layer=self.supply_layer, start=bottom, end=top, name="vdd")
 
 
@@ -214,7 +212,8 @@ class rom_wordline_driver_array(design):
                     directions="nonpref")
         self.add_via_stack_center(offset=offset,
                                 from_layer=self.active_stack[2],
-                                to_layer=self.supply_layer)
+                                to_layer=self.supply_layer,
+                                directions="nonpref")
         if well_type == "p":
             pin = "gnd_tap"
             self.gnd_taps.append(self.add_layout_pin_rect_center(text=pin, layer=self.supply_layer, offset=offset))

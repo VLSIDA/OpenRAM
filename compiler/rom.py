@@ -59,6 +59,9 @@ class rom():
     def sp_write(self, name, lvs=False, trim=False):
         self.r.sp_write(name, lvs, trim)
 
+    def lef_write(self, name):
+        self.r.lef_write(name)
+
     def gds_write(self, name):
         self.r.gds_write(name)
 
@@ -105,6 +108,13 @@ class rom():
                                         final_verification=True,
                                         output_path=OPTS.output_path)
             print_time("GDS", datetime.datetime.now(), start_time)
+
+            # Create a LEF physical model
+            start_time = datetime.datetime.now()
+            lefname = OPTS.output_path + self.r.name + ".lef"
+            debug.print_raw("LEF: Writing to {0}".format(lefname))
+            self.lef_write(lefname)
+            print_time("LEF", datetime.datetime.now(), start_time)
 
         # Save the LVS file
         start_time = datetime.datetime.now()

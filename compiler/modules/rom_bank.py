@@ -11,13 +11,14 @@ from math import ceil, log
 from openram.base import vector
 from openram.base import design
 from openram.base import rom_verilog
+from openram.base import lef
 from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import spice
 from openram.tech import drc, layer, parameter
 
 
-class rom_bank(design,rom_verilog):
+class rom_bank(design, rom_verilog, lef):
 
     """
     Rom data bank with row and column decoder + control logic
@@ -27,6 +28,7 @@ class rom_bank(design,rom_verilog):
 
     def __init__(self, name, rom_config):
         super().__init__(name=name)
+        lef.__init__(self, ["m1", "m2", "m3", "m4"])
         self.rom_config = rom_config
         rom_config.set_local_config(self)
 

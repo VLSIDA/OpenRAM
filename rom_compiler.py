@@ -51,7 +51,7 @@ openram.print_time("Start", start_time)
 output_extensions = [ "sp", "v"]
 # Only output lef/gds if back-end
 if not OPTS.netlist_only:
-    output_extensions.extend(["gds"])
+    output_extensions.extend(["lef", "gds"])
 
 output_files = ["{0}{1}.{2}".format(OPTS.output_path,
                                     OPTS.output_name, x)

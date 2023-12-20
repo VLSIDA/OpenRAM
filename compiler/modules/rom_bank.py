@@ -13,6 +13,7 @@ from openram.base import design
 from openram.base import rom_verilog
 from openram import OPTS, print_time
 from openram.sram_factory import factory
+from openram.tech import spice
 from openram.tech import drc, layer, parameter
 
 
@@ -130,20 +131,35 @@ class rom_bank(design,rom_verilog):
 
     def add_pins(self):
 
-        self.add_pin("clk", "INPUT")
-        self.add_pin("cs", "INPUT")
+        for port in self.all_ports:
+            self.add_pin("clk{}".format(port), "INPUT")
+        for port in self.all_ports:
+            self.add_pin("cs{}".format(port), "INPUT")
 
-        for i in range(self.row_bits + self.col_bits):
-            self.add_pin("addr[{}]".format(i), "INPUT")
+        for port in self.all_ports:
+            for i in range(self.row_bits + self.col_bits):
+                self.add_pin("addr{0}[{1}]".format(port, i), "INPUT")
 
-        out_pins = []
-        for j in range(self.word_size):
-            out_pins.append("dout[{}]".format(j))
-        self.add_pin_list(out_pins, "OUTPUT")
+        # out_pins = []
+        for port in self.read_ports:
+            for bit in range(self.word_size):
+                self.add_pin("dout{0}[{1}]".format(port, bit), "OUTPUT")
 
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
+        # Standard supply and ground names
+        try:
+            self.vdd_name = spice["power"]
+        except KeyError:
+            self.vdd_name = "vdd"
+        try:
+            self.gnd_name = spice["ground"]
+        except KeyError:
+            self.gnd_name = "gnd"
 
+        self.add_pin(self.vdd_name, "POWER")
+        self.add_pin(self.gnd_name, "GROUND")
+
+        self.ext_supplies = [self.vdd_name, self.gnd_name]
+        self.ext_supply = {"vdd" : self.vdd_name, "gnd" : self.gnd_name}
 
     def add_modules(self):
 
@@ -219,22 +235,22 @@ class rom_bank(design,rom_verilog):
 
 
     def create_instances(self):
-        gnd = ["gnd"]
-        vdd = ["vdd"]
+        gnd = ["vssd1"]
+        vdd = ["vccd1"]
         prechrg = ["precharge"]
         clk = ["clk_int"]
 
         bitlines = ["bl_{}".format(bl) for bl in range(self.cols)]
         wordlines = ["wl_{}".format(wl) for wl in range(self.rows)]
 
-        addr_msb = ["addr[{}]".format(addr + self.col_bits) for addr in range(self.row_bits)]
-        addr_lsb = ["addr[{}]".format(addr) for addr in range(self.col_bits)]
+        addr_msb = ["addr0[{}]".format(addr + self.col_bits) for addr in range(self.row_bits)]
+        addr_lsb = ["addr0[{}]".format(addr) for addr in range(self.col_bits)]
 
         select_lines = ["word_sel_{}".format(word) for word in range(self.words_per_row)]
 
         bitline_bar = ["bl_b_{}".format(bl) for bl in range(self.cols)]
         pre_buf_outputs = ["rom_out_prebuf_{}".format(bit) for bit in range(self.word_size)]
-        outputs = ["dout[{}]".format(bl) for bl in range(self.word_size)]
+        outputs = ["dout0[{}]".format(bl) for bl in range(self.word_size)]
 
 
         array_pins = bitlines + wordlines + prechrg + vdd + gnd
@@ -255,7 +271,7 @@ class rom_bank(design,rom_verilog):
         self.connect_inst(row_decode_pins)
 
         self.control_inst = self.add_inst(name="rom_control", mod=self.control_logic)
-        self.connect_inst(["clk", "cs", "precharge", "clk_int", "vdd", "gnd"])
+        self.connect_inst(["clk0", "cs0", "precharge", "clk_int"] + vdd + gnd)
 
         self.mux_inst = self.add_inst(name="rom_column_mux", mod=self.column_mux)
         self.connect_inst(col_mux_pins)
@@ -443,18 +459,18 @@ class rom_bank(design,rom_verilog):
         self.create_horizontal_channel_route(netlist=route_nets, offset=channel_ll, layer_stack=self.m1_stack)
 
     def place_top_level_pins(self):
-        self.add_io_pin(self.control_inst, "CS", "cs")
-        self.add_io_pin(self.control_inst, "clk_in", "clk")
+        self.add_io_pin(self.control_inst, "CS", "cs0")
+        self.add_io_pin(self.control_inst, "clk_in", "clk0")
 
         for i in range(self.word_size):
-            self.add_io_pin(self.output_inv_inst, "out_{}".format(i), "dout[{}]".format(i), directions="nonpref")
+            self.add_io_pin(self.output_inv_inst, "out_{}".format(i), "dout0[{}]".format(i), directions="nonpref")
 
         for lsb in range(self.col_bits):
-            name = "addr[{}]".format(lsb)
+            name = "addr0[{}]".format(lsb)
             self.add_io_pin(self.col_decode_inst, "A{}".format(lsb), name)
 
         for msb in range(self.col_bits, self.row_bits + self.col_bits):
-            name = "addr[{}]".format(msb)
+            name = "addr0[{}]".format(msb)
             pin_num = msb - self.col_bits
             self.add_io_pin(self.decode_inst, "A{}".format(pin_num), name)
 
@@ -462,7 +478,7 @@ class rom_bank(design,rom_verilog):
 
         for pin_name in ["vdd", "gnd"]:
             for inst in self.insts:
-                self.copy_power_pins(inst, pin_name)
+                self.copy_power_pins(inst, pin_name, self.ext_supply[pin_name])
 
         if OPTS.route_supplies:
 
@@ -489,7 +505,7 @@ class rom_bank(design,rom_verilog):
                     # Get new pins
                     pins = rtr.get_new_pins(pin_name)
                     for pin in pins:
-                        self.add_layout_pin(pin_name,
+                        self.add_layout_pin(self.ext_supply[pin_name],
                                             pin.layer,
                                             pin.ll(),
                                             pin.width(),
@@ -499,16 +515,16 @@ class rom_bank(design,rom_verilog):
         pins_to_route = []
 
         for bit in range(self.col_bits):
-            pins_to_route.append("addr[{0}]".format(bit))
+            pins_to_route.append("addr0[{0}]".format(bit))
 
         for bit in range(self.row_bits):
-            pins_to_route.append("addr[{0}]".format(bit + self.col_bits))
+            pins_to_route.append("addr0[{0}]".format(bit + self.col_bits))
 
         for bit in range(self.word_size):
-            pins_to_route.append("dout[{0}]".format(bit))
+            pins_to_route.append("dout0[{0}]".format(bit))
 
-        pins_to_route.append("clk")
-        pins_to_route.append("cs")
+        pins_to_route.append("clk0")
+        pins_to_route.append("cs0")
         from openram.router import signal_escape_router as router
         rtr = router(layers=self.m3_stack,
                      bbox=bbox,

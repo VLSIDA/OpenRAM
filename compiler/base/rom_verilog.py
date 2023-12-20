@@ -51,7 +51,7 @@ class rom_verilog:
         for port in self.all_ports:
             if port in self.read_ports:
                 self.vf.write("// Port {0}: R\n".format(port))
-                self.vf.write("    clk{0},csb{0},addr{0},dout{0}".format(port))
+                self.vf.write("    clk{0},cs{0},addr{0},dout{0}".format(port))
             # Continue for every port on a new line
             if port != self.all_ports[-1]:
                 self.vf.write(",\n")
@@ -111,7 +111,7 @@ class rom_verilog:
         """
         Create the input regs for the given port.
         """
-        self.vf.write("  reg  csb{0}_reg;\n".format(port))
+        self.vf.write("  reg  cs{0}_reg;\n".format(port))
         self.vf.write("  reg [ADDR_WIDTH-1:0]  addr{0}_reg;\n".format(port))
         if port in self.read_ports:
             self.vf.write("  reg [DATA_WIDTH-1:0]  dout{0};\n".format(port))
@@ -125,14 +125,14 @@ class rom_verilog:
         self.vf.write("  // All inputs are registers\n")
         self.vf.write("  always @(posedge clk{0})\n".format(port))
         self.vf.write("  begin\n")
-        self.vf.write("    csb{0}_reg = csb{0};\n".format(port))
+        self.vf.write("    cs{0}_reg = cs{0};\n".format(port))
         self.vf.write("    addr{0}_reg = addr{0};\n".format(port))
         if port in self.read_ports:
             self.add_write_read_checks(port)
 
         if port in self.read_ports:
             self.vf.write("    #(T_HOLD) dout{0} = {1}'bx;\n".format(port, self.word_size))
-            self.vf.write("    if ( !csb{0}_reg && VERBOSE ) \n".format(port))
+            self.vf.write("    if ( cs{0}_reg && VERBOSE ) \n".format(port))
             self.vf.write("      $display($time,\" Reading %m addr{0}=%b dout{0}=%b\",addr{0}_reg,mem[addr{0}_reg]);\n".format(port))
 
         self.vf.write("  end\n\n")
@@ -142,7 +142,7 @@ class rom_verilog:
         Add the module input and output declaration for a port.
         """
         self.vf.write("  input  clk{0}; // clock\n".format(port))
-        self.vf.write("  input   csb{0}; // active low chip select\n".format(port))
+        self.vf.write("  input   cs{0}; // active high chip select\n".format(port))
 
         self.vf.write("  input [ADDR_WIDTH-1:0]  addr{0};\n".format(port))
         if port in self.read_ports:
@@ -159,10 +159,10 @@ class rom_verilog:
         """
         self.vf.write("\n")
         self.vf.write("  // Memory Read Block Port {0}\n".format(port))
-        self.vf.write("  // Read Operation : When web{0} = 1, csb{0} = 0\n".format(port))
+        self.vf.write("  // Read Operation : When cs{0} = 1\n".format(port))
         self.vf.write("  always @ (negedge clk{0})\n".format(port))
         self.vf.write("  begin : MEM_READ{0}\n".format(port))
-        self.vf.write("    if (!csb{0}_reg)\n".format(port))
+        self.vf.write("    if (cs{0}_reg)\n".format(port))
         self.vf.write("       dout{0} <= #(DELAY) mem[addr{0}_reg];\n".format(port))
         self.vf.write("  end\n")
 

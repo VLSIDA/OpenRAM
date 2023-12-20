@@ -10,8 +10,8 @@ TOOLS+="klayout=0.28.3 "
 TOOLS+="magic=8.3.363 "
 TOOLS+="netgen=1.5.253 "
 TOOLS+="ngspice=26 "
-TOOLS+="trilinos=12.12.1 "
-TOOLS+="xyce=7.4"
+TOOLS+="trilinos=12.12.1=1 "
+TOOLS+="xyce=7.4=3"
 
 # Install miniconda if not already installed
 if [[ ! -d "${CONDA_HOME}/bin" ]]

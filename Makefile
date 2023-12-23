@@ -15,15 +15,14 @@ SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 SRAM_LIB_GIT_COMMIT ?= dd64256961317205343a3fd446908b42bafba388
 
-# Open PDKs
-OPEN_PDKS_DIR ?= $(PDK_ROOT)/open_pdks
-OPEN_PDKS_GIT_REPO ?= https://github.com/RTimothyEdwards/open_pdks.git
-OPEN_PDKS_GIT_COMMIT ?= 1.0.311
-# Uncomment this for gf180 development
-# OPEN_PDKS_GIT_COMMIT ?= 1.0.395
-#OPEN_PDKS_GIT_COMMIT ?= 7ea416610339d3c29af9d0d748ceadd3fd368608
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
-GF180_PDK ?= $(PDK_ROOT)/gf180
+GF180_PDK ?= $(PDK_ROOT)/gf180mcuD
+
+# Volare SKY130 PDK
+SKY130_VOLARE = e8294524e5f67c533c5d0c3afa0bcc5b2a5fa066 # 2022.07.29
+
+# Volare GF180 PDK
+GF180_VOLARE = cd1748bb197f9b7af62a54507de6624e30363943 # 2023.12.04
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
@@ -55,12 +54,11 @@ MAGICRC_FILE := $(SKY130_PDK)/libs.tech/magic/sky130A.magicrc
 
 ALL_FILES := $(ALL_SPICE_FILES) $(GDS_FILES) $(MAG_FILES) $(MAGLEF_FILES)
 
-
 INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_lib maglef_lib
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
-# If conda is installed, we will use Magic from there
+# If conda is installed, we will use volare from there
 CONDA_DIR := $(wildcard $(TOP_DIR)/miniconda)
 
 check-pdk-root:
@@ -84,55 +82,6 @@ $(GF180_PDKS_DIR): check-pdk-root
 		git checkout -qf $(GF180_PDKS_GIT_COMMIT) && \
 		git submodule update --init libraries/gf180mcu_fd_pr/latest libraries/gf180mcu_fd_sc_mcu7t5v0/latest libraries/gf180mcu_fd_sc_mcu9t5v0/latest
 
-
-$(OPEN_PDKS_DIR): $(SKY130_PDKS_DIR) $(GF180_PDKS_DIR)
-	@echo "Cloning open_pdks..."
-	@[ -d $(OPEN_PDKS_DIR) ] || \
-		git clone $(OPEN_PDKS_GIT_REPO) $(OPEN_PDKS_DIR)
-	@git -C $(OPEN_PDKS_DIR) checkout $(OPEN_PDKS_GIT_COMMIT)
-
-$(SKY130_PDK): $(OPEN_PDKS_DIR) $(SKY130_PDKS_DIR)
-	@echo "Installing open_pdks..."
-ifeq ($(CONDA_DIR),"")
-	@cd $(PDK_ROOT)/open_pdks && \
-		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
-		cd sky130 && \
-		make veryclean && \
-		make && \
-		make SHARED_PDKS_PATH=$(PDK_ROOT) install
-else
-	@source $(TOP_DIR)/miniconda/bin/activate && \
-		cd $(PDK_ROOT)/open_pdks && \
-		./configure --enable-sky130-pdk=$(PDK_ROOT)/skywater-pdk/libraries --with-sky130-local-path=$(PDK_ROOT) && \
-		cd sky130 && \
-		make veryclean && \
-		make && \
-		make SHARED_PDKS_PATH=$(PDK_ROOT) install && \
-		conda deactivate
-endif
-
-$(GF180_PDK): $(OPEN_PDKS_DIR) $(GF180_PDKS_DIR)
-	@echo "Installing open_pdks..."
-ifeq ($(CONDA_DIR),"")
-	@cd $(PDK_ROOT)/open_pdks && \
-		./configure --enable-gf180mcu-pdk=$(PDK_ROOT)/gf180mcu-pdk/libraries --enable-primitive-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_pr/latest \
-		--enable-sc-7t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu7t5v0/latest --enable-sc-9t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu9t5v0/latest && \
-		cd gf180mcu && \
-		make veryclean && \
-		make && \
-		make SHARED_PDKS_PATH=$(PDK_ROOT) install
-else
-	@source $(TOP_DIR)/miniconda/bin/activate && \
-		cd $(PDK_ROOT)/open_pdks && \
-		./configure --enable-gf180mcu-pdk=$(PDK_ROOT)/gf180mcu-pdk/libraries --enable-primitive-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_pr/latest \
-		--enable-sc-7t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu7t5v0/latest --enable-sc-9t5v0-gf180mcu=$(GF180_PDKS_DIR)/libraries/gf180mcu_fd_sc_mcu9t5v0/latest && \
-		cd gf180mcu && \
-		make veryclean && \
-		make && \
-		make SHARED_PDKS_PATH=$(PDK_ROOT) install && \
-		conda deactivate
-endif
-
 $(SRAM_LIB_DIR): check-pdk-root
 	@echo "Cloning SRAM library..."
 	@[ -d $(SRAM_LIB_DIR) ] || \
@@ -140,25 +89,39 @@ $(SRAM_LIB_DIR): check-pdk-root
 	@git -C $(SRAM_LIB_DIR) fetch
 	@git -C $(SRAM_LIB_DIR) checkout $(SRAM_LIB_GIT_COMMIT)
 
-install: $(SRAM_LIB_DIR)
+sky130-install: $(SRAM_LIB_DIR)
 	@[ -d $(PDK_ROOT)/sky130A ] || \
-		(echo "Warning: $(PDK_ROOT)/sky130A not found!! Run make pdk first." &&  false)
+		(echo "Warning: $(PDK_ROOT)/sky130A not found!! Run make sky130-pdk first." &&  false)
 	@[ -d $(PDK_ROOT)/skywater-pdk ] || \
-		(echo "Warning: $(PDK_ROOT)/skywater-pdk not found!! Run make pdk first." && false)
+		(echo "Warning: $(PDK_ROOT)/skywater-pdk not found!! Run make sky130-pdk first." && false)
 	@echo "Installing sky130 SRAM PDK..."
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIB_DIR='$(SRAM_LIB_DIR)'"
 	@echo "SKY130_PDK='$(SKY130_PDK)'"
 	@make $(INSTALL_DIRS)
-.PHONY: install
+.PHONY: sky130-install
 
-pdk: $(SKY130_PDK)
-	@true
-.PHONY: pdk
+sky130-pdk: $(SKY130_PDKS_DIR)
+	@echo "Installing SKY130 via volare..."
+ifeq ($(CONDA_DIR),)
+	volare enable --pdk sky130 $(SKY130_VOLARE)
+else
+	source $(TOP_DIR)/miniconda/bin/activate && \
+		volare enable --pdk sky130 $(SKY130_VOLARE) && \
+		conda deactivate
+endif
+.PHONY: sky130-pdk
 
-gf180-pdk: $(GF180_PDK)
-	@true
-.PHONY: gf180-pdk
+gf180mcu-pdk:
+	@echo "Installing GF180 via volare..."
+ifeq ($(CONDA_DIR),)
+	volare enable --pdk gf180mcu $(GF180_VOLARE)
+else
+	source $(TOP_DIR)/miniconda/bin/activate && \
+		volare enable --pdk gf180mcu $(GF180_VOLARE) && \
+		conda deactivate
+endif
+.PHONY: gf180mcu-pdk
 
 $(INSTALL_BASE)/gds_lib: $(GDS_FILES)
 	@echo

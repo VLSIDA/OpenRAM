@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# Copyright (c) 2016-2024 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 import sys, os, re

@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2023 Regents of the University of California, Santa Cruz
+# Copyright (c) 2016-2024 Regents of the University of California, Santa Cruz
 # All rights reserved.
 #
 from openram.base.vector3d import vector3d

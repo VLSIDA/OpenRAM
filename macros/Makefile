@@ -50,6 +50,7 @@ WORKING_ROM_STAMPS=$(filter-out $(addsuffix .ok, $(BROKEN)), $(ROM_STAMPS))
 
 EXAMPLE_STAMPS=$(filter example%, $(WORKING_SRAM_STAMPS)) $(filter example%, $(WORKING_ROM_STAMPS))
 SKY130_STAMPS=$(filter sky130%, $(WORKING_SRAM_STAMPS)) $(filter sky130%, $(WORKING_ROM_STAMPS))
+GF180MCU_STAMPS=$(filter gf180mcu%, $(WORKING_SRAM_STAMPS)) $(filter gf180mcu%, $(WORKING_ROM_STAMPS))
 FREEPDK45_STAMPS=$(filter freepdk45%, $(WORKING_STAMPS)) $(filter freepdk45%, $(WORKING_ROM_STAMPS))
 SCN4M_SUBM_STAMPS=$(filter scn4m_subm%, $(WORKING_STAMPS)) $(filter scn4m_subm%, $(WORKING_ROM_STAMPS))
 

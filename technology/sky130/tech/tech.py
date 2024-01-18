@@ -330,6 +330,8 @@ m2_stack = ("m2", "via2", "m3")
 m3_stack = ("m3", "via3", "m4")
 m4_stack = ("m4", "via4", "m5")
 
+lef_rom_interconnect = ["m1", "m2", "m3", "m4"]
+
 layer_indices = {"poly": 0,
                  "active": 0,
                  "nwell": 0,

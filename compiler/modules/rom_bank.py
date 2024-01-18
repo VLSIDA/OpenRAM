@@ -15,7 +15,7 @@ from openram.base import lef
 from openram import OPTS, print_time
 from openram.sram_factory import factory
 from openram.tech import spice
-from openram.tech import drc, layer, parameter
+from openram.tech import drc, layer, parameter, lef_rom_interconnect
 
 
 class rom_bank(design, rom_verilog, lef):
@@ -28,7 +28,7 @@ class rom_bank(design, rom_verilog, lef):
 
     def __init__(self, name, rom_config):
         super().__init__(name=name)
-        lef.__init__(self, ["m1", "m2", "m3", "m4"])
+        lef.__init__(self, lef_rom_interconnect)
         self.rom_config = rom_config
         rom_config.set_local_config(self)
 

@@ -147,11 +147,13 @@ OpenRAM library.
 
 OpenRAM currently **does not** support gf180mcu for SRAM generation. However ROM generation for gf180mcu is supported as an experimental feature.
 
-It is not necessary to install the gf180mcu PDK, as all necessary files are already in the git repository under `technology/gf180mcu/`.
+To install gf180mcuD, you can run:
 
-If you still want to install the PDK, you can run `make gf180mcu-pdk`.
+```
+cd $HOME/OpenRAM
+make gf180mcu-pdk
+```
 
 [SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
 [FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
 [Sky130]:   https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-

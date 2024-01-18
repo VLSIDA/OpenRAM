@@ -152,6 +152,7 @@ class rom():
         start_time = datetime.datetime.now()
         from shutil import copyfile
         copyfile(OPTS.config_file, OPTS.output_path + OPTS.output_name + '.py')
+        os.makedirs(os.path.dirname(OPTS.output_path + self.rom_data), exist_ok=True)
         copyfile(self.rom_data, OPTS.output_path + self.rom_data)
         debug.print_raw("Config: Writing to {0}".format(OPTS.output_path + OPTS.output_name + '.py'))
         print_time("Config", datetime.datetime.now(), start_time)

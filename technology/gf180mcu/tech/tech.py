@@ -97,6 +97,7 @@ m2_stack = ("m2", "via2", "m3")
 m3_stack = ("m3", "via3", "m4")
 m4_stack = ("m4", "via4", "m5")
 
+lef_rom_interconnect = ["m1", "m2", "m3", "m4", "m5"]
 
 layer_indices = {"poly": 0,
                  "active": 0,
@@ -182,6 +183,8 @@ layer_names["via2"]    = "via2"
 layer_names["m3"]      = "metal3"
 layer_names["via3"]    = "via3"
 layer_names["m4"]      = "metal4"
+layer_names["via4"]    = "via4"
+layer_names["m5"]      = "metal5"
 layer_names["text"]    = "text"
 layer_names["mem"]     = "SramCore"
 layer_names["boundary"]= "boundary"

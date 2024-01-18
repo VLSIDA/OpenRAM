@@ -113,13 +113,15 @@ models. You may get the entire [FreePDK45 PDK here][FreePDK45].
 
 ## Sky130 Setup
 
-To install [Sky130], you must have open\_pdks installed in $PDK\_ROOT. We highly
-recommend that you use the version tagged in the Makefile as others have not
-been verified. To install this automatically, you can run:
+To install [Sky130], you can run:
+
 ```
 cd $HOME/OpenRAM
-make pdk
+make sky130-pdk
 ```
+
+This will use volare to get the PDK.
+
 > **Note**: If you don't have Magic installed, you need to install and activate
 > the conda environment before running this command. You can run:
 >
@@ -128,12 +130,12 @@ make pdk
 > source miniconda/bin/activate
 > ```
 
-
 Then you must also install the [Sky130] SRAM build space with the appropriate
 cell views into the OpenRAM technology directory by running:
+
 ```
 cd $HOME/OpenRAM
-make install
+make sky130-install
 ```
 
 You can also run these from the package installation directory if you have the
@@ -141,7 +143,11 @@ OpenRAM library.
 
 ## GF180 Setup
 
-OpenRAM currently **does not** support gf180mcu for SRAM generation. However ROM generation for gf180mcu is supported as an experimental feature. To set up gf180mcu, first change ```OPEN_PDKS_GIT_COMMIT``` in ```OpenRAM/Makefile``` to version 1.0.395. Then follow the setup instructions for Sky130 but run ```make gf180-pdk``` instead of ```make pdk```.
+OpenRAM currently **does not** support gf180mcu for SRAM generation. However ROM generation for gf180mcu is supported as an experimental feature.
+
+It is not necessary to install the gf180mcu PDK, as all necessary files are already in the git repository under `technology/gf180mcu/`.
+
+If you still want to install the PDK, you can run `make gf180mcu-pdk`.
 
 [SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
 [FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents

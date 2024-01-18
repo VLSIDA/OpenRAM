@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+         pip3 install -r requirements.txt
       - name: Library build
         run: |
          rm -rf ~/.local/lib/python3.8/site-packages/openram*

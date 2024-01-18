@@ -24,8 +24,9 @@ jobs:
          export OPENRAM_HOME="${{ github.workspace }}/compiler"
          export OPENRAM_TECH="${{ github.workspace }}/technology"
          export PDK_ROOT="${{ github.workspace }}/pdk"
-         make pdk
-         make install
+         # Add make targets to install PDKs of all technologies that need it
+         make sky130-pdk
+         make sky130-install
       - name: Regress
         run: |
          export OPENRAM_HOME="${{ github.workspace }}/compiler"

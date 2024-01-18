@@ -88,6 +88,8 @@ OpenRAM installation, you can set two environment variables:
 If you have the library installed and `OPENRAM_HOME` set, the library will use
 the installation on the `OPENRAM_HOME` path.
 
+> See [Python library](./python_library.md#go-back) for details.
+
 If you don't have the library, you should also add `OPENRAM_HOME` to your
 `PYTHONPATH`. This is not needed if you have the library.
 

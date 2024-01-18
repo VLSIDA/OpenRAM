@@ -42,7 +42,13 @@ unit test framework:
 * `23-25_*_test.py` checks lib, lef, and verilog outputs using diff.
 * `30_openram_test.py` checks command-line interface and whether output files are created.
 
+## Setup
 
+Before running any unit tests, make sure to install OpenRAM.
+
+> See [Python library](./python_library.md#go-back) for details.
+
+If you have the library already installed and `OPENRAM_HOME` set, the library will use the installation on the `OPENRAM_HOME` path.
 
 ## Running Unit Tests
 Regression testing performs a number of tests for all modules in OpenRAM. From

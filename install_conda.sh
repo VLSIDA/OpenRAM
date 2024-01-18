@@ -1,5 +1,5 @@
 #!/bin/bash
-CONDA_INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-py38_22.11.1-1-Linux-x86_64.sh"
+CONDA_INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-py38_23.11.0-2-Linux-x86_64.sh"
 CONDA_INSTALLER_FILE="miniconda_installer_py38.sh"
 CONDA_HOME="${CONDA_HOME:-miniconda}"
 

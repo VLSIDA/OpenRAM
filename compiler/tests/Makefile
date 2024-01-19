@@ -21,17 +21,9 @@ RESULTS_DIR = $(OPENRAM_DIR)/results
 # or a specific tech:
 # freepdk45/test.py
 BROKEN_STAMPS = \
-	%/06_hierarchical_decoder_4096row_test.ok \
 	%/19_single_bank_16mux_1rw_1r_test.ok \
 	%/19_single_bank_16mux_test.ok \
 	%/20_sram_1bank_16mux_1rw_1r_test.ok \
-	%/20_sram_1bank_16mux_test.ok \
-	%/20_psram_1bank_2mux_1rw_1w_test.ok \
-	%/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \
-	%/20_psram_1bank_2mux_1w_1r_test.ok \
-	%/20_psram_1bank_2mux_test.ok \
-	%/21_hspice_delay_test.ok \
-	%/21_hspice_setuphold_test.ok \
 	%/21_xyce_delay_test.ok \
 	%/22_psram_1bank_2mux_func_test.ok \
 	%/22_psram_1bank_4mux_func_test.ok \
@@ -39,56 +31,36 @@ BROKEN_STAMPS = \
 	%/22_psram_1bank_nomux_func_test.ok \
 	%/22_sram_1bank_2mux_func_test.ok \
 	%/22_sram_1bank_2mux_global_func_test.ok \
-	%/22_sram_1bank_2mux_sparecols_func_test.ok \
 	%/22_sram_1bank_4mux_func_test.ok \
 	%/22_sram_1bank_8mux_func_test.ok \
 	%/22_sram_1bank_nomux_1rw_1r_func_test.ok \
 	%/22_sram_1bank_nomux_func_test.ok \
-	%/22_sram_1bank_nomux_sparecols_func_test.ok \
 	%/22_sram_1bank_wmask_1rw_1r_func_test.ok \
 	%/22_sram_wmask_func_test.ok \
-	%/26_hspice_pex_pinv_test.ok \
 	%/27_verilog_multibank_test.ok \
-	%/50_riscv_1k_1rw1r_func_test.ok \
-	%/50_riscv_1k_1rw_func_test.ok \
-	%/50_riscv_1rw1r_func_test.ok \
-	%/50_riscv_1rw1r_phys_test.ok \
-	%/50_riscv_1rw_func_test.ok \
-	%/50_riscv_1rw_phys_test.ok \
-	%/50_riscv_2k_1rw1r_func_test.ok \
-	%/50_riscv_2k_1rw_func_test.ok \
-	%/50_riscv_4k_1rw1r_func_test.ok \
-	%/50_riscv_4k_1rw_func_test.ok \
-	%/50_riscv_512b_1rw1r_func_test.ok \
-	%/50_riscv_512b_1rw_func_test.ok \
-	%/50_riscv_8k_1rw1r_func_test.ok \
-	%/50_riscv_8k_1rw_func_test.ok \
 	freepdk45/04_rom_address_control_buf_test.ok \
 	freepdk45/05_rom_array_test.ok \
 	freepdk45/06_rom_decoder_test.ok \
+	freepdk45/06_hierarchical_decoder_4096row_test.ok \
 	freepdk45/07_rom_column_mux_array_test.ok \
 	freepdk45/08_rom_decoder_buffer_array_test.ok \
 	freepdk45/08_rom_precharge_array_test.ok \
-	freepdk45/10_rom_wordline_driver_array_test.ok \
 	freepdk45/16_rom_control_logic_test.ok \
 	freepdk45/19_rom_bank_test.ok \
 	scn4m_subm/04_rom_address_control_buf_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
-	scn4m_subm/07_rom_column_mux_array_test.ok \
+	scn4m_subm/06_hierarchical_decoder_4096row_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \
-	scn4m_subm/08_rom_precharge_array_test.ok \
-	scn4m_subm/10_rom_wordline_driver_array_test.ok \
 	scn4m_subm/14_rom_array_test.ok \
-	scn4m_subm/16_rom_control_logic_test.ok \
 	scn4m_subm/19_rom_bank_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
+	scn4m_subm/50_riscv_1rw_phys_test.ok \
+	scn4m_subm/50_riscv_1rw1r_phys_test.ok \
 	sky130/01_library_test.ok \
 	sky130/03_wire_test.ok \
 	sky130/04_column_mux_pbitcell_test.ok \
 	sky130/04_dummy_pbitcell_test.ok \
 	sky130/04_pbitcell_test.ok \
-	sky130/04_pnand4_test.ok \
-	sky130/04_pand4_test.ok \
 	sky130/04_precharge_pbitcell_test.ok \
 	sky130/04_replica_pbitcell_test.ok \
 	sky130/04_dummy_pbitcell_1rw1r1w_test.ok \
@@ -96,13 +68,8 @@ BROKEN_STAMPS = \
 	sky130/04_replica_pbitcell_1rw1r1w_test.ok \
 	sky130/04_replica_pbitcell_1rw_test.ok \
 	sky130/05_pbitcell_array_test.ok \
-	sky130/05_bitcell_array_test.ok \
 	sky130/05_bitcell_array_1rw_1r_test.ok \
 	sky130/05_dummy_array_test.ok \
-	sky130/06_hierarchical_decoder_132row_test.ok \
-	sky130/06_hierarchical_decoder_512row_test.ok \
-	sky130/06_hierarchical_decoder_64row_test.ok \
-	sky130/06_hierarchical_decoder_pbitcell_test.ok \
 	sky130/07_column_mux_array_pbitcell_test.ok \
 	sky130/10_write_driver_array_spare_cols_test.ok \
 	sky130/10_write_driver_array_wmask_spare_cols_test.ok \
@@ -126,7 +93,6 @@ BROKEN_STAMPS = \
 	sky130/15_local_bitcell_array_leftrbl_1rw_test.ok \
 	sky130/15_local_bitcell_array_norbl_1rw_1r_test.ok \
 	sky130/15_local_bitcell_array_norbl_1rw_test.ok \
-	sky130/18_port_address_512rows_test.ok \
 	sky130/18_port_data_spare_cols_test.ok \
 	sky130/19_single_bank_2mux_test.ok \
 	sky130/19_single_bank_4mux_test.ok \
@@ -137,9 +103,13 @@ BROKEN_STAMPS = \
 	sky130/19_single_bank_nomux_norbl_test.ok \
 	sky130/19_single_bank_spare_cols_test.ok \
 	sky130/19_single_bank_wmask_test.ok \
-	sky130/19_pmulti_bank_test.ok \
 	sky130/19_psingle_bank_test.ok \
 	sky130/19_bank_select_pbitcell_test.ok \
+	sky130/20_psram_1bank_2mux_1rw_1w_test.ok \
+	sky130/20_psram_1bank_2mux_1rw_1w_wmask_test.ok \
+	sky130/20_psram_1bank_2mux_1w_1r_test.ok \
+	sky130/20_psram_1bank_2mux_test.ok \
+	sky130/20_sram_1bank_16mux_test.ok \
 	sky130/20_psram_1bank_4mux_1rw_1r_test.ok \
 	sky130/20_sram_1bank_2mux_1rw_1r_spare_cols_test.ok \
 	sky130/20_sram_1bank_2mux_1w_1r_spare_cols_test.ok \
@@ -159,14 +129,9 @@ BROKEN_STAMPS = \
 	sky130/21_ngspice_delay_extra_rows_test.ok \
 	sky130/21_ngspice_delay_test.ok \
 	sky130/21_regression_delay_test.ok \
-	sky130/22_psram_1bank_2mux_func_test.ok \
-	sky130/22_psram_1bank_4mux_func_test.ok \
-	sky130/22_psram_1bank_8mux_func_test.ok \
-	sky130/22_psram_1bank_nomux_func_test.ok \
 	sky130/23_lib_sram_linear_regression_test.ok \
 	sky130/23_lib_sram_model_corners_test.ok \
 	sky130/23_lib_sram_model_test.ok \
-	sky130/23_lib_sram_prune_test.ok \
 	sky130/23_lib_sram_test.ok \
 	sky130/25_verilog_multibank_test.ok \
 	sky130/25_verilog_sram_test.ok \
@@ -175,7 +140,8 @@ BROKEN_STAMPS = \
 	sky130/30_openram_front_end_library_test.ok \
 	sky130/30_openram_front_end_test.ok \
 	sky130/30_openram_sram_char_test.ok \
-	sky130/30_openram_sram_func_test.ok \
+	sky130/50_riscv_1rw_phys_test.ok \
+	sky130/50_riscv_1rw1r_phys_test.ok \
 
 gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))

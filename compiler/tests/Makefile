@@ -4,7 +4,6 @@ include $(TOP_DIR)/openram.mk
 .DEFAULT_GOAL := all
 
 ARGS ?=
-TEST_TECHS ?= scn4m_subm freepdk45
 TECHS ?= scn4m_subm freepdk45 sky130
 
 TEST_DIR   = $(TOP_DIR)/compiler/tests
@@ -182,14 +181,20 @@ gettech = $(word 1,$(subst /, ,$*))
 getfile = $(word 2,$(subst /, ,$*))
 TECH_TEST_STAMPS=$(foreach T, $(TECHS), $(addprefix $T/, $(TEST_STAMPS)))
 
-# Filter out the tests after creating the tech stamps
+# Filter out the broken tests after creating the tech stamps
 WORKING_TECH_TEST_STAMPS=$(shell shuf -e -- $(filter-out $(BROKEN_STAMPS), $(TECH_TEST_STAMPS)))
-
+# Filter out the working tests after creating the tech stamps
+BROKEN_TECH_TEST_STAMPS=$(shell shuf -e -- $(filter $(BROKEN_STAMPS), $(TECH_TEST_STAMPS)))
 
 # Run all technologies
 all: clean $(WORKING_TECH_TEST_STAMPS)
 	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
 .PHONY: all
+
+# Run broken stamps only
+broken: clean $(BROKEN_TECH_TEST_STAMPS)
+	@ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad 1> /dev/null 2>&1 && echo "FAILING TESTS" && ls -1 $(TOP_DIR)/compiler/tests/results/*/*.bad | sed -e "s#^.*results\/##" && exit 1 || exit 0
+.PHONY: broken
 
 # Run a given technology
 # e.g. make freepdk45

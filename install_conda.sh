@@ -36,7 +36,7 @@ then
 
     # Install required Python packages
     # (This step isn't required but used to prevent possible issues)
-    python3 -m pip install -r requirements.txt
+    python3 -m pip install -r requirements.txt --ignore-installed
 
     conda deactivate
 fi

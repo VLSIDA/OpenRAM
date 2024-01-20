@@ -25,18 +25,6 @@ BROKEN_STAMPS = \
 	%/19_single_bank_16mux_test.ok \
 	%/20_sram_1bank_16mux_1rw_1r_test.ok \
 	%/21_xyce_delay_test.ok \
-	%/22_psram_1bank_2mux_func_test.ok \
-	%/22_psram_1bank_4mux_func_test.ok \
-	%/22_psram_1bank_8mux_func_test.ok \
-	%/22_psram_1bank_nomux_func_test.ok \
-	%/22_sram_1bank_2mux_func_test.ok \
-	%/22_sram_1bank_2mux_global_func_test.ok \
-	%/22_sram_1bank_4mux_func_test.ok \
-	%/22_sram_1bank_8mux_func_test.ok \
-	%/22_sram_1bank_nomux_1rw_1r_func_test.ok \
-	%/22_sram_1bank_nomux_func_test.ok \
-	%/22_sram_1bank_wmask_1rw_1r_func_test.ok \
-	%/22_sram_wmask_func_test.ok \
 	%/27_verilog_multibank_test.ok \
 	freepdk45/04_rom_address_control_buf_test.ok \
 	freepdk45/05_rom_array_test.ok \
@@ -129,6 +117,13 @@ BROKEN_STAMPS = \
 	sky130/21_ngspice_delay_extra_rows_test.ok \
 	sky130/21_ngspice_delay_test.ok \
 	sky130/21_regression_delay_test.ok \
+	sky130/22_psram_1bank_2mux_func_test.ok \
+	sky130/22_psram_1bank_4mux_func_test.ok \
+	sky130/22_psram_1bank_8mux_func_test.ok \
+	sky130/22_psram_1bank_nomux_func_test.ok \
+	sky130/22_sram_1bank_2mux_global_func_test.ok \
+	sky130/22_sram_1bank_wmask_1rw_1r_func_test.ok \
+	sky130/22_sram_wmask_func_test.ok \
 	sky130/23_lib_sram_linear_regression_test.ok \
 	sky130/23_lib_sram_model_corners_test.ok \
 	sky130/23_lib_sram_model_test.ok \

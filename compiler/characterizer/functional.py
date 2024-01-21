@@ -45,7 +45,10 @@ class functional(simulation):
             sram.sp_write(self.sp_file, trim=OPTS.trim_netlist)
         # Copy sp file to temp dir
         self.temp_spice = path.join(OPTS.openram_temp, "sram.sp")
-        shutil.copy(self.sp_file, self.temp_spice)
+        try:
+            shutil.copy(self.sp_file, self.temp_spice)
+        except shutil.SameFileError: # skip if the same
+            pass
 
         if not corner:
             corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])

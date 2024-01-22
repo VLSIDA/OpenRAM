@@ -427,15 +427,15 @@ spice["temperatures"] = [0, 25, 100] # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
-spice["nom_threshold"] = 0.49     # Typical Threshold voltage in Volts
-spice["wire_unit_r"] = 0.125     # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 0.134     # Unit wire capacitance ff/um^2
-spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff
-spice["min_tx_gate_c"] = 0.2     # Minimum transistor gate capacitance in ff
-spice["dff_setup"] = 102.5391    # DFF setup time in ps
-spice["dff_hold"] = -56          # DFF hold time in ps
-spice["dff_in_cap"] = 6.89       # Input capacitance (D) [Femto-farad]
-spice["dff_out_cap"] = 6.89      # Output capacitance (Q) [Femto-farad]
+spice["nom_threshold"] = 0.49       # Typical Threshold voltage in Volts
+spice["wire_unit_r"] = 0.125        # Unit wire resistance in ohms/square
+spice["wire_unit_c"] = 0.134e-15    # Unit wire capacitance F/um^2
+spice["min_tx_drain_c"] = 0.7       # Minimum transistor drain capacitance in ff
+spice["min_tx_gate_c"] = 0.2        # Minimum transistor gate capacitance in ff
+spice["dff_setup"] = 102.5391       # DFF setup time in ps
+spice["dff_hold"] = -56             # DFF hold time in ps
+spice["dff_in_cap"] = 6.89          # Input capacitance (D) [Femto-farad]
+spice["dff_out_cap"] = 6.89         # Output capacitance (Q) [Femto-farad]
 
 # analytical power parameters, many values are temporary
 spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW

@@ -558,12 +558,24 @@ def import_tech():
     openram.OPENRAM_TECH = OPENRAM_TECH
 
     # Add all of the paths
+    tech_found = None
     for tech_path in OPENRAM_TECH.split(":"):
         debug.check(os.path.isdir(tech_path),
                     "$OPENRAM_TECH does not exist: {}".format(tech_path))
         sys.path.append(tech_path)
         debug.info(1, "Adding technology path: {}".format(tech_path))
 
+        # List all tech dirs in that path and check if we can find the tech_name inside
+        for tech_dir in os.listdir(tech_path):
+            if tech_dir==OPTS.tech_name :
+                tech_found = tech_dir
+                break;
+                
+    # If the tech_name param specified by the user is not present in the technology folder, emit an error and quit
+    if (tech_found is None):
+        debug.error(f"You specified \'tech_name={OPTS.tech_name}\' in your config file, but that technology is not present in the technologies folder!")
+        quit()
+        
     # Import the tech
     try:
         tech_mod = __import__(OPTS.tech_name)

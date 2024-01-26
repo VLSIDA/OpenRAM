@@ -746,6 +746,7 @@ spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
 spice["inv_leakage"] = 1         # Leakage power of inverter in nW
 spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
 spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
+spice["nand4_leakage"] = 1       # Leakage power of 4-input nand in nW
 spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
 spice["dff_leakage"] = 1         # Leakage power of flop in nW
 

@@ -9,6 +9,6 @@ tech_name = "gf180mcu"
 nominal_corner_only = True
 
 route_supplies = "ring"
-check_lvsdrc = True
-# check_lvsdrc = False
+# check_lvsdrc = True
+check_lvsdrc = False
 

@@ -7,213 +7,194 @@
 from openram import debug
 from openram.base import vector
 from openram.base import contact
+from openram import debug
+from openram.base import round_to_grid
 from openram.sram_factory import factory
 from openram.tech import drc, spice
 from openram.tech import cell_properties as props
 from openram import OPTS
+from openram.modules.capped_replica_bitcell_array import capped_replica_bitcell_array
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
+from math import sqrt
 
 
-class sky130_capped_replica_bitcell_array(sky130_bitcell_base_array):
+class sky130_capped_replica_bitcell_array(capped_replica_bitcell_array, sky130_bitcell_base_array):
     """
     Creates a replica bitcell array then adds the row and column caps to all
     sides of a bitcell array.
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name, rows, cols, column_offset=0)
-        debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
-                                                                                             rows,
-                                                                                             cols,
-                                                                                             rbl,
-                                                                                             left_rbl,
-                                                                                             right_rbl))
-        self.add_comment("rows: {0} cols: {1}".format(rows, cols))
-        self.add_comment("rbl: {0} left_rbl: {1} right_rbl: {2}".format(rbl, left_rbl, right_rbl))
+        super().__init__(rows, cols, rbl, left_rbl, right_rbl, name)
+            
+    def add_layout_pins(self):
+        """ Add the layout pins """
 
-        # This is how many RBLs are in all the arrays
-        self.rbl = rbl
-        # This specifies which RBL to put on the left or right by port number
-        # This could be an empty list
-        if left_rbl is not None:
-            self.left_rbl = left_rbl
-        else:
-            self.left_rbl = []
-        # This could be an empty list
-        if right_rbl is not None:
-            self.right_rbl = right_rbl
-        else:
-            self.right_rbl = []
+        for row_end in self.dummy_col_insts:
+            row_end = row_end.mod
+            for (rba_wl_name, wl_name) in zip(self.get_all_wordline_names(), row_end.get_wordline_names()):
+                pin = row_end.get_pin(wl_name)
+                self.add_layout_pin(text=rba_wl_name,
+                    layer=pin.layer,
+                    offset=vector(0,pin.ll().scale(0, 1)[1]),
+                    #width=self.width,
+                    width=pin.width(),
+                    height=pin.height())
 
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
+        pin_height = (round_to_grid(drc["minarea_m3"] / round_to_grid(sqrt(drc["minarea_m3"]))) + drc["{0}_to_{0}".format('m3')])
+        drc_width = drc["{0}_to_{0}".format('m3')]
 
-    def create_netlist(self):
-        """ Create and connect the netlist """
-        self.add_modules()
-        self.add_pins()
-        self.create_instances()
+        # vdd/gnd are only connected in the perimeter cells
+        # replica column should only have a vdd/gnd in the dummy cell on top/bottom
+        supply_insts = self.dummy_row_insts
 
-    def add_modules(self):
-        self.replica_bitcell_array = factory.create(module_type="replica_bitcell_array",
-                                                    cols=self.column_size,
-                                                    rows=self.row_size,
-                                                    rbl=self.rbl,
-                                                    left_rbl=self.left_rbl,
-                                                    right_rbl=self.right_rbl)
-
-    def add_pins(self):
-
-        # Arrays are always:
-        # bitlines (column first then port order)
-        # word lines (row first then port order)
-        # dummy wordlines
-        # replica wordlines
-        # regular wordlines (bottom to top)
-        # # dummy bitlines
-        # replica bitlines (port order)
-        # regular bitlines (left to right port order)
-        #
-        # vdd
-        # gnd
-
-        self.add_bitline_pins()
-        self.add_wordline_pins()
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
-
-    def add_bitline_pins(self):
-        self.bitline_names = self.replica_bitcell_array.bitline_names
-        self.all_bitline_names = self.replica_bitcell_array.all_bitline_names
-        self.rbl_bitline_names = self.replica_bitcell_array.rbl_bitline_names
-        self.all_rbl_bitline_names = self.replica_bitcell_array.all_rbl_bitline_names
-
-        self.bitline_pins = []
-
-        for port in self.left_rbl:
-            self.bitline_pins.extend(self.rbl_bitline_names[port])
-        self.bitline_pins.extend(self.all_bitline_names)
-        for port in self.right_rbl:
-            self.bitline_pins.extend(self.rbl_bitline_names[port])
-
-        self.add_pin_list(self.bitline_pins, "INOUT")
-
-    def add_wordline_pins(self):
-        # some of these are just included for compatibility with modules instantiating this module
-        self.rbl_wordline_names = self.replica_bitcell_array.rbl_wordline_names
-        self.all_rbl_wordline_names = self.replica_bitcell_array.all_rbl_wordline_names
-        self.wordline_names = self.replica_bitcell_array.wordline_names
-        self.all_wordline_names = self.replica_bitcell_array.all_wordline_names
-
-        self.wordline_pins = []
-
-        for port in range(self.rbl[0]):
-            self.wordline_pins.append(self.rbl_wordline_names[port][port])
-        self.wordline_pins.extend(self.all_wordline_names)
-        for port in range(self.rbl[0], self.rbl[0] + self.rbl[1]):
-            self.wordline_pins.append(self.rbl_wordline_names[port][port])
-
-        self.add_pin_list(self.wordline_pins, "INPUT")
-
-    def create_instances(self):
-        """ Create the module instances used in this design """
-        self.supplies = ["vdd", "gnd"]
-
-        # Main array
-        self.replica_bitcell_array_inst=self.add_inst(name="replica_bitcell_array",
-                                                      mod=self.replica_bitcell_array)
-        self.connect_inst(self.bitline_pins + self.wordline_pins + self.supplies)
-
-    def create_layout(self):
-
-        self.replica_bitcell_array_inst.place(offset=0)
-
-        self.width = self.replica_bitcell_array.width
-        self.height = self.replica_bitcell_array.height
-
-        for pin_name in self.bitline_pins + self.wordline_pins + self.supplies:
-            self.copy_layout_pin(self.replica_bitcell_array_inst, pin_name)
-
-        self.add_boundary()
-
-        self.DRC_LVS()
-
-    def get_main_array_top(self):
-        return self.replica_bitcell_array.get_main_array_top()
-
-    def get_main_array_bottom(self):
-        return self.replica_bitcell_array.get_main_array_bottom()
-
-    def get_main_array_left(self):
-        return self.replica_bitcell_array.get_main_array_left()
-
-    def get_main_array_right(self):
-        return self.replica_bitcell_array.get_main_array_right()
-
-    def get_replica_top(self):
-        return self.replica_bitcell_array.get_replica_top()
-
-    def get_replica_bottom(self):
-        return self.replica_bitcell_array.get_replica_bottom()
-
-    def get_replica_left(self):
-        return self.replica_bitcell_array.get_replica_left()
-
-    def get_replica_right(self):
-        return self.replica_bitcell_array.get_replica_right()
+        for pin_name in self.supplies:
+            for supply_inst in supply_insts:
+                vdd_alternate = 0
+                gnd_alternate = 0
+                for cell_inst in supply_inst.mod.insts:
+                    inst = cell_inst.mod
+                    for pin in inst.get_pins(pin_name):
+                        if pin.name == 'vdd':
+                            if vdd_alternate:
+                                connection_offset = -0.02
+                                vdd_alternate = 0
+                            else:
+                                connection_offset = 0.02
+                                vdd_alternate = 1
+                            connection_width = drc["minwidth_{}".format('m1')]
+                            track_offset = 1
+                        elif pin.name == 'gnd':
+                            if gnd_alternate:
+                                connection_offset = 0.00
+                                gnd_alternate = 0
+                            else:
+                                connection_offset = 0.00
+                                gnd_alternate = 1
+                            connection_width = drc["minwidth_{}".format('m1')]
+                            track_offset = 4
+                        pin_width = round_to_grid(sqrt(drc["minarea_m3"]))
+                        pin_height = round_to_grid(drc["minarea_m3"] / pin_width)
+                        if inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colend_p_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colenda_p_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colend_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colenda_cent' or 'corner' in inst.cell_name:
+                            if 'dummy_row_bot' in supply_inst.name:
+                                pin_center = vector(pin.center()[0], -1 * track_offset * (pin_height + drc_width*2))
+                                self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, 0), connection_width)
+                            elif 'dummy_row_top' in supply_inst.name:
+                                pin_center = vector(pin.center()[0],inst.height + 1 * track_offset* (pin_height + drc_width*2))
+                                self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, self.height), connection_width)
+                            # elif 'replica_col' in supply_inst.name and cell_inst.mirror == 'MX':
+                            #     pin_center = vector(pin.center()[0], -1 * track_offset* (pin_height + drc_width*2))
+                            #     self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, 0), connection_width)
+                            # elif 'replica_col' in supply_inst.name:
+                            #     pin_center = vector(pin.center()[0],inst.height + 1 * track_offset * (pin_height + drc_width*2))
+                            #     self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset,self.height), connection_width)
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                            to_layer='m2',
+                                            offset=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0))
 
 
-    def get_column_offsets(self):
-        return self.replica_bitcell_array.get_column_offsets()
+        # add well contacts to perimeter cells
+        for pin_name in ['vpb', 'vnb']:
+            for supply_inst in supply_insts:
+                vnb_alternate = 0
+                vpb_alternate = 0
+                for cell_inst in supply_inst.mod.insts:
 
-    def analytical_power(self, corner, load):
-        """Power of Bitcell array and bitline in nW."""
-        # Dynamic Power from Bitline
-        bl_wire = self.gen_bl_wire()
-        cell_load = 2 * bl_wire.return_input_cap()
-        bl_swing = OPTS.rbl_delay_percentage
-        freq = spice["default_event_frequency"]
-        bitline_dynamic = self.calc_dynamic_power(corner, cell_load, freq, swing=bl_swing)
+                    inst = cell_inst.mod
+                    for pin in inst.get_pins(pin_name):
+                        if pin.name == 'vpb':
+                            if vpb_alternate:
+                                connection_offset = 0.01
+                                vpb_alternate = 0
+                            else:
+                                connection_offset = 0.02
+                                vpb_alternate = 1
+                            connection_width = drc["minwidth_{}".format('m1')]
+                            track_offset = 2
+                        elif pin.name == 'vnb':
+                            if vnb_alternate:
+                                connection_offset = -0.01
+                                vnb_alternate = 0
+                            else:
+                                connection_offset = -0.02
+                                vnb_alternate = 1
+                            connection_width = drc["minwidth_{}".format('m1')]
+                            track_offset = 3
+                        if inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colend_p_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colenda_p_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colend_cent' or inst.cell_name == 'sky130_fd_bd_sram__sram_sp_colenda_cent':
+                            if 'dummy_row_bot' in supply_inst.name:
+                                pin_center = vector(pin.center()[0], -1 * track_offset * (pin_height + drc_width*2))
+                                self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, 0), connection_width)
+                            elif 'dummy_row_top' in supply_inst.name:
+                                pin_center = vector(pin.center()[0],inst.height + 1 * track_offset* (pin_height + drc_width*2))
+                                self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, self.height), connection_width)
+                            # elif 'replica_col' in supply_inst.name:
+                            #     pin_center = vector(pin.center()[0], -1 * track_offset* (pin_height + drc_width*2))
+                            #     self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset, 0), connection_width)
+                            # elif 'replica_col' in supply_inst.name:
+                            #     pin_center = vector(pin.center()[0],inst.height + 1 * track_offset * (pin_height + drc_width*2))
+                            #     self.add_segment_center(pin.layer, pin_center+supply_inst.ll()+cell_inst.ll()+vector(connection_offset,0), vector((pin_center+supply_inst.ll()+cell_inst.ll())[0] + connection_offset,self.height), connection_width)
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                            to_layer='m2',
+                                            offset=pin_center+supply_inst.ll()+cell_inst.ll() + vector(connection_offset,0))
 
-        # Calculate the bitcell power which currently only includes leakage
-        cell_power = self.cell.analytical_power(corner, load)
+        min_area = drc["minarea_{}".format('m3')]
+        for track,supply, offset in zip(range(1,5),['vdd','vdd','gnd','gnd'],[min_area * 6,min_area * 6, 0, 0]):
+            y_offset = track * (pin_height + drc_width*2)
+            self.add_segment_center('m2', vector(-0.4,-y_offset), vector(self.width+0.4, -y_offset), drc["minwidth_{}".format('m2')])
+            self.add_segment_center('m2', vector(-0.4,self.height + y_offset), vector(self.width+0.4, self.height + y_offset), drc["minwidth_{}".format('m2')])
+            self.add_power_pin(name=supply,
+                               loc=vector(round_to_grid(sqrt(min_area))/2 + offset, -y_offset),
+                               start_layer='m2')
+            self.add_power_pin(name=supply,
+                               loc=vector(round_to_grid(sqrt(min_area))/2 + offset, self.height + y_offset),
+                               start_layer='m2')
+            self.add_power_pin(name=supply,
+                               loc=vector(self.width - round_to_grid(sqrt(min_area))/2 - offset, -y_offset),
+                               start_layer='m2')
+            self.add_power_pin(name=supply,
+                               loc=vector(self.width - round_to_grid(sqrt(min_area))/2 - offset, self.height + y_offset),
+                               start_layer='m2')
 
-        # Leakage power grows with entire array and bitlines.
-        total_power = self.return_power(cell_power.dynamic + bitline_dynamic * self.column_size,
-                                        cell_power.leakage * self.column_size * self.row_size)
-        return total_power
+        self.offset_all_coordinates()
+        self.height = self.height + self.dummy_col_insts[0].lr().y * 2
+        
 
-
-    def gen_bl_wire(self):
-        if OPTS.netlist_only:
-            height = 0
-        else:
-            height = self.height
-        bl_pos = 0
-        bl_wire = self.generate_rc_net(int(self.row_size - bl_pos), height, drc("minwidth_m1"))
-        bl_wire.wire_c =spice["min_tx_drain_c"] + bl_wire.wire_c # 1 access tx d/s per cell
-        return bl_wire
-
-    def graph_exclude_bits(self, targ_row=None, targ_col=None):
-        """
-        Excludes bits in column from being added to graph except target
-        """
-        self.replica_bitcell_array.graph_exclude_bits(targ_row, targ_col)
-
-    def graph_exclude_replica_col_bits(self):
-        """
-        Exclude all replica/dummy cells in the replica columns except the replica bit.
-        """
-        self.replica_bitcell_array.graph_exclude_replica_col_bits()
-
-    def get_cell_name(self, inst_name, row, col):
-        """
-        Gets the spice name of the target bitcell.
-        """
-        return self.replica_bitcell_array.get_cell_name(inst_name + "{}x".format(OPTS.hier_seperator) + self.replica_bitcell_array_inst.name, row, col)
-
-    def clear_exclude_bits(self):
-        """
-        Clears the bit exclusions
-        """
-        self.replica_bitcell_array.clear_exclude_bits()
+        for pin_name in self.bitline_pin_list:
+            pin_list = self.replica_bitcell_array_inst.get_pins(pin_name)
+            for pin in pin_list:
+                if 'bl' in pin.name:
+                    self.add_layout_pin(text=pin_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(1, 0),
+                                        width=pin.width(),
+                                        height=self.height)
+                elif 'br' in pin_name:
+                    self.add_layout_pin(text=pin_name,
+                                        layer=pin.layer,
+                                        offset=pin.ll().scale(1, 0) + vector(0,pin_height + drc_width*2),
+                                        width=pin.width(),
+                                        height=self.height - 2 *(pin_height + drc_width*2))
+        
+        # # Replica bitlines
+        # if len(self.rbls) > 0:
+        #     for (names, inst) in zip(self.rbl_bitline_names, self.replica_col_insts):
+        #         pin_names = self.replica_bitcell_array_inst.mod.replica_columns[self.rbls[0]].all_bitline_names
+        #         mirror = self.replica_col_insts[0].mirror
+        #         for (bl_name, pin_name) in zip(names, pin_names):
+        #             pin = inst.get_pin(pin_name)
+        #             if 'rbl_bl' in bl_name:
+        #             #    if mirror != "MY":
+        #             #        bl_name = bl_name.replace("rbl_bl","rbl_br")
+        #                 self.add_layout_pin(text=bl_name,
+        #                                     layer=pin.layer,
+        #                                     offset=pin.ll().scale(1, 0),
+        #                                     width=pin.width(),
+        #                                     height=self.height)
+        #             elif 'rbl_br' in bl_name:
+        #             #    if mirror != "MY":
+        #             #        bl_name = bl_name.replace("rbl_br","rbl_bl")
+        #                 self.add_layout_pin(text=bl_name,
+        #                                     layer=pin.layer,
+        #                                     offset=pin.ll().scale(1, 0) + vector(0,(pin_height + drc_width*2)),
+        #                                     width=pin.width(),
+        #                                     height=self.height - 2 *(pin_height + drc_width*2))
+        return

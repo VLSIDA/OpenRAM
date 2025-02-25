@@ -13,7 +13,7 @@ SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 # Use this for development
 #SRAM_LIB_GIT_REPO ?= git@github.com:VLSIDA/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= dd64256961317205343a3fd446908b42bafba388
+SRAM_LIB_GIT_COMMIT ?= 8dccd8d8ddb0a9de1b02207b2cd0c0d697807aa9
 
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 GF180_PDK ?= $(PDK_ROOT)/gf180mcuD

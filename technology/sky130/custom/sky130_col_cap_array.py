@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
 # Copyright (c) 2016-2023 Regents of the University of California
@@ -9,42 +9,18 @@ from openram.base import geometry
 from openram.sram_factory import factory
 from openram.tech import layer
 from openram import OPTS
+from openram.modules.col_cap_array import col_cap_array  
 from .sky130_bitcell_base_array import sky130_bitcell_base_array
+from openram.modules import pattern
+from math import ceil
 
-class sky130_col_cap_array(sky130_bitcell_base_array):
+class sky130_col_cap_array(col_cap_array, sky130_bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, location, column_offset=0, mirror=0, name=""):
-        # Don't call the regular col-cap_array constructor since we don't want its constructor, just
-        # some of it's useful member functions
-        sky130_bitcell_base_array.__init__(self, rows=rows, cols=cols, column_offset=column_offset, name=name)
-        self.mirror = mirror
-        self.location = location
-        self.rows = rows
-        self.cols = cols
-        self.create_netlist()
-        if not OPTS.netlist_only:
-            self.create_layout()
-
-    def create_netlist(self):
-        """ Create and connect the netlist """
-        # This module has no wordlines
-        # self.create_all_wordline_names()
-        # This module has no bitlines
-        # self.create_all_bitline_names()
-        self.add_modules()
-        self.create_all_wordline_names()
-        self.add_pins()
-        self.create_instances()
-
-    def create_layout(self):
-
-        self.place_array("dummy_r{0}_c{1}", self.mirror)
-        self.add_layout_pins()
-        self.add_supply_pins()
-        self.add_boundary()
-        self.DRC_LVS()
+    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
+        super().__init__(rows, cols, column_offset=column_offset, mirror=mirror, location=location, name=name)
+        self.no_instances = False
 
     def add_modules(self):
         """ Add the modules used in this design """
@@ -60,196 +36,60 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")
 
     def create_instances(self):
-        """ Create the module instances used in this design """
-        self.cell_inst = {}
-        self.array_layout = []
-        bitline = 0
-        for col in range((self.column_size * 2) - 1):
-            row_layout = []
-            name="rca_{0}_{1}".format(self.location, col)
-            # Top/bottom cell are always dummy cells.
-            # Regular array cells are replica cells (>left_rbl and <rows-right_rbl)
-            # Replic bit specifies which other bit (in the full range (0,rows) to make a replica cell.
-            pins = []
-            if col % 4 == 0:
-                row_layout.append(self.colend1)
-                self.cell_inst[col]=self.add_inst(name=name, mod=self.colend1)
-                pins.append("fake_bl_{}".format(bitline))
-                pins.append("vdd")
-                pins.append("gnd")
-                pins.append("fake_br_{}".format(bitline))
-                pins.append("gate")
-                pins.append("vdd")
-                pins.append("gnd")
-                bitline += 1
-            elif col % 4 == 1:
-                row_layout.append(self.colend2)
-                self.cell_inst[col]=self.add_inst(name=name, mod=self.colend3)
-                pins.append("vdd")
-                pins.append("vdd")
-                pins.append("gnd")
-            elif col % 4 == 2:
-                row_layout.append(self.colend1)
-                self.cell_inst[col]=self.add_inst(name=name, mod=self.colend1)
-                pins.append("fake_bl_{}".format(bitline))
-                pins.append("vdd")
-                pins.append("gnd")
-                pins.append("fake_br_{}".format(bitline))
-                pins.append("gate")
-                pins.append("vdd")
-                pins.append("gnd")
-                bitline += 1
-            elif col % 4 ==3:
-                row_layout.append(self.colend2)
-                self.cell_inst[col]=self.add_inst(name=name, mod=self.colend2)
-                pins.append("gnd")
-                pins.append("vdd")
-                pins.append("vnb")
+        self.all_inst={}
+        self.cell_inst={}
+        
+        if self.location == "top":
+            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True)] \
+                    + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False)]\
+                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="MY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False)]
+        elif self.location == "bottom":
+            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True, mirror="MX")] \
+                    + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False, mirror="MX")]\
+                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="XY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False, mirror="MX")]
 
-            self.connect_inst(pins)
+        bit_row = pattern.rotate_list(bit_row, self.column_offset * 2)
+        bit_block = []
+        pattern.append_row_to_block(bit_block, bit_row)
+        self.pattern = pattern(self, "col_cap_array_" + self.location , bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="col_cap_array" + self.location + "_r{0}_c{1}")
+        self.pattern.connect_array()
+        
+ 
+    def get_bitcell_pins(self, row, col):
+        """
+        Creates a list of connections in the bitcell,
+        indexed by column and row, for instance use in bitcell_array
+        """
+        bitcell_pins = []
+        for port in self.all_ports:
+            bitcell_pins.extend([x for x in self.get_bitline_names(port) if x.endswith("_{0}".format(col))])
+        bitcell_pins.append("vdd") # vdd
+        bitcell_pins.append("gnd") # gnd
+        bitcell_pins.append("vdd") # vpb
+        bitcell_pins.append("gnd") # vnb
+        bitcell_pins.append("gnd")# poly gate for parasitic tx
+        #bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
 
-            self.array_layout.append(row_layout)
-
-    def place_array(self, name_template, row_offset=0):
-        xoffset = 0.0
-        yoffset = 0.0
-
-        for col in range(len(self.insts)):
-            inst = self.insts[col]
-            if col % 4 == 0:
-                inst.place(offset=[xoffset + inst.width, yoffset], mirror="MY")
-            elif col % 4 == 1:
-                inst.place(offset=[xoffset, yoffset])
-            elif col % 4 == 2:
-                inst.place(offset=[xoffset, yoffset])
-            elif col % 4 ==3:
-                inst.place(offset=[xoffset, yoffset])
-
-            xoffset += inst.width
-
-        self.width = max([x.rx() for x in self.insts])
-        self.height = max([x.uy() for x in self.insts])
-
-    def add_pins(self):
-
-        for fake_bl in range(self.cols):
-            self.add_pin("fake_bl_{}".format(fake_bl), "OUTPUT")
-            self.add_pin("fake_br_{}".format(fake_bl), "OUTPUT")
-        #self.add_pin("fake_wl", "INPUT")
-        self.add_pin("vdd", "POWER")
-        self.add_pin("gnd", "GROUND")
-        self.add_pin("gate", "BIAS")
-
-
-    def add_layout_pins(self):
-        """ Add the layout pins """
-        # Add vdd/gnd via stacks
-        for cols in range((self.column_size * 2) - 1):
-            inst = self.cell_inst[cols]
-            for pin_name in ["vdd", "gnd"]:
-                for pin in inst.get_pins(pin_name):
-                    if inst.mod.cell_name == 'sky130_fd_bd_sram__sram_sp_colend' or 'sky130_fd_bd_sram__sram_sp_colenda':
-                        if inst.mirror == "MY":
-                            if pin_name == "vdd" and pin.layer == 'm1':
-                                self.add_layout_pin_rect_center(text="vdd",
-                                                                layer=pin.layer,
-                                                                offset=inst.lr(),
-                                                                width=pin.width(),
-                                                                height=pin.height())
-                            elif pin_name == "gnd" and pin.layer == 'm1':
-                                self.add_layout_pin_rect_center(text="gnd",
-                                                                layer=pin.layer,
-                                                                offset=inst.ll(),
-                                                                width=pin.width(),
-                                                                height=pin.height())
-                        else:
-                            if pin_name == "vdd" and pin.layer == 'm1':
-                                self.add_layout_pin_rect_center(text="vdd",
-                                                                layer=pin.layer,
-                                                                offset=inst.ll(),
-                                                                width=pin.width(),
-                                                                height=pin.height())
-                            elif pin_name == "gnd" and pin.layer == 'm1':
-                                self.add_layout_pin_rect_center(text="gnd",
-                                                                layer=pin.layer,
-                                                                offset=inst.lr(),
-                                                                width=pin.width(),
-                                                                height=pin.height())
-            
-
-            for col in range(len(self.insts)):
-
-                inst = self.insts[col]
-                if col % 4 == 0:
-                    pin = self.cell_inst[col].get_pin("bl")
-                    text = "fake_bl_{}".format(int(col/2))
-                    self.add_layout_pin(text=text,
-                            layer=pin.layer,
-                            offset=pin.ll().scale(1, 0),
-                            width=pin.width(),
-                            height=pin.height())
-                    
-                    pin = self.cell_inst[col].get_pin("br")
-                    text = "fake_br_{}".format(int(col/2))
-                    self.add_layout_pin(text=text,
-                            layer=pin.layer,
-                            offset=pin.ll().scale(1, 0),
-                            width=pin.width(),
-                            height=pin.height())
-
-                elif col % 4 == 2:
-                    pin = self.cell_inst[col].get_pin("bl")
-                    text = "fake_bl_{}".format(int(col/2))
-                    self.add_layout_pin(text=text,
-                            layer=pin.layer,
-                            offset=pin.ll().scale(1, 0),
-                            width=pin.width(),
-                            height=pin.height())
-                    
-                    pin = self.cell_inst[col].get_pin("br")
-                    text = "fake_br_{}".format(int(col/2))
-                    self.add_layout_pin(text=text,
-                            layer=pin.layer,
-                            offset=pin.ll().scale(1, 0),
-                            width=pin.width(),
-                            height=pin.height())
-        return
+        return bitcell_pins
     
-    def add_supply_pins(self):
-        for col in range(len(self.insts)):
-            inst = self.cell_inst[col]
+    def get_strap_pins(self, row, col):
+        
+        strap_pins = []
+        if col % 2 == 0 and col % 4 != 0:
+            strap_pins.append("vdd") # vdd
+        else:
+            strap_pins.append("gnd") # gnd
+        strap_pins.append("vdd") # vpb
+        strap_pins.append("gnd") # vnb
+        
+        return strap_pins
+    
+    def create_layout(self):
 
-            if 'VPB' or 'vnb' in self.cell_inst[col].mod.pins:
-                pin = inst.get_pin("vpb")
-                self.objs.append(geometry.rectangle(layer["nwell"],
-                pin.ll(),
-                pin.width(),
-                pin.height()))
-                self.objs.append(geometry.label("vdd", layer["nwell"], pin.center()))
+        self.place_array()
+        self.add_layout_pins()
 
-                
-            if 'VNB' or 'vnb' in self.cell_inst[col].mod.pins:
-                try:
-                    from openram.tech import layer_override
-                    if layer_override['VNB']:
-                        pin = inst.get_pin("vnb")
-                        self.objs.append(geometry.label("gnd", layer["pwellp"], pin.center()))
-                        self.objs.append(geometry.rectangle(layer["pwellp"],
-                        pin.ll(),
-                        pin.width(),
-                        pin.height()))
-                except:
-                    pin = inst.get_pin("vnb")
-                    self.add_label("vdd", pin.layer, pin.center())
-
-
-
-    def create_all_wordline_names(self, row_size=None):
-        if row_size == None:
-            row_size = self.row_size
-
-        for row in range(row_size):
-            for port in self.all_ports:
-                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
-
-        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
+        self.add_boundary()
+        self.DRC_LVS()

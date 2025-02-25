@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 include $(TOP_DIR)/openram.mk
 

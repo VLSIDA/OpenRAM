@@ -79,24 +79,24 @@ class col_cap_array(bitcell_base_array):
 
         return bitcell_pins
 
-    def add_layout_pins(self):
-        """ Add the layout pins """
+    # def add_layout_pins(self):
+    #     """ Add the layout pins """
 
-        column_list = self.cell.get_all_bitline_names()
+    #     column_list = self.cell.get_all_bitline_names()
 
-        for col in range(self.column_size):
-            for cell_column in column_list:
-                bl_pin = self.cell_inst[0, col].get_pin(cell_column)
-                self.add_layout_pin(text=cell_column + "_{0}".format(col),
-                                    layer=bl_pin.layer,
-                                    offset=bl_pin.ll().scale(1, 0),
-                                    width=bl_pin.width(),
-                                    height=self.height)
+    #     for col in range(self.column_size):
+    #         for cell_column in column_list:
+    #             bl_pin = self.cell_inst[0, col].get_pin(cell_column)
+    #             self.add_layout_pin(text=cell_column + "_{0}".format(col),
+    #                                 layer=bl_pin.layer,
+    #                                 offset=bl_pin.ll().scale(1, 0),
+    #                                 width=bl_pin.width(),
+    #                                 height=self.height)
 
-        # Add vdd/gnd via stacks
-        for row in range(self.row_size):
-            for col in range(self.column_size):
-                inst = self.cell_inst[row, col]
-                for pin_name in ["vdd", "gnd"]:
-                    for pin in inst.get_pins(pin_name):
-                        self.copy_layout_pin(inst, pin_name)
+    #     # Add vdd/gnd via stacks
+    #     for row in range(self.row_size):
+    #         for col in range(self.column_size):
+    #             inst = self.cell_inst[row, col]
+    #             for pin_name in ["vdd", "gnd"]:
+    #                 for pin in inst.get_pins(pin_name):
+    #                     self.copy_layout_pin(inst, pin_name)

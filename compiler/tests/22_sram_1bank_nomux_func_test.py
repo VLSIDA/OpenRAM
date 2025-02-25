@@ -25,7 +25,7 @@ class sram_1bank_nomux_func_test(openram_test):
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
         OPTS.trim_netlist = False
-
+        OPTS.num_sim_threads = 1
         # This is a hack to reload the characterizer __init__ with the spice version
         from importlib import reload
         from openram import characterizer

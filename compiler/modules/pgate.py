@@ -156,13 +156,15 @@ class pgate(design):
 
         return via
 
-    def extend_wells(self):
+    def extend_wells(self, width=None):
         """ Extend the n/p wells to cover whole cell """
 
         # This should match the cells in the cell library
         self.nwell_yoffset = 0.48 * self.height
         full_height = self.height + 0.5 * self.m1_width
 
+        if width == None:
+            width = self.width + 2 * self.well_extend_active
 
         # FIXME: float rounding problem
         if "nwell" in layer:
@@ -173,12 +175,12 @@ class pgate(design):
             nwell_height = nwell_max_offset - self.nwell_yoffset
             self.add_rect(layer="nwell",
                           offset=nwell_position,
-                          width=self.width + 2 * self.well_extend_active,
+                          width=width,
                           height=nwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=nwell_position,
-                              width=self.width + 2 * self.well_extend_active,
+                              width=width,
                               height=nwell_height)
 
         # Start this half a rail width below the cell
@@ -189,12 +191,12 @@ class pgate(design):
             pwell_height = self.nwell_yoffset - pwell_position.y
             self.add_rect(layer="pwell",
                           offset=pwell_position,
-                          width=self.width + 2 * self.well_extend_active,
+                          width=width,
                           height=pwell_height)
             if "vtg" in layer:
                 self.add_rect(layer="vtg",
                               offset=pwell_position,
-                              width=self.width + 2 * self.well_extend_active,
+                              width=width,
                               height=pwell_height)
 
         if cell_props.pgate.add_implants:

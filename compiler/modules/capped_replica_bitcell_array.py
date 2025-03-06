@@ -87,7 +87,9 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                           # dummy column + left replica column(s)
                                           column_offset=0,
                                           mirror=0,
-                                          location="top")
+                                          location="top",
+                                          left_rbl=self.left_rbl,
+                                          right_rbl=self.right_rbl)
 
         self.col_cap_bottom = factory.create(module_type=col_cap_module_type,
                                              cols=self.column_size + len(self.rbls),
@@ -95,7 +97,9 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                              # dummy column + left replica column(s)
                                              column_offset=0,
                                              mirror=0,
-                                             location="bottom")
+                                             location="bottom",
+                                             left_rbl=self.left_rbl,
+                                             right_rbl=self.right_rbl)
 
         # Dummy Col or Row Cap, depending on bitcell array properties
         row_cap_module_type = ("row_cap_array" if self.cell.end_caps else "dummy_array")

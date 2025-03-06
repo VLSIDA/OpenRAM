@@ -814,7 +814,9 @@ flatglob = ["*_?mos_m*",
 blackbox_cells = ["sky130_fd_bd_sram__openram_dp_cell",
                   "sky130_fd_bd_sram__openram_dp_cell_dummy",
                   "sky130_fd_bd_sram__openram_dp_cell_replica",
-
+                  
+                  "sky130_fd_bd_sram__openram_sp_colend_replica",
+                  "sky130_fd_bd_sram__openram_sp_colenda_replica",
                   "sky130_fd_bd_sram__sram_sp_cell_opt1a",
                   "sky130_fd_bd_sram__openram_sp_cell_opt1a_dummy",
                   "sky130_fd_bd_sram__openram_sp_cell_opt1_dummy",

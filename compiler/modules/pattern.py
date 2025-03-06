@@ -176,9 +176,6 @@ class pattern():
                     self.parent_design.all_inst[row, col] = self.parent_design.add_existing_inst(inst,self.name_template.format(row, col))
                     self.parent_design.connect_inst(self.parent_design.get_strap_pins(self.bit_rows[col], self.bit_cols[row]))
 
-    def print_bit_blocck():
-        return
-    
     def place_inst(self, inst, offset) -> None:
         x = offset[0]
         y = offset[1]

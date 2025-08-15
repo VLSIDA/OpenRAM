@@ -367,8 +367,8 @@ class lib:
         self.lib.write("    type (data){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
-        self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
-        self.lib.write("    bit_from : {0};\n".format(self.sram.word_size - 1))
+        self.lib.write("    bit_width : {0};\n".format(self.sram.word_size + self.sram.num_spare_cols))
+        self.lib.write("    bit_from : {0};\n".format(self.sram.word_size + self.sram.num_spare_cols - 1))
         self.lib.write("    bit_to : 0;\n")
         self.lib.write("    }\n\n")
 
@@ -432,7 +432,7 @@ class lib:
         self.lib.write("        }\n")
 
 
-        self.lib.write("        pin(dout{0}[{1}:0]){{\n".format(read_port,self.sram.word_size-1))
+        self.lib.write("        pin(dout{0}[{1}:0]){{\n".format(read_port,self.sram.word_size + self.sram.num_spare_cols - 1))
         self.lib.write("        timing(){ \n")
         self.lib.write("            timing_sense : non_unate; \n")
         self.lib.write("            related_pin : \"clk{0}\"; \n".format(read_port))
@@ -465,7 +465,7 @@ class lib:
         self.lib.write("            address : addr{0}; \n".format(write_port))
         self.lib.write("            clocked_on  : clk{0}; \n".format(write_port))
         self.lib.write("        }\n")
-        self.lib.write("        pin(din{0}[{1}:0]){{\n".format(write_port,self.sram.word_size-1))
+        self.lib.write("        pin(din{0}[{1}:0]){{\n".format(write_port,self.sram.word_size + self.sram.num_spare_cols - 1))
         self.write_FF_setuphold(write_port)
         self.lib.write("        }\n") # pin
         self.lib.write("    }\n") #bus
@@ -513,6 +513,12 @@ class lib:
         ctrl_pin_names = ["csb{0}".format(port)]
         if port in self.readwrite_ports:
             ctrl_pin_names.append("web{0}".format(port))
+        if port in self.write_ports:
+            if self.sram.num_spare_cols == 1:
+                ctrl_pin_names.append("spare_wen{0}".format(port))
+            else:
+                for bit in range(self.sram.num_spare_cols):
+                    ctrl_pin_names.append("spare_wen{0}[{1}]".format(port, bit))
 
         for i in ctrl_pin_names:
             self.lib.write("    pin({0})".format(i))

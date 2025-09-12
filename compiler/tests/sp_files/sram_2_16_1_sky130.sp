@@ -833,8 +833,8 @@ Xrca_top_4
 X0 ll WL BR VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
 X1 ul Q_bar_float VGND VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
 X2 BL WL ul VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
-*X3 ur WL ur VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
-*X4 lr WL lr VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
+*X3 ur WL ur VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
+*X4 lr WL lr VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
 X5 VPWR Q_float lr VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X6 ur Q_bar_float VPWR VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X7 VGND Q_float ll VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
@@ -977,8 +977,8 @@ Xrca_19
 X0 Q_bar WL BR VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
 X1 Q Q_bar VGND VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
 X2 BL WL Q VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
-*X3 Q WL Q VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
-*X4 Q_bar WL Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
+*X3 Q WL Q VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
+*X4 Q_bar WL Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
 X5 VPWR Q Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X6 Q Q_bar VPWR VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X7 VGND Q Q_bar VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
@@ -989,8 +989,8 @@ X7 VGND Q Q_bar VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
 X0 Q_bar WL BR VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
 X1 Q Q_bar VGND VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15
 X2 BL WL Q VNB sky130_fd_pr__special_nfet_pass w=0.14 l=0.15
-*X3 Q WL Q VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
-*X4 Q_bar WL Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.07 l=0.095
+*X3 Q WL Q VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
+*X4 Q_bar WL Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.14u l=25n
 X5 VPWR Q Q_bar VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X6 Q Q_bar VPWR VPB sky130_fd_pr__special_pfet_pass w=0.14 l=0.15
 X7 VGND Q Q_bar VNB sky130_fd_pr__special_nfet_latch w=0.21 l=0.15

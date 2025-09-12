@@ -50,9 +50,9 @@ class sky130_dummy_array(dummy_array, sky130_bitcell_base_array):
        
         bit_block = []
         if(self.row_offset % 2 == 0):
-            next_row = 0
-        else:
             next_row = 1
+        else:
+            next_row = 0
         
         for i in range(self.row_size):
             if next_row == 0:

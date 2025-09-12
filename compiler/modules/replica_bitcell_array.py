@@ -78,7 +78,9 @@ class replica_bitcell_array(bitcell_base_array):
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             column_offset=len(self.left_rbl),
                                             cols=self.column_size,
-                                            rows=self.row_size)
+                                            rows=self.row_size,
+                                            left_rbl=self.left_rbl, 
+                                            right_rbl=self.right_rbl)
 
         # Replica bitlines
         self.replica_columns = {}

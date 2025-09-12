@@ -23,6 +23,10 @@ class sky130_bitcell(bitcell_base):
             cell_name = "sky130_fd_bd_sram__sram_sp_cell_opt1"
         elif version == "opt1a":
             cell_name = "sky130_fd_bd_sram__sram_sp_cell_opt1a"
+        elif version == "opt1_noblcon":
+            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1_noblcon"
+        elif version == "opt1a_noblcon":
+            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1a_noblcon"
         else:
             debug.error("Invalid sky130 cell name", -1)
 

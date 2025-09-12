@@ -19,7 +19,7 @@ class bitcell_array(bitcell_base_array):
     Creates a rows x cols array of memory cells.
     Assumes bit-lines and word lines are connected by abutment.
     """
-    def __init__(self, rows, cols, column_offset=0, name=""):
+    def __init__(self, rows, cols, column_offset=0, name="", left_rbl=None, right_rbl=None):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))

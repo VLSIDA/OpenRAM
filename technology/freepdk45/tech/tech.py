@@ -67,6 +67,9 @@ m1_stack = ("m1", "via1", "m2")
 m2_stack = ("m2", "via2", "m3")
 m3_stack = ("m3", "via3", "m4")
 
+# Added to support ROM generation
+lef_rom_interconnect = ["m1", "m2", "m3", "m4", "m5"]
+
 layer_indices = {"poly": 0,
                  "active": 0,
                  "m1": 1,

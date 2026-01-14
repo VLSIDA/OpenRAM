@@ -158,10 +158,35 @@ class bitcell_base_array(design):
                                     height=wl_pin.height())
 
     def route_supplies(self):
+        
+        vdd_found = False
+        gnd_found = False
+        
         for inst in self.insts:
-            for pin_name in ["vdd", "gnd"]:
-                if pin_name in inst.mod.get_pin_names():
-                    self.copy_layout_pin(inst, pin_name)
+            if 'vdd' in inst.mod.get_pin_names():
+                vdd_found = True
+            if 'gnd' in inst.mod.get_pin_names():
+                gnd_found = True
+        
+        power_name = 'vdd'
+        ground_name = 'gnd'
+        if vdd_found is False or gnd_found is False:
+            from openram.tech import cell_properties
+            try:
+                power_name = cell_properties.power_name
+            except:
+                pass
+            try:
+                ground_name = cell_properties.ground_name    
+            except:
+                pass
+            
+            
+        for inst in self.insts:
+            if power_name in inst.mod.get_pin_names():
+                self.copy_layout_pin(inst, power_name, new_name='vdd')
+            if ground_name  in inst.mod.get_pin_names():
+                self.copy_layout_pin(inst, ground_name , new_name='gnd')
 
     def add_layout_pins(self):
         """ Add the layout pins """

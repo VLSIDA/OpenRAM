@@ -17,7 +17,7 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, mirror=0, location="", name=""):
         super().__init__(rows, cols, column_offset=column_offset, location=location, name=name)
         self.mirror = mirror
         self.location = location

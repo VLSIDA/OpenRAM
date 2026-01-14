@@ -24,6 +24,7 @@ File containing the process technology parameters for Skywater 130nm.
 # For example: tech_modules["contact"] = "contact_freepdk45"
 tech_modules = d.module_type()
 
+
 # These modules have been hand designed and provided in this repository.
 tech_modules["nand2_dec"] = "nand2_dec"
 tech_modules["nand3_dec"] = "nand3_dec"
@@ -33,23 +34,24 @@ tech_modules["nand4_dec"] = "nand4_dec"
 # These are for single port and dual port as a list,
 # or for both if there is no list,
 # or only applicable to one if there is no list.
-tech_modules["bitcell_1port"] = "sky130_bitcell"
-tech_modules["replica_bitcell_1port"] = "sky130_replica_bitcell"
-tech_modules["dummy_bitcell_1port"] = "sky130_dummy_bitcell"
+
+#tech_modules["bitcell_1port"] = "sky130_bitcell"
+#tech_modules["replica_bitcell_1port"] = "sky130_replica_bitcell"
+#tech_modules["dummy_bitcell_1port"] = "sky130_dummy_bitcell"
 
 tech_modules["replica_bitcell_2port"] = "replica_bitcell_2port"
 tech_modules["dummy_bitcell_2port"] = "dummy_bitcell_2port"
 tech_modules["bitcell_2port"] = "bitcell_2port"
 
-tech_modules["bitcell_array"] = ["sky130_bitcell_array", "bitcell_array"]
-tech_modules["replica_bitcell_array"] = ["sky130_replica_bitcell_array", "replica_bitcell_array"]
-tech_modules["capped_replica_bitcell_array"] = ["sky130_capped_replica_bitcell_array", "capped_replica_bitcell_array"]
-tech_modules["dummy_array"] = ["sky130_dummy_array", "dummy_array"]
+tech_modules["bitcell_array"] = ["bitcell_array", "bitcell_array"]
+tech_modules["replica_bitcell_array"] = ["replica_bitcell_array", "replica_bitcell_array"]
+tech_modules["capped_replica_bitcell_array"] = ["capped_replica_bitcell_array", "capped_replica_bitcell_array"]
+tech_modules["dummy_array"] = ["dummy_array", "dummy_array"]
 
-tech_modules["replica_column"] = ["sky130_replica_column", "replica_column"]
+tech_modules["replica_column"] = ["replica_column", "replica_column"]
 
-tech_modules["col_cap_array"] = ["sky130_col_cap_array", "col_cap_array"]
-tech_modules["col_cap"] = ["sky130_col_cap", "col_cap_bitcell_2port"]
+tech_modules["col_cap_array"] = ["col_cap_array", "col_cap_array"]
+tech_modules["col_cap"] = ["col_cap_bitcell_1port", "col_cap_bitcell_2port"]
 tech_modules["corner"] = ["sky130_corner", None]
 tech_modules["internal"] = ["sky130_internal", None]
 tech_modules["row_cap_array"] = ["sky130_row_cap_array", "row_cap_array"]
@@ -68,28 +70,32 @@ tech_modules["and4_dec"] = "and4_dec"
 ###################################################
 cell_properties = d.cell_properties()
 
-cell_properties.bitcell_power_pin_directions = ("H", "H")
+cell_properties.power_name = 'VPWR'
+cell_properties.ground_name = 'VGND'
+
+cell_properties.bitcell_power_pin_directions = ("V", "V")
 
 cell_properties.bitcell_1port.mirror.x = True
 cell_properties.bitcell_1port.mirror.y = True
-cell_properties.bitcell_1port.end_caps = True
-cell_properties.bitcell_1port.boundary_layer = "mem"
-cell_properties.bitcell_1port.port_order = ['bl', 'br', 'gnd', 'vdd', 'vpb', 'vnb', 'wl']
-cell_properties.bitcell_1port.port_types = ["OUTPUT", "OUTPUT", "GROUND", "POWER", "BIAS", "BIAS", "INPUT"]
+cell_properties.bitcell_1port.end_caps = False
+cell_properties.bitcell_1port.boundary_layer = "boundary"
+cell_properties.bitcell_1port.port_order = ['bl', 'br', 'wl', 'vdd', 'gnd']
+cell_properties.bitcell_1port.port_types = ["INPUT", "INPUT", "GROUND", "POWER", "OUTPUT"]
 cell_properties.bitcell_1port.port_map = {'bl': 'BL',
                                           'br': 'BR',
-                                          'wl': 'WL',
+                                          'gnd': 'VGND',
                                           'vdd': 'VPWR',
-                                          'vnb': 'VNB',
-                                          'vpb': 'VPB',
-                                          'gnd': 'VGND'}
+                                          'wl': 'WL'}
+                                          
+                                          
+                                          
 
 cell_properties.bitcell_1port.wl_layer = "m2"
 cell_properties.bitcell_1port.bl_layer = "m1"
 cell_properties.bitcell_1port.vdd_layer = "m1"
 cell_properties.bitcell_1port.vdd_dir = "V"
-cell_properties.bitcell_1port.gnd_layer = "m2"
-cell_properties.bitcell_1port.gnd_dir = "H"
+cell_properties.bitcell_1port.gnd_layer = "m1"
+cell_properties.bitcell_1port.gnd_dir = "V"
 
 cell_properties.bitcell_2port.mirror.x = True
 cell_properties.bitcell_2port.mirror.y = True
@@ -103,47 +109,45 @@ cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'wl1': 'WL1',
                                           'vdd': 'VDD',
                                           'gnd': 'GND'}
+
 cell_properties.bitcell_1port.wl_layer = "m2"
-cell_properties.bitcell_1port.vdd_layer = "m2"
-cell_properties.bitcell_1port.vdd_dir = "H"
-cell_properties.bitcell_1port.gnd_layer = "m2"
-cell_properties.bitcell_1port.gnd_dir = "H"
+cell_properties.bitcell_1port.vdd_layer = "m1"
+cell_properties.bitcell_1port.vdd_dir = "V"
+cell_properties.bitcell_1port.gnd_layer = "m1"
+cell_properties.bitcell_1port.gnd_dir = "V"
 cell_properties.bitcell_2port.wl_layer = "m2"
 cell_properties.bitcell_2port.vdd_layer = "m1"
 cell_properties.bitcell_2port.vdd_dir = "H"
 cell_properties.bitcell_2port.gnd_layer = "m2"
 cell_properties.bitcell_2port.gnd_dir = "H"
 
-cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'br', 'vdd', 'gnd', 'vpb', 'vnb', 'gate'],
-                                             ['INPUT', 'INPUT','POWER', 'GROUND',  'BIAS', 'BIAS', 'INPUT'],
+cell_properties.col_cap_1port_bitcell = d.cell(['bl', 'br', 'vdd', 'gnd',],
+                                             ['INPUT', 'INPUT','POWER', 'GROUND', ],
                                              {'bl': 'bl',
                                               'br': 'br',
                                               'vdd': 'vdd',
-                                              'gnd': 'gnd',
-                                              'vnb': 'vnb',
-                                              'vpb': 'vpb',
-                                              'gate': 'gate'})
-cell_properties.col_cap_1port_bitcell.boundary_layer = "mem"
+                                              'gnd': 'gnd',})
+cell_properties.col_cap_1port_bitcell.boundary_layer = "boundary"
 
 cell_properties.col_cap_1port_strap_power = d.cell(['vdd', 'vpb', 'vnb'],
                                                  ['POWER', 'BIAS', 'BIAS'],
                                                  {'vnb': 'VNB',
                                                   'vpb': 'VPB',
                                                   'vdd': 'VPWR'})
-cell_properties.col_cap_1port_strap_power.boundary_layer = "mem"
+cell_properties.col_cap_1port_strap_power.boundary_layer = "boundary"
 
 cell_properties.col_cap_1port_strap_ground = d.cell(['gnd', 'vpb', 'vnb'],
                                                   ['GROUND', 'BIAS', 'BIAS'],
                                                   {'vnb': 'VNB',
                                                    'vpb': 'VPB',
                                                    'gnd': 'VGND'})
-cell_properties.col_cap_1port_strap_ground.boundary_layer = "mem"
+cell_properties.col_cap_1port_strap_ground.boundary_layer = "boundary"
 
 cell_properties.row_cap_1port_cell = d.cell(['vdd', 'wl'],
                                           ['POWER', 'INPUT'],
                                           {'wl': 'WL',
                                            'vdd': 'VPWR'})
-cell_properties.row_cap_1port_cell.boundary_layer = "mem"
+cell_properties.row_cap_1port_cell.boundary_layer = "boundary"
 
 cell_properties.col_cap_2port.port_order = ['bl0', 'br0', 'bl1', 'br1', 'vdd']
 cell_properties.col_cap_2port.port_map = {'bl0': 'BL0',
@@ -163,7 +167,7 @@ cell_properties.ptx.model_is_subckt = True
 
 cell_properties.pgate.add_implants = True
 
-cell_properties.use_strap = True
+cell_properties.use_strap = False
 cell_properties.strap_module = "internal"
 cell_properties.strap_version = "wlstrap"
 
@@ -219,9 +223,13 @@ cell_properties.write_driver.port_map = {'din': 'DIN',
 # If it is a list, the first is single port and the second is dual port.
 # If it is string, it is used for both single and dual port.
 cell_properties.names["dff"] = "sky130_fd_bd_sram__openram_dff"
-cell_properties.names["nand2_dec"] = ["sky130_fd_bd_sram__openram_sp_nand2_dec", "sky130_fd_bd_sram__openram_dp_nand2_dec"]
-cell_properties.names["nand3_dec"] = ["sky130_fd_bd_sram__openram_sp_nand3_dec", "sky130_fd_bd_sram__openram_dp_nand3_dec"]
-cell_properties.names["nand4_dec"] = ["sky130_fd_bd_sram__openram_sp_nand4_dec", "sky130_fd_bd_sram__openram_dp_nand4_dec"]
+cell_properties.names["nand2_dec"] = ["sky130_fd_bd_sram__openram_dp_nand2_dec", "sky130_fd_bd_sram__openram_dp_nand2_dec"]
+cell_properties.names["nand3_dec"] = ["sky130_fd_bd_sram__openram_dp_nand3_dec", "sky130_fd_bd_sram__openram_dp_nand3_dec"]
+cell_properties.names["nand4_dec"] = ["sky130_fd_bd_sram__openram_dp_nand4_dec", "sky130_fd_bd_sram__openram_dp_nand4_dec"]
+
+cell_properties.names["bitcell_1port"] = "sky130_custom_cell"
+cell_properties.names["replica_bitcell_1port"] = "sky130_custom_replica"
+cell_properties.names["dummy_bitcell_1port"] = "sky130_custom_dummy"
 
 cell_properties.names["bitcell_2port"] = "sky130_fd_bd_sram__openram_dp_cell"
 cell_properties.names["dummy_bitcell_2port"] = "sky130_fd_bd_sram__openram_dp_cell_dummy"
@@ -253,7 +261,7 @@ layer_properties.hierarchical_predecode.input_layer = "li"
 layer_properties.hierarchical_predecode.output_layer = "m2"
 layer_properties.hierarchical_predecode.vertical_supply = True
 layer_properties.hierarchical_predecode.force_horizontal_input_contact = True
-
+    
 layer_properties.bank.stack = "m2_stack"
 layer_properties.bank.pitch = "m3_pitch"
 
@@ -265,7 +273,7 @@ layer_properties.port_address.supply_offset = True
 layer_properties.port_data.enable_layer = "m1"
 layer_properties.port_data.channel_route_bitlines = False
 
-layer_properties.replica_column.even_rows = True
+layer_properties.replica_column.even_rows = False
 
 layer_properties.wordline_driver.vertical_supply = True
 

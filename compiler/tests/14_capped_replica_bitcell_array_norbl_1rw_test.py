@@ -26,7 +26,7 @@ class capped_replica_bitcell_array_norbl_1rw_test(openram_test):
         openram.setup_bitcell()
 
         debug.info(2, "Testing 7x5 capped replica array for 1rw cell without replica column or dummy row")
-        a = factory.create(module_type="capped_replica_bitcell_array", cols=7, rows=5, rbl=[0, 0])
+        a = factory.create(module_type="capped_replica_bitcell_array", cols=8, rows=6, rbl=[0, 0])
         self.local_check(a)
 
         openram.end_openram()

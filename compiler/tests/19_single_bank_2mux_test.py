@@ -24,7 +24,9 @@ class single_bank_test(openram_test):
         from openram import sram_config
 
         c = sram_config(word_size=4,
-                        num_words=16)
+                        num_words=16,
+                        num_spare_cols=1,
+                        num_spare_rows=1)
 
         c.num_words=32
         c.words_per_row=2

@@ -187,7 +187,7 @@ class pattern():
         inst.place((x, y), inst.mirror, inst.rotate)
 
     def place_array(self):
-
+    
         (self.row_max, self.col_max) = list(self.parent_design.all_inst.keys())[-1]
         y = 0
         for row in range(self.row_max+1):

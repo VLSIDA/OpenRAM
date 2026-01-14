@@ -107,6 +107,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.row_cap_left = factory.create(module_type=row_cap_module_type,
                                             cols=1,
                                             column_offset=0,
+                                            row_offset=len(self.left_rbl)+len(self.right_rbl),
                                             rows=self.row_size + self.extra_rows,
                                             location="left")
 
@@ -117,6 +118,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                             # + bitcell columns
                                             # + right replica column(s)
                                             column_offset=len(self.left_rbl) + self.column_size + self.rbl[0],
+                                            row_offset=len(self.left_rbl)+len(self.right_rbl),
                                             rows=self.row_size + self.extra_rows,
                                             location="right")
 
@@ -181,7 +183,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # Top/bottom dummy rows or col caps
         self.dummy_row_insts = []
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_bot",
-                                                  mod=self.col_cap_bottom))
+                                                  mod=self.col_cap_bottom,))
         self.connect_inst(self.bitline_pin_list + ["gnd"] * len(self.col_cap_bottom.get_wordline_names()) + self.supplies)
         self.dummy_row_insts.append(self.add_inst(name="dummy_row_top",
                                                   mod=self.col_cap_top))
@@ -217,7 +219,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.capped_rba_height = self.dummy_col_insts[0].height
         
 
-        #self.route_power_ring(self.supply_stack[2], self.supply_stack[0])
+        self.route_power_ring(self.supply_stack[2], self.supply_stack[0])
         self.route_supplies()
 
         self.route_unused_wordlines()
@@ -289,6 +291,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.dummy_col_insts[1].place(offset=offset)
 
     def add_layout_pins(self):
+
         for pin_name in self.used_wordline_names + self.bitline_pin_list:
             pin = self.replica_bitcell_array_inst.get_pin(pin_name)
 
@@ -308,6 +311,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                 offset=pin_offset,
                                 width=pin_width,
                                 height=pin_height)
+            
 
     def route_supplies(self):
 
@@ -322,8 +326,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
         
         if top:
             inst = self.dummy_row_insts[1]
-            if "vdd" in inst.mod.pins:
-                array_pins = inst.get_pins("vdd")
+            if 'vdd' in inst.mod.pins:
+                array_pins = inst.get_pins('vdd')
                 for array_pin in array_pins:
                     supply_pin = self.top_vdd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
@@ -331,7 +335,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               to_layer = supply_pin.layer,
                                               offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-                array_pins = inst.get_pins("gnd")
+                array_pins = inst.get_pins('gnd')
                 for array_pin in array_pins:
                     supply_pin = self.top_gnd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
@@ -340,8 +344,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               offset = vector(array_pin.center()[0], supply_pin.center()[1]))
         if bottom:
             inst = self.dummy_row_insts[0]
-            if "vdd" in inst.mod.pins:
-                array_pins = inst.get_pins("vdd")
+            if 'vdd' in inst.mod.pins:
+                array_pins = inst.get_pins('vdd')
                 for array_pin in array_pins:
                     supply_pin = self.bottom_vdd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
@@ -349,7 +353,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               to_layer = supply_pin.layer,
                                               offset = vector(array_pin.center()[0], supply_pin.center()[1]))
 
-                array_pins = inst.get_pins("gnd")
+                array_pins = inst.get_pins('gnd')
                 for array_pin in array_pins:
                     supply_pin = self.bottom_gnd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
@@ -358,8 +362,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               offset = vector(array_pin.center()[0], supply_pin.center()[1]))
         if left:
             inst = self.dummy_col_insts[0]
-            if "vdd" in inst.mod.pins:
-                array_pins = inst.get_pins("vdd")
+            if 'vnd' in inst.mod.pins:
+                array_pins = inst.get_pins('vnd')
                 for array_pin in array_pins:
                     supply_pin = self.left_vdd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
@@ -367,7 +371,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               to_layer = supply_pin.layer,
                                               offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-                array_pins = inst.get_pins("gnd")
+                array_pins = inst.get_pins('gnd')
                 for array_pin in array_pins:
                     supply_pin = self.left_gnd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
@@ -376,8 +380,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               offset = vector(supply_pin.center()[0], array_pin.center()[1]))
         if right:
             inst = self.dummy_col_insts[1]
-            if "vdd" in inst.mod.pins:
-                array_pins = inst.get_pins("vdd")
+            if 'vdd' in inst.mod.pins:
+                array_pins = inst.get_pins('vdd')
                 for array_pin in array_pins:
                     supply_pin = self.right_vdd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
@@ -385,29 +389,30 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                               to_layer = supply_pin.layer,
                                               offset = vector(supply_pin.center()[0], array_pin.center()[1]))
 
-                array_pins = inst.get_pins("gnd")
+                array_pins = inst.get_pins('gnd')
                 for array_pin in array_pins:
                     supply_pin = self.right_gnd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))       
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                          
     def route_unused_wordlines(self):
         """
         Connect the unused RBL and dummy wordlines to gnd
         """
         # This grounds all the dummy row word lines
         for inst in self.dummy_row_insts:
-            for wl_name in self.col_cap_top.get_wordline_names():
+            for wl_name in inst.mod.get_wordline_names():
                 pin = inst.get_pin(wl_name)
-                self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-                self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
+                self.connect_side_pin(pin, "left", self.left_gnd_pin.cx())
+                self.connect_side_pin(pin, "right", self.right_gnd_pin.cx())
 
         # Ground the unused replica wordlines
         for wl_name in self.unused_wordline_names:
             pin = self.replica_bitcell_array_inst.get_pin(wl_name)
-            self.connect_side_pin(pin, "left", self.left_gnd_locs[0].x)
-            self.connect_side_pin(pin, "right", self.right_gnd_locs[0].x)
+            self.connect_side_pin(pin, "left", self.left_gnd_pin.cx())
+            self.connect_side_pin(pin, "right", self.right_gnd_pin.cx())
 
     def route_side_pin(self, name, side, offset_multiple=1):
         """

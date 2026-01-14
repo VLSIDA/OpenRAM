@@ -67,7 +67,7 @@ def parse_args():
                              dest="num_sim_threads"),
         optparse.make_option("-v", "--verbose",
                              action="count",
-                             dest="verbose_level",
+                             dest="5",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech",
                              dest="tech_name",

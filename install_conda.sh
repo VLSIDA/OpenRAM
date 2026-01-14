@@ -1,4 +1,7 @@
 #!/bin/bash
+#CONDA_INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-py313_25.11.1-1-Linux-x86_64.sh"
+#CONDA_INSTALLER_FILE="miniconda_installer_py313.sh"
+
 CONDA_INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-py38_23.11.0-2-Linux-x86_64.sh"
 CONDA_INSTALLER_FILE="miniconda_installer_py38.sh"
 CONDA_HOME="${CONDA_HOME:-miniconda}"
@@ -6,12 +9,12 @@ CONDA_HOME="${CONDA_HOME:-miniconda}"
 # The tool name format is "<tool>=<version>".
 # If you want to use the latest version, just use "<tool>".
 TOOLS=""
-TOOLS+="klayout=0.28.3 "
-TOOLS+="magic=8.3.497 "
+#TOOLS+="klayout=0.28.3 "
+TOOLS+="magic=8.3.587 "
 TOOLS+="netgen=1.5.286 "
 TOOLS+="ngspice=26 "
 TOOLS+="trilinos=12.12.1=1 "
-TOOLS+="xyce=7.4=3"
+TOOLS+="xyce=7.4"
 
 # Install miniconda if not already installed
 if [[ ! -d "${CONDA_HOME}/bin" ]]
@@ -24,16 +27,16 @@ then
     # Prioritize channels to prevent version conflicts
     conda config --add channels conda-forge
     conda config --add channels vlsida-eda
-
-    # Install iverilog from conda-eda
-    conda install -q -y -c litex-hub iverilog
-
+    
+    #conda install -q -y -c conda-forge trilinos
     # Install rest of the tools from vlsida-eda
     for tool in ${TOOLS}
     do
         conda install -q -y -c vlsida-eda ${tool}
     done
 
+    # Install iverilog from conda-eda
+    conda install -q -y -c litex-hub iverilog
     # Install required Python packages
     # (This step isn't required but used to prevent possible issues)
     python3 -m pip install -r requirements.txt --ignore-installed

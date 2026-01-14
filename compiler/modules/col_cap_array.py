@@ -6,7 +6,8 @@
 from openram.sram_factory import factory
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-
+from openram.base import geometry
+from .pattern import pattern
 
 class col_cap_array(bitcell_base_array):
     """

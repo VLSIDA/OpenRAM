@@ -59,7 +59,7 @@ All unit tests should pass first.
 3. Clone your repository (or use an existing cloned copy if you've
    already done this once):
 ```
-  git clone https://github.com/<youruser>/oepnram.git
+  git clone https://github.com/<youruser>/openram.git
   cd openram
 ```
 

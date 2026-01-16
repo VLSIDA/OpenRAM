@@ -1816,9 +1816,9 @@ class layout():
             # The boundary will determine the limits to the size
             # of the routing grid
             boundary = layout.measureBoundary(top_name)
-            # These must be un-indexed to get rid of the matrix type
-            ll = vector(boundary[0][0], boundary[0][1])
-            ur = vector(boundary[1][0], boundary[1][1])
+            # These must be un-indexed to get rid of the numpy array type
+            ll = vector(boundary[0][0].item(), boundary[0][1].item())
+            ur = vector(boundary[1][0].item(), boundary[1][1].item())
         else:
             ll, ur = self.bbox
 

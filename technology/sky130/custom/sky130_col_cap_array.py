@@ -75,12 +75,12 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 row_layout.append(self.colend1)
                 self.cell_inst[col]=self.add_inst(name=name, mod=self.colend1)
                 pins.append("fake_bl_{}".format(bitline))
-                pins.append("vdd")
-                pins.append("gnd")
                 pins.append("fake_br_{}".format(bitline))
-                pins.append("gate")
                 pins.append("vdd")
                 pins.append("gnd")
+                pins.append("vdd")
+                pins.append("gnd")
+                pins.append("gate")
                 bitline += 1
             elif col % 4 == 1:
                 row_layout.append(self.colend2)
@@ -92,12 +92,12 @@ class sky130_col_cap_array(sky130_bitcell_base_array):
                 row_layout.append(self.colend1)
                 self.cell_inst[col]=self.add_inst(name=name, mod=self.colend1)
                 pins.append("fake_bl_{}".format(bitline))
-                pins.append("vdd")
-                pins.append("gnd")
                 pins.append("fake_br_{}".format(bitline))
-                pins.append("gate")
                 pins.append("vdd")
                 pins.append("gnd")
+                pins.append("vdd")
+                pins.append("gnd")
+                pins.append("gate")
                 bitline += 1
             elif col % 4 ==3:
                 row_layout.append(self.colend2)

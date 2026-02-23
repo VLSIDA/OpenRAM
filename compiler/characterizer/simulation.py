@@ -126,8 +126,10 @@ class simulation():
     def get_data_bit_column_number(self, probe_address, probe_data):
         """Calculates bitline column number of data bit under test using bit position and mux size"""
 
-        if self.sram.col_addr_size>0:
-            col_address = int(probe_address[0:self.sram.col_addr_size], 2)
+        # Address pins are ordered a*_0 ... a*_N, where a*_0 is the LSB.
+        # So the column mux select bits are the rightmost bits in the binary address string.
+        if self.sram.col_addr_size > 0:
+            col_address = int(probe_address[-self.sram.col_addr_size:], 2)
         else:
             col_address = 0
         bl_column = int(self.sram.words_per_row * probe_data + col_address)
@@ -136,7 +138,11 @@ class simulation():
     def get_address_row_number(self, probe_address):
         """Calculates wordline row number of data bit under test using address and column mux size"""
 
-        return int(probe_address[self.sram.col_addr_size:], 2)
+        if self.sram.col_addr_size > 0:
+            row_address = probe_address[:-self.sram.col_addr_size]
+        else:
+            row_address = probe_address
+        return int(row_address, 2) if row_address else 0
 
     def add_control_one_port(self, port, op):
         """Appends control signals for operation to a given port"""
@@ -484,7 +490,9 @@ class simulation():
 
     def get_column_addr(self):
         """Returns column address of probe bit"""
-        return self.probe_address[:self.sram.col_addr_size]
+        if self.sram.col_addr_size == 0:
+            return ""
+        return self.probe_address[-self.sram.col_addr_size:]
 
     def add_graph_exclusions(self):
         """

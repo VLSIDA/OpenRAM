@@ -56,12 +56,15 @@ class trim_spice():
         # Always start fresh if we do multiple reductions
         self.sp_buffer = self.spice
 
-        # Split up the address and convert to an int
-        wl_address = int(address[self.col_addr_size:], 2)
+        # Address pins are ordered with bit 0 as LSB, so mux column bits
+        # are the rightmost bits in the binary address string.
         if self.col_addr_size > 0:
-            col_address = int(address[0:self.col_addr_size], 2)
+            row_address = address[:-self.col_addr_size]
+            col_address = int(address[-self.col_addr_size:], 2)
         else:
+            row_address = address
             col_address = 0
+        wl_address = int(row_address, 2) if row_address else 0
 
         # 1. Keep cells in the bitcell array based on WL and BL
         wl_name = "wl_{}".format(wl_address)

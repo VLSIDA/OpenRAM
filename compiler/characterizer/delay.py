@@ -1388,11 +1388,15 @@ class delay(simulation):
     def calculate_inverse_address(self):
         """Determine dummy test address based on probe address and column mux size."""
 
-        # The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines
+        # The inverse address needs to share the same bitlines as the probe address as the trimming will remove all other bitlines.
         # This is only an issue when there is a column mux and the address maps to different bitlines.
         column_addr = self.get_column_addr() # do not invert this part
         inverse_address = ""
-        for c in self.probe_address[self.sram.col_addr_size:]: # invert everything else
+        if self.sram.col_addr_size > 0:
+            row_address = self.probe_address[:-self.sram.col_addr_size]
+        else:
+            row_address = self.probe_address
+        for c in row_address: # invert row bits only
             if c=="0":
                 inverse_address += "1"
             elif c=="1":

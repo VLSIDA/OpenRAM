@@ -25,7 +25,11 @@ class sky130_capped_replica_bitcell_array(capped_replica_bitcell_array, sky130_b
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         super().__init__(rows, cols, rbl, left_rbl, right_rbl, name)
-            
+    
+    def route_power_ring(self, v_layer, h_layer):
+        # ring is manually added and routed in add_layout_pins
+        pass
+
     def add_layout_pins(self):
         """ Add the layout pins """
 

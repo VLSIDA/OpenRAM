@@ -176,7 +176,11 @@ $(TEST_BASES):
 	@rm -rf results/$*
 	@rm -rf results/$*.*
 	@mkdir -p results/$*/tmp
+ifdef TECH_FILE
+	@sh -c "python3 -u $(OPENRAM_DIR)/$(getfile).py -t $(gettech) -k -f $(TECH_FILE) -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
+else
 	@sh -c "python3 -u $(OPENRAM_DIR)/$(getfile).py -t $(gettech) -k -v $(ARGS) -p $(OPENRAM_DIR)/results/$* > $(OPENRAM_DIR)/results/$*.out 2>&1 && touch $(OPENRAM_DIR)/results/$*.ok || touch $(OPENRAM_DIR)/results/$*.bad"
+endif
 ifdef KEEP
 	@test -f $(TOP_DIR)/compiler/tests/results/$*.ok && echo "$* ... PASS!" || echo "$* ... FAIL!"
 else

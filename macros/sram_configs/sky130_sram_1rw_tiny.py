@@ -18,9 +18,9 @@ num_r_ports = 0
 num_w_ports = 0
 ports_human = '1rw'
 
-#num_spare_cols = 1
-#num_spare_rows = 1
-netlist_only = True
+num_spare_cols = 1
+num_spare_rows = 1
+#netlist_only = True
 
 num_sim_threads = 1
 #analytical_delay = False

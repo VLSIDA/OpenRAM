@@ -9,7 +9,7 @@ CONDA_HOME="${CONDA_HOME:-miniconda}"
 # The tool name format is "<tool>=<version>".
 # If you want to use the latest version, just use "<tool>".
 TOOLS=""
-#TOOLS+="klayout=0.28.3 "
+TOOLS+="klayout=0.28.3 "
 TOOLS+="magic=8.3.587 "
 TOOLS+="netgen=1.5.286 "
 TOOLS+="ngspice=26 "

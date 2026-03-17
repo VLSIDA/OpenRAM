@@ -85,7 +85,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                           cols=self.column_size + len(self.rbls),
                                           rows=1,
                                           # dummy column + left replica column(s)
-                                          column_offset=0,
+                                          column_offset=1,
+                                          row_offset=self.row_size+ self.extra_rows,
                                           mirror=0,
                                           location="top",
                                           left_rbl=self.left_rbl,
@@ -95,8 +96,9 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                              cols=self.column_size + len(self.rbls),
                                              rows=1,
                                              # dummy column + left replica column(s)
-                                             column_offset=0,
-                                             mirror=0,
+                                             column_offset=1,
+                                             row_offset=0,
+                                             mirror=(1+self.row_size+self.extra_rows) % 2,
                                              location="bottom",
                                              left_rbl=self.left_rbl,
                                              right_rbl=self.right_rbl)
@@ -106,20 +108,16 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         self.row_cap_left = factory.create(module_type=row_cap_module_type,
                                             cols=1,
-                                            column_offset=0,
-                                            row_offset=len(self.left_rbl)+len(self.right_rbl),
                                             rows=self.row_size + self.extra_rows,
+                                            column_offset=0,
+                                            row_offset=0,
                                             location="left")
 
         self.row_cap_right = factory.create(module_type=row_cap_module_type,
                                             cols=1,
-                                            #   dummy column
-                                            # + left replica column(s)
-                                            # + bitcell columns
-                                            # + right replica column(s)
-                                            column_offset=len(self.left_rbl) + self.column_size + self.rbl[0],
-                                            row_offset=len(self.left_rbl)+len(self.right_rbl),
                                             rows=self.row_size + self.extra_rows,
+                                            column_offset=1 + len(self.left_rbl) + self.column_size + len(self.right_rbl),
+                                            row_offset=0,
                                             location="right")
 
     def add_pins(self):

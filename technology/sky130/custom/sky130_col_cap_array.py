@@ -18,7 +18,7 @@ class sky130_col_cap_array(col_cap_array, sky130_bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name="", left_rbl=[],right_rbl=[]):
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, mirror=0, location="", name="", left_rbl=[],right_rbl=[]):
         self.left_rbl = left_rbl
         self.right_rbl = right_rbl
         super().__init__(rows, cols, column_offset=column_offset, mirror=mirror, location=location, name=name, left_rbl=left_rbl, right_rbl=right_rbl)
@@ -42,15 +42,17 @@ class sky130_col_cap_array(col_cap_array, sky130_bitcell_base_array):
         self.cell_inst={}
         
         if self.location == "top":
-            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True)] \
+            bit_row = [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="MY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False)] \
+                    + [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True)] \
                     + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False)]\
-                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="MY")] \
-                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False)]
+
         elif self.location == "bottom":
-            bit_row = [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True, mirror="MX")] \
+            bit_row = [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="XY")] \
+                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False, mirror="MX")] \
+                    + [geometry.instance("00_colend", mod=self.colend1, is_bitcell=True, mirror="MX")] \
                     + [geometry.instance("01_strap_p_cent", mod=self.colend2, is_bitcell=False, mirror="MX")]\
-                    + [geometry.instance("02_colend", mod=self.colend1, is_bitcell=True, mirror="XY")] \
-                    + [geometry.instance("03_strap_p", mod=self.colend3, is_bitcell=False, mirror="MX")]
+
 
         bit_row = pattern.rotate_list(bit_row, self.column_offset * 2)
         bit_block = []

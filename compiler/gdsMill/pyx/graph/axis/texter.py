@@ -143,7 +143,7 @@ class exponential:
                        skipexp1=None,
                        nomantissaexp=r"{10^{%s}}",
                        minusnomantissaexp=r"{-10^{%s}}",
-                       mantissamin=tick.rational((1, 1)), mantissamax=tick.rational((10L, 1)),
+                       mantissamin=tick.rational((1, 1)), mantissamax=tick.rational((10, 1)),
                        skipmantissa1=0, skipallmantissa1=1,
                        mantissatexter=decimal()):
         r"""initializes the instance

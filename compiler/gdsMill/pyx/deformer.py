@@ -135,7 +135,7 @@ def controldists_from_endgeometry_pt(A, B, tangA, tangB, curvA, curvB, allownega
                 return []
 
         if debug:
-            print("fallback with exact zero value")
+            print "fallback with exact zero value"
         return [(a, b)]
     # >>>
     def fallback_smallT(T, D, E, AB, curvA, curvB, threshold, debug):# <<<
@@ -147,7 +147,7 @@ def controldists_from_endgeometry_pt(A, B, tangA, tangB, curvA, curvB, allownega
             abs(b*T) < threshold * q1 and abs(1.5*a*abs(a)*curvA - D) < threshold * q1 and
             abs(a*T) < threshold * q2 and abs(1.5*b*abs(b)*curvB - E) < threshold * q2):
             if debug:
-                print("fallback with T approx 0")
+                print "fallback with T approx 0"
             return [(a, b)]
         return []
     # >>>
@@ -161,7 +161,7 @@ def controldists_from_endgeometry_pt(A, B, tangA, tangB, curvA, curvB, allownega
             abs(1.5*b*b*curvB) < threshold * min(abs(a*T), abs(E)) and
             abs(a*T - E) < threshold * min(abs(a*T), abs(E))):
             if debug:
-                print("fallback with curvB approx 0")
+                print "fallback with curvB approx 0"
             result.append((a, b))
 
         # is curvA approx zero?
@@ -171,7 +171,7 @@ def controldists_from_endgeometry_pt(A, B, tangA, tangB, curvA, curvB, allownega
             abs(1.5*a*a*curvA) < threshold * min(abs(b*T), abs(D)) and
             abs(b*T - D) < threshold * min(abs(b*T), abs(D))):
             if debug:
-                print("fallback with curvA approx 0")
+                print "fallback with curvA approx 0"
             result.append((a, b))
 
         return result
@@ -754,7 +754,7 @@ class parallel(deformer): # <<<
             # get the next parallel piece for the normpath
             try:
                 next_parallel_normpath = self.deformsubpathitem(next_orig_nspitem, epsilon)
-            except InvalidParamException as e:
+            except InvalidParamException, e:
                 invalid_nspitem_param = e.normsubpathitemparam
                 # split the nspitem apart and continue with pieces that do not contain
                 # the invalid point anymore. At the end, simply take one piece, otherwise two.

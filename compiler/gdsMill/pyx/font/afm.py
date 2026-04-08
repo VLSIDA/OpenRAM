@@ -365,9 +365,7 @@ class AFMfile:
         else:
             raise AFMError("Unsupported key %s in kerning data section" % key)
 
-    def _processline_kernpairs(self, line, arg):
-        direction = arg[0]
-        i = arg[1]
+    def _processline_kernpairs(self, line, (direction, i)):
         try:
             key, args = line.split(None, 1)
         except ValueError:
@@ -486,6 +484,6 @@ class AFMfile:
 
 if __name__ == "__main__":
     a = AFMfile("/opt/local/share/texmf-dist/fonts/afm/yandy/lucida/lbc.afm")
-    print(a.charmetrics[0].name)
+    print a.charmetrics[0].name
     a = AFMfile("/usr/share/enscript/hv.afm")
-    print(a.charmetrics[32].name)
+    print a.charmetrics[32].name

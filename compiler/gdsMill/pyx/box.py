@@ -142,8 +142,8 @@ class polygon_pt:
     def alignvector_pt(self, a, dx, dy, alignlinevector, alignpointvector):
         n = math.hypot(dx, dy)
         dx, dy = dx / n, dy / n
-        linevectors = map(lambda p, self=self, a=a, dx=dx, dy=dy, alignlinevector=alignlinevector:
-                                alignlinevector(a, dx, dy, *(p[0] + p[1])), self.successivepoints())
+        linevectors = map(lambda (p1, p2), self=self, a=a, dx=dx, dy=dy, alignlinevector=alignlinevector:
+                                alignlinevector(a, dx, dy, *(p1 + p2)), self.successivepoints())
         for linevector in linevectors:
             if type(linevector) is types.TupleType:
                 return linevector

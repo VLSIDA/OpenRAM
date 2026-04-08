@@ -319,7 +319,7 @@ class epsfile(canvas.canvasitem):
         try:
             epsfile=open(self.filename,"rb")
         except:
-            raise IOError("cannot open EPS file '%s'" % self.filename)
+            raise IOError, "cannot open EPS file '%s'" % self.filename
 
         file.write("BeginEPSF\n")
 

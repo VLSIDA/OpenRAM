@@ -160,7 +160,7 @@ class multibank(design):
         self.central_bus_width = self.m2_pitch * self.num_control_lines + 2*self.m2_width
 
         # A space for wells or jogging m2
-        self.m2_gap = max(2*drc("pwell_to_nwell") + drc("well_enclose_active"),
+        self.m2_gap = max(2*drc("pwell_to_nwell"] + drc["well_enclose_active"),
                           2*self.m2_pitch)
 
 

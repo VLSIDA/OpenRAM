@@ -815,9 +815,9 @@ class T1font:
             elif 251 <= x <= 254: # mid size ints
                 cmds.append(-((x - 251)*256) - code.pop(0) - 108)
             else: # x = 255, i.e. full size ints
-                y = ((code.pop(0)*256+code.pop(0))*256+code.pop(0))*256+code.pop(0)
-                if y > (1 << 31):
-                    cmds.append(y - (1 << 32))
+                y = ((code.pop(0)*256l+code.pop(0))*256+code.pop(0))*256+code.pop(0)
+                if y > (1l << 31):
+                    cmds.append(y - (1l << 32))
                 else:
                     cmds.append(y)
         return cmds
@@ -843,7 +843,7 @@ class T1font:
                     code.append(b)
                 else:
                     if cmd < 0:
-                        cmd += 1 << 32
+                        cmd += 1l << 32
                     cmd, x4 = divmod(cmd, 256)
                     cmd, x3 = divmod(cmd, 256)
                     x1, x2 = divmod(cmd, 256)

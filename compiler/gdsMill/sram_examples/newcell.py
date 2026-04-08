@@ -95,5 +95,5 @@ writer.writeToFile(gds_file_out)
 #                         inputPath = "./gdsFiles/arrayLayout.gds")
 
 
-print "LIB: %s" % gds_file_in
-print "\nCompleted ", gds_file_out
+print("LIB: %s" % gds_file_in)
+print("\nCompleted ", gds_file_out)

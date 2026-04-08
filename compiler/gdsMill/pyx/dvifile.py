@@ -102,7 +102,7 @@ class TFMError(exceptions.Exception): pass
 
 class char_info_word:
     def __init__(self, word):
-        self.width_index  = int((word & 0xFF000000L) >> 24) #make sign-safe
+        self.width_index  = int((word & 0xFF000000) >> 24) #make sign-safe
         self.height_index = (word & 0x00F00000) >> 20
         self.depth_index  = (word & 0x000F0000) >> 16
         self.italic_index = (word & 0x0000FC00) >> 10
@@ -135,10 +135,10 @@ class tfmfile:
                 self.ne <= 256 and
                 self.lf == 6+self.lh+(self.ec-self.bc+1)+self.nw+self.nh+self.nd
                 +self.ni+self.nl+self.nk+self.ne+self.np):
-            raise TFMError, "error in TFM pre-header"
+            raise TFMError("error in TFM pre-header")
 
         if debug:
-            print "lh=%d" % self.lh
+            print("lh=%d" % self.lh)
 
         #
         # read header
@@ -160,9 +160,9 @@ class tfmfile:
             self.fontfamily = None
 
         if debug:
-            print "(FAMILY %s)" % self.fontfamily
-            print "(CODINGSCHEME %s)" % self.charcoding
-            print "(DESINGSIZE R %f)" % 16.0*self.designsize/16777216L
+            print("(FAMILY %s)" % self.fontfamily)
+            print("(CODINGSCHEME %s)" % self.charcoding)
+            print("(DESINGSIZE R %f)" % 16.0*self.designsize/16777216)
 
         if self.lh > 17:
             self.sevenbitsave = self.file.readuchar()
@@ -201,7 +201,7 @@ class tfmfile:
 
         if self.lh > 18:
             # just ignore the rest
-            print self.file.read((self.lh-18)*4)
+            print(self.file.read((self.lh-18)*4))
 
         #
         # read char_info
@@ -392,9 +392,9 @@ def readfontmap(filenames):
             if not (line=="" or line[0] in (" ", "%", "*", ";" , "#")):
                 try:
                     fm = fontmapping(line)
-                except (RuntimeError, UnsupportedPSFragment), e:
+                except (RuntimeError, UnsupportedPSFragment) as e:
                     warnings.warn("Ignoring line %i in mapping file '%s': %s" % (lineno, mappath, e))
-                except UnsupportedFontFormat, e:
+                except UnsupportedFontFormat as e:
                     pass
                 else:
                     fontmap[fm.texname] = fm
@@ -468,16 +468,16 @@ class font:
 
     def __str__(self):
         return "font %s designed at %g TeX pts used at %g TeX pts" % (self.name,
-                                                                      16.0*self.d/16777216L,
-                                                                      16.0*self.q/16777216L)
+                                                                      16.0*self.d/16777216,
+                                                                      16.0*self.q/16777216)
     __repr__ = __str__
 
     def getsize_pt(self):
         """ return size of font in (PS) points """
-        # The factor 16L/16777216L=2**(-20) converts a fix_word (here self.q)
+        # The factor 16/16777216=2**(-20) converts a fix_word (here self.q)
         # to the corresponding float. Furthermore, we have to convert from TeX
         # points to points, hence the factor 72/72.27.
-        return 16L*self.q/16777216L*72/72.27
+        return 16*self.q/16777216*72/72.27
 
     def _convert_tfm_to_dvi(self, length):
         # doing the integer math with long integers will lead to different roundings
@@ -1269,7 +1269,7 @@ class vffile:
                 # of the virtual font itself.  Note that realscale has
                 # to be a fix_word (like s)
                 # XXX: check rounding
-                reals = int(round(self.scale * (16*self.ds/16777216L) * s))
+                reals = int(round(self.scale * (16*self.ds/16777216) * s))
 
                 # print ("defining font %s -- VF scale: %g, VF design size: %d, relative font size: %d => real size: %d" %
                 #        (fontname, self.scale, self.ds, s, reals)

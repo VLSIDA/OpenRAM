@@ -6,16 +6,19 @@
 from openram.sram_factory import factory
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-
+from .pattern import pattern
+from openram.base import geometry
+from math import ceil
 
 class row_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, location="", name=""):
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, mirror=0, location="", name=""):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
         self.mirror = mirror
         self.location = location
+        self.row_offset = row_offset
         #self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -33,7 +36,7 @@ class row_cap_array(bitcell_base_array):
 
     def create_layout(self):
 
-        self.place_array("dummy_r{0}_c{1}", self.mirror)
+        self.place_array()
         self.add_layout_pins()
 
         self.width = max([x.rx() for x in self.insts])
@@ -44,19 +47,37 @@ class row_cap_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.dummy_cell = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
+        self.row_cap = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
-        self.cell_inst = {}
-        for col in range(self.column_size):
-            for row in range(0, self.row_size):
-                name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row, col]=self.add_inst(name=name,
-                                                       mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(row, col))
+        self.all_inst={}
+        self.cell_inst={}
+        
+        bit_block = []
+        
+        if self.location == "left":
+            #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False, mirror="MY")
+            #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="XY")
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="MX")
+        elif self.location == "right":
+            #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False)
+            #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="MX")
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="MY")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="XY")
+        #pattern.append_row_to_block(bit_block, [top_corner])
+        for row in range(0, self.row_size):
+                if row % 2 == 1:
+                    pattern.append_row_to_block(bit_block, [rowend])
+                else:
+                    pattern.append_row_to_block(bit_block, [rowend_m])
+
+        #pattern.append_row_to_block(bit_block, [bottom_corner])
+        self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
+        self.pattern.connect_array_raw()
 
     def get_bitcell_pins(self, row, col):
         """

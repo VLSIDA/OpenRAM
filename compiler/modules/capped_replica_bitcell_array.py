@@ -20,7 +20,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
     sides of a bitcell array.
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name, rows, cols, column_offset=0)
+        super().__init__(name, rows, cols, column_offset=0, row_offset=0)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
                                                                                              cols,

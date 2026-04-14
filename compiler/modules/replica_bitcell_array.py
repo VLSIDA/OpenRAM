@@ -25,7 +25,7 @@ class replica_bitcell_array(bitcell_base_array):
     replica bitcell and dummy bitcell (BL/BR disconnected).
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0, row_offset=0)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
                                                                                              cols,
@@ -77,6 +77,7 @@ class replica_bitcell_array(bitcell_base_array):
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             column_offset=len(self.left_rbl),
+                                            row_offset=len(self.left_rbl),
                                             cols=self.column_size,
                                             rows=self.row_size,
                                             left_rbl=self.left_rbl, 
@@ -110,20 +111,17 @@ class replica_bitcell_array(bitcell_base_array):
 
         for port in self.all_ports:
             if port in self.left_rbl:
-                row_offset = self.row_size
-                mirror = row_offset % 2 + 1
-            elif port in self.right_rbl:
                 row_offset = 0
-                mirror = 0
+            elif port in self.right_rbl:
+                row_offset = self.row_size + len(self.left_rbl)
             else:
-                continue
+                row_offset = 0
                 
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
                                             row_offset=row_offset,
-                                            column_offset=len(self.left_rbl),
-                                            mirror=mirror)
+                                            column_offset=len(self.left_rbl))
 
     def add_pins(self):
 

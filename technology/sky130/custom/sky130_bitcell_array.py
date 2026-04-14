@@ -19,8 +19,8 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
     Creates a rows x cols array of memory cells.
     Assumes bit-lines and word lines are connected by abutment.
     """
-    def __init__(self, rows, cols, column_offset=0, name="",left_rbl=None, right_rbl=None):
-        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, name="",left_rbl=None, right_rbl=None):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset, name=name)
         self.left_rbl = left_rbl
         self.right_rbl = right_rbl
         

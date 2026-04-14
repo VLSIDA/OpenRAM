@@ -30,7 +30,7 @@ class replica_column(bitcell_base_array):
         self.row_start = rbl[0]
         # End of regular word line rows
         self.row_end = self.row_start + rows
-        super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, name=name)
+        super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, row_offset=0, name=name)
 
         self.rows = rows
         self.left_rbl = rbl[0]
@@ -95,12 +95,12 @@ class replica_column(bitcell_base_array):
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                if current_row % 2 == 1:
+                if current_row % 2 == 0:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
             else:
-                if current_row % 2 == 1:
+                if current_row % 2 == 0:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')

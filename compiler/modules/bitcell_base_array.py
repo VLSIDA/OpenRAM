@@ -16,14 +16,14 @@ class bitcell_base_array(design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy, replica
     """
-    def __init__(self, name, rows, cols, column_offset):
+    def __init__(self, name, rows, cols, column_offset, row_offset):
         super().__init__(name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
 
         self.column_size = cols
         self.row_size = rows
         self.column_offset = column_offset
-
+        self.row_offset = row_offset
         # Bitcell for port names only
         self.cell = factory.create(module_type=OPTS.bitcell)
 
@@ -170,6 +170,18 @@ class bitcell_base_array(design):
         
         power_name = 'vdd'
         ground_name = 'gnd'
+
+        if vdd_found == False or gnd_found == False:
+            for inst in self.insts:
+                if 'VDD' in inst.mod.get_pin_names():
+                    vdd_found = True
+                    power_name = 'VDD'
+            
+                if 'GND' in inst.mod.get_pin_names():
+                    gnd_found = True
+                    ground_name = 'GND'
+    
+
         if vdd_found is False or gnd_found is False:
             from openram.tech import cell_properties
             try:

@@ -26,3 +26,4 @@ num_sim_threads = 1
 #analytical_delay = False
 import os
 exec(open(os.path.join(os.path.dirname(__file__), 'sky130_sram_common.py')).read())
+#tech_file = "tech_custom_cell"

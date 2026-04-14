@@ -147,7 +147,6 @@ class pattern():
 
     def connect_array(self) -> None:
 
-        #debug_array = [[None]*12 for _ in range(6)] 
         row = 0
         col = 0
         for i in range(self.num_cores_y):
@@ -183,7 +182,7 @@ class pattern():
             y += inst.height
         if "Y" in inst.mirror:
             x += inst.width
-        #print('placing inst {} at {}'.format(inst, offset))
+        print('placing inst {} at {}'.format(inst, offset))
         inst.place((x, y), inst.mirror, inst.rotate)
 
     def place_array(self):
@@ -193,7 +192,7 @@ class pattern():
         for row in range(self.row_max+1):
             x = 0
             for col in range(self.col_max+1):
-                inst = self.parent_design.all_inst[self.row_max - row, col]
+                inst = self.parent_design.all_inst[row, col]
                 self.place_inst(inst, (x, y))
                 x += inst.width
             y += inst.height

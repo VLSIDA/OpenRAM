@@ -19,8 +19,8 @@ class bitcell_array(bitcell_base_array):
     Creates a rows x cols array of memory cells.
     Assumes bit-lines and word lines are connected by abutment.
     """
-    def __init__(self, rows, cols, column_offset=0, name="", left_rbl=None, right_rbl=None):
-        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, name="", left_rbl=None, right_rbl=None):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset, name=name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
 
@@ -59,18 +59,21 @@ class bitcell_array(bitcell_base_array):
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
+        r = self.row_offset
+        c = self.column_offset
         self.cell_inst={}
         if self.cell.mirror.y:
             core_block = [[0 for x in range(2)] for y in range(2)]
-            core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
-            core_block[1][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
-            core_block[0][1] = geometry.instance("core_0_1", mod=self.cell, is_bitcell=True, mirror='MY')
-            core_block[1][1] = geometry.instance("core_1_1", mod=self.cell, is_bitcell=True, mirror='XY')
+            core_block[(0 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(0+c)%2}", mod=self.cell, is_bitcell=True, mirror='XY')
+            core_block[(0 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(1+c)%2}", mod=self.cell, is_bitcell=True, mirror='MX')
+            core_block[(1 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(0+c)%2}", mod=self.cell, is_bitcell=True, mirror='MY')
+            core_block[(1 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(1+c)%2}", mod=self.cell, is_bitcell=True, mirror='')
         else:
-            core_block = [[0 for x in range(1)] for y in range(2)]
-            core_block[0][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
-            core_block[1][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
-
+            core_block = [[0 for x in range(1)] for y in range(2)] 
+            core_block[(0 + self.row_offset) % 2][(0+self.column_offset) %2] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
+            core_block[(1 + self.row_offset) % 2][(0+self.column_offset) %2] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
+        print(r, c)
+        print(core_block)
 
         self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.row_size, num_cols=self.column_size,name_template="bit_r{0}_c{1}")
         self.pattern.connect_array()

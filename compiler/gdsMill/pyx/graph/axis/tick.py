@@ -90,12 +90,12 @@ class rational:
                 if autolong:
                     self.denom *= 10 ** int(expparts[1])
                 else:
-                    self.denom *= 10L ** int(expparts[1])
+                    self.denom *= 10 ** int(expparts[1])
             else:
                 if autolong:
                     self.num *= 10 ** int(expparts[1])
                 else:
-                    self.num *= 10L ** int(expparts[1])
+                    self.num *= 10 ** int(expparts[1])
 
     def initfromfloat(self, x, floatprecision):
         "converts a float into a rational with finite resolution"

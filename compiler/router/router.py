@@ -111,6 +111,52 @@ class router(router_tech):
         self.all_pins.update(pin_set)
 
 
+    def find_pins_inside(self, pin_name):
+        # find pins except moat, power ring, the moat pins will be store as set and return
+        """ Find the pins with the given name. """
+        debug.info(4, "Finding all pins for {}".format(pin_name))
+
+        shape_list = self.layout.getAllPinShapes(str(pin_name))
+        pin_set = set()
+        for shape in shape_list:
+            layer, boundary = shape
+            # gdsMill boundaries are in (left, bottom, right, top) order
+            ll = vector(boundary[0], boundary[1])
+            ur = vector(boundary[2], boundary[3])
+            rect = [ll, ur]
+            new_pin = graph_shape(pin_name, rect, layer)
+            # Skip this pin if it's contained by another pin of the same type
+            if new_pin.core_contained_by_any(pin_set):
+                continue
+            # skip the moat pin
+            if self.check_pin_on_moat(new_pin):
+                continue
+            # Merge previous pins into this one if possible
+            self.merge_shapes(new_pin, pin_set)
+            pin_set.add(new_pin)
+        # Add these pins to the 'pins' dict
+        self.pins[pin_name] = pin_set
+        self.all_pins.update(pin_set)
+
+
+    def check_pin_on_moat(self, pin_shape):
+        """ Check if a given pin is on the moat. """
+        ll, ur = self.bbox
+        left_x = ll.x
+        right_x = ur.x
+        bottom_y = ll.y
+        top_y = ur.y
+
+        threshold = 10 # inside this distance, could be considered as on the moat
+
+        is_on_left = abs(pin_shape.center().x - left_x) < threshold
+        is_on_right = abs(pin_shape.center().x - right_x) < threshold
+        is_on_bottom = abs(pin_shape.center().y - bottom_y) < threshold
+        is_on_top = abs(pin_shape.center().y - top_y) < threshold
+
+        return is_on_left or is_on_right or is_on_bottom or is_on_top
+
+
     def find_blockages(self, name="blockage", shape_list=None):
         """ Find all blockages in the routing layers. """
         debug.info(4, "Finding blockages...")

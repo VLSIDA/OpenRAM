@@ -502,7 +502,8 @@ drc["pwell_to_nwell"] = 0
 drc.add_layer("nwell",
               width=0.840,
               spacing=1.270)
-
+# nwell.6 Minimum enclosure of nwell hole by deep nwell outside UHVI
+drc["minclosure_nwell_by_dnwell"] = 1.030
 # poly.1a Minimum width of poly
 # poly.2 Minimum spacing of poly AND active
 drc.add_layer("poly",
@@ -662,7 +663,8 @@ drc.add_enclosure("m3",
 drc.add_layer("via3",
               width=0.200,
               spacing=0.200)
-
+# via3.12 Minimum spacing of via3 to via2 (cu)
+drc["via3_to_via2"] = 0.180
 # m4.1 Minimum width of metal4
 # m4.2 Minimum spacing of metal4
 # m4.7 Minimum area of metal4

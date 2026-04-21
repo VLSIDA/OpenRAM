@@ -5,12 +5,15 @@
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
+# This version aims to keep the track out/vertical to the dff pins
+# Now only consider the channel at the south, but works fine with channel at the north
 import collections
 from openram import debug
 from openram.tech import drc
 from .vector import vector
 from .design import design
-
+from openram import OPTS
+import re
 
 class channel_net():
     def __init__(self, net_name, pins, vertical):
@@ -85,7 +88,8 @@ class channel_route(design):
                  layer_stack,
                  directions=None,
                  vertical=False,
-                 parent=None):
+                 parent=None,
+                 dff_area=False):
         """
         The net list is a list of the nets with each net being a list of pins
         to be connected. The offset is the lower-left of where the
@@ -106,6 +110,7 @@ class channel_route(design):
         self.vertical = vertical
         # For debugging...
         self.parent = parent
+        self.dff_area = dff_area # this is a special value to handle dff areas, should be true when routing col_dff/dffs
 
         if not directions or directions == "pref":
             # Use the preferred layer directions
@@ -139,6 +144,16 @@ class channel_route(design):
 
         layer_stuff = self.get_layer_pitch(self.horizontal_layer)
         (self.horizontal_nonpref_pitch, self.horizontal_pitch, self.horizontal_width, self.horizontal_space) = layer_stuff
+        # For debug
+
+        debug.warning("layer horizontal: {0}".format(self.horizontal_layer))
+        debug.warning("horizontal_nonpref_pitch: {0}".format(self.horizontal_nonpref_pitch))
+        debug.warning("horizontal_pitch: {0}".format(self.horizontal_pitch))
+        debug.warning("horizontal_space: {0}".format(self.horizontal_space))
+        debug.warning("layer vertical: {0}".format(self.vertical_layer))
+        debug.warning("vertiacl_nonpref_pitch: {0}".format(self.vertical_pitch))
+        debug.warning("vertical_pitch: {0}".format(self.vertical_pitch))
+        debug.warning("vertical_space: {0}".format(self.vertical_space))
 
         self.route()
 
@@ -220,7 +235,9 @@ class channel_route(design):
         else:
             real_channel_offset = vector(min(self.min_value, self.offset.x), self.offset.y)
         current_offset = real_channel_offset
-
+        if self.dff_area == True:
+            if self.layer_stack == self.m2_stack:
+                self.vertical_nonpref_pitch = self.horizontal_pitch + 0.1 # 0.1 make sure even if via at same col, fulfill m3-m3 spacing
         # Sort nets by left edge value
         nets.sort()
         while len(nets) > 0:
@@ -245,9 +262,14 @@ class channel_route(design):
                                                       self.horizontal_pitch)
                         current_offset = vector(current_offset.x, net.max_value + self.horizontal_nonpref_pitch)
                     else:
-                        self.add_horizontal_trunk_route(net.pins,
-                                                        current_offset,
-                                                        self.vertical_pitch)
+                        if self.dff_area == True: # only use in dff channel routing
+                            self.add_horizontal_trunk_with_jog(net.pins,
+                                                               current_offset,
+                                                               self.vertical_pitch)
+                        else:
+                            self.add_horizontal_trunk_route(net.pins,
+                                                            current_offset,
+                                                            self.vertical_pitch)
                         current_offset = vector(net.max_value + self.vertical_nonpref_pitch, current_offset.y)
 
                     # Remove the net from other constriants in the VCG
@@ -296,6 +318,265 @@ class channel_route(design):
         except AttributeError:
             debug.error("Cannot find layer pitch.", -1)
         return (nonpref_pitch, pitch, pitch - space, space)
+
+    def check_need_jog(self, pin_name):
+        match = re.search(r'^din\d+_(\d+)$', pin_name)
+        if match:
+            number = int(match.group(1))
+            if number % int(OPTS.write_size) == 0:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def add_horizontal_trunk_with_jog(self,
+                                      pins,
+                                      trunk_offset,
+                                      pitch):
+        """ Special for connecting channel of dffs & bank, avoid too close with vdd pins """
+        max_x = max([pin.center().x for pin in pins])
+        min_x = min([pin.center().x for pin in pins])
+        min_y = min([pin.center().y for pin in pins])
+        max_y = max([pin.center().y for pin in pins])
+        # see the channel is at top or bottom
+        if min_y < 0: # port0
+            for pin in pins:
+                if pin.center().x == max_x:
+                    if pin.center().y == max_y:
+                        min_x = min_x - 0.1 # in order to add jog at the dff pins, avoid overlap with vdd pins, left shift vertical line at dout pin
+                    else: # pin has max_x is under track
+                        max_x = max_x - 0.1
+            port = 0
+        else: # port1
+            for pin in pins:
+                if pin.center().x == max_x:
+                    if pin.center().y == max_y:
+                        max_x = max_x - 0.1 # in order to add jog at the dff pins, avoid overlap with vdd pins, left shift vertical line at dout pin
+                    else: # pin has max_x is under track
+                        min_x = min_x - 0.1
+            port = 1
+        # if we are less than a pitch, just create a non-preferred layer jog
+        non_preferred_route = max_x - min_x <= pitch
+        half_layer_width = 0.5 * drc["minwidth_{0}".format(self.vertical_layer)]
+        if port == 0: # bottom need shift
+            if non_preferred_route:
+                # Add the horizontal trunk on the vertical layer!
+                self.add_path(self.vertical_layer,
+                            [vector(min_x - half_layer_width, trunk_offset.y),
+                            vector(max_x + half_layer_width, trunk_offset.y)])
+
+                # Route each pin to the trunk
+                for pin in pins:
+                    if pin.cy() < trunk_offset.y:
+                        pin_pos = pin.center()
+                        mid = vector(pin_pos.x - 0.1, trunk_offset.y)
+                        self.add_path(self.vertical_layer, [vector(pin.bc().x - 0.1, pin.bc().y), mid])
+                        self.add_via_stack_center(from_layer=pin.layer,
+                                                  to_layer=self.vertical_layer,
+                                                  offset=pin_pos)
+                    else:
+                        if self.check_need_jog(pin.name) and (OPTS.write_size != OPTS.word_size):# for port0, only pin above track needs to check
+                            # right first
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.rc())
+                            point_1 = vector(pin.center().x + pitch, pin.center().y)
+                            self.add_path(self.vertical_layer, [pin.rc(), point_1])
+                            # straight out of bank area
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_1)
+                            point_2 = vector(point_1.x, point_1.y - 5.6)
+                            self.add_path(self.vertical_layer, [point_1, point_2])
+                            # then left
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_2)
+                            point_3 = vector(pin.center().x, pin.center().y - 5.6)
+                            self.add_path(self.vertical_layer, [point_2, point_3])
+                            # back to normal
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_3)
+                            mid = vector(point_3.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [point_3, mid])
+                        else: # do not need to care of wmask
+                            pin_pos = pin.bc()
+                            # No bend needed here
+                            mid = vector(pin_pos.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [pin_pos, mid])
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.bc())
+            else:
+                # Add the horizontal trunk
+                self.add_path(self.horizontal_layer,
+                            [vector(min_x, trunk_offset.y),
+                            vector(max_x, trunk_offset.y)])
+
+                # Route each pin to the trunk
+                for pin in pins:
+                    debug.warning("pin name in net ----> {0}".format(pin.name))
+                    debug.warning("wmask or not --> {0}".format(OPTS.write_size))
+                    # Find the correct side of the pin
+                    if pin.cy() < trunk_offset.y:
+                        pin_pos = pin.center()
+                        mid = vector(pin_pos.x - 0.1, trunk_offset.y)
+                        self.add_path(self.vertical_layer, [vector(pin.bc().x - 0.1, pin.bc().y), mid])
+                        self.add_via_center(layers=self.layer_stack,
+                                            offset=mid,
+                                            directions=self.directions)
+                        self.add_via_stack_center(from_layer=pin.layer,
+                                                  to_layer=self.vertical_layer,
+                                                  offset=pin_pos)
+                    else:
+                        if self.check_need_jog(pin.name) and (OPTS.write_size != OPTS.word_size):# for port0, only pin above track needs to check
+                            # right first
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.rc())
+                            point_1 = vector(pin.center().x + pitch, pin.center().y)
+                            self.add_path(self.vertical_layer, [pin.rc(), point_1])
+                            # straight out of bank area
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_1)
+                            point_2 = vector(point_1.x, point_1.y - 5.6)
+                            self.add_path(self.vertical_layer, [point_1, point_2])
+                            # then left
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_2)
+                            point_3 = vector(pin.center().x, pin.center().y - 5.6)
+                            self.add_path(self.vertical_layer, [point_2, point_3])
+                            # back to normal
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_3)
+                            mid = vector(point_3.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [point_3, mid])
+                            self.add_via_center(layers=self.layer_stack,
+                                                offset=mid,
+                                                directions=self.directions)
+                        else: # do not need to care of wmask
+                            pin_pos = pin.bc()
+                            mid = vector(pin_pos.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [pin_pos, mid])
+                            self.add_via_center(layers=self.layer_stack,
+                                                offset=mid,
+                                                directions=self.directions)
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.bc())
+        else: # port 1, situation different, top need shift
+            if non_preferred_route:
+                # Add the horizontal trunk on the vertical layer!
+                self.add_path(self.vertical_layer,
+                            [vector(min_x - half_layer_width, trunk_offset.y),
+                            vector(max_x + half_layer_width, trunk_offset.y)])
+
+                # Route each pin to the trunk
+                for pin in pins:
+                    if pin.cy() < trunk_offset.y:
+                        if self.check_need_jog(pin.name) and (OPTS.write_size != OPTS.word_size):# for port0, only pin above track needs to check
+                            # right first
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.rc())
+                            point_1 = vector(pin.center().x + pitch, pin.center().y)
+                            self.add_path(self.vertical_layer, [pin.rc(), point_1])
+                            # straight out of bank area
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_1)
+                            point_2 = vector(point_1.x, point_1.y + 5.6)
+                            self.add_path(self.vertical_layer, [point_1, point_2])
+                            # then left
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_2)
+                            point_3 = vector(pin.center().x, pin.center().y + 5.6)
+                            self.add_path(self.vertical_layer, [point_2, point_3])
+                            # back to normal
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_3)
+                            mid = vector(point_3.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [point_3, mid])
+                        else: # do not need to care of wmask
+                            pin_pos = pin.uc()
+                            # No bend needed here
+                            mid = vector(pin_pos.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [pin_pos, mid])
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.uc())
+                    else:
+                        pin_pos = pin.center()
+                        mid = vector(pin_pos.x - 0.1, trunk_offset.y)
+                        self.add_path(self.vertical_layer, [vector(pin.uc().x - 0.1, pin.uc().y), mid])
+                        self.add_via_stack_center(from_layer=pin.layer,
+                                                  to_layer=self.vertical_layer,
+                                                  offset=pin_pos)
+            else:
+                # Add the horizontal trunk
+                self.add_path(self.horizontal_layer,
+                            [vector(min_x, trunk_offset.y),
+                            vector(max_x, trunk_offset.y)])
+
+                # Route each pin to the trunk
+                for pin in pins:
+                    # Find the correct side of the pin
+                    if pin.cy() < trunk_offset.y:
+                        if self.check_need_jog(pin.name) and (OPTS.write_size != OPTS.word_size):# for port0, only pin above track needs to check
+                            # right first
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.rc())
+                            point_1 = vector(pin.center().x + pitch, pin.center().y)
+                            self.add_path(self.vertical_layer, [pin.rc(), point_1])
+                            # straight out of bank area
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_1)
+                            point_2 = vector(point_1.x, point_1.y + 5.6)
+                            self.add_path(self.vertical_layer, [point_1, point_2])
+                            # then left
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_2)
+                            point_3 = vector(pin.center().x, pin.center().y + 5.6)
+                            self.add_path(self.vertical_layer, [point_2, point_3])
+                            # back to normal
+                            self.add_via_stack_center(from_layer=self.vertical_layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=point_3)
+                            mid = vector(point_3.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [point_3, mid])
+                            self.add_via_center(layers=self.layer_stack,
+                                                offset=mid,
+                                                directions=self.directions)
+                        else: # do not need to care of wmask
+                            pin_pos = pin.uc()
+                            mid = vector(pin_pos.x, trunk_offset.y)
+                            self.add_path(self.vertical_layer, [pin_pos, mid])
+                            self.add_via_center(layers=self.layer_stack,
+                                                offset=mid,
+                                                directions=self.directions)
+                            self.add_via_stack_center(from_layer=pin.layer,
+                                                      to_layer=self.vertical_layer,
+                                                      offset=pin.uc())
+                    else:
+                        pin_pos = pin.center()
+                        mid = vector(pin_pos.x - 0.1, trunk_offset.y)
+                        self.add_path(self.vertical_layer, [vector(pin.uc().x - 0.1, pin.uc().y), mid])
+                        self.add_via_center(layers=self.layer_stack,
+                                            offset=mid,
+                                            directions=self.directions)
+                        self.add_via_stack_center(from_layer=pin.layer,
+                                                  to_layer=self.vertical_layer,
+                                                  offset=pin_pos)
 
     def add_horizontal_trunk_route(self,
                                    pins,

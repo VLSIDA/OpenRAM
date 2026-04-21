@@ -52,6 +52,8 @@ class options(optparse.Values):
     words_per_row = None
     num_spare_rows = 0
     num_spare_cols = 0
+    # Route approach
+    route_approach = "classic"# "classic" or "quality"
 
     ###################
     # ROM configuration options

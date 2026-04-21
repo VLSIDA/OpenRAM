@@ -71,7 +71,6 @@ for path in output_files:
 # Create an SRAM (we can also pass sram_config, see documentation/tutorials for details)
 from openram import sram
 s = sram()
-
 # Output the files for the resulting SRAM
 s.save()
 

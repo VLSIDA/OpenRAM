@@ -97,7 +97,7 @@ class supply_router(router):
 
         ll, ur = self.bbox
         vertical = side in ["left", "right"]
-        inner = pin_name == self.gnd_name
+        inner = pin_name == self.vdd_name
 
         # Calculate wires' wideness
         wideness = self.track_wire * num_vias + self.track_space * (num_vias - 1)

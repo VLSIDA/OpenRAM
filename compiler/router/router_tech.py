@@ -89,6 +89,8 @@ class router_tech:
 
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_wire, 1, self.track_wire]
+        # via2 to via3 distance requirements
+        self.via2_via3_pitch = 0.5 * drc("minwidth_{}".format("via2")) + 0.5 * drc("minwidth_{}".format("via3")) + drc["via3_to_via2"]
 
     def same_lpp(self, lpp1, lpp2):
         """

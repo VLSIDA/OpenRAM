@@ -742,6 +742,9 @@ class VlsiLayout:
         Search for a pin label and return ALL the enclosing rectangles on the same layer
         as the pin label.
         """
+        #debug
+        for pin in self.pins:
+            print(pin)
         shape_list = []
         pin_map = self.pins[pin_name]
         for pin_list in pin_map:

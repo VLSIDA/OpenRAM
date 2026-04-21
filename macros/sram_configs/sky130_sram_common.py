@@ -10,8 +10,10 @@ nominal_corner_only = True
 #local_array_size = 16
 
 route_supplies = "ring"
+#supply_pin_type = "top"
 #route_supplies = "left"
-check_lvsdrc = True
+#route_supplies = False
+check_lvsdrc = False
 uniquify = True
 #perimeter_pins = False
 #netlist_only = True

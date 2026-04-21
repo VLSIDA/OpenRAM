@@ -10,20 +10,31 @@ from openram import OPTS
 from .graph import graph
 from .graph_shape import graph_shape
 from .router import router
-
+import re
 
 class signal_escape_router(router):
     """
     This is the signal escape router that uses the Hanan grid graph method.
     """
 
-    def __init__(self, layers, design, bbox=None):
+    def __init__(self, layers, design, bbox=None, mod=0):
 
         # `router` is the base router class
         router.__init__(self, layers, design, bbox)
 
         # New pins are the side supply pins
         self.new_pins = {}
+
+        # Use for add distance of dout pins at the perimeter
+        self.distance_right = 0
+
+        self.distance_left = 0
+
+        # Use for control which edge/position the pins(dout) will be placed
+        # 0 -> default
+        # 1 -> all top/bottom
+        # 2 -> all left/right
+        self.state_mod = mod
 
 
     def route(self, pin_names):
@@ -176,7 +187,6 @@ class signal_escape_router(router):
                               layer_name_pp=layer)
             self.fake_pins.append(pin)
 
-
     def create_fake_pin(self, pin):
         """ Create a fake pin on the perimeter orthogonal to the given pin. """
 
@@ -197,15 +207,48 @@ class signal_escape_router(router):
         if edge == "top":
             fake_center = vector(c.x, ur.y + self.track_wire * 2)
 
+        # relocate the pin position
+        pattern = r'^dout'
+        if re.match(pattern, pin.name):
+
+            if self.state_mod == 0:
+                pass# do not change, default
+
+            elif self.state_mod == 1: # all top/bottom
+                if edge == "right":
+                    vertical = False
+                    fake_center = vector(c.x, ll.y - self.track_wire * 2)
+                    self.distance_right += 1
+                else:
+                    if edge == "left":
+                        vertical = False
+                        fake_center = vector(c.x, ll.y + self.track_wire * 2)
+                        self.distance_left += 1
+
+            elif self.state_mod == 2: # all left/right
+                if (edge == "bottom") or (edge == "right"):# change to the east
+                    vertical = True
+                    fake_center = vector(ur.x + self.track_wire * 2, ll.y + 30 + self.distance_right)
+                    self.distance_right += 1
+                else:
+                    if (edge == "top") or (edge == "left"):# change to the west
+                        vertical = True
+                        fake_center = vector(ll.x - self.track_wire * 2, ur.y - 30 - self.distance_left)
+                        self.distance_left += 1
+            else:
+                debug.error("wrong state mod!", -1)
+
         # Create the fake pin shape
         layer = self.get_layer(int(not vertical))
         half_wire_vector = vector([self.half_wire] * 2)
         nll = fake_center - half_wire_vector
         nur = fake_center + half_wire_vector
+
         rect = [nll, nur]
         pin = graph_shape(name="fake",
                           rect=rect,
                           layer_name_pp=layer)
+
         return pin
 
 

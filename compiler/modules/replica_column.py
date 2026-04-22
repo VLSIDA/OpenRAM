@@ -96,14 +96,14 @@ class replica_column(bitcell_base_array):
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
                 if current_row % 2 == 0:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
-                else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
+                else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
             else:
                 if current_row % 2 == 0:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
-                else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+                else:
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
 
             current_row += 1
             

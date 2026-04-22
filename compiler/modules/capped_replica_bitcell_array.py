@@ -86,7 +86,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                           rows=1,
                                           # dummy column + left replica column(s)
                                           column_offset=1,
-                                          row_offset=self.row_size+ self.extra_rows,
+                                          row_offset=self.row_size+ self.extra_rows + 1, #add 1 to account for bottom col_cap
                                           mirror=0,
                                           location="top",
                                           left_rbl=self.left_rbl,
@@ -162,10 +162,21 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.unused_wordline_names = self.replica_bitcell_array.unused_wordline_names
         self.replica_array_wordline_names_with_grounded_wls = ["gnd" if x in self.unused_wordline_names else x for x in self.replica_bitcell_array.wordline_pin_list]
 
+        # Left/right row caps cover the full array height. Pad with gnd so the
+        # netlist list length matches the row cap (replica in the center); do
+        # not use col cap wordline heuristics.
+
+        n_rowcap_wl = len(self.row_cap_left.get_wordline_names())
+        n_rba_wl = len(self.replica_array_wordline_names_with_grounded_wls)
+
+
         self.wordline_pin_list = []
-        self.wordline_pin_list.extend(["gnd"] * len(self.col_cap_top.get_wordline_names()))
+
+        if self.rbls:
+            self.wordline_pin_list.extend(["gnd"] * len(self.rbls))
         self.wordline_pin_list.extend(self.replica_array_wordline_names_with_grounded_wls)
-        self.wordline_pin_list.extend(["gnd"] * len(self.col_cap_bottom.get_wordline_names()))
+        if self.rbls:
+            self.wordline_pin_list.extend(["gnd"] * len(self.rbls))
 
         self.add_pin_list(self.used_wordline_names, "INPUT")
 
@@ -192,6 +203,10 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_left",
                                                     mod=self.row_cap_left))
         self.connect_inst(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.wordline_pin_list + self.supplies)
+
+        #print(self.dummy_col_insts[0].mod.pins)
+        #print(["dummy_left_" + bl for bl in self.row_cap_left.all_bitline_names] + self.wordline_pin_list + self.supplies)
+
         self.dummy_col_insts.append(self.add_inst(name="dummy_col_right",
                                                     mod=self.row_cap_right))
         self.connect_inst(["dummy_right_" + bl for bl in self.row_cap_right.all_bitline_names] + self.wordline_pin_list + self.supplies)
@@ -282,10 +297,14 @@ class capped_replica_bitcell_array(bitcell_base_array):
         # Far left dummy col
         dummy_col_width =  vector(self.dummy_col_insts[0].width, 0)
         offset = self.dummy_row_insts[0].ll() - dummy_col_width
+        if self.dummy_col_insts[0].mod.cell.has_corners is False:
+            offset += vector(0, dummy_row_height.y)
         self.dummy_col_insts[0].place(offset=offset)
 
         # Far right dummy col
         offset = self.dummy_row_insts[0].lr()
+        if self.dummy_col_insts[0].mod.cell.has_corners is False:
+            offset += vector(0, dummy_row_height.y)
         self.dummy_col_insts[1].place(offset=offset)
 
     def add_layout_pins(self):

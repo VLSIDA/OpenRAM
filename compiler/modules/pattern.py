@@ -182,7 +182,7 @@ class pattern():
             y += inst.height
         if "Y" in inst.mirror:
             x += inst.width
-        print('placing inst {} at {}'.format(inst, offset))
+        #print('placing inst {} at {}'.format(inst, offset))
         inst.place((x, y), inst.mirror, inst.rotate)
 
     def place_array(self):

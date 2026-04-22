@@ -15,7 +15,7 @@ class row_cap_array(bitcell_base_array):
     Generate a dummy row/column for the replica array.
     """
     def __init__(self, rows, cols, column_offset=0, row_offset=0, mirror=0, location="", name=""):
-        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset, name=name)
         self.mirror = mirror
         self.location = location
         self.row_offset = row_offset
@@ -76,7 +76,11 @@ class row_cap_array(bitcell_base_array):
                     pattern.append_row_to_block(bit_block, [rowend_m])
 
         #pattern.append_row_to_block(bit_block, [bottom_corner])
-        self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
+        if self.cell.has_corners is False:
+            num_rows = self.row_size - 2
+        else:
+            num_rows = self.row_size
+        self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=num_rows, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
         self.pattern.connect_array_raw()
 
     def get_bitcell_pins(self, row, col):

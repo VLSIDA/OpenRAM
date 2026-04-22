@@ -80,12 +80,12 @@ class sky130_replica_column(replica_column, sky130_bitcell_base_array):
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                if current_row % 2 == 1:
+                if current_row % 2 == 0:
                     pattern.append_row_to_block(bit_block, replica_row_opt1)
                 else:
                     pattern.append_row_to_block(bit_block, replica_row_opt1a)
             else:
-                if current_row % 2 == 1:
+                if current_row % 2 == 0:
                     pattern.append_row_to_block(bit_block, dummy_row_opt1)
                 else:
                     pattern.append_row_to_block(bit_block, dummy_row_opt1a)

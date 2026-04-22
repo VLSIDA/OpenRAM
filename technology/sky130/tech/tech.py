@@ -15,5 +15,5 @@ sys.path.append("{}/{}".format(dir_path,'tech_configs'))
 
 if not hasattr(OPTS, 'tech_file'):
     OPTS.tech_file = 'tech_cypress_cell'
-#TODO: FIX THIS TERRIBLE HACK JUST FOR TESTING EXECUTING 
+#TODO: FIX THIS TERRIBLE HACK JUST FOR TESTING
 exec('from {} import *'.format(OPTS.tech_file))

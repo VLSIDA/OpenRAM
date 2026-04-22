@@ -56,13 +56,15 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
             rowend = geometry.instance("row_cap_rowend", mod=self.rowend, is_bitcell=True, mirror="MX")
             rowenda = geometry.instance("row_cap_rowenda", mod=self.rowenda, is_bitcell=True)
 
-        pattern.append_row_to_block(bit_block, [top_corner])
+        pattern.append_row_to_block(bit_block, [bottom_corner])
         for row in range(1, self.row_size-1):
             if row % 2 == 1:
-                pattern.append_row_to_block(bit_block, [rowend])
-            else:
                 pattern.append_row_to_block(bit_block, [rowenda])
-        pattern.append_row_to_block(bit_block, [bottom_corner])
+
+            else:
+                pattern.append_row_to_block(bit_block, [rowend])
+
+        pattern.append_row_to_block(bit_block, [top_corner])
         self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=self.row_size, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
         self.pattern.connect_array_raw()
         
@@ -76,8 +78,6 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
         bitcell_pins = []
         bitcell_pins.append("vdd") # vdd   
         bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
-
-        #bitcell_pins.extend([x for x in self.all_wordline_names if x.endswith("_{0}".format(row))])
 
         return bitcell_pins
     
@@ -94,7 +94,6 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
     def create_all_wordline_names(self, row_size=None, start_row=0):
         if row_size == None:
             row_size = self.row_size
-        row_size = row_size - 2
         for row in range(start_row, row_size):
             for port in self.all_ports:
                 self.wordline_names[port].append("wl_{0}_{1}".format(port, row))

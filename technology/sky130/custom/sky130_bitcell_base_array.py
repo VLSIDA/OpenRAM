@@ -17,8 +17,8 @@ class sky130_bitcell_base_array(bitcell_base_array):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy, replica
     """
-    def __init__(self, name, rows, cols, column_offset):
-        super().__init__(name, rows, cols, column_offset)
+    def __init__(self, name, rows, cols, column_offset, row_offset):
+        super().__init__(name, rows, cols, column_offset, row_offset)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
 
         self.cell = factory.create(module_type=OPTS.bitcell, version="opt1")

@@ -121,13 +121,14 @@ class bitcell_base_array(design):
     def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
-        temp.extend(self.get_rbl_wordline_names(0))
+        if len(self.all_ports) > 1:
+            temp.extend(self.get_rbl_wordline_names(1))
         if port == None:
             temp.extend(self.all_wordline_names)
         else:
             temp.extend(self.wordline_names[port])
-        if len(self.all_ports) > 1:
-            temp.extend(self.get_rbl_wordline_names(1))
+        temp.extend(self.get_rbl_wordline_names(0))
+
         return temp
 
     def add_bitline_pins(self):

@@ -76,8 +76,8 @@ class replica_bitcell_array(bitcell_base_array):
         """  Array and dummy/replica columns """
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            column_offset=len(self.left_rbl),
-                                            row_offset=len(self.left_rbl),
+                                            column_offset=len(self.left_rbl)+ 1, #add 1 to account for left row_cap
+                                            row_offset=len(self.left_rbl)+1, #add 1 to account for bottom col_cap
                                             cols=self.column_size,
                                             rows=self.row_size,
                                             left_rbl=self.left_rbl, 
@@ -92,11 +92,11 @@ class replica_bitcell_array(bitcell_base_array):
             if port in self.left_rbl:
                 # These go top down starting from the bottom of the bitcell array.
                 replica_bit = self.rbl[0] - port - 1
-                column_offset = 0
+                column_offset = 1
             elif port in self.right_rbl:
                 # These go bottom up starting from the top of the bitcell array.
                 replica_bit = self.rbl[0] + self.row_size + port - 1
-                column_offset = len(self.left_rbl) + self.column_size
+                column_offset = len(self.left_rbl) + self.column_size + 1
             else:
                 continue
 
@@ -120,8 +120,8 @@ class replica_bitcell_array(bitcell_base_array):
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
-                                            row_offset=row_offset,
-                                            column_offset=len(self.left_rbl))
+                                            row_offset=row_offset+1, #add 1 to account for bottom col_cap
+                                            column_offset=len(self.left_rbl)+1) #add 1 to account for left row_cap
 
     def add_pins(self):
 

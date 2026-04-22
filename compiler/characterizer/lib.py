@@ -254,7 +254,7 @@ class lib:
         self.lib.write("    resistance_unit : \"1kohm\" ;\n")
         self.lib.write("    capacitive_load_unit(1, pF) ;\n")
         self.lib.write("    leakage_power_unit : \"1mW\" ;\n")
-        self.lib.write("    pulling_resistance_unit :\"1kohm\" ;\n")
+        self.lib.write("    pulling_resistance_unit : \"1kohm\" ;\n")
         self.lib.write("    operating_conditions(OC){\n")
         self.lib.write("    process : {} ;\n".format(1.0)) # How to use TT, FF, SS?
         self.lib.write("    voltage : {} ;\n".format(self.voltage))
@@ -536,7 +536,7 @@ class lib:
         min_pulse_width = round_time(self.char_sram_results["min_period"])/2.0
         min_period = round_time(self.char_sram_results["min_period"])
         self.lib.write("        timing(){ \n")
-        self.lib.write("            timing_type :\"min_pulse_width\"; \n")
+        self.lib.write("            timing_type : \"min_pulse_width\"; \n")
         self.lib.write("            related_pin  : clk{0}; \n".format(port))
         self.lib.write("            rise_constraint(scalar) {\n")
         self.lib.write("                values(\"{0}\"); \n".format(min_pulse_width))
@@ -546,7 +546,7 @@ class lib:
         self.lib.write("            }\n")
         self.lib.write("         }\n")
         self.lib.write("        timing(){ \n")
-        self.lib.write("            timing_type :\"minimum_period\"; \n")
+        self.lib.write("            timing_type : \"minimum_period\"; \n")
         self.lib.write("            related_pin  : clk{0}; \n".format(port))
         self.lib.write("            rise_constraint(scalar) {\n")
         self.lib.write("                values(\"{0}\"); \n".format(min_period))

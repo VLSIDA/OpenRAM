@@ -17,11 +17,11 @@ SRAM_LIB_GIT_COMMIT ?= 3ad211667d2b7ee0d1092dcc204e6da5a2a3886c
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 GF180_PDK ?= $(PDK_ROOT)/gf180mcuD
 
-# Volare SKY130 PDK
-SKY130_VOLARE = e8294524e5f67c533c5d0c3afa0bcc5b2a5fa066 # 2022.07.29
+# Ciel SKY130 PDK
+SKY130_CIEL = e8294524e5f67c533c5d0c3afa0bcc5b2a5fa066 # 2022.07.29
 
-# Volare GF180 PDK
-GF180_VOLARE = cd1748bb197f9b7af62a54507de6624e30363943 # 2023.12.04
+# Ciel GF180 PDK
+GF180_CIEL = cd1748bb197f9b7af62a54507de6624e30363943 # 2023.12.04
 
 # Skywater PDK
 SKY130_PDKS_DIR ?= $(PDK_ROOT)/skywater-pdk
@@ -57,7 +57,7 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
-# If conda is installed, we will use volare from there
+# If conda is installed, we will use ciel from there
 CONDA_DIR := $(wildcard $(TOP_DIR)/miniconda)
 
 check-pdk-root:
@@ -101,23 +101,23 @@ sky130-install: $(SRAM_LIB_DIR)
 .PHONY: sky130-install
 
 sky130-pdk: $(SKY130_PDKS_DIR)
-	@echo "Installing SKY130 via volare..."
+	@echo "Installing SKY130 via ciel..."
 ifeq ($(CONDA_DIR),)
-	volare enable --pdk sky130 $(SKY130_VOLARE)
+	ciel enable --pdk sky130 $(SKY130_CIEL)
 else
 	source $(TOP_DIR)/miniconda/bin/activate && \
-		volare enable --pdk sky130 $(SKY130_VOLARE) && \
+		ciel enable --pdk sky130 $(SKY130_CIEL) && \
 		conda deactivate
 endif
 .PHONY: sky130-pdk
 
 gf180mcu-pdk:
-	@echo "Installing GF180 via volare..."
+	@echo "Installing GF180 via ciel..."
 ifeq ($(CONDA_DIR),)
-	volare enable --pdk gf180mcu $(GF180_VOLARE)
+	ciel enable --pdk gf180mcu $(GF180_CIEL)
 else
 	source $(TOP_DIR)/miniconda/bin/activate && \
-		volare enable --pdk gf180mcu $(GF180_VOLARE) && \
+		ciel enable --pdk gf180mcu $(GF180_CIEL) && \
 		conda deactivate
 endif
 .PHONY: gf180mcu-pdk

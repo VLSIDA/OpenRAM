@@ -47,7 +47,7 @@ jobs:
          make -k -j 48
       - name: Archive
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Regress Archives
           path: ${{ github.workspace }}/compiler/tests/results/*

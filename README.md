@@ -42,10 +42,6 @@ updating.
 # Further Help
 
 + [Documentation][documentation]
-+ [OpenRAM Slack Workspace][Slack]
-+ [OpenRAM Users Group][user-group] ([subscribe here][user-group-subscribe])
-+ [OpenRAM Developers Group][dev-group] ([subscribe here][dev-group-subscribe])
-
 
 
 # License
@@ -77,7 +73,7 @@ If I forgot to add you, please let me know!
 
 
 
-[Matthew Guthaus]:       https://users.soe.ucsc.edu/~mrg
+[Matthew Guthaus]:       https://vlsida.github.io
 [James Stine]:           https://ece.okstate.edu/content/stine-james-e-jr-phd
 [VLSIDA]:                https://vlsida.soe.ucsc.edu
 [VLSIARCH]:              https://vlsiarch.ecen.okstate.edu/
@@ -88,10 +84,6 @@ If I forgot to add you, please let me know!
 [Github project]:        https://github.com/VLSIDA/OpenRAM
 
 [documentation]:         docs/source/index.md
-[dev-group]:             mailto:openram-dev-group@ucsc.edu
-[user-group]:            mailto:openram-user-group@ucsc.edu
-[dev-group-subscribe]:   mailto:openram-dev-group+subscribe@ucsc.edu
-[user-group-subscribe]:  mailto:openram-user-group+subscribe@ucsc.edu
 
 [Klayout]:               https://www.klayout.de/
 [Magic]:                 http://opencircuitdesign.com/magic/
@@ -105,6 +97,5 @@ If I forgot to add you, please let me know!
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 [Sky130]:                https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 
-[Slack]:                 https://join.slack.com/t/openram/shared_invite/zt-onim74ue-zlttW5XI30xvdBlJGJF6JA
 
 

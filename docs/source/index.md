@@ -29,6 +29,7 @@ navigate through the documentation.
 1. [Characterization](./characterization.md#go-back)
 1. [Results](./results.md#go-back)
 1. [FAQ](./FAQ.md#go-back)
+1. [For developer](./openram_dev_notes.md#go-back)
 1. [Contributors/Collaborators](#contributorscollaborators)
 
 

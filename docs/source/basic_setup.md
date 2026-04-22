@@ -122,7 +122,7 @@ cd $HOME/OpenRAM
 make sky130-pdk
 ```
 
-This will use volare to get the PDK.
+This will use ciel to get the PDK.
 
 > **Note**: If you don't have Magic installed, you need to install and activate
 > the conda environment before running this command. You can run:

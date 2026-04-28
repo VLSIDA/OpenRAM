@@ -73,6 +73,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                                                     cols=self.column_size,
                                                     rows=self.row_size,
                                                     rbl=self.rbl,
+                                                    column_offset=1,
+                                                    row_offset=1,
                                                     left_rbl=self.left_rbl,
                                                     right_rbl=self.right_rbl)
 

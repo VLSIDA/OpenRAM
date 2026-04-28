@@ -19,6 +19,7 @@ class row_cap_array(bitcell_base_array):
         self.mirror = mirror
         self.location = location
         self.row_offset = row_offset
+        self.column_offset = column_offset
         #self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
@@ -58,19 +59,19 @@ class row_cap_array(bitcell_base_array):
         
         bit_block = []
         
-        if self.location == "left":
+        if self.column_offset % 2 == 0:
             #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False, mirror="MY")
             #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="XY")
-            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="")
-            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="MX")
-        elif self.location == "right":
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="MX")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="")
+        else:
             #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False)
             #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="MX")
-            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="MY")
-            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="XY")
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="XY")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="MY")
         #pattern.append_row_to_block(bit_block, [top_corner])
         for row in range(0, self.row_size):
-                if row % 2 == 1:
+                if row % 2 == 0:
                     pattern.append_row_to_block(bit_block, [rowend])
                 else:
                     pattern.append_row_to_block(bit_block, [rowend_m])

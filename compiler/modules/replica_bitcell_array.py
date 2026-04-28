@@ -24,8 +24,8 @@ class replica_bitcell_array(bitcell_base_array):
     Requires a regular bitcell array and (if using replica topology)
     replica bitcell and dummy bitcell (BL/BR disconnected).
     """
-    def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name=name, rows=rows, cols=cols, column_offset=0, row_offset=0)
+    def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, column_offset=0, row_offset=0, name=""):
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset)
         debug.info(1, "Creating {0} {1} x {2} rbls: {3} left_rbl: {4} right_rbl: {5}".format(self.name,
                                                                                              rows,
                                                                                              cols,
@@ -34,6 +34,9 @@ class replica_bitcell_array(bitcell_base_array):
                                                                                              right_rbl))
         self.add_comment("rows: {0} cols: {1}".format(rows, cols))
         self.add_comment("rbl: {0} left_rbl: {1} right_rbl: {2}".format(rbl, left_rbl, right_rbl))
+
+        self.column_offset=column_offset
+        self.row_offset=row_offset
 
         self.column_size = cols
         self.row_size = rows
@@ -76,8 +79,8 @@ class replica_bitcell_array(bitcell_base_array):
         """  Array and dummy/replica columns """
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
-                                            column_offset=len(self.left_rbl)+ 1, #add 1 to account for left row_cap
-                                            row_offset=len(self.left_rbl)+1, #add 1 to account for bottom col_cap
+                                            column_offset=len(self.left_rbl)+ self.column_offset,
+                                            row_offset=len(self.left_rbl)+ self.row_offset,
                                             cols=self.column_size,
                                             rows=self.row_size,
                                             left_rbl=self.left_rbl, 
@@ -92,18 +95,18 @@ class replica_bitcell_array(bitcell_base_array):
             if port in self.left_rbl:
                 # These go top down starting from the bottom of the bitcell array.
                 replica_bit = self.rbl[0] - port - 1
-                column_offset = 1
+                rbc_offset = 0
             elif port in self.right_rbl:
                 # These go bottom up starting from the top of the bitcell array.
                 replica_bit = self.rbl[0] + self.row_size + port - 1
-                column_offset = len(self.left_rbl) + self.column_size + 1
+                rbc_offset = len(self.left_rbl) + self.column_size
             else:
                 continue
 
             self.replica_columns[port] = factory.create(module_type="replica_column",
                                                         rows=self.row_size,
                                                         rbl=self.rbl,
-                                                        column_offset=column_offset,
+                                                        column_offset=rbc_offset + self.column_offset,
                                                         replica_bit=replica_bit)
 
         # Dummy row (for replica wordlines)
@@ -111,17 +114,17 @@ class replica_bitcell_array(bitcell_base_array):
 
         for port in self.all_ports:
             if port in self.left_rbl:
-                row_offset = 0
+                dummy_offset = 0
             elif port in self.right_rbl:
-                row_offset = self.row_size + len(self.left_rbl)
+                dummy_offset = self.row_size + len(self.left_rbl)
             else:
-                row_offset = 0
+                dummy_offset = 0
                 
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
-                                            row_offset=row_offset+1, #add 1 to account for bottom col_cap
-                                            column_offset=len(self.left_rbl)+1) #add 1 to account for left row_cap
+                                            row_offset=dummy_offset + self.row_offset,
+                                            column_offset=len(self.left_rbl) + self.row_offset)
 
     def add_pins(self):
 

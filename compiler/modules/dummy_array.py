@@ -59,10 +59,10 @@ class dummy_array(bitcell_base_array):
         c = self.column_offset
         if self.cell.mirror.y:
             core_block = [[0 for x in range(2)] for y in range(2)]
-            core_block[(0 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(0+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='XY')
-            core_block[(0 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(1+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
-            core_block[(1 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(0+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='MY')
-            core_block[(1 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(1+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='')
+            core_block[(0 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(0+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='')
+            core_block[(0 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(0 + r)%2}_{(1+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='MY')
+            core_block[(1 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(0+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+            core_block[(1 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(1+c)%2}", mod=self.dummy_cell, is_bitcell=True, mirror='XY')
         else: 
             core_block = [[0 for x in range(1)] for y in range(2)] 
             core_block[(0 + self.row_offset) % 2][(0+self.column_offset) %2] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)

@@ -95,7 +95,7 @@ cell_properties.bitcell_1port.gnd_dir = "H"
 cell_properties.bitcell_2port.mirror.x = True
 cell_properties.bitcell_2port.mirror.y = True
 cell_properties.bitcell_2port.end_caps = True
-cell_properties.bitcell_2port.has_corners = True
+cell_properties.bitcell_2port.has_corners = False
 cell_properties.bitcell_2port.port_order = ['bl0', 'br0', 'bl1', 'br1', 'wl0', 'wl1', 'vdd', 'gnd']
 cell_properties.bitcell_2port.port_map = {'bl0': 'BL0',
                                           'br0': 'BR0',

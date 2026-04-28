@@ -65,10 +65,10 @@ class col_cap_array(bitcell_base_array):
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst={}        
-        if self.location == "top":
+        if self.row_offset % 2 == 0:
             bit_row = [geometry.instance("00_colend", mod=self.colend, is_bitcell=True, mirror="MY")]\
                     + [geometry.instance("01_colend", mod=self.colend, is_bitcell=True)]
-        elif self.location == "bottom":
+        else:
             bit_row = [geometry.instance("00_colend", mod=self.colend, is_bitcell=True, mirror="XY")]\
                     + [geometry.instance("01_colend", mod=self.colend, is_bitcell=True, mirror="MX")]
 

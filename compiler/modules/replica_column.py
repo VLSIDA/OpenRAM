@@ -94,26 +94,28 @@ class replica_column(bitcell_base_array):
             # Regular array cells are replica cells
             # Replic bit specifies which other bit (in the full range (0,total_size) to make a replica cell.
             # All other cells are dummies
+            
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
                 if current_row % 2 == 0:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MX')
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MY')
                 else:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True)
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='XY')
             else:
                 if current_row % 2 == 0:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MX')
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MY')
                 else:
-                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True)
+                    core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='XY')
 
             current_row += 1
-            
+        
         if self.cell.mirror.y:
             for row in range(self.total_size):
                 if self.column_offset % 2 == 0:
-                    if core_block[row][0].mirror=='MX':
-                        core_block[row][0].mirror='XY'
+                    if core_block[row][0].mirror=='MY':
+                        core_block[row][0].mirror=''
                     else:
-                        core_block[row][0].mirror='MY'
+                        core_block[row][0].mirror='MX'
+
         self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size, name_template="rbc_r{0}_c{1}")
         self.pattern.connect_array()
 

@@ -845,4 +845,5 @@ blackbox_cells = ["sky130_fd_bd_sram__openram_dp_cell",
                   "sky130_fd_bd_sram__sram_sp_wlstrap_ce",
                   "sky130_fd_bd_sram__sram_sp_wlstrap",
                   "sky130_fd_bd_sram__sram_sp_wlstrap_p_ce",
-                  "sky130_fd_bd_sram__sram_sp_wlstrap_p"]
+                  "sky130_fd_bd_sram__sram_sp_wlstrap_p",
+                  "sky130_fd_bd_sram__sram_sp_wlstrapa_p"]

@@ -25,6 +25,7 @@ class sky130_dummy_array(dummy_array, sky130_bitcell_base_array):
         """ Add the modules used in this design """
         self.dummy_cell = factory.create(module_type=OPTS.dummy_bitcell, version="opt1")
         self.dummy_cella = factory.create(module_type=OPTS.dummy_bitcell, version="opt1a")
+        
         self.strap = factory.create(module_type="internal", version="wlstrap")
         self.strap_p = factory.create(module_type="internal", version="wlstrap_p")
         self.strapa = factory.create(module_type="internal", version="wlstrapa")

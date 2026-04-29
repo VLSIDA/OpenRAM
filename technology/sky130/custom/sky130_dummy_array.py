@@ -37,15 +37,15 @@ class sky130_dummy_array(dummy_array, sky130_bitcell_base_array):
         self.all_inst={}
         self.cell_inst={}
         
-        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='MY')] \
-                     + [geometry.instance("01_strap_p", mod=self.strap_p, is_bitcell=False, mirror='')]\
-                     + [geometry.instance("02_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='')] \
-                     + [geometry.instance("03_strap", mod=self.strap, is_bitcell=False, mirror='')]
+        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='MX')] \
+                     + [geometry.instance("01_strap", mod=self.strap, is_bitcell=False, mirror='MX')]\
+                     + [geometry.instance("02_opt1", mod=self.dummy_cell, is_bitcell=True, mirror='XY')] \
+                     + [geometry.instance("03_strap_p", mod=self.strap_p, is_bitcell=False, mirror='MX')]
   
-        bit_row_opt1a = [geometry.instance("10_opt1a", mod=self.dummy_cella, is_bitcell=True, mirror='MY')] \
-                      + [geometry.instance("11_strap_p", mod=self.strap_p, is_bitcell=False)] \
-                      + [geometry.instance("12_opt1a", mod=self.dummy_cella, is_bitcell=True)] \
-                      + [geometry.instance("13_strapaa", mod=self.strapa, is_bitcell=False)]
+        bit_row_opt1a = [geometry.instance("10_opt1a", mod=self.dummy_cella, is_bitcell=True, mirror='')] \
+                      + [geometry.instance("11_strapa", mod=self.strapa, is_bitcell=False, mirror='')] \
+                      + [geometry.instance("12_opt1a", mod=self.dummy_cella, is_bitcell=True, mirror='MY')] \
+                      + [geometry.instance("13_strapa_p", mod=self.strapa_p, is_bitcell=False, mirror='')]
 
        
         bit_block = []

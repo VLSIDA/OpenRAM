@@ -90,15 +90,7 @@ class sky130_row_cap_array(row_cap_array, sky130_bitcell_base_array):
         strap_pins.append("gnd") # vnb
         
         return strap_pins
-        
-    def create_all_wordline_names(self, row_size=None, start_row=0):
-        if row_size == None:
-            row_size = self.row_size
-        for row in range(start_row, row_size):
-            for port in self.all_ports:
-                self.wordline_names[port].append("wl_{0}_{1}".format(port, row))
 
-        self.all_wordline_names = [x for sl in zip(*self.wordline_names) for x in sl]
         
     def create_layout(self):
 

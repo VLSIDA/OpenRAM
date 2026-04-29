@@ -35,6 +35,7 @@ class sky130_capped_replica_bitcell_array(capped_replica_bitcell_array, sky130_b
 
         for row_end in self.dummy_col_insts:
             row_end = row_end.mod
+            print(self.get_all_wordline_names(), row_end.get_wordline_names())
             for (rba_wl_name, wl_name) in zip(self.get_all_wordline_names(), row_end.get_wordline_names()):
                 pin = row_end.get_pin(wl_name)
                 self.add_layout_pin(text=rba_wl_name,

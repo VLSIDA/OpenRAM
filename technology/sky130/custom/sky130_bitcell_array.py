@@ -19,11 +19,12 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
     Creates a rows x cols array of memory cells.
     Assumes bit-lines and word lines are connected by abutment.
     """
-    def __init__(self, rows, cols, column_offset=0, row_offset=0, name="",left_rbl=None, right_rbl=None):
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, name="", left_rbl=None, right_rbl=None):
         super().__init__(rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset, name=name)
         self.left_rbl = left_rbl
         self.right_rbl = right_rbl
-        
+        self.column_offset = column_offset
+        self.row_offset = row_offset
     def add_modules(self):
         """ Add the modules used in this design """
         # Bitcell for port names only
@@ -44,19 +45,23 @@ class sky130_bitcell_array(bitcell_array, sky130_bitcell_base_array):
         #self.cell_noblcon_inst = geometry.instance("cell_noblcon_inst", mod=self.cell_noblcon, is_bitcell=True)
         #self.cella_noblcon_inst = geometry.instance("cella_noblcon_inst", mod=self.cella_noblcon, is_bitcell=True)
 
-        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.cell, is_bitcell=True, mirror='XY')] \
-                     + [geometry.instance("01_strap_p", mod=self.strap_p, is_bitcell=False, mirror='MX')]\
-                     + [geometry.instance("02_opt1", mod=self.cell, is_bitcell=True, mirror='MX')] \
-                     + [geometry.instance("03_strap", mod=self.strap, is_bitcell=False, mirror='MX')]
+        bit_row_opt1 = [geometry.instance("00_opt1", mod=self.cell, is_bitcell=True, mirror='MX')] \
+                     + [geometry.instance("01_strap_p", mod=self.strap, is_bitcell=False, mirror='MX')]\
+                     + [geometry.instance("02_opt1", mod=self.cell, is_bitcell=True, mirror='XY')] \
+                     + [geometry.instance("03_strap", mod=self.strap_p, is_bitcell=False, mirror='MX')]
   
-        bit_row_opt1a = [geometry.instance("10_opt1a", mod=self.cella, is_bitcell=True, mirror='MY')] \
-                      + [geometry.instance("11_strap_p", mod=self.strap_p, is_bitcell=False)] \
-                      + [geometry.instance("12_opt1a", mod=self.cella, is_bitcell=True)] \
-                      + [geometry.instance("13_strapa", mod=self.strapa, is_bitcell=False)]
+        bit_row_opt1a = [geometry.instance("10_opt1a", mod=self.cella, is_bitcell=True)] \
+                      + [geometry.instance("11_strapa", mod=self.strap, is_bitcell=False)] \
+                      + [geometry.instance("12_opt1a", mod=self.cella, is_bitcell=True, mirror='MY')] \
+                      + [geometry.instance("13_strapa_p", mod=self.strapa_p, is_bitcell=False)]
    
         bit_block = []
-        pattern.append_row_to_block(bit_block, bit_row_opt1)
-        pattern.append_row_to_block(bit_block, bit_row_opt1a)
+        if self.row_offset % 2 == 0:
+            pattern.append_row_to_block(bit_block, bit_row_opt1)
+            pattern.append_row_to_block(bit_block, bit_row_opt1a)
+        else:
+            pattern.append_row_to_block(bit_block, bit_row_opt1a)
+            pattern.append_row_to_block(bit_block, bit_row_opt1)
 
         for row in bit_block:
             row = pattern.rotate_list(row, self.column_offset * 2)

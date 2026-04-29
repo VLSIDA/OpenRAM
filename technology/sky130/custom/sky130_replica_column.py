@@ -64,7 +64,7 @@ class sky130_replica_column(replica_column, sky130_bitcell_base_array):
                       + [geometry.instance("dummy_13_strapa", mod=self.strapa, is_bitcell=False)]
 
         bit_block = []
-        if self.column_offset % 2 == 0:
+        if self.column_offset % 2 == 1:
             replica_row_opt1 = replica_row_opt1[0:2]
             replica_row_opt1a = replica_row_opt1a[0:2]
             dummy_row_opt1 = dummy_row_opt1[0:2]

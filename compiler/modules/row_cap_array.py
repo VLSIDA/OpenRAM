@@ -103,7 +103,7 @@ class row_cap_array(bitcell_base_array):
         max_row = self.row_size - 2
         for row in range(0, max_row):
             for port in self.all_ports:
-                wl_pin = self.cell_inst[max_row - 1 - row, 0].get_pin(wl_names[port])
+                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
                 self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),

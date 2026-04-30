@@ -40,7 +40,7 @@ In general, the OpenRAM compiler has very few dependencies:
 + Make
 + Python 3.5 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ Anaconda
++ Nix
 
 Commercial tools (optional):
 * Spice Simulator

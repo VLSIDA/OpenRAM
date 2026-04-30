@@ -7,8 +7,8 @@ This page shows the basic setup for using OpenRAM to generate an SRAM.
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
-1. [Anaconda](#anaconda)
-1. [Docker](#docker-deprecated-use-anaconda-instead)
+1. [Nix](#nix)
+1. [Docker](#docker-deprecated-use-nix-instead)
 1. [Environment](#environment)
 1. [Sky130 Setup](#sky130-setup)
 
@@ -20,51 +20,25 @@ In general, the OpenRAM compiler has very few dependencies:
 + Make
 + Python 3.5 or higher
 + Various Python packages (pip install -r requirements.txt)
-+ Anaconda
++ Nix
 
 
 
-## Anaconda
-We use Anaconda package manager to install the tools used by OpenRAM. This way,
-you don't have to worry about updating/installing these tools. OpenRAM installs
-Anaconda silently in the background (without affecting any existing Anaconda
-setup you have).
+## Nix
+OpenRAM uses Nix to provide the external toolchain (layout tools, simulators,
+etc.) needed for SRAM generation.
 
-You don't have to manually activate/deactivate the Anaconda environment. OpenRAM
-automatically manages this before and after running the tools.
-
-OpenRAM uses Anaconda by default, but you can turn this feature off by setting
-`use_conda = False` in your config file. Then, OpenRAM will use the tools you
-have installed on your system.
-
-You can also tell OpenRAM where Anaconda should be installed or which Anaconda
-setup it should use. You can set the `$CONDA_HOME` variable like this:
+Enter the Nix development environment with:
 ```
-export CONDA_HOME="/path/to/conda/setup"
+nix develop
 ```
 
-> **Note**: If you want to install Anaconda without running OpenRAM (for example
-> to run unit tests, which do not install Anaconda), you can run:
-> ```
-> ./install_conda.sh
-> ```
+Within the devShell, required executables are available on `PATH`
 
-> **Note**: You can uninstall OpenRAM's Anaconda installation by simply deleting
-> the folder Anaconda is installed to. You can run:
-> ```
-> rm -rf miniconda
-> ```
+OpenRAM uses the `use_nix` option (enabled by default) to initialize Nix-based
+tool dependencies via `nix develop`.
 
-> **Note**: You can change a tool's version with the following commands:
-> ```
-> source ./miniconda/bin/activate
-> conda uninstall <tool>
-> conda install -y -c vlsida-eda <tool>=<version>
-> ```
-
-
-
-## Docker (deprecated, use Anaconda instead)
+## Docker (deprecated, use Nix instead)
 We have a [docker setup](../../docker) to run OpenRAM. To use this, you should
 run:
 ```
@@ -124,12 +98,11 @@ make sky130-pdk
 
 This will use ciel to get the PDK.
 
-> **Note**: If you don't have Magic installed, you need to install and activate
-> the conda environment before running this command. You can run:
+> **Note**: If you don't have Magic installed, enter the OpenRAM Nix devShell
+> first (it provides Magic and other tools via `PATH`):
 >
 > ```
-> ./install_conda.sh
-> source miniconda/bin/activate
+> nix develop
 > ```
 
 Then you must also install the [Sky130] SRAM build space with the appropriate

@@ -151,9 +151,9 @@ class options(optparse.Values):
     ###################
     # Top process that was ran (openram, memchar, memfunc)
     top_process = None
-    # Use conda to install the default tools
-    # (existing tools will be used if disabled)
-    use_conda = True
+    # Use Nix to initialize the default open-source toolchain.
+    # If disabled, OpenRAM uses whatever tools are already in PATH.
+    use_nix = True
     # Variable to select the variant of spice
     spice_name = None
     # The spice executable being used which is derived from the user PATH.

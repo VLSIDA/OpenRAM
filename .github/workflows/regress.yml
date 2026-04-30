@@ -19,31 +19,30 @@ jobs:
         run: |
          rm -rf ~/.local/lib/python3.8/site-packages/openram*
          make library
-      - name: Build conda
-        run: |
-         ./install_conda.sh
       - name: PDK Install
         run: |
-         export OPENRAM_HOME="${{ github.workspace }}/compiler"
-         export OPENRAM_TECH="${{ github.workspace }}/technology"
-         export PDK_ROOT="${{ github.workspace }}/pdk"
+         nix --extra-experimental-features 'nix-command flakes' develop --command bash -lc '
+         export OPENRAM_HOME="${{ github.workspace }}/compiler";
+         export OPENRAM_TECH="${{ github.workspace }}/technology";
+         export PDK_ROOT="${{ github.workspace }}/pdk";
          # Add make targets to install PDKs of all technologies that need it
-         make sky130-pdk
+         make sky130-pdk;
          make sky130-install
       - name: Regress
         run: |
-         export OPENRAM_HOME="${{ github.workspace }}/compiler"
-         export OPENRAM_TECH="${{ github.workspace }}/technology"
-         export PDK_ROOT="${{ github.workspace }}/pdk"
-         export FREEPDK45="~/FreePDK45"
+         nix --extra-experimental-features 'nix-command flakes' develop --command bash -lc '
+         export OPENRAM_HOME="${{ github.workspace }}/compiler";
+         export OPENRAM_TECH="${{ github.workspace }}/technology";
+         export PDK_ROOT="${{ github.workspace }}/pdk";
+         export FREEPDK45="~/FreePDK45";
          # KLAYOUT_PATH breaks klayout installation. Unset it for now...
-         unset KLAYOUT_PATH
+         unset KLAYOUT_PATH;
          #cd $OPENRAM_HOME/.. && make pdk && make install
          #export OPENRAM_TMP="${{ github.workspace }}/scn4me_subm_temp"
          #python3-coverage run -p $OPENRAM_HOME/tests/regress.py -j 12 -t scn4m_subm
          #$OPENRAM_HOME/tests/regress.py -j 24 -t scn4m_subm
-         cd $OPENRAM_HOME/tests
-         make clean
+         cd $OPENRAM_HOME/tests;
+         make clean;
          make -k -j 48
       - name: Archive
         if: ${{ failure() }}

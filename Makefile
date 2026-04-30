@@ -13,8 +13,7 @@ SRAM_LIB_GIT_REPO ?= https://github.com/vlsida/sky130_fd_bd_sram.git
 # Use this for development
 #SRAM_LIB_GIT_REPO ?= git@github.com:VLSIDA/sky130_fd_bd_sram.git
 #SRAM_LIB_GIT_REPO ?= https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
-SRAM_LIB_GIT_COMMIT ?= dd64256961317205343a3fd446908b42bafba388
-
+SRAM_LIB_GIT_COMMIT ?= fc63b12883b4bf458ee8c756ba64c37063e1ffb9
 SKY130_PDK ?= $(PDK_ROOT)/sky130A
 GF180_PDK ?= $(PDK_ROOT)/gf180mcuD
 
@@ -58,8 +57,8 @@ INSTALL_BASE_DIRS := gds_lib mag_lib sp_lib lvs_lib calibre_lvs_lib klayout_lvs_
 INSTALL_BASE := $(OPENRAM_HOME)/../technology/sky130
 INSTALL_DIRS := $(addprefix $(INSTALL_BASE)/,$(INSTALL_BASE_DIRS))
 
-# If conda is installed, we will use ciel from there
-CONDA_DIR := $(wildcard $(TOP_DIR)/miniconda)
+# If nix is available, run ciel via nix develop
+NIX_BIN := $(shell command -v nix 2>/dev/null)
 
 check-pdk-root:
 ifndef PDK_ROOT
@@ -103,23 +102,21 @@ sky130-install: $(SRAM_LIB_DIR)
 
 sky130-pdk: $(SKY130_PDKS_DIR)
 	@echo "Installing SKY130 via ciel..."
-ifeq ($(CONDA_DIR),)
+ifeq ($(NIX_BIN),)
 	ciel enable --pdk sky130 $(SKY130_CIEL)
 else
-	source $(TOP_DIR)/miniconda/bin/activate && \
-		ciel enable --pdk sky130 $(SKY130_CIEL) && \
-		conda deactivate
+	nix --extra-experimental-features 'nix-command flakes' develop --command \
+		ciel enable --pdk sky130 $(SKY130_CIEL)
 endif
 .PHONY: sky130-pdk
 
 gf180mcu-pdk:
 	@echo "Installing GF180 via ciel..."
-ifeq ($(CONDA_DIR),)
+ifeq ($(NIX_BIN),)
 	ciel enable --pdk gf180mcu $(GF180_CIEL)
 else
-	source $(TOP_DIR)/miniconda/bin/activate && \
-		ciel enable --pdk gf180mcu $(GF180_CIEL) && \
-		conda deactivate
+	nix --extra-experimental-features 'nix-command flakes' develop --command \
+		ciel enable --pdk gf180mcu $(GF180_CIEL)
 endif
 .PHONY: gf180mcu-pdk
 

@@ -11,7 +11,7 @@ In this section, the detailed usage of using OpenRAM framework will be demonstra
 >
 >  Before you go through, make sure that environment of Sky130 has been already set up.
 
-1. Activate miniconda
+1. Enter the Nix devShell
 
 2. Edit the sram configuration file
 
@@ -19,11 +19,11 @@ In this section, the detailed usage of using OpenRAM framework will be demonstra
 
 4. Check the results
 
-#### Activate miniconda
+#### Enter Nix devShell
 
 ```bash
 cd OpenRAM/
-source ./miniconda/bin/activate
+nix develop
 ```
 
 #### Modified the sram configuration

@@ -50,6 +50,7 @@ class spice():
         if not os.path.exists(self.lvs_file):
             self.lvs_file = self.sp_file
 
+        self.valid_signal_types = ["INOUT", "INPUT", "OUTPUT", "BIAS", "POWER", "GROUND"]
         # Holds subckts/mods for this module
         self.mods = set()
         # Holds the pins for this module (in order)
@@ -699,7 +700,8 @@ class spice():
     def get_instance_connections(self):
         conns = []
         for inst in self.insts:
-            conns.append(inst.get_connections())
+            if "contact" not in inst.name:
+                conns.append(inst.get_connections())
         return conns
 
     def is_net_alias(self, known_net, net_alias, mod, exclusion_set):

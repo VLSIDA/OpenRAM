@@ -9,6 +9,7 @@ import sys
 import os
 import re
 from math import sqrt
+from copy import deepcopy
 from openram import debug
 from openram.gdsMill import gdsMill
 from openram import tech
@@ -460,19 +461,30 @@ class layout():
             for pin in pin_list:
                 pin.rect = [pin.ll() - offset, pin.ur() - offset]
 
-    def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
+    def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0, is_bitcell=False):
         """ Adds an instance of a mod to this module """
         # Contacts are not really instances, so skip them
         if "contact" not in mod.name:
             # Check that the instance name is unique
             debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.cell_name, name))
-
         self.mods.add(mod)
         self.inst_names.add(name)
-        self.insts.append(geometry.instance(name, mod, offset, mirror, rotate))
+        self.insts.append(geometry.instance(name, mod, offset, mirror, rotate, is_bitcell))
         debug.info(3, "adding instance {}".format(self.insts[-1]))
         # This is commented out for runtime reasons
         # debug.info(4, "instance list: " + ",".join(x.name for x in self.insts))
+        return self.insts[-1]
+
+    def add_existing_inst(self, inst, name):
+        #new_inst = deepcopy(inst)
+        new_inst = self.add_inst(name, inst.mod, offset=inst.offset, mirror=inst.mirror, rotate=inst.rotate, is_bitcell=inst.is_bitcell)
+        #new_inst.mod = inst.mod
+        self.mods.add(new_inst.mod)
+        #if name:
+        #    new_inst.name = name
+        self.inst_names.add(new_inst.name)
+        #self.insts.append(new_inst)
+        debug.info(3, "adding existing instance{}".format(self.insts[-1]))
         return self.insts[-1]
 
     def get_inst(self, name):
@@ -2149,6 +2161,13 @@ class layout():
         # Add the gnd ring
         self.add_ring([ll, ur])
 
+    def reset_coordinates(self):
+        ll=vector(min([x.lx() for x in self.insts]),min([y.by() for y in self.insts]))
+
+        self.translate_all(ll)
+        self.width = max([x.rx() for x in self.insts]) - min([x.lx() for x in self.insts])
+        self.height = max([x.uy() for x in self.insts]) - min([y.by() for y in self.insts])
+
     def add_ring(self, bbox=None, width_mult=8, offset=0):
         """
         Add a ring around the bbox
@@ -2201,7 +2220,7 @@ class layout():
                                 size=(supply_vias,
                                       supply_vias))
 
-    def add_power_ring(self):
+    def add_power_ring(self, h_layer="m2", v_layer="m1", top=True, bottom=True, left=True, right=True):
         """
         Create vdd and gnd power rings around an area of the bounding box
         argument. Must have a supply_rail_width and supply_rail_pitch
@@ -2209,118 +2228,120 @@ class layout():
         left/right/top/bottom vdd/gnd center offsets for use in other
         modules..
         """
-
         [ll, ur] = self.bbox
 
-        supply_rail_spacing = self.supply_rail_pitch - self.supply_rail_width
+        supply_rail_spacing = self.supply_rail_pitch
         height = (ur.y - ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
         width = (ur.x - ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
 
         # LEFT vertical rails
-        offset = ll + vector(-2 * self.supply_rail_pitch,
-                             -2 * self.supply_rail_pitch)
-        left_gnd_pin = self.add_layout_pin(text="gnd",
-                                           layer="m2",
-                                           offset=offset,
-                                           width=self.supply_rail_width,
-                                           height=height)
+        if left:
+            offset = ll  + vector(-2*self.supply_rail_pitch, 
+                                  -2*self.supply_rail_pitch)
+            self.left_gnd_pin = self.add_layout_pin(text="gnd",
+                                               layer=v_layer,
+                                               offset=offset,
+                                               width=self.supply_rail_width,
+                                               height=height + 2 * supply_rail_spacing)
 
-        offset = ll + vector(-1 * self.supply_rail_pitch,
-                             -1 * self.supply_rail_pitch)
-        left_vdd_pin = self.add_layout_pin(text="vdd",
-                                           layer="m2",
-                                           offset=offset,
-                                           width=self.supply_rail_width,
-                                           height=height)
+            offset = ll + vector(-1 * self.supply_rail_pitch,
+                                 -1 * self.supply_rail_pitch)
+            self.left_vdd_pin = self.add_layout_pin(text="vdd",
+                                               layer=v_layer,
+                                               offset=offset,
+                                               width=self.supply_rail_width,
+                                               height=height)
 
-        # RIGHT vertical rails
-        offset = vector(ur.x, ll.y) + vector(0, -2 * self.supply_rail_pitch)
-        right_gnd_pin = self.add_layout_pin(text="gnd",
-                                            layer="m2",
-                                            offset=offset,
-                                            width=self.supply_rail_width,
-                                            height=height)
+        if right:
+            # RIGHT vertical railsteac a 460
+            offset = vector(ur.x, ll.y) + vector(2 * self.supply_rail_pitch - self.supply_rail_width,
+                                                -2 * self.supply_rail_pitch)
+            self.right_gnd_pin = self.add_layout_pin(text="gnd",
+                                                layer=v_layer,
+                                                offset=offset,
+                                                width=self.supply_rail_width,
+                                                height=height + 2* supply_rail_spacing)
 
-        offset = vector(ur.x, ll.y) + vector(self.supply_rail_pitch,
-                                            -1 * self.supply_rail_pitch)
-        right_vdd_pin = self.add_layout_pin(text="vdd",
-                                            layer="m2",
-                                            offset=offset,
-                                            width=self.supply_rail_width,
-                                            height=height)
+            offset = vector(ur.x, ll.y) + vector(1 * self.supply_rail_pitch - self.supply_rail_width,
+                                                -1 * self.supply_rail_pitch)
+            self.right_vdd_pin = self.add_layout_pin(text="vdd",
+                                                layer=v_layer,
+                                                offset=offset,
+                                                width=self.supply_rail_width,
+                                                height=height)
 
-        # BOTTOM horizontal rails
-        offset = ll + vector(-2 * self.supply_rail_pitch,
-                             -2 * self.supply_rail_pitch)
-        bottom_gnd_pin = self.add_layout_pin(text="gnd",
-                                             layer="m1",
-                                             offset=offset,
-                                             width=width,
-                                             height=self.supply_rail_width)
+        if bottom:
+            # BOTTOM horizontal rails
+            offset = ll + vector(-2 * self.supply_rail_pitch,
+                                 -2 * self.supply_rail_pitch)
+            self.bottom_gnd_pin = self.add_layout_pin(text="gnd",
+                                                 layer=h_layer,
+                                                 offset=offset,
+                                                 width=width + 2 * supply_rail_spacing,
+                                                 height=self.supply_rail_width)
 
-        offset = ll + vector(-1 * self.supply_rail_pitch,
-                             -1 * self.supply_rail_pitch)
-        bottom_vdd_pin = self.add_layout_pin(text="vdd",
-                                             layer="m1",
-                                             offset=offset,
-                                             width=width,
-                                             height=self.supply_rail_width)
+            offset = ll + vector(-1 * self.supply_rail_pitch,
+                                 -1 * self.supply_rail_pitch)
+            self.bottom_vdd_pin = self.add_layout_pin(text="vdd",
+                                                 layer=h_layer,
+                                                 offset=offset,
+                                                 width=width,
+                                                 height=self.supply_rail_width)
+        if top:
+            # TOP horizontal rails
+            offset = vector(ll.x, ur.y) + vector(-2 * self.supply_rail_pitch,
+                                                  2 * self.supply_rail_pitch - self.supply_rail_width)
+            self.top_gnd_pin = self.add_layout_pin(text="gnd",
+                                              layer=h_layer,
+                                              offset=offset,
+                                              width=width + 2 * supply_rail_spacing,
+                                              height=self.supply_rail_width)
 
-        # TOP horizontal rails
-        offset = vector(ll.x, ur.y) + vector(-2 * self.supply_rail_pitch,
-                                             0)
-        top_gnd_pin = self.add_layout_pin(text="gnd",
-                                          layer="m1",
-                                          offset=offset,
-                                          width=width,
-                                          height=self.supply_rail_width)
-
-        offset = vector(ll.x, ur.y) + vector(-1 * self.supply_rail_pitch,
-                                             self.supply_rail_pitch)
-        top_vdd_pin = self.add_layout_pin(text="vdd",
-                                          layer="m1",
-                                          offset=offset,
-                                          width=width,
-                                          height=self.supply_rail_width)
+            offset = vector(ll.x, ur.y) + vector(-1 * self.supply_rail_pitch, 
+                                                  1 * self.supply_rail_pitch - self.supply_rail_width)
+            self.top_vdd_pin = self.add_layout_pin(text="vdd",
+                                              layer=h_layer,
+                                              offset=offset,
+                                              width=width,
+                                              height=self.supply_rail_width)
 
         # Remember these for connecting things in the design
-        self.left_gnd_x_center = left_gnd_pin.cx()
-        self.left_vdd_x_center = left_vdd_pin.cx()
-        self.right_gnd_x_center = right_gnd_pin.cx()
-        self.right_vdd_x_center = right_vdd_pin.cx()
+        if left:
+            self.left_gnd_x_center = self.left_gnd_pin.cx()
+            self.left_vdd_x_center = self.left_vdd_pin.cx()
+        if right:
+            self.right_gnd_x_center = self.right_gnd_pin.cx()
+            self.right_vdd_x_center = self.right_vdd_pin.cx()
+        if bottom:
+            self.bottom_gnd_y_center = self.bottom_gnd_pin.cy()
+            self.bottom_vdd_y_center = self.bottom_vdd_pin.cy()
+        if top:
+            self.top_gnd_y_center = self.top_gnd_pin.cy()
+            self.top_vdd_y_center = self.top_vdd_pin.cy()
 
-        self.bottom_gnd_y_center = bottom_gnd_pin.cy()
-        self.bottom_vdd_y_center = bottom_vdd_pin.cy()
-        self.top_gnd_y_center = top_gnd_pin.cy()
-        self.top_vdd_y_center = top_vdd_pin.cy()
-
-        # Find the number of vias for this pitch
-        self.supply_vias = 1
-        while True:
-            c = factory.create(module_type="contact",
-                               layer_stack=self.m1_stack,
-                               dimensions=(self.supply_vias, self.supply_vias))
-            if c.second_layer_width < self.supply_rail_width and c.second_layer_height < self.supply_rail_width:
-                self.supply_vias += 1
-            else:
-                self.supply_vias -= 1
-                break
-
-        via_points = [vector(self.left_gnd_x_center, self.bottom_gnd_y_center),
-                      vector(self.left_gnd_x_center, self.top_gnd_y_center),
-                      vector(self.right_gnd_x_center, self.bottom_gnd_y_center),
-                      vector(self.right_gnd_x_center, self.top_gnd_y_center),
-                      vector(self.left_vdd_x_center, self.bottom_vdd_y_center),
-                      vector(self.left_vdd_x_center, self.top_vdd_y_center),
-                      vector(self.right_vdd_x_center, self.bottom_vdd_y_center),
-                      vector(self.right_vdd_x_center, self.top_vdd_y_center)]
-
+        via_points = []
+        if left and bottom:
+            via_points.append((self.left_gnd_x_center, self.bottom_gnd_y_center))
+        if left and top:
+            via_points.append(vector(self.left_gnd_x_center, self.top_gnd_y_center))
+        if right and bottom:          
+            via_points.append(vector(self.right_gnd_x_center, self.bottom_gnd_y_center))
+        if right and top:
+            via_points.append(vector(self.right_gnd_x_center, self.top_gnd_y_center))
+        if left and bottom:
+            via_points.append(vector(self.left_vdd_x_center, self.bottom_vdd_y_center))
+        if left and top:
+            via_points.append(vector(self.left_vdd_x_center, self.top_vdd_y_center))
+        if right and bottom:
+            via_points.append(vector(self.right_vdd_x_center, self.bottom_vdd_y_center))
+        if right and top:
+            via_points.append((self.right_vdd_x_center, self.top_vdd_y_center))
+        
         for pt in via_points:
-            self.add_via_center(layers=self.m1_stack,
-                                offset=pt,
-                                size=(self.supply_vias,
-                                      self.supply_vias))
-
+            self.add_via_stack_center(offset=pt,
+                                      from_layer=h_layer,
+                                      to_layer=v_layer,
+                                      min_area=True)
     def pdf_write(self, pdf_name):
         """
         Display the layout to a PDF file.

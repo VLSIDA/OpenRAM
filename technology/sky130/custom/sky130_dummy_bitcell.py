@@ -21,9 +21,9 @@ class sky130_dummy_bitcell(bitcell_base):
         # Ignore the name argument
 
         if version == "opt1":
-            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1_dummy"
+            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1_noblcon"
         elif version == "opt1a":
-            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1a_dummy"
+            cell_name = "sky130_fd_bd_sram__openram_sp_cell_opt1a_noblcon"
         super().__init__(name, cell_name, prop=props.bitcell_1port)
         debug.info(2, "Create dummy bitcell")
 

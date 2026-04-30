@@ -6,16 +6,21 @@
 from openram.sram_factory import factory
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
-
+from .pattern import pattern
+from openram.base import geometry
+from math import ceil
 
 class row_cap_array(bitcell_base_array):
     """
     Generate a dummy row/column for the replica array.
     """
-    def __init__(self, rows, cols, column_offset=0, mirror=0, name=""):
-        super().__init__(rows=rows, cols=cols, column_offset=column_offset, name=name)
+    def __init__(self, rows, cols, column_offset=0, row_offset=0, mirror=0, location="", name=""):
+        super().__init__(rows=rows, cols=cols, column_offset=column_offset, row_offset=row_offset, name=name)
         self.mirror = mirror
-        self.no_instances = True
+        self.location = location
+        self.row_offset = row_offset
+        self.column_offset = column_offset
+        #self.no_instances = True
         self.create_netlist()
         if not OPTS.netlist_only:
             self.create_layout()
@@ -32,7 +37,7 @@ class row_cap_array(bitcell_base_array):
 
     def create_layout(self):
 
-        self.place_array("dummy_r{0}_c{1}", self.mirror)
+        self.place_array()
         self.add_layout_pins()
 
         self.width = max([x.rx() for x in self.insts])
@@ -43,19 +48,41 @@ class row_cap_array(bitcell_base_array):
 
     def add_modules(self):
         """ Add the modules used in this design """
-        self.dummy_cell = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
+        self.row_cap = factory.create(module_type="row_cap_{}".format(OPTS.bitcell))
 
         self.cell = factory.create(module_type=OPTS.bitcell)
 
     def create_instances(self):
         """ Create the module instances used in this design """
-        self.cell_inst = {}
-        for col in range(self.column_size):
-            for row in range(0, self.row_size):
-                name = "bit_r{0}_c{1}".format(row, col)
-                self.cell_inst[row, col]=self.add_inst(name=name,
-                                                       mod=self.dummy_cell)
-                self.connect_inst(self.get_bitcell_pins(row, col))
+        self.all_inst={}
+        self.cell_inst={}
+        
+        bit_block = []
+        
+        if self.column_offset % 2 == 0:
+            #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False, mirror="MY")
+            #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="XY")
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="MX")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="")
+        else:
+            #top_corner = geometry.instance("row_cap_top_corner", mod=self.top_corner, is_bitcell=False)
+            #bottom_corner = geometry.instance("row_cap_bottom_corner", mod=self.bottom_corner, is_bitcell=False, mirror="MX")
+            rowend = geometry.instance("row_cap_rowend", mod=self.row_cap, is_bitcell=True, mirror="XY")
+            rowend_m = geometry.instance("row_cap_rowend_m", mod=self.row_cap, is_bitcell=True, mirror="MY")
+        #pattern.append_row_to_block(bit_block, [top_corner])
+        for row in range(0, self.row_size):
+                if row % 2 == 0:
+                    pattern.append_row_to_block(bit_block, [rowend])
+                else:
+                    pattern.append_row_to_block(bit_block, [rowend_m])
+
+        #pattern.append_row_to_block(bit_block, [bottom_corner])
+        if self.cell.has_corners is False:
+            num_rows = self.row_size - 2
+        else:
+            num_rows = self.row_size
+        self.pattern = pattern(self, "row_cap_array_" + self.location, bit_block, num_rows=num_rows, num_cols=self.column_size, num_cores_x=ceil(self.column_size/2), num_cores_y=ceil(self.row_size/2), name_template="row_cap_array" + self.location + "_r{0}_c{1}")
+        self.pattern.connect_array_raw()
 
     def get_bitcell_pins(self, row, col):
         """
@@ -69,44 +96,21 @@ class row_cap_array(bitcell_base_array):
 
         return bitcell_pins
 
-    def place_array(self, name_template, row_offset=0):
-        xoffset = 0.0
-        for col in range(self.column_size):
-            yoffset = self.cell.height
-            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
-
-            for row in range(self.row_size):
-                tempy, dir_x = self._adjust_y_offset(yoffset, row + 1, row_offset)
-
-                if dir_x and dir_y:
-                    dir_key = "XY"
-                elif dir_x:
-                    dir_key = "MX"
-                elif dir_y:
-                    dir_key = "MY"
-                else:
-                    dir_key = ""
-
-                self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                               mirror=dir_key)
-                yoffset += self.cell.height
-            xoffset += self.cell.width
-
     def add_layout_pins(self):
         """ Add the layout pins """
 
-        row_list = self.cell.get_all_wl_names()
-
-        for row in range(1, self.row_size - 1):
-            for cell_row in row_list:
-                wl_pin = self.cell_inst[row, 0].get_pin(cell_row)
-                self.add_layout_pin(text=cell_row + "_{0}".format(row),
+        wl_names = self.cell.get_all_wl_names()
+        max_row = self.row_size - 2
+        for row in range(0, max_row):
+            for port in self.all_ports:
+                wl_pin = self.cell_inst[row, 0].get_pin(wl_names[port])
+                self.add_layout_pin(text="wl_{0}_{1}".format(port, row),
                                     layer=wl_pin.layer,
                                     offset=wl_pin.ll().scale(0, 1),
                                     width=self.width,
                                     height=wl_pin.height())
 
-        for row in range(1, self.row_size - 1):
+        for row in range(0, max_row):
             for col in range(self.column_size):
                 inst = self.cell_inst[row, col]
                 for pin_name in ["vdd", "gnd"]:

@@ -12,6 +12,7 @@ simulations as well.
 """
 
 import os
+import shlex
 import subprocess
 import numpy as np
 from openram import debug
@@ -406,11 +407,15 @@ class stimuli():
         spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
         spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
-        # Wrap the command with conda activate & conda deactivate
+        # Run spice in the Nix devShell when Nix-managed tools are enabled.
         # FIXME: Should use verify/run_script.py here but run_script doesn't return
         # the return code of the subprocess. File names might also mismatch.
-        from openram import CONDA_HOME
-        cmd = "/bin/bash -c 'source {0}/bin/activate && {1} && conda deactivate'".format(CONDA_HOME, cmd)
+        if OPTS.use_nix:
+            cmd = (
+                "nix --extra-experimental-features 'nix-command flakes' "
+                "develop --command /bin/bash -lc {0}"
+                .format(shlex.quote(cmd))
+            )
         debug.info(2, cmd)
         proc = subprocess.run(cmd, stdout=spice_stdout, stderr=spice_stderr, shell=True)
 

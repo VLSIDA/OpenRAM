@@ -61,10 +61,9 @@ make -j 3
 ```
 
 The `-j` can run with 3 threads. By default, this will run in all technologies.
-> **Note**: If you have not run openram before running unit tests, the conda
-> environment will not be installed. You can install it by running
-> `OpenRAM/install_conda.sh` (see [Basic Setup](basic_setup.md#anaconda) for
-> more details).
+> **Note**: The external EDA toolchain is provided by the Nix devShell.
+> If you run unit tests without being in a Nix environment, enter it first:
+> `nix develop` (see [Basic Setup](basic_setup.md#nix) for more details).
 
 To run a specific test in all technologies:
 ```

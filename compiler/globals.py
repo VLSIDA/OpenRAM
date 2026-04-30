@@ -67,10 +67,13 @@ def parse_args():
                              dest="num_sim_threads"),
         optparse.make_option("-v", "--verbose",
                              action="count",
-                             dest="verbose_level",
+                             dest="5",
                              help="Increase the verbosity level"),
         optparse.make_option("-t", "--tech",
                              dest="tech_name",
+                             help="Technology name"),
+        optparse.make_option("-f", "--tech_file",
+                             dest="tech_file",
                              help="Technology name"),
         optparse.make_option("-s", "--spice",
                              dest="spice_name",
@@ -185,7 +188,7 @@ def init_openram(config_file, is_unit_test=False):
 
     read_config(config_file, is_unit_test)
 
-    install_conda()
+    install_nix()
 
     import_tech()
 
@@ -206,17 +209,40 @@ def init_openram(config_file, is_unit_test=False):
     from openram import verify
 
 
-def install_conda():
-    """ Setup conda for default tools. """
+def install_nix():
+    """Initialize Nix-based toolchain dependencies."""
 
-    # Don't setup conda if not used
-    if not OPTS.use_conda or OPTS.is_unit_test:
+    # Don't setup tools during unit tests.
+    if OPTS.is_unit_test:
         return
 
-    debug.info(1, "Creating conda setup...");
+    if not OPTS.use_nix or OPTS.is_unit_test:
+        return
 
-    from openram import CONDA_INSTALLER
-    subprocess.call(CONDA_INSTALLER)
+    debug.info(1, "Bootstrapping toolchain with Nix...")
+
+    nix_exe = shutil.which("nix")
+    if nix_exe is None:
+        debug.error("Nix is required for automatic tool setup, but 'nix' was not found in PATH.", -1)
+
+    repo_root = os.path.abspath(os.path.join(OPENRAM_HOME, ".."))
+    flake_file = os.path.join(repo_root, "flake.nix")
+    if not os.path.exists(flake_file):
+        debug.error("Expected Nix flake at {} for tool setup.".format(flake_file), -1)
+
+    # Trigger materialization/build of the devShell dependencies once.
+    # Environment activation still happens outside OpenRAM via `nix develop`.
+    cmd = [
+        nix_exe,
+        "--extra-experimental-features", "nix-command flakes",
+        "develop",
+        "--command", "true",
+    ]
+    result = subprocess.call(cmd, cwd=repo_root)
+    if result != 0:
+        debug.error("Failed to initialize Nix toolchain (nix develop returned {}).".format(result), -1)
+
+    return
 
 
 def setup_bitcell():
@@ -443,14 +469,7 @@ def find_exe(check_exe):
     Check if the binary exists in any path dir and return the full path.
     """
 
-    # Search for conda setup if used
-    if OPTS.use_conda:
-        from openram import CONDA_HOME
-        search_path = "{0}/bin{1}{2}".format(CONDA_HOME,
-                                             os.pathsep,
-                                             os.environ["PATH"])
-    else:
-        search_path = os.environ["PATH"]
+    search_path = os.environ["PATH"]
 
     # Check if the preferred spice option exists in the path
     for path in search_path.split(os.pathsep):

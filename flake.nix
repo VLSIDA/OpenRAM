@@ -18,8 +18,8 @@
         {
           default = pkgs.mkShell {
             packages = [
-              # PDK management — ciel: install/switch open PDK revisions (e.g. sky130, gf180)
-              pkgs.ciel
+              # FOSSI PDK ciel (nixpkgs `ciel` is unrelated: AOSC ciel-rs, wants root)
+              pkgs.pdk-ciel
 
               # EDA / verification tools
               pkgs.klayout

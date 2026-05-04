@@ -17,6 +17,12 @@
         in
         {
           default = pkgs.mkShell {
+            # Pip wheels (e.g. numpy in .venv) need common shared libs at runtime on Nix.
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+              pkgs.stdenv.cc.cc.lib
+              pkgs.zlib
+            ];
+
             packages = [
               # FOSSI PDK ciel (nixpkgs `ciel` is unrelated: AOSC ciel-rs, wants root)
               pkgs.pdk-ciel

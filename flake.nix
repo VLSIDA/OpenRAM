@@ -18,6 +18,9 @@
         {
           default = pkgs.mkShell {
             packages = [
+              # PDK management — ciel: install/switch open PDK revisions (e.g. sky130, gf180)
+              pkgs.ciel
+
               # EDA / verification tools
               pkgs.klayout
               pkgs.magic-vlsi

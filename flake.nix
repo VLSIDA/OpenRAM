@@ -38,11 +38,24 @@
               pkgs.git
               pkgs.gnumake
               pkgs.curl
+
+              # Python + pip (user installs, venvs; prefer Nix where possible)
+              pkgs.python3
+              pkgs.python3Packages.pip
             ];
 
             shellHook = ''
               export OPENRAM_USE_CONDA=0
-              echo "OpenRAM: using tools from Nix devShell"
+              # PEP 668: Nix `python3` is externally managed. Put a repo-local venv first on PATH
+              # so `make library` uses it. Use $PWD (writable checkout), not `toString self` (nix store).
+              OPENRAM_VENV="''${OPENRAM_HOME}/.venv"
+              if [ ! -x "$OPENRAM_VENV/bin/python3" ]; then
+                echo "OpenRAM: creating venv at $OPENRAM_VENV"
+                ${pkgs.python3}/bin/python3 -m venv "$OPENRAM_VENV"
+              fi
+              export VIRTUAL_ENV="$OPENRAM_VENV"
+              export PATH="$OPENRAM_VENV/bin:$PATH"
+              echo "OpenRAM: Nix devShell (venv on PATH: $OPENRAM_VENV)"
             '';
           };
         });

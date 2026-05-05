@@ -97,7 +97,7 @@ sky130-install: $(SRAM_LIB_DIR)
 	@echo "PDK_ROOT='$(PDK_ROOT)'"
 	@echo "SRAM_LIB_DIR='$(SRAM_LIB_DIR)'"
 	@echo "SKY130_PDK='$(SKY130_PDK)'"
-	@make $(INSTALL_DIRS)
+	@$(MAKE) -B $(INSTALL_DIRS)
 .PHONY: sky130-install
 
 sky130-pdk: $(SKY130_PDKS_DIR)

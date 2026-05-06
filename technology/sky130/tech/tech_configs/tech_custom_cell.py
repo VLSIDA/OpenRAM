@@ -248,10 +248,14 @@ array_col_multiple = 2
 ###################################################
 # Power grid
 ###################################################
-connect_ring_top = True
-connect_ring_bottom = True
-connect_ring_left = False
-connect_ring_right = False
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+connect_ring_top = ['vdd','gnd']
+connect_ring_bottom = ['vdd','gnd']
+connect_ring_left = []
+connect_ring_right = []
 
 ###################################################
 # Custom layer properties

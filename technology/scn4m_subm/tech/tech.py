@@ -107,10 +107,14 @@ lef_rom_interconnect = ["m1", "m2", "m3", "m4"]
 # Use M3/M4
 power_grid = m3_stack
 
-connect_ring_top = False
-connect_ring_bottom = False
-connect_ring_left = True
-connect_ring_right = True
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+connect_ring_top = ['gnd']
+connect_ring_bottom = ['gnd']
+connect_ring_left = ['vdd']
+connect_ring_right = ['vdd']
 ###################################################
 ##GDS Layer Map
 ###################################################

@@ -276,10 +276,10 @@ layer_properties.global_wordline_layer = "m5"
 ###################################################
 # Power grid
 ###################################################
-connect_ring_top = True
-connect_ring_bottom = True
-connect_ring_left = False
-connect_ring_right = False
+connect_ring_top = ['vdd','gnd']
+connect_ring_bottom = ['vdd','gnd']
+connect_ring_left = []
+connect_ring_right = []
 
 ###################################################
 # Discrete tx bins

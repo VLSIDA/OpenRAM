@@ -44,10 +44,15 @@ cell_properties.bitcell_2port.mirror.y = False
 ###################################################
 layer_properties = d.layer_properties()
 
-connect_ring_top = False
-connect_ring_bottom = False
-connect_ring_left = True
-connect_ring_right = True
+
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+connect_ring_top = []
+connect_ring_bottom = []
+connect_ring_left = ['vdd','gnd']
+connect_ring_right = ['vdd','gnd']
 ###################################################
 # GDS file info
 ###################################################

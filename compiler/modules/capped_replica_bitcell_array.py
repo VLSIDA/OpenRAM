@@ -10,6 +10,7 @@ from openram.base import contact
 from openram.sram_factory import factory
 from openram.tech import drc, spice
 from openram.tech import cell_properties as props
+from openram.tech import connect_ring_bottom, connect_ring_left, connect_ring_right, connect_ring_top
 from openram import OPTS
 from .bitcell_base_array import bitcell_base_array
 
@@ -338,10 +339,10 @@ class capped_replica_bitcell_array(bitcell_base_array):
             bitcell = factory.create(module_type="pbitcell")
         else:
             bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
-        top = True
-        bottom = True
-        left = False
-        right = False
+        top = connect_ring_top
+        bottom = connect_ring_bottom
+        left = connect_ring_left
+        right = connect_ring_right
         
         if top:
             inst = self.dummy_row_insts[1]

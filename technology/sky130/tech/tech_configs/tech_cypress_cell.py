@@ -273,6 +273,13 @@ layer_properties.wordline_driver.vertical_supply = True
 
 layer_properties.global_wordline_layer = "m5"
 
+###################################################
+# Power grid
+###################################################
+connect_ring_top = True
+connect_ring_bottom = True
+connect_ring_left = False
+connect_ring_right = False
 
 ###################################################
 # Discrete tx bins

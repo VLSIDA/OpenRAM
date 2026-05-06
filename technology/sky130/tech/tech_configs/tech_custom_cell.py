@@ -246,6 +246,14 @@ array_row_multiple = 2
 array_col_multiple = 2
 
 ###################################################
+# Power grid
+###################################################
+connect_ring_top = True
+connect_ring_bottom = True
+connect_ring_left = False
+connect_ring_right = False
+
+###################################################
 # Custom layer properties
 ###################################################
 layer_properties = d.layer_properties()

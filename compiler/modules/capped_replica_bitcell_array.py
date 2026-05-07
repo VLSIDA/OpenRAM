@@ -250,8 +250,20 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
     def route_power_ring(self, v_layer, h_layer):
         self.bbox = (vector(0,0), vector(self.capped_rba_width, self.capped_rba_height))
-        self.supply_rail_width = drc["minwidth_m3"]
-        self.supply_rail_pitch = 6 * self.supply_rail_width
+        # add_power_ring uses one shared ring width/pitch for both horizontal and
+        # vertical rails, so satisfy DRC requirements of both layers.
+        v_layer_width = drc("minwidth_{}".format(v_layer))
+        h_layer_width = drc("minwidth_{}".format(h_layer))
+        self.supply_rail_width = max(v_layer_width, h_layer_width)
+        v_layer_space = drc("{}_to_{}".format(v_layer, v_layer))
+        h_layer_space = drc("{}_to_{}".format(h_layer, h_layer))
+        # Pitch is centerline-to-centerline rail offset in add_power_ring.
+        # Prefer technology routing pitch so ring placement aligns with the
+        # routing/via grid, but never violate same-layer spacing.
+        drc_pitch = self.supply_rail_width + max(v_layer_space, h_layer_space)
+        tech_pitch = max(getattr(self, "{}_pitch".format(v_layer)),
+                         getattr(self, "{}_pitch".format(h_layer)))
+        self.supply_rail_pitch = max(drc_pitch, tech_pitch)
         self.add_power_ring(v_layer=v_layer, h_layer=h_layer, top=power_ring_top, bottom=power_ring_bottom, left=power_ring_left, right=power_ring_right)
 
     def get_main_array_top(self):

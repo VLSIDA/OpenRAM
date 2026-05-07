@@ -108,13 +108,13 @@ class replica_column(bitcell_base_array):
 
             current_row += 1
         
-        if self.cell.mirror.y:
+        if not self.cell.mirror.y or self.column_offset % 2 == 0:
             for row in range(self.total_size):
-                if self.column_offset % 2 == 0:
                     if core_block[row][0].mirror=='MY':
                         core_block[row][0].mirror=''
-                    else:
+                    elif core_block[row][0].mirror=='XY':
                         core_block[row][0].mirror='MX'
+
 
         self.pattern = pattern(self, "bitcell_array", core_block, num_rows=self.total_size, num_cols=self.column_size, name_template="rbc_r{0}_c{1}")
         self.pattern.connect_array()

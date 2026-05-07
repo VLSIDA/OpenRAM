@@ -276,6 +276,12 @@ layer_properties.global_wordline_layer = "m5"
 ###################################################
 # Power grid
 ###################################################
+
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+
 connect_ring_top = ['vdd','gnd']
 connect_ring_bottom = ['vdd','gnd']
 connect_ring_left = []

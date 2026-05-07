@@ -368,7 +368,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]),
+                                              directions=("V", "V"))
         if 'gnd' in top:
             inst = self.dummy_row_insts[1]
             if 'gnd' in inst.mod.pins:
@@ -378,7 +379,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]),
+                                              directions=("V", "V"))
         if 'vdd' in bottom:
             inst = self.dummy_row_insts[0]
             if 'vdd' in inst.mod.pins:
@@ -388,7 +390,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]),
+                                              directions=("V", "V"))
         if 'gnd' in bottom:
             inst = self.dummy_row_insts[0]
             if 'gnd' in inst.mod.pins:
@@ -398,7 +401,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]))
+                                              offset = vector(array_pin.center()[0], supply_pin.center()[1]),
+                                              directions=("V", "V"))
         if 'vdd' in left:
             inst = self.dummy_col_insts[0]
             if 'vdd' in inst.mod.pins:
@@ -408,7 +412,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]),
+                                              directions=("H", "H"))
         if 'gnd' in left:
             inst = self.dummy_col_insts[0]
             if 'gnd' in inst.mod.pins:
@@ -418,7 +423,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]),
+                                              directions=("H", "H"))
         if 'vdd' in right:
             inst = self.dummy_col_insts[1]
             if 'vdd' in inst.mod.pins:
@@ -428,7 +434,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]),
+                                              directions=("H", "H"))
         if 'gnd' in right:
             inst = self.dummy_col_insts[1]
             if 'gnd' in inst.mod.pins:
@@ -438,7 +445,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
                     self.add_path(array_pin.layer, [array_pin.center(), vector(supply_pin.center()[0], array_pin.center()[1])])
                     self.add_via_stack_center(from_layer = array_pin.layer,
                                               to_layer = supply_pin.layer,
-                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]))
+                                              offset = vector(supply_pin.center()[0], array_pin.center()[1]),
+                                              directions=("H", "H"))
                           
     def route_unused_wordlines(self):
         """

@@ -25,6 +25,7 @@ class bitcell_base(design):
             self.nets_match = self.do_nets_exist(prop.storage_nets)
             self.mirror = prop.mirror
             self.end_caps = prop.end_caps
+            self.has_corners = prop.has_corners
     def get_stage_effort(self, load):
         parasitic_delay = 1
         # This accounts for bitline being drained

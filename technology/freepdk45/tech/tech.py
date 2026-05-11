@@ -33,11 +33,26 @@ tech_modules = d.module_type()
 ###################################################
 cell_properties = d.cell_properties()
 
+cell_properties.bitcell_1port.mirror.y = True
+cell_properties.bitcell_1port.mirror.y = False
+
+cell_properties.bitcell_2port.mirror.y = True
+cell_properties.bitcell_2port.mirror.y = False
+
 ###################################################
 # Custom cell properties
 ###################################################
 layer_properties = d.layer_properties()
 
+
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+connect_ring_top = []
+connect_ring_bottom = []
+connect_ring_left = ['vdd','gnd']
+connect_ring_right = ['vdd','gnd']
 ###################################################
 # GDS file info
 ###################################################
@@ -94,6 +109,9 @@ preferred_directions = {"poly": "V",
                         "m2": "V",
                         "m3": "H",
                         "m4": "V"}
+
+lef_rom_interconnect = ["m1", "m2", "m3", "m4"]
+
 ###################################################
 # Power grid
 ###################################################

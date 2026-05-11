@@ -144,11 +144,11 @@ class _pgate:
 
 
 class bitcell(cell):
-    def __init__(self, port_order, port_types, port_map=None, storage_nets=["Q", "Q_bar"], mirror=None, end_caps=False):
+    def __init__(self, port_order, port_types, port_map=None, storage_nets=["Q", "Q_bar"], mirror=None, end_caps=False, has_corners=True):
         super().__init__(port_order, port_types, port_map)
 
         self.end_caps = end_caps
-
+        self.has_corners = has_corners
         if not mirror:
             self.mirror = _mirror_axis(True, False)
         else:

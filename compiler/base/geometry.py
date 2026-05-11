@@ -164,7 +164,7 @@ class instance(geometry):
     An instance of a module with a specified location, rotation,
     spice pins, and spice nets
     """
-    def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
+    def __init__(self, name, mod, offset=[0, 0], mirror="R0", rotate=0, is_bitcell=False):
         """Initializes an instance to represent a module"""
         super().__init__()
         debug.check(mirror not in ["R90", "R180", "R270"],
@@ -176,6 +176,8 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
+        self.is_bitcell = is_bitcell
+
         # track if the instance's spice pin connections have been made
         self.connected = False
 
@@ -183,10 +185,11 @@ class instance(geometry):
         # change attributes in these spice objects
         self.spice_pins = copy.deepcopy(self.mod.pins)
         self.spice_nets = copy.deepcopy(self.mod.nets)
-        for pin in self.spice_pins.values():
-            pin.set_inst(self)
-        for net in self.spice_nets.values():
-            net.set_inst(self)
+        if "contact" not in mod.name:
+            for pin in self.spice_pins.values():
+                pin.set_inst(self)
+            for net in self.spice_nets.values():
+                net.set_inst(self)
 
         if OPTS.netlist_only:
             self.width = 0

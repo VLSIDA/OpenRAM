@@ -6,23 +6,24 @@
 # All rights reserved.
 #
 from openram import debug
+from openram.base.geometry import instance
 from openram.base import design
 from openram.sram_factory import factory
 from openram import OPTS
-
+from openram.modules import pattern
 
 class bitcell_base_array(design):
     """
     Abstract base class for bitcell-arrays -- bitcell, dummy, replica
     """
-    def __init__(self, name, rows, cols, column_offset):
+    def __init__(self, name, rows, cols, column_offset, row_offset):
         super().__init__(name)
         debug.info(1, "Creating {0} {1} x {2}".format(self.name, rows, cols))
 
         self.column_size = cols
         self.row_size = rows
         self.column_offset = column_offset
-
+        self.row_offset = row_offset
         # Bitcell for port names only
         self.cell = factory.create(module_type=OPTS.bitcell)
 
@@ -120,13 +121,16 @@ class bitcell_base_array(design):
     def get_all_wordline_names(self, port=None):
         """ Return all the wordline names """
         temp = []
-        temp.extend(self.get_rbl_wordline_names(0))
+        if len(self.all_ports) > 0:
+            temp.extend(self.get_rbl_wordline_names(0))
         if port == None:
             temp.extend(self.all_wordline_names)
         else:
             temp.extend(self.wordline_names[port])
         if len(self.all_ports) > 1:
             temp.extend(self.get_rbl_wordline_names(1))
+
+
         return temp
 
     def add_bitline_pins(self):
@@ -157,14 +161,54 @@ class bitcell_base_array(design):
                                     height=wl_pin.height())
 
     def route_supplies(self):
-        for inst in self.cell_inst.values():
-            for pin_name in ["vdd", "gnd"]:
-                self.copy_layout_pin(inst, pin_name)
+        
+        vdd_found = False
+        gnd_found = False
+        
+        for inst in self.insts:
+            if 'vdd' in inst.mod.get_pin_names():
+                vdd_found = True
+            if 'gnd' in inst.mod.get_pin_names():
+                gnd_found = True
+        
+        power_name = 'vdd'
+        ground_name = 'gnd'
+
+        if vdd_found == False or gnd_found == False:
+            for inst in self.insts:
+                if 'VDD' in inst.mod.get_pin_names():
+                    vdd_found = True
+                    power_name = 'VDD'
+            
+                if 'GND' in inst.mod.get_pin_names():
+                    gnd_found = True
+                    ground_name = 'GND'
+    
+
+        if vdd_found is False or gnd_found is False:
+            from openram.tech import cell_properties
+            try:
+                power_name = cell_properties.power_name
+            except:
+                pass
+            try:
+                ground_name = cell_properties.ground_name    
+            except:
+                pass
+            
+            
+        for inst in self.insts:
+            if power_name in inst.mod.get_pin_names():
+                self.copy_layout_pin(inst, power_name, new_name='vdd')
+            if ground_name  in inst.mod.get_pin_names():
+                self.copy_layout_pin(inst, ground_name , new_name='gnd')
 
     def add_layout_pins(self):
         """ Add the layout pins """
-        self.add_bitline_pins()
-        self.add_wl_pins()
+        if self.get_bitline_names():
+            self.add_bitline_pins()
+        if self.get_wordline_names():
+            self.add_wl_pins()
 
     def _adjust_x_offset(self, xoffset, col, col_offset):
         tempx = xoffset
@@ -184,32 +228,8 @@ class bitcell_base_array(design):
             dir_x = True
         return (tempy, dir_x)
 
-    def place_array(self, name_template, row_offset=0):
-        # We increase it by a well enclosure so the precharges don't overlap our wells
-        self.height = self.row_size * self.cell.height
-        self.width = self.column_size * self.cell.width
-
-        xoffset = 0.0
-        for col in range(self.column_size):
-            yoffset = 0.0
-            tempx, dir_y = self._adjust_x_offset(xoffset, col, self.column_offset)
-
-            for row in range(self.row_size):
-                tempy, dir_x = self._adjust_y_offset(yoffset, row, row_offset)
-
-                if dir_x and dir_y:
-                    dir_key = "XY"
-                elif dir_x:
-                    dir_key = "MX"
-                elif dir_y:
-                    dir_key = "MY"
-                else:
-                    dir_key = ""
-
-                self.cell_inst[row, col].place(offset=[tempx, tempy],
-                                               mirror=dir_key)
-                yoffset += self.cell.height
-            xoffset += self.cell.width
+    def place_array(self):
+        self.pattern.place_array()
 
     def get_column_offsets(self):
         """

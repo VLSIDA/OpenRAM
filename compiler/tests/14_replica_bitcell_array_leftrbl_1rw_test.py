@@ -23,6 +23,7 @@ class replica_bitcell_array_leftrbl_1rw_test(openram_test):
         OPTS.num_rw_ports = 1
         OPTS.num_r_ports = 0
         OPTS.num_w_ports = 0
+
         openram.setup_bitcell()
 
         debug.info(2, "Testing 7x5 replica array for 1rw cell with left replica column")

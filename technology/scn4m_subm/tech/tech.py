@@ -34,6 +34,12 @@ cell_properties = d.cell_properties()
 cell_properties.bitcell_1port.gnd_layer = "m2"
 cell_properties.bitcell_1port.gnd_dir = "V"
 
+cell_properties.bitcell_1port.mirror.y = True
+cell_properties.bitcell_1port.mirror.y = False
+
+cell_properties.bitcell_2port.mirror.y = True
+cell_properties.bitcell_2port.mirror.y = False
+
 ###################################################
 # Custom cell properties
 ###################################################
@@ -92,12 +98,23 @@ preferred_directions = {"poly": "V",
                         "m3": "H",
                         "m4": "V"}
 
+lef_rom_interconnect = ["m1", "m2", "m3", "m4"]
+
+
 ###################################################
 # Power grid
 ###################################################
 # Use M3/M4
 power_grid = m3_stack
 
+power_ring_top = True
+power_ring_bottom = True
+power_ring_left = True
+power_ring_right = True
+connect_ring_top = ['gnd']
+connect_ring_bottom = ['gnd']
+connect_ring_left = ['vdd']
+connect_ring_right = ['vdd']
 ###################################################
 ##GDS Layer Map
 ###################################################
@@ -339,6 +356,8 @@ drc.add_layer("m4",
 drc.add_enclosure("m4",
                   layer = "via3",
                   enclosure = 2*_lambda_)
+
+
 
 ###################################################
 # Spice Simulation Parameters

@@ -68,8 +68,6 @@ class dummy_array(bitcell_base_array):
             core_block[(0 + r) % 2][0] = geometry.instance("core_0_0", mod=self.dummy_cell, is_bitcell=True)
             core_block[(1 + r) % 2][0] = geometry.instance("core_1_0", mod=self.dummy_cell, is_bitcell=True, mirror='MX')
             
-            print(core_block)
-
         #print(r, c)
         #print(core_block)
 

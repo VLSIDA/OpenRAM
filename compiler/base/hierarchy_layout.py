@@ -2228,11 +2228,14 @@ class layout():
         left/right/top/bottom vdd/gnd center offsets for use in other
         modules..
         """
-        [ll, ur] = self.bbox
-
+        [ll, ur] = self.bbox 
         supply_rail_spacing = self.supply_rail_pitch
-        height = (ur.y - ll.y) + 3 * self.supply_rail_pitch - supply_rail_spacing
-        width = (ur.x - ll.x) + 3 * self.supply_rail_pitch - supply_rail_spacing
+
+        #ll = ll - vector(self.supply_rail_pitch, self.supply_rail_pitch)
+        #ur = ur - vector(self.supply_rail_pitch, self.supply_rail_pitch)
+
+        height = (ur.y - ll.y) + 2 * self.supply_rail_pitch
+        width = (ur.x - ll.x) + 2 * self.supply_rail_pitch 
 
         # LEFT vertical rails
         if left:

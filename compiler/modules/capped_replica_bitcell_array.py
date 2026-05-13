@@ -233,9 +233,14 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
         ll = vector(-1 * self.dummy_col_insts[0].width, -1 * self.dummy_row_insts[0].height)
         self.translate_all(ll)
-        self.capped_rba_width = self.dummy_col_insts[0].width + self.dummy_row_insts[0].width + self.dummy_col_insts[1].width 
-        self.capped_rba_height = self.dummy_col_insts[0].height
-        
+
+        self.capped_rba_width = (self.dummy_col_insts[0].width
+                                 + self.replica_bitcell_array_inst.width
+                                 + self.dummy_col_insts[1].width)
+        self.capped_rba_height = (self.dummy_row_insts[0].height
+                                  + self.replica_bitcell_array_inst.height
+                                  + self.dummy_row_insts[1].height)
+
 
         self.route_power_ring(self.supply_stack[2], self.supply_stack[0])
         self.route_supplies()
@@ -325,6 +330,8 @@ class capped_replica_bitcell_array(bitcell_base_array):
         self.dummy_col_insts[1].place(offset=offset)
 
     def add_layout_pins(self):
+        self.pin_width = self.capped_rba_width + 4 * self.supply_rail_pitch
+        self.pin_height = self.capped_rba_height + 4 * self.supply_rail_pitch
 
         for pin_name in self.used_wordline_names + self.bitline_pin_list:
             pin = self.replica_bitcell_array_inst.get_pin(pin_name)
@@ -332,13 +339,13 @@ class capped_replica_bitcell_array(bitcell_base_array):
             if "wl" in pin_name:
                 # wordlines
                 pin_offset = pin.ll().scale(0, 1)
-                pin_width  = self.capped_rba_width
+                pin_width  = self.pin_width
                 pin_height = pin.height()
             else:
                 # bitlines
                 pin_offset = pin.ll().scale(1, 0)
                 pin_width  = pin.width()
-                pin_height = self.capped_rba_height
+                pin_height = self.pin_height
 
             self.add_layout_pin(text=pin_name,
                                 layer=pin.layer,

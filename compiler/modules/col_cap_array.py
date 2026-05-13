@@ -42,6 +42,11 @@ class col_cap_array(bitcell_base_array):
         self.place_array()
         self.add_layout_pins()
 
+        # Promote leaf vdd/gnd shapes to module pin_map (same as dummy_array) so
+        # parents (e.g. capped_replica_bitcell_array.route_supplies) can use
+        # inst.get_pins("vdd") / get_pins("gnd") on this sub-module.
+        self.route_supplies()
+
         #self.height = self.dummy_cell.height
         #self.width = self.column_size * self.cell.width
 
@@ -51,17 +56,7 @@ class col_cap_array(bitcell_base_array):
     def add_modules(self):
         """ Add the modules used in this design """
         self.colend = factory.create(module_type="col_cap_{}".format(OPTS.bitcell))
-
-    # def create_instances(self):
-    #     """ Create the module instances used in this design """
-    #     self.cell_inst = {}
-    #     for col in range(self.column_size):
-    #         for row in range(self.row_size):
-    #             name = "bit_r{0}_c{1}".format(row, col)
-    #             self.cell_inst[row, col]=self.add_inst(name=name,
-    #                                                    mod=self.dummy_cell)
-    #             self.connect_inst(self.get_bitcell_pins(row, col))
-
+        
     def create_instances(self):
         """ Create the module instances used in this design """
         self.cell_inst={}        

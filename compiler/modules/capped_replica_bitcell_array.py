@@ -356,11 +356,6 @@ class capped_replica_bitcell_array(bitcell_base_array):
 
     def route_supplies(self):
 
-        if OPTS.bitcell == "pbitcell":
-            bitcell = factory.create(module_type="pbitcell")
-        else:
-            bitcell = getattr(props, "bitcell_{}port".format(OPTS.num_ports))
-
         top = connect_ring_top
         bottom = connect_ring_bottom
         left = connect_ring_left
@@ -370,6 +365,7 @@ class capped_replica_bitcell_array(bitcell_base_array):
             inst = self.dummy_row_insts[1]
             if 'vdd' in inst.mod.pins:
                 array_pins = inst.get_pins('vdd')
+                print("found pin", inst, inst.mod, array_pins)
                 for array_pin in array_pins:
                     supply_pin = self.top_vdd_pin
                     self.add_path(array_pin.layer, [array_pin.center(), vector(array_pin.center()[0], supply_pin.center()[1])])

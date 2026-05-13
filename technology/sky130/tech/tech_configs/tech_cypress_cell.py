@@ -284,8 +284,8 @@ power_ring_right = True
 
 connect_ring_top = ['vdd','gnd']
 connect_ring_bottom = ['vdd','gnd']
-connect_ring_left = []
-connect_ring_right = []
+connect_ring_left = ['gnd']
+connect_ring_right = ['gnd']
 
 ###################################################
 # Discrete tx bins

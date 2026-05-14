@@ -613,216 +613,91 @@ class capped_replica_bitcell_array(bitcell_base_array):
                 sp.cx(), sp.cy()))
         print(sep)
 
-    def _strap_bridge_supply_stack_contact_extent(self, vertical_rail_taps):
-        """
-        Fallback: m3 (``supply_stack[0]``) first-layer span from the same
-        ``directions`` as ``connect_side_pin``, without walking a pin-specific
-        via stack.
-        """
+    def _pwr_stack(self):
         st = self.supply_stack
-        if isinstance(st, (list, tuple)) and len(st) >= 3:
-            if vertical_rail_taps:
-                return contact(layer_stack=st, directions=("H", "H")).first_layer_width
-            return contact(layer_stack=st, directions=("V", "V")).first_layer_height
-        return self.supply_rail_width
+        return st if isinstance(st, (list, tuple)) and len(st) >= 3 else None
 
-    def _strap_bridge_merge_draw_width(self, vertical_rail_taps, from_layers, strap_layer):
-        """
-        Perpendicular merge-segment width matching ``add_via_stack_center`` plus
-        ``add_min_area_rect_center`` on ``supply_stack[0]`` for each tap
-        ``from_layer`` up to ``strap_layer``.
-        """
-        st = self.supply_stack
-        if not isinstance(st, (list, tuple)) or len(st) < 3:
+    def _strap_m3_merge_width(self, vert, from_layers, strap_layer):
+        pw = self._pwr_stack()
+        if not pw:
             return self.supply_rail_width
-        metal_layer = st[0]
-        dirs = ("H", "H") if vertical_rail_taps else ("V", "V")
-        horizontal_extent = vertical_rail_taps
-        best = 0.0
-        for fl in from_layers:
-            ext = self.via_stack_metal_extent_after_min_area(fl, strap_layer, dirs,
-                                                             metal_layer, horizontal_extent)
-            best = max(best, ext)
-        if best > 0:
-            return best
-        return self._strap_bridge_supply_stack_contact_extent(vertical_rail_taps)
+        d = ("H", "H") if vert else ("V", "V")
+        mx = max(self.via_stack_metal_layer_extent(fl, strap_layer, d, pw[0], not vert) for fl in from_layers)
+        if mx > 0:
+            return mx
+        c = contact(layer_stack=pw, directions=d)
+        return c.first_layer_width if vert else c.first_layer_height
 
-    def _strap_supply_bottom_metal(self):
-        """Bottom routing metal in ``supply_stack`` (e.g. ``m3`` for ``m3_stack``)."""
-        st = self.supply_stack
-        if isinstance(st, (list, tuple)) and len(st) >= 3:
-            return st[0]
-        return None
-
-    def _strap_supply_top_metal(self):
-        """Top routing metal in ``supply_stack`` (e.g. ``m4`` for ``m3_stack``)."""
-        st = self.supply_stack
-        if isinstance(st, (list, tuple)) and len(st) >= 3:
-            return st[2]
-        return None
-
-    def _strap_bridge_top_metal_via_width(self, vertical_rail_taps):
-        """
-        Perpendicular span of ``supply_stack[2]`` (second metal) from the same
-        ``contact(layer_stack=supply_stack, directions=...)`` as the side routes:
-        ``second_layer_width`` with ``("H","H")`` (``route_vertical_side_pin``),
-        ``second_layer_height`` with ``("V","V")`` (horizontal ring uses m3 width
-        from first layer; top metal thickness here matches the via's m4 enclosure).
-        """
-        st = self.supply_stack
-        if not isinstance(st, (list, tuple)) or len(st) < 3:
-            return 0.0
-        if vertical_rail_taps:
-            return contact(layer_stack=st, directions=("H", "H")).second_layer_width
-        return contact(layer_stack=st, directions=("V", "V")).second_layer_height
-
-    def _strap_bridge_layer_spacing_thickness(self, rail_layer, strap_width_along_rail):
-        """
-        Return ``(segment_layer, min_center_spacing)`` for merge bars on the
-        supply-stack **bottom metal** (e.g. ``m3``), not the via cut layer.
-
-        Tap-center spacing uses that metal's minwidth + same-layer spacing.
-        Drawn merge width is computed separately by ``_strap_bridge_merge_draw_width``.
-        """
-        metal = self._strap_supply_bottom_metal()
-        if metal is not None:
-            thick = drc("minwidth_{}".format(metal))
-            same = "{}_to_{}".format(metal, metal)
+    def _strap_merge_minsep_seg(self, rail_layer, w_fb):
+        pw = self._pwr_stack()
+        if pw:
+            m = pw[0]
+            mn = drc("minwidth_{}".format(m))
+            same = "{}_to_{}".format(m, m)
             sp = drc(same) if same in drc else 0.0
-            min_sep = max(self.supply_rail_pitch, thick + sp)
-            return metal, min_sep
+            return m, max(self.supply_rail_pitch, mn + sp)
         same = "{}_to_{}".format(rail_layer, rail_layer)
         sp = drc(same) if same in drc else 0.0
-        min_sep = max(self.supply_rail_pitch, strap_width_along_rail + sp)
-        return rail_layer, min_sep
+        return rail_layer, max(self.supply_rail_pitch, w_fb + sp)
 
     def _bridge_close_strap_taps(self):
-        """
-        After routing strap taps, add merge segments on the supply-stack **bottom
-        metal** (e.g. ``m3``), not the via cut layer, between consecutive taps that
-        are closer than DRC-safe spacing on that metal. When taps are on the
-        supply-stack **top** metal (e.g. ``m4``), the same merge also draws on that
-        layer using the via's second-metal width (``route_vertical_side_pin`` /
-        ``contact`` ``second_layer_*``). Each segment runs from the outer **metal**
-        extent at one tap to the next along the rail (same stack as
-        ``add_via_stack_center``), not only between tap centers. Falls back to strap
-        routing metal if no 3-tuple ``supply_stack`` is defined.
-        """
-        if not getattr(self, "_strap_routing_endpoints", None):
+        """Close strap taps: m3 bars (min-area width) on too-close centers; m4 too when rail is stack top; ends at outer m3 along rail."""
+        ep = getattr(self, "_strap_routing_endpoints", None)
+        if not ep:
             return
+        eps, pw = 1e-9, self._pwr_stack()
+        m3, m4 = (pw[0], pw[2]) if pw else (None, None)
+        wv = getattr(self, "_strap_width_vertical_rail", self.supply_rail_width)
+        wh = getattr(self, "_strap_width_horizontal_rail", self.supply_rail_width)
 
-        w_vert = getattr(self, "_strap_width_vertical_rail", self.supply_rail_width)
-        w_horiz = getattr(self, "_strap_width_horizontal_rail", self.supply_rail_width)
-        eps = 1e-9
-
-        def bridge_vertical_cluster(cx, rail_layer, recs_sorted):
-            if len(recs_sorted) < 2:
+        def cluster(fixed, rail, recs, vert):
+            if len(recs) < 2:
                 return
-            from_layers = {r["from_layer"] for r in recs_sorted}
-            seg_layer, min_sep = self._strap_bridge_layer_spacing_thickness(
-                rail_layer, w_vert)
-            draw_w = self._strap_bridge_merge_draw_width(True, from_layers, rail_layer)
-            dirs = ("H", "H")
-            metal_lm = self._strap_supply_bottom_metal()
-            for i in range(len(recs_sorted) - 1):
-                r0, r1 = recs_sorted[i], recs_sorted[i + 1]
-                y0, y1 = r0["center"].y, r1["center"].y
-                gap = y1 - y0
-                if gap <= eps:
+            recs.sort(key=(lambda r: (r["center"].y, r["center"].x)) if vert else (lambda r: (r["center"].x, r["center"].y)))
+            fl = {r["from_layer"] for r in recs}
+            seg, ms = self._strap_merge_minsep_seg(rail, wv if vert else wh)
+            dw = self._strap_m3_merge_width(vert, fl, rail)
+            d = ("H", "H") if vert else ("V", "V")
+            w_top = 0.0
+            if m4 is not None and rail == m4:
+                c = contact(layer_stack=pw, directions=d)
+                w_top = c.second_layer_width if vert else c.second_layer_height
+            for i in range(len(recs) - 1):
+                r0, r1 = recs[i], recs[i + 1]
+                g0, g1 = ((r0["center"].y, r1["center"].y) if vert else (r0["center"].x, r1["center"].x))
+                if g1 - g0 <= eps or g1 - g0 >= ms:
                     continue
-                if gap < min_sep:
-                    if metal_lm is not None:
-                        ext0 = self.via_stack_metal_layer_extent_parallel_to_rail(
-                            r0["from_layer"], rail_layer, dirs, metal_lm, True)
-                        ext1 = self.via_stack_metal_layer_extent_parallel_to_rail(
-                            r1["from_layer"], rail_layer, dirs, metal_lm, True)
-                    else:
-                        ext0 = ext1 = 0.0
-                    ya = y0 - 0.5 * ext0
-                    yb = y1 + 0.5 * ext1
-                    if yb <= ya + eps:
-                        ya, yb = y0, y1
-                    self.add_segment_center(layer=seg_layer,
-                                            start=vector(cx, ya),
-                                            end=vector(cx, yb),
-                                            width=draw_w)
-                    top_m = self._strap_supply_top_metal()
-                    if top_m is not None and rail_layer == top_m:
-                        w_top = self._strap_bridge_top_metal_via_width(True)
-                        if w_top > 0:
-                            self.add_segment_center(layer=top_m,
-                                                    start=vector(cx, ya),
-                                                    end=vector(cx, yb),
-                                                    width=w_top)
+                if m3:
+                    e0 = self.via_stack_metal_layer_extent(r0["from_layer"], rail, d, m3, vert)
+                    e1 = self.via_stack_metal_layer_extent(r1["from_layer"], rail, d, m3, vert)
+                else:
+                    e0 = e1 = 0.0
+                a, b = g0 - 0.5 * e0, g1 + 0.5 * e1
+                if b <= a + eps:
+                    a, b = g0, g1
+                if vert:
+                    s, e = vector(fixed, a), vector(fixed, b)
+                else:
+                    s, e = vector(a, fixed), vector(b, fixed)
+                self.add_segment_center(layer=seg, start=s, end=e, width=dw)
+                if w_top > 0:
+                    self.add_segment_center(layer=m4, start=s, end=e, width=w_top)
 
-        def bridge_horizontal_cluster(cy, rail_layer, recs_sorted):
-            if len(recs_sorted) < 2:
-                return
-            from_layers = {r["from_layer"] for r in recs_sorted}
-            seg_layer, min_sep = self._strap_bridge_layer_spacing_thickness(
-                rail_layer, w_horiz)
-            draw_w = self._strap_bridge_merge_draw_width(False, from_layers, rail_layer)
-            dirs = ("V", "V")
-            metal_lm = self._strap_supply_bottom_metal()
-            for i in range(len(recs_sorted) - 1):
-                r0, r1 = recs_sorted[i], recs_sorted[i + 1]
-                x0, x1 = r0["center"].x, r1["center"].x
-                gap = x1 - x0
-                if gap <= eps:
-                    continue
-                if gap < min_sep:
-                    if metal_lm is not None:
-                        ext0 = self.via_stack_metal_layer_extent_parallel_to_rail(
-                            r0["from_layer"], rail_layer, dirs, metal_lm, False)
-                        ext1 = self.via_stack_metal_layer_extent_parallel_to_rail(
-                            r1["from_layer"], rail_layer, dirs, metal_lm, False)
-                    else:
-                        ext0 = ext1 = 0.0
-                    xa = x0 - 0.5 * ext0
-                    xb = x1 + 0.5 * ext1
-                    if xb <= xa + eps:
-                        xa, xb = x0, x1
-                    self.add_segment_center(layer=seg_layer,
-                                            start=vector(xa, cy),
-                                            end=vector(xb, cy),
-                                            width=draw_w)
-                    top_m = self._strap_supply_top_metal()
-                    if top_m is not None and rail_layer == top_m:
-                        w_top = self._strap_bridge_top_metal_via_width(False)
-                        if w_top > 0:
-                            self.add_segment_center(layer=top_m,
-                                                    start=vector(xa, cy),
-                                                    end=vector(xb, cy),
-                                                    width=w_top)
-
-        vertical_groups = {}
-        horizontal_groups = {}
-        for rec in self._strap_routing_endpoints:
-            strap = rec["strap"]
-            c = rec["center"]
+        vg, hg = {}, {}
+        for rec in ep:
             sk = self._strap_side_key(rec["side"])
+            sp = rec["strap"]
             if rec["kind"] == "vertical":
-                key = (sk, round(strap.cx(), 9), strap.layer)
-                vertical_groups.setdefault(key, []).append(rec)
+                vg.setdefault((sk, round(sp.cx(), 9), sp.layer), []).append(rec)
             elif rec["kind"] == "horizontal":
-                key = (sk, round(strap.cy(), 9), strap.layer)
-                horizontal_groups.setdefault(key, []).append(rec)
+                hg.setdefault((sk, round(sp.cy(), 9), sp.layer), []).append(rec)
 
-        for key, recs in vertical_groups.items():
-            if len(recs) < 2:
-                continue
-            recs.sort(key=lambda r: (r["center"].y, r["center"].x))
-            cx = recs[0]["center"].x
-            rail_layer = key[2]
-            bridge_vertical_cluster(cx, rail_layer, recs)
-
-        for key, recs in horizontal_groups.items():
-            if len(recs) < 2:
-                continue
-            recs.sort(key=lambda r: (r["center"].x, r["center"].y))
-            cy = recs[0]["center"].y
-            rail_layer = key[2]
-            bridge_horizontal_cluster(cy, rail_layer, recs)
+        for key, recs in vg.items():
+            if len(recs) >= 2:
+                cluster(recs[0]["center"].x, key[2], recs, True)
+        for key, recs in hg.items():
+            if len(recs) >= 2:
+                cluster(recs[0]["center"].y, key[2], recs, False)
 
         self._strap_routing_endpoints = []
 

@@ -1368,6 +1368,142 @@ class layout():
 
         return via
 
+    def compute_min_area_rect_dims(self, layer, width, height):
+        """
+        Return ``(width, height)`` after the same min-area expansion as
+        ``add_min_area_rect_center`` (no geometry added). If ``minarea`` for
+        ``layer`` is zero, returns ``(width, height)`` unchanged.
+        """
+        min_area = drc("minarea_{}".format(layer))
+        if min_area == 0:
+            return width, height
+
+        min_width = drc("minwidth_{}".format(layer))
+
+        if preferred_directions[layer] == "V":
+            new_height = ceil(max(min_area / width, min_width))
+            new_width = width
+        else:
+            new_width = ceil(max(min_area / height, min_width))
+            new_height = height
+        debug.check(min_area <= round_to_grid(new_height * new_width), "Min area violated.")
+        return new_width, new_height
+
+    def via_stack_metal_extent_after_min_area(self,
+                                              from_layer,
+                                              to_layer,
+                                              directions,
+                                              metal_layer,
+                                              horizontal_extent,
+                                              size=(1, 1)):
+        """
+        Horizontal span (if ``horizontal_extent``) or vertical span of
+        ``metal_layer`` patches that ``add_via_stack_center`` would produce on
+        that layer: the hop's contact ``first_layer`` size, plus
+        ``compute_min_area_rect_dims`` when ``add_via_stack_center`` would call
+        ``add_min_area_rect_center`` for that hop (intermediate routing metal).
+
+        ``directions`` and ``size`` match ``add_via_stack_center`` / ``add_via_center``.
+        Returns ``0.0`` if ``metal_layer`` is never the starting layer of a hop
+        on the path from ``from_layer`` to ``to_layer``.
+        """
+        if from_layer == to_layer:
+            return 0.0
+
+        intermediate_layers = self.get_metal_layers(from_layer, to_layer)
+        best = 0.0
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = tech_layer_indices[cur_layer]
+            to_id = tech_layer_indices[to_layer]
+
+            if from_id < to_id:
+                search_id = 0
+                next_id = 2
+            else:
+                search_id = 2
+                next_id = 0
+
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, tech_layer_stacks), None)
+            if curr_stack is None:
+                debug.error("via_stack_metal_extent_after_min_area: no stack for {} toward {}".format(cur_layer, to_layer), -1)
+
+            via_mod = factory.create(module_type="contact",
+                                     layer_stack=curr_stack,
+                                     dimensions=size,
+                                     directions=directions,
+                                     implant_type=None,
+                                     well_type=None)
+
+            if cur_layer == metal_layer:
+                fw = via_mod.first_layer_width
+                fh = via_mod.first_layer_height
+                if cur_layer in intermediate_layers:
+                    nw, nh = self.compute_min_area_rect_dims(cur_layer, fw, fh)
+                else:
+                    nw, nh = fw, fh
+                cand = nw if horizontal_extent else nh
+                best = max(best, cand)
+
+            cur_layer = curr_stack[next_id]
+
+        return best
+
+    def via_stack_metal_layer_extent_parallel_to_rail(self,
+                                                      from_layer,
+                                                      to_layer,
+                                                      directions,
+                                                      metal_layer,
+                                                      parallel_along_y,
+                                                      size=(1, 1)):
+        """
+        Span along the rail axis of ``metal_layer`` metal only (the hop where
+        that layer is the contact first layer), including ``compute_min_area_rect_dims``
+        when ``add_via_stack_center`` would add a min-area patch on that layer.
+        Does **not** use the full contact cell bbox (which includes via cut layers).
+        """
+        if from_layer == to_layer:
+            return 0.0
+
+        intermediate_layers = self.get_metal_layers(from_layer, to_layer)
+        best = 0.0
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = tech_layer_indices[cur_layer]
+            to_id = tech_layer_indices[to_layer]
+
+            if from_id < to_id:
+                search_id = 0
+                next_id = 2
+            else:
+                search_id = 2
+                next_id = 0
+
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, tech_layer_stacks), None)
+            if curr_stack is None:
+                debug.error("via_stack_metal_layer_extent_parallel_to_rail: no stack for {} toward {}".format(cur_layer, to_layer), -1)
+
+            via_mod = factory.create(module_type="contact",
+                                     layer_stack=curr_stack,
+                                     dimensions=size,
+                                     directions=directions,
+                                     implant_type=None,
+                                     well_type=None)
+
+            if cur_layer == metal_layer:
+                fw = via_mod.first_layer_width
+                fh = via_mod.first_layer_height
+                if cur_layer in intermediate_layers:
+                    nw, nh = self.compute_min_area_rect_dims(cur_layer, fw, fh)
+                else:
+                    nw, nh = fw, fh
+                span = nh if parallel_along_y else nw
+                best = max(best, span)
+
+            cur_layer = curr_stack[next_id]
+
+        return best
+
     def add_min_area_rect_center(self,
                                  layer,
                                  offset,
@@ -1381,15 +1517,7 @@ class layout():
         if min_area == 0:
             return
 
-        min_width = drc("minwidth_{}".format(layer))
-
-        if preferred_directions[layer] == "V":
-            new_height = ceil(max(min_area / width, min_width))
-            new_width = width
-        else:
-            new_width = ceil(max(min_area / height, min_width))
-            new_height = height
-        debug.check(min_area <= round_to_grid(new_height*new_width), "Min area violated.")
+        new_width, new_height = self.compute_min_area_rect_dims(layer, width, height)
 
         self.add_rect_center(layer=layer,
                              offset=offset,

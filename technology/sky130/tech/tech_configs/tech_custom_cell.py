@@ -226,9 +226,9 @@ cell_properties.write_driver.port_map = {'din': 'DIN',
 # If it is a list, the first is single port and the second is dual port.
 # If it is string, it is used for both single and dual port.
 cell_properties.names["dff"] = "sky130_fd_bd_sram__openram_dff"
-cell_properties.names["nand2_dec"] = ["sky130_fd_bd_sram__openram_dp_nand2_dec", "sky130_fd_bd_sram__openram_dp_nand2_dec"]
-cell_properties.names["nand3_dec"] = ["sky130_fd_bd_sram__openram_dp_nand3_dec", "sky130_fd_bd_sram__openram_dp_nand3_dec"]
-cell_properties.names["nand4_dec"] = ["sky130_fd_bd_sram__openram_dp_nand4_dec", "sky130_fd_bd_sram__openram_dp_nand4_dec"]
+cell_properties.names["nand2_dec"] = ["sky130_custom_nand2_dec", "sky130_fd_bd_sram__openram_dp_nand2_dec"]
+cell_properties.names["nand3_dec"] = ["sky130_custom_nand3_dec", "sky130_fd_bd_sram__openram_dp_nand3_dec"]
+cell_properties.names["nand4_dec"] = ["sky130_custom_nand4_dec", "sky130_fd_bd_sram__openram_dp_nand4_dec"]
 
 cell_properties.names["bitcell_1port"] = "sky130_custom_cell"
 cell_properties.names["replica_bitcell_1port"] = "sky130_custom_replica"

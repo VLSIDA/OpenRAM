@@ -629,16 +629,34 @@ class capped_replica_bitcell_array(bitcell_base_array):
         return c.first_layer_width if vert else c.first_layer_height
 
     def _strap_merge_minsep_seg(self, rail_layer, w_fb):
+        """Merge spacing: max over ``supply_stack`` of ``minwidth_L+L_to_L`` and adjacent ``L0_to_L1`` if in DRC; else rail-only."""
         pw = self._pwr_stack()
         if pw:
-            m = pw[0]
-            mn = drc("minwidth_{}".format(m))
-            same = "{}_to_{}".format(m, m)
-            sp = drc(same) if same in drc else 0.0
-            return m, max(self.supply_rail_pitch, mn + sp)
-        same = "{}_to_{}".format(rail_layer, rail_layer)
-        sp = drc(same) if same in drc else 0.0
-        return rail_layer, max(self.supply_rail_pitch, w_fb + sp)
+            ms = 0.0
+            for lyr in pw:
+                wkey = "minwidth_{}".format(lyr)
+                if wkey not in drc:
+                    continue
+                skey = "{}_to_{}".format(lyr, lyr)
+                sp = drc(skey) if skey in drc else 0.0
+                ms = max(ms, drc(wkey) + sp)
+            for i in range(len(pw) - 1):
+                a, b = pw[i], pw[i + 1]
+                for pair in ("{}_to_{}".format(a, b), "{}_to_{}".format(b, a)):
+                    if pair in drc:
+                        ms = max(ms, drc(pair))
+                        break
+            if ms <= 0:
+                wkey = "minwidth_{}".format(pw[0])
+                if wkey in drc:
+                    sk = "{}_to_{}".format(pw[0], pw[0])
+                    ms = drc(wkey) + (drc(sk) if sk in drc else 0.0)
+            return pw[0], ms
+        wkey = "minwidth_{}".format(rail_layer)
+        mw = drc(wkey) if wkey in drc else w_fb
+        skey = "{}_to_{}".format(rail_layer, rail_layer)
+        sp = drc(skey) if skey in drc else 0.0
+        return rail_layer, mw + sp
 
     def _bridge_close_strap_taps(self):
         """Close strap taps: m3 bars (min-area width) on too-close centers; m4 too when rail is stack top; ends at outer m3 along rail."""

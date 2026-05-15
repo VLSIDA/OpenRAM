@@ -23,10 +23,20 @@ class single_bank_wmask_test(openram_test):
         openram.init_openram(config_file, is_unit_test=True)
         from openram import sram_config
 
-        c = sram_config(word_size=8,
-                        write_size=4,
-                        num_words=16,
-                        num_banks=1)
+        if OPTS.tech_name == "sky130":
+            c = sram_config(word_size=8,
+                            write_size=4,
+                            num_words=16,
+                            num_banks=1,
+                            num_spare_cols=1,
+                            num_spare_rows=1)
+        else:
+            c = sram_config(word_size=8,
+                            write_size=4,
+                            num_words=16,
+                            num_banks=1,
+                            num_spare_cols=0,
+                            num_spare_rows=0)
 
         c.words_per_row=1
         c.recompute_sizes()

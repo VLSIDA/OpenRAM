@@ -859,6 +859,63 @@ class bank(design):
         else:
             self.route_port_address_out(port, "left")
 
+    def _via_stack_destination_second_layer_size(self, from_layer, to_layer, directions=None, size=(1, 1)):
+        """
+        Return (width, height) of the second-layer metal on the last hop of
+        ``add_via_stack_center(from_layer, to_layer, ...)`` (i.e. metal on ``to_layer``).
+        """
+        from openram.tech import layer_indices, layer_stacks
+
+        if from_layer == to_layer:
+            return (0.0, 0.0)
+        tw, th = 0.0, 0.0
+        cur_layer = from_layer
+        while cur_layer != to_layer:
+            from_id = layer_indices[cur_layer]
+            to_id = layer_indices[to_layer]
+            if from_id < to_id:
+                search_id, next_id = 0, 2
+            else:
+                search_id, next_id = 2, 0
+
+            curr_stack = next(filter(lambda stack: stack[search_id] == cur_layer, layer_stacks), None)
+            if curr_stack is None:
+                debug.error("via stack: no stack from {} toward {}".format(cur_layer, to_layer), -1)
+
+            via_mod = factory.create(module_type="contact",
+                                     layer_stack=curr_stack,
+                                     dimensions=size,
+                                     directions=directions,
+                                     implant_type=None,
+                                     well_type=None)
+            if via_mod.second_layer_name == to_layer:
+                tw = via_mod.second_layer_width
+                th = via_mod.second_layer_height
+            cur_layer = curr_stack[next_id]
+        return (tw, th)
+
+    def _port_address_wl_route_mid1_mid2_widen_width(self, from_layer, to_layer, mid1, mid2, route_layer):
+        """
+        If same-layer spacing between via top metal at mid1 and the horizontal
+        mid2→WL segment would be tighter than minimum, return a metal width to
+        use on the mid1→mid2 jog; otherwise None (keep default min-width path).
+        """
+        if from_layer == to_layer:
+            return None
+        tw, th = self._via_stack_destination_second_layer_size(from_layer, to_layer)
+        if tw == 0 and th == 0:
+            return None
+        sp_key = "{0}_to_{0}".format(route_layer)
+        if sp_key not in drc:
+            return None
+        dy = abs(mid1.y - mid2.y)
+        via_half = 0.5 * max(tw, th)
+        min_w = drc["minwidth_{}".format(route_layer)]
+        clearance = dy - via_half - 0.5 * min_w
+        if clearance >= drc[sp_key]:
+            return None
+        return max(min_w, tw, th)
+
     def route_port_address_out(self, port, side="left"):
         """ Connecting Wordline driver output to Bitcell WL connection  """
 
@@ -894,7 +951,24 @@ class bank(design):
                 self.add_via_stack_center(from_layer=driver_wl_pin.layer,
                                           to_layer=bitcell_wl_pin.layer,
                                           offset=mid1)
-                self.add_path(bitcell_wl_pin.layer, [mid1, mid2, bitcell_wl_pos])
+                rl = bitcell_wl_pin.layer
+                min_w = drc["minwidth_{}".format(rl)]
+                wide_w = self._port_address_wl_route_mid1_mid2_widen_width(driver_wl_pin.layer,
+                                                                           rl,
+                                                                           mid1,
+                                                                           mid2,
+                                                                           rl)
+                if wide_w is not None and wide_w > min_w:
+                    self.add_path(rl, [mid1, mid2], width=wide_w)
+                    self.add_path(rl, [mid2, bitcell_wl_pos], width=min_w)
+                    # Miter at mid2: match horizontal WL thickness in y (a centered square
+                    # max(wide_w, min_w) overshoots mid2 vertically vs the thin horizontal leg).
+                    self.add_rect(layer=rl,
+                                  offset=vector(mid2.x - 0.5 * wide_w, mid2.y - 0.5 * min_w),
+                                  width=wide_w,
+                                  height=min_w)
+                else:
+                    self.add_path(rl, [mid1, mid2, bitcell_wl_pos])
             else:
                 self.add_path(bitcell_wl_pin.layer, [driver_wl_pos, mid1, mid2, bitcell_wl_pos])
 

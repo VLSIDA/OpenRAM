@@ -582,12 +582,18 @@ class port_data(design):
                                             num_bits=self.word_size,
                                             inst1_start_bit=start_bit)
 
-                self.channel_route_bitlines(inst1=self.precharge_array_inst,
-                                            inst1_bls_template="{inst}_{bit}",
-                                            inst2=inst2,
-                                            num_bits=self.num_spare_cols,
-                                            inst1_start_bit=self.num_cols + off,
-                                            inst2_start_bit=self.word_size)
+                # The spare columns route directly from the precharge array
+                # (bypassing the column mux). A channel route would via the
+                # bitline up to the vertical layer right at the precharge pin,
+                # landing on the precharge cell's full-width en_bar rail and
+                # shorting the spare bitlines to p_en_bar. Stay on the bitline
+                # layer with connect_bitlines to avoid that via.
+                self.connect_bitlines(inst1=self.precharge_array_inst,
+                                      inst1_bls_template="{inst}_{bit}",
+                                      inst2=inst2,
+                                      num_bits=self.num_spare_cols,
+                                      inst1_start_bit=self.num_cols + off,
+                                      inst2_start_bit=self.word_size)
             else:
                 self.connect_bitlines(inst1=self.column_mux_array_inst,
                                             inst1_bls_template="{inst}_out_{bit}",
@@ -653,12 +659,15 @@ class port_data(design):
                                         num_bits=self.word_size,
                                         inst1_start_bit=start_bit)
 
-            self.channel_route_bitlines(inst1=self.precharge_array_inst,
-                                        inst1_bls_template="{inst}_{bit}",
-                                        inst2=inst2,
-                                        num_bits=self.num_spare_cols,
-                                        inst1_start_bit=self.num_cols + off,
-                                        inst2_start_bit=self.word_size)
+            # See note in route_sense_amp_to_column_mux_or_precharge_array:
+            # spare columns route from the precharge array, so stay on the
+            # bitline layer to avoid shorting to the en_bar rail.
+            self.connect_bitlines(inst1=self.precharge_array_inst,
+                                  inst1_bls_template="{inst}_{bit}",
+                                  inst2=inst2,
+                                  num_bits=self.num_spare_cols,
+                                  inst1_start_bit=self.num_cols + off,
+                                  inst2_start_bit=self.word_size)
 
         # This could be a channel route, but in some techs the bitlines
         # are too close together.

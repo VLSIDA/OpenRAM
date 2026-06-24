@@ -90,6 +90,7 @@ def log(str):
                 compile_log.write(line)
             log.setup_output = []
         compile_log.write(str + '\n')
+        compile_log.close()
     else:
         log.setup_output.append(str + "\n")
 

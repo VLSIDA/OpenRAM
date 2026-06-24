@@ -23,7 +23,8 @@ from openram import options
 
 
 from openram import OPENRAM_HOME
-VERSION = open(OPENRAM_HOME + "/../VERSION").read().rstrip()
+with open(OPENRAM_HOME + "/../VERSION", "r", encoding="utf-8") as version_file:
+    VERSION = version_file.read().rstrip()
 NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 

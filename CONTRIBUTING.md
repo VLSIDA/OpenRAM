@@ -2,8 +2,7 @@ We are happy to accept contributions to OpenRAM and encourage this!
 This document will let you know our preferred methodology for
 including your contributions.
 
-If you are unsure about a contribution, please email our development
-list at openram-dev-group@ucsc.edu. We are happy to give insights into
+If you are unsure about a contribution, please [post an issue on the GitHub](https://github.com/VLSIDA/OpenRAM/issues). We are happy to give insights into
 the best way to implement a change to ensure your contribution will be
 accepted and help other OpenRAM users.
 

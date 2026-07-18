@@ -133,7 +133,7 @@ def print_banner():
     debug.print_raw("|=========" + " ".center(60) + "=========|")
     user_info = "Usage help: openram-user-group@ucsc.edu"
     debug.print_raw("|=========" + user_info.center(60) + "=========|")
-    dev_info = "Development help: openram-dev-group@ucsc.edu"
+    dev_info = "Development help: https://github.com/VLSIDA/OpenRAM/issues"
     debug.print_raw("|=========" + dev_info.center(60) + "=========|")
     debug.print_raw("|=========" + "See LICENSE for license info".center(60) + "=========|")
     debug.print_raw("|==============================================================================|")

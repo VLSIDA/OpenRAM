@@ -33,10 +33,15 @@ def run_script(cell_name, script="lvs"):
     start = time.time()
     with open(outfile, 'wb') as fo, open(errfile, 'wb') as fe:
         if OPTS.use_nix:
+            # The script runs in openram_temp, which has no flake.nix, so the
+            # flake has to be named explicitly or nix searches up from the temp
+            # directory, fails, and the script never runs at all.
+            repo_root = os.path.abspath(os.path.join(os.environ["OPENRAM_HOME"], ".."))
             p_cmd = [
                 "nix",
                 "--extra-experimental-features", "nix-command flakes",
                 "develop",
+                "path:{}".format(repo_root),
                 "--command",
                 scriptpath,
             ]

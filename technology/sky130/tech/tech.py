@@ -711,6 +711,14 @@ drc.add_enclosure("m5",
 spice = {}
 spice["nmos"] = "sky130_fd_pr__nfet_01v8"
 spice["pmos"] = "sky130_fd_pr__pfet_01v8"
+
+# An nfet narrower than 0.42um is a different device in sky130: magic
+# extracts it as sky130_fd_pr__special_nfet_01v8, so the netlist has to use
+# that name below the threshold or netgen reports a device class mismatch.
+# See the "device msubcircuit" lines in sky130A.tech. There is no equivalent
+# split for pfets, so only the nmos is declared here.
+spice["nmos_narrow"] = "sky130_fd_pr__special_nfet_01v8"
+spice["nmos_narrow_max_width"] = 0.42
 spice["power"]="vccd1"
 spice["ground"]="vssd1"
 

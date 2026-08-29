@@ -257,16 +257,16 @@ spice["temperatures"] = [0, 25, 100]  # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
 # analytical delay parameters
-spice["nom_threshold"] = 1.3   # Typical Threshold voltage in Volts
+spice["nom_threshold"] = 1.3        # Typical Threshold voltage in Volts
 # FIXME: These need to be updated for SCMOS, they are copied from FreePDK45.
-spice["wire_unit_r"] = 0.075    # Unit wire resistance in ohms/square
-spice["wire_unit_c"] = 0.64     # Unit wire capacitance ff/um^2
-spice["min_tx_drain_c"] = 0.7   # Minimum transistor drain capacitance in ff
-spice["min_tx_gate_c"] = 0.1    # Minimum transistor gate capacitance in ff
-spice["dff_setup"] = 9        # DFF setup time in ps
-spice["dff_hold"] = 1         # DFF hold time in ps
-spice["dff_in_cap"] = 9.8242  # Input capacitance (D) [Femto-farad]
-spice["dff_out_cap"] = 2       # Output capacitance (Q) [Femto-farad]
+spice["wire_unit_r"] = 0.075        # Unit wire resistance in ohms/square
+spice["wire_unit_c"] = 0.64e-15     # Unit wire capacitance F/um^2
+spice["min_tx_drain_c"] = 0.7       # Minimum transistor drain capacitance in ff
+spice["min_tx_gate_c"] = 0.1        # Minimum transistor gate capacitance in ff
+spice["dff_setup"] = 9              # DFF setup time in ps
+spice["dff_hold"] = 1               # DFF hold time in ps
+spice["dff_in_cap"] = 9.8242        # Input capacitance (D) [Femto-farad]
+spice["dff_out_cap"] = 2            # Output capacitance (Q) [Femto-farad]
 
 # analytical power parameters, many values are temporary
 spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW

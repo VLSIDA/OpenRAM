@@ -18,8 +18,7 @@ class wire_spice_model():
     def cal_wire_c(self, wire_length, wire_width):
         from openram.tech import spice
         # Convert the F/um^2 to fF/um^2 then multiple by width and length
-        # FIXME: shouldn't it be 1e15?
-        total_c = (spice["wire_unit_c"]*1e12) * wire_length * wire_width
+        total_c = (spice["wire_unit_c"]*1e15) * wire_length * wire_width
         wire_c = total_c / self.lump_num
         return wire_c
 

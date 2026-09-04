@@ -946,7 +946,7 @@ class layout():
         """
         Route together all of the pins of a given name that horizontally align.
         Uses local_insts if insts not specified.
-        Uses center of pin by default, or top or botom if specified.
+        Uses center of pin by default, or top or bottom if specified.
         New top level pin can be renamed with new_name, otherwise the new pin will keep the same name as old pins
         TODO: Add equally spaced option for IR drop min, right now just 2
         """

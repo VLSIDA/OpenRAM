@@ -1,5 +1,9 @@
 ### [Go Back](./index.md#table-of-contents)
 
+## What unit is the word size measured in?
+
+Word sizes are measured in ``bytes`` not ``bits``.  If your word size is nominally ``9`` bits, you will need to round the word size to ``16`` bits as the next multiple of ``8`` and set ``word_size = 2`` as **OpenRAM** assumes that there are ``8`` bits in a byte.
+
 # Frequently Asked Questions
 
 ## What to do if OpenRAM encounters an error?

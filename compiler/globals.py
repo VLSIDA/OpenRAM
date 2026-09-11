@@ -544,6 +544,12 @@ def set_default_corner():
     if (OPTS.slew_scales == ""):
         OPTS.slew_scales = [0.25, 1, 8]
 
+    # Lower bound for the max_transition emitted on input pins. A
+    # characterized slew range can be far tighter than the technology can
+    # actually drive, which produces a limit downstream STA rejects.
+    if (OPTS.max_transition == ""):
+        OPTS.max_transition = 0.5
+
 
 def import_tech():
     """ Dynamically adds the tech directory to the path and imports it. """

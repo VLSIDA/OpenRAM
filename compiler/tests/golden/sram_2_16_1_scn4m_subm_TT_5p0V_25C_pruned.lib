@@ -165,7 +165,7 @@ cell (sram_2_16_1_scn4m_subm){
         bus_type  : addr; 
         direction  : input; 
         capacitance : 9.8242;  
-        max_transition       : 0.4;
+        max_transition       : 0.5;
         pin(addr0[3:0]){
         timing(){ 
             timing_type : setup_rising; 

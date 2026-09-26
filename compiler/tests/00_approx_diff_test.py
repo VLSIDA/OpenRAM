@@ -10,8 +10,10 @@
 
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 
+import openram
 from testutils import openram_test
 
 
@@ -57,4 +59,7 @@ class approx_diff_test(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    # The regression Makefile passes OpenRAM options to every test script.
+    openram.parse_args()
+    del sys.argv[1:]
     unittest.main()

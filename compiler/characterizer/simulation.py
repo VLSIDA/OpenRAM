@@ -618,16 +618,19 @@ class simulation():
         """
         Gets the signal name associated with the bitlines in the bank.
         """
-        # FIXME: change to a solution that does not depend on the technology
-        #if OPTS.tech_name == "sky130" and len(self.all_ports) == 1:
-        #    cell_mod = factory.create(module_type=OPTS.bitcell, version="opt1")
-        #else:
+        # The bitcell array may create its bitcell with arguments (sky130: version="opt1"),
+        # which gives a different object than create() without them. Use the bitcell
+        # object that is found in the timing paths.
+        exclude_set = self.get_bl_name_search_exclusions()
         cell_mod = factory.create(module_type=OPTS.bitcell)
+        for mod in factory.get_mods(type(cell_mod).__name__):
+            if any(self.sram.find_aliases(self.sram_instance_name, self.pins, path, mod.get_bl_name(port), mod, exclude_set) for path in paths):
+                cell_mod = mod
+                break
         cell_bl = cell_mod.get_bl_name(port)
         cell_br = cell_mod.get_br_name(port)
 
         bl_names = []
-        exclude_set = self.get_bl_name_search_exclusions()
         for int_net in [cell_bl, cell_br]:
             bl_names.append(self.get_alias_in_path(paths, int_net, cell_mod, exclude_set))
         if OPTS.use_pex and OPTS.pex_exe[0] != "calibre":

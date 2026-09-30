@@ -376,7 +376,11 @@ class graph:
             node = self.nodes[i]
             if node.remove:
                 node.remove_all_neighbors()
-                self.nodes.remove(node)
+        # Filter in one pass: calling list.remove() for every marked node
+        # searches the list each time, which is quadratic in the number of
+        # nodes and takes hours for large routing graphs. Nodes compare by
+        # identity, so the resulting list is the same.
+        self.nodes = [node for node in self.nodes if not node.remove]
 
 
     def save_end_nodes(self):

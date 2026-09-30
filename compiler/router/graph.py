@@ -399,14 +399,19 @@ class graph:
         A* algorithm.
         """
 
-        # Heuristic function to calculate the scores
+        # Heuristic function to calculate the scores. It loops over all target
+        # nodes, so it is cached: a node can be pushed to the queue many times.
+        h_cache = {}
         def h(node):
             """ Return the estimated distance to the closest target. """
+            if node.id in h_cache:
+                return h_cache[node.id]
             min_dist = float("inf")
             for t in self.target_nodes:
                 dist = t.center.distance(node.center) + abs(t.center.z - node.center.z)
                 if dist < min_dist:
                     min_dist = dist
+            h_cache[node.id] = min_dist
             return min_dist
 
         # Initialize data structures to be used for A* search

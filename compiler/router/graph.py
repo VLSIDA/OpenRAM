@@ -414,6 +414,10 @@ class graph:
             h_cache[node.id] = min_dist
             return min_dist
 
+        # Target check by node id: searching the target node list for every
+        # visited node is slow for large targets (nodes compare by identity)
+        target_ids = {node.id for node in self.target_nodes}
+
         # Initialize data structures to be used for A* search
         queue = []
         close_set = set()
@@ -438,7 +442,7 @@ class graph:
             close_set.add(current)
 
             # Check if we've reached the target
-            if current in self.target_nodes:
+            if current.id in target_ids:
                 path = []
                 while current.id in came_from:
                     path.append(current)

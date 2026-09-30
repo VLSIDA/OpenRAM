@@ -226,15 +226,22 @@ class graph:
     def find_graph_blockages(self, region):
         """ Find blockages that overlap the routing region. """
 
+        # Keys of the included blockages, for a constant-time duplicate check.
+        # Searching self.graph_blockages instead ("blockage in list") compares
+        # against every included blockage, and doing that for each blockage of
+        # the design made this loop quadratic in the number of blockages.
+        included = {self.blockage_key(blockage) for blockage in self.graph_blockages}
         for blockage in self.router.blockages:
             # Skip if already included
-            if blockage in self.graph_blockages:
+            key = self.blockage_key(blockage)
+            if key in included:
                 continue
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
+                included.add(key)
         # Make sure that the source or target fake pins are included as blockage
         for shape in [self.source, self.target]:
             for blockage in self.graph_blockages:
@@ -243,6 +250,19 @@ class graph:
                     break
             else:
                 self.graph_blockages.append(shape)
+
+
+    @staticmethod
+    def blockage_key(shape):
+        """
+        Key under which two shapes are equal exactly when pin_layout.__eq__
+        says so: same class (__eq__ is False between a class and its
+        subclass), same lpp and same rectangle. The coordinates are compared
+        as numbers, not via the cached hash, which is taken from repr() and
+        tells 1 and 1.0 apart although they are equal.
+        """
+        (ll, ur) = shape.rect
+        return (type(shape), shape.lpp, ll.x, ll.y, ur.x, ur.y)
 
 
     def find_graph_vias(self, region):

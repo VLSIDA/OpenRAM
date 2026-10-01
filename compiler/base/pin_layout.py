@@ -236,10 +236,6 @@ class pin_layout:
 
     def contains(self, other):
         """ Check if a shape contains another rectangle  """
-        # If it is the same shape entirely, it is contained!
-        if self == other:
-            return True
-
         # Can only overlap on the same layer
         if not self.same_lpp(self.lpp, other.lpp):
             return False

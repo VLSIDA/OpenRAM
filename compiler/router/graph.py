@@ -4,6 +4,7 @@
 # All rights reserved.
 #
 import heapq
+import numpy
 from copy import deepcopy
 from openram import debug
 from openram.base.vector import vector
@@ -419,18 +420,22 @@ class graph:
         A* algorithm.
         """
 
-        # Heuristic function to calculate the scores. It loops over all target
-        # nodes, so it is cached: a node can be pushed to the queue many times.
+        # Heuristic function to calculate the scores: the distance to the closest
+        # target, over all targets at once with numpy (the same float operations
+        # as a loop, so the same values). It is cached: a node can be pushed to the
+        # queue many times.
+        tx = numpy.array([t.center.x for t in self.target_nodes], dtype=float)
+        ty = numpy.array([t.center.y for t in self.target_nodes], dtype=float)
+        tz = numpy.array([t.center.z for t in self.target_nodes], dtype=float)
         h_cache = {}
         def h(node):
             """ Return the estimated distance to the closest target. """
             if node.id in h_cache:
                 return h_cache[node.id]
             min_dist = float("inf")
-            for t in self.target_nodes:
-                dist = t.center.distance(node.center) + abs(t.center.z - node.center.z)
-                if dist < min_dist:
-                    min_dist = dist
+            if len(tx):
+                c = node.center
+                min_dist = float((numpy.abs(tx - c.x) + numpy.abs(ty - c.y) + numpy.abs(tz - c.z)).min())
             h_cache[node.id] = min_dist
             return min_dist
 

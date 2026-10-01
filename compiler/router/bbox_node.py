@@ -73,10 +73,9 @@ class bbox_node:
 
         # Add the change in areas as cost
         self_cost = self_merge.area()
-        left_cost = self_merge.area() - self.bbox.area()
-        left_cost += left_merge.area() - self.left.bbox.area()
-        right_cost = self_merge.area() - self.bbox.area()
-        right_cost += right_merge.area() - self.right.bbox.area()
+        growth = self_cost - self.bbox.area()
+        left_cost = growth + (left_merge.area() - self.left.bbox.area())
+        right_cost = growth + (right_merge.area() - self.right.bbox.area())
 
         # Add the overlaps in areas as cost
         self_overlap = self.bbox.overlap(bbox)

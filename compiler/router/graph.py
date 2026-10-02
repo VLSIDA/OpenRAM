@@ -4,6 +4,7 @@
 # All rights reserved.
 #
 import heapq
+import numpy
 from copy import deepcopy
 from openram import debug
 from openram.base.vector import vector
@@ -226,15 +227,22 @@ class graph:
     def find_graph_blockages(self, region):
         """ Find blockages that overlap the routing region. """
 
+        # Keys of the included blockages, for a constant-time duplicate check.
+        # Searching self.graph_blockages instead ("blockage in list") compares
+        # against every included blockage, and doing that for each blockage of
+        # the design made this loop quadratic in the number of blockages.
+        included = {self.blockage_key(blockage) for blockage in self.graph_blockages}
         for blockage in self.router.blockages:
             # Skip if already included
-            if blockage in self.graph_blockages:
+            key = self.blockage_key(blockage)
+            if key in included:
                 continue
             # Set the region's lpp to current blockage's lpp so that the
             # overlaps method works
             region.lpp = blockage.lpp
             if region.overlaps(blockage):
                 self.graph_blockages.append(blockage)
+                included.add(key)
         # Make sure that the source or target fake pins are included as blockage
         for shape in [self.source, self.target]:
             for blockage in self.graph_blockages:
@@ -243,6 +251,19 @@ class graph:
                     break
             else:
                 self.graph_blockages.append(shape)
+
+
+    @staticmethod
+    def blockage_key(shape):
+        """
+        Key under which two shapes are equal exactly when pin_layout.__eq__
+        says so: same class (__eq__ is False between a class and its
+        subclass), same lpp and same rectangle. The coordinates are compared
+        as numbers, not via the cached hash, which is taken from repr() and
+        tells 1 and 1.0 apart although they are equal.
+        """
+        (ll, ur) = shape.rect
+        return (type(shape), shape.lpp, ll.x, ll.y, ur.x, ur.y)
 
 
     def find_graph_vias(self, region):
@@ -376,7 +397,11 @@ class graph:
             node = self.nodes[i]
             if node.remove:
                 node.remove_all_neighbors()
-                self.nodes.remove(node)
+        # Filter in one pass: calling list.remove() for every marked node
+        # searches the list each time, which is quadratic in the number of
+        # nodes and takes hours for large routing graphs. Nodes compare by
+        # identity, so the resulting list is the same.
+        self.nodes = [node for node in self.nodes if not node.remove]
 
 
     def save_end_nodes(self):
@@ -395,15 +420,28 @@ class graph:
         A* algorithm.
         """
 
-        # Heuristic function to calculate the scores
+        # Heuristic function to calculate the scores: the distance to the closest
+        # target, over all targets at once with numpy (the same float operations
+        # as a loop, so the same values). It is cached: a node can be pushed to the
+        # queue many times.
+        tx = numpy.array([t.center.x for t in self.target_nodes], dtype=float)
+        ty = numpy.array([t.center.y for t in self.target_nodes], dtype=float)
+        tz = numpy.array([t.center.z for t in self.target_nodes], dtype=float)
+        h_cache = {}
         def h(node):
             """ Return the estimated distance to the closest target. """
+            if node.id in h_cache:
+                return h_cache[node.id]
             min_dist = float("inf")
-            for t in self.target_nodes:
-                dist = t.center.distance(node.center) + abs(t.center.z - node.center.z)
-                if dist < min_dist:
-                    min_dist = dist
+            if len(tx):
+                c = node.center
+                min_dist = float((numpy.abs(tx - c.x) + numpy.abs(ty - c.y) + numpy.abs(tz - c.z)).min())
+            h_cache[node.id] = min_dist
             return min_dist
+
+        # Target check by node id: searching the target node list for every
+        # visited node is slow for large targets (nodes compare by identity)
+        target_ids = {node.id for node in self.target_nodes}
 
         # Initialize data structures to be used for A* search
         queue = []
@@ -429,7 +467,7 @@ class graph:
             close_set.add(current)
 
             # Check if we've reached the target
-            if current in self.target_nodes:
+            if current.id in target_ids:
                 path = []
                 while current.id in came_from:
                     path.append(current)

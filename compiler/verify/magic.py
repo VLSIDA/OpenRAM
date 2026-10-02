@@ -273,8 +273,10 @@ def write_lvs_script(cell_name, gds_name, sp_name, final_verification=False, out
     setup_file = os.path.basename(full_setup_file)
 
     if os.path.exists(full_setup_file):
-        # Copy setup.tcl file into temp dir
-        shutil.copy(full_setup_file, output_path)
+        # Copy setup.tcl file into temp dir. Copy only the contents: the
+        # source may be read-only (e.g. a PDK in the Nix store), and the copy
+        # is appended to below.
+        shutil.copyfile(full_setup_file, os.path.join(output_path, setup_file))
 
         setup_file_object = open(output_path + "/setup.tcl", 'a')
         setup_file_object.write("# Increase the column sizes for ease of reading long names\n")

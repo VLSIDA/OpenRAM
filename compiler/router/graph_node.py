@@ -44,9 +44,10 @@ class graph_node:
     def remove_all_neighbors(self):
         """ Disconnect all current neighbors. """
 
+        # Unlink from every neighbor, then clear the list at once.
         for neighbor in self.neighbors:
-            self.neighbors.remove(neighbor)
             neighbor.neighbors.remove(self)
+        self.neighbors.clear()
 
 
     def get_direction(self, b):

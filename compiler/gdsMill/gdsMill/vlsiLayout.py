@@ -759,6 +759,8 @@ class VlsiLayout:
 
         # Get the labels on a layer in the root level
         labels = self.getTexts(lpp)
+        if not labels:
+            return
 
         # Get all of the shapes on the layer at all levels
         # and transform them to the current level

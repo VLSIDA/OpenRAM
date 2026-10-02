@@ -228,7 +228,7 @@ class verilog:
                 self.vf.write("        if (wmask{0}_reg[{1}])\n".format(port, mask))
                 self.vf.write("                mem[addr{0}_reg][{1}:{2}] = din{0}_reg[{1}:{2}];\n".format(port, upper, lower))
         else:
-            upper = self.word_size - self.num_spare_cols - 1
+            upper = self.word_size - 1
             self.vf.write("        mem[addr{0}_reg][{1}:0] = din{0}_reg[{1}:0];\n".format(port, upper))
 
         if self.num_spare_cols == 1:

@@ -165,7 +165,7 @@ cell (sram_2_16_1_freepdk45){
         bus_type  : addr; 
         direction  : input; 
         capacitance : 0.2091;  
-        max_transition       : 0.04;
+        max_transition       : 0.5;
         pin(addr0[3:0]){
         timing(){ 
             timing_type : setup_rising; 

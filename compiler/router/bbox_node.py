@@ -19,48 +19,54 @@ class bbox_node:
         self.right = right
 
 
-    def iterate_point(self, point, check_done=False):
+    def iterate_point(self, point):
         """ Iterate over shapes in the tree that overlap the given point. """
 
         px, py = point.x, point.y
-        # Return this shape if it's a leaf
-        if self.is_leaf:
-            ll, ur = self.bbox.rect
-            if check_done or (ll.x <= px and px <= ur.x and ll.y <= py and py <= ur.y):
-                yield self.bbox.shape
-        else:
-            # Check the left child
-            if self.left:
-                ll, ur = self.left.bbox.rect
-                if ll.x <= px and px <= ur.x and ll.y <= py and py <= ur.y:
-                    yield from self.left.iterate_point(point, True)
-            # Check the right child
-            if self.right:
-                ll, ur = self.right.bbox.rect
-                if ll.x <= px and px <= ur.x and ll.y <= py and py <= ur.y:
-                    yield from self.right.iterate_point(point, True)
+        ll, ur = self.bbox.rect
+        if not (ll.x <= px <= ur.x and ll.y <= py <= ur.y):
+            return
+        # Depth first, left before right, with a stack rather than recursion
+        # (the tree can get deeper than Python's recursion limit). Only nodes
+        # whose bbox contains the point are pushed, so a leaf on the stack is a
+        # match.
+        stack = [self]
+        while stack:
+            node = stack.pop()
+            if node.is_leaf:
+                yield node.bbox.shape
+                continue
+            # Push the right child first so that the left one comes first
+            for child in (node.right, node.left):
+                if child:
+                    ll, ur = child.bbox.rect
+                    if ll.x <= px <= ur.x and ll.y <= py <= ur.y:
+                        stack.append(child)
 
 
-    def iterate_shape(self, shape, check_done=False):
+    def iterate_shape(self, shape):
         """ Iterate over shapes in the tree that overlap the given shape. """
 
         sll, sur = shape.rect
-        # Return this shape if it's a leaf
-        if self.is_leaf:
-            ll, ur = self.bbox.rect
-            if check_done or (ll.x <= sur.x and sll.x <= ur.x and ll.y <= sur.y and sll.y <= ur.y):
-                yield self.bbox.shape
-        else:
-            # Check the left child
-            if self.left:
-                ll, ur = self.left.bbox.rect
-                if ll.x <= sur.x and sll.x <= ur.x and ll.y <= sur.y and sll.y <= ur.y:
-                    yield from self.left.iterate_shape(shape, True)
-            # Check the right child
-            if self.right:
-                ll, ur = self.right.bbox.rect
-                if ll.x <= sur.x and sll.x <= ur.x and ll.y <= sur.y and sll.y <= ur.y:
-                    yield from self.right.iterate_shape(shape, True)
+        ll, ur = self.bbox.rect
+        if not (ll.x <= sur.x and sll.x <= ur.x and ll.y <= sur.y and sll.y <= ur.y):
+            return
+        # Depth first, left before right, with a stack rather than recursion
+        # (the tree can get deeper than Python's recursion limit). Only nodes
+        # whose bbox overlaps the shape are pushed, so a leaf on the stack is a
+        # match.
+        stack = [self]
+        while stack:
+            node = stack.pop()
+            if node.is_leaf:
+                yield node.bbox.shape
+                continue
+            # Push the right child first so that the left one comes first
+            for child in (node.right, node.left):
+                if child:
+                    ll, ur = child.bbox.rect
+                    if ll.x <= sur.x and sll.x <= ur.x and ll.y <= sur.y and sll.y <= ur.y:
+                        stack.append(child)
 
 
     def get_costs(self, bbox):
@@ -95,21 +101,30 @@ class bbox_node:
     def insert(self, bbox):
         """ Insert a bbox to the bbox tree. """
 
-        if self.is_leaf:
-            # Put the current bbox to the left child
-            self.left = bbox_node(self.bbox)
-            # Put the new bbox to the right child
-            self.right = bbox_node(bbox)
-        else:
+        # Go down to the node where the bbox is added. This is a loop rather
+        # than recursion because the tree can get deeper than Python's
+        # recursion limit in large designs.
+        path = []
+        node = self
+        while True:
+            path.append(node)
+            if node.is_leaf:
+                # Put the current bbox to the left child
+                node.left = bbox_node(node.bbox)
+                # Put the new bbox to the right child
+                node.right = bbox_node(bbox)
+                break
             # Calculate the costs of adding the new bbox
-            self_cost, left_cost, right_cost = self.get_costs(bbox)
+            self_cost, left_cost, right_cost = node.get_costs(bbox)
             if self_cost < left_cost and self_cost < right_cost: # Add here
-                self.left = bbox_node(self.bbox, left=self.left, right=self.right)
-                self.right = bbox_node(bbox)
+                node.left = bbox_node(node.bbox, left=node.left, right=node.right)
+                node.right = bbox_node(bbox)
+                break
             elif left_cost < right_cost: # Add to the left
-                self.left.insert(bbox)
+                node = node.left
             else: # Add to the right
-                self.right.insert(bbox)
-        # Update the current bbox
-        self.bbox = self.left.bbox.merge(self.right.bbox)
-        self.is_leaf = False
+                node = node.right
+        # Update the bboxes on the way back up
+        for node in reversed(path):
+            node.bbox = node.left.bbox.merge(node.right.bbox)
+            node.is_leaf = False

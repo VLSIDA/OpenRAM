@@ -255,7 +255,7 @@ class openram_test(unittest.TestCase):
 
             # 3. Convert to floats rather than strings
             line1_floats = [float(x) for x in line1_floats]
-            line2_floats = [float(x) for x in line1_floats]
+            line2_floats = [float(x) for x in line2_floats]
 
             # 4. Check if remaining string matches
             if line1 != line2:

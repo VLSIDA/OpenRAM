@@ -654,10 +654,7 @@ class lib:
 
         else:
             self.d = delay(self.sram, self.sp_file, self.corner)
-            if (self.sram.num_spare_rows == 0):
-                probe_address = "1" * self.sram.addr_size
-            else:
-                probe_address = "0" + "1" * (self.sram.addr_size - 1)
+            probe_address = get_probe_address(self.sram)
             probe_data = self.sram.word_size - 1
             char_results = self.d.analyze(probe_address, probe_data, self.load_slews)
 

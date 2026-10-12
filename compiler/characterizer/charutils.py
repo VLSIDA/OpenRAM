@@ -12,6 +12,16 @@ from openram import debug
 from openram import OPTS
 
 
+def get_probe_address(sram):
+    """
+    Address to characterize. All ones is only a real word when num_words
+    is a power of 2, so use the last word instead.
+    """
+    if sram.num_spare_rows == 0:
+        return format(sram.num_words - 1, "0{}b".format(sram.addr_size))
+    return "0" + "1" * (sram.addr_size - 1)
+
+
 def relative_compare(value1, value2, error_tolerance=0.001):
     """ This is used to compare relative values for convergence. """
     return (abs(value1 - value2) / abs(max(value1, value2)) <= error_tolerance)

@@ -104,6 +104,7 @@ class sram():
         from openram import verify
         from openram.characterizer import functional
         from openram.characterizer import delay
+        from openram.characterizer import get_probe_address
 
         # Save the spice file
         start_time = datetime.datetime.now()
@@ -122,10 +123,7 @@ class sram():
         start_time = datetime.datetime.now()
         debug.print_raw("DELAY: Writing stimulus...")
         d = delay(self.s, spname, ("TT", 5, 25), output_path=OPTS.output_path)
-        if (self.s.num_spare_rows == 0):
-            probe_address = "1" * self.s.addr_size
-        else:
-            probe_address = "0" + "1" * (self.s.addr_size - 1)
+        probe_address = get_probe_address(self.s)
         probe_data = self.s.word_size - 1
         d.analysis_init(probe_address, probe_data)
         d.targ_read_ports.extend(self.s.read_ports)

@@ -69,6 +69,9 @@ GDS = {}
 #calculate the size of a user unit in meters, divide the second number
 #by the first."
 GDS["unit"] = (0.0005,1e-9)
+
+# LEF database units per micron
+lef_units = 2000
 # default label zoom
 GDS["zoom"] = 0.05
 

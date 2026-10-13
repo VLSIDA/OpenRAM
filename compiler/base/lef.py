@@ -10,7 +10,7 @@ import shutil
 from openram import debug
 from openram.base import vector
 from openram.base import pin_layout
-from openram.tech import layer_names
+from openram.tech import layer_names, lef_units
 from openram import OPTS
 
 
@@ -22,7 +22,7 @@ class lef:
     """
     def __init__(self, layers):
         # LEF db units per micron
-        self.lef_units = 2000
+        self.lef_units = lef_units
         # These are the layers of the obstructions
         self.lef_layers = layers
         # Round to ensure float values are divisible by 0.0025 (the manufacturing grid)

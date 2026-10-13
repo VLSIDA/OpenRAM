@@ -333,6 +333,9 @@ GDS = {}
 GDS["unit"] = (0.001, 1e-9)
 #GDS["unit"]=(0.001, 1e-6)
 
+# LEF database units per micron. sky130 tech LEFs use 1000.
+lef_units = 1000
+
 ###################################################
 # Interconnect stacks
 ###################################################

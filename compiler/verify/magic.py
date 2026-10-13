@@ -131,6 +131,11 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     # Hack to work around unit scales in SkyWater
     if OPTS.tech_name=="sky130":
         f.write(pre + "extract style ngspice(si)\n")
+    # LVS only needs connectivity and ext2spice drops the parasitics below.
+    # Extracting them anyway can take hours on large arrays.
+    f.write(pre + "extract no capacitance\n")
+    f.write(pre + "extract no coupling\n")
+    f.write(pre + "extract no resistance\n")
     if final_verification and OPTS.route_supplies:
         f.write(pre + "extract unique all\n")
     f.write(pre + "extract all\n")

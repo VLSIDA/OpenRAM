@@ -119,7 +119,9 @@ class dff_array(design):
             # Add connections every 4 cells
             for col in range(0, self.columns, 4):
                 vdd_pin=self.dff_insts[0, col].get_pin("vdd")
-                self.add_power_pin("vdd", vdd_pin.lc(), start_layer=vdd_pin.layer)
+                # col-0 via centred on the array edge puts m2 0.055 um from an abutted array's channel trunk (met2.2 0.14 um)
+                inset = vector(0.5 * self.m2_pitch, 0) if col == 0 else vector(0, 0)
+                self.add_power_pin("vdd", vdd_pin.lc() + inset, start_layer=vdd_pin.layer)
 
             # Add connections every 4 cells
             for col in range(0, self.columns, 4):

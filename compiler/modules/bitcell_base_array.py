@@ -160,7 +160,7 @@ class bitcell_base_array(design):
                                     width=self.width,
                                     height=wl_pin.height())
 
-    def route_supplies(self):
+    def route_supplies(self, insts=None):
         
         vdd_found = False
         gnd_found = False
@@ -197,7 +197,7 @@ class bitcell_base_array(design):
                 pass
             
             
-        for inst in self.insts:
+        for inst in insts or self.insts:
             if power_name in inst.mod.get_pin_names():
                 self.copy_layout_pin(inst, power_name, new_name='vdd')
             if ground_name  in inst.mod.get_pin_names():

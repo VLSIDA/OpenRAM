@@ -48,7 +48,8 @@ class bitcell_array(bitcell_base_array):
 
         self.add_layout_pins()
 
-        self.route_supplies()
+        # Rails abut, so row 0 and column 0 label each one; per-cell copies are tens of thousands of duplicate labels on large arrays
+        self.route_supplies([inst for (row, col), inst in self.all_inst.items() if row == 0 or col == 0])
 
         self.add_boundary()
 

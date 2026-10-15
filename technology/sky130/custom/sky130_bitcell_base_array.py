@@ -85,10 +85,10 @@ class sky130_bitcell_base_array(bitcell_base_array):
         strap_pins = ["vdd", "gnd", "vdd"]
         return strap_pins
 
-    def route_supplies(self):
+    def route_supplies(self, insts=None):
         # Copy a vdd/gnd layout pin from every cell
-        super().route_supplies()
-        for inst in self.insts:
+        super().route_supplies(insts)
+        for inst in insts or self.insts:
             if "VPWR" in inst.mod.pins:
                 self.copy_layout_pin(inst, "VPWR", "vdd")
             if "VGND" in inst.mod.pins:

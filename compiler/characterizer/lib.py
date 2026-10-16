@@ -281,7 +281,7 @@ class lib:
         self.lib.write("    default_input_pin_cap    : 1.0 ;\n")
         self.lib.write("    default_inout_pin_cap    : 1.0 ;\n")
         self.lib.write("    default_output_pin_cap   : 0.0 ;\n")
-        self.lib.write("    default_max_transition   : 0.5 ;\n")
+        self.lib.write("    default_max_transition   : {} ;\n".format(OPTS.max_transition))
         self.lib.write("    default_fanout_load      : 1.0 ;\n")
         self.lib.write("    default_max_fanout   : 4.0 ;\n")
         self.lib.write("    default_connection_class : universal ;\n\n")
@@ -484,7 +484,8 @@ class lib:
         self.lib.write("        bus_type  : addr; \n")
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"]/1000))
-        self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
+        max_transition = max(OPTS.max_transition, self.slews[-1])
+        self.lib.write("        max_transition       : {0};\n".format(max_transition))
         self.lib.write("        pin(addr{0}[{1}:0])".format(port,self.sram.addr_size-1))
         self.lib.write("{\n")
 
@@ -499,7 +500,8 @@ class lib:
         self.lib.write("        bus_type  : wmask; \n")
         self.lib.write("        direction  : input; \n")
         self.lib.write("        capacitance : {0};  \n".format(tech.spice["dff_in_cap"] / 1000))
-        self.lib.write("        max_transition       : {0};\n".format(self.slews[-1]))
+        max_transition = max(OPTS.max_transition, self.slews[-1])
+        self.lib.write("        max_transition       : {0};\n".format(max_transition))
         self.lib.write("        pin(wmask{0}[{1}:0])".format(port, self.sram.num_wmasks - 1))
         self.lib.write("{\n")
 

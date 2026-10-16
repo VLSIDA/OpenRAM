@@ -43,6 +43,7 @@ class options(optparse.Values):
     process_corners = ""
     load_scales = ""
     slew_scales = ""
+    max_transition = ""
 
     # Size parameters must be specified by user in config file.
     # num_words = 0

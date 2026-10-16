@@ -910,6 +910,7 @@ class sram_1bank(design, verilog, lef):
             self.col_addr_pos[port] = vector(x_offset,
                                              y_offset)
             self.col_addr_dff_insts[port].place(self.col_addr_pos[port])
+            # keep abutted: clk/li rails and well overhangs join across the edge; a gap opens clk and trips nwell.2a (1.27 um)
             x_offset = self.col_addr_dff_insts[port].rx()
         else:
             self.col_addr_pos[port] = vector(x_offset, 0)
@@ -1280,7 +1281,7 @@ class sram_1bank(design, verilog, lef):
                     continue
                 src_pin = self.control_logic_insts[port].get_pin(signal)
                 dest_pin = self.bank_inst.get_pin(signal + "{}".format(port))
-                self.connect_vbus(src_pin, dest_pin)
+                self.connect_vbus(src_pin, dest_pin, dest_inst=self.bank_inst)
 
         if self.has_rbl:
             for port in self.all_ports:

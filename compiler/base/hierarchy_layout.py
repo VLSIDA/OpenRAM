@@ -1756,10 +1756,11 @@ class layout():
                                           to_layer=bus_layer,
                                           offset=bus_pos)
 
-    def connect_vbus(self, src_pin, dest_pin, hlayer="m3", vlayer="m2"):
+    def connect_vbus(self, src_pin, dest_pin, hlayer="m3", vlayer="m2", dest_inst=None):
         """
         Helper routine to connect an instance to a vertical bus.
         Routes horizontal then vertical L shape.
+        dest_inst: instance owning the bus; its top-level hlayer straps are avoided or reused.
         """
 
         if src_pin.cx()<dest_pin.cx():
@@ -1771,12 +1772,26 @@ class layout():
         else:
             out_pos = dest_pin.uc()
 
+        (y, on_strap, pad) = (in_pos.y, False, None)
+        if dest_inst:
+            (y, on_strap, pad) = self.vbus_corner_y(dest_inst, dest_pin, in_pos, out_pos.x, hlayer, vlayer)
+
         # move horizontal first on layer stack
-        mid_pos = vector(out_pos.x, in_pos.y)
+        mid_pos = vector(out_pos.x, y)
         self.add_via_stack_center(from_layer=src_pin.layer,
                                   to_layer=hlayer,
                                   offset=in_pos)
-        self.add_path(hlayer, [in_pos, mid_pos])
+        if on_strap:
+            # bus already has an hlayer strap here; a second via2 cut lands 0.125 um from its cut (via2.2 0.20 um)
+            self.add_path(hlayer, [in_pos, vector(out_pos.x, in_pos.y)])
+            # one block over run end and strap pad; a path jog leaves slivers at the 0.015 um pad overhang (met3.1/met3.2 0.30 um)
+            hwidth = getattr(self, hlayer + "_width")
+            lo = min(in_pos.y - 0.5 * hwidth, y - 0.5 * pad)
+            hi = max(in_pos.y + 0.5 * hwidth, y + 0.5 * pad)
+            self.add_rect(hlayer, vector(out_pos.x - 0.5 * pad, lo), pad, hi - lo)
+            return
+        jog = [vector(in_pos.x, y)] if y != in_pos.y else []
+        self.add_path(hlayer, [in_pos] + jog + [mid_pos])
         self.add_via_stack_center(from_layer=hlayer,
                                   to_layer=vlayer,
                                   offset=mid_pos)
@@ -1784,6 +1799,65 @@ class layout():
         self.add_via_stack_center(from_layer=vlayer,
                                   to_layer=dest_pin.layer,
                                   offset=out_pos)
+
+    def vbus_corner_y(self, inst, dest_pin, in_pos, x, hlayer, vlayer):
+        """
+        Pick the y of the connect_vbus hlayer run into the bus at x, checked against inst's own
+        top-level hlayer rects and via pads. Only a via on dest_pin itself counts as a strap to
+        reuse. Returns (y, joins_existing_strap, via_pad_size).
+        """
+        if inst.mirror != "R0" or inst.rotate != 0:
+            return (in_pos.y, False, None)
+        stack = next((s for s in tech_layer_stacks if {s[0], s[2]} == {hlayer, vlayer}), None)
+        if stack is None:
+            # no hlayer/vlayer stack in this technology: keep the old routing
+            return (in_pos.y, False, None)
+        via = getattr(self, stack[0] + "_via")
+        if stack[2] == hlayer:
+            half = 0.5 * max(via.second_layer_width, via.second_layer_height)
+        else:
+            half = 0.5 * max(via.first_layer_width, via.first_layer_height)
+        space = getattr(self, hlayer + "_space")
+        width = getattr(self, hlayer + "_width")
+        pitch = getattr(self, hlayer + "_pitch")
+        shapes = []
+        cuts = []
+        for r in inst.mod.objs:
+            if isinstance(r, geometry.rectangle) and r.lpp == tech_layer[hlayer]:
+                shapes.append((r.ll() + inst.offset, r.ur() + inst.offset))
+        for i in inst.mod.insts:
+            stack_i = getattr(i.mod, "layer_stack", None)
+            if stack_i and hlayer in stack_i:
+                shapes.append((i.ll() + inst.offset, i.ur() + inst.offset))
+                if vlayer in stack_i:
+                    cuts.append(i.center() + inst.offset)
+
+        # a strap is only reusable when its via sits on dest_pin's own rect, otherwise it is another net
+        (pll, pur) = (dest_pin.ll(), dest_pin.ur())
+        straps = [c.y for c in cuts
+                  if abs(c.x - x) < half and abs(c.y - in_pos.y) < 2 * half + space
+                  and pll.x < c.x + half and c.x - half < pur.x
+                  and pll.y < c.y + half and c.y - half < pur.y]
+        if straps:
+            return (min(straps, key=lambda cy: abs(cy - in_pos.y)), True, 2 * half)
+
+        def hits(y):
+            run = (min(in_pos.x, x), y - 0.5 * width, max(in_pos.x, x), y + 0.5 * width)
+            pad = (x - half, y - half, x + half, y + half)
+            return [s for s in shapes for b in (run, pad)
+                    if b[0] - space < s[1].x and s[0].x < b[2] + space
+                    and b[1] - space < s[1].y and s[0].y < b[3] + space]
+
+        blocked = hits(in_pos.y)
+        if not blocked:
+            return (in_pos.y, False, 2 * half)
+        # via pad 0.29 um from a bank strap pad of another net (met3.2 0.30 um): shift the run away by pitches
+        sign = 1 if sum(0.5 * (s[0].y + s[1].y) for s in blocked) / len(blocked) < in_pos.y else -1
+        for dy in [sign * pitch, -sign * pitch, 2 * sign * pitch, -2 * sign * pitch]:
+            if not hits(in_pos.y + dy):
+                return (in_pos.y + dy, False, 2 * half)
+        debug.warning("connect_vbus: no clear {} track near y={}".format(hlayer, in_pos.y))
+        return (in_pos.y, False, 2 * half)
 
     def connect_hbus(self, src_pin, dest_pin, hlayer="m3", vlayer="m2"):
         """

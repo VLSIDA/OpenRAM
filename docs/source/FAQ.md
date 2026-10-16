@@ -2,6 +2,34 @@
 
 # Frequently Asked Questions
 
+## What units are `word_size` and `write_size` in?
+
+Both are in **bits**, not bytes.
+
+`word_size` is the width of a data word in bits. It is the number of bitcell
+columns per word: `sram_config` computes `num_cols = words_per_row * word_size`,
+so a 9-bit word is `word_size = 9` and needs no rounding up to a byte multiple.
+
+`write_size` is the write-mask granularity, also in bits. It defaults to
+`word_size` (one mask bit, i.e. no write mask) and otherwise gives
+`ceil(word_size / write_size)` mask bits. Setting `write_size = 8` is what
+produces byte write masks, and this is probably where the "bytes" idea comes
+from — the byte is the mask granularity, not the unit of `word_size`.
+
+For a worked example, `macros/sram_configs/sky130_sram_2kbyte_1rw1r_32x512_8.py`
+is:
+
+```python
+word_size = 32   # Bits
+num_words = 512
+write_size = 8   # Bits
+```
+
+which is 32 bits x 512 words = 16384 bits = 2 kbyte, matching the macro name,
+with byte write masks. The trailing `8` in these macro names is `write_size`.
+
+Capacity in bytes is therefore `word_size * num_words / 8`.
+
 ## What to do if OpenRAM encounters an error?
 
 When OpenRAM runs, it puts files in a temporary directory that is

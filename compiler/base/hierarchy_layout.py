@@ -1774,7 +1774,7 @@ class layout():
 
         (y, on_strap, pad) = (in_pos.y, False, None)
         if dest_inst:
-            (y, on_strap, pad) = self.vbus_corner_y(dest_inst, in_pos, out_pos.x, hlayer, vlayer)
+            (y, on_strap, pad) = self.vbus_corner_y(dest_inst, dest_pin, in_pos, out_pos.x, hlayer, vlayer)
 
         # move horizontal first on layer stack
         mid_pos = vector(out_pos.x, y)
@@ -1800,14 +1800,18 @@ class layout():
                                   to_layer=dest_pin.layer,
                                   offset=out_pos)
 
-    def vbus_corner_y(self, inst, in_pos, x, hlayer, vlayer):
+    def vbus_corner_y(self, inst, dest_pin, in_pos, x, hlayer, vlayer):
         """
         Pick the y of the connect_vbus hlayer run into the bus at x, checked against inst's own
-        top-level hlayer rects and via pads. Returns (y, joins_existing_strap, via_pad_size).
+        top-level hlayer rects and via pads. Only a via on dest_pin itself counts as a strap to
+        reuse. Returns (y, joins_existing_strap, via_pad_size).
         """
         if inst.mirror != "R0" or inst.rotate != 0:
             return (in_pos.y, False, None)
-        stack = next(s for s in tech_layer_stacks if {s[0], s[2]} == {hlayer, vlayer})
+        stack = next((s for s in tech_layer_stacks if {s[0], s[2]} == {hlayer, vlayer}), None)
+        if stack is None:
+            # no hlayer/vlayer stack in this technology: keep the old routing
+            return (in_pos.y, False, None)
         via = getattr(self, stack[0] + "_via")
         if stack[2] == hlayer:
             half = 0.5 * max(via.second_layer_width, via.second_layer_height)
@@ -1828,7 +1832,12 @@ class layout():
                 if vlayer in stack_i:
                     cuts.append(i.center() + inst.offset)
 
-        straps = [c.y for c in cuts if abs(c.x - x) < half and abs(c.y - in_pos.y) < 2 * half + space]
+        # a strap is only reusable when its via sits on dest_pin's own rect, otherwise it is another net
+        (pll, pur) = (dest_pin.ll(), dest_pin.ur())
+        straps = [c.y for c in cuts
+                  if abs(c.x - x) < half and abs(c.y - in_pos.y) < 2 * half + space
+                  and pll.x < c.x + half and c.x - half < pur.x
+                  and pll.y < c.y + half and c.y - half < pur.y]
         if straps:
             return (min(straps, key=lambda cy: abs(cy - in_pos.y)), True, 2 * half)
 

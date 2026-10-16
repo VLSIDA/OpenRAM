@@ -120,6 +120,7 @@ class dff_array(design):
             for col in range(0, self.columns, 4):
                 vdd_pin=self.dff_insts[0, col].get_pin("vdd")
                 # col-0 via centred on the array edge puts m2 0.055 um from an abutted array's channel trunk (met2.2 0.14 um)
+                # deliberately unconditional: harmless where the rule is looser, and keeps one geometry across technologies
                 inset = vector(0.5 * self.m2_pitch, 0) if col == 0 else vector(0, 0)
                 self.add_power_pin("vdd", vdd_pin.lc() + inset, start_layer=vdd_pin.layer)
 

@@ -16,6 +16,7 @@ import shutil
 import optparse
 import copy
 import importlib
+import importlib.util
 import getpass
 import subprocess
 from openram import debug
@@ -29,6 +30,7 @@ NAME = "OpenRAM v{}".format(VERSION)
 USAGE = "sram_compiler.py [options] <config file>\nUse -h for help.\n"
 
 OPTS = options.options()
+_config_modules = {}
 
 
 def parse_args():
@@ -348,9 +350,16 @@ def read_config(config_file, is_unit_test=False):
     # Import the configuration file of which modules to use
     debug.info(1, "Configuration file is " + config_file + ".py")
     try:
-        config = importlib.import_module(module_name)
-    except ImportError:
-        debug.error("Unable to read configuration file: {0}".format(config_file), 2)
+        config = _config_modules.get(OPTS.config_file)
+        if config is None:
+            # Load the requested file without consulting Python's module-name cache.
+            spec = importlib.util.spec_from_file_location(module_name, OPTS.config_file)
+            config = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(config)
+            _config_modules[OPTS.config_file] = config
+    except (ImportError, OSError) as error:
+        debug.error("Unable to read configuration file: {0}: {1}".format(
+            OPTS.config_file, error), 2)
 
     OPTS.overridden = {}
     for k, v in config.__dict__.items():

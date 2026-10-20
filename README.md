@@ -93,7 +93,7 @@ If I forgot to add you, please let me know!
 [Xyce]:                  http://xyce.sandia.gov/
 [Git]:                   https://git-scm.com/
 
-[FreePDK45]:             https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[FreePDK45]:             https://eda.ncsu.edu/freepdk/freepdk45/
 [SCMOS]:                 https://www.mosis.com/files/scmos/scmos.pdf
 [Sky130]:                https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git
 

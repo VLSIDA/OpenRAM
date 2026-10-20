@@ -128,5 +128,5 @@ make gf180mcu-pdk
 ```
 
 [SCMOS]:    https://www.mosis.com/files/scmos/scmos.pdf
-[FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[FreePDK45]: https://eda.ncsu.edu/freepdk/freepdk45/
 [Sky130]:   https://github.com/google/skywater-pdk-libs-sky130_fd_bd_sram.git

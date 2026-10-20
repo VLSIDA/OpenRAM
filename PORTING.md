@@ -25,5 +25,5 @@ specific technology (e.g., [FreePDK45]) should be a subdirectory
 
 
 
-[FreePDK45]: https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+[FreePDK45]: https://eda.ncsu.edu/freepdk/freepdk45/
 [SCMOS]:     https://www.mosis.com/files/scmos/scmos.pdf

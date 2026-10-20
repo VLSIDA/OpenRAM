@@ -17,8 +17,7 @@
  <text>
 #
 #  DRC  for  FreePDK45 according to :
-#   https://www.eda.ncsu.edu/wiki/FreePDK45:RuleDevel
-#   https://www.eda.ncsu.edu/wiki/FreePDK45:Contents
+#   https://eda.ncsu.edu/freepdk/freepdk45/
 #
 ##########################################################################################
 tstart = Time.now
@@ -336,7 +335,7 @@ end
 
 
 #   ONGRID  also defined in :
-#   https://www.eda.ncsu.edu/wiki/FreePDK45:Manufacturing_Grid
+#   https://eda.ncsu.edu/freepdk/freepdk45/
 ###########################################
 if OFFGRID
 info("GRID section")

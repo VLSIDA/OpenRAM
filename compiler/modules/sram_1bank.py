@@ -662,6 +662,8 @@ class sram_1bank(design, verilog, lef):
             inputs = []
             outputs = []
             for bit in range(self.num_spare_cols):
+                # The top-level pin is a scalar (spare_wen{port}) when there is
+                # a single spare column, so drop the 1-bit bus index to match it.
                 if self.num_spare_cols == 1:
                     inputs.append("spare_wen{}".format(port))
                 else:

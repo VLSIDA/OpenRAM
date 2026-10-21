@@ -116,12 +116,32 @@ class ptx(design):
         # but this may be uncommented for debug purposes
         # self.DRC()
 
+    def get_model_name(self):
+        """
+        Return the device model name for this transistor's width.
+
+        Some technologies model narrow devices with a separate model. In
+        sky130, an nfet narrower than 0.42um is extracted as
+        sky130_fd_pr__special_nfet_01v8 rather than sky130_fd_pr__nfet_01v8
+        (see the "device msubcircuit" rules in sky130A.tech), so the netlist
+        must use the same name or LVS reports a device class mismatch on
+        every gate built from a minimum-width device.
+        """
+        narrow_model = spice.get("{}_narrow".format(self.tx_type))
+        narrow_width = spice.get("{}_narrow_max_width".format(self.tx_type))
+        if narrow_model and narrow_width and self.tx_width < narrow_width:
+            return narrow_model
+
+        return spice[self.tx_type]
+
     def create_netlist(self):
         pin_list = ["D", "G", "S", "B"]
         if self.tx_type == "nmos":
             body_dir = "GROUND"
         else:
             body_dir = "POWER"
+
+        self.model_name = self.get_model_name()
         dir_list = ["INOUT", "INPUT", "INOUT", body_dir]
         self.add_pin_list(pin_list, dir_list)
 
@@ -133,7 +153,7 @@ class ptx(design):
         self.channel_length = drc("minlength_channel")
         if cell_props.ptx.model_is_subckt:
             # sky130
-            main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(spice[self.tx_type],
+            main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(self.model_name,
                                                                     self.mults,
                                                                     self.tx_width,
                                                                     self.channel_length)
@@ -142,7 +162,7 @@ class ptx(design):
             area_str = "pd={0:.2f} ps={0:.2f} as={1:.2f}u ad={1:.2f}u".format(perimeter_sd,
                                                                               area_sd)
         else:
-            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+            main_str = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(self.model_name,
                                                                       self.mults,
                                                                       self.tx_width,
                                                                       self.channel_length)
@@ -164,12 +184,12 @@ class ptx(design):
                                                                                  self.tx_width,
                                                                                  self.channel_length)
         elif cell_props.ptx.model_is_subckt:
-            self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(spice[self.tx_type],
+            self.lvs_device = "X{{0}} {{1}} {0} m={1} w={2}u l={3}u".format(self.model_name,
                                                                             self.mults,
                                                                             self.tx_width,
                                                                             self.channel_length)
         else:
-            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(spice[self.tx_type],
+            self.lvs_device = "M{{0}} {{1}} {0} m={1} w={2}u l={3}u ".format(self.model_name,
                                                                              self.mults,
                                                                              self.tx_width,
                                                                              self.channel_length)

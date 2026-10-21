@@ -6,7 +6,7 @@ library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     resistance_unit : "1kohm" ;
     capacitive_load_unit(1, pF) ;
     leakage_power_unit : "1mW" ;
-    pulling_resistance_unit :"1kohm" ;
+    pulling_resistance_unit : "1kohm" ;
     operating_conditions(OC){
     process : 1.0 ;
     voltage : 5.0 ;
@@ -59,16 +59,16 @@ library (sram_2_16_1_scn4m_subm_SS_5p0V_25C_lib){
     base_type : array;
     data_type : bit;
     bit_width : 2;
-    bit_from : 0;
-    bit_to : 1;
+    bit_from : 1;
+    bit_to : 0;
     }
 
     type (addr){
     base_type : array;
     data_type : bit;
     bit_width : 4;
-    bit_from : 0;
-    bit_to : 3;
+    bit_from : 3;
+    bit_to : 0;
     }
 
 cell (sram_2_16_1_scn4m_subm){
@@ -94,9 +94,9 @@ cell (sram_2_16_1_scn4m_subm){
     }
 
     leakage_power () {
-      value : 0.000198;
+      value : 0.000194;
     }
-    cell_leakage_power : 0.000198;
+    cell_leakage_power : 0.000194;
     bus(din0){
         bus_type  : data; 
         direction  : input; 
@@ -150,14 +150,14 @@ cell (sram_2_16_1_scn4m_subm){
             related_pin : "clk0"; 
             timing_type : falling_edge; 
             cell_rise(CELL_TABLE) {
-            values("1.446, 1.466, 1.545",\
-                   "1.446, 1.466, 1.545",\
-                   "1.446, 1.466, 1.545");
+            values("1.382, 1.402, 1.482",\
+                   "1.382, 1.402, 1.482",\
+                   "1.382, 1.402, 1.482");
             }
             cell_fall(CELL_TABLE) {
-            values("1.446, 1.466, 1.545",\
-                   "1.446, 1.466, 1.545",\
-                   "1.446, 1.466, 1.545");
+            values("1.382, 1.402, 1.482",\
+                   "1.382, 1.402, 1.482",\
+                   "1.382, 1.402, 1.482");
             }
             rise_transition(CELL_TABLE) {
             values("0.007, 0.009, 0.017",\
@@ -283,57 +283,57 @@ cell (sram_2_16_1_scn4m_subm){
         internal_power(){
             when : "!csb0 & !web0"; 
             rise_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
             fall_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
         }
         internal_power(){
             when : "csb0 & !web0"; 
             rise_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
             fall_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
         }
         internal_power(){
             when : "!csb0 & web0"; 
             rise_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
             fall_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
         }
         internal_power(){
             when : "csb0 & web0"; 
             rise_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
             fall_power(scalar){
-                values("6.379579e+00");
+                values("6.183736e+00");
             }
         }
         timing(){ 
-            timing_type :"min_pulse_width"; 
+            timing_type : "min_pulse_width"; 
             related_pin  : clk0; 
             rise_constraint(scalar) {
-                values("0.1545"); 
+                values("2.741"); 
             }
             fall_constraint(scalar) {
-                values("0.1545"); 
+                values("2.741"); 
             }
          }
         timing(){ 
-            timing_type :"minimum_period"; 
+            timing_type : "minimum_period"; 
             related_pin  : clk0; 
             rise_constraint(scalar) {
-                values("0.309"); 
+                values("5.482"); 
             }
             fall_constraint(scalar) {
-                values("0.309"); 
+                values("5.482"); 
             }
          }
     }

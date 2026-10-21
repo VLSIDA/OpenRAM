@@ -1,6 +1,6 @@
 # See LICENSE for licensing information.
 #
-# Copyright (c) 2016-2024 Regents of the University of California and The Board
+# Copyright (c) 2016-2026 Regents of the University of California and The Board
 # of Regents for the Oklahoma Agricultural and Mechanical College
 # (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
@@ -357,7 +357,7 @@ def read_config(config_file, is_unit_test=False):
             config = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(config)
             _config_modules[OPTS.config_file] = config
-    except (ImportError, OSError) as error:
+    except (ImportError, OSError, SyntaxError) as error:
         debug.error("Unable to read configuration file: {0}: {1}".format(
             OPTS.config_file, error), 2)
 

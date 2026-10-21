@@ -7,6 +7,8 @@
 """Check configuration loading without initializing a technology or simulator."""
 
 import array
+from contextlib import redirect_stderr
+import io
 import sys
 import tempfile
 import unittest
@@ -93,6 +95,46 @@ class read_config_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 globals.read_config(str(self.root / "sys.py"))
         self.assertIn("Unable to read configuration file", error.call_args.args[0])
+
+    def test_syntax_errors_use_configuration_diagnostic(self):
+        cases = [
+            ("missing_colon", "if True\n    pass\n", 3),
+            ("missing_indentation", "if True:\npass\n", 4),
+            ("mixed_indentation", "if True:\n\tword_size = 32\n        num_words = 32\n", 5),
+        ]
+        for name, source, line in cases:
+            with self.subTest(name=name):
+                path = self.config(name + ".py", extra=source)
+                output = io.StringIO()
+                with redirect_stderr(output), self.assertRaises(AssertionError):
+                    globals.read_config(str(path))
+                self.assertIn("Unable to read configuration file: " + str(path), output.getvalue())
+                self.assertIn("{0}, line {1}".format(path.name, line), output.getvalue())
+
+    def test_syntax_error_in_sibling_import_identifies_source(self):
+        helper = self.config("syntax_values.py", extra="if True\n    pass\n")
+        path = self.config("settings.py", extra="import syntax_values\n")
+        self.addCleanup(sys.modules.pop, "syntax_values", None)
+        output = io.StringIO()
+        with redirect_stderr(output), self.assertRaises(AssertionError):
+            globals.read_config(str(path))
+        self.assertIn("Unable to read configuration file: " + str(path), output.getvalue())
+        self.assertIn(helper.name + ", line 3", output.getvalue())
+
+    def test_configuration_can_be_retried_after_syntax_fix(self):
+        path = self.config("retry_settings.py", extra="if True\n    pass\n")
+        with redirect_stderr(io.StringIO()), self.assertRaises(AssertionError):
+            globals.read_config(str(path))
+        self.assertNotIn(str(path), globals._config_modules)
+        self.assertNotIn("word_size", globals.OPTS.__dict__)
+        self.config("retry_settings.py", word_size=32)
+        globals.read_config(str(path))
+        self.assertEqual(globals.OPTS.word_size, 32)
+
+    def test_runtime_errors_are_not_reclassified(self):
+        path = self.config("runtime_error.py", extra="raise RuntimeError('configuration calculation failed')\n")
+        with self.assertRaisesRegex(RuntimeError, "configuration calculation failed"):
+            globals.read_config(str(path))
 
 
 if __name__ == "__main__":

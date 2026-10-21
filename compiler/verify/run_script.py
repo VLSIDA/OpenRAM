@@ -41,7 +41,7 @@ def run_script(cell_name, script="lvs"):
                 "nix",
                 "--extra-experimental-features", "nix-command flakes",
                 "develop",
-                "path:{}".format(repo_root),
+                repo_root,
                 "--command",
                 scriptpath,
             ]

@@ -8,6 +8,7 @@ This page shows the basic setup for using OpenRAM to generate an SRAM.
 ## Table of Contents
 1. [Dependencies](#dependencies)
 1. [Nix](#nix)
+1. [Python Environment](#python-environment)
 1. [Docker](#docker-deprecated-use-nix-instead)
 1. [Environment](#environment)
 1. [Sky130 Setup](#sky130-setup)
@@ -19,7 +20,7 @@ In general, the OpenRAM compiler has very few dependencies:
 + Git
 + Make
 + Python 3.5 or higher
-+ Various Python packages (pip install -r requirements.txt)
++ Python packages listed in `requirements.txt` (installed with the package below)
 + Nix
 
 
@@ -28,8 +29,10 @@ In general, the OpenRAM compiler has very few dependencies:
 OpenRAM uses Nix to provide the external toolchain (layout tools, simulators,
 etc.) needed for SRAM generation.
 
-Enter the Nix development environment with:
-```
+From the root of your checkout, set the compiler path and enter the Nix
+development environment:
+```bash
+export OPENRAM_HOME="$PWD/compiler"
 nix develop
 ```
 
@@ -37,6 +40,27 @@ Within the devShell, required executables are available on `PATH`
 
 OpenRAM uses the `use_nix` option (enabled by default) to initialize Nix-based
 tool dependencies via `nix develop`.
+
+## Python Environment
+
+From the root of your OpenRAM checkout, create a virtual environment and install
+the local Python package with its dependencies. If you use Nix, enter the
+devShell first.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e .
+```
+
+The editable installation uses the source in your checkout, so Python sees your
+changes without reinstalling the package. Activate the environment again with
+`source .venv/bin/activate` when opening a new shell in the checkout.
+
+The virtual environment provides the Python dependencies. Use Nix for the
+external layout, verification and simulation tools. If you have installed those
+tools separately and they are on `PATH`, set `use_nix = False` in your OpenRAM
+configuration file.
 
 ## Docker (deprecated, use Nix instead)
 We have a [docker setup](../../docker) to run OpenRAM. To use this, you should
@@ -66,6 +90,10 @@ the installation on the `OPENRAM_HOME` path.
 
 If you don't have the library, you should also add `OPENRAM_HOME` to your
 `PYTHONPATH`. This is not needed if you have the library.
+
+The examples below assume your checkout is at `$HOME/OpenRAM`. Adjust that path
+to match your checkout, including its capitalization. `OPENRAM_HOME` must point
+to its `compiler` subdirectory.
 
 You can add these environment variables to your `.bashrc`:
 ```

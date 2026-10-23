@@ -13,6 +13,55 @@ import re
 import klayout.db as kdb
 
 
+def import_frame(layout, tech, cdl):
+    """Extract frame overlays, leaving the compiler's real bit instances intact.
+
+    Coordinates follow the shipped 16-row matrix. Only the core geometry is
+    removed from the overlay; CELL_2x1's additional supply straps stay intact.
+    """
+    layout.cell("RM_IHPSG13_1P_BITKIT_CELL").clear()
+    header = cdl[:cdl.index(".SUBCKT")]
+    for name, source, dx, width, labels, ports in [
+        ("ihp_frame_tile", "16x2_SRAM", 0, 5.62,
+         [("vdd", 30, 1.405, -.535), ("gnd", 30, 1.405, .535)],
+         ["vdd", "gnd"]),
+        ("ihp_frame_edge", "16x2_EDGE_LR", 1.61, 1.61,
+         [(f"wl_{row}", 30, -.095, row * 1.07) for row in range(16)] +
+         [("vdd", 30, -.095, -.535), ("gnd", 30, -.095, .535)],
+         [f"wl_{row}" for row in range(16)] + ["vdd", "gnd"]),
+        ("ihp_frame_power", "16x2_POWER_ramblk", 0, 11.24,
+         [("gnd", 50, 1.565, .535), ("vdd", 50, 7.185, 1.605)],
+         ["vdd", "gnd"]),
+    ]:
+        dest = kdb.Layout()
+        dest.dbu = layout.dbu
+        cell = dest.create_cell(name)
+        original = layout.cell("RM_IHPSG13_1P_BITKIT_" + source)
+        shift = kdb.Trans(round(dx / dest.dbu), round(1.435 / dest.dbu))
+        for index in layout.layer_indexes():
+            info = layout.get_info(index)
+            cell.shapes(dest.layer(info)).insert(
+                kdb.Region(original.begin_shapes_rec(index)).merged().transformed(shift))
+        cell.shapes(dest.layer(189, 4)).insert(
+            kdb.DBox(0, 0, width, 18.92).to_itype(dest.dbu))
+        for pin, layer, x, y in labels:
+            point = kdb.Point(round(x / dest.dbu), round(y / dest.dbu)) + shift.disp
+            if not any(p.inside(point) for p in kdb.Region(cell.shapes(dest.layer(layer, 0))).each()):
+                raise ValueError(f"{name}: {pin} is not on metal")
+            cell.shapes(dest.layer(layer, 25)).insert(kdb.Text(pin, kdb.Trans(point)))
+        dest.write(str(tech / "gds_lib" / (name + ".gds")))
+        netlist = [header.rstrip(), "* Unchanged foundry frame geometry; bodies tied by taps.",
+                   ".subckt " + name + " " + " ".join(ports)]
+        if name == "ihp_frame_edge":
+            # EDGE_LR CDL has two grounded diffusion devices per row. The
+            # second gate is deliberately floating, as in the shipped CDL.
+            for row in range(16):
+                netlist += [f"Xwl_{row} gnd wl_{row} gnd gnd sg13_lv_nmos w=300n l=130n m=1",
+                            f"Xdummy_{row} gnd floating_{row} gnd gnd sg13_lv_nmos w=300n l=130n m=1"]
+        netlist.append(".ends " + name + "\n")
+        (tech / "sp_lib" / (name + ".sp")).write_text("\n".join(netlist))
+
+
 def main():
     if os.environ.get("PDK") != "ihp-sg13g2":
         raise SystemExit("Select the PDK first: iic-pdk ihp-sg13g2")
@@ -82,6 +131,8 @@ def main():
     dest.write(str(tech / "gds_lib/cell_1rw.gds"))
     (tech / "sp_lib/cell_1rw.sp").write_text("\n".join(netlist))
     print("Imported cell_1rw: pitch 2.81 x 1.07 um; six unchanged foundry FETs")
+    import_frame(layout, tech, cdl)
+    print("Imported 16-row tap/strap, edge/corner, and 4-column M4 power overlays")
 
 
 if __name__ == "__main__":

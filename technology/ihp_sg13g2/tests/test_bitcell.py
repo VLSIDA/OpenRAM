@@ -82,6 +82,40 @@ class FoundryBitcellTest(unittest.TestCase):
             with self.subTest(layer=str(info)):
                 self.assertTrue((expected ^ actual).is_empty())
 
+    def test_framed_array_matches_shipped_matrix(self):
+        import klayout.db as kdb
+        source = kdb.Layout()
+        source.read(str(Path(os.environ["PDKPATH"]) / "libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds"))
+        reference = source.cell("RM_IHPSG13_1P_MATRIX_16x32")
+        array = factory.create(module_type="ihp_bitcell_array", rows=16, cols=32)
+        self.assertAlmostEqual(array.width, 93.14)
+        self.assertAlmostEqual(array.height, 18.92)
+        path = Path(self.temp.name) / "framed.gds"
+        array.gds_write(str(path))
+        actual = kdb.Layout()
+        actual.read(str(path))
+        # Compare the complete assembled layout, including compiler pin metal,
+        # directly against the shipped matrix, not against importer outputs.
+        for index in source.layer_indexes():
+            info = source.get_info(index)
+            if info.datatype != 0:
+                continue
+            expected = kdb.Region(reference.begin_shapes_rec(index)).transformed(kdb.Trans(1610, 1435))
+            result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
+            with self.subTest(layer=str(info)):
+                self.assertEqual((expected ^ result).area(), 0)
+        for cols in (4, 12):
+            smaller = factory.create(module_type="ihp_bitcell_array", rows=16, cols=cols)
+            self.assertAlmostEqual(smaller.width, cols * 2.81 + 3.22)
+            self.assertEqual(len(smaller.get_bitline_names()), cols * 2)
+            self.assertEqual(len(smaller.get_wordline_names()), 16)
+            self.assertAlmostEqual(smaller.get_pin("wl_0_15").cy(), 17.485)
+            self.assertTrue(smaller.get_pins("vdd"))
+            self.assertTrue(smaller.get_pins("gnd"))
+        for rows, cols in ((32, 4), (16, 2), (16, 6), (16, 36)):
+            with self.subTest(rows=rows, cols=cols), self.assertRaises(ValueError):
+                factory.create(module_type="ihp_bitcell_array", rows=rows, cols=cols)
+
 
 if __name__ == "__main__":
     unittest.main()

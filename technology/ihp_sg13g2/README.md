@@ -3,9 +3,11 @@
 The IHP technology now supplies `gds_lib/cell_1rw.gds` and
 `sp_lib/cell_1rw.sp` for OpenRAM's existing `bitcell_1port` hard-cell class.
 No custom bitcell class or change to the generic compiler is needed.
-**This is core-cell/placement integration, not a complete, tapeout-ready
-OpenRAM SRAM port.** Tap/end cells, replica/dummy cells, peripherals, full
-array DRC/LVS, and characterization remain to be integrated.
+The explicit `ihp_bitcell_array` module also assembles a foundry-framed
+16-row array with the shipped taps, ends/corners, row supply straps, and M4
+feeds. **This is not a complete, tapeout-ready OpenRAM SRAM port.** Replica
+integration, peripherals, complete-macro verification, and characterization
+remain. The generic compiler has not been switched to this array globally.
 
 ## Rebuild and test inside IIC-OSIC
 
@@ -37,9 +39,68 @@ core = factory.create(module_type="bitcell_array", rows=4, cols=3)
 # cell: 2.81 × 1.07 µm; core repeat area: 8.43 × 4.28 µm.
 ```
 
-Creating a core does not insert foundry taps/end cells. The API regression
-tests explicitly disable automatic DRC/LVS for these incomplete cores; that
-is not a waiver for a finished array. Run physical verification separately.
+Creating a generic `bitcell_array` still does not insert foundry taps/end
+cells. Use the technology-specific module below for a framed array. API
+tests disable the incomplete generic verifier; physical verification uses
+the installed PDK runners explicitly, not a blanket DRC waiver.
+
+## Foundry array frame (step 1)
+
+```python
+array = factory.create(module_type="ihp_bitcell_array", rows=16, cols=32)
+# 512 bits; full framed envelope 93.14 × 18.92 µm.
+```
+
+Supported dimensions are **16 rows, 4–32 columns in groups of four**.
+Other heights, offset parity, and replica attachments are rejected rather
+than extrapolating an unverified tap topology. The unchanged reference uses
+top/bottom taps for this 16-row height. The core remains 2.81 × 1.07 µm per
+bit; the frame does not enlarge the bitcell pitch.
+
+The importer emits three overlays, deliberately excluding only the core
+bitcell geometry so OpenRAM retains real individually connected bit instances:
+
+- `ihp_frame_tile`: two columns of top/bottom taps and the extra Via2/M3
+  supply straps from `BITKIT_CELL_2x1`.
+- `ihp_frame_edge`: the complete 16-row side edge and its two physical
+  corners, reflected for the right side. The source's two dummy NMOS per
+  row are included in SPICE; one gate in each pair is intentionally floating.
+- `ihp_frame_power`: the original alternating GND/VDD M4 feeds for four
+  columns, including Via3 arrays.
+
+The 16×32 output has **zero manufacturing-layer polygon XOR** against
+`RM_IHPSG13_1P_MATRIX_16x32`, after translating the reference by
+(1.61, 1.435) µm. This compares the actual factory-written GDS, including
+its pin routing, to the original shipped matrix—not to another reconstruction.
+The full envelope area is 1762.2088 µm², identical to that reference matrix;
+it excludes the macro's decoder, column circuitry, and control logic.
+
+To export and verify a supported width inside the container:
+
+```sh
+iic-pdk ihp-sg13g2
+R=/foss/designs/ihp-openram/OpenRAM
+python3 "$R/technology/ihp_sg13g2/tests/verify_array.py" --cols 32 \
+  --output /tmp/ihp-frame-16x32
+```
+
+The checker keeps the original compiler GDS/SPICE, the LVS views, and logs.
+DRC uses the installed main/maximal decks with the original SRAM marker
+intact and `--no_density`; it does not disable SRAM-related rule categories.
+The shipped matrix is the geometric authority for this reuse, not a claim
+that the public general rules cover every private SRAM manufacturing rule.
+Density/fill, antenna, integration context, and fabrication signoff remain
+outside this standalone-array check.
+
+LVS uses strict top-level ports and **no implicit-net joins**. Its separate
+view removes child text labels (otherwise storage probes become macro
+ports in flat extraction) and only Metal2/Metal3 datatype-29 `lvsres`
+recognition markers. This implements the same through-pin joining as the
+five-port netlist; no manufacturing polygons, contacts, or SRAM marker are
+removed. The LVS CDL changes X model calls to M devices for the PDK reader.
+`--disable_tap_extraction` omits tap *devices* absent from the schematic;
+physical tap-to-body connectivity is still extracted and compared.
+An unnormalized flat LVS run is not expected to match these joined-pin views.
 
 ## Electrical interface
 
@@ -66,18 +127,25 @@ the real array taps; they are not contacts magically added to the core GDS.
 - Asymmetric 3-column × 2-row and 3-column × 4-row arrays have correct repeat
   dimensions, bitline positions, and wordline positions.
 - KLayout XOR confirms unchanged source polygons after translation.
+- Four API/geometry regression tests pass, including the complete framed
+  16×32 matrix comparison against the shipped GDS.
+- All eight supported widths (4, 8, 12, 16, 20, 24, 28, 32 columns) pass
+  installed-PDK main/maximal DRC with density disabled and the strict LVS
+  comparison described above. The LVS views retain identical manufacturing
+  geometry to their original compiler GDS.
 - An independently tiled source array has zero physical-layer XOR difference
   from the actual factory-generated 3×4 GDS, including its pin routing.
 - A nominal TT/1.2 V ngspice smoke test writes 1, holds 1, writes 0, holds 0.
   This is not read-margin, PVT, mismatch, timing, or yield characterization.
 - Official KLayout DRC on the **core-only** array still reports `LU.a`,
   `LU.b`, and `NW.b1`, as does the equivalently isolated foundry core array.
-  The shipped block with its original tap/end context passes; these missing
-  structures are the next integration task, not errors to suppress.
+  The shipped block with its original tap/end context passes. The framed
+  array now supplies those structures rather than suppressing their errors.
 
 Bring-up GDS, SPICE, simulation and DRC logs are in the sibling layout repo's
 locally ignored `.amp/in/artifacts/openram-foundry/` directory. They are not
 part of the technology library or evidence of complete SRAM signoff.
+Frame checks are in the sibling repo's `.amp/in/artifacts/array-frame/`.
 
 ## Does the macro also contain sense amps and write drivers?
 
@@ -98,8 +166,24 @@ These are embedded macro building blocks, not standalone, characterized
 OpenRAM-compatible library views. Reusing them needs logical adapters,
 pin/placement definitions, enable/precharge sequencing, output-polarity
 checks, DRC/LVS, and characterization. They are not enabled by this bitcell
-import. First integrate the core's tap/end context; then adapt peripherals
-one at a time instead of replacing them solely on matching cell names.
+import. With the initial 16-row tap/end context assembled, the next step is
+adapting peripherals one at a time, not replacing them solely on matching
+cell names or duplicating BLDRV's precharge/mux circuitry.
+
+## c4m / PDKMaster comparison
+
+The inspected local FlexMem builds its own procedural bitcells, with taps
+embedded at cell boundaries and shared by abutment; it does not import IHP
+BITKIT. The c4m IHP model declares an `SRAM` auxiliary layer, but explicitly
+leaves `extra/relaxed rules inside SRAM layer` as TODO in
+`c4m/pdk/ihpsg13g2/pdkmaster.py`. PDKMaster derives rules from its encoded
+primitive model; satisfying that subset is not full foundry DRC signoff.
+No SRAM DRC pass/fail reports were found in these checkouts. Their configured
+IHP library signoff targets standard-cell/I/O libraries, not FlexMem SRAM.
+This is useful generator architecture reference, not evidence to waive or
+replace the shipped BITKIT frame. FlexMem also currently assumes one NMOS
+implant, whereas the c4m IHP NMOS primitive declares none, so those checked-out
+versions are not a demonstrated drop-in working IHP SRAM flow.
 
 ## Upstream availability history
 

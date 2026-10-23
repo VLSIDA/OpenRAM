@@ -197,13 +197,10 @@ class FoundryBitcellTest(unittest.TestCase):
                         self.assertAlmostEqual(float(values[key]), expected * supply,
                                                delta=.05 * supply, msg=key)
 
-    def test_loaded_column_write_read(self):
+    def test_memory_slice_write_read(self):
         # Opposite values in neighboring columns and the two extreme rows
         # distinguish column swaps, polarity errors, and half-select writes.
-        dut = factory.create(module_type="ihp_column_data")
         path = Path(self.temp.name)
-        dut.sp_write(str(path / "column.sp"))
-        factory.create(module_type="bitcell_1port").sp_write(str(path / "bit.sp"))
         models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
         pattern = {(0, 0): 1, (0, 1): 0, (0, 2): 0, (0, 3): 1,
                    (15, 0): 0, (15, 1): 1, (15, 2): 1, (15, 3): 0}
@@ -215,8 +212,12 @@ class FoundryBitcellTest(unittest.TestCase):
                        ("read", 15, 1, 1), ("read", 0, 2, 0),
                        ("write", 0, 0, 0), ("read", 0, 0, 0),
                        ("read", 0, 3, 1), ("read", 15, 0, 0)]
-        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
-            with self.subTest(corner=corner):
+        for cols, corner, supply in ((4, "tt", 1.2), (4, "ss", 1.08),
+                                     (4, "ff", 1.32), (8, "tt", 1.2)):
+            with self.subTest(cols=cols, corner=corner):
+                dut = factory.create(module_type="ihp_memory_slice", cols=cols)
+                dut.sp_write(str(path / f"slice_{cols}.sp"))
+                groups = cols // 4
                 signals = {p: [(0, 0)] for p in ["pre_n", "wr_one", "wr_zero", "sae"] +
                            [f"sel_{c}" for c in range(4)] + [f"wl_{r}" for r in range(16)]}
                 measurements = []
@@ -229,47 +230,73 @@ class FoundryBitcellTest(unittest.TestCase):
                     else:
                         pulses.append(("sae", 5, 9))
                         for tag, delay in (("read", 7), ("hold", 13)):
-                            measurements += [(f"qp_{index}_{tag}", "qp", start + delay, bit),
-                                             (f"qn_{index}_{tag}", "qn", start + delay, 1 - bit)]
+                            for group in range(groups):
+                                value = bit ^ group
+                                measurements += [(f"qp_{group}_{index}_{tag}", f"qp_{group}", start + delay, value),
+                                                 (f"qn_{group}_{index}_{tag}", f"qn_{group}", start + delay, 1 - value)]
                     for pin, begin, end in pulses:
                         signals[pin] += [(start + begin, 0), (start + begin + .05, supply),
                                          (start + end, supply), (start + end + .05, 0)]
                     if op == "write":
-                        measurements += [(f"written_{index}", f"xmem_{row}_{col}.nt", start + 13, bit)]
+                        for group in range(groups):
+                            physical_col = 4 * group + col
+                            measurements += [(f"written_{group}_{index}",
+                                              f"xmemory.xarray.xbit_r{row}_c{physical_col}.nt",
+                                              start + 13, bit ^ group)]
                 end_time = 16 * len(operations) + 5
                 final_pattern = dict(pattern)
                 final_pattern[0, 1] = 1
                 final_pattern[0, 0] = 0
                 for (row, col), bit in final_pattern.items():
-                    measurements += [(f"retained_{row}_{col}", f"xmem_{row}_{col}.nt", end_time - 1, bit)]
-                lines = ["* Loaded 16-row, four-column write/read path; lumped loads, no PEX",
-                         f".lib {models} mos_{corner}", f".include {path / 'column.sp'}",
-                         f".include {path / 'bit.sp'}", ".temp 27", f"Vdd vdd 0 {supply}"]
+                    for group in range(groups):
+                        physical_col = 4 * group + col
+                        measurements += [(f"retained_{group}_{row}_{col}",
+                                          f"xmemory.xarray.xbit_r{row}_c{physical_col}.nt",
+                                          end_time - 1, bit ^ group)]
+                lines = ["* Framed memory slice; lumped loads, no PEX",
+                         f".lib {models} mos_{corner}", f".include {path / ('slice_' + str(cols) + '.sp')}",
+                         ".temp 27", f"Vdd vdd 0 {supply}"]
                 for pin, points in signals.items():
                     wave = " ".join(f"{time}n {voltage}" for time, voltage in points)
                     lines.append(f"V{pin} {pin} 0 PWL({wave})")
-                lines += ["Xcolumn bl_0 br_0 bl_1 br_1 bl_2 br_2 bl_3 br_3 "
-                          "sel_0 sel_1 sel_2 sel_3 pre_n wr_one wr_zero sae qp qn vdd 0 " + dut.name,
-                          "Cqp qp 0 5f", "Cqn qn 0 5f"]
-                for col in range(4):
+                connections = [f"wl_{row}" for row in range(16)]
+                connections += [f"sel_{col}" for col in range(4)]
+                for group in range(groups):
+                    # The second group writes complementary data to a
+                    # separate word bit, exposing cross-group shorts/swaps.
+                    connections += ["pre_n", "sae"]
+                    connections += (["wr_one", "wr_zero"] if group == 0 else ["wr_zero", "wr_one"])
+                    connections += [f"qp_{group}", f"qn_{group}"]
+                    lines += [f"Cqp_{group} qp_{group} 0 5f", f"Cqn_{group} qn_{group} 0 5f"]
+                lines.append("Xmemory " + " ".join(connections + ["vdd", "0", dut.name]))
+                for col in range(cols):
                     for pin in ("bl", "br"):
-                        lines.append(f"C{pin}_{col} {pin}_{col} 0 50f")
-                    for row in range(16):
-                        lines.append(f"Xmem_{row}_{col} bl_{col} br_{col} wl_{row} vdd 0 cell_1rw")
+                        lines.append(f"C{pin}_{col} xmemory.{pin}_0_{col} 0 50f")
                 lines += [".control", f"tran 20p {end_time}n"]
                 for tag, node, time, _ in measurements:
                     lines.append(f"meas tran {tag} find v({node}) at={time}n")
                 lines += ["quit", ".endc", ".end"]
-                deck = path / f"column_{corner}.sp"
+                deck = path / f"slice_{cols}_{corner}.sp"
                 deck.write_text("\n".join(lines) + "\n")
                 run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
-                (path / f"column_{corner}.log").write_text(run.stdout + run.stderr)
+                (path / f"slice_{cols}_{corner}.log").write_text(run.stdout + run.stderr)
                 self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
                 values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
                 for tag, _, _, bit in measurements:
                     self.assertIn(tag, values, run.stdout + run.stderr)
                     self.assertAlmostEqual(float(values[tag]), bit * supply,
-                                           delta=.1 * supply, msg=f"{corner}: {tag}")
+                                           delta=.1 * supply, msg=f"{cols}, {corner}: {tag}")
+
+    def test_memory_slice_physical(self):
+        # Eight columns exercise the array interface and an inter-group
+        # shared-tap boundary. Missing VDD bridges fail LVS; missing tap
+        # completion shapes fail DRC. No implicit supply joins are allowed.
+        command = [sys.executable, str(Path(__file__).with_name("verify_array.py")),
+                   "--slice", "--cols=8", "--output=" + str(Path(self.temp.name) / "slice-physical")]
+        run = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn("DRC passed", run.stdout)
+        self.assertIn("LVS passed", run.stdout)
 
     def test_column_data_layout(self):
         import klayout.db as kdb

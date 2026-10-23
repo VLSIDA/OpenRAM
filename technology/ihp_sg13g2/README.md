@@ -169,7 +169,8 @@ checks, DRC/LVS, and characterization. BLDRV and the sense/latch are now
 available as explicit hard cells below, but neither peripheral is enabled
 in the generic SRAM assembly. An IHP column-data hard cell now combines
 them with connected source-parent routing and without duplicating BLDRV's
-precharge/mux circuitry. Array-to-column integration remains the next step.
+precharge/mux circuitry. The memory slice below joins these blocks to the
+framed array; bank decoding/control integration remains outstanding.
 
 ## BLDRV hard-cell bring-up
 
@@ -282,8 +283,8 @@ and the previous bitcell/frame and BLDRV electrical checks.
 Bring-up GDS/SPICE, reference DRC, LVS, and the nominal waveform probe are
 in the sibling repo's locally ignored `.amp/in/artifacts/sense-amp/`.
 The column assembly below preserves the foundry placement and physically
-joins BLDRV's supplies. Array connections and extracted parasitics still
-need validation before replacing generic `port_data`.
+joins BLDRV's supplies. The slice below validates the array connections;
+extracted parasitics and bank integration remain outstanding.
 
 ## Four-column physical assembly
 
@@ -303,15 +304,16 @@ No separate precharge, column mux, or write-driver array is instantiated.
 The foundry parent's data/mask registers, BIST logic, clock buffers, and
 output inverter are not part of this prototype.
 
-The loaded-path regression connects all 64 foundry bitcells in 16 rows ×
-four columns, with ideal body/supply ties, 50 fF lumped load per bitline
+The loaded-path regression now instantiates the framed memory slice below,
+including all 64 foundry bitcells in 16 rows × four columns, with ideal
+supplies, 50 fF lumped load per bitline
 and 5 fF per sense output. These are explicit test loads, not extracted
 wire capacitances. At each of TT/1.20 V, SS/1.08 V, and FF/1.32 V (27 °C),
 24 operations cover writes of both polarities in every column at rows 0
 and 15, reads in mixed column order, overwrites in both directions, and
 retention of the eight programmed cells. Read outputs are checked both
 during evaluation and after returning to precharge. No storage-node
-initial conditions force the written values. The full suite has ten tests.
+initial conditions force the written values. The full suite has eleven tests.
 
 The conservative test sequence uses a 16 ns operation period: disable
 precharge, select a column 1 ns later, drive write data at 2 ns for a
@@ -346,14 +348,78 @@ manufacturing polygons relative to the source parent.
 
 The empty space left by omitted logic has not been vertically compacted:
 preserving the source routing is the first verified implementation, not
-an assertion of minimum possible area. The next physical step is to join
-this block to the framed 16-row array and verify the combined power and
-bitline connections, abutment rules, and eventually extracted parasitics.
+an assertion of minimum possible area. The slice below joins this block
+to the framed 16-row array. Extracted parasitics remain uncharacterized.
 
 Simulation decks and logs are saved in the sibling layout repo's locally
 ignored `.amp/in/artifacts/column-layout/` directory, along with DRC/LVS
 results and a KLayout rendering. Repeat the regression
 with the same `tests/test_bitcell.py -v` command used above.
+
+## Framed memory slice (not a complete bank)
+
+```python
+memory = factory.create(module_type="ihp_memory_slice", cols=32)
+# 16 physical rows × 32 physical columns; four columns per word bit.
+# Equivalent storage organization: 64 words × 8 bits, but no address decoder.
+```
+
+Supported widths are 4..32 columns in groups of four, always 16 rows.
+Each four-column group gets one `ihp_column_data`, with no duplicate
+precharge/mux/write circuitry. The array's lower-left origin is
+(0, 32.840) µm; column group `g` is at (1.260 + 11.240 × g, 0) µm.
+These transforms follow the right-hand bank in the source macro and
+include a 25 nm overlap at the bitline interface. Bitlines, GND, and the
+four column-select buses join through source geometry, not new signal
+routing. VDD needs a new M4 continuation per group: a 2.81 µm-wide strip
+from y=26 to 33 µm, overlapping both existing supply stripes. Without
+this connection, strict LVS reports separate array/column VDD nets.
+
+Between adjacent column groups, four 20 nm × 300 nm active bridges restore
+the parent-level tap-stripe completion shapes from `COLCTRL2`. They are
+not new transistor geometry. Omitting them leaves 20 nm active gaps and
+fails `Act.b`; retaining them clears the abutment findings without waivers.
+
+Top-level ports are `wl_0 ... wl_15`, `sel_0 ... sel_3`, then, for each
+group `g`, `pre_n_g sae_g wr_one_g wr_zero_g qp_g qn_g`, then `vdd gnd`.
+Wordlines and selection must be one-hot when active. Selection is shared
+across word bits by physical source buses. Precharge, sense enable, and
+write controls are separate per word bit; a future bank adapter must
+distribute controls, encode data/masks, and supply adequate buffering.
+The slice is not a replacement for generic `bank` or `port_data` yet.
+
+The height is 51.76 µm; width is the array width (2.81 × cols + 3.22) µm.
+Examples: 14.46 × 51.76 µm for 64 × 1 storage and 93.14 × 51.76 µm
+for 64 × 8 storage. These envelopes include frame and column circuitry,
+but exclude address decoding, wordline drivers, clock/control generation,
+output buffers, and final bank power routing.
+
+Verification uses main/maximal DRC with density disabled and strict-port
+LVS, no implicit-net joins or black boxes, with tap-device extraction
+disabled. All eight supported widths (4, 8, …, 32 columns) pass both
+checks. As for the standalone array, the LVS-only GDS removes internal
+child labels and datatype-29 Metal2/3 through-pin recognition markers;
+raw manufacturing geometry is kept unchanged. Both raw and normalized
+views are retained. The physical regression exercises eight columns,
+including an inter-group boundary. The electrical regression exercises
+four columns at TT/1.20 V, SS/1.08 V, and FF/1.32 V, plus eight columns
+at TT/1.20 V with complementary data in the two word bits. These are
+functional lumped-load simulations, not PEX, timing, or mismatch signoff.
+
+Run inside IIC-OSIC after selecting SG13G2:
+
+```sh
+python3 technology/ihp_sg13g2/tests/verify_array.py --slice --cols 32 \
+  --output ../openram-ihp-port/.amp/in/artifacts/memory-slice/32
+```
+
+The verifier retains the existing `array.gds`, `array.sp`, `array.cdl`, and
+`array_lvs.gds` filenames for either mode. Artifacts for the width sweep,
+transients, and KLayout preview are under `.amp/in/artifacts/memory-slice/`
+in the sibling layout repository. Next: row/column decoding and buffered
+control/write-data adaptation, then complete-bank routing and PEX-based
+timing/characterization. The current physical slice is not a characterized
+or fabrication-qualified compiled SRAM.
 
 ## c4m / PDKMaster comparison
 

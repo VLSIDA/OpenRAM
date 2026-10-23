@@ -304,16 +304,16 @@ No separate precharge, column mux, or write-driver array is instantiated.
 The foundry parent's data/mask registers, BIST logic, clock buffers, and
 output inverter are not part of this prototype.
 
-The loaded-path regression now instantiates the framed memory slice below,
-including all 64 foundry bitcells in 16 rows × four columns, with ideal
+The loaded-path regression exercises the framed slice and row-addressed
+assembly below, including all 64 foundry bitcells in 16 rows × four columns, with ideal
 supplies, 50 fF lumped load per bitline
 and 5 fF per sense output. These are explicit test loads, not extracted
 wire capacitances. At each of TT/1.20 V, SS/1.08 V, and FF/1.32 V (27 °C),
-24 operations cover writes of both polarities in every column at rows 0
-and 15, reads in mixed column order, overwrites in both directions, and
-retention of the eight programmed cells. Read outputs are checked both
+40 operations cover writes of both polarities in every column at rows 0,
+5, 10 and 15, reads in mixed column order, overwrites in both directions, and
+retention of the sixteen programmed cells. Read outputs are checked both
 during evaluation and after returning to precharge. No storage-node
-initial conditions force the written values. The full suite has eleven tests.
+initial conditions force the written values. The full suite has thirteen tests.
 
 The conservative test sequence uses a 16 ns operation period: disable
 precharge, select a column 1 ns later, drive write data at 2 ns for a
@@ -401,10 +401,12 @@ checks. As for the standalone array, the LVS-only GDS removes internal
 child labels and datatype-29 Metal2/3 through-pin recognition markers;
 raw manufacturing geometry is kept unchanged. Both raw and normalized
 views are retained. The physical regression exercises eight columns,
-including an inter-group boundary. The electrical regression exercises
+including an inter-group boundary. The original electrical bring-up exercised
 four columns at TT/1.20 V, SS/1.08 V, and FF/1.32 V, plus eight columns
 at TT/1.20 V with complementary data in the two word bits. These are
 functional lumped-load simulations, not PEX, timing, or mismatch signoff.
+The expanded current electrical regression includes the row-addressed
+assembly described below, retaining a direct-slice TT control case.
 
 Run inside IIC-OSIC after selecting SG13G2:
 
@@ -452,8 +454,8 @@ noninverting two-stage buffers, 64 unchanged FETs, with a 12.355 × 18.16 µm
 geometry envelope. Ordered ports are `decode_15 ... decode_0 wl_15 ...
 wl_0 vdd gnd`. Their supply labels come from datatype-2 child terminals;
 the source's bank-level signal labels use datatype 25. These envelopes
-are not abutment pitches, and the modules are **not yet physically joined
-by their standalone wrappers**. The row-addressed assembly below now
+are not abutment pitches. The standalone wrappers do not connect the
+modules to one another; the row-addressed assembly below now
 connects them to each other and the memory slice.
 
 Both factory-exported cells have zero manufacturing-layer polygon XOR
@@ -486,10 +488,9 @@ python3 technology/ihp_sg13g2/tests/verify_array.py --cell ihp_wordline_driver \
 ```
 
 The existing `tests/test_bitcell.py -v` command includes source-geometry,
-LVS, and decoder-to-driver electrical regressions. Next is physical
-row-path integration with the slice, column-address/control adaptation,
-then a complete bank interface and post-layout characterization—not an
-upstream-ready compiler merely because the individual blocks pass.
+LVS, and decoder-to-driver electrical regressions. The assembly below
+integrates the row path with the slice; column-address/control adaptation,
+a complete bank interface and post-layout characterization remain.
 
 ## Row-addressed memory assembly
 
@@ -516,6 +517,10 @@ new M1-to-M5 via stacks sit in a 1.20 µm left access channel, outside the
 decoder's packed M2/M3 routing. Placing those stacks inside the original
 decoder envelope produced M2/M3 spacing errors; the separate access
 channel avoids those errors without waivers or resizing source devices.
+An independent metal/via-only connectivity trace of the eight-column
+assembly checks all 2220 recursive VDD/GND labels: one connected metal
+component per supply, no missing probes, and no VDD-to-GND short. Thus
+power continuity does not depend solely on substrate/well connectivity.
 
 The height remains 51.76 µm. Width is 41.25 µm plus the slice width:
 55.71 µm for four columns and 134.39 µm for 32 columns. These are

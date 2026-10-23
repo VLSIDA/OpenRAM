@@ -1,0 +1,528 @@
+# frozen_string_literal: true
+
+#=========================================================================================
+# Copyright 2025 IHP PDK Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#=========================================================================================
+
+#====================================================================================================================
+#--------------------------------------------- IHP-SG13G2 DRC RULE DECK ---------------------------------------------
+#====================================================================================================================
+require 'time'
+require 'logger'
+require 'json'
+require 'pathname'
+require 'etc'
+
+exec_start_time = Time.now
+
+# Custom formatter including timestamp and memory usage
+formatter = proc do |_severity, datetime, _progname, msg|
+  memory_usage = "#{RBA::Timer.memory_size / 1024}K"
+  "#{datetime}: Memory Usage (#{memory_usage}) : #{msg}\n"
+end
+
+# Create file logger
+file_logger = Logger.new($log)
+file_logger.formatter = formatter
+
+# Create stdout logger
+stdout_logger = Logger.new($stdout)
+stdout_logger.formatter = formatter
+
+# Don't buffer stdout
+$stdout.sync = true
+
+# MultiLogger class to broadcast to multiple loggers
+class MultiLogger
+  def initialize(*targets)
+    @targets = targets
+  end
+
+  def info(msg)
+    @targets.each { |t| t.info(msg) }
+  end
+
+  def warn(msg)
+    @targets.each { |t| t.warn(msg) }
+  end
+
+  def error(msg)
+    @targets.each { |t| t.error(msg) }
+  end
+end
+
+# Use the multi-logger for your application
+logger = MultiLogger.new(stdout_logger, file_logger)
+
+#================================================
+#----------------- FILE SETUP -------------------
+#================================================
+
+logger.info("Starting running IHP-SG13G2 KLayout DRC runset on #{$input}")
+logger.info("Ruby Version for klayout: #{RUBY_VERSION}")
+
+if $input
+  if $topcell
+    source($input, $topcell)
+  else
+    source($input)
+  end
+end
+
+logger.info('Loading database to memory is complete.')
+
+if $report
+  logger.info("IHP-SG13G2 KLayout DRC runset output at: #{$report}")
+  report('Main DRC Run Report at', $report)
+else
+  layout_dir = Pathname.new(RBA::CellView.active.filename).parent.realpath
+  report_path = layout_dir.join('sg13g2_drc_main.lyrdb').to_s
+  logger.info("IHP-SG13G2 KLayout DRC runset output at default location: #{report_path}")
+  report('Main DRC Run Report at', report_path)
+end
+
+#================================================
+#------------------ SWITCHES --------------------
+#================================================
+
+logger.info('Evaluate switches.')
+
+def bool_check?(obj)
+  obj.to_s.downcase == 'true'
+end
+
+TABLES = ($tables || 'main').split
+logger.info("tables selected: #{TABLES.join(' ')}")
+
+# Run mode setup
+def setup_run_mode(run_mode)
+  case run_mode
+  when 'tiling'
+    tiles(500.um)
+    tile_borders(30.um)
+  when 'flat'
+    flat
+  else
+    deep
+  end
+end
+
+# Threads
+$threads = ($threads || Etc.nprocessors).to_i
+threads($threads)
+logger.info("KLayout will use #{$threads} thread(s) in tiling mode.")
+
+# Run mode
+$run_mode = $run_mode || 'deep'
+setup_run_mode($run_mode)
+logger.info("#{$run_mode} mode is enabled.")
+
+# FEOL
+FEOL = !bool_check?($no_feol)
+logger.info("FEOL enabled: #{FEOL}")
+
+# BEOL
+BEOL = !bool_check?($no_beol)
+logger.info("BEOL enabled: #{BEOL}")
+
+# OFFGRID
+OFFGRID = !bool_check?($no_offgrid)
+logger.info("OFFGRID enabled: #{OFFGRID}")
+
+# ANGLE
+ANGLE = !bool_check?($no_angle)
+logger.info("ANGLE enabled: #{ANGLE}")
+
+# PIN
+PIN = !bool_check?($no_pin)
+logger.info("PIN enabled: #{PIN}")
+
+# FORBIDDEN
+FORBIDDEN = !bool_check?($no_forbidden)
+logger.info("FORBIDDEN enabled: #{FORBIDDEN}")
+
+# RECOMMENDED
+RECOMMENDED = !bool_check?($no_recommended)
+logger.info("RECOMMENDED enabled: #{RECOMMENDED}")
+
+# PreCheck DRC
+PRECHECK_DRC = bool_check?($precheck_drc)
+logger.info("PreCheck DRC enabled: #{PRECHECK_DRC}")
+
+# Connectivity rules
+# Needed for full FEOL runs and for explicit nwell/nbulay table runs.
+conn_tables = %w[nwell nbulay]
+CONNECTIVITY_RULES = FEOL || TABLES.any?{|x| conn_tables.include?(x)}
+logger.info("CONNECTIVITY_RULES enabled: #{CONNECTIVITY_RULES}.")
+
+#================================================
+#------------- LAYERS DEFINITIONS ---------------
+#================================================
+
+# %include rule_decks/layers_def.drc
+
+#================================================
+# -------------------- UTILS --------------------
+#================================================
+
+# Method to get DRC values from JSON files
+def get_drc_values(logger)
+  script_dir = File.expand_path(File.dirname(__FILE__))
+  $drc_json_default = $drc_json_default || File.expand_path(File.join(script_dir, 'rule_decks/sg13g2_tech_default.json'))
+  $drc_json = $drc_json || File.expand_path(File.join(script_dir, '../../python/sg13g2_pycell_lib/sg13g2_tech_mod.json'))
+
+  tech_rules = {}
+  if $drc_json && $drc_json != $drc_json_default
+    begin
+      tech_drc_content = File.read($drc_json)
+      tech_drc_data = JSON.parse(tech_drc_content)
+      tech_rules = tech_drc_data['drc_rules'] || {}
+      logger.info("Loaded TECH DRC rules values from #{$drc_json}")
+    rescue StandardError => e
+      logger.error("Error reading TECH DRC rules from #{$drc_json}: #{e.message}")
+      raise "Error reading TECH DRC rules from #{$drc_json}: #{e.message}"
+    end
+  end
+
+  begin
+    default_drc_content = File.read($drc_json_default)
+    default_drc_data = JSON.parse(default_drc_content)
+    default_rules = default_drc_data['drc_rules'] || {}
+    logger.info("Loaded default DRC rules values from #{$drc_json_default}")
+  rescue StandardError => e
+    logger.error("Error reading default DRC rules from #{$drc_json_default}: #{e.message}")
+    raise "Error reading default DRC rules from #{$drc_json_default}: #{e.message}"
+  end
+
+  merged_rules = tech_rules.merge(default_rules)
+
+  # Report any fallback rules used
+  missing_keys = default_rules.keys - tech_rules.keys
+  unless missing_keys.empty?
+    logger.warn('The following rules values were missing in tech json and default values were used:')
+    missing_keys.each { |rule| logger.warn("  - #{rule}") }
+  end
+
+  merged_rules
+end
+
+# Extract DRC rules values from the JSON file
+drc_rules = get_drc_values(logger)
+
+# Method to convert glob pattern to a case-insensitive glob-style pattern
+def glob_to_case_insensitive_glob(glob)
+  wildcards = ['*', '?']
+
+  pattern = glob.chars.map do |c|
+    if c =~ /[A-Za-z]/
+      "[#{c.upcase}#{c.downcase}]"
+    elsif wildcards.include?(c)
+      c  # Keep wildcard characters as they are
+    else
+      Regexp.escape(c)
+    end
+  end.join
+
+  pattern
+end
+
+#================================================
+#-------------- COMMON DERIVATIONS --------------
+#================================================
+
+# === LAYOUT EXTENT ===
+CHIP = extent.sized(0.0)
+chip_area = CHIP.area
+chip_bbox = CHIP.bbox
+chip_w = chip_bbox.width
+chip_l = chip_bbox.height
+
+logger.info("Total area of the design is #{chip_area} um^2.")
+logger.info("The design dimensions are #{chip_w} µm * #{chip_l} µm.")
+
+# Enable tiling if chip area exceeds 100,000 µm²
+en_tiles = chip_area > 1_000_000.um2
+
+# === General Derivations ===
+logger.info('Starting general IHP-SG13G2 derivations.')
+
+# Pwell
+logger.info('Starting Pwell derivations')
+pwell_allowed = CHIP.not(pwell_block)
+digisub_gap = digisub_drw.not(digisub_drw.sized(-1.nm))
+pwell = pwell_allowed.not(nwell_drw).not(digisub_gap)
+
+# nBulay
+nbulay_tables = %w[main nbulay nwell activfiller schottkydiode]
+if TABLES.any?{|x| nbulay_tables.include?(x)}
+  nbulay_gen_sized = nwell_drw.sized(-1.495.um).sized(0.495.um)
+  nbuLay_gen = nbulay_gen_sized.not(nbulay_block.join(res_drw))
+  nbuLay_gen_nbulay = nbuLay_gen.join(nbulay_drw)
+end
+
+# n activ
+nact_pact_tables = %w[main pwellblock gatpoly cont latchup nwell nbulay]
+if TABLES.any?{|x| nact_pact_tables.include?(x)}
+  logger.info('Starting n-Activ derivations')
+  nactiv  = activ_drw.not(psd_drw.join(nsd_block))
+end
+
+# p activ
+pact_pact_tables = %w[main pwellblock gatpoly cont npnsubstratetie latchup nwell nbulay schottkydiode contbar via1]
+if TABLES.any?{|x| pact_pact_tables.include?(x)}
+  logger.info('Starting p-Activ derivations')
+  pactiv  = activ_drw.and(psd_drw)
+end
+
+# p tap
+ptap_tables = %w[main pwellblock npnsubstratetie latchup nwell nbulay schottkydiode contbar via1]
+if TABLES.any?{|x| ptap_tables.include?(x)}
+  logger.info('Starting ptap derivations')
+  ptap = pactiv.and(pwell)
+end
+
+# n tap
+ntap_tables = %w[main nwell nbulay]
+if TABLES.any?{|x| ntap_tables.include?(x)}
+  logger.info('Starting ntap derivations')
+  ntap = nactiv.and(nwell_drw)
+end
+
+# activ FETs
+pact_fet_tables = %w[main gatpoly nwell nbulay]
+if TABLES.any?{|x| pact_fet_tables.include?(x)}
+  logger.info('Starting pact FET derivations')
+  pact_fet = pactiv.and(nwell_drw)
+end
+
+nact_fet_tables = %w[main pwellblock gatpoly latchup nwell nbulay cont]
+if TABLES.any?{|x| nact_fet_tables.include?(x)}
+  logger.info('Starting nact FET derivations')
+  nact_fet = nactiv.and(pwell)
+end
+
+# Gate FETs
+gate_tables = %w[main gatpoly nwell nbulay]
+if TABLES.any?{|x| gate_tables.include?(x)}
+  logger.info('Starting Gate derivations')
+  res_mk = polyres_drw.join(res_drw)
+  ngate = nact_fet.and(gatpoly_drw)
+  pgate = pact_fet.and(gatpoly_drw)
+end
+
+# Cont derivations
+cont_tables = %w[main cont contbar schottkydiode]
+if TABLES.any?{|x| cont_tables.include?(x)}
+  logger.info('Starting cont/contbar general derivations')
+  cont_nseal = cont_drw.not(edgeseal_drw)
+  contbar = cont_nseal.non_squares
+  cont_sq = cont_nseal.not(contbar)
+  cont_nseal.forget
+end
+
+# Pad derivations
+pad_tables = %w[main pad solderbump copperpillar]
+if TABLES.any?{|x| pad_tables.include?(x)}
+  logger.info('Starting pad general derivations')
+  cu_pillarpad = passiv_pillar.and(dfpad_pillar).and(topmetal2_drw)
+  sbumppad = dfpad_sbump.and(passiv_sbump).and(topmetal2_drw)
+  pad = passiv_drw.and(dfpad_drw).and(topmetal2_drw)
+end
+
+# schottky_nbl derivations
+schottky_tables = %w[main schottkydiode pwellblock]
+if TABLES.any?{|x| schottky_tables.include?(x)}
+  logger.info('Starting schottky_nbl general derivations')
+  schottky_nbl_mk = recog_diode.and(thickgateox_drw).and(salblock_drw).and(nsd_block)
+  schottky_nbl_rec = nbulay_drw.not(nwell_drw).not_outside(schottky_nbl_mk)
+  schottky_nbl1 = ptap.holes.covering(schottky_nbl_rec)
+end
+
+# SVaricap derivations
+svaricap_tables = %w[main cont nbulay nwell]
+if TABLES.any?{|x| svaricap_tables.include?(x)}
+  logger.info('Starting SVaricap general derivations')
+  svaricap_gate = gatpoly_drw.and(nwell_drw).and(nbulay_drw)
+  svaricap_patt = glob_to_case_insensitive_glob("SVaricap")
+  svaricap_text = text_drw.texts(svaricap_patt)
+  svaricap_recog = activ_drw.not_outside(svaricap_gate).interacting(svaricap_text)
+  svaricap = nwell_drw.not_outside(svaricap_recog)
+end
+
+# HBT derivations
+npn_tables = %w[main npnsubstratetie contbar via1]
+if TABLES.any?{|x| npn_tables.include?(x)}
+  logger.info('Starting HBT general derivations')
+  sg13g2_patt  = glob_to_case_insensitive_glob("npn13G2")
+  sg13g2l_patt = glob_to_case_insensitive_glob("npn13G2L")
+  sg13g2v_patt = glob_to_case_insensitive_glob("npn13G2V")
+  npn_mk = trans_drw.and(ptap.holes)
+  npn13g2 = npn_mk.interacting(text_drw.texts(sg13g2_patt)).covering(emwind_drw.and(activ_mask).and(nsd_block))
+  npn13g2l = npn_mk.interacting(text_drw.texts(sg13g2l_patt)).covering(emwind_drw.and(activ_drw))
+  npn13g2v = npn_mk.interacting(text_drw.texts(sg13g2v_patt)).covering(emwihv_drw.and(activ_drw))
+end
+
+# DRC tolerance value
+drc_tole = 0.005.um
+
+#================================================
+#------------- LAYERS CONNECTIONS ---------------
+#================================================
+
+if CONNECTIVITY_RULES
+  logger.info('Starting IHP-SG13G2 DRC connectivity related derivations.')
+
+  # Wells
+  nwell_ring_niso = nwell_drw.with_holes.not(nbulay_drw)
+  nwell_holes = nwell_drw.holes.not(nwell_drw)
+  isoPWell  = nbulay_drw.and(nwell_holes)
+  pwell_sub = pwell.not(isoPWell).join(nwell_ring_niso)
+
+  # conn layers
+  poly_con      = gatpoly_drw.not(res_mk)
+  metal1_con    = metal1_drw.not(metal1_res)
+  metal2_con    = metal2_drw.not(metal2_res)
+  metal3_con    = metal3_drw.not(metal3_res)
+  metal4_con    = metal4_drw.not(metal4_res)
+  metal5_con    = metal5_drw.not(metal5_res)
+  topmetal1_con = topmetal1_drw.not(topmetal1_res).not(ind_drw)
+  topmetal2_con = topmetal2_drw.not(topmetal2_res).not(ind_drw)
+
+  # Mimcap
+  mim_via = vmim_drw.join(topvia1_drw).and(mim_drw)
+  topvia1_n_cap = topvia1_drw.not(mim_via)
+
+  logger.info('Starting IHP-SG13G2 DRC connectivity setup')
+  # Inter-layer
+  connect(pwell_sub, pwell)
+  connect(pwell, ptap)
+  connect(nwell_drw, ntap)
+  connect(cont_drw, nactiv)
+  connect(cont_drw, pactiv)
+  connect(nbulay_drw, nbuLay_gen_nbulay)
+  connect(nbuLay_gen_nbulay, nwell_drw)
+  connect(ntap, cont_drw)
+  connect(ptap, cont_drw)
+  connect(poly_con, cont_drw)
+  connect(nact_fet, cont_drw)
+  connect(pact_fet, cont_drw)
+  connect(cont_drw, metal1_con)
+  connect(metal1_con, via1_drw)
+  connect(via1_drw, metal2_con)
+  connect(metal2_con, via2_drw)
+  connect(via2_drw, metal3_con)
+  connect(metal3_con, via3_drw)
+  connect(via3_drw, metal4_con)
+  connect(metal4_con, via4_drw)
+  connect(via4_drw, metal5_con)
+  connect(metal5_con, topvia1_n_cap)
+  connect(topvia1_n_cap, topmetal1_con)
+  connect(topmetal1_con, topvia2_drw)
+  connect(topvia2_drw, topmetal2_con)
+
+  # nwell nets
+  nwell_nets = nwell_drw.nets
+end
+
+#================================================
+#------------ PRE-DEFINED FUNCTIONS -------------
+#================================================
+
+def get_circle(polygon_check)
+  maybe_circle1 = polygon_check.with_bbox_aspect_ratio(1)
+  maybe_circle2 = maybe_circle1.select { |polygon| polygon.num_points >= 16 }
+  # Circle detection based on area ratio of bounding box to shape area ≈ 4/π ≈ 1.2732
+  # (Derived from: (d^2) / (π * d^2 / 4) = 4/π)
+  maybe_circle2.without_holes.with_area_ratio(1.270, 1.276)
+end
+
+def get_octagon(polygon_check)
+  maybe_oct1 = polygon_check.with_bbox_aspect_ratio(1)
+  maybe_oct2 = maybe_oct1.select { |polygon| polygon.num_points == 8 }
+  h_edges_check = maybe_oct2.edges.with_angle(0, absolute)
+  maybe_oct3 = maybe_oct2.interacting(h_edges_check, 2, 2)
+  v_edges_check = maybe_oct3.edges.with_angle(90, absolute)
+  maybe_oct4 = maybe_oct3.interacting(v_edges_check, 2, 2)
+  diag_edges_check = maybe_oct4.edges.with_angle(44.5, 45.5, absolute)
+  maybe_oct4.interacting(diag_edges_check, 4, 4)
+end
+
+#================================================
+#----------------- MAIN RUNSET ------------------
+#================================================
+
+logger.info('Starting IHP-SG13G2 DRC rules.')
+
+# === FEOL ===
+logger.info('Running all FEOL rules') if FEOL
+# === BEOL ===
+logger.info('Running all BEOL rules') if BEOL
+# === PIN ===
+logger.info('Running all PIN rules') if PIN
+# === FORBIDDEN ===
+logger.info('Running all FORBIDDEN rules') if FORBIDDEN
+
+#================================================
+#------------------- INCLUDES -------------------
+#================================================
+
+# %include rule_decks/feol/5_1_nwell.drc
+# %include rule_decks/feol/5_2_pwellblock.drc
+# %include rule_decks/feol/5_3_nbulay.drc
+# %include rule_decks/feol/5_5_activ.drc
+# %include rule_decks/feol/5_6_activfiller.drc
+# %include rule_decks/feol/5_7_thickgateox.drc
+# %include rule_decks/feol/5_8_gatpoly.drc
+# %include rule_decks/feol/5_9_gatpolyfiller.drc
+# %include rule_decks/feol/5_10_psd.drc
+# %include rule_decks/feol/5_14_cont.drc
+# %include rule_decks/feol/5_15_contbar.drc
+# %include rule_decks/feol/6_1_npnsubstratetie.drc
+# %include rule_decks/feol/6_7_schottkydiode.drc
+# %include rule_decks/feol/7_2_latchup.drc
+
+# %include rule_decks/beol/5_16_metal1.drc
+# %include rule_decks/beol/5_17_metaln.drc
+# %include rule_decks/beol/5_18_metalnfiller.drc
+# %include rule_decks/beol/5_19_via1.drc
+# %include rule_decks/beol/5_20_vian.drc
+# %include rule_decks/beol/5_21_topvia1.drc
+# %include rule_decks/beol/5_22_topmetal1.drc
+# %include rule_decks/beol/5_23_topmetal1filler.drc
+# %include rule_decks/beol/5_24_topvia2.drc
+# %include rule_decks/beol/5_25_topmetal2.drc
+# %include rule_decks/beol/5_26_topmetal2filler.drc
+# %include rule_decks/beol/5_27_passiv.drc
+# %include rule_decks/beol/6_9_copperpillar.drc
+# %include rule_decks/beol/6_9_pad.drc
+# %include rule_decks/beol/6_9_solderbump.drc
+# %include rule_decks/beol/6_10_sealring.drc
+# %include rule_decks/beol/6_11_mim.drc
+# %include rule_decks/beol/7_3_metalslits.drc
+# %include rule_decks/beol/9_1_lbe.drc
+
+# %include rule_decks/pin/7_4_pin.drc
+
+# %include rule_decks/geometry/3_1_offgrid.drc
+# %include rule_decks/geometry/3_2_angle.drc
+# %include rule_decks/forbidden/3_2_forbidden.drc
+
+#================================================
+#--------------------- TAIL ---------------------
+#================================================
+
+exec_end_time = Time.now
+run_time = exec_end_time - exec_start_time
+logger.info("KLayout DRC run for tables '#{TABLES.join(' ')}' completed in #{run_time.round(2)} seconds")

@@ -1,10 +1,12 @@
-"""Foundry hard-cell loading/placement contract, not array DRC qualification.
+"""Foundry bitcell/BLDRV contracts, not complete-macro qualification.
 
 Run inside IIC-OSIC after selecting SG13G2 and running import_sram.py.
 """
 
 import os
 from pathlib import Path
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -49,6 +51,102 @@ class FoundryBitcellTest(unittest.TestCase):
             self.assertTrue(all(pin.layer == "m2" for pin in cell.get_pins(name)))
         self.assertEqual(cell.get_pin("wl").layer, "m3")
         self.assertEqual(len(cell.get_pins("gnd")), 2)
+
+    def test_bldrv_hard_cell(self):
+        import klayout.db as kdb
+        cell = factory.create(module_type="ihp_bldrv")
+        self.assertEqual(list(cell.pins), ["br", "br_sel", "bl", "bl_sel", "pre_n",
+                                         "sel_p", "wr_one", "wr_zero", "vdd", "gnd"])
+        self.assertAlmostEqual(cell.width, 4.08)
+        self.assertAlmostEqual(cell.height, 17.625)
+        for pin in cell.pins:
+            self.assertTrue(cell.get_pins(pin), pin)
+        self.assertEqual(len(cell.get_pins("vdd")), 2)
+        self.assertEqual(len(cell.get_pins("gnd")), 2)
+        self.assertEqual(cell.get_pin("bl").layer, "m2")
+        self.assertEqual(cell.get_pin("bl_sel").layer, "m3")
+        self.assertAlmostEqual(cell.get_pin("bl").cx(), 1.15)
+        source = kdb.Layout()
+        source.read(str(Path(os.environ["PDKPATH"]) / "libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds"))
+        original = source.cell("RM_IHPSG13_1P_BLDRV")
+        path = Path(self.temp.name) / "bldrv.gds"
+        cell.gds_write(str(path))
+        actual = kdb.Layout()
+        actual.read(str(path))
+        for index in source.layer_indexes():
+            info = source.get_info(index)
+            if info.datatype == 25 or (info.layer, info.datatype) == (189, 4):
+                continue
+            expected = kdb.Region(original.begin_shapes_rec(index)).transformed(kdb.Trans(510, 4725))
+            result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
+            with self.subTest(layer=str(info)):
+                self.assertEqual((expected ^ result).area(), 0)
+
+    def test_bldrv_lvs(self):
+        dut = factory.create(module_type="ihp_bldrv")
+        path = Path(self.temp.name)
+        dut.gds_write(str(path / "bldrv.gds"))
+        dut.sp_write(str(path / "bldrv.sp"))
+        lines = (path / "bldrv.sp").read_text().splitlines()
+        (path / "bldrv.cdl").write_text("\n".join(
+            "M" + line[1:] if line.startswith("X") and " sg13_lv_" in line else line
+            for line in lines) + "\n")
+        runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
+        # Bottom-up only: the parent must physically join the separate supply
+        # rails. Do not join signal nets or ignore strict top-level port checks.
+        run = subprocess.run([sys.executable, str(runner),
+                              "--layout=" + str(path / "bldrv.gds"),
+                              "--netlist=" + str(path / "bldrv.cdl"),
+                              "--run_dir=" + str(path / "bldrv-lvs"),
+                              "--disable_tap_extraction", "--implicit_nets=vdd,gnd"],
+                             capture_output=True, text=True)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn("Congratulations! Netlists match.", run.stdout, run.stdout + run.stderr)
+
+    def test_bldrv_controls(self):
+        # Asymmetric read levels distinguish polarity swaps; deselected writes
+        # must leave the externally biased bitlines untouched. Weak selected-
+        # line pulldowns make off vs on observable rather than floating.
+        cases = [
+            ("precharge_offselect", 0, 0, 0, 0, None, (1, 1, 0, 0)),
+            ("precharge_selected", 0, 1, 0, 0, None, (1, 1, 1, 1)),
+            ("write_one", 1, 1, 1, 0, None, (1, 0, 1, 0)),
+            ("write_zero", 1, 1, 0, 1, None, (0, 1, 0, 1)),
+            ("read_selected", 1, 1, 0, 0, (.9, .7), (.9, .7, .9, .7)),
+            ("read_deselected", 1, 0, 0, 0, (.9, .7), (.9, .7, 0, 0)),
+            ("write_deselected", 1, 0, 1, 0, (.3, .8), (.3, .8, 0, 0)),
+        ]
+        dut = factory.create(module_type="ihp_bldrv")
+        path = Path(self.temp.name)
+        dut.sp_write(str(path / "bldrv.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            for name, pre, select, one, zero, bias, expected in cases:
+                with self.subTest(corner=corner, supply=supply, case=name):
+                    lines = ["* BLDRV public-pin control contract",
+                             f".lib {models} mos_{corner}", f".include {path / 'bldrv.sp'}",
+                             ".temp 27",
+                             f"VDD vdd 0 {supply}", f"Vpre pre 0 {pre * supply}",
+                             f"Vsel sel 0 {select * supply}", f"Vone one 0 {one * supply}",
+                             f"Vzero zero 0 {zero * supply}",
+                             "Xdut br br_sel bl bl_sel pre sel one zero vdd 0 ihp_bldrv",
+                             "Rbl bl 0 1g", "Rbr br 0 1g",
+                             "Routs bl_sel 0 1meg", "Routr br_sel 0 1meg"]
+                    if bias:
+                        lines += [f"Vbl bias_bl 0 {bias[0] * supply}",
+                                  f"Vbr bias_br 0 {bias[1] * supply}",
+                                  "Rbiasbl bias_bl bl 1k", "Rbiasbr bias_br br 1k"]
+                    lines += [".control", "op", "print v(bl) v(br) v(bl_sel) v(br_sel)",
+                              "quit", ".endc", ".end"]
+                    (path / "controls.sp").write_text("\n".join(lines) + "\n")
+                    run = subprocess.run(["ngspice", "-b", str(path / "controls.sp")],
+                                         capture_output=True, text=True)
+                    self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                    values = dict(re.findall(r"^v\(([^)]+)\)\s*=\s*(\S+)", run.stdout, re.MULTILINE))
+                    for pin, target in zip(("bl", "br", "bl_sel", "br_sel"), expected):
+                        self.assertIn(pin, values, run.stdout + run.stderr)
+                        self.assertAlmostEqual(float(values[pin]), target * supply,
+                                               delta=.04 * supply, msg=pin)
 
     def test_asymmetric_arrays(self):
         for rows, cols in [(2, 3), (4, 3)]:

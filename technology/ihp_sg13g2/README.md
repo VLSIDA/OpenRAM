@@ -421,6 +421,75 @@ control/write-data adaptation, then complete-bank routing and PEX-based
 timing/characterization. The current physical slice is not a characterized
 or fabrication-qualified compiled SRAM.
 
+## Foundry row decoder and wordline drivers
+
+Two additional explicit factory modules reuse the source row path without
+changing the generic compiler:
+
+```python
+decoder = factory.create(module_type="ihp_row_decoder")
+drivers = factory.create(module_type="ihp_wordline_driver")
+```
+
+The decoder imports GDS `RM_IHPSG13_1P_ROWDEC4` and CDL
+`RM_IHPSG13_64x16_c2_1P_ROWDEC4`, including its address latches and fill
+capacitors: 222 unchanged FETs, with a 29.58 × 18.16 µm geometry envelope.
+Its ordered ports are `addr_3 ... addr_0 cs eclk decode_15 ... decode_0
+vdd gnd`. Source `ADDR_N_I<i>` maps directly to `addr_i`; the importer
+does not invert it. At these terminals, the observed decode is ordinary
+binary: `addr=5` selects `decode_5`, not `decode_10`.
+
+Selection is active with **CS high and ECLK low**. Either CS low or ECLK
+high makes all decode outputs low after settling. CS also clocks the
+source's high-transparent address latches; this is not a generic
+combinational decoder or an edge-triggered address register. Address
+setup/hold and hazard-free control sequencing still need bank-level
+verification. Do not connect the generic OpenRAM gated wordline-driver
+interface to these terminals without adapting the control protocol.
+
+The drivers import `RM_IHPSG13_1P_WLDRV16X4` and its matching CDL: sixteen
+noninverting two-stage buffers, 64 unchanged FETs, with a 12.355 × 18.16 µm
+geometry envelope. Ordered ports are `decode_15 ... decode_0 wl_15 ...
+wl_0 vdd gnd`. Their supply labels come from datatype-2 child terminals;
+the source's bank-level signal labels use datatype 25. These envelopes
+are not abutment pitches, and the modules are **not yet physically joined
+to each other or the memory slice**.
+
+Both factory-exported cells have zero manufacturing-layer polygon XOR
+against their respective source cells translated by (0.510, 0.300) µm.
+Both pass installed main/maximal DRC with density disabled and strict-port
+LVS with tap-device extraction disabled, **no implicit-net joins**, and no
+black boxes. The decoder's two `lvsres` clock through-pin annotations are
+joined in SPICE; only their Metal2 datatype-29 recognition polygons are
+removed from the separate LVS view. Manufacturing geometry is unchanged.
+Real resistors remain unsupported by this peripheral importer rather
+than silently discarded.
+
+The electrical regression connects the decoder to all sixteen wordline
+buffers, each with a 100 fF lumped output load. At TT/1.20 V, SS/1.08 V,
+and FF/1.32 V (27 °C), it exercises every binary address in alternating
+low/high order and checks all sixteen wordlines in four states: clock
+disabled before selection, selected, clock disabled afterward, and CS
+disabled with an otherwise active clock. This is 1024 checked voltages
+per corner. It establishes settled polarity, address order, and gating,
+not maximum frequency, transition hazards, PEX timing, or array-loaded
+read/write operation through this row path.
+
+Repeat physical checks inside the selected IIC-OSIC environment:
+
+```sh
+python3 technology/ihp_sg13g2/tests/verify_array.py --cell ihp_row_decoder \
+  --output ../openram-ihp-port/.amp/in/artifacts/row-path/decoder
+python3 technology/ihp_sg13g2/tests/verify_array.py --cell ihp_wordline_driver \
+  --output ../openram-ihp-port/.amp/in/artifacts/row-path/driver
+```
+
+The existing `tests/test_bitcell.py -v` command includes source-geometry,
+LVS, and decoder-to-driver electrical regressions. Next is physical
+row-path integration with the slice, column-address/control adaptation,
+then a complete bank interface and post-layout characterization—not an
+upstream-ready compiler merely because the individual blocks pass.
+
 ## c4m / PDKMaster comparison
 
 The inspected local FlexMem builds its own procedural bitcells, with taps

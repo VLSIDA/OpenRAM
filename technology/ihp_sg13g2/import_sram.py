@@ -14,7 +14,7 @@ import klayout.db as kdb
 
 
 def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
-                      ports, label_purpose, transistor_count):
+                      ports, label_purposes, transistor_count):
     """Import an unchanged peripheral and its recursively flattened circuit."""
     original = layout.cell(gds_name)
     dest = kdb.Layout()
@@ -27,13 +27,17 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
         info = layout.get_info(index)
         cell.shapes(dest.layer(info)).insert(
             kdb.Region(original.begin_shapes_rec(index)).merged().transformed(shift))
-        if info.datatype != label_purpose:
+        if info.datatype not in label_purposes:
             continue
         it = original.begin_shapes_rec(index)
         while not it.at_end():
             shape = it.shape()
             if shape.is_text():
-                pin = ports[shape.text.string.rstrip("!")]
+                source_pin = shape.text.string.rstrip("!")
+                if source_pin not in ports:
+                    it.next()
+                    continue  # Internal child labels are not peripheral ports.
+                pin = ports[source_pin]
                 point = shift * (it.trans() * kdb.Point(shape.text.trans.disp))
                 metal = kdb.Region(original.begin_shapes_rec(layout.layer(info.layer, 0)))
                 if not any(p.inside(shift.inverted() * point) for p in metal.each()):
@@ -56,6 +60,7 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
     netlist = [cdl[:cdl.index(".SUBCKT")].rstrip(),
                f"* Flattened from {cdl_name}; unchanged W/L/m.",
                ".subckt " + name + " " + " ".join(ports.values())]
+    through_pins = []
 
     def flatten(name, nodes, prefix=""):
         formal, body = circuits[name]
@@ -76,10 +81,34 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
             elif tokens[0].startswith("X"):
                 connections = [mapping.get(n, prefix + n) for n in tokens[1:-1] if n != "/"]
                 flatten(tokens[-1], connections, instance + "_")
+            elif tokens[0].startswith("R") and tokens[3] == "lvsres":
+                # Foundry through-pin annotations, not physical resistors.
+                through_pins.append([mapping.get(n, prefix + n) for n in tokens[1:3]])
             else:
                 raise ValueError(f"Unsupported peripheral CDL statement: {line}")
 
     flatten(cdl_name, list(ports.values()))
+    aliases = {}
+
+    def joined(node):
+        while node in aliases:
+            node = aliases[node]
+        return node
+
+    for left, right in through_pins:
+        left, right = joined(left), joined(right)
+        if left == right:
+            continue
+        if right in ports.values():
+            left, right = right, left
+        if right in ports.values():
+            raise ValueError(f"{name}: through-pin joins distinct public ports")
+        aliases[right] = left
+    for index, line in enumerate(netlist):
+        if line.startswith("X"):
+            tokens = line.split()
+            tokens[1:5] = [joined(n) for n in tokens[1:5]]
+            netlist[index] = " ".join(tokens)
     if sum(line.startswith("X") for line in netlist) != transistor_count:
         raise ValueError(f"Expected {transistor_count} transistors in {name}")
     netlist.append(".ends " + name + "\n")
@@ -326,13 +355,26 @@ def main():
                       "RM_IHPSG13_64x16_c2_1P_BLDRV",
                       {"BLC": "br", "BLC_SEL": "br_sel", "BLT": "bl", "BLT_SEL": "bl_sel",
                        "PRE_N": "pre_n", "SEL_P": "sel_p", "WR_ONE": "wr_one",
-                       "WR_ZERO": "wr_zero", "VDD": "vdd", "VSS": "gnd"}, 2, 22)
+                       "WR_ZERO": "wr_zero", "VDD": "vdd", "VSS": "gnd"}, (2,), 22)
     print("Imported ihp_bldrv: 22 FETs; precharge, column selection, and write drive")
     import_peripheral(layout, tech, cdl, "ihp_sense_amp", "RSC_IHPSG13_DFPQD_MSAFFX2N",
                       "RSC_IHPSG13_DFPQD_MSAFFX2",
                       {"CP": "cp", "DN": "dn", "DP": "dp", "QN": "qn", "QP": "qp",
-                       "VDD": "vdd", "VSS": "gnd"}, 25, 19)
+                       "VDD": "vdd", "VSS": "gnd"}, (25,), 19)
     print("Imported ihp_sense_amp: 19 FETs; clocked differential sense/latch")
+    import_peripheral(layout, tech, cdl, "ihp_row_decoder", "RM_IHPSG13_1P_ROWDEC4",
+                      "RM_IHPSG13_64x16_c2_1P_ROWDEC4",
+                      {**{f"ADDR_N_I<{i}>": f"addr_{i}" for i in reversed(range(4))},
+                       "CS_I": "cs", "ECLK_I": "eclk",
+                       **{f"WL_O<{i}>": f"decode_{i}" for i in reversed(range(16))},
+                       "VDD": "vdd", "VSS": "gnd"}, (25,), 222)
+    print("Imported ihp_row_decoder: 222 FETs; latched 4-to-16 decode")
+    import_peripheral(layout, tech, cdl, "ihp_wordline_driver", "RM_IHPSG13_1P_WLDRV16X4",
+                      "RM_IHPSG13_64x16_c2_1P_WLDRV16X4",
+                      {**{f"A<{i}>": f"decode_{i}" for i in reversed(range(16))},
+                       **{f"Z<{i}>": f"wl_{i}" for i in reversed(range(16))},
+                       "VDD": "vdd", "VSS": "gnd"}, (2, 25), 64)
+    print("Imported ihp_wordline_driver: 64 FETs; sixteen noninverting buffers")
     import_column_data(layout, tech)
     print("Imported ihp_column_data: four BLDRVs, one sense/latch, and connected parent routing")
     import_frame(layout, tech, cdl)

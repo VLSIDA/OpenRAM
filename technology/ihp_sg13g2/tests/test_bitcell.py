@@ -98,7 +98,7 @@ class FoundryBitcellTest(unittest.TestCase):
         path = Path(self.temp.name)
         runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
         for name in ("ihp_bldrv", "ihp_sense_amp", "ihp_column_data",
-                     "ihp_row_decoder", "ihp_wordline_driver"):
+                     "ihp_row_decoder", "ihp_wordline_driver", "ihp_column_decoder"):
             with self.subTest(cell=name):
                 dut = factory.create(module_type=name)
                 dut.gds_write(str(path / (name + ".gds")))
@@ -213,6 +213,48 @@ class FoundryBitcellTest(unittest.TestCase):
                     self.assertAlmostEqual(float(values[tag]), bit * supply,
                                            delta=.1 * supply, msg=tag)
 
+    def test_column_decode(self):
+        path = Path(self.temp.name)
+        decoder = factory.create(module_type="ihp_column_decoder")
+        self.assertEqual(list(decoder.pins), ["addr_1", "addr_0"] +
+                         [f"sel_{i}" for i in range(4)] + ["vdd", "gnd"])
+        decoder.sp_write(str(path / "column_decode.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        # Include both asymmetric addresses and transitions in both directions.
+        addresses = [0, 2, 1, 3, 1, 2, 0]
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            with self.subTest(corner=corner):
+                lines = ["* Combinational column decoder with lumped output loads",
+                         f".lib {models} mos_{corner}", f".include {path / 'column_decode.sp'}",
+                         ".temp 27", f"Vdd vdd 0 {supply}",
+                         "Xdecode a1 a0 s0 s1 s2 s3 vdd 0 " + decoder.name]
+                for bit in range(2):
+                    points = ["0 0"]
+                    previous = 0
+                    for index, address in enumerate(addresses):
+                        time = 1 + 5 * index
+                        value = supply * ((address >> bit) & 1)
+                        points += [f"{time}n {previous}", f"{time + .05}n {value}"]
+                        previous = value
+                    lines.append(f"Va{bit} a{bit} 0 PWL({' '.join(points)})")
+                lines += [f"Cload{i} s{i} 0 50f" for i in range(4)]
+                lines += [".control", "tran 20p 36n"]
+                for index in range(len(addresses)):
+                    for col in range(4):
+                        lines.append(f"meas tran s_{index}_{col} find v(s{col}) at={4 + 5 * index}n")
+                lines += ["quit", ".endc", ".end"]
+                deck = path / f"column_decode_{corner}.sp"
+                deck.write_text("\n".join(lines) + "\n")
+                run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
+                for index, address in enumerate(addresses):
+                    for col in range(4):
+                        tag = f"s_{index}_{col}"
+                        self.assertIn(tag, values, run.stdout + run.stderr)
+                        self.assertAlmostEqual(float(values[tag]), supply * (col == address),
+                                               delta=.1 * supply, msg=tag)
+
     def test_bldrv_controls(self):
         # Asymmetric read levels distinguish polarity swaps; deselected writes
         # must leave the externally biased bitlines untouched. Weak selected-
@@ -325,21 +367,28 @@ class FoundryBitcellTest(unittest.TestCase):
                 row_inputs = ([f"addr_{i}" for i in range(4)] + ["cs"] if addressed else
                               [f"wl_{r}" for r in range(16)])
                 signals = {p: [(0, 0)] for p in ["pre_n", "wr_one", "wr_zero", "sae"] +
-                           [f"sel_{c}" for c in range(4)] + row_inputs}
+                           (["col_1", "col_0"] if addressed else
+                            [f"sel_{c}" for c in range(4)]) + row_inputs}
                 if addressed:
                     signals["eclk"] = [(0, supply)]
                 memory_node = "xmemory.xmemory" if addressed else "xmemory"
                 measurements = []
                 for index, (op, row, col, bit) in enumerate(operations):
                     start = 5 + 16 * index
-                    pulses = [("pre_n", 0, 12), (f"sel_{col}", 1, 11),
+                    pulses = [("pre_n", 0, 12),
                               ("eclk" if addressed else f"wl_{row}", 3, 8)]
                     if addressed:
+                        for i in range(2):
+                            points = signals[f"col_{i}"]
+                            points += [(start, points[-1][1]),
+                                       (start + .05, supply * ((col >> i) & 1))]
                         pulses.append(("cs", 1, 9))
                         for i in range(4):
                             points = signals[f"addr_{i}"]
                             points += [(start, points[-1][1]),
                                        (start + .05, supply * ((row >> i) & 1))]
+                    else:
+                        pulses.append((f"sel_{col}", 1, 11))
                     if op == "write":
                         pulses.append(("wr_one" if bit else "wr_zero", 2, 9))
                     else:
@@ -372,6 +421,11 @@ class FoundryBitcellTest(unittest.TestCase):
                 lines = ["* Framed memory slice; lumped loads, no PEX",
                          f".lib {models} mos_{corner}", f".include {netlist}",
                          ".temp 27", f"Vdd vdd 0 {supply}"]
+                if addressed:
+                    column_decoder = factory.create(module_type="ihp_column_decoder")
+                    column_decoder.sp_write(str(path / "column_decoder.sp"))
+                    lines += [f".include {path / 'column_decoder.sp'}",
+                              "Xcolumn col_1 col_0 sel_0 sel_1 sel_2 sel_3 vdd 0 " + column_decoder.name]
                 for pin, points in signals.items():
                     wave = " ".join(f"{time}n {voltage}" for time, voltage in points)
                     lines.append(f"V{pin} {pin} 0 PWL({wave})")

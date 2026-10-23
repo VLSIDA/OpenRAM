@@ -554,10 +554,39 @@ retention, and output hold. Intermediate asymmetric addresses distinguish
 row-address bit swaps that testing only 0 and 15 would miss. Loads remain
 50 fF per bitline and 5 fF per sense output, with ideal supplies and no PEX.
 The 16 ns sequence asserts CS at 1 ns, lowers ECLK at 3 ns, raises it at
-8 ns, and lowers CS at 9 ns relative to each operation's start. Other
-column/write/precharge/sense timing follows the original slice sequence.
+8 ns, and lowers CS at 9 ns relative to each operation's start.
+Write/precharge/sense timing follows the original slice sequence.
 
-Next: column decoding, clock/control and data/mask adaptation, followed by
+## Combinational column decoder
+
+`ihp_column_decoder` retains the shipped COLDEC2's eight inverters and four
+NAND gates (32 FETs), with their original transistor geometry and connected
+parent signal routing. It omits the BIST registers and filler-cap region.
+New M1 rail continuations and a left-margin M2 strap physically connect its
+three VDD sections; LVS does not rely on implicit supply joins.
+Its envelope is 16.32 × 9.45 µm. Ports are `addr_1 addr_0 sel_0 sel_1
+sel_2 sel_3 vdd gnd`; settled binary address 0–3 selects the correspondingly
+numbered active-high output. There is no enable or address latch: inputs
+must remain stable during the active memory operation.
+
+The standalone cell passes the installed main/maximal no-density DRC and
+strict flat LVS with tap-device extraction disabled, using the same check
+flow as the row-path cells:
+
+```sh
+python3 technology/ihp_sg13g2/tests/verify_array.py --cell ihp_column_decoder \
+  --output ../openram-ihp-port/.amp/in/artifacts/column-decoder
+```
+
+The decoder electrical test checks every output for all four addresses,
+including nonmonotonic transitions, at TT/1.20 V, SS/1.08 V, and FF/1.32 V
+with 50 fF output loads. The row-addressed memory electrical regression now
+uses this transistor-level decoder instead of ideal one-hot selection
+sources; the direct-wordline slice remains the independent one-hot control.
+This is netlist-level integration, not yet physical placement/routing of
+the column decoder into `ihp_row_memory`.
+
+Next: physical column-decoder integration, clock/control and data/mask adaptation, followed by
 normal SRAM compiler entry-point integration and extracted characterization.
 These are required for the intended complete technology port, rather than
 optional work after upstreaming an isolated-cell prototype.

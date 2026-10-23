@@ -13,6 +13,82 @@ import re
 import klayout.db as kdb
 
 
+def import_bldrv(layout, tech, cdl):
+    """Import the combined column block without changing its transistor layout."""
+    original = layout.cell("RM_IHPSG13_1P_BLDRV")
+    dest = kdb.Layout()
+    dest.dbu = layout.dbu
+    cell = dest.create_cell("ihp_bldrv")
+    box = original.bbox()
+    shift = kdb.Trans(-box.left, -box.bottom)
+    ports = {"BLC": "br", "BLC_SEL": "br_sel", "BLT": "bl", "BLT_SEL": "bl_sel",
+             "PRE_N": "pre_n", "SEL_P": "sel_p", "WR_ONE": "wr_one",
+             "WR_ZERO": "wr_zero", "VDD": "vdd", "VSS": "gnd"}
+    found = set()
+    for index in layout.layer_indexes():
+        info = layout.get_info(index)
+        cell.shapes(dest.layer(info)).insert(
+            kdb.Region(original.begin_shapes_rec(index)).merged().transformed(shift))
+        # This cell uses text on pin-purpose 2, not the bitcell's purpose 25.
+        if info.datatype != 2:
+            continue
+        it = original.begin_shapes_rec(index)
+        while not it.at_end():
+            shape = it.shape()
+            if shape.is_text():
+                pin = ports[shape.text.string.rstrip("!")]
+                point = shift * (it.trans() * kdb.Point(shape.text.trans.disp))
+                metal = kdb.Region(original.begin_shapes_rec(layout.layer(info.layer, 0)))
+                if not any(p.inside(shift.inverted() * point) for p in metal.each()):
+                    raise ValueError(f"BLDRV: {pin} is not on source metal")
+                cell.shapes(dest.layer(info.layer, 25)).insert(kdb.Text(pin, kdb.Trans(point)))
+                found.add(pin)
+            it.next()
+    if found != set(ports.values()):
+        raise ValueError(f"Missing BLDRV pins: {set(ports.values()) - found}")
+    # An envelope, not an independently tileable pitch: the source wells and
+    # diffusion overlap neighboring columns in the shipped COLCTRL2 layout.
+    cell.shapes(dest.layer(189, 4)).insert(kdb.Box(0, 0, box.width(), box.height()))
+    dest.write(str(tech / "gds_lib/ihp_bldrv.gds"))
+
+    statements = re.sub(r"\n\+\s*", " ", cdl)
+    circuits = {}
+    for match in re.finditer(r"^\.SUBCKT\s+(\S+)([^\n]*)\n(.*?)^\.ENDS[^\n]*",
+                             statements, re.MULTILINE | re.DOTALL):
+        circuits[match[1]] = (match[2].split(), match[3].splitlines())
+    netlist = [cdl[:cdl.index(".SUBCKT")].rstrip(),
+               "* Flattened from RM_IHPSG13_64x16_c2_1P_BLDRV; unchanged W/L/m.",
+               ".subckt ihp_bldrv " + " ".join(ports.values())]
+
+    def flatten(name, nodes, prefix=""):
+        formal, body = circuits[name]
+        if len(formal) != len(nodes):
+            raise ValueError(f"BLDRV CDL pin count mismatch in {name}")
+        mapping = dict(zip(formal, nodes))
+        for line in body:
+            tokens = line.split()
+            if not tokens or tokens[0].startswith("*"):
+                continue
+            instance = prefix + tokens[0]
+            if tokens[0].startswith("M"):
+                params = dict(token.split("=", 1) for token in tokens[6:])
+                netlist.append("X" + instance + " " +
+                               " ".join(mapping.get(n, prefix + n) for n in tokens[1:5]) +
+                               " " + tokens[5] + " " +
+                               " ".join(key + "=" + params[key] for key in ("w", "l", "m")))
+            elif tokens[0].startswith("X"):
+                connections = [mapping.get(n, prefix + n) for n in tokens[1:-1] if n != "/"]
+                flatten(tokens[-1], connections, instance + "_")
+            else:
+                raise ValueError(f"Unsupported BLDRV CDL statement: {line}")
+
+    flatten("RM_IHPSG13_64x16_c2_1P_BLDRV", list(ports.values()))
+    if sum(line.startswith("X") for line in netlist) != 22:
+        raise ValueError("Expected 22 BLDRV transistors including NAND/inverter logic")
+    netlist.append(".ends ihp_bldrv\n")
+    (tech / "sp_lib/ihp_bldrv.sp").write_text("\n".join(netlist))
+
+
 def import_frame(layout, tech, cdl):
     """Extract frame overlays, leaving the compiler's real bit instances intact.
 
@@ -131,6 +207,8 @@ def main():
     dest.write(str(tech / "gds_lib/cell_1rw.gds"))
     (tech / "sp_lib/cell_1rw.sp").write_text("\n".join(netlist))
     print("Imported cell_1rw: pitch 2.81 x 1.07 um; six unchanged foundry FETs")
+    import_bldrv(layout, tech, cdl)
+    print("Imported ihp_bldrv: 22 FETs; precharge, column selection, and write drive")
     import_frame(layout, tech, cdl)
     print("Imported 16-row tap/strap, edge/corner, and 4-column M4 power overlays")
 

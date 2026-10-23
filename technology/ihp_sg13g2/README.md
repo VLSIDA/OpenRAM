@@ -165,10 +165,75 @@ Yes, both GDS and CDL contain the relevant peripheral circuitry:
 These are embedded macro building blocks, not standalone, characterized
 OpenRAM-compatible library views. Reusing them needs logical adapters,
 pin/placement definitions, enable/precharge sequencing, output-polarity
-checks, DRC/LVS, and characterization. They are not enabled by this bitcell
-import. With the initial 16-row tap/end context assembled, the next step is
-adapting peripherals one at a time, not replacing them solely on matching
-cell names or duplicating BLDRV's precharge/mux circuitry.
+checks, DRC/LVS, and characterization. BLDRV is now available as the explicit
+hard cell below, but neither peripheral is enabled in the generic SRAM
+assembly. The next integration step is the sense amplifier, followed by an
+IHP column-data module that does not duplicate BLDRV's precharge/mux circuitry.
+
+## BLDRV hard-cell bring-up
+
+```python
+driver = factory.create(module_type="ihp_bldrv")
+# NOT module_type="write_driver": this cell also precharges and selects.
+```
+
+`import_sram.py` imports the unchanged `RM_IHPSG13_1P_BLDRV` polygons and
+recursively flattens its matching CDL plus two NANDs and three inverters.
+All 22 FETs retain their source W/L/m; X model calls are used for simulation.
+The source pin texts are on datatype 2. Canonical datatype-25 labels are
+added at those same physical terminals after translating by (0.510, 4.725) µm.
+
+| Source terminal | OpenRAM terminal | Metal |
+|---|---|---|
+| BLT / BLC | bl / br | M2 |
+| BLT_SEL / BLC_SEL | bl_sel / br_sel | M3 |
+| PRE_N | pre_n | M1 |
+| SEL_P | sel_p | M1 |
+| WR_ONE / WR_ZERO | wr_one / wr_zero | M1 |
+| VDD! / VSS! | vdd / gnd | M1, two must-connect rails each |
+
+The control contract, confirmed by DC simulation, is:
+
+- `pre_n=0` charges both bitlines, independent of selection. There is no
+  separate bitline equalizer transistor in this block.
+- `sel_p=1` connects the bitlines to the selected read lines through PMOS
+  pass devices; this is intended for high-common-mode, small-swing reads,
+  not guaranteed full-swing CMOS transmission.
+- With `pre_n=1, sel_p=1`, `wr_one=1, wr_zero=0` drives bl high / br low;
+  the opposite controls drive bl low / br high.
+- For reading, both write controls are zero. Selection low isolates the
+  selected read lines and disables write drive.
+- Do not assert both write controls or overlap precharge with a selected
+  write: these cause pull-up/pull-down contention. Sequencing is still the
+  responsibility of the future column/control adapter.
+
+The reported 4.08 × 17.625 µm boundary is a **geometry envelope, not an array
+repeat pitch**. The shipped parent uses staggered/reflected overlapping
+placements; do not tile drivers at `driver.width` or assume exact bitcell
+pitch alignment. Parent routing must connect both VDD and both GND rails.
+
+Verification inside IIC-OSIC with the selected IHP PDK:
+
+- Zero polygon XOR versus the shipped BLDRV after translation, except
+  intentional label/boundary metadata.
+- Both the isolated original and imported cell pass installed main/maximal
+  DRC with `--no_density`; no SRAM marker or rule waiver is added.
+- Strict-port KLayout LVS passes with `--disable_tap_extraction` and
+  `--implicit_nets=vdd,gnd`. **Those supply joins are a bottom-up assumption,
+  not proof that parent power routing is complete.** No signal joins,
+  ignored ports, or transistor black boxes are used. CDL changes X calls
+  back to M devices for the LVS reader.
+- Seven regression tests pass, including BLDRV loading/pins, source XOR,
+  LVS, and 21 DC operating cases: precharge selected/deselected, write both
+  values, read selected/deselected with asymmetric levels, and a deselected
+  write. Cases run at TT/1.20 V, SS/1.08 V, FF/1.32 V, all at 27 °C.
+
+Run the existing `tests/test_bitcell.py -v` command above to repeat these
+API/geometry, LVS, and electrical checks. DRC uses the same installed
+`run_drc.py --path=... --run_dir=... --no_density` command as the frame.
+Saved bring-up views and logs are in the sibling layout repo's locally
+ignored `.amp/in/artifacts/bldrv/` directory. These are static hard-cell
+checks, not timing, parasitic, noise-margin, mismatch, or full-memory tests.
 
 ## c4m / PDKMaster comparison
 

@@ -1,4 +1,4 @@
-"""Export a framed array and check it with the installed SG13G2 runners.
+"""Export a framed array or memory slice and run installed SG13G2 checks.
 
 Run after import_sram.py, inside IIC-OSIC with iic-pdk ihp-sg13g2.
 The original compiler GDS/SPICE are kept alongside normalized LVS views.
@@ -27,6 +27,7 @@ from openram.sram_factory import factory
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cols", type=int, choices=range(4, 33, 4), default=32)
+    parser.add_argument("--slice", action="store_true", help="Verify array plus column-data assembly")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if os.environ.get("PDK") != "ihp-sg13g2":
@@ -39,7 +40,8 @@ def main():
         OPTS.output_path = temp + "/output/"
         openram.init_openram(str(ROOT / "compiler/tests/configs/config.py"), is_unit_test=True)
         OPTS.check_lvsdrc = False  # Explicit installed-PDK runs below.
-        array = factory.create(module_type="ihp_bitcell_array", rows=16, cols=args.cols)
+        array = (factory.create(module_type="ihp_memory_slice", cols=args.cols) if args.slice else
+                 factory.create(module_type="ihp_bitcell_array", rows=16, cols=args.cols))
         array.gds_write(str(out / "array.gds"))
         array.sp_write(str(out / "array.sp"))
         openram.end_openram()

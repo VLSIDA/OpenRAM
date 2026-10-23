@@ -305,9 +305,9 @@ The foundry parent's data/mask registers, BIST logic, clock buffers, and
 output inverter are not part of this prototype.
 
 The loaded-path regression exercises the framed slice and row-addressed
-assembly below, including all 64 foundry bitcells in 16 rows × four columns, with ideal
-supplies, 50 fF lumped load per bitline
-and 5 fF per sense output. These are explicit test loads, not extracted
+assembly below, including all 64 foundry bitcells in 16 rows × four columns,
+with ideal supplies, 50 fF lumped load per bitline and 5 fF per sense output.
+These are explicit test loads, not extracted
 wire capacitances. At each of TT/1.20 V, SS/1.08 V, and FF/1.32 V (27 °C),
 40 operations cover writes of both polarities in every column at rows 0,
 5, 10 and 15, reads in mixed column order, overwrites in both directions, and
@@ -530,10 +530,13 @@ are not included. Space below the decoder remains available for that
 logic rather than representing a final compact floorplan.
 
 The physical checker supports `--row-memory` and retains raw and normalized
-views as for the existing slice. Verification requires strict-port LVS
-with no implicit-net joins or black boxes and main/maximal DRC with
-density disabled. The regression checks both the original slice and
-row-addressed assembly at eight columns, including their inter-group
+views as for the existing slice. All eight supported widths (4, 8, …, 32
+columns) pass strict-port flat LVS with no implicit-net joins or black
+boxes and main/maximal DRC with density disabled. Flat comparison can
+be slow for these repeated transistor networks. A hierarchical-mode trial
+did not match; the reported passes and supported checker use flat mode.
+The regression checks both the original slice and row-addressed assembly
+at eight columns, including their inter-group
 tap boundary. Run a particular width inside the selected container:
 
 ```sh

@@ -453,7 +453,8 @@ geometry envelope. Ordered ports are `decode_15 ... decode_0 wl_15 ...
 wl_0 vdd gnd`. Their supply labels come from datatype-2 child terminals;
 the source's bank-level signal labels use datatype 25. These envelopes
 are not abutment pitches, and the modules are **not yet physically joined
-to each other or the memory slice**.
+by their standalone wrappers**. The row-addressed assembly below now
+connects them to each other and the memory slice.
 
 Both factory-exported cells have zero manufacturing-layer polygon XOR
 against their respective source cells translated by (0.510, 0.300) µm.
@@ -489,6 +490,69 @@ LVS, and decoder-to-driver electrical regressions. Next is physical
 row-path integration with the slice, column-address/control adaptation,
 then a complete bank interface and post-layout characterization—not an
 upstream-ready compiler merely because the individual blocks pass.
+
+## Row-addressed memory assembly
+
+`factory.create(module_type="ihp_row_memory", cols=32)` physically connects
+the foundry decoder and sixteen wordline buffers to `ihp_memory_slice`.
+Supported physical widths remain 4..32 columns in groups of four, with
+16 rows. This removes the external one-hot wordline interface; it does
+not yet provide the complete synchronous compiler/bank interface.
+
+Ordered ports are `addr_3 ... addr_0 cs eclk`, then `sel_0 ... sel_3`,
+then each word-bit group's `pre_n_g sae_g wr_one_g wr_zero_g qp_g qn_g`,
+then `vdd gnd`. Row addressing is binary and selection requires CS high
+with ECLK low. Column selection, write-data encoding, masking, and
+precharge/sense timing are still externally supplied. No duplicate
+precharge, write-driver or mux blocks are added.
+
+The decoder, wordline drivers, and slice are placed respectively at
+(1.20, 33.60), (29.76, 33.60), and (41.25, 0) µm. Their relative positions
+follow the source macro's right-hand bank. Short M3 paths connect matching
+decoder outputs and driver inputs, and driver outputs to array wordlines.
+Two M1 rail continuations join the split bottom supply rails. M5 supply
+straps connect these rails to the corresponding existing M4 slice feeds;
+new M1-to-M5 via stacks sit in a 1.20 µm left access channel, outside the
+decoder's packed M2/M3 routing. Placing those stacks inside the original
+decoder envelope produced M2/M3 spacing errors; the separate access
+channel avoids those errors without waivers or resizing source devices.
+
+The height remains 51.76 µm. Width is 41.25 µm plus the slice width:
+55.71 µm for four columns and 134.39 µm for 32 columns. These are
+intermediate assembly envelopes, not final SRAM macro area figures;
+clock/control, column decoding, data/mask registers and output buffering
+are not included. Space below the decoder remains available for that
+logic rather than representing a final compact floorplan.
+
+The physical checker supports `--row-memory` and retains raw and normalized
+views as for the existing slice. Verification requires strict-port LVS
+with no implicit-net joins or black boxes and main/maximal DRC with
+density disabled. The regression checks both the original slice and
+row-addressed assembly at eight columns, including their inter-group
+tap boundary. Run a particular width inside the selected container:
+
+```sh
+python3 technology/ihp_sg13g2/tests/verify_array.py --row-memory --cols 32 \
+  --output ../openram-ihp-port/.amp/in/artifacts/row-memory/32
+```
+
+The memory electrical regression now exercises binary row addresses
+through decoder and drivers at TT/1.20 V, SS/1.08 V, and FF/1.32 V for
+four columns, and TT/1.20 V for eight columns with complementary word-bit
+data. A direct-wordline four-column slice remains a TT control case.
+Each case runs 40 operations across all four column choices and rows
+0, 5, 10, and 15, covering both values, mixed-order reads, overwrites,
+retention, and output hold. Intermediate asymmetric addresses distinguish
+row-address bit swaps that testing only 0 and 15 would miss. Loads remain
+50 fF per bitline and 5 fF per sense output, with ideal supplies and no PEX.
+The 16 ns sequence asserts CS at 1 ns, lowers ECLK at 3 ns, raises it at
+8 ns, and lowers CS at 9 ns relative to each operation's start. Other
+column/write/precharge/sense timing follows the original slice sequence.
+
+Next: column decoding, clock/control and data/mask adaptation, followed by
+normal SRAM compiler entry-point integration and extracted characterization.
+These are required for the intended complete technology port, rather than
+optional work after upstreaming an isolated-cell prototype.
 
 ## c4m / PDKMaster comparison
 

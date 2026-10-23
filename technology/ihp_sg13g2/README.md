@@ -159,16 +159,17 @@ Yes, both GDS and CDL contain the relevant peripheral circuitry:
 - **Sense/latch:** CDL `RSC_IHPSG13_DFPQD_MSAFFX2` has `CP DN DP QN QP VDD VSS`.
   The column-control CDL explicitly instantiates it as `XA_ISENSE`, driven
   by `A_SAE`, `A_BLC_SEL`, and `A_BLT_SEL`. GDS contains the associated
-  `RSC_IHPSG13_DFPQD_MSAFFX2N` hierarchy; the layout/CDL name difference and
-  correspondence still need LVS verification before importing it.
+  `RSC_IHPSG13_DFPQD_MSAFFX2N` hierarchy; strict LVS now confirms that it
+  matches this CDL despite the extra `N` in the layout name.
 
 These are embedded macro building blocks, not standalone, characterized
 OpenRAM-compatible library views. Reusing them needs logical adapters,
 pin/placement definitions, enable/precharge sequencing, output-polarity
-checks, DRC/LVS, and characterization. BLDRV is now available as the explicit
-hard cell below, but neither peripheral is enabled in the generic SRAM
-assembly. The next integration step is the sense amplifier, followed by an
-IHP column-data module that does not duplicate BLDRV's precharge/mux circuitry.
+checks, DRC/LVS, and characterization. BLDRV and the sense/latch are now
+available as explicit hard cells below, but neither peripheral is enabled
+in the generic SRAM assembly. A circuit-only IHP column-data module now
+combines them without duplicating BLDRV's precharge/mux circuitry;
+physical column integration remains the next step.
 
 ## BLDRV hard-cell bring-up
 
@@ -223,7 +224,7 @@ Verification inside IIC-OSIC with the selected IHP PDK:
   not proof that parent power routing is complete.** No signal joins,
   ignored ports, or transistor black boxes are used. CDL changes X calls
   back to M devices for the LVS reader.
-- Seven regression tests pass, including BLDRV loading/pins, source XOR,
+- Regression tests cover BLDRV loading/pins, source XOR,
   LVS, and 21 DC operating cases: precharge selected/deselected, write both
   values, read selected/deselected with asymmetric levels, and a deselected
   write. Cases run at TT/1.20 V, SS/1.08 V, FF/1.32 V, all at 27 °C.
@@ -234,6 +235,103 @@ API/geometry, LVS, and electrical checks. DRC uses the same installed
 Saved bring-up views and logs are in the sibling layout repo's locally
 ignored `.amp/in/artifacts/bldrv/` directory. These are static hard-cell
 checks, not timing, parasitic, noise-margin, mismatch, or full-memory tests.
+
+## Sense/latch hard-cell bring-up
+
+```python
+sense = factory.create(module_type="ihp_sense_amp")
+# Native interface: cp dn dp qn qp vdd gnd.
+```
+
+The shared peripheral importer preserves the source
+`RSC_IHPSG13_DFPQD_MSAFFX2N` geometry, including both half-cell instances,
+and imports all 19 FETs from `RSC_IHPSG13_DFPQD_MSAFFX2` CDL. Translation is
+(0.510, 0.300) µm; the 9.69 × 9.00 µm boundary is the geometry envelope,
+not a compiler column pitch. CP is on M2; DN, DP, QN, QP and supplies are
+on M1. One VDD and two GND pin shapes are exposed.
+
+Observed transient contract:
+
+- CP high starts regenerative evaluation. With DP above DN, QP becomes
+  high and QN low; opposite differential gives opposite outputs.
+- CP low precharges the internal sensing nodes but **retains the output**.
+  Once resolved, the output also survives input reversal while CP remains
+  high. A low/high clock cycle permits a new decision.
+- No power-up output value is guaranteed before a valid evaluation. Do
+  not use CP low as an output-reset signal or treat this as a combinational
+  sense amplifier.
+- The shipped parent connects BLT_SEL to DP and BLC_SEL to DN. It obtains
+  true read data by inverting QN externally; the standalone QP has the
+  corresponding true polarity but its loading/drive is not characterized.
+
+Both original and imported isolated layouts pass installed main/maximal
+DRC with density disabled and no added markers/waivers. Polygon XOR is zero
+apart from canonical label/boundary metadata. Strict-port LVS matches all
+19 FETs with `--disable_tap_extraction`, **no implicit-net joins**, no
+ignored ports, and no black boxes. This establishes the GDS/CDL mapping.
+
+The regression suite also runs three transient sequences at TT/1.20 V,
+SS/1.08 V, and FF/1.32 V, at 27 °C with 5 fF on each output. Inputs are at
+VDD and 0.95 × VDD (54–66 mV differential). Each sequence checks both
+decision polarities, input reversal during CP high, retention during CP
+low, and a subsequent opposite decision. This is a functional smoke test,
+not minimum input offset, metastability, mismatch, noise-margin, or timing
+characterization. These checks run alongside both peripheral LVS checks
+and the previous bitcell/frame and BLDRV electrical checks.
+
+Bring-up GDS/SPICE, reference DRC, LVS, and the nominal waveform probe are
+in the sibling repo's locally ignored `.amp/in/artifacts/sense-amp/`.
+Column assembly must still preserve the foundry placement, join BLDRV's
+supplies physically, and validate extracted parasitics before replacing
+generic `port_data`. The circuit-level loaded path is tested below.
+
+## Four-column circuit assembly
+
+`factory.create(module_type="ihp_column_data")` with `OPTS.netlist_only=True`
+builds four unchanged BLDRVs sharing one sense/latch, following the
+`COLCTRL2` CDL connectivity. This is an explicit circuit prototype, not a
+generic `port_data` override. Layout-mode construction raises an error:
+there is no verified column-data layout or area estimate yet.
+
+Ports, in order, are `bl_0 br_0 ... bl_3 br_3`, `sel_0 ... sel_3`,
+`pre_n wr_one wr_zero sae qp qn vdd gnd`. The one-hot `sel` inputs select
+both read and write columns. `qp` is the true read result and `qn` its
+complement; neither includes a characterized output buffer. The caller
+must generate the write-data encoding, one-hot decode, and control timing.
+No separate precharge, column mux, or write-driver array is instantiated.
+The foundry parent's data/mask registers, BIST logic, clock buffers, and
+output inverter are not part of this prototype.
+
+The loaded-path regression connects all 64 foundry bitcells in 16 rows ×
+four columns, with ideal body/supply ties, 50 fF lumped load per bitline
+and 5 fF per sense output. These are explicit test loads, not extracted
+wire capacitances. At each of TT/1.20 V, SS/1.08 V, and FF/1.32 V (27 °C),
+24 operations cover writes of both polarities in every column at rows 0
+and 15, reads in mixed column order, overwrites in both directions, and
+retention of the eight programmed cells. Read outputs are checked both
+during evaluation and after returning to precharge. No storage-node
+initial conditions force the written values. The full suite has nine tests.
+
+The conservative test sequence uses a 16 ns operation period: disable
+precharge, select a column 1 ns later, drive write data at 2 ns for a
+write, assert the wordline at 3 ns, and assert sense enable at 5 ns for a
+read. The wordline falls at 8 ns, write/sense enable at 9 ns, column select
+at 11 ns, and precharge resumes at 12 ns. Edges take 50 ps. This proves
+functional sequencing only, not maximum frequency, offset, mismatch,
+read-disturb margin, physical supply integrity, or post-layout operation.
+
+Physical integration must retain the source's overlapping placement, not
+tile hard-cell envelopes. In original GDS coordinates (µm), BLDRV columns
+0..3 are respectively R0 at (0, −16.8), mirrored about Y at (5.61, −16.8),
+R0 at (5.61, −16.8), and mirrored about Y at (11.22, −16.8). The sense
+cell is R180 at (9.69, −25.2). Imported-cell origin translations must be
+accounted for before reusing these transforms. Parent metal must still
+be reconstructed and verified, including every supply rail; these
+positions alone are not a routed or LVS-verified assembly.
+
+Simulation decks and logs are saved in the sibling layout repo's locally
+ignored `.amp/in/artifacts/column-data/` directory. Repeat the regression
+with the same `tests/test_bitcell.py -v` command used above.
 
 ## c4m / PDKMaster comparison
 

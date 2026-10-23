@@ -1,4 +1,4 @@
-"""Foundry bitcell/BLDRV contracts, not complete-macro qualification.
+"""Foundry SRAM hard-cell contracts, not complete-macro qualification.
 
 Run inside IIC-OSIC after selecting SG13G2 and running import_sram.py.
 """
@@ -52,56 +52,70 @@ class FoundryBitcellTest(unittest.TestCase):
         self.assertEqual(cell.get_pin("wl").layer, "m3")
         self.assertEqual(len(cell.get_pins("gnd")), 2)
 
-    def test_bldrv_hard_cell(self):
+    def test_peripheral_hard_cells(self):
         import klayout.db as kdb
-        cell = factory.create(module_type="ihp_bldrv")
-        self.assertEqual(list(cell.pins), ["br", "br_sel", "bl", "bl_sel", "pre_n",
-                                         "sel_p", "wr_one", "wr_zero", "vdd", "gnd"])
-        self.assertAlmostEqual(cell.width, 4.08)
-        self.assertAlmostEqual(cell.height, 17.625)
-        for pin in cell.pins:
-            self.assertTrue(cell.get_pins(pin), pin)
-        self.assertEqual(len(cell.get_pins("vdd")), 2)
-        self.assertEqual(len(cell.get_pins("gnd")), 2)
-        self.assertEqual(cell.get_pin("bl").layer, "m2")
-        self.assertEqual(cell.get_pin("bl_sel").layer, "m3")
-        self.assertAlmostEqual(cell.get_pin("bl").cx(), 1.15)
         source = kdb.Layout()
         source.read(str(Path(os.environ["PDKPATH"]) / "libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds"))
-        original = source.cell("RM_IHPSG13_1P_BLDRV")
-        path = Path(self.temp.name) / "bldrv.gds"
-        cell.gds_write(str(path))
-        actual = kdb.Layout()
-        actual.read(str(path))
-        for index in source.layer_indexes():
-            info = source.get_info(index)
-            if info.datatype == 25 or (info.layer, info.datatype) == (189, 4):
-                continue
-            expected = kdb.Region(original.begin_shapes_rec(index)).transformed(kdb.Trans(510, 4725))
-            result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
-            with self.subTest(layer=str(info)):
-                self.assertEqual((expected ^ result).area(), 0)
+        for name, original_name, width, height, shift, ports, vdd_pins in [
+            ("ihp_bldrv", "RM_IHPSG13_1P_BLDRV", 4.08, 17.625, (510, 4725),
+             ["br", "br_sel", "bl", "bl_sel", "pre_n", "sel_p", "wr_one", "wr_zero", "vdd", "gnd"], 2),
+            ("ihp_sense_amp", "RSC_IHPSG13_DFPQD_MSAFFX2N", 9.69, 9.0, (510, 300),
+             ["cp", "dn", "dp", "qn", "qp", "vdd", "gnd"], 1),
+        ]:
+            with self.subTest(cell=name):
+                cell = factory.create(module_type=name)
+                self.assertEqual(list(cell.pins), ports)
+                self.assertAlmostEqual(cell.width, width)
+                self.assertAlmostEqual(cell.height, height)
+                for pin in cell.pins:
+                    self.assertTrue(cell.get_pins(pin), pin)
+                self.assertEqual(len(cell.get_pins("vdd")), vdd_pins)
+                self.assertEqual(len(cell.get_pins("gnd")), 2)
+                if name == "ihp_bldrv":
+                    self.assertEqual(cell.get_pin("bl").layer, "m2")
+                    self.assertEqual(cell.get_pin("bl_sel").layer, "m3")
+                    self.assertAlmostEqual(cell.get_pin("bl").cx(), 1.15)
+                else:
+                    self.assertEqual(cell.get_pin("cp").layer, "m2")
+                    self.assertEqual(cell.get_pin("dp").layer, "m1")
+                    self.assertAlmostEqual(cell.get_pin("dp").cx(), 3.51)
+                original = source.cell(original_name)
+                path = Path(self.temp.name) / (name + ".gds")
+                cell.gds_write(str(path))
+                actual = kdb.Layout()
+                actual.read(str(path))
+                for index in source.layer_indexes():
+                    info = source.get_info(index)
+                    if info.datatype == 25 or (info.layer, info.datatype) == (189, 4):
+                        continue
+                    expected = kdb.Region(original.begin_shapes_rec(index)).transformed(kdb.Trans(*shift))
+                    result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
+                    with self.subTest(layer=str(info)):
+                        self.assertEqual((expected ^ result).area(), 0)
 
-    def test_bldrv_lvs(self):
-        dut = factory.create(module_type="ihp_bldrv")
+    def test_peripheral_lvs(self):
         path = Path(self.temp.name)
-        dut.gds_write(str(path / "bldrv.gds"))
-        dut.sp_write(str(path / "bldrv.sp"))
-        lines = (path / "bldrv.sp").read_text().splitlines()
-        (path / "bldrv.cdl").write_text("\n".join(
-            "M" + line[1:] if line.startswith("X") and " sg13_lv_" in line else line
-            for line in lines) + "\n")
         runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
-        # Bottom-up only: the parent must physically join the separate supply
-        # rails. Do not join signal nets or ignore strict top-level port checks.
-        run = subprocess.run([sys.executable, str(runner),
-                              "--layout=" + str(path / "bldrv.gds"),
-                              "--netlist=" + str(path / "bldrv.cdl"),
-                              "--run_dir=" + str(path / "bldrv-lvs"),
-                              "--disable_tap_extraction", "--implicit_nets=vdd,gnd"],
-                             capture_output=True, text=True)
-        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-        self.assertIn("Congratulations! Netlists match.", run.stdout, run.stdout + run.stderr)
+        for name in ("ihp_bldrv", "ihp_sense_amp"):
+            with self.subTest(cell=name):
+                dut = factory.create(module_type=name)
+                dut.gds_write(str(path / (name + ".gds")))
+                dut.sp_write(str(path / (name + ".sp")))
+                lines = (path / (name + ".sp")).read_text().splitlines()
+                (path / (name + ".cdl")).write_text("\n".join(
+                    "M" + line[1:] if line.startswith("X") and " sg13_lv_" in line else line
+                    for line in lines) + "\n")
+                command = [sys.executable, str(runner),
+                           "--layout=" + str(path / (name + ".gds")),
+                           "--netlist=" + str(path / (name + ".cdl")),
+                           "--run_dir=" + str(path / (name + "-lvs")), "--disable_tap_extraction"]
+                # BLDRV's separate rails are must-connect at parent level.
+                # The sense amp matches without any implicit connections.
+                if name == "ihp_bldrv":
+                    command.append("--implicit_nets=vdd,gnd")
+                run = subprocess.run(command, capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                self.assertIn("Congratulations! Netlists match.", run.stdout, run.stdout + run.stderr)
 
     def test_bldrv_controls(self):
         # Asymmetric read levels distinguish polarity swaps; deselected writes
@@ -147,6 +161,124 @@ class FoundryBitcellTest(unittest.TestCase):
                         self.assertIn(pin, values, run.stdout + run.stderr)
                         self.assertAlmostEqual(float(values[pin]), target * supply,
                                                delta=.04 * supply, msg=pin)
+
+    def test_sense_amp_evaluate_and_hold(self):
+        dut = factory.create(module_type="ihp_sense_amp")
+        path = Path(self.temp.name)
+        dut.sp_write(str(path / "sense.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        samples = [("first", 2.8, 1), ("hold_high", 3.8, 1), ("hold_low", 7.5, 1),
+                   ("second", 8.8, 0), ("hold_high2", 9.8, 0),
+                   ("hold_low2", 13.5, 0), ("third", 14.8, 1)]
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            with self.subTest(corner=corner, supply=supply):
+                low = .95 * supply  # Nonzero input common mode, 5% VDD differential.
+                lines = ["* Clocked differential evaluate, opposite decision, and retention",
+                         f".lib {models} mos_{corner}", f".include {path / 'sense.sp'}",
+                         ".temp 27", f"Vdd vdd 0 {supply}",
+                         f"Vcp cp 0 PULSE(0 {supply} 2n 50p 50p 2n 6n)",
+                         f"Vdp dp 0 PWL(0 {supply} 3n {supply} 3.05n {low} 9n {low} 9.05n {supply} 18n {supply})",
+                         f"Vdn dn 0 PWL(0 {low} 3n {low} 3.05n {supply} 9n {supply} 9.05n {low} 18n {low})",
+                         "Xdut cp dn dp qn qp vdd 0 ihp_sense_amp",
+                         "Cqp qp 0 5f", "Cqn qn 0 5f", ".control", "tran 10p 18n"]
+                for tag, time, _ in samples:
+                    for pin in ("qp", "qn"):
+                        lines.append(f"meas tran {pin}_{tag} find v({pin}) at={time}n")
+                lines += ["quit", ".endc", ".end"]
+                (path / "sense_controls.sp").write_text("\n".join(lines) + "\n")
+                run = subprocess.run(["ngspice", "-b", str(path / "sense_controls.sp")],
+                                     capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
+                for tag, _, bit in samples:
+                    for pin, expected in (("qp", bit), ("qn", 1 - bit)):
+                        key = pin + "_" + tag
+                        self.assertIn(key, values, run.stdout + run.stderr)
+                        self.assertAlmostEqual(float(values[key]), expected * supply,
+                                               delta=.05 * supply, msg=key)
+
+    def test_loaded_column_write_read(self):
+        # Opposite values in neighboring columns and the two extreme rows
+        # distinguish column swaps, polarity errors, and half-select writes.
+        # The factory caches across this mixed layout/netlist test suite.
+        # Load hard-cell GDS before temporarily entering netlist-only mode.
+        for name in ("ihp_bldrv", "ihp_sense_amp"):
+            factory.create(module_type=name)
+        previous = OPTS.netlist_only
+        OPTS.netlist_only = True
+        try:
+            dut = factory.create(module_type="ihp_column_data")
+        finally:
+            OPTS.netlist_only = previous
+        path = Path(self.temp.name)
+        dut.sp_write(str(path / "column.sp"))
+        factory.create(module_type="bitcell_1port").sp_write(str(path / "bit.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        pattern = {(0, 0): 1, (0, 1): 0, (0, 2): 0, (0, 3): 1,
+                   (15, 0): 0, (15, 1): 1, (15, 2): 1, (15, 3): 0}
+        operations = [("write", r, c, b) for (r, c), b in pattern.items()]
+        operations += [("read", r, c, pattern[r, c])
+                       for r, c in [(15, 2), (0, 3), (15, 0), (0, 1),
+                                    (0, 0), (15, 3), (0, 2), (15, 1)]]
+        operations += [("write", 0, 1, 1), ("read", 0, 1, 1),
+                       ("read", 15, 1, 1), ("read", 0, 2, 0),
+                       ("write", 0, 0, 0), ("read", 0, 0, 0),
+                       ("read", 0, 3, 1), ("read", 15, 0, 0)]
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            with self.subTest(corner=corner):
+                signals = {p: [(0, 0)] for p in ["pre_n", "wr_one", "wr_zero", "sae"] +
+                           [f"sel_{c}" for c in range(4)] + [f"wl_{r}" for r in range(16)]}
+                measurements = []
+                for index, (op, row, col, bit) in enumerate(operations):
+                    start = 5 + 16 * index
+                    pulses = [("pre_n", 0, 12), (f"sel_{col}", 1, 11),
+                              (f"wl_{row}", 3, 8)]
+                    if op == "write":
+                        pulses.append(("wr_one" if bit else "wr_zero", 2, 9))
+                    else:
+                        pulses.append(("sae", 5, 9))
+                        for tag, delay in (("read", 7), ("hold", 13)):
+                            measurements += [(f"qp_{index}_{tag}", "qp", start + delay, bit),
+                                             (f"qn_{index}_{tag}", "qn", start + delay, 1 - bit)]
+                    for pin, begin, end in pulses:
+                        signals[pin] += [(start + begin, 0), (start + begin + .05, supply),
+                                         (start + end, supply), (start + end + .05, 0)]
+                    if op == "write":
+                        measurements += [(f"written_{index}", f"xmem_{row}_{col}.nt", start + 13, bit)]
+                end_time = 16 * len(operations) + 5
+                final_pattern = dict(pattern)
+                final_pattern[0, 1] = 1
+                final_pattern[0, 0] = 0
+                for (row, col), bit in final_pattern.items():
+                    measurements += [(f"retained_{row}_{col}", f"xmem_{row}_{col}.nt", end_time - 1, bit)]
+                lines = ["* Loaded 16-row, four-column write/read path; lumped loads, no PEX",
+                         f".lib {models} mos_{corner}", f".include {path / 'column.sp'}",
+                         f".include {path / 'bit.sp'}", ".temp 27", f"Vdd vdd 0 {supply}"]
+                for pin, points in signals.items():
+                    wave = " ".join(f"{time}n {voltage}" for time, voltage in points)
+                    lines.append(f"V{pin} {pin} 0 PWL({wave})")
+                lines += ["Xcolumn bl_0 br_0 bl_1 br_1 bl_2 br_2 bl_3 br_3 "
+                          "sel_0 sel_1 sel_2 sel_3 pre_n wr_one wr_zero sae qp qn vdd 0 " + dut.name,
+                          "Cqp qp 0 5f", "Cqn qn 0 5f"]
+                for col in range(4):
+                    for pin in ("bl", "br"):
+                        lines.append(f"C{pin}_{col} {pin}_{col} 0 50f")
+                    for row in range(16):
+                        lines.append(f"Xmem_{row}_{col} bl_{col} br_{col} wl_{row} vdd 0 cell_1rw")
+                lines += [".control", f"tran 20p {end_time}n"]
+                for tag, node, time, _ in measurements:
+                    lines.append(f"meas tran {tag} find v({node}) at={time}n")
+                lines += ["quit", ".endc", ".end"]
+                deck = path / f"column_{corner}.sp"
+                deck.write_text("\n".join(lines) + "\n")
+                run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
+                (path / f"column_{corner}.log").write_text(run.stdout + run.stderr)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
+                for tag, _, _, bit in measurements:
+                    self.assertIn(tag, values, run.stdout + run.stderr)
+                    self.assertAlmostEqual(float(values[tag]), bit * supply,
+                                           delta=.1 * supply, msg=f"{corner}: {tag}")
 
     def test_asymmetric_arrays(self):
         for rows, cols in [(2, 3), (4, 3)]:

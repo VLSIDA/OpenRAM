@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--cols", type=int, choices=range(4, 33, 4), default=32)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--slice", action="store_true", help="Verify array plus column-data assembly")
+    mode.add_argument("--row-memory", action="store_true", help="Verify row-addressed memory assembly")
     mode.add_argument("--cell", choices=("ihp_row_decoder", "ihp_wordline_driver"),
                       help="Verify an imported row-path hard cell instead of an array")
     parser.add_argument("--output", type=Path, required=True)
@@ -45,6 +46,8 @@ def main():
         OPTS.check_lvsdrc = False  # Explicit installed-PDK runs below.
         if args.cell:
             array = factory.create(module_type=args.cell)
+        elif args.row_memory:
+            array = factory.create(module_type="ihp_row_memory", cols=args.cols)
         elif args.slice:
             array = factory.create(module_type="ihp_memory_slice", cols=args.cols)
         else:

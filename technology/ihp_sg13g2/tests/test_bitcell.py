@@ -293,34 +293,53 @@ class FoundryBitcellTest(unittest.TestCase):
                         self.assertAlmostEqual(float(values[key]), expected * supply,
                                                delta=.05 * supply, msg=key)
 
-    def test_memory_slice_write_read(self):
-        # Opposite values in neighboring columns and the two extreme rows
-        # distinguish column swaps, polarity errors, and half-select writes.
+    def test_memory_paths_write_read(self):
+        # Opposite neighboring data and asymmetric intermediate row addresses
+        # distinguish column/row swaps, polarity errors, and half-select writes.
         path = Path(self.temp.name)
         models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
         pattern = {(0, 0): 1, (0, 1): 0, (0, 2): 0, (0, 3): 1,
+                   (5, 0): 0, (5, 1): 0, (5, 2): 1, (5, 3): 1,
+                   (10, 0): 1, (10, 1): 0, (10, 2): 1, (10, 3): 0,
                    (15, 0): 0, (15, 1): 1, (15, 2): 1, (15, 3): 0}
         operations = [("write", r, c, b) for (r, c), b in pattern.items()]
         operations += [("read", r, c, pattern[r, c])
                        for r, c in [(15, 2), (0, 3), (15, 0), (0, 1),
                                     (0, 0), (15, 3), (0, 2), (15, 1)]]
+        operations += [("read", r, c, pattern[r, c])
+                       for r, c in [(10, 1), (5, 2), (10, 3), (5, 0),
+                                    (5, 1), (10, 2), (5, 3), (10, 0)]]
         operations += [("write", 0, 1, 1), ("read", 0, 1, 1),
                        ("read", 15, 1, 1), ("read", 0, 2, 0),
                        ("write", 0, 0, 0), ("read", 0, 0, 0),
                        ("read", 0, 3, 1), ("read", 15, 0, 0)]
-        for cols, corner, supply in ((4, "tt", 1.2), (4, "ss", 1.08),
-                                     (4, "ff", 1.32), (8, "tt", 1.2)):
-            with self.subTest(cols=cols, corner=corner):
-                dut = factory.create(module_type="ihp_memory_slice", cols=cols)
-                dut.sp_write(str(path / f"slice_{cols}.sp"))
+        for addressed, cols, corner, supply in ((False, 4, "tt", 1.2),
+                                                (True, 4, "tt", 1.2), (True, 4, "ss", 1.08),
+                                                (True, 4, "ff", 1.32), (True, 8, "tt", 1.2)):
+            with self.subTest(addressed=addressed, cols=cols, corner=corner):
+                dut = factory.create(module_type="ihp_row_memory" if addressed else "ihp_memory_slice",
+                                     cols=cols)
+                netlist = path / f"memory_{addressed}_{cols}.sp"
+                dut.sp_write(str(netlist))
                 groups = cols // 4
+                row_inputs = ([f"addr_{i}" for i in range(4)] + ["cs"] if addressed else
+                              [f"wl_{r}" for r in range(16)])
                 signals = {p: [(0, 0)] for p in ["pre_n", "wr_one", "wr_zero", "sae"] +
-                           [f"sel_{c}" for c in range(4)] + [f"wl_{r}" for r in range(16)]}
+                           [f"sel_{c}" for c in range(4)] + row_inputs}
+                if addressed:
+                    signals["eclk"] = [(0, supply)]
+                memory_node = "xmemory.xmemory" if addressed else "xmemory"
                 measurements = []
                 for index, (op, row, col, bit) in enumerate(operations):
                     start = 5 + 16 * index
                     pulses = [("pre_n", 0, 12), (f"sel_{col}", 1, 11),
-                              (f"wl_{row}", 3, 8)]
+                              ("eclk" if addressed else f"wl_{row}", 3, 8)]
+                    if addressed:
+                        pulses.append(("cs", 1, 9))
+                        for i in range(4):
+                            points = signals[f"addr_{i}"]
+                            points += [(start, points[-1][1]),
+                                       (start + .05, supply * ((row >> i) & 1))]
                     if op == "write":
                         pulses.append(("wr_one" if bit else "wr_zero", 2, 9))
                     else:
@@ -331,13 +350,14 @@ class FoundryBitcellTest(unittest.TestCase):
                                 measurements += [(f"qp_{group}_{index}_{tag}", f"qp_{group}", start + delay, value),
                                                  (f"qn_{group}_{index}_{tag}", f"qn_{group}", start + delay, 1 - value)]
                     for pin, begin, end in pulses:
-                        signals[pin] += [(start + begin, 0), (start + begin + .05, supply),
-                                         (start + end, supply), (start + end + .05, 0)]
+                        low, high = (supply, 0) if pin == "eclk" else (0, supply)
+                        signals[pin] += [(start + begin, low), (start + begin + .05, high),
+                                         (start + end, high), (start + end + .05, low)]
                     if op == "write":
                         for group in range(groups):
                             physical_col = 4 * group + col
                             measurements += [(f"written_{group}_{index}",
-                                              f"xmemory.xarray.xbit_r{row}_c{physical_col}.nt",
+                                              f"{memory_node}.xarray.xbit_r{row}_c{physical_col}.nt",
                                               start + 13, bit ^ group)]
                 end_time = 16 * len(operations) + 5
                 final_pattern = dict(pattern)
@@ -347,15 +367,16 @@ class FoundryBitcellTest(unittest.TestCase):
                     for group in range(groups):
                         physical_col = 4 * group + col
                         measurements += [(f"retained_{group}_{row}_{col}",
-                                          f"xmemory.xarray.xbit_r{row}_c{physical_col}.nt",
+                                          f"{memory_node}.xarray.xbit_r{row}_c{physical_col}.nt",
                                           end_time - 1, bit ^ group)]
                 lines = ["* Framed memory slice; lumped loads, no PEX",
-                         f".lib {models} mos_{corner}", f".include {path / ('slice_' + str(cols) + '.sp')}",
+                         f".lib {models} mos_{corner}", f".include {netlist}",
                          ".temp 27", f"Vdd vdd 0 {supply}"]
                 for pin, points in signals.items():
                     wave = " ".join(f"{time}n {voltage}" for time, voltage in points)
                     lines.append(f"V{pin} {pin} 0 PWL({wave})")
-                connections = [f"wl_{row}" for row in range(16)]
+                connections = ([f"addr_{i}" for i in reversed(range(4))] + ["cs", "eclk"]
+                               if addressed else [f"wl_{row}" for row in range(16)])
                 connections += [f"sel_{col}" for col in range(4)]
                 for group in range(groups):
                     # The second group writes complementary data to a
@@ -367,15 +388,15 @@ class FoundryBitcellTest(unittest.TestCase):
                 lines.append("Xmemory " + " ".join(connections + ["vdd", "0", dut.name]))
                 for col in range(cols):
                     for pin in ("bl", "br"):
-                        lines.append(f"C{pin}_{col} xmemory.{pin}_0_{col} 0 50f")
+                        lines.append(f"C{pin}_{col} {memory_node}.{pin}_0_{col} 0 50f")
                 lines += [".control", f"tran 20p {end_time}n"]
                 for tag, node, time, _ in measurements:
                     lines.append(f"meas tran {tag} find v({node}) at={time}n")
                 lines += ["quit", ".endc", ".end"]
-                deck = path / f"slice_{cols}_{corner}.sp"
+                deck = path / f"memory_{addressed}_{cols}_{corner}.sp"
                 deck.write_text("\n".join(lines) + "\n")
                 run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
-                (path / f"slice_{cols}_{corner}.log").write_text(run.stdout + run.stderr)
+                deck.with_suffix(".log").write_text(run.stdout + run.stderr)
                 self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
                 values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
                 for tag, _, _, bit in measurements:
@@ -387,12 +408,14 @@ class FoundryBitcellTest(unittest.TestCase):
         # Eight columns exercise the array interface and an inter-group
         # shared-tap boundary. Missing VDD bridges fail LVS; missing tap
         # completion shapes fail DRC. No implicit supply joins are allowed.
-        command = [sys.executable, str(Path(__file__).with_name("verify_array.py")),
-                   "--slice", "--cols=8", "--output=" + str(Path(self.temp.name) / "slice-physical")]
-        run = subprocess.run(command, capture_output=True, text=True)
-        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-        self.assertIn("DRC passed", run.stdout)
-        self.assertIn("LVS passed", run.stdout)
+        for mode in ("--slice", "--row-memory"):
+            with self.subTest(mode=mode):
+                command = [sys.executable, str(Path(__file__).with_name("verify_array.py")),
+                           mode, "--cols=8", "--output=" + str(Path(self.temp.name) / mode[2:])]
+                run = subprocess.run(command, capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                self.assertIn("DRC passed", run.stdout)
+                self.assertIn("LVS passed", run.stdout)
 
     def test_column_data_layout(self):
         import klayout.db as kdb

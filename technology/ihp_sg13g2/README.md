@@ -167,9 +167,9 @@ OpenRAM-compatible library views. Reusing them needs logical adapters,
 pin/placement definitions, enable/precharge sequencing, output-polarity
 checks, DRC/LVS, and characterization. BLDRV and the sense/latch are now
 available as explicit hard cells below, but neither peripheral is enabled
-in the generic SRAM assembly. A circuit-only IHP column-data module now
-combines them without duplicating BLDRV's precharge/mux circuitry;
-physical column integration remains the next step.
+in the generic SRAM assembly. An IHP column-data hard cell now combines
+them with connected source-parent routing and without duplicating BLDRV's
+precharge/mux circuitry. Array-to-column integration remains the next step.
 
 ## BLDRV hard-cell bring-up
 
@@ -281,17 +281,18 @@ and the previous bitcell/frame and BLDRV electrical checks.
 
 Bring-up GDS/SPICE, reference DRC, LVS, and the nominal waveform probe are
 in the sibling repo's locally ignored `.amp/in/artifacts/sense-amp/`.
-Column assembly must still preserve the foundry placement, join BLDRV's
-supplies physically, and validate extracted parasitics before replacing
-generic `port_data`. The circuit-level loaded path is tested below.
+The column assembly below preserves the foundry placement and physically
+joins BLDRV's supplies. Array connections and extracted parasitics still
+need validation before replacing generic `port_data`.
 
-## Four-column circuit assembly
+## Four-column physical assembly
 
-`factory.create(module_type="ihp_column_data")` with `OPTS.netlist_only=True`
-builds four unchanged BLDRVs sharing one sense/latch, following the
-`COLCTRL2` CDL connectivity. This is an explicit circuit prototype, not a
-generic `port_data` override. Layout-mode construction raises an error:
-there is no verified column-data layout or area estimate yet.
+`factory.create(module_type="ihp_column_data")` loads four unchanged
+BLDRVs sharing one sense/latch, following the `COLCTRL2` connectivity and
+physical placement. Both layout and netlist-only modes are supported.
+This remains an explicit IHP module, not a generic `port_data` override.
+Its 12.24 × 32.865 µm boundary (402.27 µm²) is a geometry envelope, **not
+a repeat pitch or a complete memory area**.
 
 Ports, in order, are `bl_0 br_0 ... bl_3 br_3`, `sel_0 ... sel_3`,
 `pre_n wr_one wr_zero sae qp qn vdd gnd`. The one-hot `sel` inputs select
@@ -310,7 +311,7 @@ wire capacitances. At each of TT/1.20 V, SS/1.08 V, and FF/1.32 V (27 °C),
 and 15, reads in mixed column order, overwrites in both directions, and
 retention of the eight programmed cells. Read outputs are checked both
 during evaluation and after returning to precharge. No storage-node
-initial conditions force the written values. The full suite has nine tests.
+initial conditions force the written values. The full suite has ten tests.
 
 The conservative test sequence uses a 16 ns operation period: disable
 precharge, select a column 1 ns later, drive write data at 2 ns for a
@@ -320,17 +321,38 @@ at 11 ns, and precharge resumes at 12 ns. Edges take 50 ps. This proves
 functional sequencing only, not maximum frequency, offset, mismatch,
 read-disturb margin, physical supply integrity, or post-layout operation.
 
-Physical integration must retain the source's overlapping placement, not
-tile hard-cell envelopes. In original GDS coordinates (µm), BLDRV columns
+Physical assembly retains the source's overlapping placement, rather than
+tiling hard-cell envelopes. In original GDS coordinates (µm), BLDRV columns
 0..3 are respectively R0 at (0, −16.8), mirrored about Y at (5.61, −16.8),
 R0 at (5.61, −16.8), and mirrored about Y at (11.22, −16.8). The sense
-cell is R180 at (9.69, −25.2). Imported-cell origin translations must be
-accounted for before reusing these transforms. Parent metal must still
-be reconstructed and verified, including every supply rail; these
-positions alone are not a routed or LVS-verified assembly.
+cell is R180 at (9.69, −25.2). The combined geometry is translated by
+(0.510, 33.900) µm. Parent metal/vias are cropped at the sense-cell bottom;
+the importer rejects any crop that truncates a retained hard-cell shape.
+A metal/via connectivity trace removes routing components that do not
+touch the five retained hard cells. Connected control stubs remain; no new
+manufacturing geometry is drawn. Parent wells, diffusion, poly, contacts,
+and implants belonging to omitted circuitry are not imported. Only the
+five hard cells supply device geometry. This avoids narrow parent well
+slivers left over when their neighboring logic is removed.
+
+Strict-port LVS matches all 107 FETs with `--disable_tap_extraction`, **no
+implicit-net joins**, no ignored ports, and no black boxes. All exposed
+supply rails are therefore joined in this assembly rather than assumed
+joined as in standalone BLDRV verification. The geometry passes installed
+main/maximal DRC with density disabled and no rule waivers. Regression
+checks also require zero manufacturing XOR through OpenRAM GDS export,
+unchanged device-layer geometry for the five hard cells, and no added
+manufacturing polygons relative to the source parent.
+
+The empty space left by omitted logic has not been vertically compacted:
+preserving the source routing is the first verified implementation, not
+an assertion of minimum possible area. The next physical step is to join
+this block to the framed 16-row array and verify the combined power and
+bitline connections, abutment rules, and eventually extracted parasitics.
 
 Simulation decks and logs are saved in the sibling layout repo's locally
-ignored `.amp/in/artifacts/column-data/` directory. Repeat the regression
+ignored `.amp/in/artifacts/column-layout/` directory, along with DRC/LVS
+results and a KLayout rendering. Repeat the regression
 with the same `tests/test_bitcell.py -v` command used above.
 
 ## c4m / PDKMaster comparison

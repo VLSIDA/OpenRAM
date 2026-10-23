@@ -96,7 +96,7 @@ class FoundryBitcellTest(unittest.TestCase):
     def test_peripheral_lvs(self):
         path = Path(self.temp.name)
         runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
-        for name in ("ihp_bldrv", "ihp_sense_amp"):
+        for name in ("ihp_bldrv", "ihp_sense_amp", "ihp_column_data"):
             with self.subTest(cell=name):
                 dut = factory.create(module_type=name)
                 dut.gds_write(str(path / (name + ".gds")))
@@ -110,7 +110,7 @@ class FoundryBitcellTest(unittest.TestCase):
                            "--netlist=" + str(path / (name + ".cdl")),
                            "--run_dir=" + str(path / (name + "-lvs")), "--disable_tap_extraction"]
                 # BLDRV's separate rails are must-connect at parent level.
-                # The sense amp matches without any implicit connections.
+                # The sense amp and routed column match without implicit joins.
                 if name == "ihp_bldrv":
                     command.append("--implicit_nets=vdd,gnd")
                 run = subprocess.run(command, capture_output=True, text=True)
@@ -200,16 +200,7 @@ class FoundryBitcellTest(unittest.TestCase):
     def test_loaded_column_write_read(self):
         # Opposite values in neighboring columns and the two extreme rows
         # distinguish column swaps, polarity errors, and half-select writes.
-        # The factory caches across this mixed layout/netlist test suite.
-        # Load hard-cell GDS before temporarily entering netlist-only mode.
-        for name in ("ihp_bldrv", "ihp_sense_amp"):
-            factory.create(module_type=name)
-        previous = OPTS.netlist_only
-        OPTS.netlist_only = True
-        try:
-            dut = factory.create(module_type="ihp_column_data")
-        finally:
-            OPTS.netlist_only = previous
+        dut = factory.create(module_type="ihp_column_data")
         path = Path(self.temp.name)
         dut.sp_write(str(path / "column.sp"))
         factory.create(module_type="bitcell_1port").sp_write(str(path / "bit.sp"))
@@ -279,6 +270,46 @@ class FoundryBitcellTest(unittest.TestCase):
                     self.assertIn(tag, values, run.stdout + run.stderr)
                     self.assertAlmostEqual(float(values[tag]), bit * supply,
                                            delta=.1 * supply, msg=f"{corner}: {tag}")
+
+    def test_column_data_layout(self):
+        import klayout.db as kdb
+        dut = factory.create(module_type="ihp_column_data")
+        self.assertAlmostEqual(dut.width, 12.24)
+        self.assertAlmostEqual(dut.height, 32.865)
+        self.assertEqual(list(dut.pins),
+                         ["bl_0", "br_0", "bl_1", "br_1", "bl_2", "br_2", "bl_3", "br_3",
+                          "sel_0", "sel_1", "sel_2", "sel_3", "pre_n", "wr_one", "wr_zero",
+                          "sae", "qp", "qn", "vdd", "gnd"])
+        for pin in dut.pins:
+            self.assertTrue(dut.get_pins(pin), pin)
+        path = Path(self.temp.name) / "column-layout.gds"
+        dut.gds_write(str(path))
+        actual = kdb.Layout()
+        actual.read(str(path))
+        source = kdb.Layout()
+        source.read(str(Path(os.environ["PDKPATH"]) / "libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds"))
+        parent = source.cell("RM_IHPSG13_1P_COLCTRL2")
+        imported = kdb.Layout()
+        imported.read(str(Path(OPTS.openram_tech) / "gds_lib/ihp_column_data.gds"))
+        shift = kdb.Trans(510, 33900)
+        for index in source.layer_indexes():
+            info = source.get_info(index)
+            if info.datatype != 0:
+                continue
+            with self.subTest(layer=str(info)):
+                result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
+                library = kdb.Region(imported.top_cell().begin_shapes_rec(imported.layer(info)))
+                self.assertTrue((result ^ library).is_empty(), "GDS export changed geometry")
+                reference = kdb.Region(parent.begin_shapes_rec(index)).transformed(shift)
+                self.assertTrue((result - reference).is_empty(), "Added non-foundry geometry")
+                if info.layer not in (8, 19, 10, 29, 30, 49, 50):
+                    devices = kdb.Region()
+                    for inst in parent.each_inst():
+                        if inst.cell.name in ("RM_IHPSG13_1P_BLDRV", "RSC_IHPSG13_DFPQD_MSAFFX2N"):
+                            for trans in inst.cell_inst.each_trans():
+                                devices += kdb.Region(inst.cell.begin_shapes_rec(index)).transformed(trans)
+                    self.assertTrue((result ^ devices.transformed(shift)).is_empty(),
+                                    "Retained devices changed or unrelated devices remain")
 
     def test_asymmetric_arrays(self):
         for rows, cols in [(2, 3), (4, 3)]:

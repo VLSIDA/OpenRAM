@@ -86,6 +86,124 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
     (tech / "sp_lib" / (name + ".sp")).write_text("\n".join(netlist))
 
 
+def import_column_data(layout, tech):
+    """Keep four drivers, one sense/latch, and their connected parent metal.
+
+    Discard the parent's other devices and their disconnected routing. Keep
+    connected routing stubs, rather than inventing a new routing topology.
+    The crop stops at the sense-cell bottom; it cuts no retained device.
+    """
+    parent = layout.cell("RM_IHPSG13_1P_COLCTRL2")
+    driver_name = "RM_IHPSG13_1P_BLDRV"
+    sense_name = "RSC_IHPSG13_DFPQD_MSAFFX2N"
+    blocks = []
+    for inst in parent.each_inst():
+        if inst.cell.name not in (driver_name, sense_name):
+            continue
+        for trans in inst.cell_inst.each_trans():
+            if inst.cell.name == driver_name:
+                col = {(0, False): 0, (5610, True): 1,
+                       (5610, False): 2, (11220, True): 3}[(trans.disp.x, trans.is_mirror())]
+                names = {"BLC": f"br_{col}", "BLC_SEL": "br_sel", "BLT": f"bl_{col}",
+                         "BLT_SEL": "bl_sel", "PRE_N": "pre_n", "SEL_P": f"sel_{col}",
+                         "WR_ONE": "wr_one", "WR_ZERO": "wr_zero", "VDD": "vdd", "VSS": "gnd"}
+                blocks.append((inst.cell, trans, f"driver_{col}", names, 2, "ihp_bldrv"))
+            else:
+                names = {"CP": "sae", "DN": "br_sel", "DP": "bl_sel", "QN": "qn",
+                         "QP": "qp", "VDD": "vdd", "VSS": "gnd"}
+                blocks.append((inst.cell, trans, "sense", names, 25, "ihp_sense_amp"))
+    if len(blocks) != 5:
+        raise ValueError("Expected four BLDRVs and one sense/latch")
+    ports = [p for col in range(4) for p in (f"bl_{col}", f"br_{col}")]
+    ports += [f"sel_{col}" for col in range(4)]
+    ports += ["pre_n", "wr_one", "wr_zero", "sae", "qp", "qn", "vdd", "gnd"]
+    clip = kdb.Region(kdb.Box(-800, -33900, 12245, -1035))
+    shift = kdb.Trans(510, 33900)
+    conductors = (8, 19, 10, 29, 30, 49, 50)
+    regions, seeds = {}, {}
+    vias = [i for i in parent.each_inst() if i.cell.name.startswith(("M2_", "M3_", "viagen"))]
+    for index in layout.layer_indexes():
+        info = layout.get_info(index)
+        region = kdb.Region()
+        seed = kdb.Region()
+        for child, trans, *_ in blocks:
+            seed += kdb.Region(child.begin_shapes_rec(index)).transformed(trans)
+        if not (seed - clip).is_empty():
+            raise ValueError(f"Column crop truncates a retained device on {info}")
+        region += seed
+        for inst in vias:
+            for trans in inst.cell_inst.each_trans():
+                region += kdb.Region(inst.cell.begin_shapes_rec(index)).transformed(trans)
+        if info.datatype == 0 and info.layer in conductors:
+            region += kdb.Region(parent.shapes(index))
+        regions[info.layer, info.datatype] = (region & clip).merged()
+        seeds[info.layer, info.datatype] = seed
+
+    # Pure metal/via connectivity: retain a routing component only if it
+    # touches a conductor belonging to one of the five retained hard cells.
+    trace = kdb.LayoutToNetlist("routes", layout.dbu)
+    wires = {layer: regions[layer, 0].dup() for layer in conductors}
+    for layer, region in wires.items():
+        trace.register(region, str(layer))
+        trace.connect(region)
+    for lower, via, upper in ((8, 19, 10), (10, 29, 30), (30, 49, 50)):
+        trace.connect(wires[lower], wires[via])
+        trace.connect(wires[via], wires[upper])
+    trace.extract_netlist()
+    kept = {layer: kdb.Region() for layer in conductors}
+    for net in trace.netlist().top_circuit().each_net():
+        parts = {layer: trace.shapes_of_net(net, region, True) for layer, region in wires.items()}
+        if any(not (part & seeds[layer, 0]).is_empty() for layer, part in parts.items()):
+            for layer, part in parts.items():
+                kept[layer] += part
+    for layer, region in kept.items():
+        regions[layer, 0] = region
+    dest = kdb.Layout()
+    dest.dbu = layout.dbu
+    cell = dest.create_cell("ihp_column_data")
+    for (layer, purpose), region in regions.items():
+        cell.shapes(dest.layer(layer, purpose)).insert(region.transformed(shift))
+    found = set()
+    for child, trans, _, names, purpose, _ in blocks:
+        for index in layout.layer_indexes():
+            info = layout.get_info(index)
+            if info.datatype != purpose:
+                continue
+            it = child.begin_shapes_rec(index)
+            while not it.at_end():
+                shape = it.shape()
+                if shape.is_text():
+                    pin = names[shape.text.string.rstrip("!")]
+                    if pin in ports:
+                        point = shift * (trans * (it.trans() * kdb.Point(shape.text.trans.disp)))
+                        cell.shapes(dest.layer(info.layer, 25)).insert(kdb.Text(pin, kdb.Trans(point)))
+                        found.add(pin)
+                it.next()
+    if found != set(ports):
+        raise ValueError(f"Missing column pins: {set(ports) - found}")
+    cell.shapes(dest.layer(189, 4)).insert(cell.bbox())
+    dest.write(str(tech / "gds_lib/ihp_column_data.gds"))
+
+    # Flatten the already imported, verified peripheral circuits. Source
+    # pin order agrees with names insertion order; dimensions are unchanged.
+    header = (tech / "sp_lib/ihp_bldrv.sp").read_text().split(".subckt")[0]
+    lines = [header.rstrip(), ".subckt ihp_column_data " + " ".join(ports)]
+    for _, _, prefix, names, _, module in blocks:
+        source = (tech / "sp_lib" / (module + ".sp")).read_text().splitlines()
+        formal = next(line.split()[2:] for line in source if line.startswith(".subckt"))
+        mapping = dict(zip(formal, names.values()))
+        for line in source:
+            if line.startswith("X"):
+                tokens = line.split()
+                nodes = [mapping.get(n, prefix + "_" + n) for n in tokens[1:5]]
+                lines.append("X" + prefix + "_" + tokens[0][1:] + " " +
+                             " ".join(nodes + tokens[5:]))
+    if sum(line.startswith("X") for line in lines) != 107:
+        raise ValueError("Expected 107 column-data FETs")
+    lines.append(".ends ihp_column_data\n")
+    (tech / "sp_lib/ihp_column_data.sp").write_text("\n".join(lines))
+
+
 def import_frame(layout, tech, cdl):
     """Extract frame overlays, leaving the compiler's real bit instances intact.
 
@@ -215,6 +333,8 @@ def main():
                       {"CP": "cp", "DN": "dn", "DP": "dp", "QN": "qn", "QP": "qp",
                        "VDD": "vdd", "VSS": "gnd"}, 25, 19)
     print("Imported ihp_sense_amp: 19 FETs; clocked differential sense/latch")
+    import_column_data(layout, tech)
+    print("Imported ihp_column_data: four BLDRVs, one sense/latch, and connected parent routing")
     import_frame(layout, tech, cdl)
     print("Imported 16-row tap/strap, edge/corner, and 4-column M4 power overlays")
 

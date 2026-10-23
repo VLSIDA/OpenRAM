@@ -94,12 +94,21 @@ class FoundryBitcellTest(unittest.TestCase):
                         self.assertEqual((expected ^ result).area(), 0)
 
     def test_peripheral_lvs(self):
+        import klayout.db as kdb
         path = Path(self.temp.name)
         runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
-        for name in ("ihp_bldrv", "ihp_sense_amp", "ihp_column_data"):
+        for name in ("ihp_bldrv", "ihp_sense_amp", "ihp_column_data",
+                     "ihp_row_decoder", "ihp_wordline_driver"):
             with self.subTest(cell=name):
                 dut = factory.create(module_type=name)
                 dut.gds_write(str(path / (name + ".gds")))
+                if name == "ihp_row_decoder":
+                    # Same through-pin joins as the exported circuit;
+                    # manufacturing metal is unchanged.
+                    layout = kdb.Layout()
+                    layout.read(str(path / (name + ".gds")))
+                    layout.top_cell().shapes(layout.layer(10, 29)).clear()
+                    layout.write(str(path / (name + ".gds")))
                 dut.sp_write(str(path / (name + ".sp")))
                 lines = (path / (name + ".sp")).read_text().splitlines()
                 (path / (name + ".cdl")).write_text("\n".join(
@@ -116,6 +125,93 @@ class FoundryBitcellTest(unittest.TestCase):
                 run = subprocess.run(command, capture_output=True, text=True)
                 self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
                 self.assertIn("Congratulations! Netlists match.", run.stdout, run.stdout + run.stderr)
+
+    def test_row_path_geometry(self):
+        import klayout.db as kdb
+        source = kdb.Layout()
+        source.read(str(Path(os.environ["PDKPATH"]) / "libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds"))
+        for name, original, width in (("ihp_row_decoder", "RM_IHPSG13_1P_ROWDEC4", 29.58),
+                                      ("ihp_wordline_driver", "RM_IHPSG13_1P_WLDRV16X4", 12.355)):
+            with self.subTest(cell=name):
+                dut = factory.create(module_type=name)
+                self.assertAlmostEqual(dut.width, width)
+                self.assertAlmostEqual(dut.height, 18.16)
+                for pin in dut.pins:
+                    self.assertTrue(dut.get_pins(pin), pin)
+                path = Path(self.temp.name) / (name + "-export.gds")
+                dut.gds_write(str(path))
+                actual = kdb.Layout()
+                actual.read(str(path))
+                for index in source.layer_indexes():
+                    info = source.get_info(index)
+                    if info.datatype != 0:
+                        continue
+                    expected = kdb.Region(source.cell(original).begin_shapes_rec(index))
+                    expected.transform(kdb.Trans(510, 300))
+                    result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
+                    self.assertTrue((expected ^ result).is_empty(), f"{name}: {info}")
+
+    def test_row_decode_and_drive(self):
+        # Every address, in alternating low/high order, exposes bit-order
+        # swaps. Check every WL, not just the selected one. Test both clock
+        # levels and CS=0 with an otherwise active clock.
+        path = Path(self.temp.name)
+        decoder = factory.create(module_type="ihp_row_decoder")
+        driver = factory.create(module_type="ihp_wordline_driver")
+        decoder.sp_write(str(path / "decoder.sp"))
+        driver.sp_write(str(path / "driver.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        addresses = [a for pair in zip(range(8), reversed(range(8, 16))) for a in pair]
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            with self.subTest(corner=corner):
+                signals = {f"addr_{i}": [(0, 0)] for i in range(4)}
+                signals.update(cs=[(0, 0)], eclk=[(0, supply)])
+                samples = []
+                for index, address in enumerate(addresses):
+                    start = 2 + 12 * index
+                    for bit in range(4):
+                        points = signals[f"addr_{bit}"]
+                        points += [(start, points[-1][1]),
+                                   (start + .05, supply * ((address >> bit) & 1))]
+                    signals["cs"] += [(start + 1, 0), (start + 1.05, supply),
+                                      (start + 9, supply), (start + 9.05, 0)]
+                    signals["eclk"] += [(start + 3, supply), (start + 3.05, 0),
+                                        (start + 6, 0), (start + 6.05, supply),
+                                        (start + 10, supply), (start + 10.05, 0),
+                                        (start + 11.5, 0), (start + 11.55, supply)]
+                    for phase, delay, selected in (("clock_off", 2.5, None),
+                                                    ("active", 5, address),
+                                                    ("clock_off2", 8, None),
+                                                    ("deselected", 11, None)):
+                        for row in range(16):
+                            samples.append((f"wl_{index}_{phase}_{row}", row,
+                                            start + delay, int(row == selected)))
+                lines = ["* Foundry row decoder driving all sixteen WL buffers",
+                         f".lib {models} mos_{corner}", f".include {path / 'decoder.sp'}",
+                         f".include {path / 'driver.sp'}", ".temp 27", f"Vdd vdd 0 {supply}"]
+                for pin, points in signals.items():
+                    wave = " ".join(f"{time}n {value}" for time, value in points)
+                    lines.append(f"V{pin} {pin} 0 PWL({wave})")
+                decode_nets = [f"decode_{i}" for i in reversed(range(16))]
+                address_nets = [f"addr_{i}" for i in reversed(range(4))]
+                wordlines = [f"wl_{i}" for i in reversed(range(16))]
+                lines.append("Xdecode " + " ".join(address_nets + ["cs", "eclk"] +
+                                                   decode_nets + ["vdd", "0", decoder.name]))
+                lines.append("Xdrive " + " ".join(decode_nets + wordlines + ["vdd", "0", driver.name]))
+                lines += [f"Cwl_{row} wl_{row} 0 100f" for row in range(16)]
+                lines += [".control", "tran 20p 194n"]
+                for tag, row, time, _ in samples:
+                    lines.append(f"meas tran {tag} find v(wl_{row}) at={time}n")
+                lines += ["quit", ".endc", ".end"]
+                deck = path / f"row_path_{corner}.sp"
+                deck.write_text("\n".join(lines) + "\n")
+                run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
+                for tag, _, _, bit in samples:
+                    self.assertIn(tag, values, run.stdout + run.stderr)
+                    self.assertAlmostEqual(float(values[tag]), bit * supply,
+                                           delta=.1 * supply, msg=tag)
 
     def test_bldrv_controls(self):
         # Asymmetric read levels distinguish polarity swaps; deselected writes

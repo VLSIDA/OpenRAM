@@ -11,6 +11,17 @@ tech_modules = d.module_type()
 cell_properties = d.cell_properties()
 cell_properties.ptx.model_is_subckt = True
 
+# Unmodified foundry SRAM hard cell, imported by ../import_sram.py.
+# Both axes alternate; the core has no body taps of its own.
+cell_properties.bitcell_1port.mirror.x = True
+cell_properties.bitcell_1port.mirror.y = True
+cell_properties.bitcell_1port.storage_nets = ["NT", "NC"]
+cell_properties.bitcell_1port.wl_layer = "m3"
+cell_properties.bitcell_1port.vdd_layer = "m2"
+cell_properties.bitcell_1port.vdd_dir = "V"
+cell_properties.bitcell_1port.gnd_layer = "m2"
+cell_properties.bitcell_1port.gnd_dir = "V"
+
 ###################################################
 # GDS file info
 ###################################################
@@ -90,6 +101,8 @@ layer["topvia2"] = (133, 0)
 layer["topmetal2"] = (134, 0)
 layer["nwell"] = (31, 0)
 layer["pwell"] = (46, 0)
+layer["nimplant"] = (7, 0)
+layer["pimplant"] = (14, 0)
 layer["text"] = (63, 0)
 layer["boundary"] = (189, 4)
 layer["mem"] = (189, 4)
@@ -115,6 +128,8 @@ for openram_name, pdk_name in [("active", "Activ"),
                                ("topmetal2", "TopMetal2"),
                                ("nwell", "NWell"),
                                ("pwell", "PWell"),
+                               ("nimplant", "nSD"),
+                               ("pimplant", "pSD"),
                                ("text", "TEXT"),
                                ("boundary", "prBoundary"),
                                ("mem", "prBoundary")]:
@@ -126,9 +141,9 @@ for openram_name, pdk_name in [("active", "Activ"),
 parameter = {}
 parameter["min_tx_size"] = 0.13
 parameter["beta"] = 2
-parameter["6T_inv_nmos_size"] = 0.26
-parameter["6T_inv_pmos_size"] = 0.26
-parameter["6T_access_size"] = 0.26
+parameter["6T_inv_nmos_size"] = 0.30
+parameter["6T_inv_pmos_size"] = 0.15
+parameter["6T_access_size"] = 0.30
 parameter["le_tau"] = 2.25
 parameter["cap_relative_per_ff"] = 7.5
 parameter["dff_clk_cin"] = 30.6
@@ -167,6 +182,40 @@ drc["minwidth_via3"] = 0.19
 drc["via3_to_via3"] = 0.22
 drc["minwidth_via4"] = 0.19
 drc["via4_to_via4"] = 0.22
+
+# OpenRAM initializes contact measurements even when loading a hard cell.
+# Ordinary (non-SRAM) rules from the SG13G2 public deck; no SRAM relaxation
+# is applied to generated routing. These do not constitute a complete port.
+drc.add_layer("nwell", width=0.62, spacing=1.8)
+drc.add_enclosure("nwell", "active", enclosure=0.31)
+# P-substrate is implicit; do not impose an artificial well enclosure.
+drc.add_layer("pwell", width=0, spacing=0)
+drc.add_enclosure("pwell", "active", enclosure=0)
+drc.add_layer("implant", width=0.31, spacing=0.31)
+drc.add_enclosure("implant", "active", enclosure=0.03)
+drc["poly_to_active"] = 0.07
+drc["poly_extend_active"] = 0.18
+drc["poly_to_contact"] = 0.14
+drc["active_contact_to_gate"] = 0.11
+drc["poly_contact_to_gate"] = 0.14
+drc["minarea_active"] = 0.122
+drc["minarea_poly"] = 0.09
+drc["minarea_m1"] = 0.09
+for metal in ("m2", "m3", "m4", "m5"):
+    drc["minarea_" + metal] = 0.144
+drc.add_enclosure("active", "contact", enclosure=0.07)
+drc.add_enclosure("poly", "contact", enclosure=0.07)
+drc.add_enclosure("m1", "contact", enclosure=0, extension=0.05)
+for lower, via, upper in (m1_stack, m2_stack, m3_stack, m4_stack):
+    # Symmetric 0.05 enclosure satisfies the directional enclosure rules.
+    drc.add_enclosure(lower, via, enclosure=0.05)
+    drc.add_enclosure(upper, via, enclosure=0.05)
+drc.add_layer("topvia1", width=0.42, spacing=0.42)
+drc.add_enclosure("m5", "topvia1", enclosure=0.10)
+drc.add_enclosure("topmetal1", "topvia1", enclosure=0.42)
+drc.add_layer("topvia2", width=0.90, spacing=1.06)
+drc.add_enclosure("topmetal1", "topvia2", enclosure=0.50)
+drc.add_enclosure("topmetal2", "topvia2", enclosure=0.50)
 
 ###################################################
 # Spice parameters

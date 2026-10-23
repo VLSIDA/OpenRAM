@@ -115,6 +115,46 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
     (tech / "sp_lib" / (name + ".sp")).write_text("\n".join(netlist))
 
 
+def connected_parent_regions(layout, parent, blocks, clip):
+    """Keep selected devices and parent routing connected to their metal."""
+    conductors = (8, 19, 10, 29, 30, 49, 50)
+    regions, seeds = {}, {}
+    vias = [i for i in parent.each_inst() if i.cell.name.startswith(("M2_", "M3_", "viagen"))]
+    for index in layout.layer_indexes():
+        info = layout.get_info(index)
+        seed = kdb.Region()
+        for child, trans in blocks:
+            seed += kdb.Region(child.begin_shapes_rec(index)).transformed(trans)
+        if not (seed - clip).is_empty():
+            raise ValueError(f"Peripheral crop truncates a retained device on {info}")
+        region = seed.dup()
+        for inst in vias:
+            for trans in inst.cell_inst.each_trans():
+                region += kdb.Region(inst.cell.begin_shapes_rec(index)).transformed(trans)
+        if info.datatype == 0 and info.layer in conductors:
+            region += kdb.Region(parent.shapes(index))
+        regions[info.layer, info.datatype] = (region & clip).merged()
+        seeds[info.layer, info.datatype] = seed
+    trace = kdb.LayoutToNetlist("routes", layout.dbu)
+    wires = {layer: regions[layer, 0].dup() for layer in conductors}
+    for layer, region in wires.items():
+        trace.register(region, str(layer))
+        trace.connect(region)
+    for lower, via, upper in ((8, 19, 10), (10, 29, 30), (30, 49, 50)):
+        trace.connect(wires[lower], wires[via])
+        trace.connect(wires[via], wires[upper])
+    trace.extract_netlist()
+    kept = {layer: kdb.Region() for layer in conductors}
+    for net in trace.netlist().top_circuit().each_net():
+        parts = {layer: trace.shapes_of_net(net, region, True) for layer, region in wires.items()}
+        if any(not (part & seeds[layer, 0]).is_empty() for layer, part in parts.items()):
+            for layer, part in parts.items():
+                kept[layer] += part
+    for layer, region in kept.items():
+        regions[layer, 0] = region
+    return regions
+
+
 def import_column_data(layout, tech):
     """Keep four drivers, one sense/latch, and their connected parent metal.
 
@@ -148,45 +188,7 @@ def import_column_data(layout, tech):
     ports += ["pre_n", "wr_one", "wr_zero", "sae", "qp", "qn", "vdd", "gnd"]
     clip = kdb.Region(kdb.Box(-800, -33900, 12245, -1035))
     shift = kdb.Trans(510, 33900)
-    conductors = (8, 19, 10, 29, 30, 49, 50)
-    regions, seeds = {}, {}
-    vias = [i for i in parent.each_inst() if i.cell.name.startswith(("M2_", "M3_", "viagen"))]
-    for index in layout.layer_indexes():
-        info = layout.get_info(index)
-        region = kdb.Region()
-        seed = kdb.Region()
-        for child, trans, *_ in blocks:
-            seed += kdb.Region(child.begin_shapes_rec(index)).transformed(trans)
-        if not (seed - clip).is_empty():
-            raise ValueError(f"Column crop truncates a retained device on {info}")
-        region += seed
-        for inst in vias:
-            for trans in inst.cell_inst.each_trans():
-                region += kdb.Region(inst.cell.begin_shapes_rec(index)).transformed(trans)
-        if info.datatype == 0 and info.layer in conductors:
-            region += kdb.Region(parent.shapes(index))
-        regions[info.layer, info.datatype] = (region & clip).merged()
-        seeds[info.layer, info.datatype] = seed
-
-    # Pure metal/via connectivity: retain a routing component only if it
-    # touches a conductor belonging to one of the five retained hard cells.
-    trace = kdb.LayoutToNetlist("routes", layout.dbu)
-    wires = {layer: regions[layer, 0].dup() for layer in conductors}
-    for layer, region in wires.items():
-        trace.register(region, str(layer))
-        trace.connect(region)
-    for lower, via, upper in ((8, 19, 10), (10, 29, 30), (30, 49, 50)):
-        trace.connect(wires[lower], wires[via])
-        trace.connect(wires[via], wires[upper])
-    trace.extract_netlist()
-    kept = {layer: kdb.Region() for layer in conductors}
-    for net in trace.netlist().top_circuit().each_net():
-        parts = {layer: trace.shapes_of_net(net, region, True) for layer, region in wires.items()}
-        if any(not (part & seeds[layer, 0]).is_empty() for layer, part in parts.items()):
-            for layer, part in parts.items():
-                kept[layer] += part
-    for layer, region in kept.items():
-        regions[layer, 0] = region
+    regions = connected_parent_regions(layout, parent, [(b[0], b[1]) for b in blocks], clip)
     dest = kdb.Layout()
     dest.dbu = layout.dbu
     cell = dest.create_cell("ihp_column_data")
@@ -231,6 +233,58 @@ def import_column_data(layout, tech):
         raise ValueError("Expected 107 column-data FETs")
     lines.append(".ends ihp_column_data\n")
     (tech / "sp_lib/ihp_column_data.sp").write_text("\n".join(lines))
+
+
+def import_column_decoder(layout, tech, cdl):
+    """Retain COLDEC2's combinational gates, not its BIST registers/fill."""
+    parent = layout.cell("RM_IHPSG13_1P_COLDEC2")
+    blocks = [(i.cell, i.trans) for i in parent.each_inst()
+              if i.cell.name in ("RSC_IHPSG13_INVX2", "RSC_IHPSG13_NAND2X2")]
+    if len(blocks) != 12:
+        raise ValueError("Expected eight inverters and four NAND2 column-decode gates")
+    regions = connected_parent_regions(layout, parent, blocks,
+                                       kdb.Region(kdb.Box(16320, -21525, 32640, -12075)))
+    dest = kdb.Layout()
+    dest.dbu = layout.dbu
+    cell = dest.create_cell("ihp_column_decoder")
+    for (layer, purpose), region in regions.items():
+        cell.shapes(dest.layer(layer, purpose)).insert(region)
+    # Removing fillers leaves separate VDD rails. Join them physically in
+    # M1 and use the empty left margin for an M2 top-to-bottom strap.
+    for y, right in ((-21000, 32130), (-12600, 18870)):
+        cell.shapes(dest.layer(8, 0)).insert(kdb.Box(16320, y - 200, right, y + 200))
+        cell.shapes(dest.layer(19, 0)).insert(kdb.Box(16425, y - 95, 16615, y + 95))
+    cell.shapes(dest.layer(10, 0)).insert(kdb.Box(16320, -21200, 16720, -12400))
+    # These are the two inverter-chain inputs, traced against the source
+    # NAND/output connectivity. The shipped source labels only the register
+    # inputs, which are deliberately not part of this combinational view.
+    for pin, x, y in (("addr_1", 17240, -18580), ("addr_0", 17240, -15020)):
+        cell.shapes(dest.layer(8, 25)).insert(kdb.Text(pin, kdb.Trans(x, y)))
+    for child, trans in blocks:
+        for shape in child.shapes(layout.layer(8, 2)).each():
+            if shape.is_text() and shape.text.string in ("VDD!", "VSS!"):
+                point = trans * kdb.Point(shape.text.trans.disp)
+                pin = "vdd" if shape.text.string == "VDD!" else "gnd"
+                cell.shapes(dest.layer(8, 25)).insert(kdb.Text(pin, kdb.Trans(point)))
+    for index in layout.layer_indexes():
+        info = layout.get_info(index)
+        for shape in parent.shapes(index).each():
+            if shape.is_text() and shape.text.string in [f"ADDR_DEC<{i}>" for i in range(4)]:
+                pin = "sel_" + shape.text.string[-2]
+                cell.shapes(dest.layer(info.layer, 25)).insert(kdb.Text(pin, shape.text.trans))
+
+    statements = re.sub(r"\n\+\s*", " ", cdl)
+    body = re.search(r"^\.SUBCKT RM_IHPSG13_64x16_c2_1P_COLDEC2[^\n]*\n(.*?)^\.ENDS",
+                     statements, re.MULTILINE | re.DOTALL)[1]
+    gates = [line for line in body.splitlines() if re.match(r"XI(?:1|2|3|13)<", line)]
+    if len(gates) != 12:
+        raise ValueError("Expected twelve combinational column-decode CDL instances")
+    ports = {"padr_int<1>": "addr_1", "padr_int<0>": "addr_0",
+             **{f"ADDR_DEC<{i}>": f"sel_{i}" for i in range(4)}, "VDD": "vdd", "VSS": "gnd"}
+    subset = "\n.SUBCKT column_decode_subset " + " ".join(ports) + "\n"
+    subset += "\n".join(gates) + "\n.ENDS\n"
+    import_peripheral(dest, tech, cdl + subset, "ihp_column_decoder", cell.name,
+                      "column_decode_subset", dict(zip(ports.values(), ports.values())), (25,), 32)
 
 
 def import_frame(layout, tech, cdl):
@@ -377,6 +431,8 @@ def main():
     print("Imported ihp_wordline_driver: 64 FETs; sixteen noninverting buffers")
     import_column_data(layout, tech)
     print("Imported ihp_column_data: four BLDRVs, one sense/latch, and connected parent routing")
+    import_column_decoder(layout, tech, cdl)
+    print("Imported ihp_column_decoder: 32 FETs; combinational 2-to-4 decode without BIST registers")
     import_frame(layout, tech, cdl)
     print("Imported 16-row tap/strap, edge/corner, and 4-column M4 power overlays")
 

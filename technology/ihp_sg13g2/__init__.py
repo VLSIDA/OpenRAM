@@ -23,6 +23,7 @@ ihp_lib_ngspice = os.path.join(open_pdks, "ngspice", ".spiceinit")
 if not os.path.exists(ihp_lib_ngspice):
     raise SystemError("Did not find {} under {}".format(ihp_lib_ngspice, open_pdks))
 os.environ["SPICE_MODEL_DIR"] = spice_model_dir
+os.environ["SPICE_USERINIT_DIR"] = os.path.dirname(ihp_lib_ngspice)
 
 open_pdks = os.path.abspath(open_pdks)
 ihp_magicrc = os.path.join(open_pdks, 'magic', "ihp-sg13g2.magicrc")

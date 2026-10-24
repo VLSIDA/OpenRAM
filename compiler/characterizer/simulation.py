@@ -13,6 +13,18 @@ from openram import tech
 from openram import OPTS
 
 
+class _probe_name(str):
+    """A real node per port, using the measurement API's ``format(port)``."""
+
+    def __new__(cls, nodes):
+        obj = super().__new__(cls, next(iter(nodes.values())))
+        obj.nodes = nodes
+        return obj
+
+    def format(self, port):
+        return self.nodes[port]
+
+
 class simulation():
 
     def __init__(self, sram, spfile, corner):
@@ -499,6 +511,9 @@ class simulation():
         Exclude portions of SRAM from timing graph which are not relevant
         """
 
+        if callable(getattr(self.sram, "get_characterization_probes", None)):
+            return
+
         # other initializations can only be done during analysis when a bit has been selected
         # for testing.
         if OPTS.top_process != 'memchar':
@@ -512,6 +527,26 @@ class simulation():
         """
         Sets important names for characterization such as Sense amp enable and internal bit nets.
         """
+
+        get_probes = getattr(self.sram, "get_characterization_probes", None)
+        if callable(get_probes):
+            # The optional technology contract returns complete hierarchical SPICE
+            # nodes, not generic bank aliases or templates. Storage nodes still
+            # come from get_cell_name and get_storage_net_names.
+            self.characterization_probes = {}
+            for port in self.all_ports:
+                probes = get_probes(self.wordline_row, self.bitline_column, port)
+                debug.check(isinstance(probes, dict),
+                            "get_characterization_probes must return a dict")
+                for key in ("bl", "br", "sen"):
+                    debug.check(isinstance(probes.get(key), str) and probes[key].strip()
+                                and not any(c in probes[key] for c in "{} \t\r\n"),
+                                "Characterization probe {0} must be a real SPICE node".format(key))
+                self.characterization_probes[port] = probes
+            for key in ("bl", "br", "sen"):
+                setattr(self, key + "_name", _probe_name({port: probes[key]
+                        for port, probes in self.characterization_probes.items()}))
+            return
 
         port = self.read_ports[0]
         if not OPTS.use_pex or (OPTS.use_pex and OPTS.pex_exe[0] == "calibre"):
@@ -571,6 +606,10 @@ class simulation():
         """
         Creates timing graph to generate the timing paths for the SRAM output.
         """
+
+        if callable(getattr(self.sram, "get_characterization_probes", None)):
+            self.sram_instance_name = "X{}".format(self.sram.name)
+            return
 
         # Make exclusions dependent on the bit being tested.
         self.sram.clear_exclude_bits() # Removes previous bit exclusions

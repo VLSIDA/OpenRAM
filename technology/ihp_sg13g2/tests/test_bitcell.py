@@ -74,7 +74,11 @@ class FoundryBitcellTest(unittest.TestCase):
                 if name == "ihp_bldrv":
                     self.assertEqual(cell.get_pin("bl").layer, "m2")
                     self.assertEqual(cell.get_pin("bl_sel").layer, "m3")
-                    self.assertAlmostEqual(cell.get_pin("bl").cx(), 1.15)
+                    # Access must contain the shifted foundry BLT label;
+                    # decomposition may change the rectangle's center.
+                    pin = cell.get_pin("bl")
+                    self.assertTrue(pin.lx() <= 1.15 <= pin.rx())
+                    self.assertTrue(pin.by() <= 17.325 <= pin.uy())
                 else:
                     self.assertEqual(cell.get_pin("cp").layer, "m2")
                     self.assertEqual(cell.get_pin("dp").layer, "m1")
@@ -98,17 +102,23 @@ class FoundryBitcellTest(unittest.TestCase):
         path = Path(self.temp.name)
         runner = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech/lvs/run_lvs.py"
         for name in ("ihp_bldrv", "ihp_sense_amp", "ihp_column_data",
-                     "ihp_row_decoder", "ihp_wordline_driver", "ihp_column_decoder"):
+                     "ihp_row_decoder", "ihp_wordline_driver", "ihp_column_decoder",
+                     "controller", "delay_high", "delay_mux", "inv", "and2", "nor2", "dff"):
             with self.subTest(cell=name):
-                dut = factory.create(module_type=name)
+                if name.startswith("ihp_"):
+                    dut = factory.create(module_type=name)
+                else:
+                    dut = factory.create(module_type="ihp_control_cell", kind=name)
+                for pin in dut.pins:
+                    self.assertTrue(dut.get_pins(pin), pin)
                 dut.gds_write(str(path / (name + ".gds")))
-                if name == "ihp_row_decoder":
-                    # Same through-pin joins as the exported circuit;
-                    # manufacturing metal is unchanged.
-                    layout = kdb.Layout()
-                    layout.read(str(path / (name + ".gds")))
-                    layout.top_cell().shapes(layout.layer(10, 29)).clear()
-                    layout.write(str(path / (name + ".gds")))
+                # Same through-pin joins as the exported circuit;
+                # manufacturing metal is unchanged.
+                layout = kdb.Layout()
+                layout.read(str(path / (name + ".gds")))
+                for metal in (8, 10, 30, 50, 67):
+                    layout.top_cell().shapes(layout.layer(metal, 29)).clear()
+                layout.write(str(path / (name + ".gds")))
                 dut.sp_write(str(path / (name + ".sp")))
                 lines = (path / (name + ".sp")).read_text().splitlines()
                 (path / (name + ".cdl")).write_text("\n".join(
@@ -218,6 +228,8 @@ class FoundryBitcellTest(unittest.TestCase):
         decoder = factory.create(module_type="ihp_column_decoder")
         self.assertEqual(list(decoder.pins), ["addr_1", "addr_0"] +
                          [f"sel_{i}" for i in range(4)] + ["vdd", "gnd"])
+        for pin in decoder.pins:
+            self.assertTrue(decoder.get_pins(pin), pin)
         decoder.sp_write(str(path / "column_decode.sp"))
         models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
         # Include both asymmetric addresses and transitions in both directions.
@@ -254,6 +266,41 @@ class FoundryBitcellTest(unittest.TestCase):
                         self.assertIn(tag, values, run.stdout + run.stderr)
                         self.assertAlmostEqual(float(values[tag]), supply * (col == address),
                                                delta=.1 * supply, msg=tag)
+
+    def test_input_register_capture(self):
+        path = Path(self.temp.name)
+        registers = factory.create(module_type="ihp_input_registers", bits=2)
+        registers.sp_write(str(path / "registers.sp"))
+        models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
+        # Data changes after rising capture but before falling clock. A
+        # negative-edge, transparent, inverted, or swapped-bit implementation
+        # gives different results on these asymmetric patterns.
+        for corner, supply in (("tt", 1.2), ("ss", 1.08), ("ff", 1.32)):
+            with self.subTest(corner=corner):
+                lines = ["* Positive-edge input-register contract",
+                         f".lib {models} mos_{corner}", f".include {path / 'registers.sp'}",
+                         ".temp 27", f"Vdd vdd 0 {supply}",
+                         f"Vclk clk 0 PULSE(0 {supply} 2n 50p 50p 4.95n 10n)",
+                         f"Vd0 d0 0 PWL(0 {supply} 3.5n {supply} 3.55n 0 13.5n 0 13.55n {supply})",
+                         f"Vd1 d1 0 PWL(0 0 3.5n 0 3.55n {supply} 23.5n {supply} 23.55n 0)",
+                         f"Xregs d0 d1 q0 q1 clk vdd 0 {registers.cell_name}",
+                         "Cq0 q0 0 5f", "Cq1 q1 0 5f", ".control", "tran 20p 40n"]
+                expected = {}
+                for cycle, bits in enumerate(((1, 0), (0, 1), (1, 1), (1, 0))):
+                    for offset in (5, 9):
+                        for bit, value in enumerate(bits):
+                            tag = f"q{bit}_{cycle}_{offset}"
+                            lines.append(f"meas tran {tag} find v(q{bit}) at={10 * cycle + offset}n")
+                            expected[tag] = value * supply
+                lines += ["quit", ".endc", ".end"]
+                deck = path / f"registers_{corner}.sp"
+                deck.write_text("\n".join(lines) + "\n")
+                run = subprocess.run(["ngspice", "-b", str(deck)], capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                values = dict(re.findall(r"^(\w+)\s*=\s*([-\d.eE+]+)", run.stdout, re.MULTILINE))
+                for tag, voltage in expected.items():
+                    self.assertIn(tag, values, run.stdout + run.stderr)
+                    self.assertAlmostEqual(float(values[tag]), voltage, delta=.1 * supply, msg=tag)
 
     def test_bldrv_controls(self):
         # Asymmetric read levels distinguish polarity swaps; deselected writes
@@ -421,17 +468,13 @@ class FoundryBitcellTest(unittest.TestCase):
                 lines = ["* Framed memory slice; lumped loads, no PEX",
                          f".lib {models} mos_{corner}", f".include {netlist}",
                          ".temp 27", f"Vdd vdd 0 {supply}"]
-                if addressed:
-                    column_decoder = factory.create(module_type="ihp_column_decoder")
-                    column_decoder.sp_write(str(path / "column_decoder.sp"))
-                    lines += [f".include {path / 'column_decoder.sp'}",
-                              "Xcolumn col_1 col_0 sel_0 sel_1 sel_2 sel_3 vdd 0 " + column_decoder.name]
                 for pin, points in signals.items():
                     wave = " ".join(f"{time}n {voltage}" for time, voltage in points)
                     lines.append(f"V{pin} {pin} 0 PWL({wave})")
                 connections = ([f"addr_{i}" for i in reversed(range(4))] + ["cs", "eclk"]
                                if addressed else [f"wl_{row}" for row in range(16)])
-                connections += [f"sel_{col}" for col in range(4)]
+                connections += (["col_1", "col_0"] if addressed else
+                                [f"sel_{col}" for col in range(4)])
                 for group in range(groups):
                     # The second group writes complementary data to a
                     # separate word bit, exposing cross-group shorts/swaps.
@@ -576,6 +619,37 @@ class FoundryBitcellTest(unittest.TestCase):
         for rows, cols in ((32, 4), (16, 2), (16, 6), (16, 36)):
             with self.subTest(rows=rows, cols=cols), self.assertRaises(ValueError):
                 factory.create(module_type="ihp_bitcell_array", rows=rows, cols=cols)
+
+    def test_synchronous_compiler_functional(self):
+        from openram.characterizer import functional
+        settings = {key: getattr(OPTS, key) for key in
+                    ("netlist_only", "analytical_delay", "trim_netlist", "use_pex", "use_nix",
+                     "spice_name", "spice_exe", "num_sim_threads")}
+        try:
+            OPTS.netlist_only = True
+            OPTS.analytical_delay = False
+            OPTS.trim_netlist = False
+            OPTS.use_pex = False
+            OPTS.use_nix = False  # Use the selected IIC-OSIC toolchain.
+            OPTS.spice_name = "ngspice"
+            OPTS.spice_exe = openram.find_exe("ngspice")
+            OPTS.num_sim_threads = 1
+            config = openram.sram_config(word_size=2, num_words=64, words_per_row=4)
+            macro = openram.sram(sram_config=config, name="ihp_sync_test")
+            self.assertEqual(list(macro.s.pins),
+                             ["din0[0]", "din0[1]"] + [f"addr0[{i}]" for i in range(6)]
+                             + ["csb0", "web0", "clk0", "dout0[0]", "dout0[1]", "VDD", "VSS"])
+            # Different data bits and random row/column addresses catch
+            # positional pin swaps and an incorrect binary-column mapping.
+            check = functional(macro.s, corner=("TT", 1.2, 27), cycles=24, period=16)
+            success, message = check.run()
+            self.assertTrue(success, message)
+            with self.assertRaises(ValueError):
+                openram.sram(sram_config=openram.sram_config(
+                    word_size=2, num_words=32, words_per_row=4), name="unsupported_ihp")
+        finally:
+            for key, value in settings.items():
+                setattr(OPTS, key, value)
 
 
 if __name__ == "__main__":

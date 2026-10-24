@@ -392,11 +392,19 @@ class stimuli():
             # ngspice 27+ supports threading with "set num_threads=4" in the stimulus file or a .spiceinit
             # Measurements can't be made with a raw file set in ngspice
             # -r {2}timing.raw
-            ng_cfg = open("{}.spiceinit".format(OPTS.openram_temp), "w")
-            ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
-            ng_cfg.write("set ngbehavior=hsa\n")
-            ng_cfg.write("set ng_nomodcheck\n")
-            ng_cfg.close()
+            with open("{}.spiceinit".format(OPTS.openram_temp), "w") as ng_cfg:
+                # Our local initialization takes precedence over the selected
+                # PDK's optional initialization. Retain its OSDI loads and paths.
+                init_dir = os.environ.get("SPICE_USERINIT_DIR")
+                if init_dir:
+                    try:
+                        with open(os.path.join(init_dir, ".spiceinit")) as pdk_init:
+                            ng_cfg.write(pdk_init.read() + "\n")
+                    except FileNotFoundError:
+                        pass
+                ng_cfg.write("set num_threads={}\n".format(OPTS.num_sim_threads))
+                ng_cfg.write("set ngbehavior=hsa\n")
+                ng_cfg.write("set ng_nomodcheck\n")
 
             cmd = "{0} -b -o {2}timing.lis {1}".format(OPTS.spice_exe,
                                                        temp_stim,

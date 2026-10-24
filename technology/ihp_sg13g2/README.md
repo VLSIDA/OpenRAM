@@ -1,13 +1,17 @@
-# SG13G2 foundry-bitcell bring-up
+# IHP SG13G2 SRAM technology
 
-The IHP technology now supplies `gds_lib/cell_1rw.gds` and
+The IHP technology supplies `gds_lib/cell_1rw.gds` and
 `sp_lib/cell_1rw.sp` for OpenRAM's existing `bitcell_1port` hard-cell class.
-No custom bitcell class or change to the generic compiler is needed.
-The explicit `ihp_bitcell_array` module also assembles a foundry-framed
+The explicit `ihp_bitcell_array` module assembles a foundry-framed
 16-row array with the shipped taps, ends/corners, row supply straps, and M4
-feeds. **This is not a complete, tapeout-ready OpenRAM SRAM port.** Replica
-integration, peripherals, complete-macro verification, and characterization
-remain. The generic compiler has not been switched to this array globally.
+feeds. A technology-specific synchronous top now integrates the combined
+foundry peripherals through the normal compiler construction API.
+The initial compiler organization is 64 words × 1..8 data bits, one RW port,
+one bank, four-way column selection, and full-word writes without spares.
+**This is not a tapeout-qualified OpenRAM SRAM port.** Representative complete
+macros pass public no-density DRC and strict LVS; density/fill, extracted timing,
+and broader qualification remain required. Other technologies
+retain the generic SRAM top and array implementations.
 
 ## Rebuild and test inside IIC-OSIC
 
@@ -19,6 +23,10 @@ R=/foss/designs/ihp-openram/OpenRAM
 python3 "$R/technology/ihp_sg13g2/import_sram.py"
 python3 "$R/technology/ihp_sg13g2/tests/test_bitcell.py" -v
 ```
+
+Layout import/routing requires the KLayout Python API, NumPy, and Matplotlib;
+electrical tests require ngspice with the selected PDK's PSP OSDI models.
+These dependencies are already present in the IIC-OSIC environment used here.
 
 The importer uses the installed PDK's
 `libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds` and matching CDL.
@@ -94,7 +102,7 @@ outside this standalone-array check.
 
 LVS uses strict top-level ports and **no implicit-net joins**. Its separate
 view removes child text labels (otherwise storage probes become macro
-ports in flat extraction) and only Metal2/Metal3 datatype-29 `lvsres`
+ports in flat extraction) and only Metal1–Metal5 datatype-29 `lvsres`
 recognition markers. This implements the same through-pin joining as the
 five-port netlist; no manufacturing polygons, contacts, or SRAM marker are
 removed. The LVS CDL changes X model calls to M devices for the PDK reader.
@@ -127,7 +135,7 @@ the real array taps; they are not contacts magically added to the core GDS.
 - Asymmetric 3-column × 2-row and 3-column × 4-row arrays have correct repeat
   dimensions, bitline positions, and wordline positions.
 - KLayout XOR confirms unchanged source polygons after translation.
-- Four API/geometry regression tests pass, including the complete framed
+- API/geometry regression tests include the complete framed
   16×32 matrix comparison against the shipped GDS.
 - All eight supported widths (4, 8, 12, 16, 20, 24, 28, 32 columns) pass
   installed-PDK main/maximal DRC with density disabled and the strict LVS
@@ -170,7 +178,7 @@ available as explicit hard cells below, but neither peripheral is enabled
 in the generic SRAM assembly. An IHP column-data hard cell now combines
 them with connected source-parent routing and without duplicating BLDRV's
 precharge/mux circuitry. The memory slice below joins these blocks to the
-framed array; bank decoding/control integration remains outstanding.
+framed array; the synchronous top described later adds decoding and control.
 
 ## BLDRV hard-cell bring-up
 
@@ -284,7 +292,8 @@ Bring-up GDS/SPICE, reference DRC, LVS, and the nominal waveform probe are
 in the sibling repo's locally ignored `.amp/in/artifacts/sense-amp/`.
 The column assembly below preserves the foundry placement and physically
 joins BLDRV's supplies. The slice below validates the array connections;
-extracted parasitics and bank integration remain outstanding.
+the later synchronous top adds bank-level integration. Extracted parasitics
+remain outstanding.
 
 ## Four-column physical assembly
 
@@ -489,8 +498,8 @@ python3 technology/ihp_sg13g2/tests/verify_array.py --cell ihp_wordline_driver \
 
 The existing `tests/test_bitcell.py -v` command includes source-geometry,
 LVS, and decoder-to-driver electrical regressions. The assembly below
-integrates the row path with the slice; column-address/control adaptation,
-a complete bank interface and post-layout characterization remain.
+integrates the row path with the slice; later sections add column addressing
+and the synchronous compiler interface. Post-layout characterization remains.
 
 ## Row-addressed memory assembly
 
@@ -498,12 +507,13 @@ a complete bank interface and post-layout characterization remain.
 the foundry decoder and sixteen wordline buffers to `ihp_memory_slice`.
 Supported physical widths remain 4..32 columns in groups of four, with
 16 rows. This removes the external one-hot wordline interface; it does
-not yet provide the complete synchronous compiler/bank interface.
+not itself provide the synchronous compiler interface supplied by `ihp_sram`.
 
-Ordered ports are `addr_3 ... addr_0 cs eclk`, then `sel_0 ... sel_3`,
+Ordered ports are `addr_3 ... addr_0 cs eclk`, then `col_1 col_0`,
 then each word-bit group's `pre_n_g sae_g wr_one_g wr_zero_g qp_g qn_g`,
 then `vdd gnd`. Row addressing is binary and selection requires CS high
-with ECLK low. Column selection, write-data encoding, masking, and
+with ECLK low. Column addressing is binary through the integrated decoder
+described below. Write-data encoding, masking, and
 precharge/sense timing are still externally supplied. No duplicate
 precharge, write-driver or mux blocks are added.
 
@@ -525,13 +535,14 @@ power continuity does not depend solely on substrate/well connectivity.
 The height remains 51.76 µm. Width is 41.25 µm plus the slice width:
 55.71 µm for four columns and 134.39 µm for 32 columns. These are
 intermediate assembly envelopes, not final SRAM macro area figures;
-clock/control, column decoding, data/mask registers and output buffering
+clock/control, data/mask registers and output buffering
 are not included. Space below the decoder remains available for that
 logic rather than representing a final compact floorplan.
 
 The physical checker supports `--row-memory` and retains raw and normalized
-views as for the existing slice. All eight supported widths (4, 8, …, 32
-columns) pass strict-port flat LVS with no implicit-net joins or black
+views as for the existing slice. Before column-decoder integration, all
+eight supported widths (4, 8, …, 32 columns) passed strict-port flat LVS
+with no implicit-net joins or black
 boxes and main/maximal DRC with density disabled. Flat comparison can
 be slow for these repeated transistor networks. A hierarchical-mode trial
 did not match; the reported passes and supported checker use flat mode.
@@ -583,13 +594,143 @@ including nonmonotonic transitions, at TT/1.20 V, SS/1.08 V, and FF/1.32 V
 with 50 fF output loads. The row-addressed memory electrical regression now
 uses this transistor-level decoder instead of ideal one-hot selection
 sources; the direct-wordline slice remains the independent one-hot control.
-This is netlist-level integration, not yet physical placement/routing of
-the column decoder into `ihp_row_memory`.
+The decoder is now physically integrated into `ihp_row_memory`, whose
+column-address ports are `col_1 col_0` rather than external one-hot selects.
+It occupies the reserved channel at (4, 18) µm without enlarging the memory
+outline. Four M4 drops connect its outputs to the shared M3 select buses;
+explicit supply straps connect the decoder's power rails to the memory.
+The four- and 32-column binary-addressed assemblies pass main/maximal
+no-density DRC and strict-port flat LVS without implicit supply joins:
 
-Next: physical column-decoder integration, clock/control and data/mask adaptation, followed by
-normal SRAM compiler entry-point integration and extracted characterization.
-These are required for the intended complete technology port, rather than
-optional work after upstreaming an isolated-cell prototype.
+```sh
+python3 technology/ihp_sg13g2/tests/verify_array.py --row-memory --cols 4 \
+  --output ../openram-ihp-port/.amp/in/artifacts/binary-memory/4
+```
+
+The importer decomposes peripheral routing metal into rectangles so OpenRAM
+can discover access shapes on T-shaped conductors, including select outputs
+1 and 2. Source-metal XOR remains zero. Only the peripheral's own signal
+labels become public pins; nested child labels are not promoted accidentally.
+
+The synchronous integration below adds input capture and cycle control and
+has representative complete-macro physical checks. Extracted characterization
+is still required for full post-layout technology qualification.
+
+## Foundry controller bring-up
+
+`import_sram.py` also imports the shipped controller, high-delay element,
+selectable delay mux, inverter, AND, NOR, and negative-edge DFF, exposed through
+`factory.create(module_type="ihp_control_cell", kind=...)`. Their source
+transistor dimensions are retained. All seven cells pass standalone
+main/maximal no-density DRC and strict LVS, including explicit supply
+connectivity. The delay mux needs a small M1/M2 power strap in its unused
+left margin to connect its two source VDD rails; its source devices and
+signal routing are unchanged.
+
+The controller import exposed a real canonical-name collision: public
+`CS_I` became `cs`, shorting it to the distinct source-local mux output
+`cs`; RE and WE had the same problem. The importer now namespaces root
+private nodes as well as nested ones. No physical input bridges or port
+waivers are needed. The peripheral LVS regression covers this distinction.
+
+Standalone TT/1.20 V transistor simulation establishes active-high CS/RE/WE,
+idle-high/active-low ECLK, and falling-edge capture for the source DFNQ
+cells. Controller capture and access both follow its clock's rising edge.
+Thus simply inverting its clock does **not** implement OpenRAM's rising-edge
+input capture followed by falling-edge access; independent input capture is
+required. Its pulse feedback must retain the real delay mux: the low-delay
+chain is only through-wire/filler, but shorting PULSE_H to PULSE_L would
+eliminate the pulse. With representative standalone loads, delay-select 0
+lost one toggle polarity, while select 1 produced both pulses. Neither is a
+loaded-memory/PVT timing guarantee.
+
+An additional loaded-memory smoke test uses the imported controller and
+delay mux at select 1, real NOR/inverter precharge logic, inverter sense
+control, and AND/inverter write encoding. Sixteen operations write, read,
+and overwrite four asymmetric row/column addresses in a four-column
+assembly. All eight readbacks pass at TT/1.20 V, SS/1.08 V, and FF/1.32 V,
+27 °C, with a 16 ns period, 50 fF per bitline, and 5 fF at the output.
+No ideal control buffers or ideal phase generators are used. This is
+schematic-level evidence for that load/period, not PEX, full address-space
+coverage, temperature characterization, or a measured maximum frequency.
+
+## Synchronous compiler integration
+
+`tech_modules["sram_1bank"] = "ihp_sram"` selects the foundry assembly through
+the normal `openram.sram(...)` construction API. The default top for other
+technologies is unchanged. Initially supported organizations are 64 words,
+1..8 data bits, four-way column selection, one RW port, and one bank, without
+spares or partial writes. Unsupported organizations fail explicitly.
+
+`ihp_input_registers` captures data, all six address bits, CSB, and WEB on the
+external rising edge. The controller receives the inverted external clock and
+launches access on the falling edge. The standard OpenRAM Verilog model and
+active-low `csb0`/`web0` protocol therefore apply. Real inverter/AND gates encode
+the captured data for BLDRV; there is no parallel generic precharge, column
+mux, or write-driver array. The raw `ihp_control_logic` block and single- and
+16-bit input-register banks pass standalone main/maximal no-density DRC and
+strict LVS; this does not establish complete-macro closure.
+
+The normal functional simulator passes a 64×2 netlist at a 16 ns period and
+14.4 fF output loads: TT/1.20 V/27 °C, SS/1.08 V/125 °C, and
+FF/1.32 V/−55 °C. A separate input-capture test changes requests between the
+rising and falling edges and passes TT/SS/FF at 27 °C. These are unextracted
+schematic tests, not address-space coverage or a full PVT/timing guarantee.
+
+Normal delay characterization uses explicit BL/BR/SAE nodes from the real
+hierarchy, with NT/NC storage probes and electrical correctness checks intact;
+it does not fabricate a generic bank hierarchy. A 64×1 TT/1.20 V/25 °C test at
+16 ns, 14.4 fF load, and 50 ps slew measures 2.155 ns rising and 2.229 ns
+falling output delay. The two transitions remain independently measured.
+Setup/hold simulation uses the actual positive-edge input-register circuit.
+
+Simulation requires `analytical_delay=False`, `trim_netlist=False`, and
+`use_pex=False`; unsupported analytical/trim/PEX modes fail rather than silently
+using placeholder models. The selected PDK's ngspice initialization is retained
+so its PSP OSDI models load during normal characterization. Model `.lib`
+sections are not misinterpreted as include filenames. OpenRAM's capacitance
+unit is fF: `dff_in_cap=3.6` is rounded up from TT input-charge measurements
+(2.69..3.56 fF at 50 ps slew, both data transitions and clock levels), not a
+0.001 fF placeholder. This is a representative input capacitance, not complete
+per-pin capacitance characterization.
+
+The bring-up configuration is
+`macros/sram_configs/ihp_sg13g2_sram_1rw_2x64.py`. Keep `use_nix=False` when using
+the installed IIC-OSIC tools. Run the actual compiler and the physical checker:
+
+```sh
+export OPENRAM_HOME="$R/compiler" OPENRAM_TECH="$R/technology"
+python3 "$R/sram_compiler.py" "$R/macros/sram_configs/ihp_sg13g2_sram_1rw_2x64.py"
+python3 "$R/technology/ihp_sg13g2/tests/verify_array.py" --sram --cols 8 \
+  --output /tmp/ihp-sram-64x2
+```
+
+All eight complete-macro widths pass installed public main/maximal no-density
+DRC. Routed 64×1, 64×2, and 64×8 macros pass the stock strict-port flat LVS
+runner, with no implicit-net joins. The final 64×2 normal compiler's exported
+GDS and LVS SPICE also pass that comparison with zero warnings/errors.
+The intermediate widths additionally pass full extracted-transistor comparison
+using uniquely topology-derived mandatory net hints. Deliberately changed
+transistor width and gate connectivity are rejected by that comparison;
+this is separate from the stock runner, not a port or device waiver.
+Public inputs/clock and supplies have Metal5 pins at the bottom perimeter;
+outputs have Metal5 pins at the top. The final 64×2 LEF loads together with
+the installed technology LEF and a characterized Liberty in OpenROAD, with
+all 15 public pins unblocked and on the perimeter. LEF database units are
+1000, matching the installed technology view.
+
+The normal physical compiler completes SPICE, LVS SPICE, GDS, LEF, Verilog,
+Liberty, configuration, and datasheet export. The final 64×2 single-point
+TT/1.20 V/27 °C Liberty at 14.4 fF load and 50 ps slew contains independently
+measured 2.181 ns rising and 2.255 ns falling output delays, and a searched
+minimum period of 4.531 ns. Its physical area is 9607.25 µm². These are
+unextracted nominal results, not a guaranteed operating frequency. The final
+Verilog passes Icarus parsing, and the final LEF/Liberty load in OpenROAD.
+
+Density/fill, antenna, PEX, extracted timing, and complete per-pin/PVT/load/slew
+characterization are not established by these checks. In particular, the
+single-point Liberty is bring-up evidence, not a production timing library.
+This is not yet a claim of full feature or signoff parity with SKY130/GF180.
 
 ## c4m / PDKMaster comparison
 
@@ -625,7 +766,17 @@ dates. No separate standalone-cell library files were found in the inspected
 upstream history. The older GDS/CDL name differences were already present in
 2023; they do not indicate recently introduced cells or a recent rename.
 
-The generated SPICE retains the source CDL's Apache-2.0 notice. Preserve
-upstream notices/provenance when redistributing; separate confirmation of
-the binary layout's license coverage and any fabrication qualifications
-remains outside this bring-up.
+## License and provenance
+
+The imported source GDS and CDL both match the files at IHP Open PDK commit
+[`a49358cc`](https://github.com/IHP-GmbH/IHP-Open-PDK/commit/a49358cc0b20635fcb53c0940505e3563763fc7a)
+byte-for-byte (SHA-256 respectively
+`0cc794e39c7c6006a7df329c97f73cb38ae6c94feb8761e7756b378cda4302a7`
+and `240ef98547a85fa24378a13d5dbd46099b0f23962e953903ad60a81d98b3702b`).
+That revision's [license declaration](https://github.com/IHP-GmbH/IHP-Open-PDK/blob/a49358cc0b20635fcb53c0940505e3563763fc7a/README.md#license)
+releases the PDK under Apache-2.0, with no separate license exception found
+in the SRAM subtree. The unchanged upstream license is included as
+[LICENSE.IHP-PDK](LICENSE.IHP-PDK); [NOTICE](NOTICE) records attribution,
+source paths, and the importer's modifications. Generated SPICE also retains
+the source CDL notice. Preserve these notices when redistributing the views.
+License provenance is not fabrication qualification or a warranty.

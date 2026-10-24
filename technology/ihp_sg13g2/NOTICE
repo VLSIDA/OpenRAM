@@ -1,0 +1,16 @@
+IHP SG13G2 SRAM hard-cell views
+Copyright 2025 IHP PDK Authors
+
+The imported GDS and SPICE views derive from IHP-GmbH/IHP-Open-PDK,
+commit a49358cc0b20635fcb53c0940505e3563763fc7a:
+  ihp-sg13g2/libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_64x16_c2.gds
+  ihp-sg13g2/libs.ref/sg13g2_sram/cdl/RM_IHPSG13_1P_64x16_c2.cdl
+Upstream repository: https://github.com/IHP-GmbH/IHP-Open-PDK
+These source views are distributed under Apache License 2.0; see LICENSE.IHP-PDK.
+
+The OpenRAM importer modifies the views by extracting cells and parent routing,
+translating coordinates, merging polygons, adding canonical pins and boundaries,
+flattening/renaming circuit nodes, joining annotated through-pins, and converting
+CDL devices to the PDK simulation-model interface. Array overlays separate frame
+geometry from individually instantiated storage cells. See import_sram.py and
+README.md for the transformations and supported assembly constraints.

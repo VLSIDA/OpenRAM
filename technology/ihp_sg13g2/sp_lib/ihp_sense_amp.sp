@@ -19,23 +19,23 @@
 * ------------------------------------------------------
 * Flattened from RSC_IHPSG13_DFPQD_MSAFFX2; unchanged W/L/m.
 .subckt ihp_sense_amp cp dn dp qn qp vdd gnd
-XMN12 SN RN DIFFP gnd sg13_lv_nmos w=2.4u l=200.0n m=1
-XMN13 TAIL cp gnd gnd sg13_lv_nmos w=2.4u l=130.00n m=1
-XMN9 DIFFP dp TAIL gnd sg13_lv_nmos w=2.4u l=200.0n m=1
-XMN10 DIFFN dn TAIL gnd sg13_lv_nmos w=2.4u l=200.0n m=1
-XMN11 RN SN DIFFN gnd sg13_lv_nmos w=2.4u l=200.0n m=1
-XMN19 net33 SN gnd gnd sg13_lv_nmos w=980.00n l=130.00n m=1
-XMN20 qn qp net37 gnd sg13_lv_nmos w=980.00n l=130.00n m=1
-XMN18 net37 RN gnd gnd sg13_lv_nmos w=980.00n l=130.00n m=1
-XMN17 qp qn net33 gnd sg13_lv_nmos w=980.00n l=130.00n m=1
-XMP15 SN RN vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP16 RN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP14 DIFFP cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP12 RN SN vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP13 DIFFN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP11 SN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
-XMP19 qn qp vdd vdd sg13_lv_pmos w=900.0n l=130.00n m=1
-XMP20 qp SN vdd vdd sg13_lv_pmos w=1.8u l=130.00n m=1
-XMP18 qn RN vdd vdd sg13_lv_pmos w=1.8u l=130.00n m=1
-XMP17 qp qn vdd vdd sg13_lv_pmos w=900.0n l=130.00n m=1
+Xinternal_MN12 internal_SN internal_RN internal_DIFFP gnd sg13_lv_nmos w=2.4u l=200.0n m=1
+Xinternal_MN13 internal_TAIL cp gnd gnd sg13_lv_nmos w=2.4u l=130.00n m=1
+Xinternal_MN9 internal_DIFFP dp internal_TAIL gnd sg13_lv_nmos w=2.4u l=200.0n m=1
+Xinternal_MN10 internal_DIFFN dn internal_TAIL gnd sg13_lv_nmos w=2.4u l=200.0n m=1
+Xinternal_MN11 internal_RN internal_SN internal_DIFFN gnd sg13_lv_nmos w=2.4u l=200.0n m=1
+Xinternal_MN19 internal_net33 internal_SN gnd gnd sg13_lv_nmos w=980.00n l=130.00n m=1
+Xinternal_MN20 qn qp internal_net37 gnd sg13_lv_nmos w=980.00n l=130.00n m=1
+Xinternal_MN18 internal_net37 internal_RN gnd gnd sg13_lv_nmos w=980.00n l=130.00n m=1
+Xinternal_MN17 qp qn internal_net33 gnd sg13_lv_nmos w=980.00n l=130.00n m=1
+Xinternal_MP15 internal_SN internal_RN vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP16 internal_RN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP14 internal_DIFFP cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP12 internal_RN internal_SN vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP13 internal_DIFFN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP11 internal_SN cp vdd vdd sg13_lv_pmos w=800.0n l=130.00n m=1
+Xinternal_MP19 qn qp vdd vdd sg13_lv_pmos w=900.0n l=130.00n m=1
+Xinternal_MP20 qp internal_SN vdd vdd sg13_lv_pmos w=1.8u l=130.00n m=1
+Xinternal_MP18 qn internal_RN vdd vdd sg13_lv_pmos w=1.8u l=130.00n m=1
+Xinternal_MP17 qp qn vdd vdd sg13_lv_pmos w=900.0n l=130.00n m=1
 .ends ihp_sense_amp

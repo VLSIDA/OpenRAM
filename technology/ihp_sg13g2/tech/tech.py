@@ -7,6 +7,8 @@ import os
 from openram import drc as d
 
 tech_modules = d.module_type()
+tech_modules["sram_1bank"] = "ihp_sram"
+tech_modules["dff"] = "ihp_input_registers"
 
 cell_properties = d.cell_properties()
 cell_properties.ptx.model_is_subckt = True
@@ -225,17 +227,20 @@ spice["power"] = "VDD"
 spice["ground"] = "VSS"
 spice["nmos"] = "sg13_lv_nmos"
 spice["pmos"] = "sg13_lv_pmos"
-spice["fet_models"] = {"TT": "mos_tt", "SS": "mos_ss", "FF": "mos_ff"}
 spice["fet_libraries"] = {
     "TT": [[os.path.join(os.environ.get("SPICE_MODEL_DIR", ""), "cornerMOSlv.lib"), "mos_tt"]],
     "SS": [[os.path.join(os.environ.get("SPICE_MODEL_DIR", ""), "cornerMOSlv.lib"), "mos_ss"]],
     "FF": [[os.path.join(os.environ.get("SPICE_MODEL_DIR", ""), "cornerMOSlv.lib"), "mos_ff"]],
 }
+# Corner discovery also reads this key; all actual models come from .lib.
+spice["fet_models"] = {corner: [] for corner in spice["fet_libraries"]}
 spice["supply_voltages"] = [1.08, 1.20, 1.32]
 spice["temperatures"] = [125, 25, -55]
 spice["nom_supply_voltage"] = 1.20
 spice["nom_temperature"] = 25
-spice["dff_in_cap"] = 0.001
+# fF, rounded up from TT input-charge simulation of the foundry DFF:
+# 50 ps transitions, both polarities and clock levels, 2.69..3.56 fF.
+spice["dff_in_cap"] = 3.6
 spice["rise_time"] = 0.05
 spice["fall_time"] = 0.05
 spice["feasible_period"] = 10

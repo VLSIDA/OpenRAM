@@ -25,8 +25,13 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
     found = set()
     for index in layout.layer_indexes():
         info = layout.get_info(index)
-        cell.shapes(dest.layer(info)).insert(
-            kdb.Region(original.begin_shapes_rec(index)).merged().transformed(shift))
+        region = kdb.Region(original.begin_shapes_rec(index)).merged().transformed(shift)
+        # OpenRAM discovers pin access rectangles, not arbitrary polygons.
+        # Rectilinear decomposition preserves metal exactly while exposing
+        # pins on T-shaped routing (notably COLDEC2's select outputs).
+        if info.datatype == 0 and info.layer in (8, 10, 30, 50, 67):
+            region = region.decompose_trapezoids_to_region()
+        cell.shapes(dest.layer(info)).insert(region)
         if info.datatype not in label_purposes:
             continue
         it = original.begin_shapes_rec(index)
@@ -34,7 +39,7 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
             shape = it.shape()
             if shape.is_text():
                 source_pin = shape.text.string.rstrip("!")
-                if source_pin not in ports:
+                if source_pin not in ports or (source_pin not in ("VDD", "VSS") and it.cell() != original):
                     it.next()
                     continue  # Internal child labels are not peripheral ports.
                 pin = ports[source_pin]
@@ -87,7 +92,10 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
             else:
                 raise ValueError(f"Unsupported peripheral CDL statement: {line}")
 
-    flatten(cdl_name, list(ports.values()))
+    # Canonical public names can coincide with distinct source-local nets
+    # (CTRL's CS_I -> cs versus its internal mux output cs, for example).
+    # Namespace all private nodes, including those at the root circuit.
+    flatten(cdl_name, list(ports.values()), prefix="internal_")
     aliases = {}
 
     def joined(node):
@@ -287,6 +295,49 @@ def import_column_decoder(layout, tech, cdl):
                       "column_decode_subset", dict(zip(ports.values(), ports.values())), (25,), 32)
 
 
+def import_control_cells(layout, tech, cdl):
+    """Keep the shipped controller, timing elements and interface gates."""
+    controller_ports = "ACLK_N BIST_CK_I BIST_CS_I BIST_EN BIST_RE_I BIST_WE_I B_TIEL_O CK_I CS_I DCLK ECLK PULSE_H PULSE_L PULSE_O RCLK RE_I ROW_CS WCLK WE_I VDD VSS".split()
+    canonical = "aclk_n bist_clk bist_cs bist_en bist_re bist_we tie_low clk cs dclk eclk pulse_h pulse_l pulse rclk re row_cs wclk we vdd gnd".split()
+    import_peripheral(layout, tech, cdl, "ihp_controller", "RM_IHPSG13_1P_CTRL",
+                      "RM_IHPSG13_64x16_c2_1P_CTRL", dict(zip(controller_ports, canonical)), (25,), 242)
+    for name, source, circuit, count in (
+        ("delay_high", "RM_IHPSG13_1P_DLY_1", "RM_IHPSG13_64x16_c2_1P_DLY_pcell_2", 22),
+    ):
+        import_peripheral(layout, tech, cdl, "ihp_" + name, source, circuit,
+                          {"A": "a", "Z": "z", "VDD": "vdd", "VSS": "gnd"}, (25,), count)
+    # DLY_MUX has no parent pin texts. Its CDL connects A/SEL to the
+    # mux's A0/S and Z to the final inverter's Z. Label those exact child
+    # terminals in parent coordinates, retaining all source parent routing.
+    mux = layout.cell("RM_IHPSG13_1P_DLY_MUX")
+    for inst in mux.each_inst():
+        names = {"RSC_IHPSG13_MX2IX1": {"A0": "A", "S": "SEL"},
+                 "RSC_IHPSG13_CINVX2": {"Z": "Z"}}.get(inst.cell.name, {})
+        for index in layout.layer_indexes():
+            for shape in inst.cell.shapes(index).each():
+                if shape.is_text() and shape.text.string in names:
+                    point = inst.trans * kdb.Point(shape.text.trans.disp)
+                    mux.shapes(index).insert(kdb.Text(names[shape.text.string], kdb.Trans(point)))
+    # Its two rows have separate VDD rails. Complete them physically in
+    # the unused left margin instead of relying on implicit LVS joins.
+    for y in (0, 8400):
+        mux.shapes(layout.layer(8, 0)).insert(kdb.Box(-2000, y - 200, -900, y + 200))
+        mux.shapes(layout.layer(19, 0)).insert(kdb.Box(-1895, y - 95, -1705, y + 95))
+    mux.shapes(layout.layer(10, 0)).insert(kdb.Box(-2000, -200, -1600, 8600))
+    import_peripheral(layout, tech, cdl, "ihp_delay_mux", mux.name,
+                      "RM_IHPSG13_64x16_c2_1P_DLY_MUX",
+                      {"A": "a", "SEL": "sel", "Z": "z", "VDD": "vdd", "VSS": "gnd"},
+                      (2, 25), 36)
+    for name, source, ports, count in (
+        ("inv", "INVX2", {"A": "a", "Z": "z", "VDD": "vdd", "VSS": "gnd"}, 2),
+        ("and2", "AND2X2", {"A": "a", "B": "b", "Z": "z", "VDD": "vdd", "VSS": "gnd"}, 6),
+        ("nor2", "NOR2X2", {"A": "a", "B": "b", "Z": "z", "VDD": "vdd", "VSS": "gnd"}, 4),
+        ("dff", "DFNQX2", {"CN": "clk_n", "D": "d", "Q": "q", "VDD": "vdd", "VSS": "gnd"}, 24),
+    ):
+        source = "RSC_IHPSG13_" + source
+        import_peripheral(layout, tech, cdl, "ihp_" + name, source, source, ports, (2, 25), count)
+
+
 def import_frame(layout, tech, cdl):
     """Extract frame overlays, leaving the compiler's real bit instances intact.
 
@@ -433,6 +484,8 @@ def main():
     print("Imported ihp_column_data: four BLDRVs, one sense/latch, and connected parent routing")
     import_column_decoder(layout, tech, cdl)
     print("Imported ihp_column_decoder: 32 FETs; combinational 2-to-4 decode without BIST registers")
+    import_control_cells(layout, tech, cdl)
+    print("Imported shipped controller, delay chains, and interface logic cells")
     import_frame(layout, tech, cdl)
     print("Imported 16-row tap/strap, edge/corner, and 4-column M4 power overlays")
 

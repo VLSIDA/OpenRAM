@@ -31,6 +31,9 @@ GDS = {}
 GDS["unit"] = (0.001, 1e-6)
 GDS["zoom"] = 0.5
 
+# LEF database units per micron, matching the installed SG13G2 technology LEF.
+lef_units = 1000
+
 ###################################################
 # Interconnect stacks
 ###################################################

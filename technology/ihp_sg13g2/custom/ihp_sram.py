@@ -26,7 +26,6 @@ class ihp_sram(design, verilog, lef):
                              "use_pex=False, and trim_netlist=False")
         design.__init__(self, name)
         lef.__init__(self, ["m1", "m2", "m3", "m4", "m5"])
-        self.lef_units = 1000  # Match the installed SG13G2 technology LEF.
         verilog.__init__(self)
         self.sram_config = sram_config
         sram_config.set_local_config(self)
@@ -277,8 +276,6 @@ class ihp_sram(design, verilog, lef):
                 continue
             foreign = [(all_shapes[i] + routed[i] - own[name][i]).merged() for i in range(5)]
             blocked = [raster(foreign[i].sized(round(.38 / dbu))) for i in (2, 3, 4)]
-            via_blocked = [raster(foreign[i].sized(round(.38 / dbu), round(.53 / dbu), 2))
-                           for i in (2, 3, 4)]
             starts = []
             for inst, pin_name, pins, shapes in ports:
                 found = None

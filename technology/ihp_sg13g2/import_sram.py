@@ -62,7 +62,7 @@ def import_peripheral(layout, tech, cdl, name, gds_name, cdl_name,
     for match in re.finditer(r"^\.SUBCKT\s+(\S+)([^\n]*)\n(.*?)^\.ENDS[^\n]*",
                              statements, re.MULTILINE | re.DOTALL):
         circuits[match[1]] = (match[2].split(), match[3].splitlines())
-    netlist = [cdl[:cdl.index(".SUBCKT")].rstrip(),
+    netlist = ["\n".join(line.rstrip() for line in cdl[:cdl.index(".SUBCKT")].splitlines()).rstrip(),
                f"* Flattened from {cdl_name}; unchanged W/L/m.",
                ".subckt " + name + " " + " ".join(ports.values())]
     through_pins = []
@@ -345,7 +345,7 @@ def import_frame(layout, tech, cdl):
     removed from the overlay; CELL_2x1's additional supply straps stay intact.
     """
     layout.cell("RM_IHPSG13_1P_BITKIT_CELL").clear()
-    header = cdl[:cdl.index(".SUBCKT")]
+    header = "\n".join(line.rstrip() for line in cdl[:cdl.index(".SUBCKT")].splitlines())
     for name, source, dx, width, labels, ports in [
         ("ihp_frame_tile", "16x2_SRAM", 0, 5.62,
          [("vdd", 30, 1.405, -.535), ("gnd", 30, 1.405, .535)],

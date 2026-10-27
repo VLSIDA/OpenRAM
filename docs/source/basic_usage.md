@@ -19,10 +19,16 @@ This page of the documentation explains the basic usage of OpenRAM's SRAM compil
 ## Environment Variable Setup (assuming bash)
 > **Note**: This is optional if you have the OpenRAM library. See
 > [Python library](./python_library.md#go-back) for details.
+
+These examples assume your checkout is at `$HOME/OpenRAM`. Adjust that path to
+match your checkout, including its capitalization. See
+[Basic Setup](./basic_setup.md#python-environment) to install the Python package
+in a virtual environment.
+
 * `OPENRAM_HOME` defines where the compiler directory is
-    * `export OPENRAM_HOME="$HOME/openram/compiler"`
+    * `export OPENRAM_HOME="$HOME/OpenRAM/compiler"`
 * `OPENRAM_TECH` defines list of paths where the technologies exist
-    * `export OPENRAM_TECH="$HOME/openram/technology"`
+    * `export OPENRAM_TECH="$HOME/OpenRAM/technology"`
     * Colon separated list so you can have private technology directories
 * Must also have any PDK related variables set up
 * Add compiler to `PYTHONPATH`
@@ -46,13 +52,21 @@ cd OpenRAM/macros
 make example_config_scn4m_subm
 ```
 
+Pass compiler options through `OPENRAM_OPTS`. For example, to generate the same
+macro without running DRC or LVS:
+
+```bash
+make OPENRAM_OPTS="-n" example_config_scn4m_subm
+```
+
 * Common arguments:
     * `-h` print all arguments
     * `-t` specify technology (scn4m\_subm or scmos or freepdk45)
     * `-v` increase verbosity of output
     * `-n` don't run DRC/LVS
     * `-c` perform simulation-based characterization
-    * `-d` don't purge /tmp directory contents
+    * `-k` keep the temporary files after a successful run
+    * `-d` enter the debugger on failure
 
 
 

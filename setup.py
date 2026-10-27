@@ -92,5 +92,9 @@ setup(
     packages=packages,
     package_dir=package_dir,
     include_package_data=True,
+    # VERSION sits at the repository root, which is the openram package root.
+    # include_package_data no longer picks it up from MANIFEST.in, and
+    # globals.py reads it at import time, so declare it explicitly.
+    package_data={"openram": ["VERSION"]},
     install_requires=reqs,
 )

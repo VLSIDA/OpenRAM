@@ -178,7 +178,6 @@ class regression_model(simulation):
         data = get_scaled_data(data_path)
         features, labels = data[:, :num_inputs], data[:,num_inputs:]
 
-        output_num = 0
         models = {}
         debug.info(1, "Output name, mean_accuracy, std_dev")
         model_scores = {}
@@ -187,11 +186,11 @@ class regression_model(simulation):
         else:
             test_outputs = self.output_names
         for o_name in test_outputs:
+            output_num = self.output_names.index(o_name)
             output_label = labels[:,output_num]
             scores = cross_val_score(untrained_model, features, output_label, cv=10)
             debug.info(1, "{}, {}, {}".format(o_name, scores.mean(), scores.std()))
             model_scores[o_name] = scores.mean()
-            output_num+=1
 
         return model_scores
 

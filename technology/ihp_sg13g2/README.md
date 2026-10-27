@@ -43,6 +43,24 @@ KLayout's Python API, NumPy, and Matplotlib. Electrical checks require ngspice
 with the selected PDK's PSP OSDI models. These are available in the IIC-OSIC
 environment used for validation. Keep `use_nix=False` with those installed tools.
 
+IHP starts from the shared generic regression suite, with named exclusions in
+`compiler/tests/Makefile`'s `BROKEN_STAMPS`, like the other technologies. Comments
+group exclusions by unqualified generic physical modules, unsupported
+organizations/models/fixtures, and missing setup/hold golden data. New shared
+test files are included by default; the old IHP-only allowlist is not used.
+The hard-cell suite (including synchronous and masked writes) and complete
+64×2 macro DRC/LVS are additional IHP entries, not replacements for shared tests.
+After installing the OpenRAM Python package, run
+`make -C compiler/tests ihp_sg13g2 KEEP=1` in the selected IHP environment.
+Results use the normal `compiler/tests/results/`
+logs and pass/fail markers. The normal all-technology regression includes this
+test set. If IHP is not already selected, the Makefile runs its tests in
+IIC-OSIC 2026.10 using Docker and the wheel from `make library`; no IHP-specific
+CI step is needed. Failures are archived alongside the other technologies.
+These entries exercise the existing installed-PDK checker directly; no compiler
+verification backend is added. This does not qualify unsupported generic banks
+or claim signoff coverage.
+
 The example configuration uses `analytical_delay=False`, `trim_netlist=False`,
 `use_pex=False`, and `check_lvsdrc=False`. Analytical, trimming, and compiler PEX
 modes are unsupported and fail explicitly. Physical verification is a separate,

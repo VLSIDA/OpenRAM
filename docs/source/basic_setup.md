@@ -88,8 +88,16 @@ the installation on the `OPENRAM_HOME` path.
 
 > See [Python library](./python_library.md#go-back) for details.
 
-If you don't have the library, you should also add `OPENRAM_HOME` to your
-`PYTHONPATH`. This is not needed if you have the library.
+If you don't have the library, these two variables are all you need: the
+top-level scripts (`sram_compiler.py`, `rom_compiler.py`) locate the package
+from `OPENRAM_HOME` themselves, so no `PYTHONPATH` setting is required to run
+them.
+
+Adding `OPENRAM_HOME` to `PYTHONPATH` does *not* make `import openram` work in
+your own scripts, because the package is the repository root rather than its
+`compiler` subdirectory. To write `import openram`, install the package as
+described in [Python Environment](#python-environment) above. The `PYTHONPATH`
+setting below is only so that symbols resolve in an editor.
 
 The examples below assume your checkout is at `$HOME/OpenRAM`. Adjust that path
 to match your checkout, including its capitalization. `OPENRAM_HOME` must point

@@ -31,8 +31,11 @@ in a virtual environment.
     * `export OPENRAM_TECH="$HOME/OpenRAM/technology"`
     * Colon separated list so you can have private technology directories
 * Must also have any PDK related variables set up
-* Add compiler to `PYTHONPATH`
+* Optionally add the compiler to `PYTHONPATH` so that symbols resolve in your
+  editor
     * `export PYTHONPATH="$PYTHONPATH:$OPENRAM_HOME"`
+    * This is not what makes `import openram` work in your own scripts; install
+      the package for that
 
 
 

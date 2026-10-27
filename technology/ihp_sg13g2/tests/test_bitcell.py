@@ -608,7 +608,7 @@ class FoundryBitcellTest(unittest.TestCase):
             result = kdb.Region(actual.top_cell().begin_shapes_rec(actual.layer(info)))
             with self.subTest(layer=str(info)):
                 self.assertEqual((expected ^ result).area(), 0)
-        for cols in (4, 12):
+        for cols in (4, 12, 64, 128):
             smaller = factory.create(module_type="ihp_bitcell_array", rows=16, cols=cols)
             self.assertAlmostEqual(smaller.width, cols * 2.81 + 3.22)
             self.assertEqual(len(smaller.get_bitline_names()), cols * 2)
@@ -616,7 +616,7 @@ class FoundryBitcellTest(unittest.TestCase):
             self.assertAlmostEqual(smaller.get_pin("wl_0_15").cy(), 17.485)
             self.assertTrue(smaller.get_pins("vdd"))
             self.assertTrue(smaller.get_pins("gnd"))
-        for rows, cols in ((32, 4), (16, 2), (16, 6), (16, 36)):
+        for rows, cols in ((32, 4), (16, 2), (16, 6), (16, 132)):
             with self.subTest(rows=rows, cols=cols), self.assertRaises(ValueError):
                 factory.create(module_type="ihp_bitcell_array", rows=rows, cols=cols)
 
@@ -647,6 +647,63 @@ class FoundryBitcellTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 openram.sram(sram_config=openram.sram_config(
                     word_size=2, num_words=32, words_per_row=4), name="unsupported_ihp")
+        finally:
+            for key, value in settings.items():
+                setattr(OPTS, key, value)
+
+    def test_wide_masked_writes(self):
+        from openram.characterizer import functional
+
+        class ByteWrites(functional):
+            def create_random_memory_sequence(self):
+                self.add_noop_all_ports("Initial idle")
+                # Literal expected words distinguish low/high byte masks,
+                # disabled writes, both data polarities, and column addresses.
+                for address, data, mask, expected in (
+                    (1, 0xA53C, "11", 0xA53C),
+                    (62, 0x39C6, "11", 0x39C6),
+                    (1, 0xFFFF, "00", 0xA53C),
+                    (1, 0x5AC3, "01", 0xA5C3),
+                    (1, 0xC396, "10", 0xC3C3),
+                    (1, 0x69F0, "11", 0x69F0),
+                    (1, 0x0000, "10", 0x00F0),
+                    (1, 0xFFFF, "01", 0x00FF),
+                ):
+                    addr = f"{address:06b}"
+                    self.add_write_one_port("Masked write", addr, f"{data:016b}", mask, 0)
+                    self.cycle_times.append(self.t_current)
+                    self.t_current += self.period
+                    self.add_read_one_port("Read back", addr, 0)
+                    self.add_read_check(f"{expected:016b}", 0)
+                    self.cycle_times.append(self.t_current)
+                    self.t_current += self.period
+                self.add_read_one_port("Other address retained", "111110", 0)
+                self.add_read_check(f"{0x39C6:016b}", 0)
+                self.cycle_times.append(self.t_current)
+                self.t_current += self.period
+                self.add_noop_all_ports("Final idle")
+
+        settings = {key: getattr(OPTS, key) for key in
+                    ("netlist_only", "analytical_delay", "trim_netlist", "use_pex", "use_nix",
+                     "spice_name", "spice_exe", "num_sim_threads")}
+        try:
+            OPTS.netlist_only = True
+            OPTS.analytical_delay = OPTS.trim_netlist = OPTS.use_pex = False
+            OPTS.use_nix = False
+            OPTS.spice_name = "ngspice"
+            OPTS.spice_exe = openram.find_exe("ngspice")
+            OPTS.num_sim_threads = 1
+            config = openram.sram_config(word_size=16, num_words=64,
+                                        words_per_row=4, write_size=8)
+            macro = openram.sram(sram_config=config, name="ihp_byte_write_test")
+            check = ByteWrites(macro.s, corner=("TT", 1.2, 27), period=16)
+            success, message = check.run()
+            self.assertTrue(success, message)
+            for width, write_size in ((33, 1), (16, 3), (8, 16)):
+                with self.subTest(width=width, write_size=write_size), self.assertRaises(ValueError):
+                    openram.sram(sram_config=openram.sram_config(
+                        word_size=width, num_words=64, words_per_row=4,
+                        write_size=write_size), name="unsupported_ihp_mask")
         finally:
             for key, value in settings.items():
                 setattr(OPTS, key, value)

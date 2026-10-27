@@ -13,8 +13,8 @@ from openram.sram_factory import factory
 
 class ihp_memory_slice(design):
     def __init__(self, name, cols=4):
-        if cols < 4 or cols > 32 or cols % 4:
-            raise ValueError("Memory slice supports 16 rows and 4..32 columns in groups of four")
+        if cols < 4 or cols > 128 or cols % 4:
+            raise ValueError("Memory slice supports 16 rows and 4..128 columns in groups of four")
         super().__init__(name)
         self.cols = cols
         self.array = factory.create(module_type="ihp_bitcell_array", rows=16, cols=cols)

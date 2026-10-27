@@ -26,7 +26,8 @@ from openram.sram_factory import factory
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cols", type=int, choices=range(4, 33, 4), default=32)
+    parser.add_argument("--cols", type=int, choices=range(4, 129, 4), default=32)
+    parser.add_argument("--write-size", type=int, help="Bits per write mask, for --sram")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--slice", action="store_true", help="Verify array plus column-data assembly")
     mode.add_argument("--row-memory", action="store_true", help="Verify row-addressed memory assembly")
@@ -37,12 +38,14 @@ def main():
                       help="Verify a foundry control/interface hard cell")
     mode.add_argument("--control-logic", action="store_true",
                       help="Verify the assembled raw cycle controller")
-    mode.add_argument("--input-registers", type=int, choices=range(1, 17),
+    mode.add_argument("--input-registers", type=int, choices=range(1, 73),
                       help="Verify a rising-edge input-register bank of this width")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if os.environ.get("PDK") != "ihp-sg13g2":
         parser.error("Select iic-pdk ihp-sg13g2 first")
+    if args.write_size is not None and not args.sram:
+        parser.error("--write-size requires --sram")
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="ihp-frame-") as temp:
@@ -55,7 +58,8 @@ def main():
             OPTS.analytical_delay = False
             OPTS.trim_netlist = False
             OPTS.use_pex = False
-            config = openram.sram_config(word_size=args.cols // 4, num_words=64, words_per_row=4)
+            config = openram.sram_config(word_size=args.cols // 4, num_words=64,
+                                        words_per_row=4, write_size=args.write_size)
             array = openram.sram(sram_config=config, name="ihp_sram_check").s
         elif args.cell:
             array = factory.create(module_type=args.cell)

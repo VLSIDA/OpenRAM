@@ -1,10 +1,18 @@
 # IHP SG13G2 SRAM technology
 
 This port assembles the IHP Open PDK's SRAM hard cells through the normal
-OpenRAM compiler API. It supports **64 words × 1–8 data bits**, one RW port,
-one bank, four-way column selection, full-word writes, and no spares.
+OpenRAM compiler API. It accepts **64 words × 1–32 data bits**, one RW port,
+one bank, four-way column selection, configurable write masks, and no spares.
 Unsupported organizations fail explicitly. Other technologies retain the
 generic SRAM implementation.
+
+Widths above eight bits extend the same array and column-data groups, sharing
+one row decoder and cycle controller; they do not concatenate complete macros.
+For byte writes, set `word_size=16` (or 32) and `write_size=8` in the normal
+configuration. Other positive write sizes that divide the word width are
+accepted; full-word writes omit the mask pins. Wider/masked configurations are
+an extension of the original bring-up; the historical validation below does not
+by itself qualify them.
 
 **This is a compiler-compatible bring-up port, not a tapeout-qualified SRAM.**
 Public no-density DRC, representative strict LVS, functional simulation,
@@ -26,7 +34,10 @@ python3 "$R/technology/ihp_sg13g2/tests/verify_array.py" --sram --cols 8 \
   --output /tmp/ihp-sram-64x2
 ```
 
-The hard-cell regression suite contains **16 tests**, including geometry,
+For a 64×16 macro with byte writes, use `--sram --cols 64 --write-size 8`;
+`--cols` counts physical columns, four per data bit.
+
+The hard-cell regression suite contains **17 tests**, including geometry,
 LVS, and transistor-level electrical checks. Layout import/routing requires
 KLayout's Python API, NumPy, and Matplotlib. Electrical checks require ngspice
 with the selected PDK's PSP OSDI models. These are available in the IIC-OSIC
@@ -49,6 +60,9 @@ external rising edge. The foundry controller receives the inverted external
 clock and launches access on the falling edge. The standard OpenRAM Verilog
 model applies: `csb0=0` selects the memory, `web0=0` writes, and `web0=1` reads.
 The low two address bits select a column; the upper four select a row.
+When enabled, `wmask0[]` is captured with the request: each high mask bit
+permits writes to its `write_size` data bits, while low mask bits retain data.
+Only the per-group write pulse is masked; array access timing remains shared.
 
 The foundry BLDRV combines precharge, column selection, and write drive.
 There is **no duplicate generic precharge/mux/write-driver path**. Real gates
@@ -88,7 +102,7 @@ canonical public pins.
 
 The assembly hierarchy is:
 
-- `ihp_bitcell_array`: 16 rows, 4–32 columns in groups of four, with source taps,
+- `ihp_bitcell_array`: 16 rows, 4–128 columns in groups of four, with source taps,
   ends/corners, row supply straps, and M4 feeds. Core pitch is 2.81 × 1.07 µm,
   with alternate-column/row reflection. The 16×32 framed array has zero
   manufacturing-layer polygon XOR against the shipped matrix.
@@ -118,7 +132,7 @@ metal through-pin recognition markers are removed in a separate LVS view.
 Simulation X model calls become M devices for the LVS reader. No transistor
 black boxes or signal-port waivers are used.
 
-All eight complete-macro widths pass public no-density DRC. Widths 1, 2, and 8
+The original eight complete-macro widths pass public no-density DRC. Widths 1, 2, and 8
 pass the stock strict-port flat LVS runner; the final normal compiler 64×2
 GDS/LVS-SPICE passes with zero warnings/errors. Intermediate widths additionally
 pass an independent full extracted-transistor comparison using uniquely

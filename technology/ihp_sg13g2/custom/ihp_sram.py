@@ -15,12 +15,13 @@ class ihp_sram(design, verilog, lef):
     def __init__(self, name, sram_config):
         if (sram_config.num_words != 64 or sram_config.num_banks != 1
                 or sram_config.words_per_row != 4
-                or not 1 <= sram_config.word_size <= 8
+                or not 1 <= sram_config.word_size <= 32
                 or sram_config.num_spare_rows or sram_config.num_spare_cols
-                or sram_config.write_size != sram_config.word_size
+                or not 1 <= sram_config.write_size <= sram_config.word_size
+                or sram_config.word_size % sram_config.write_size
                 or (OPTS.num_rw_ports, OPTS.num_w_ports, OPTS.num_r_ports) != (1, 0, 0)):
-            raise ValueError("IHP SRAM requires 64 words, 1..8 bits, mux4, one RW port, "
-                             "one bank, full-word writes, and no spares")
+            raise ValueError("IHP SRAM requires 64 words, 1..32 bits, mux4, one RW port, "
+                             "one bank, write_size dividing word_size, and no spares")
         if OPTS.analytical_delay or OPTS.use_pex or OPTS.trim_netlist:
             raise ValueError("IHP SRAM currently requires simulation characterization, "
                              "use_pex=False, and trim_netlist=False")
@@ -29,7 +30,7 @@ class ihp_sram(design, verilog, lef):
         verilog.__init__(self)
         self.sram_config = sram_config
         sram_config.set_local_config(self)
-        self.num_wmasks = 0
+        self.num_wmasks = self.word_size // self.write_size if self.write_size < self.word_size else 0
         self.vdd_name, self.gnd_name = spice["power"], spice["ground"]
         # Match the generic top's netlist-only Liberty area convention.
         self.width = self.height = 0
@@ -41,8 +42,13 @@ class ihp_sram(design, verilog, lef):
         self.request_nets = ([f"data_{i}" for i in range(self.word_size)]
                              + [f"address_{i}" for i in range(self.addr_size)]
                              + ["csb_q", "web_q"])
+        mask_pins = [f"wmask0[{i}]" for i in range(self.num_wmasks)]
         for pin in self.request_pins + ["clk0"]:
             self.add_pin(pin, "INPUT")
+        for pin in mask_pins:
+            self.add_pin(pin, "INPUT")
+        self.request_pins += mask_pins
+        self.request_nets += [f"mask_{i}" for i in range(self.num_wmasks)]
         for bit in range(self.word_size):
             self.add_pin(f"dout0[{bit}]", "OUTPUT")
         self.add_pin(self.vdd_name, "POWER")
@@ -65,13 +71,19 @@ class ihp_sram(design, verilog, lef):
         self.control_inst = self.add_inst("control", self.control)
         self.connect_inst(["clk_n", "cs", "web_q", "we", "row_cs", "eclk",
                            "pre_n", "sae", "wclk", self.vdd_name, self.gnd_name])
+        self.mask_insts = []
+        for mask in range(self.num_wmasks):
+            self.mask_insts.append(self.add_inst(f"write_mask_{mask}", and2))
+            self.connect_inst(["wclk", f"mask_{mask}", f"masked_wclk_{mask}",
+                               self.vdd_name, self.gnd_name])
         self.write_insts = []
         for bit in range(self.word_size):
             insts = []
+            write_clock = f"masked_wclk_{bit // self.write_size}" if self.num_wmasks else "wclk"
             for name, mod, nodes in (
                 ("invert", inv, [f"data_{bit}", f"data_bar_{bit}"]),
-                ("one", and2, [f"data_{bit}", "wclk", f"wr_one_{bit}"]),
-                ("zero", and2, [f"data_bar_{bit}", "wclk", f"wr_zero_{bit}"]),
+                ("one", and2, [f"data_{bit}", write_clock, f"wr_one_{bit}"]),
+                ("zero", and2, [f"data_bar_{bit}", write_clock, f"wr_zero_{bit}"]),
             ):
                 insts.append(self.add_inst(f"write_{bit}_{name}", mod))
                 self.connect_inst(nodes + [self.vdd_name, self.gnd_name])
@@ -107,7 +119,7 @@ class ihp_sram(design, verilog, lef):
         self.memory_inst.place((2, 15))
         self.control_inst.place((self.memory.width + 6, 15))
         x = 2
-        for inst in self.interface_insts + [i for group in self.write_insts for i in group]:
+        for inst in self.interface_insts + self.mask_insts + [i for group in self.write_insts for i in group]:
             inst.place((x, 72))
             x += inst.mod.width - .51
         # Bridge the one-row library's site gaps, as in the request bank.

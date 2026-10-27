@@ -12,8 +12,8 @@ from openram.modules.bitcell_array import bitcell_array
 class ihp_bitcell_array(bitcell_array):
     def __init__(self, rows, cols, column_offset=0, row_offset=0, name="",
                  left_rbl=None, right_rbl=None):
-        if rows != 16 or cols < 4 or cols > 32 or cols % 4:
-            raise ValueError("Foundry frame supports 16 rows and 4..32 columns in groups of four")
+        if rows != 16 or cols < 4 or cols > 128 or cols % 4:
+            raise ValueError("Foundry frame supports 16 rows and 4..128 columns in groups of four")
         if column_offset or row_offset or left_rbl or right_rbl:
             raise ValueError("Offset/replica frames have not been validated")
         super().__init__(rows, cols, name=name)

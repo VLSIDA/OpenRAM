@@ -126,7 +126,9 @@ class replica_bitcell_array(bitcell_base_array):
             if port in self.left_rbl:
                 dummy_offset = 0
             elif port in self.right_rbl:
-                dummy_offset = self.row_size + len(self.left_rbl)
+                # Rows below the top dummy row: the bottom replica rows plus
+                # the array itself. Again rbl[0], not the left column count.
+                dummy_offset = self.row_size + self.rbl[0]
             else:
                 dummy_offset = 0
 

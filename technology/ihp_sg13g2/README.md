@@ -37,7 +37,7 @@ python3 "$R/technology/ihp_sg13g2/tests/verify_array.py" --sram --cols 8 \
 For a 64×16 macro with byte writes, use `--sram --cols 64 --write-size 8`;
 `--cols` counts physical columns, four per data bit.
 
-The hard-cell regression suite contains **17 tests**, including geometry,
+The hard-cell regression suite contains **18 tests**, including geometry,
 LVS, and transistor-level electrical checks. Layout import/routing requires
 KLayout's Python API, NumPy, and Matplotlib. Electrical checks require ngspice
 with the selected PDK's PSP OSDI models. These are available in the IIC-OSIC
@@ -57,9 +57,17 @@ logs and pass/fail markers. The normal all-technology regression includes this
 test set. If IHP is not already selected, the Makefile runs its tests in
 IIC-OSIC 2026.10 using Docker and the wheel from `make library`; no IHP-specific
 CI step is needed. Failures are archived alongside the other technologies.
-These entries exercise the existing installed-PDK checker directly; no compiler
-verification backend is added. This does not qualify unsupported generic banks
-or claim signoff coverage.
+Shared `local_check` and `local_drc_check` tests reuse `verify_array.py` for IHP
+only; other technologies keep their existing verifier. Paths/wires, qualified
+generated gates, and supported mux4 and masked functional fixtures run through
+the shared suite. The IHP FET/contact overrides handle implicit N+ diffusion
+and SI model dimensions; generator rules satisfy contacted-FET geometry without
+resizing imported SRAM transistors. Standalone via landing areas, bare untapped
+FETs, remaining generic routing/cell contracts, and unsupported organizations
+remain excluded.
+Checker regression controls reject bad metal, changed connectivity, and missing
+top-level supply labels. No compiler verification backend or signoff waiver is
+added; physical regressions retain the public no-density scope.
 
 The example configuration uses `analytical_delay=False`, `trim_netlist=False`,
 `use_pex=False`, and `check_lvsdrc=False`. Analytical, trimming, and compiler PEX

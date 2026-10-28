@@ -14,14 +14,78 @@ import tempfile
 import klayout.db as kdb
 
 ROOT = Path(__file__).resolve().parents[3]
-os.environ["OPENRAM_HOME"] = str(ROOT / "compiler")
-os.environ["OPENRAM_TECH"] = str(ROOT / "technology")
-sys.path.insert(0, str(ROOT))
-from common import make_openram_package
-make_openram_package()
+if __name__ == "__main__":
+    os.environ["OPENRAM_HOME"] = str(ROOT / "compiler")
+    os.environ["OPENRAM_TECH"] = str(ROOT / "technology")
+    sys.path.insert(0, str(ROOT))
+    from common import make_openram_package
+    make_openram_package()
 import openram
 from openram import OPTS
 from openram.sram_factory import factory
+
+
+def _input(path):
+    path = Path(path)
+    return path.resolve() if path.is_absolute() else (Path(OPTS.openram_temp) / path).resolve()
+
+
+def _run(kind, cell_name, flags, output_path):
+    out = Path(output_path or OPTS.openram_temp).resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    pdk = Path(os.environ["PDK_ROOT"]) / "ihp-sg13g2/libs.tech/klayout/tech"
+    command = [sys.executable, str(pdk / kind / ("run_" + kind + ".py")),
+               "--topcell=" + cell_name, "--run_dir=" + str(out / (cell_name + "." + kind))] + flags
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    log = out / (cell_name + "." + kind + ".out")
+    log.write_text(result.stdout)
+    success = {"drc": "KLayout DRC Check Passed", "lvs": "Congratulations! Netlists match."}[kind]
+    # These PDK runners can exit zero even when the comparison fails.
+    failed = result.returncode != 0 or success not in result.stdout
+    print(f"{kind.upper()} {'failed' if failed else 'passed'}: {log}")
+    return int(failed)
+
+
+def run_drc(cell_name, gds_name, sp_name=None, extract=True, final_verification=False,
+            output_path=None):
+    # Regression inputs are unfilled cells/macros, not manufacturing signoff.
+    return _run("drc", cell_name, ["--path=" + str(_input(gds_name)),
+                                  "--no_density", "--mp=1", "--density_thr=1"], output_path)
+
+
+def run_lvs(cell_name, gds_name, sp_name, final_verification=False, output_path=None):
+    out = Path(output_path or OPTS.openram_temp).resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    # The simulation models are X subcircuits; the LVS reader expects M FETs.
+    spice = _input(sp_name).read_text().splitlines()
+    cdl = out / (cell_name + ".cdl")
+    cdl.write_text("\n".join(
+        "M" + line[1:] if line.startswith("X") and " sg13_lv_" in line else line
+        for line in spice) + "\n")
+
+    layout = kdb.Layout()
+    layout.read(str(_input(gds_name)))
+    top = layout.cell(cell_name)
+    if top is None:
+        raise ValueError("Missing LVS top cell: " + cell_name)
+    for cell in layout.each_cell():
+        # Flat LVS must not promote internal library/probe labels to ports.
+        # Keep the actual top-level pins, including power and ground.
+        if cell != top:
+            for index in layout.layer_indexes():
+                for shape in list(cell.shapes(index).each()):
+                    if shape.is_text():
+                        shape.delete()
+        # The source uses lvsres to split through-pins joined in our netlist.
+        # Remove ONLY nonmanufacturing recognition markers, not metal,
+        # contacts, SRAM markers, or real resistors.
+        for metal in (8, 10, 30, 50, 67):
+            cell.shapes(layout.layer(metal, 29)).clear()
+    gds = out / (cell_name + "_lvs.gds")
+    layout.write(str(gds))
+    # No implicit supply joins or missing-port exemptions, including cell tests.
+    return _run("lvs", cell_name, ["--layout=" + str(gds), "--netlist=" + str(cdl),
+                                  "--run_mode=flat", "--disable_tap_extraction"], out)
 
 
 def main():
@@ -82,46 +146,10 @@ def main():
             array.verilog_write(str(out / "array.v"))
         openram.end_openram()
 
-    # The simulation models are X subcircuits; the LVS reader expects M FETs.
-    spice = (out / "array.sp").read_text().splitlines()
-    (out / "array.cdl").write_text("\n".join(
-        "M" + line[1:] if line.startswith("X") and " sg13_lv_" in line else line
-        for line in spice) + "\n")
-
-    layout = kdb.Layout()
-    layout.read(str(out / "array.gds"))
-    top = layout.top_cell()
-    for cell in layout.each_cell():
-        # Internal library labels (including storage-net probes) must not be
-        # promoted to macro ports by flat LVS. Keep the actual top-level pins.
-        if cell != top:
-            for index in layout.layer_indexes():
-                for shape in list(cell.shapes(index).each()):
-                    if shape.is_text():
-                        shape.delete()
-        # The source uses lvsres to split through-pins. Our five-port circuit
-        # joins those pins; remove ONLY their nonmanufacturing recognition
-        # markers, not metal, contacts, SRAM markers, or real resistors.
-        for metal in (8, 10, 30, 50, 67):
-            cell.shapes(layout.layer(metal, 29)).clear()
-    layout.write(str(out / "array_lvs.gds"))
-
-    pdk = Path(os.environ["PDKPATH"]) / "libs.tech/klayout/tech"
-    for kind, flags, success in [
-        ("drc", ["--path=" + str(out / "array.gds"), "--no_density"],
-         "KLayout DRC Check Passed"),
-        ("lvs", ["--layout=" + str(out / "array_lvs.gds"),
-                 "--netlist=" + str(out / "array.cdl"), "--disable_tap_extraction"],
-         "Congratulations! Netlists match."),
-    ]:
-        command = [sys.executable, str(pdk / kind / ("run_" + kind + ".py")),
-                   "--run_dir=" + str(out / kind)] + flags
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        (out / (kind + ".log")).write_text(result.stdout)
-        # These PDK runners can exit zero even when the comparison fails.
-        if result.returncode or success not in result.stdout:
-            raise SystemExit(f"{kind.upper()} failed: see {out / (kind + '.log')}")
-        print(f"{kind.upper()} passed: {out / (kind + '.log')}")
+    drc_errors = run_drc(array.cell_name, out / "array.gds", output_path=out)
+    lvs_errors = run_lvs(array.cell_name, out / "array.gds", out / "array.sp", output_path=out)
+    if drc_errors or lvs_errors:
+        raise SystemExit(f"DRC/LVS failed: see {out}")
 
 
 if __name__ == "__main__":

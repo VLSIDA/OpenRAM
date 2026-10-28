@@ -14,6 +14,15 @@ from openram import debug
 from openram import OPTS
 
 
+def get_verifier():
+    """Use the installed-PDK checker for IHP regression inputs only."""
+    if OPTS.tech_name == "ihp_sg13g2":
+        from openram.technology.ihp_sg13g2.tests import verify_array
+        return verify_array
+    from openram import verify
+    return verify
+
+
 class openram_test(unittest.TestCase):
     """ Base unit test that we have some shared classes in. """
 
@@ -47,9 +56,10 @@ class openram_test(unittest.TestCase):
 
         tempgds = "{}.gds".format(w.name)
         w.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
-        from openram import verify
+        verify = get_verifier()
 
-        result=verify.run_drc(w.name, tempgds, None)
+        cell_name = getattr(w, "cell_name", w.name) if OPTS.tech_name == "ihp_sg13g2" else w.name
+        result=verify.run_drc(cell_name, tempgds, None)
         if result != 0:
             self.fail("DRC failed: {}".format(w.name))
         elif not OPTS.keep_temp:
@@ -67,14 +77,15 @@ class openram_test(unittest.TestCase):
         if not OPTS.netlist_only:
             a.gds_write("{0}{1}".format(OPTS.openram_temp, tempgds))
 
-            from openram import verify
+            verify = get_verifier()
+            cell_name = getattr(a, "cell_name", a.name) if OPTS.tech_name == "ihp_sg13g2" else a.name
             # Run both DRC and LVS even if DRC might fail
             # Magic can still extract despite DRC failing, so it might be ok in some techs
             # if we ignore things like minimum metal area of pins
-            drc_result=verify.run_drc(a.name, tempgds, tempspice, extract=True, final_verification=final_verification)
+            drc_result=verify.run_drc(cell_name, tempgds, tempspice, extract=True, final_verification=final_verification)
 
             # We can still run LVS even if DRC fails in Magic OR Calibre
-            lvs_result=verify.run_lvs(a.name, tempgds, tempspice, final_verification=final_verification)
+            lvs_result=verify.run_lvs(cell_name, tempgds, tempspice, final_verification=final_verification)
 
             # Only allow DRC to fail and LVS to pass if we are using magic
             if lvs_result == 0 and drc_result != 0:

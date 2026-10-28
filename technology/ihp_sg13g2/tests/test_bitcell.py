@@ -39,6 +39,56 @@ class FoundryBitcellTest(unittest.TestCase):
         openram.end_openram()
         cls.temp.cleanup()
 
+    def test_checker_rejects_errors(self):
+        """The shared test checker accepts a good cell and rejects real faults."""
+        import klayout.db as kdb
+        from openram.tests.testutils import get_verifier
+
+        verify = get_verifier()
+        dut = factory.create(module_type="ihp_control_cell", kind="inv")
+        out = Path(self.temp.name) / "checker"
+        out.mkdir()
+        gds, spice = out / "good.gds", out / "good.sp"
+        dut.gds_write(str(gds))
+        dut.sp_write(str(spice))
+        self.assertEqual(verify.run_drc(dut.cell_name, gds, output_path=out), 0)
+        self.assertEqual(verify.run_lvs(dut.cell_name, gds, spice, output_path=out), 0)
+
+        layout = kdb.Layout()
+        layout.read(str(gds))
+        # A 10 nm Metal1 line violates the installed 160 nm width rule.
+        x = layout.top_cell().bbox().right + 1000
+        layout.top_cell().shapes(layout.layer(8, 0)).insert(kdb.Box(x, 0, x + 10, 10000))
+        bad_gds = out / "narrow.gds"
+        layout.write(str(bad_gds))
+        self.assertNotEqual(verify.run_drc(dut.cell_name, bad_gds, output_path=out), 0)
+
+        # Tie the NMOS gate to its source instead of the input.
+        lines = spice.read_text().splitlines()
+        index = next(i for i, line in enumerate(lines) if line.startswith("X") and " sg13_lv_nmos " in line)
+        device = lines[index].split()
+        self.assertNotEqual(device[2], device[3])
+        device[2] = device[3]
+        lines[index] = " ".join(device)
+        bad_spice = out / "miswired.sp"
+        bad_spice.write_text("\n".join(lines) + "\n")
+        self.assertNotEqual(verify.run_lvs(dut.cell_name, gds, bad_spice,
+                                         final_verification=True, output_path=out), 0)
+
+        layout = kdb.Layout()
+        layout.read(str(gds))
+        removed = 0
+        for layer in layout.layer_indexes():
+            for shape in list(layout.top_cell().shapes(layer).each()):
+                if shape.is_text() and shape.text.string == "gnd":
+                    shape.delete()
+                    removed += 1
+        self.assertGreater(removed, 0)
+        no_ground = out / "missing-ground.gds"
+        layout.write(str(no_ground))
+        self.assertNotEqual(verify.run_lvs(dut.cell_name, no_ground, spice,
+                                         final_verification=True, output_path=out), 0)
+
     def test_hard_cell(self):
         cell = factory.create(module_type="bitcell_1port")
         self.assertEqual(cell.cell_name, "cell_1rw")
@@ -270,6 +320,8 @@ class FoundryBitcellTest(unittest.TestCase):
     def test_input_register_capture(self):
         path = Path(self.temp.name)
         registers = factory.create(module_type="ihp_input_registers", bits=2)
+        for supply in ("vdd", "gnd"):
+            self.assertEqual(registers.get_pin(supply).layer, "m1")
         registers.sp_write(str(path / "registers.sp"))
         models = Path(os.environ["PDKPATH"]) / "libs.tech/ngspice/models/cornerMOSlv.lib"
         # Data changes after rising capture but before falling clock. A

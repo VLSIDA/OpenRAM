@@ -9,6 +9,8 @@ from openram import drc as d
 tech_modules = d.module_type()
 tech_modules["sram_1bank"] = "ihp_sram"
 tech_modules["dff"] = "ihp_input_registers"
+tech_modules["ptx"] = "ihp_ptx"
+tech_modules["contact"] = "ihp_contact"
 
 cell_properties = d.cell_properties()
 cell_properties.ptx.model_is_subckt = True
@@ -144,7 +146,7 @@ for openram_name, pdk_name in [("active", "Activ"),
 # DRC/LVS rules setup
 ###################################################
 parameter = {}
-parameter["min_tx_size"] = 0.13
+parameter["min_tx_size"] = 0.34
 parameter["beta"] = 2
 parameter["6T_inv_nmos_size"] = 0.30
 parameter["6T_inv_pmos_size"] = 0.15
@@ -162,11 +164,16 @@ parameter["bitcell_drain_cap"] = 0.1
 
 drc = d.design_rules("ihp_sg13g2")
 drc["grid"] = 0.005
-drc["minwidth_tx"] = 0.13
+# Contacted generic FETs must also satisfy Gat.e: 0.13 * (W + 2*0.18)
+# >= 0.09 um². Round W up to the manufacturing grid; channel length is 0.13.
+# This generator minimum does not resize imported foundry SRAM transistors.
+drc["minwidth_tx"] = 0.34
 drc["minlength_channel"] = 0.13
 drc["pwell_to_nwell"] = 1.8
 
-drc.add_layer("active", width=0.15, spacing=0.21)
+# Generic gates place taps beside diffusion. Allow the conservative pSD
+# enclosure (0.30) plus pSD-to-unrelated-active spacing (0.18).
+drc.add_layer("active", width=0.15, spacing=0.48)
 drc.add_layer("poly", width=0.13, spacing=0.18)
 drc.add_layer("contact", width=0.16, spacing=0.18)
 drc.add_layer("m1", width=0.16, spacing=0.18)
@@ -197,7 +204,9 @@ drc.add_enclosure("nwell", "active", enclosure=0.31)
 drc.add_layer("pwell", width=0, spacing=0)
 drc.add_enclosure("pwell", "active", enclosure=0)
 drc.add_layer("implant", width=0.31, spacing=0.31)
-drc.add_enclosure("implant", "active", enclosure=0.03)
+# The generic generator shares one implant enclosure. Use PFET gate pSD.i
+# (0.30), which also covers the P+ active pSD.c enclosure (0.18).
+drc.add_enclosure("implant", "active", enclosure=0.30)
 drc["poly_to_active"] = 0.07
 drc["poly_extend_active"] = 0.18
 drc["poly_to_contact"] = 0.14
@@ -210,7 +219,7 @@ for metal in ("m2", "m3", "m4", "m5"):
     drc["minarea_" + metal] = 0.144
 drc.add_enclosure("active", "contact", enclosure=0.07)
 drc.add_enclosure("poly", "contact", enclosure=0.07)
-drc.add_enclosure("m1", "contact", enclosure=0, extension=0.05)
+drc.add_enclosure("m1", "contact", enclosure=0.07)
 for lower, via, upper in (m1_stack, m2_stack, m3_stack, m4_stack):
     # Symmetric 0.05 enclosure satisfies the directional enclosure rules.
     drc.add_enclosure(lower, via, enclosure=0.05)

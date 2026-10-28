@@ -153,15 +153,13 @@ BROKEN_STAMPS = \
 	sky130/50_riscv_1rw_phys_test.ok \
 	sky130/50_riscv_1rw1r_phys_test.ok \
 
-# These tests exercise generic cells/banks not qualified by the IHP foundry
-# assembly tests. Some also require the generic verify.run_drc/run_lvs path;
-# wiring a checker alone does not qualify their generated devices or routing.
-# Supported IHP assemblies use the installed-PDK checker in the entries below.
+# These generic cells/banks remain unqualified for IHP geometry, connectivity,
+# or module contracts. Shared local_check/local_drc_check reuse the installed-PDK checker
+# for IHP; passing basic gates and routing tests are enabled normally.
 # Keep explicit filenames so newly added shared tests are included by default.
 BROKEN_STAMPS += \
 	ihp_sg13g2/01_library_test.ok \
 	ihp_sg13g2/03_contact_test.ok \
-	ihp_sg13g2/03_path_test.ok \
 	ihp_sg13g2/03_ptx_1finger_nmos_test.ok \
 	ihp_sg13g2/03_ptx_1finger_pmos_test.ok \
 	ihp_sg13g2/03_ptx_3finger_nmos_test.ok \
@@ -169,34 +167,18 @@ BROKEN_STAMPS += \
 	ihp_sg13g2/03_ptx_4finger_nmos_test.ok \
 	ihp_sg13g2/03_ptx_4finger_pmos_test.ok \
 	ihp_sg13g2/03_ptx_no_contacts_test.ok \
-	ihp_sg13g2/03_wire_test.ok \
 	ihp_sg13g2/04_and2_dec_test.ok \
-	ihp_sg13g2/04_and3_dec_test.ok \
-	ihp_sg13g2/04_and4_dec_test.ok \
 	ihp_sg13g2/04_column_mux_1rw_1r_test.ok \
 	ihp_sg13g2/04_column_mux_pbitcell_test.ok \
 	ihp_sg13g2/04_column_mux_test.ok \
 	ihp_sg13g2/04_dff_buf_test.ok \
 	ihp_sg13g2/04_dummy_pbitcell_1rw1r1w_test.ok \
 	ihp_sg13g2/04_dummy_pbitcell_1rw_test.ok \
-	ihp_sg13g2/04_pand2_test.ok \
-	ihp_sg13g2/04_pand3_test.ok \
-	ihp_sg13g2/04_pand4_test.ok \
 	ihp_sg13g2/04_pbitcell_test.ok \
 	ihp_sg13g2/04_pbuf_dec_8x_test.ok \
-	ihp_sg13g2/04_pbuf_test.ok \
-	ihp_sg13g2/04_pdriver_test.ok \
-	ihp_sg13g2/04_pinv_100x_test.ok \
-	ihp_sg13g2/04_pinv_10x_test.ok \
-	ihp_sg13g2/04_pinv_1x_beta_test.ok \
-	ihp_sg13g2/04_pinv_1x_test.ok \
-	ihp_sg13g2/04_pinv_2x_test.ok \
 	ihp_sg13g2/04_pinv_dec_1x_test.ok \
 	ihp_sg13g2/04_pinvbuf_test.ok \
 	ihp_sg13g2/04_pnand2_test.ok \
-	ihp_sg13g2/04_pnand3_test.ok \
-	ihp_sg13g2/04_pnand4_test.ok \
-	ihp_sg13g2/04_pnor2_test.ok \
 	ihp_sg13g2/04_precharge_1rw_1r_test.ok \
 	ihp_sg13g2/04_precharge_pbitcell_test.ok \
 	ihp_sg13g2/04_precharge_test.ok \
@@ -387,12 +369,10 @@ BROKEN_STAMPS += \
 	ihp_sg13g2/22_psram_1bank_nomux_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_2mux_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_2mux_global_func_test.ok \
-	ihp_sg13g2/22_sram_1bank_4mux_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_8mux_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_nomux_1rw_1r_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_nomux_func_test.ok \
 	ihp_sg13g2/22_sram_1bank_wmask_1rw_1r_func_test.ok \
-	ihp_sg13g2/22_sram_wmask_func_test.ok \
 	ihp_sg13g2/23_lib_sram_linear_regression_test.ok \
 	ihp_sg13g2/23_lib_sram_model_corners_test.ok \
 	ihp_sg13g2/23_lib_sram_model_test.ok \

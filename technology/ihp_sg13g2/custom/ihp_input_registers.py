@@ -65,9 +65,9 @@ class ihp_input_registers(design):
             self.add_path("m3", [point, (pin.cx(), bus_y)], width=.3)
         self.add_path("m3", [(clock_pins[0].cx(), bus_y),
                              (clock_pins[-1].cx(), bus_y)], width=.3)
-        for y in (0, 4.2):
-            self.add_rect("m1", (.51, y), width=self.width - 1.02, height=.6)
-        for inst in [self.clock_inst] + self.flop_insts:
-            for pin in ("vdd", "gnd"):
-                self.copy_layout_pin(inst, pin)
+        for pin, y in (("gnd", 0), ("vdd", 4.2)):
+            # One continuous rail per supply also supports generic callers
+            # that require a single pin rather than an iterator of shapes.
+            self.add_layout_pin(pin, "m1", (.51, y),
+                                width=self.width - 1.02, height=.6)
         self.add_boundary()

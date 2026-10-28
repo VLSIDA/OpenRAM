@@ -80,7 +80,10 @@ class replica_bitcell_array(bitcell_base_array):
         # Bitcell array
         self.bitcell_array = factory.create(module_type="bitcell_array",
                                             column_offset=len(self.left_rbl)+ self.column_offset,
-                                            row_offset=len(self.left_rbl)+ self.row_offset,
+                                            # Rows below the array are rbl[0], not the number of
+                                            # left replica columns; the two coincide in most
+                                            # configurations, which is why this went unnoticed.
+                                            row_offset=self.rbl[0] + self.row_offset,
                                             cols=self.column_size,
                                             rows=self.row_size,
                                             left_rbl=self.left_rbl, 
@@ -107,7 +110,7 @@ class replica_bitcell_array(bitcell_base_array):
                                                         rows=self.row_size,
                                                         rbl=self.rbl,
                                                         column_offset=rbc_offset + self.column_offset,
-                                                        row_offset=len(self.left_rbl) + self.row_offset,
+                                                        row_offset=self.rbl[0] + self.row_offset,
                                                         replica_bit=replica_bit)
 
         # Dummy row (for replica wordlines)

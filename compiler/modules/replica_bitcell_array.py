@@ -123,14 +123,17 @@ class replica_bitcell_array(bitcell_base_array):
             # replica array but makes the capped and local arrays worse, since
             # there a col cap sits below the dummy row and shifts the parity.
             # It needs a formulation valid in both contexts.
-            if port in self.left_rbl:
+            # The instances are indexed by port, and add_replica_columns()
+            # places index < rbl[0] below the array and the rest above it, so
+            # that is what decides the offset. Keying off membership in
+            # left_rbl/right_rbl sent every unlisted port to the bottom offset,
+            # including ports that are then placed on top.
+            if port < self.rbl[0]:
+                # Below the array.
                 dummy_offset = 0
-            elif port in self.right_rbl:
-                # Rows below the top dummy row: the bottom replica rows plus
-                # the array itself. Again rbl[0], not the left column count.
-                dummy_offset = self.row_size + self.rbl[0]
             else:
-                dummy_offset = 0
+                # Above it: the bottom replica rows plus the array itself.
+                dummy_offset = self.row_size + self.rbl[0]
 
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,

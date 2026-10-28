@@ -31,6 +31,7 @@ class pbitcell(bitcell_base):
         self.dummy_bitcell = dummy_bitcell
         self.mirror = props.bitcell_1port.mirror
         self.end_caps = props.bitcell_1port.end_caps
+        self.has_corners = props.bitcell_1port.has_corners
 
         self.wl_layer = "m1"
         self.wl_dir = "H"

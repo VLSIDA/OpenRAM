@@ -70,9 +70,11 @@ class bitcell_array(bitcell_base_array):
             core_block[(1 + r) % 2][(0+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(0+c)%2}", mod=self.cell, is_bitcell=True, mirror='MX')
             core_block[(1 + r) % 2][(1+c) %2] = geometry.instance(f"core_{(1 + r)%2}_{(1+c)%2}", mod=self.cell, is_bitcell=True, mirror='XY')
         else:
-            core_block = [[0 for x in range(1)] for y in range(2)] 
-            core_block[(0 + self.row_offset) % 2][(0+self.column_offset) %2] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
-            core_block[(1 + self.row_offset) % 2][(0+self.column_offset) %2] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
+            # Without y-mirroring the block is one column wide, so there is no
+            # column alternation to select and the index is always 0.
+            core_block = [[0 for x in range(1)] for y in range(2)]
+            core_block[(0 + r) % 2][0] = geometry.instance("core_0_0", mod=self.cell, is_bitcell=True)
+            core_block[(1 + r) % 2][0] = geometry.instance("core_1_0", mod=self.cell, is_bitcell=True, mirror='MX')
         #print(r, c)
         #print(core_block)
 

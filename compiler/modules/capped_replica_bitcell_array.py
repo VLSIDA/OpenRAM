@@ -175,13 +175,20 @@ class capped_replica_bitcell_array(bitcell_base_array):
         n_rba_wl = len(self.replica_array_wordline_names_with_grounded_wls)
 
 
-        self.wordline_pin_list = []
+        # The row cap is row_size + extra_rows tall while the replica array
+        # supplies only its own wordlines, so pad to the row cap's height and
+        # keep the real wordlines centered. len(self.rbls) is not the padding:
+        # extra_rows is sum(self.rbl) + 2 for the bottom and top dummy rows.
+        pad = n_rowcap_wl - n_rba_wl
+        debug.check(pad >= 0,
+                    "Row cap has fewer wordlines ({0}) than the replica array ({1})".format(n_rowcap_wl,
+                                                                                            n_rba_wl))
+        pad_bottom = pad // 2
+        pad_top = pad - pad_bottom
 
-        if self.rbls:
-            self.wordline_pin_list.extend(["gnd"] * len(self.rbls))
-        self.wordline_pin_list.extend(self.replica_array_wordline_names_with_grounded_wls)
-        if self.rbls:
-            self.wordline_pin_list.extend(["gnd"] * len(self.rbls))
+        self.wordline_pin_list = ["gnd"] * pad_bottom \
+                                 + self.replica_array_wordline_names_with_grounded_wls \
+                                 + ["gnd"] * pad_top
 
         self.add_pin_list(self.used_wordline_names, "INPUT")
 

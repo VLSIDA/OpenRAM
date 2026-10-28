@@ -20,7 +20,7 @@ class local_bitcell_array(bitcell_base_array):
     or it can be combined into a larger array with hierarchical WL.
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
-        super().__init__(name=name, rows=rows, cols=cols, column_offset=0)
+        super().__init__(name=name, rows=rows, cols=cols, column_offset=0, row_offset=0)
         debug.info(2, "Creating {0} {1}x{2} rbl: {3} left_rbl: {4} right_rbl: {5}".format(name,
                                                                                           rows,
                                                                                           cols,

@@ -22,7 +22,7 @@ class global_bitcell_array(bitcell_base_array):
     """
     def __init__(self, rows, cols, rbl=None, left_rbl=None, right_rbl=None, name=""):
         # The total of all columns will be the number of columns
-        super().__init__(name=name, rows=rows, cols=sum(cols), column_offset=0)
+        super().__init__(name=name, rows=rows, cols=sum(cols), column_offset=0, row_offset=0)
         self.column_sizes = cols
         self.col_offsets = [0] + list(cumsum(cols)[:-1])
 

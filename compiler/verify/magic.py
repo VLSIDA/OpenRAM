@@ -185,28 +185,43 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
 
     f.write('echo "$(date): Starting DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write('\n')
-    f.write("{} -dnull -noconsole << EOF\n".format(OPTS.drc_exe[1]))
-    f.write("load {} -dereference\n".format(cell_name))
-    f.write('puts "Finished loading cell {}"\n'.format(cell_name))
-    f.write("cellname delete \\(UNNAMED\\)\n")
-    f.write("select top cell\n")
-    f.write("expand\n")
-    f.write('puts "Finished expanding"\n')
-    f.write("drc euclidean on\n")
-    # Workaround to address DRC CIF style not loading if 'drc check' is run before catchup
-    if OPTS.tech_name=="gf180mcu":
-      f.write("drc catchup\n")
-    f.write("drc check\n")
-    f.write('puts "Finished drc check"\n')
-    f.write("drc catchup\n")
-    f.write('puts "Finished drc catchup"\n')
+
+    # The commands must go in a script file rather than on stdin. "drc check"
+    # is asynchronous, and over stdin magic reaches "drc count total" before
+    # the check has finished, so it counts an empty list and always reports
+    # zero errors. Given a script file it completes the check first.
+    drc_script = "{}.drc.tcl".format(cell_name)
+    g = open(output_path + drc_script, "w")
+    g.write("load {} -dereference\n".format(cell_name))
+    g.write('puts "Finished loading cell {}"\n'.format(cell_name))
+    g.write("cellname delete \\(UNNAMED\\)\n")
+    g.write("select top cell\n")
+    g.write("expand\n")
+    g.write('puts "Finished expanding"\n')
+    g.write("drc euclidean on\n")
+    # Use the complete rule set where the technology defines style variants.
+    # Not every technology does, so tolerate the style being absent.
+    g.write("catch {drc style drc(full)}\n")
+    # Flush pending checks before the real one. This was previously done only
+    # for gf180mcu, to address the DRC CIF style not loading when 'drc check'
+    # runs before a catchup. It is unconditional now: it is a no-op for the
+    # technologies the suite covers (verified, identical counts with and
+    # without it), and gf180mcu is not in TECHS, so there is no way to confirm
+    # that dropping it would be safe there.
+    g.write("drc catchup\n")
+    g.write("drc check\n")
+    g.write('puts "Finished drc check"\n')
+    g.write("drc catchup\n")
+    g.write('puts "Finished drc catchup"\n')
     # This is needed instead of drc count total because it displays
     # some errors that are not "DRC" errors.
-    # f.write("puts -nonewline \"Total DRC errors found: \"\n")
-    # f.write("puts stdout [drc listall count total]\n")
-    f.write("drc count total\n")
-    f.write("quit -noprompt\n")
-    f.write("EOF\n")
+    # g.write("puts -nonewline \"Total DRC errors found: \"\n")
+    # g.write("puts stdout [drc listall count total]\n")
+    g.write("drc count total\n")
+    g.write("quit -noprompt\n")
+    g.close()
+
+    f.write("{0} -dnull -noconsole {1}\n".format(OPTS.drc_exe[1], drc_script))
     f.write("magic_retcode=$?\n")
     f.write('echo "$(date): Finished ($magic_retcode) DRC using Magic {}"\n'.format(OPTS.drc_exe[1]))
     f.write("exit $magic_retcode\n")

@@ -107,19 +107,26 @@ class replica_bitcell_array(bitcell_base_array):
                                                         rows=self.row_size,
                                                         rbl=self.rbl,
                                                         column_offset=rbc_offset + self.column_offset,
+                                                        row_offset=len(self.left_rbl) + self.row_offset,
                                                         replica_bit=replica_bit)
 
         # Dummy row (for replica wordlines)
         self.dummy_rows = {}
 
         for port in self.all_ports:
+            # FIXME: the dummy row's mirroring parity is still wrong, so the
+            # edge it shares with the array can put opposite wells together.
+            # Deriving it as len(left_rbl) + row_offset + 1 fixes the bare
+            # replica array but makes the capped and local arrays worse, since
+            # there a col cap sits below the dummy row and shifts the parity.
+            # It needs a formulation valid in both contexts.
             if port in self.left_rbl:
                 dummy_offset = 0
             elif port in self.right_rbl:
                 dummy_offset = self.row_size + len(self.left_rbl)
             else:
                 dummy_offset = 0
-                
+
             self.dummy_rows[port] = factory.create(module_type="dummy_array",
                                             cols=self.column_size,
                                             rows=1,
@@ -300,8 +307,13 @@ class replica_bitcell_array(bitcell_base_array):
             self.replica_col_insts[bit].place(offset)
         # Grow to the right of the bitcell array, array outward
         for bit, port in enumerate(self.right_rbl):
+            # Compute the dimension from the column being placed. It used to be
+            # read from the left-hand loop above, which leaves it undefined when
+            # there is no left replica column at all.
+            inst = self.replica_col_insts[self.rbl[0] + bit]
+            rbc_dimension = vector(inst.width, self.cell.height)
             offset = self.bitcell_array_inst.lr() + rbc_dimension.scale(bit, -self.rbl[0])
-            self.replica_col_insts[self.rbl[0] + bit].place(offset)
+            inst.place(offset)
 
         # Replica dummy rows
         # Add the dummy rows even if we aren't adding the replica column to this bitcell array

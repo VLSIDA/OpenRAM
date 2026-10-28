@@ -21,7 +21,7 @@ class replica_column(bitcell_base_array):
     replica cell relative to the bottom (including the dummy bit at 0).
     """
 
-    def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
+    def __init__(self, name, rows, rbl, replica_bit, column_offset=0, row_offset=0):
         # Used for pin names and properties
         self.cell = factory.create(module_type=OPTS.bitcell)
         # Row size is the number of rows with word lines
@@ -30,7 +30,7 @@ class replica_column(bitcell_base_array):
         self.row_start = rbl[0]
         # End of regular word line rows
         self.row_end = self.row_start + rows
-        super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, row_offset=0, name=name)
+        super().__init__(rows=self.row_size, cols=1, column_offset=column_offset, row_offset=row_offset, name=name)
 
         self.rows = rows
         self.left_rbl = rbl[0]
@@ -89,6 +89,10 @@ class replica_column(bitcell_base_array):
         self.cell_inst = {}
         core_block = [[0 for x in range(1)] for y in range(self.total_size)]
 
+        # The column abuts the main array, so each of its rows must carry the
+        # same mirroring as the array row beside it, or the shared vertical edge
+        # puts opposite wells and implants together. The array's parity is set
+        # by its row offset, so compare against that rather than against 0.
         current_row = self.row_start
         for row in range(self.total_size):
             # Regular array cells are replica cells
@@ -96,12 +100,12 @@ class replica_column(bitcell_base_array):
             # All other cells are dummies
             
             if (row == self.replica_bit) or (row >= self.row_start and row < self.row_end):
-                if current_row % 2 == 0:
+                if current_row % 2 == self.row_offset % 2:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='MY')
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.replica_cell, is_bitcell=True, mirror='XY')
             else:
-                if current_row % 2 == 0:
+                if current_row % 2 == self.row_offset % 2:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='MY')
                 else:
                     core_block[row][0] = geometry.instance("rbc_{}".format(row), mod=self.dummy_cell, is_bitcell=True, mirror='XY')

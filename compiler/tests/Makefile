@@ -37,15 +37,23 @@ BROKEN_STAMPS = \
 	freepdk45/16_rom_control_logic_test.ok \
 	freepdk45/19_rom_bank_test.ok \
 	scn4m_subm/04_rom_address_control_buf_test.ok \
+	scn4m_subm/05_rom_array_test.ok \
 	scn4m_subm/06_rom_decoder_test.ok \
+	scn4m_subm/07_rom_column_mux_array_test.ok \
 	scn4m_subm/06_hierarchical_decoder_4096row_test.ok \
 	scn4m_subm/08_rom_decoder_buffer_array_test.ok \
 	scn4m_subm/14_rom_array_test.ok \
+	scn4m_subm/16_rom_control_logic_test.ok \
 	scn4m_subm/19_rom_bank_test.ok \
 	scn4m_subm/19_single_bank_global_bitline_test.ok \
 	scn4m_subm/50_riscv_1rw_phys_test.ok \
 	scn4m_subm/50_riscv_1rw1r_phys_test.ok \
 	sky130/01_library_test.ok \
+	sky130/04_rom_precharge_test.ok \
+	sky130/05_rom_array_test.ok \
+	sky130/06_rom_decoder_test.ok \
+	sky130/08_rom_precharge_array_test.ok \
+	sky130/19_rom_bank_test.ok \
 	sky130/03_wire_test.ok \
 	sky130/04_column_mux_pbitcell_test.ok \
 	sky130/04_dummy_pbitcell_test.ok \

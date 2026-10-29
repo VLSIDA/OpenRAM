@@ -22,8 +22,8 @@ class sky130_replica_column(replica_column, sky130_bitcell_base_array):
     replica cell relative to the bottom (including the dummy bit at 0).
     """
 
-    def __init__(self, name, rows, rbl, replica_bit, column_offset=0):
-        super().__init__(name=name, rows=rows, rbl=rbl, replica_bit=replica_bit, column_offset=column_offset)
+    def __init__(self, name, rows, rbl, replica_bit, column_offset=0, row_offset=0):
+        super().__init__(name=name, rows=rows, rbl=rbl, replica_bit=replica_bit, column_offset=column_offset, row_offset=row_offset)
 
     def add_modules(self):
         self.replica_cell = factory.create(module_type="replica_bitcell_1port", version="opt1")

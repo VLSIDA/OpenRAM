@@ -1,0 +1,100 @@
+name: release
+
+# Pushing stable with a new VERSION releases it. One workflow does the whole
+# job, because a push made with GITHUB_TOKEN does not trigger other workflows,
+# so tagging here could not hand off to a second workflow without a personal
+# access token.
+#
+# The trigger is VERSION against the existing tags, not the commit message.
+# The old workflow keyed off "Bump version:" and 1.2.49 was lost because its
+# commit said "Bump version" without the colon.
+on:
+  push:
+    branches:
+      - stable
+  # Manual re-attempt if a release half-completed.
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide whether this is a new version
+        id: check
+        run: |
+          NEW="$(cat VERSION)"
+          echo "NEW=$NEW" >> $GITHUB_ENV
+          if ! printf '%s' "$NEW" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::VERSION '$NEW' is not X.Y.Z"; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$NEW" >/dev/null; then
+            echo "v$NEW is already tagged; nothing to release."
+            echo "release=no" >> $GITHUB_OUTPUT
+          else
+            echo "releasing v$NEW"
+            echo "release=yes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        if: steps.check.outputs.release == 'yes'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build the package
+        if: steps.check.outputs.release == 'yes'
+        run: |
+          python3 -m pip install --upgrade pip
+          make build_library
+
+      - name: Check the wheel imports
+        if: steps.check.outputs.release == 'yes'
+        run: |
+          # VERSION has to be inside the wheel or 'import openram' dies. That
+          # regressed once already, so fail here rather than on PyPI.
+          python3 -m venv /tmp/check
+          /tmp/check/bin/python3 -m pip install -q "dist/openram-${NEW}-py3-none-any.whl"
+          # Run outside the checkout with OPENRAM_* cleared, which is the path a
+          # plain 'pip install openram' user takes. Clearing them explicitly
+          # keeps the check meaningful even if a runner has them set.
+          cd /tmp && env -u OPENRAM_HOME -u OPENRAM_TECH \
+            /tmp/check/bin/python3 -c "import openram; print(openram.NAME)"
+
+      - name: Tag the release
+        if: steps.check.outputs.release == 'yes'
+        run: |
+          git config user.name "vlsida-bot"
+          git config user.email "mrg+vlsidabot@ucsc.edu"
+          git tag "v$NEW"
+          git push origin "v$NEW"
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.release == 'yes'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create the GitHub release
+        if: steps.check.outputs.release == 'yes'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PREV="$(git describe --tags --abbrev=0 "v$NEW^" 2>/dev/null || true)"
+          {
+            printf '## Install\nPython package is available at [PyPI](https://pypi.org/project/openram/).\n'
+            printf '## Documentation\nDocumentation is available [here](https://github.com/VLSIDA/OpenRAM/blob/stable/docs/source/index.md).\n'
+            if [ -n "$PREV" ]; then
+              printf '## Changes\nFull changelog: https://github.com/VLSIDA/OpenRAM/compare/%s...v%s\n' "$PREV" "$NEW"
+              printf '## Contributors\n'
+              git log --pretty='format:+ %an' "$PREV..v$NEW" | sort -u
+              printf '\n'
+            fi
+          } > release_notes.txt
+          gh release create "v$NEW" --verify-tag -F release_notes.txt

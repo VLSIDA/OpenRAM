@@ -50,17 +50,3 @@ jobs:
         with:
           name: Regress Archives
           path: ${{ github.workspace }}/compiler/tests/results/*
-  # This job triggers sync.yml workflow
-  sync_trigger:
-    if: ${{ always() && github.ref_name == 'dev' && github.repository == 'VLSIDA/PrivateRAM' && needs.regression_test.result == 'failure' }}
-    needs: regression_test
-    uses: ./.github/workflows/sync.yml
-    secrets:
-      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}
-  # This job triggers version.yml workflow
-  version_trigger:
-    if: ${{ github.ref_name == 'dev' }}
-    needs: regression_test
-    uses: ./.github/workflows/version.yml
-    secrets:
-      WORKFLOW_ACCESS_TOKEN: ${{ secrets.WORKFLOW_ACCESS_TOKEN }}

@@ -20,7 +20,7 @@ class library_lvs_test(openram_test):
     def runTest(self):
         config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
         openram.init_openram(config_file, is_unit_test=True)
-        from openram import verify
+        verify = get_verifier()
 
         (gds_dir, sp_dir, allnames) = setup_files()
         drc_errors = 0

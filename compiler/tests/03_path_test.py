@@ -24,7 +24,7 @@ class path_test(openram_test):
         from openram import tech
         from openram.base import design
 
-        min_space = 2 * tech.drc["minwidth_m1"]
+        min_space = tech.drc["minwidth_m1"] + max(tech.drc["minwidth_m1"], tech.drc("m1_to_m1"))
         layer_stack = ("m1")
         # checks if we can retrace a path
         position_list = [[0,0],
@@ -38,7 +38,7 @@ class path_test(openram_test):
         self.local_drc_check(w)
 
 
-        min_space = 2 * tech.drc["minwidth_m1"]
+        min_space = tech.drc["minwidth_m1"] + max(tech.drc["minwidth_m1"], tech.drc("m1_to_m1"))
         layer_stack = ("m1")
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
@@ -54,7 +54,7 @@ class path_test(openram_test):
         wire_path(w,layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * tech.drc["minwidth_m2"]
+        min_space = tech.drc["minwidth_m2"] + max(tech.drc["minwidth_m2"], tech.drc("m2_to_m2"))
         layer_stack = ("m2")
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
@@ -70,7 +70,7 @@ class path_test(openram_test):
         wire_path(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * tech.drc["minwidth_m3"]
+        min_space = tech.drc["minwidth_m3"] + max(tech.drc["minwidth_m3"], tech.drc("m3_to_m3"))
         layer_stack = ("m3")
         position_list = [[0, 0],
                          [0, 3 * min_space],

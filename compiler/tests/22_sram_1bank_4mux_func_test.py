@@ -40,7 +40,7 @@ class sram_1bank_4mux_func_test(openram_test):
             num_spare_cols = 0
 
         c = sram_config(word_size=4,
-                        num_words=128,
+                        num_words=64 if OPTS.tech_name == "ihp_sg13g2" else 128,
                         num_banks=1,
                         num_spare_cols=num_spare_cols,
                         num_spare_rows=num_spare_rows)

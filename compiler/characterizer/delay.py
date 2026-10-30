@@ -183,7 +183,11 @@ class delay(simulation):
                                                            meas.targ_name_no_port))
             self.dout_volt_meas[-1].meta_str = meas.meta_str
 
-            if OPTS.use_pex and OPTS.pex_exe[0] != 'calibre':
+            if hasattr(self, "characterization_probes"):
+                # Explicit nodes are complete names, including the port's actual
+                # hierarchy. Do not append a synthetic port number to SAE.
+                self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
+            elif OPTS.use_pex and OPTS.pex_exe[0] != 'calibre':
                 self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name, "FALL", "RISE", measure_scale=1e9)
             else:
                 self.sen_meas = delay_measure("delay_sen", self.clk_frmt, self.sen_name + "{}", "FALL", "RISE", measure_scale=1e9)
@@ -255,6 +259,13 @@ class delay(simulation):
 
     def create_sen_and_bitline_path_measures(self):
         """Create measurements for the s_en and bitline paths for individual delays per stage."""
+
+        if hasattr(self, "characterization_probes"):
+            # These optional per-stage diagnostics require the generic bank
+            # graph. Electrical, output, storage and SAE checks remain enabled.
+            self.sen_path_meas = []
+            self.bl_path_meas = []
+            return []
 
 #        # FIXME: There should be a default_read_port variable in this case, pathing is done with this
 #        # but is never mentioned otherwise
@@ -873,6 +884,12 @@ class delay(simulation):
 
         sen_val = self.sen_meas.retrieve_measure(port=port)
         debug.info(2, "s_en delay={0}ns".format(sen_val))
+        if hasattr(self, "characterization_probes"):
+            # SAE may idle high, go low for read development and rise to
+            # evaluate. A rise before the falling launch edge is not a valid
+            # evaluation event; retain the normal half-period upper bound.
+            if type(sen_val) != float or not math.isfinite(sen_val) or sen_val < 0:
+                return False
         if self.sen_meas.meta_add_delay:
             max_delay = self.period / 2
         else:
@@ -925,11 +942,13 @@ class delay(simulation):
         at the end of the read cycle.
         """
         success = False
+        all_success = True
         for polarity, meas_list in bit_measures.items():
             for meas in meas_list:
                 val = meas.retrieve_measure(port=port)
                 debug.info(2, "{0}={1}".format(meas.name, val))
                 if type(val) != float:
+                    all_success = False
                     continue
                 meas_cycle = meas.meta_str
                 # Loose error conditions. Assume it's not metastable but account for noise during reads.
@@ -945,11 +964,15 @@ class delay(simulation):
                 elif (meas_cycle == sram_op.WRITE_ONE and polarity == bit_polarity.INVERTING) or\
                      (meas_cycle == sram_op.WRITE_ZERO and polarity == bit_polarity.NONINVERTING):
                     success = val < self.vdd_voltage / 2
+                all_success = all_success and success
                 if not success:
                     debug.info(1, ("Wrong value detected on probe bit during read/write cycle. "
                                    "Check writes and control logic for bugs.\n measure={0}, op={1}, "
                                    "bit_storage={2}, V(bit)={3}").format(meas.name, meas_cycle.name, polarity.name, val))
 
+        if hasattr(self, "characterization_probes"):
+            # Do not let a later correct storage node hide an earlier failure.
+            return success and all_success
         return success
 
     def check_bitline_meas(self, v_discharged_bl, v_charged_bl):
@@ -1026,6 +1049,12 @@ class delay(simulation):
 
         delays_str = "delay_hl={0} delay_lh={1}".format(delay_hl, delay_lh)
         slews_str = "slew_hl={0} slew_lh={1}".format(slew_hl, slew_lh)
+        if hasattr(self, "characterization_probes"):
+            # Explicit-probe SRAMs must measure both real output transitions.
+            # Never substitute the opposite edge for a precharge/invalid event.
+            if not all(math.isfinite(value) and value >= 0
+                       for value in (delay_hl, delay_lh, slew_hl, slew_lh)):
+                return False
         # high-to-low delays start at neg. clk edge, so they need to be less than half_period
         half_period = self.period / 2
         if abs(delay_hl)>half_period or abs(delay_lh)>half_period or abs(slew_hl)>half_period or abs(slew_lh)>self.period \
@@ -1333,7 +1362,8 @@ class delay(simulation):
         # char_sram_data["bl_path_names"] = bl_names
         # char_sram_data["sen_path_names"] = sen_names
         # FIXME: low-to-high delays are altered to be independent of the period. This makes the lib results less accurate.
-        self.alter_lh_char_data(char_port_data)
+        if not hasattr(self, "characterization_probes"):
+            self.alter_lh_char_data(char_port_data)
 
         return (char_sram_data, char_port_data)
 

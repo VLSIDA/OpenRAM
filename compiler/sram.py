@@ -8,6 +8,7 @@
 import os
 import shutil
 import datetime
+from importlib import import_module
 from openram import debug
 from openram import sram_config as config
 from openram import OPTS, print_time
@@ -49,9 +50,18 @@ class sram():
 
         self.name = name
 
-        from openram.modules.sram_1bank import sram_1bank as sram
-
-        self.s = sram(name, sram_config)
+        # A technology may assemble combined hard peripherals rather than a
+        # generic bank. Resolve its top through the existing technology map,
+        # but do not cache the mutable top-level design in the module factory.
+        from openram.sram_factory import factory
+        module_type, _ = factory.get_techmodule_type("sram_1bank")
+        try:
+            module = import_module("openram.modules." + module_type)
+        except ModuleNotFoundError as error:
+            if error.name != "openram.modules." + module_type:
+                raise
+            module = import_module("openram.custom." + module_type)
+        self.s = getattr(module, module_type)(name, sram_config)
 
         self.s.create_netlist()
         if not OPTS.netlist_only:
@@ -122,7 +132,8 @@ class sram():
         # Save stimulus and measurement file
         start_time = datetime.datetime.now()
         debug.print_raw("DELAY: Writing stimulus...")
-        d = delay(self.s, spname, ("TT", 5, 25), output_path=OPTS.output_path)
+        corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
+        d = delay(self.s, spname, corner, output_path=OPTS.output_path)
         probe_address = get_probe_address(self.s)
         probe_data = self.s.word_size - 1
         d.analysis_init(probe_address, probe_data)

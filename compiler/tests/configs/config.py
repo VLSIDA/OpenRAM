@@ -14,6 +14,12 @@ tech_name = OPTS.tech_name
 nominal_corner_only = True
 check_lvsdrc = True
 
+if tech_name == "ihp_sg13g2":
+    analytical_delay = False
+    trim_netlist = False
+    spice_name = "ngspice"
+    use_nix = False  # Tests use the selected IIC-OSIC environment.
+
 #route_supplies = False
 
 output_name = "sram"

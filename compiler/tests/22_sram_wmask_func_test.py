@@ -40,12 +40,12 @@ class sram_wmask_func_test(openram_test):
             num_spare_cols = 0
 
         c = sram_config(word_size=8,
-                        num_words=16,
+                        num_words=64 if OPTS.tech_name == "ihp_sg13g2" else 16,
                         write_size=4,
                         num_banks=1,
                         num_spare_cols=num_spare_cols,
                         num_spare_rows=num_spare_rows)
-        c.words_per_row=1
+        c.words_per_row=4 if OPTS.tech_name == "ihp_sg13g2" else 1
         c.recompute_sizes()
         debug.info(1, "Functional test for sram with "
                    "{} bit words, {} words, {} words per row, {} bit writes, {} banks".format(c.word_size,

@@ -167,15 +167,24 @@ class regression_model(simulation):
 
 
     def cross_validation(self, test_only=None):
-        """Wrapper for sklean cross validation function for OpenRAM regression models.
-           Returns the mean accuracy for each model/output."""
+        """Return mean cross-validated R2 for each requested output.
 
+        Fit input and target scaling on each training fold, so held-out
+        extrema do not affect the model. Score predictions in original units.
+        """
+
+        from sklearn.compose import TransformedTargetRegressor
         from sklearn.model_selection import cross_val_score
-        untrained_model = self.get_model()
+        from sklearn.pipeline import make_pipeline
+        from sklearn.preprocessing import MinMaxScaler
+
+        untrained_model = TransformedTargetRegressor(
+            regressor=make_pipeline(MinMaxScaler(), self.get_model()),
+            transformer=MinMaxScaler())
 
         num_inputs = 9 #FIXME - should be defined somewhere else
         self.output_names = get_data_names(data_path)[num_inputs:]
-        data = get_scaled_data(data_path)
+        data = np.asarray(get_data(data_path)).T
         features, labels = data[:, :num_inputs], data[:,num_inputs:]
 
         models = {}

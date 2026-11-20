@@ -9,6 +9,7 @@ import math
 from openram import debug
 from openram.base import design
 from openram.base import vector
+from openram.base import round_to_grid
 from openram.sram_factory import factory
 from openram.tech import drc
 from openram import OPTS
@@ -186,6 +187,46 @@ class write_driver_array(design):
 
             base = vector(xoffset, 0)
             self.local_insts[index].place(offset=base, mirror=mirror)
+
+        self.separate_enable_rails()
+
+    def enable_group(self, index):
+        """ Drivers with the same group share one enable signal. """
+        if index >= self.word_size:
+            # every spare column has its own enable
+            return ("spare", index)
+        if self.write_size != self.word_size:
+            return ("wmask", index // self.write_size)
+        return ("en", 0)
+
+    def separate_enable_rails(self):
+        """
+        A driver's enable rail may run to one edge of the cell, so in a
+        mirrored pair the rails of two abutting drivers meet at the shared
+        edge. Shift a driver (and every driver to its right) so that rails of
+        different enables stay apart.
+        """
+        order = sorted(range(len(self.local_insts)), key=lambda i: self.local_insts[i].lx())
+        shift = 0
+        for left, right in zip(order, order[1:]):
+            right_inst = self.local_insts[right]
+            if shift:
+                right_inst.place(offset=right_inst.offset + vector(shift, 0), mirror=right_inst.mirror)
+            if self.enable_group(left) == self.enable_group(right):
+                continue
+            left_en = self.local_insts[left].get_pin(self.local_insts[left].mod.en_name)
+            right_en = right_inst.get_pin(right_inst.mod.en_name)
+            same_track = left_en.by() < right_en.uy() and right_en.by() < left_en.uy()
+            gap = right_en.lx() - left_en.rx()
+            # The parent drops a via on a spare enable pin at the end of the
+            # rail, and its pad overhangs the rail, so keep m1 space plus that
+            # overhang.
+            via_pad = max(self.m1_via.first_layer_width, self.m1_via.first_layer_height)
+            need = self.m1_space + 0.5 * (via_pad - drc("minwidth_m1"))
+            if same_track and gap < need:
+                extra = round_to_grid(need - gap)
+                right_inst.place(offset=right_inst.offset + vector(extra, 0), mirror=right_inst.mirror)
+                shift += extra
 
     def add_layout_pins(self):
         for i in range(self.word_size + self.num_spare_cols):

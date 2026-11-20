@@ -27,6 +27,11 @@ class sky130_replica_bitcell_array(replica_bitcell_array, sky130_bitcell_base_ar
     bitcell (Bl/BR disconnected).
     """
     def __init__(self, rows=0, cols=0, rbl=None, left_rbl=None, right_rbl=None, column_offset=0, row_offset=0, name="",):
-        debug.check((cols+ sum(rbl)) % 2==0, "must have an even number of cols including replica cols; you can add a spare col to fix this")
+        # Cells are tiled in mirrored pairs, so the physical column and row
+        # counts must be even. Replica columns are placed only for the ports in
+        # left_rbl/right_rbl, while every rbl port adds a replica row.
+        num_rbl_cols = len(left_rbl or []) + len(right_rbl or [])
+        debug.check((cols + num_rbl_cols) % 2 == 0, "must have an even number of cols including replica cols; you can add a spare col to fix this")
+        debug.check((rows + sum(rbl or [])) % 2 == 0, "must have an even number of rows including replica rows; you can add a spare row to fix this")
         super().__init__(rows, cols, rbl, left_rbl, right_rbl, column_offset, row_offset, name)
 

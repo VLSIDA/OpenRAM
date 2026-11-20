@@ -25,8 +25,11 @@ class replica_bitcell_array_norbl_1rw_test(openram_test):
         OPTS.num_w_ports = 0
         openram.setup_bitcell()
 
-        debug.info(2, "Testing 7x5 replica array for 1rw cell without replica column or dummy row")
-        a = factory.create(module_type="replica_bitcell_array", cols=7, rows=5, rbl=[0, 0])
+        # sky130 tiles cells in mirrored pairs, so it needs an even number of
+        # physical columns and rows.
+        (cols, rows) = (8, 6) if OPTS.tech_name == "sky130" else (7, 5)
+        debug.info(2, "Testing {}x{} replica array for 1rw cell without replica column or dummy row".format(cols, rows))
+        a = factory.create(module_type="replica_bitcell_array", cols=cols, rows=rows, rbl=[0, 0])
         self.local_check(a)
 
         openram.end_openram()

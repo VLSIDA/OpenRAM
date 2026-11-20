@@ -23,9 +23,13 @@ class single_bank_spare_cols_test(openram_test):
         openram.init_openram(config_file, is_unit_test=True)
         from openram import sram_config
 
+        # sky130 tiles rows in mirrored pairs, so it needs a spare row to go
+        # with the replica row.
+        num_spare_rows = 1 if OPTS.tech_name == "sky130" else 0
         c = sram_config(word_size=4,
                         num_words=16,
-                        num_spare_cols=3)
+                        num_spare_cols=3,
+                        num_spare_rows=num_spare_rows)
 
         c.words_per_row=1
         c.recompute_sizes()

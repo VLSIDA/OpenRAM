@@ -851,8 +851,14 @@ class port_data(design):
             top_bl, top_br = top_bl_pin.bc(), top_br_pin.bc()
 
             layer_pitch = getattr(self, "{}_pitch".format(top_bl_pin.layer))
-            self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V", fixed_offset=top_bl_pin.by() - layer_pitch)
-            self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V", fixed_offset=top_bl_pin.by() - 2 * layer_pitch)
+            bl_offset = top_bl_pin.by() - layer_pitch
+            br_offset = top_bl_pin.by() - 2 * layer_pitch
+            # If both bitlines jog the same way, the leading one must jog first (lower) or they cross.
+            bl_jog = top_bl.x - bot_bl.x
+            if bl_jog * (top_br.x - bot_br.x) > 0 and bl_jog * (bot_bl.x - bot_br.x) > 0:
+                bl_offset, br_offset = br_offset, bl_offset
+            self.add_zjog(bot_bl_pin.layer, bot_bl, top_bl, "V", fixed_offset=bl_offset)
+            self.add_zjog(bot_br_pin.layer, bot_br, top_br, "V", fixed_offset=br_offset)
 
     def graph_exclude_precharge(self):
         """Precharge adds a loop between bitlines, can be excluded to reduce complexity"""

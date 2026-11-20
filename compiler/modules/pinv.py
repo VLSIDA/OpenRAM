@@ -83,13 +83,12 @@ class pinv(pgate):
         """
 
         # This may make the result differ when the layout is created...
-        if OPTS.netlist_only:
+        # Binned models are sized below as in layout mode, since the fingers
+        # depend on the cell height and both devices share one finger count.
+        if OPTS.netlist_only and not cell_props.ptx.bin_spice_models:
             self.tx_mults = 1
             self.nmos_width = self.nmos_size * drc("minwidth_tx")
             self.pmos_width = self.pmos_size * drc("minwidth_tx")
-            if cell_props.ptx.bin_spice_models:
-                (self.nmos_width, self.tx_mults) = pgate.best_bin("nmos", self.nmos_width)
-                (self.pmos_width, self.tx_mults) = pgate.best_bin("pmos", self.pmos_width)
             return
 
         # Do a quick sanity check and bail if unlikely feasible height

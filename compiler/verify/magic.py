@@ -136,6 +136,11 @@ def write_drc_script(cell_name, gds_name, extract, final_verification, output_pa
     f.write(pre + "extract no capacitance\n")
     f.write(pre + "extract no coupling\n")
     f.write(pre + "extract no resistance\n")
+    # Since magic 8.3.642, "extract all" uniquifies same-name nets that are
+    # not connected (vdd_uq0, ...). Module LVS relies on such supply pins
+    # being merged by name, as older versions did. Final verification still
+    # renames them with "extract unique all" below.
+    f.write(pre + "extract no unique\n")
     if final_verification and OPTS.route_supplies:
         f.write(pre + "extract unique all\n")
     f.write(pre + "extract all\n")
@@ -527,6 +532,8 @@ def write_script_pex_rule(gds_name, cell_name, sp_name, output):
         f.write("port makeall\n")
     else:
         f.write("readspice {}\n".format(sp_name))
+    # Keep same-name nets merged by name, as before magic 8.3.642.
+    f.write("extract no unique\n")
     f.write("extract\n")
     f.write("ext2sim labels on\n")
     f.write("ext2sim\n")

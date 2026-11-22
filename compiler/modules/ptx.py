@@ -151,6 +151,21 @@ class ptx(design):
         perimeter_sd = 2 * self.poly_width + 2 * self.tx_width
 
         self.channel_length = drc("minlength_channel")
+        fin_width = spice.get("fin_width")
+        if fin_width:
+            # FinFET (BSIM-CMG): the width is an integer number of fins.
+            # w is kept as the fin-quantized effective width for tools that read it.
+            self.nfin = max(1, int(round(self.tx_width / fin_width)))
+            fin_w = self.nfin * fin_width
+            self.spice_device = "M{{0}} {{1}} {0} m={1} w={2:.4f}u l={3}u nfin={4}".format(self.model_name,
+                                                                                         self.mults,
+                                                                                         fin_w,
+                                                                                         self.channel_length,
+                                                                                         self.nfin)
+            self.spice.append("\n* spice ptx " + self.spice_device)
+            self.lvs_device = self.spice_device
+            return
+
         if cell_props.ptx.model_is_subckt:
             # sky130
             main_str = "X{{0}} {{1}} {0} m={1} w={2} l={3} ".format(self.model_name,

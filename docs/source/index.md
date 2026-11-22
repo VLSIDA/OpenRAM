@@ -63,6 +63,10 @@ Commercial tools (optional):
 * Skywater 130nm (sky130)
     * Fabricable technology
     * Magic/Netgen or klayout
+* ASAP7 7nm FinFET (asap7)
+    * Predictive (non-fabricable) technology
+    * Netlist-only: abstract library cell layouts, no DRC/LVS
+    * BSIM-CMG models (HSPICE syntax)
 
 
 
